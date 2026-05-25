@@ -80,6 +80,7 @@ namespace Oasis.Backend.Controllers
 
         private static OasisState LoadState()
         {
+            var state = new OasisState();
             try {
                 // Migration: If root doesn't exist but bin does, copy it
                 if (!System.IO.File.Exists(StoragePath) && System.IO.File.Exists(BackupStoragePath))
@@ -94,19 +95,35 @@ namespace Oasis.Backend.Controllers
                     using (var reader = new StreamReader(fs))
                     {
                         string json = reader.ReadToEnd();
-                        var state = JsonSerializer.Deserialize<OasisState>(json, JsonOptions) ?? new OasisState();
+                        state = JsonSerializer.Deserialize<OasisState>(json, JsonOptions) ?? new OasisState();
                         if (MigrateBase64Assets(state))
                         {
                             SaveStateInternal(state);
                             Console.WriteLine("Oasis: Assets migrados y archivo optimizado.");
                         }
-                        return state;
                     }
                 }
             } catch (Exception ex) { 
                 Console.WriteLine($"Error cargando oasis: {ex.Message}");
             }
-            return new OasisState();
+
+            // Seed default user if not exists
+            if (state.Users == null) state.Users = new List<User>();
+            if (!state.Users.Any(u => u.Username.Equals("ory11", StringComparison.OrdinalIgnoreCase)))
+            {
+                state.Users.Add(new User 
+                { 
+                    Username = "ory11", 
+                    Password = "pass123",
+                    FullName = "Oasis Admin",
+                    Age = 25,
+                    Background = new BackgroundConfig { Type = "color", Value = "#030304" }
+                });
+                SaveStateInternal(state);
+                Console.WriteLine("Oasis: seeded default user ory11.");
+            }
+
+            return state;
         }
 
         private static bool MigrateBase64Assets(OasisState state)
