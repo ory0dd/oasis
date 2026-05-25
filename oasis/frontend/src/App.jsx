@@ -1840,11 +1840,12 @@ const ProfileView = ({
     setView, playlists, setPlayQueue, setCurrentTrack, setIsPlaying,
     avatar, setAvatar, calculatedResults, noteKeywords, bgType, bgValue,
     conversations, setConversations, handleSelectConversation,
-    onSaveProfile, onNewChat, onOpenNotebook
+    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest
 }) => {
     const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
     const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
     const [coverImage, setCoverImage] = useState(() => localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+    const [profileTab, setProfileTab] = useState('board'); // 'board' | 'psychic'
 
     React.useEffect(() => {
         const profileBlock = blocks.find(b => b.id === 'profile_settings');
@@ -2260,404 +2261,683 @@ const ProfileView = ({
                 </div>
             </div>
 
-            {/* 3. PLAYNITE STYLE DETAILS PANELS */}
+            {/* 3. DETAILS PANELS */}
             <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pb-32 flex flex-col gap-8 pointer-events-auto">
 
-                {/* DESCRIPCIÓN & CONTENIDO */}
-                <div className="space-y-8 w-full">
-                    {/* BIOGRAFIA / DESCRIPCION */}
-                    <div className="p-6 md:p-8 rounded-[2rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-6 border-b border-white/5 pb-3">Descripción</h3>
+                {/* DESCRIPCIÓN */}
+                <div className="p-6 md:p-8 rounded-[2rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-6 border-b border-white/5 pb-3">Descripción</h3>
 
-                        {isEditingProfile ? (
-                            <textarea
-                                value={bio}
-                                onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[120px]"
-                                placeholder="Escribe la descripción de tu alma o biografía..."
-                            />
-                        ) : (
-                            <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans">
-                                {bio}
-                            </p>
+                    {isEditingProfile ? (
+                        <textarea
+                            value={bio}
+                            onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
+                            className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[120px]"
+                            placeholder="Escribe la descripción de tu alma o biografía..."
+                        />
+                    ) : (
+                        <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans">
+                            {bio}
+                        </p>
+                    )}
+                </div>
+
+                {/* TABS SELECTOR FOR BOARD OR CLINICAL STUDY */}
+                <div className="flex border-b border-white/5 pb-px gap-2">
+                    <button
+                        onClick={() => setProfileTab('board')}
+                        className={`pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${profileTab === 'board' ? 'text-accent' : 'text-zinc-500 hover:text-white'}`}
+                        style={profileTab === 'board' ? { color: accent } : undefined}
+                    >
+                        Bitácora Creativa
+                        {profileTab === 'board' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: accent }} />
                         )}
-                    </div>
+                    </button>
+                    <button
+                        onClick={() => setProfileTab('psychic')}
+                        className={`pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${profileTab === 'psychic' ? 'text-accent' : 'text-zinc-500 hover:text-white'}`}
+                        style={profileTab === 'psychic' ? { color: accent } : undefined}
+                    >
+                        Estructura Psíquica & Clínicas
+                        {profileTab === 'psychic' && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: accent }} />
+                        )}
+                    </button>
+                </div>
 
-                    {/* THE CREATIVE BOARD */}
-                    <div className="space-y-8">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-white/5 pb-4">
-                            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                                <Compass size={18} className="text-accent" style={{ color: accent }} />
-                                <div>
-                                    <h3 className="text-xl font-black uppercase italic tracking-tight">Bitácora del Camino Existencial</h3>
-                                    <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Espacio descriptivo para la auto-indagación y disolución del ruido interno</p>
+                {/* RENDERING DYNAMIC SECTION */}
+                {profileTab === 'psychic' ? (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        {/* SECCIÓN 1: PID-5 Y ARQUETIPO */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* TARGET ARQUETIPO CARD */}
+                            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden"
+                                 style={{ borderTop: `4px solid ${calculatedResults.isPid5Complete ? accent : 'rgba(255,255,255,0.05)'}` }}>
+                                {!calculatedResults.isPid5Complete ? (
+                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
+                                        <Layers size={36} className="text-zinc-600 mb-4 animate-pulse" />
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Estructura Existencial Bloqueada</h4>
+                                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test breve de personalidad PID-5 para trazar tu arquetipo clínico y estructura fenomenológica.</p>
+                                        <button onClick={() => { setActiveTest('pid5'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Realizar Test</button>
+                                    </div>
+                                ) : null}
+
+                                <div className="space-y-4">
+                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Arquetipo Dominante de Identidad</span>
+                                    <h2 className="text-3xl font-black italic tracking-tighter text-white font-sans uppercase">
+                                        {calculatedResults.archetype?.name}
+                                    </h2>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 font-mono">
+                                        {calculatedResults.archetype?.subtitle}
+                                    </p>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                                        <div className="space-y-1">
+                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Vulnerabilidad Nuclear</span>
+                                            <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">{calculatedResults.archetype?.vulnerability}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Respuesta de Bloqueo</span>
+                                            <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">{calculatedResults.archetype?.blockage}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Camino de Liberación</span>
+                                            <p className="text-[10px] leading-relaxed text-accent font-sans" style={{ color: accent }}>{calculatedResults.archetype?.liberation}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 items-center">
-                                {[
-                                    { id: 'all', label: 'Todos' },
-                                    { id: 'notes', label: 'Notas' },
-                                    { id: 'diary', label: 'Diario' },
-                                    { id: 'resonance', label: 'Resonancias' },
-                                    { id: 'chats', label: 'Diálogos AI' },
-                                    { id: 'images', label: 'Multimedia' }
-                                ].map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setReleaseTab(tab.id)}
-                                        className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
-                                            ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
-                                            : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
-                                            }`}
-                                        style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
 
-                                <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
+                            {/* PID-5 SUBDOMINIOS SCORES */}
+                            <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                                {!calculatedResults.isPid5Complete ? (
+                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
+                                        <Activity size={32} className="text-zinc-600 mb-4" />
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-500">Sin Datos de Subdominios</h4>
+                                    </div>
+                                ) : null}
 
-                                <button
-                                    onClick={() => {
-                                        setIsSelectionMode(!isSelectionMode);
-                                        setSelectedIds([]);
-                                    }}
-                                    className={`px-4 py-1.5 rounded-full border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${isSelectionMode
-                                        ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
-                                        }`}
-                                >
-                                    <CheckSquare size={10} />
-                                    {isSelectionMode ? 'Cancelar' : 'Seleccionar'}
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm("¿Estás seguro de eliminar todos los datos de prueba? Esta acción no se puede deshacer.")) {
-                                            deleteBlocks(blocks.map(b => b.id));
-                                        }
-                                    }}
-                                    className="px-4 py-1.5 rounded-full border border-red-900/30 bg-red-950/20 transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 text-red-500 hover:bg-red-600 hover:text-black shadow-lg"
-                                    title="Restablecer Pizarrón / Borrar Todo"
-                                >
-                                    <Trash2 size={10} />
-                                    Borrar Todo
-                                </button>
+                                <div className="space-y-6 w-full">
+                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Subdominios de Personalidad (PID-5)</span>
+                                    
+                                    <div className="space-y-4">
+                                        {[
+                                            { key: 'AfectividadNegativa', label: 'Afectividad Negativa', max: 15 },
+                                            { key: 'Desapego', label: 'Desapego', max: 15 },
+                                            { key: 'Antagonismo', label: 'Antagonismo', max: 15 },
+                                            { key: 'Desinhibicion', label: 'Desinhibición', max: 15 },
+                                            { key: 'Psicoticismo', label: 'Psicoticismo', max: 10 }
+                                        ].map(dom => {
+                                            const score = calculatedResults.pidScores?.[dom.key] || 0;
+                                            const percentage = Math.min((score / dom.max) * 100, 100);
+                                            const isDominant = calculatedResults.dominantDomain === dom.key;
+                                            return (
+                                                <div key={dom.key} className="space-y-1.5">
+                                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider">
+                                                        <span className={isDominant ? "text-accent" : "text-zinc-400"} style={isDominant ? { color: accent } : undefined}>
+                                                            {dom.label} {isDominant && "★"}
+                                                        </span>
+                                                        <span className="font-mono text-zinc-500">{score} / {dom.max}</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full rounded-full transition-all duration-1000"
+                                                            style={{ 
+                                                                width: `${percentage}%`,
+                                                                backgroundColor: isDominant ? accent : 'rgba(255, 255, 255, 0.25)',
+                                                                boxShadow: isDominant ? `0 0 10px ${accent}80` : 'none'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {filteredReleases.length > 0 ? (
-                            <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[280px] grid-flow-dense pb-8 pt-2 w-full">
-                                    {filteredReleases.map(b => {
-                                        const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                        const isDia = b.entries && b.entries.length > 0;
-                                        const isInsight = b.type === 'insight';
-                                        const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-                                        const isImg = b.type === 'image' || b.type === 'relic';
-                                        const isChat = b.type === 'conversation';
-                                        const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
+                        {/* SECCIÓN 2: COGNITIVO ICAR-16 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* DETAILED STATS GRID */}
+                            <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                                {!calculatedResults.isIcarComplete ? (
+                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
+                                        <Zap size={36} className="text-zinc-600 mb-4 animate-pulse" />
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Procesamiento Bloqueado</h4>
+                                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test ICAR-16 para mapear tus velocidades y habilidades de procesamiento analítico.</p>
+                                        <button onClick={() => { setActiveTest('icar16'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Realizar Test</button>
+                                    </div>
+                                ) : null}
 
-                                        const noteColor = b.color || accent;
-                                        const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
-                                        const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
-                                        const isSelected = selectedIds.includes(b.id);
+                                <div className="space-y-6 w-full">
+                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Procesamiento Cognitivo (ICAR-16)</span>
 
-                                        // SUDOKU TILE LOGIC (Masonry / Windows Tiles)
-                                        let spanClass = "col-span-1 row-span-1";
-                                        if (isImg) {
-                                            spanClass = "col-span-1 sm:col-span-2 row-span-2";
-                                        } else if (hasSubNotes) {
-                                            spanClass = "col-span-1 sm:col-span-2 md:col-span-3 row-span-1 lg:row-span-2";
-                                        } else if (isDia || isChat) {
-                                            spanClass = "col-span-1 sm:col-span-2 row-span-1 md:row-span-2";
-                                        } else if (isNote && b.content && b.content.length > 250) {
-                                            spanClass = "col-span-1 sm:col-span-2 row-span-1 lg:row-span-2";
-                                        } else if (isNote && b.content && b.content.length > 120) {
-                                            spanClass = "col-span-1 row-span-2";
-                                        }
+                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
+                                            <span className="text-2xl font-black italic tracking-tighter text-accent font-sans" style={{ color: accent }}>
+                                                {calculatedResults.score}/16
+                                            </span>
+                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Aciertos</span>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
+                                            <span className="text-2xl font-black italic tracking-tighter text-white font-sans">
+                                                {calculatedResults.dwellAvg}s
+                                            </span>
+                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Reacción</span>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
+                                            <span className="text-2xl font-black italic tracking-tighter text-white font-sans">
+                                                {calculatedResults.totalChanges}
+                                            </span>
+                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Titubeos</span>
+                                        </div>
+                                    </div>
 
-                                        return (
-                                            <div
-                                                key={b.id}
-                                                onClick={() => handleCardClick(b.id)}
-                                                draggable={!isSelectionMode}
-                                                onDragStart={(e) => {
-                                                    e.dataTransfer.setData("text/plain", b.id);
-                                                    e.dataTransfer.effectAllowed = "move";
-                                                }}
-                                                onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    if (dragOverId !== b.id) setDragOverId(b.id);
-                                                }}
-                                                onDragLeave={() => {
-                                                    if (dragOverId === b.id) setDragOverId(null);
-                                                }}
-                                                onDrop={(e) => {
-                                                    e.preventDefault();
-                                                    setDragOverId(null);
-                                                    const draggedId = e.dataTransfer.getData("text/plain");
-                                                    handleReorderBlocks(draggedId, b.id);
-                                                }}
-                                                className={`${spanClass} w-full h-full bg-black/40 border rounded-[2.5rem] p-6 flex flex-col transition-all duration-300 relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${isSelectionMode
-                                                    ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
-                                                    : 'border-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 hover:z-10'
-                                                    }`}
-                                                style={{
-                                                    borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
-                                                    borderColor: dragOverId === b.id ? accent : '',
-                                                    boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
-                                                    opacity: dragOverId === b.id ? 0.7 : ''
-                                                }}
-                                            >
-                                                <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity">
-                                                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
-                                                        {typeLabel}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        {isSelectionMode ? (
-                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
-                                                                ? 'bg-red-500 border-red-500 text-white'
-                                                                : 'border-white/30 bg-black/40'
-                                                                }`}>
-                                                                {isSelected && <Check size={8} />}
-                                                            </div>
-                                                        ) : (
-                                                            <>
-                                                                <span className="text-[7px] font-mono text-zinc-600">
-                                                                    {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
-                                                                </span>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (b.isVirtual) {
-                                                                            if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
-                                                                                const updated = conversations.filter(c => c.id !== b.id);
-                                                                                setConversations(updated);
-                                                                                fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
-                                                                                    method: 'POST',
-                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                    body: JSON.stringify(updated)
-                                                                                });
-                                                                            }
-                                                                        } else {
-                                                                            deleteBlock(b.id);
-                                                                        }
-                                                                    }}
-                                                                    className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
-                                                                    title="Eliminar registro"
-                                                                >
-                                                                    <Trash2 size={10} />
-                                                                </button>
-                                                            </>
-                                                        )}
+                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
+                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 block">Estilo de Ejecución Atencional</span>
+                                        <p className="text-[10px] font-black uppercase tracking-wider text-accent italic" style={{ color: accent }}>
+                                            {calculatedResults.estado_cognitivo?.estilo_ejecucion === 'eficiente' ? 'Alta Eficiencia Analítica' : 
+                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'impulsivo' ? 'Desconexión / Estilo Impulsivo' :
+                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'analítico_sostenido' ? 'Procesamiento Analítico Sostenido' : 'Sobrecarga Cognitiva'}
+                                        </p>
+                                        <p className="text-[9px] leading-relaxed text-zinc-400 font-sans">
+                                            {calculatedResults.estado_cognitivo?.estilo_ejecucion === 'eficiente' ? 'Procesamiento de alta precisión a velocidades óptimas, sugiriendo alta automatización visoespacial.' :
+                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'impulsivo' ? 'Baja persistencia en el razonamiento de problemas complejos. Respuestas rápidas pero imprecisas.' :
+                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'analítico_sostenido' ? 'Alta inversión de tiempo de procesamiento garantizando máxima exactitud en la resolución atencional.' : 
+                                             'Sobrecarga en la memoria de trabajo ejecutivo que desencadena saturación rápida y fatiga.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* COGNITIVE DIMENSIONS BREAKDOWN */}
+                            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                                {!calculatedResults.isIcarComplete ? (
+                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
+                                        <Database size={32} className="text-zinc-600 mb-4" />
+                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-500">Sin Dimensiones de Inteligencia</h4>
+                                    </div>
+                                ) : null}
+
+                                <div className="space-y-4 w-full">
+                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Análisis por Dominios de Razonamiento</span>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {[
+                                            { key: 'verbal', label: 'Razonamiento Verbal / Lógico' },
+                                            { key: 'visuospatial', label: 'Razonamiento Rotacional 3D' },
+                                            { key: 'sequential', label: 'Lógica Secuencial / Patrones' },
+                                            { key: 'inductive', label: 'Inferencia Inductiva' }
+                                        ].map(dim => {
+                                            const details = calculatedResults.indices_referencia?.dimensions?.[dim.key] || { correct: 0, average_dwell: 0, status: 'normal', interpretation: '' };
+                                            return (
+                                                <div key={dim.key} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-between space-y-2">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <h5 className="text-[9px] font-black uppercase tracking-wider text-white">{dim.label}</h5>
+                                                            <span className="text-[7px] text-zinc-500 font-mono uppercase">Reactivos correctos: {details.correct} de 4</span>
+                                                        </div>
+                                                        <span className="px-2 py-0.5 rounded bg-white/10 text-[6px] font-mono font-black uppercase text-zinc-400">
+                                                            {details.status}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[9px] leading-relaxed text-zinc-400 font-sans italic">
+                                                        "{details.interpretation}"
+                                                    </p>
+                                                    <div className="flex gap-2 text-[6px] font-mono font-black text-zinc-500 uppercase tracking-widest pt-1 border-t border-white/5">
+                                                        <span>Dwell: {details.average_dwell}s</span>
+                                                        <span>•</span>
+                                                        <span>Cambios: {details.total_changes || 0}</span>
                                                     </div>
                                                 </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                                                {isImg && (
-                                                    <div className="flex-1 min-h-0 space-y-3 pt-2 flex flex-col">
-                                                        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
-                                                            <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
-                                                        </div>
-                                                        {b.caption && (
-                                                            <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
-                                                                {b.caption}
-                                                            </h4>
-                                                        )}
-                                                    </div>
-                                                )}
+                        {/* SECCIÓN 3: FORMULACIÓN DE CASO FUNCIONAL */}
+                        <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl relative overflow-hidden"
+                             style={{ borderTop: `4px solid ${calculatedResults.isPhenomComplete && calculatedResults.isPid5Complete ? accent : 'rgba(255,255,255,0.05)'}` }}>
+                            {!calculatedResults.isPhenomComplete || !calculatedResults.isPid5Complete ? (
+                                <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
+                                    <Compass size={36} className="text-zinc-600 mb-4 animate-pulse" />
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Formulación de Caso Bloqueada</h4>
+                                    <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test Fenomenológico Cualitativo y el PID-5 para sintetizar la formulación clínica funcional de tu psique.</p>
+                                    <button onClick={() => { setActiveTest('phenom'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Comenzar Fenomenología</button>
+                                </div>
+                            ) : null}
 
-                                                {isChat && (() => {
-                                                    let msgs = [];
-                                                    try { msgs = JSON.parse(b.content) || []; } catch (e) { }
-                                                    return (
-                                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
-                                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                                {b.caption || 'Diálogo AI'}
-                                                            </h4>
-                                                            <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
-                                                                {msgs.map((msg, idx) => (
-                                                                    <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
-                                                                            {msg.role === 'user' ? 'Tú' : 'Kio'}
-                                                                        </span>
-                                                                        <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
-                                                                            ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
-                                                                            : 'bg-white/5 border border-white/5 text-white/80'
-                                                                            } max-w-[90%] whitespace-pre-wrap`}>
-                                                                            {msg.content}
-                                                                        </p>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })()}
+                            <div className="space-y-6">
+                                <div>
+                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Ecosistema Dinámico</span>
+                                    <h3 className="text-xl font-black uppercase italic tracking-tight text-white mt-1">Formulación de Caso Clínico Funcional</h3>
+                                </div>
 
-                                                {isRes && (() => {
-                                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
-                                                    const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
-                                                    const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
+                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>01</div>
+                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">A. Disparador / Antecedente</h5>
+                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
+                                            {calculatedResults.isPhenomComplete ? (
+                                                <>Susceptibilidad y reactividad emocional cuando enfrentas densidades existenciales como: <span className="text-accent" style={{ color: accent }}>"{noteKeywords.slice(0, 3).join(', ') || 'ideas caóticas'}"</span>. Sueles percibir el caos como una amenaza existencial directa.</>
+                                            ) : 'Vacío'}
+                                        </p>
+                                    </div>
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
+                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>02</div>
+                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">B. Vulnerabilidad Nuclear</h5>
+                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
+                                            {calculatedResults.isPid5Complete ? (
+                                                <>La base de tu vulnerabilidad nuclear fenomenológica se asienta en: <span className="italic text-zinc-400">"{calculatedResults.archetype?.vulnerability}"</span>. Actúa como el filtro a través del cual moldeas tus miedos en el lienzo.</>
+                                            ) : 'Vacío'}
+                                        </p>
+                                    </div>
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
+                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>03</div>
+                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">C. Respuesta de Evitación</h5>
+                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
+                                            {calculatedResults.isPid5Complete ? (
+                                                <>Ante la sobrecarga conceptual y emocional, respondes activando un bucle protector de <span className="font-bold text-white uppercase">{calculatedResults.archetype?.subtitle}</span>, manifestándose en el bloqueo: <span className="text-red-400 font-sans">"{calculatedResults.archetype?.blockage}"</span>.</>
+                                            ) : 'Vacío'}
+                                        </p>
+                                    </div>
+                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
+                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>04</div>
+                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">D. Bucle Autoperpetuador</h5>
+                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
+                                            {calculatedResults.isPid5Complete ? (
+                                                <>Aunque el repliegue disminuye la ansiedad en el corto plazo, a largo plazo refuerza la vulnerabilidad existencial primordial, consolidando un bucle psicológico que frena tu libertad creativa en el canvas.</>
+                                            ) : 'Vacío'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    /* CREATIVE BOARD / FEED (LEGACY CONTENT WELL STYLE) */
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        {/* THE CREATIVE BOARD */}
+                        <div className="space-y-8">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-white/5 pb-4">
+                                <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                                    <Compass size={18} className="text-accent" style={{ color: accent }} />
+                                    <div>
+                                        <h3 className="text-xl font-black uppercase italic tracking-tight">Bitácora del Camino Existencial</h3>
+                                        <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Espacio descriptivo para la auto-indagación y disolución del ruido interno</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                    {[
+                                        { id: 'all', label: 'Todos' },
+                                        { id: 'notes', label: 'Notas' },
+                                        { id: 'diary', label: 'Diario' },
+                                        { id: 'resonance', label: 'Resonancias' },
+                                        { id: 'chats', label: 'Diálogos AI' },
+                                        { id: 'images', label: 'Multimedia' }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setReleaseTab(tab.id)}
+                                            className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
+                                                ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
+                                                : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
+                                                }`}
+                                            style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
 
-                                                    const resonanceText = resMatch ? resMatch[1].trim() : '';
-                                                    const impactText = impMatch ? impMatch[1].trim() : '';
-                                                    const strangeText = extMatch ? extMatch[1].trim() : '';
+                                    <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
 
-                                                    return (
-                                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
-                                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                                {b.caption || 'Resonancia Psíquica'}
-                                                            </h4>
-                                                            <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
-                                                                {resonanceText && (
-                                                                    <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
-                                                                        <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
-                                                                        <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
-                                                                    </div>
-                                                                )}
-                                                                {impactText && (
-                                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
-                                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
-                                                                        <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
-                                                                    </div>
-                                                                )}
-                                                                {strangeText && (
-                                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
-                                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
-                                                                        <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })()}
+                                    <button
+                                        onClick={() => {
+                                            setIsSelectionMode(!isSelectionMode);
+                                            setSelectedIds([]);
+                                        }}
+                                        className={`px-4 py-1.5 rounded-full border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${isSelectionMode
+                                            ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
+                                            : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
+                                            }`}
+                                    >
+                                        <CheckSquare size={10} />
+                                        {isSelectionMode ? 'Cancelar' : 'Seleccionar'}
+                                    </button>
 
-                                                {isDia && (
-                                                    <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
-                                                        <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
-                                                            {b.caption || 'Bitácora / Diario'}
-                                                        </h4>
-                                                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
-                                                            {b.entries.map((entry, idx) => (
-                                                                <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
-                                                                    <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                                                                        <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
-                                                                        <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                    </div>
-                                                                    <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
-                                                                        "{entry.text}"
-                                                                    </p>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm("¿Estás seguro de eliminar todos los datos de prueba? Esta acción no se puede deshacer.")) {
+                                                deleteBlocks(blocks.map(b => b.id));
+                                            }
+                                        }}
+                                        className="px-4 py-1.5 rounded-full border border-red-900/30 bg-red-950/20 transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 text-red-500 hover:bg-red-600 hover:text-black shadow-lg"
+                                        title="Restablecer Pizarrón / Borrar Todo"
+                                    >
+                                        <Trash2 size={10} />
+                                        Borrar Todo
+                                    </button>
+                                </div>
+                            </div>
+
+                            {filteredReleases.length > 0 ? (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[280px] grid-flow-dense pb-8 pt-2 w-full">
+                                        {filteredReleases.map(b => {
+                                            const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                            const isDia = b.entries && b.entries.length > 0;
+                                            const isInsight = b.type === 'insight';
+                                            const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                                            const isImg = b.type === 'image' || b.type === 'relic';
+                                            const isChat = b.type === 'conversation';
+                                            const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
+
+                                            const noteColor = b.color || accent;
+                                            const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                                            const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
+                                            const isSelected = selectedIds.includes(b.id);
+
+                                            // SUDOKU TILE LOGIC (Masonry / Windows Tiles)
+                                            let spanClass = "col-span-1 row-span-1";
+                                            if (isImg) {
+                                                spanClass = "col-span-1 sm:col-span-2 row-span-2";
+                                            } else if (hasSubNotes) {
+                                                spanClass = "col-span-1 sm:col-span-2 md:col-span-3 row-span-1 lg:row-span-2";
+                                            } else if (isDia || isChat) {
+                                                spanClass = "col-span-1 sm:col-span-2 row-span-1 md:row-span-2";
+                                            } else if (isNote && b.content && b.content.length > 250) {
+                                                spanClass = "col-span-1 sm:col-span-2 row-span-1 lg:row-span-2";
+                                            } else if (isNote && b.content && b.content.length > 120) {
+                                                spanClass = "col-span-1 row-span-2";
+                                            }
+
+                                            return (
+                                                <div
+                                                    key={b.id}
+                                                    onClick={() => handleCardClick(b.id)}
+                                                    draggable={!isSelectionMode}
+                                                    onDragStart={(e) => {
+                                                        e.dataTransfer.setData("text/plain", b.id);
+                                                        e.dataTransfer.effectAllowed = "move";
+                                                    }}
+                                                    onDragOver={(e) => {
+                                                        e.preventDefault();
+                                                        if (dragOverId !== b.id) setDragOverId(b.id);
+                                                    }}
+                                                    onDragLeave={() => {
+                                                        if (dragOverId === b.id) setDragOverId(null);
+                                                    }}
+                                                    onDrop={(e) => {
+                                                        e.preventDefault();
+                                                        setDragOverId(null);
+                                                        const draggedId = e.dataTransfer.getData("text/plain");
+                                                        handleReorderBlocks(draggedId, b.id);
+                                                    }}
+                                                    className={`${spanClass} w-full h-full bg-black/40 border rounded-[2.5rem] p-6 flex flex-col transition-all duration-300 relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${isSelectionMode
+                                                        ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
+                                                        : 'border-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 hover:z-10'
+                                                        }`}
+                                                    style={{
+                                                        borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
+                                                        borderColor: dragOverId === b.id ? accent : '',
+                                                        boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
+                                                        opacity: dragOverId === b.id ? 0.7 : ''
+                                                    }}
+                                                >
+                                                    <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity">
+                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
+                                                            {typeLabel}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            {isSelectionMode ? (
+                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
+                                                                    ? 'bg-red-500 border-red-500 text-white'
+                                                                    : 'border-white/30 bg-black/40'
+                                                                    }`}>
+                                                                    {isSelected && <Check size={8} />}
                                                                 </div>
-                                                            ))}
+                                                            ) : (
+                                                                <>
+                                                                    <span className="text-[7px] font-mono text-zinc-600">
+                                                                        {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (b.isVirtual) {
+                                                                                if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
+                                                                                    const updated = conversations.filter(c => c.id !== b.id);
+                                                                                    setConversations(updated);
+                                                                                    fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
+                                                                                        method: 'POST',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify(updated)
+                                                                                    });
+                                                                                }
+                                                                            } else {
+                                                                                deleteBlock(b.id);
+                                                                            }
+                                                                        }}
+                                                                        className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
+                                                                        title="Eliminar registro"
+                                                                    >
+                                                                        <Trash2 size={10} />
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                )}
 
-                                                {isNote && (
-                                                    <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
-                                                        <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
-                                                            {b.caption || 'Nota Personal'}
-                                                        </h4>
-
-                                                        {(() => {
-                                                            const lines = (b.content || '').split('\n');
-                                                            const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
-                                                            const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
-
-                                                            return (
-                                                                <>
-                                                                    <div className="flex-1 overflow-y-auto no-scrollbar relative">
-                                                                        <p className={`text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap ${!hasSubNotes ? 'h-full' : ''}`}>
-                                                                            {textLines}
-                                                                        </p>
-                                                                    </div>
-                                                                    {inlineImage && (
-                                                                        <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
-                                                                            <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
-                                                                        </div>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
-
-                                                        {b.muralBlocks && b.muralBlocks.length > 0 && (
-                                                            <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
-                                                                {b.muralBlocks.map((mb, i) => (
-                                                                    <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
-                                                                        {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
-                                                                        {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
-                                                                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
-                                                                    </div>
-                                                                ))}
+                                                    {isImg && (
+                                                        <div className="flex-1 min-h-0 space-y-3 pt-2 flex flex-col">
+                                                            <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
+                                                                <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center">
-                                                    <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
-                                                    {!isSelectionMode && (
-                                                        <div className="flex gap-2">
-                                                            {isChat && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleSelectConversation(b.id);
-                                                                        setView('canvas');
-                                                                    }}
-                                                                    className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                                >
-                                                                    <MessageSquare size={8} /> Abrir Diálogo
-                                                                </button>
-                                                            )}
-                                                            {!b.isVirtual && (
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
-                                                                    className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                                    style={{ '--accent-color': noteColor }}
-                                                                >
-                                                                    <Focus size={8} /> Enfocar
-                                                                </button>
+                                                            {b.caption && (
+                                                                <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
+                                                                    {b.caption}
+                                                                </h4>
                                                             )}
                                                         </div>
                                                     )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
 
-                                {/* DROP ZONE AT THE END OF THE FEED */}
-                                {!isSelectionMode && (
-                                    <div
-                                        onDragOver={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
-                                        }}
-                                        onDragLeave={(e) => {
-                                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                                        }}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                                            const draggedId = e.dataTransfer.getData("text/plain");
-                                            handleReorderBlocks(draggedId, 'FEED_END');
-                                        }}
-                                        className="w-full h-16 border border-dashed border-white/10 rounded-[1.5rem] flex items-center justify-center text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all cursor-pointer mt-6 backdrop-blur-md"
-                                    >
-                                        Arrastrar aquí para mover al final del feed
+                                                    {isChat && (() => {
+                                                        let msgs = [];
+                                                        try { msgs = JSON.parse(b.content) || []; } catch (e) { }
+                                                        return (
+                                                            <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
+                                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                                    {b.caption || 'Diálogo AI'}
+                                                                </h4>
+                                                                <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
+                                                                    {msgs.map((msg, idx) => (
+                                                                        <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                                                            <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
+                                                                                {msg.role === 'user' ? 'Tú' : 'Kio'}
+                                                                            </span>
+                                                                            <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
+                                                                                ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
+                                                                                : 'bg-white/5 border border-white/5 text-white/80'
+                                                                                } max-w-[90%] whitespace-pre-wrap`}>
+                                                                                {msg.content}
+                                                                            </p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+
+                                                    {isRes && (() => {
+                                                        const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                                        const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
+                                                        const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
+
+                                                        const resonanceText = resMatch ? resMatch[1].trim() : '';
+                                                        const impactText = impMatch ? impMatch[1].trim() : '';
+                                                        const strangeText = extMatch ? extMatch[1].trim() : '';
+
+                                                        return (
+                                                            <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
+                                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                                    {b.caption || 'Resonancia Psíquica'}
+                                                                </h4>
+                                                                <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
+                                                                    {resonanceText && (
+                                                                        <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
+                                                                            <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
+                                                                            <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {impactText && (
+                                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
+                                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
+                                                                            <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
+                                                                        </div>
+                                                                    )}
+                                                                    {strangeText && (
+                                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
+                                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
+                                                                            <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+
+                                                    {isDia && (
+                                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
+                                                            <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
+                                                                {b.caption || 'Bitácora / Diario'}
+                                                            </h4>
+                                                            <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
+                                                                {b.entries.map((entry, idx) => (
+                                                                    <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
+                                                                        <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
+                                                                            <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                                                                            <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                        </div>
+                                                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
+                                                                            "{entry.text}"
+                                                                        </p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {isNote && (
+                                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
+                                                            <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
+                                                                    {b.caption || 'Nota Personal'}
+                                                            </h4>
+
+                                                            {(() => {
+                                                                const lines = (b.content || '').split('\n');
+                                                                const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
+                                                                const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
+
+                                                                return (
+                                                                    <>
+                                                                        <div className="flex-1 overflow-y-auto no-scrollbar relative">
+                                                                            <p className={`text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap ${!hasSubNotes ? 'h-full' : ''}`}>
+                                                                                {textLines}
+                                                                            </p>
+                                                                        </div>
+                                                                        {inlineImage && (
+                                                                            <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
+                                                                                <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+
+                                                            {b.muralBlocks && b.muralBlocks.length > 0 && (
+                                                                <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
+                                                                    {b.muralBlocks.map((mb, i) => (
+                                                                        <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
+                                                                            {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
+                                                                            {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
+                                                                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center">
+                                                        <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
+                                                        {!isSelectionMode && (
+                                                            <div className="flex gap-2">
+                                                                {isChat && (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleSelectConversation(b.id);
+                                                                            setView('canvas');
+                                                                        }}
+                                                                        className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                                    >
+                                                                        <MessageSquare size={8} /> Abrir Diálogo
+                                                                    </button>
+                                                                )}
+                                                                {!b.isVirtual && (
+                                                                    <button
+                                                                        onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
+                                                                        className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                                        style={{ '--accent-color': noteColor }}
+                                                                    >
+                                                                        <Focus size={8} /> Enfocar
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="h-[300px] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] animate-in fade-in duration-500">
-                                <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
-                                <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
-                            </div>
-                        )}
+
+                                    {/* DROP ZONE AT THE END OF THE FEED */}
+                                    {!isSelectionMode && (
+                                        <div
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
+                                            }}
+                                            onDragLeave={(e) => {
+                                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                                                const draggedId = e.dataTransfer.getData("text/plain");
+                                                handleReorderBlocks(draggedId, 'FEED_END');
+                                            }}
+                                            className="w-full h-16 border border-dashed border-white/10 rounded-[1.5rem] flex items-center justify-center text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all cursor-pointer mt-6 backdrop-blur-md"
+                                        >
+                                            Arrastrar aquí para mover al final del feed
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="h-[300px] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] animate-in fade-in duration-500">
+                                    <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
+                                    <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
+
             {/* FLOATING ACTION BAR FOR SELECTION DELETE */}
             {isSelectionMode && selectedIds.length > 0 && (
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-red-500/30 px-6 py-4 rounded-3xl shadow-[0_10px_50px_rgba(239,68,68,0.25)] flex items-center gap-6 animate-in slide-in-from-bottom-10 backdrop-blur-xl z-50">
@@ -9730,6 +10010,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     onSaveProfile={handleSaveProfile}
                                     onNewChat={handleNewChat}
                                     onOpenNotebook={setActiveNotebook}
+                                    setActiveTest={setActiveTest}
                                 />
                             )}
             </div>
