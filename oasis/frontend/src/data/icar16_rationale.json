@@ -1,0 +1,98 @@
+[
+  {
+    "question_number": 1,
+    "rationale": "Zach es > Matt. Richard es < Zach. Por lo tanto, tanto Matt como Richard son más bajos que Zach. Sin embargo, no hay información que compare a Matt con Richard. Por lo tanto, es imposible saberlo.",
+    "cognitive_implication_correct": "Capacidad adecuada para retener múltiples premisas en la memoria de trabajo y evitar saltar a conclusiones espurias (inhibición de inferencias inválidas).",
+    "cognitive_implication_incorrect": "Tendencia a forzar un cierre cognitivo ante la ambigüedad, asumiendo relaciones espaciales/temporales no declaradas explícitamente."
+  },
+  {
+    "question_number": 2,
+    "rationale": "El estímulo requiere rotar el cubo mentalmente manteniendo la consistencia de las caras adyacentes. Si se rota el cubo X 90 grados en sentido antihorario manteniendo la Cruz arriba, el Remolino pasa de la cara izquierda a la derecha y rota 90 grados, apuntando su punta hacia la esquina superior-izquierda (como en C). La cara frontal-izquierda pasa a ser el Asterisco, que estaba oculto. Por lo tanto, C es una rotación 3D válida.",
+    "cognitive_implication_correct": "Alta capacidad de rotación visoespacial de objetos tridimensionales de forma estructurada y sostenida.",
+    "cognitive_implication_incorrect": "Confusión en la preservación de la lateralidad (efecto espejo) durante la manipulación mental del objeto en el espacio de trabajo."
+  },
+  {
+    "question_number": 3,
+    "rationale": "La distancia entre letras en el abecedario incrementa de 1 en 1: I (+1) J (+2) L (+3) O (+4) S (+5). Por tanto, la siguiente letra debe ser S + 5 = X.",
+    "cognitive_implication_correct": "Razonamiento secuencial fluido; el sujeto puede inferir una regla matemática/lógica subyacente a una secuencia de símbolos discretos.",
+    "cognitive_implication_incorrect": "Fallo en la extrapolación del patrón dinámico, aplicando un salto estático o confundiendo la cardinalidad del alfabeto."
+  },
+  {
+    "question_number": 4,
+    "rationale": "Se debe aplicar rotación mental. Ninguna de las opciones propuestas (A-F) representa una rotación válida del cubo X preservando correctamente la quiralidad y relación de sus caras. Por tanto, la opción correcta es G.",
+    "cognitive_implication_correct": "Confianza cognitiva; capacidad para rechazar distractores y sostener la conclusión de un análisis exhaustivo frente a la incertidumbre.",
+    "cognitive_implication_incorrect": "Vulnerabilidad a la fatiga visual o al sesgo de confirmación (intentar 'forzar' una opción válida entre las respuestas dadas)."
+  },
+  {
+    "question_number": 5,
+    "rationale": "Para resolver la matriz de 3x3 se analizan 4 variables independientes en la columna 3 y fila 3: 1) Orientación principal: los rombos alternan Horizontal -> Vertical -> Horizontal (toca rombo ancho). 2) Rotación de sombreado: el área negra rota 90° horario en cada paso, yendo de Izquierda -> Arriba -> Derecha (toca negro a la derecha). 3) Sudoku satélite: falta un Cuadrado en la fila 3 (que ya tiene Círculo y Estrella). 4) Posición satélite: rota Abajo -> Derecha -> Arriba (toca arriba). La opción D cumple a la perfección con todas las variables.",
+    "cognitive_implication_correct": "Fuerte razonamiento inductivo abstracto; procesamiento matricial que integra reglas simultáneas (horizontal y vertical).",
+    "cognitive_implication_incorrect": "Atención parcial a una sola regla (ej. solo el eje horizontal), indicando una limitación en la memoria de trabajo visomotora."
+  },
+  {
+    "question_number": 6,
+    "rationale": "Se trata de un cálculo encadenado de fracciones: (1/5) * (1/4) * (1/9) * 900. (1/9) de 900 es 100. (1/4) de 100 es 25. (1/5) de 25 es 5. La opción D es 5.",
+    "cognitive_implication_correct": "Memoria de trabajo verbal-numérica intacta. Capacidad para invertir o encadenar operaciones sin pérdida de rastreo.",
+    "cognitive_implication_incorrect": "Sobrecarga de la memoria de trabajo verbal; pérdida del rastro secuencial durante el desglose paso a paso."
+  },
+  {
+    "question_number": 7,
+    "rationale": "Al intentar rotar el cubo usando el Remolino como ancla, las leyes de geometría tridimensional obligarían a la Mancuerna a posicionarse horizontalmente en la cara superior. Ninguna de las opciones propuestas (A-G) respeta esta conservación topológica, por lo que ninguna es una rotación válida.",
+    "cognitive_implication_correct": "Procesamiento topológico profundo; retención de alta fidelidad de texturas/formas en el buffer visoespacial.",
+    "cognitive_implication_incorrect": "Fallo en el mantenimiento de las asimetrías internas de los símbolos al aplicar transformaciones algebraicas en 3D."
+  },
+  {
+    "question_number": 8,
+    "rationale": "El patrón de esta matriz opera bajo tres variables independientes al mismo tiempo: 1. Geometría Externa (Regla de Sudoku): Cada fila y columna exige un set de {Círculo, Cuadrado, Cruz}. Al cruzar la Fila 2 y Columna 3, falta la Cruz. 2. Piel de la Figura (Traslación Diagonal): El color se clona en líneas diagonales. Siguiendo la diagonal superior, la celda faltante debe ser una Cruz Blanca sobre fondo negro. 3. El Núcleo (Figura Interna): Las formas pequeñas operan bajo su propio Sudoku {Rombo, Estrella, Cuadrado}, exigiendo un Cuadrado de color opuesto (negro). La opción correcta es D.",
+    "cognitive_implication_correct": "Excelente discriminación de patrones visuales; aislamiento de múltiples variables independientes (geometría externa, traslación de color y geometría interna).",
+    "cognitive_implication_incorrect": "Fallo en el aislamiento y procesamiento simultáneo de múltiples variables lógicas e independientes en matrices complejas."
+  },
+  {
+    "question_number": 9,
+    "rationale": "La secuencia retrocede en saltos decrecientes: V (-5) Q (-4) M (-3) J (-2) H (-1) -> G. La respuesta es C (G).",
+    "cognitive_implication_correct": "Alta flexibilidad mental al manejar series reversibles con derivadas de aceleración/desaceleración.",
+    "cognitive_implication_incorrect": "Inflexibilidad cognitiva; dificultad para procesar operaciones matemáticas inversas y decrecientes en memoria."
+  },
+  {
+    "question_number": 10,
+    "rationale": "El patrón es una progresión alternante: K (+3) N (+2) P (+3) S (+2) U (+3) -> X. La respuesta es F (X).",
+    "cognitive_implication_correct": "Aptitud para abstraer múltiples patrones superpuestos (meta-reglas rítmicas) en un solo conjunto de datos.",
+    "cognitive_implication_incorrect": "Búsqueda de reglas lineales simples, fracasando al encontrar un patrón oscilatorio de alta frecuencia."
+  },
+  {
+    "question_number": 11,
+    "rationale": "El usuario debe aislar 4 variables simultáneas para hallar la celda faltante (Fila 3, Columna 3): 1. Forma y Orientación: Sudoku exige un set de {Rectángulo, Círculo, Rombo}. Falta el Rombo. La orientación alterna Vertical->Horizontal->Vertical, resultando en un Rombo Vertical. 2. Sombreado: La mitad negra gira 90° a la derecha en cada paso de la fila. F3: Izquierda -> Arriba -> Derecha (toca negro a la derecha). 3. Forma del Satélite: Sudoku exige {Estrella, Círculo, Cuadrado}. Falta la Estrella. 4. Posición del Satélite: Gira 90° antihorario en cada paso. F3: Izquierda -> Fondo -> Derecha. La opción que cumple todo es E.",
+    "cognitive_implication_correct": "Aislamiento y procesamiento simultáneo de múltiples variables independientes (forma principal, orientación, sombreado y satélites) bajo reglas de lógica formal no ortodoxa.",
+    "cognitive_implication_incorrect": "Fallo en la alternancia dimensional y en el rastreo secuencial de giros rotacionales independientes."
+  },
+  {
+    "question_number": 12,
+    "rationale": "Al rotar mentalmente, la llave y el trébol conservan su alineación relativa. La opción B es la única que mantiene la topología y orientación de las caras respecto al eje de rotación.",
+    "cognitive_implication_correct": "Alta precisión en la evaluación de la direccionalidad implícita de objetos asimétricos durante su rotación.",
+    "cognitive_implication_incorrect": "Pérdida de resolución en el detalle local del símbolo mientras se evalúa la rotación global del cubo."
+  },
+  {
+    "question_number": 13,
+    "rationale": "Serie de letras con dos secuencias entrelazadas: [Q, N, L] y [S, P, M]. La serie 1 disminuye en -3 y -2. La serie 2 disminuye en -3 y -3. Siguiendo la progresión, la siguiente letra para completar el patrón es la N.",
+    "cognitive_implication_correct": "Capacidad excepcional para la atención dividida y el rastreo de flujos de datos multiplexados.",
+    "cognitive_implication_incorrect": "Fusión de secuencias; el cerebro intenta forzar una regla lineal sobre datos que operan en paralelo."
+  },
+  {
+    "question_number": 14,
+    "rationale": "Si 'pasado mañana' es dos días antes del jueves (Martes), entonces 'mañana' es Lunes, y 'hoy' es Domingo.",
+    "cognitive_implication_correct": "Dominio de la reversibilidad y flexibilidad en el anclaje cronológico abstracto. Rápida reasignación de variables.",
+    "cognitive_implication_incorrect": "Confusión en el marco de referencia por alta demanda del buffer semántico, saltando los nodos lógicos de referencia temporal."
+  },
+  {
+    "question_number": 15,
+    "rationale": "Cada componente es independiente: la flecha rota 90° en sentido horario y el círculo pequeño se desplaza por los vértices del contenedor cambiando de color (blanco/negro). La opción C satisface ambos movimientos.",
+    "cognitive_implication_correct": "Atención selectiva multidimensional; puede aislar y calcular los vectores de cambio de diferentes entidades a la vez.",
+    "cognitive_implication_incorrect": "Desatención inatencional a una de las capas (e.g. rastrear la rotación pero perder el patrón cromático de los círculos)."
+  },
+  {
+    "question_number": 16,
+    "rationale": "Diferencia de edad constante: Joshua (12) y Hermana (36). Diferencia = 24 años. Cuando Joshua tenga 23 (+11 años), su hermana tendrá 36+11 = 47.",
+    "cognitive_implication_correct": "Inhibición cognitiva madura: no se deja engañar por la premisa 'el triple de su edad' manteniéndola estática en el tiempo.",
+    "cognitive_implication_incorrect": "Bajo control inhibitorio; tendencia a aplicar la heurística inicial ('multiplicar por 3') asumiendo 23 * 3 = 69, u otras derivaciones erróneas."
+  }
+]

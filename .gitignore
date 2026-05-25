@@ -1,0 +1,6 @@
+oasis/backend/wwwroot/cache/
+*.mp3
+
+oasis/backend/bin/
+oasis/backend/obj/
+oasis/backend/wwwroot/uploads/
