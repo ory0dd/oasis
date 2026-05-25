@@ -217,7 +217,9 @@ namespace Oasis.Backend.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
-            var user = _state.Users.FirstOrDefault(u => u.Username == req.Username && u.Password == req.Password);
+            var user = _state.Users.FirstOrDefault(u => 
+                u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase) && 
+                u.Password == req.Password);
             if (user == null) return Unauthorized(new { msg = "Credenciales de Alma inválidas." });
             return Ok(new { msg = "Oasis Sincronizado", user = UserDto.FromUser(user) });
         }
@@ -225,7 +227,7 @@ namespace Oasis.Backend.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody] LoginRequest req)
         {
-            if (_state.Users.Any(u => u.Username == req.Username))
+            if (_state.Users.Any(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase)))
                 return BadRequest(new { msg = "Esta Identidad ya existe en el Oasis." });
 
             var user = new User { 
