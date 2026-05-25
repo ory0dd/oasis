@@ -185,18 +185,18 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                 </div>
 
                 {/* Top bar (Header) */}
-                <div className="absolute top-6 left-6 right-6 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
-                    <div className="flex items-center gap-3">
+                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
+                    <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarOpen && (
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
+                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
                                 title="Ver Historial de Ruido"
                             >
-                                <PanelLeft size={20} />
+                                <PanelLeft size={16} className="md:size-5" />
                             </button>
                         )}
-                        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 flex items-center gap-2">
+                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border border-white/5 flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                             <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-purple-400">
                                 RESONANCIA
@@ -206,14 +206,14 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
 
                     <button
                         onClick={onClose}
-                        className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
+                        className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
                     >
-                        <X size={20} />
+                        <X size={16} className="md:size-5" />
                     </button>
                 </div>
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-32">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-20 md:pt-32">
                     <div className="max-w-2xl mx-auto px-6 space-y-6 pb-32">
                         {/* Title input */}
                         <div className="flex items-center justify-between">
@@ -221,7 +221,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                                 value={resName}
                                 onChange={e => setResName(e.target.value)}
                                 placeholder="Nombre del Ruido..."
-                                className="bg-transparent border-none text-2xl sm:text-4xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
+                                className="bg-transparent border-none text-xl sm:text-4xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
                             />
                             
                             {/* Step Indicators */}
@@ -296,24 +296,24 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                 </div>
 
                 {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-6 md:p-12">
-                    <div className="max-w-2xl mx-auto relative flex items-center justify-between gap-3 px-4 py-3 bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
-                        <div className="flex items-center gap-3">
+                <div className="relative z-10 p-3 md:p-12">
+                    <div className="max-w-2xl mx-auto relative flex items-center justify-between gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
+                        <div className="flex items-center gap-1.5 md:gap-3">
                             <button
                                 onClick={() => step > 0 && setStep(prev => prev - 1)}
                                 disabled={step === 0}
-                                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 text-zinc-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none"
+                                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 border border-white/10 text-zinc-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none"
                                 title="Fase Anterior"
                             >
-                                <ArrowLeft size={16} />
+                                <ArrowLeft size={14} className="md:size-4" />
                             </button>
 
                             <button 
                                 onClick={() => toggleRecording(getFieldByStep())}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${activeRecordingField === getFieldByStep() ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
+                                className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${activeRecordingField === getFieldByStep() ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
                                 title="Hablar (Voz a Texto)"
                             >
-                                <Mic size={18} />
+                                <Mic size={15} className="md:size-[18px]" />
                             </button>
                         </div>
 
@@ -321,20 +321,20 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                             {activeRecordingField ? 'Escuchando voz...' : `Fase ${step + 1}: ${getFieldByStep().toUpperCase()}`}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 md:gap-2">
                             {step < 2 ? (
                                 <button
                                     onClick={() => setStep(prev => prev + 1)}
-                                    className="px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10"
+                                    className="px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10"
                                 >
                                     <span>Continuar</span>
-                                    <ArrowRight size={12} />
+                                    <ArrowRight size={10} className="md:size-3" />
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleSave}
                                     disabled={!resPrimal.trim()}
-                                    className={`px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 transition-all shadow-xl ${
+                                    className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 transition-all shadow-xl ${
                                         saveSuccess
                                             ? 'bg-green-600 text-white'
                                             : !resPrimal.trim()
@@ -342,13 +342,13 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                                                 : 'bg-white text-black hover:bg-zinc-200'
                                     }`}
                                 >
-                                    <Save size={12} />
-                                    <span>{saveSuccess ? 'Guardado ✓' : (activeResId ? 'Actualizar' : 'Guardar Ruido')}</span>
+                                    <Save size={10} className="md:size-3" />
+                                    <span>{saveSuccess ? 'Guardado ✓' : (activeResId ? 'Actualizar' : 'Guardar')}</span>
                                 </button>
                             )}
                         </div>
                     </div>
-                    <p className="text-center text-[7px] font-black uppercase text-zinc-950 tracking-[0.4em] mt-6 select-none italic">Oasis Resonance Module — v1.6</p>
+                    <p className="text-center text-[7px] font-black uppercase text-zinc-950 tracking-[0.4em] mt-3 md:mt-6 select-none italic">Oasis Resonance Module — v1.6</p>
                 </div>
             </div>
         </div>

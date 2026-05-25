@@ -155,18 +155,18 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
                 </div>
 
                 {/* Top bar (Header) */}
-                <div className="absolute top-6 left-6 right-6 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
-                    <div className="flex items-center gap-3">
+                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
+                    <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarOpen && (
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
+                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
                                 title="Ver Historial"
                             >
-                                <PanelLeft size={20} />
+                                <PanelLeft size={16} className="md:size-5" />
                             </button>
                         )}
-                        <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/5 flex items-center gap-2">
+                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border border-white/5 flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                             <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-amber-400">
                                 Diario
@@ -176,21 +176,21 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
 
                     <button
                         onClick={onClose}
-                        className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
+                        className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
                     >
-                        <X size={20} />
+                        <X size={16} className="md:size-5" />
                     </button>
                 </div>
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-32">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-20 md:pt-32">
                     <div className="max-w-2xl mx-auto px-6 space-y-6 pb-32">
                         {/* Title input */}
                         <input 
                             value={diaryTitle}
                             onChange={e => setDiaryTitle(e.target.value)}
                             placeholder="Título del día..."
-                            className="w-full bg-transparent border-none text-3xl sm:text-5xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
+                            className="w-full bg-transparent border-none text-2xl sm:text-5xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
                         />
 
                         {/* Large, beautiful borderless editor area */}
@@ -206,24 +206,24 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
                 </div>
 
                 {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-6 md:p-12">
-                    <div className="max-w-2xl mx-auto relative flex items-center gap-3 px-4 py-3 bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
+                <div className="relative z-10 p-3 md:p-12">
+                    <div className="max-w-2xl mx-auto relative flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
                         <button 
                             onClick={toggleRecording}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
+                            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
                             title="Hablar (Voz a Texto)"
                         >
-                            <Mic size={18} />
+                            <Mic size={15} className="md:size-[18px]" />
                         </button>
 
-                        <div className="flex-1 text-[10px] text-zinc-500 font-mono tracking-widest uppercase pl-2">
+                        <div className="flex-1 text-[9px] md:text-[10px] text-zinc-500 font-mono tracking-widest uppercase pl-1 truncate">
                             {isRecording ? 'Escuchando tu voz...' : 'Escribe arriba tu entrada diaria'}
                         </div>
 
                         <button
                             onClick={handleSave}
                             disabled={!diaryContent.trim()}
-                            className={`px-5 py-2.5 rounded-full transition-all font-black uppercase tracking-widest text-[9px] flex items-center gap-2 shadow-xl shrink-0 ${
+                            className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full transition-all font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 shadow-xl shrink-0 ${
                                 saveSuccess 
                                     ? 'bg-green-600 text-white' 
                                     : !diaryContent.trim() 
@@ -231,11 +231,11 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
                                         : 'bg-amber-500 text-black hover:bg-amber-400 hover:scale-105 active:scale-95'
                             }`}
                         >
-                            <Save size={12} />
+                            <Save size={10} className="md:size-3" />
                             <span>{saveSuccess ? 'Guardado ✓' : (activeEntryId ? 'Actualizar' : 'Guardar')}</span>
                         </button>
                     </div>
-                    <p className="text-center text-[7px] font-black uppercase text-zinc-950 tracking-[0.4em] mt-6 select-none italic">Oasis Diary Module — v1.6</p>
+                    <p className="text-center text-[7px] font-black uppercase text-zinc-950 tracking-[0.4em] mt-3 md:mt-6 select-none italic">Oasis Diary Module — v1.6</p>
                 </div>
             </div>
         </div>

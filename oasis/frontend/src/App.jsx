@@ -1310,7 +1310,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             onClick={handleNodeClick}
         >
             <div
-                className={`relative flex flex-col ${isChildNote ? 'rounded-[1.25rem]' : 'rounded-[2.5rem]'} border shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#0b0b0c]')))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-accent ring-1 ring-accent/20' : (isActive ? 'border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : (isDiaryAny ? 'border-amber-500/20 hover:border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.1)]' : (isLoopMapNode ? 'border-cyan-500/20 hover:border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.1)]' : 'border-white/5 hover:border-white/10')))} ${(draggingId !== block.id && !hasConnections) ? 'ctr-node-float' : ''}`}
+                className={`relative flex flex-col ${isChildNote ? 'rounded-[1.25rem]' : 'rounded-[2.5rem]'} border shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-gradient-to-br from-[#121214] to-[#080809] border-white/5')))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-accent ring-1 ring-accent/20' : (isActive ? 'border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : (isDiaryAny ? 'border-amber-500/20 hover:border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.1)]' : (isLoopMapNode ? 'border-cyan-500/20 hover:border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.1)]' : 'border-white/5 hover:border-white/10')))} ${(draggingId !== block.id && !hasConnections) ? 'ctr-node-float' : ''}`}
                 style={{
                     width: localSize.width ? `${localSize.width}px` : (block.type === 'loop_map_mini' ? '850px' : (isCentralNode ? '480px' : (isChildNote ? '160px' : '288px'))),
                     height: localSize.height ? `${localSize.height}px` : (block.type === 'loop_map_mini' ? '700px' : (isCentralNode ? '600px' : (isChildNote ? '160px' : '288px'))),
@@ -1486,7 +1486,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-hidden relative opacity-60 group-hover/text:opacity-90 transition-opacity">
+                                <div className="flex-1 overflow-hidden relative opacity-90 group-hover/text:opacity-100 transition-opacity">
                                     {block.type === 'diary_notebook' ? (
                                         <div className="flex flex-col h-full w-full relative group/notebook pointer-events-auto">
                                             <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2">
@@ -6175,6 +6175,8 @@ export default function App() {
     const isPointerDown = useRef(false);
     const initialPinchDist = useRef(0);
     const initialPinchScale = useRef(1);
+    const initialPinchCam = useRef({ x: 0, y: 0 });
+    const initialTouchMidpoint = useRef({ x: 0, y: 0 });
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTrack, setCurrentTrack] = useState(0);
@@ -7175,6 +7177,11 @@ ${searchContext}
         if (e.touches && e.touches.length === 2) {
             initialPinchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             initialPinchScale.current = cam.scale;
+            initialPinchCam.current = { x: cam.x, y: cam.y };
+            initialTouchMidpoint.current = {
+                x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+            };
         } else {
             initialPinchDist.current = 0;
         }
@@ -7223,9 +7230,28 @@ ${searchContext}
 
         // PINCH ZOOM (Tactil)
         if (e.touches && e.touches.length === 2 && initialPinchDist.current > 0) {
-            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            const scale = initialPinchScale.current * (dist / initialPinchDist.current);
-            setCam(prev => ({ ...prev, scale: Math.min(Math.max(scale, 0.1), 3) }));
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+            const newScale = Math.min(Math.max(initialPinchScale.current * (dist / initialPinchDist.current), 0.15), 3);
+            
+            // Midpoint relative to window center
+            const mx = (touch1.clientX + touch2.clientX) / 2 - window.innerWidth / 2;
+            const my = (touch1.clientY + touch2.clientY) / 2 - window.innerHeight / 2;
+            
+            // Center of initial touches relative to window center
+            const imx = initialTouchMidpoint.current.x - window.innerWidth / 2;
+            const imy = initialTouchMidpoint.current.y - window.innerHeight / 2;
+            
+            // Canvas coordinates under the initial midpoint
+            const cx = (imx - initialPinchCam.current.x) / initialPinchScale.current;
+            const cy = (imy - initialPinchCam.current.y) / initialPinchScale.current;
+            
+            // Adjust camera position so cx, cy aligns with mx, my under the newScale
+            const newX = mx - cx * newScale;
+            const newY = my - cy * newScale;
+            
+            setCam({ x: newX, y: newY, scale: newScale });
             return;
         }
 

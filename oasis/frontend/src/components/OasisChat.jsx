@@ -287,20 +287,20 @@ const OasisChat = ({
                     <div className={`w-64 h-64 md:w-96 md:h-96 rounded-full blur-[100px] transition-all duration-1000 ${isLoading ? 'bg-purple-600 scale-125 animate-pulse' : 'bg-accent/20 scale-100'}`} />
                 </div>
 
-                <div className="absolute top-6 left-6 right-6 md:top-10 md:left-10 md:right-10 z-[1600] flex justify-between items-center pointer-events-none">
-                    <div className="flex items-center gap-3">
+                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-[1600] flex justify-between items-center pointer-events-none">
+                    <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarVisible && (
                             <button
                                 onClick={() => setIsSidebarVisible(true)}
-                                className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto"
+                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto"
                             >
-                                <PanelLeft size={20} />
+                                <PanelLeft size={16} className="md:size-5" />
                             </button>
                         )}
                         <button
                             onClick={handleForceSave}
                             disabled={messages.length === 0 || isLoading}
-                            className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
+                            className={`w-9 h-9 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
                                 saveSuccess
                                     ? 'bg-green-500/20 border-green-500/30 text-green-400'
                                     : messages.length === 0 || isLoading
@@ -310,17 +310,17 @@ const OasisChat = ({
                             title="Forzar Guardado Manual"
                         >
                             {isSaving ? (
-                                <Zap size={18} className="animate-spin text-accent" />
+                                <Zap size={14} className="animate-spin text-accent md:size-[18px]" />
                             ) : saveSuccess ? (
-                                <Check size={18} className="animate-bounce" />
+                                <Check size={14} className="animate-bounce md:size-[18px]" />
                             ) : (
-                                <Save size={18} />
+                                <Save size={14} className="md:size-[18px]" />
                             )}
                         </button>
                         <button
                             onClick={handlePinChatToCanvas}
                             disabled={!activeConversationId || isLoading}
-                            className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
+                            className={`w-9 h-9 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
                                 isChatAlreadyPinned
                                     ? 'bg-purple-500/20 border-purple-500/35 text-purple-300 shadow-[0_0_15px_rgba(217,70,239,0.35)]'
                                     : !activeConversationId || isLoading
@@ -329,7 +329,7 @@ const OasisChat = ({
                             }`}
                             title={isChatAlreadyPinned ? "Desanclar del Pizarrón" : "Anclar al Pizarrón"}
                         >
-                            <Pin size={18} className={isChatAlreadyPinned ? "rotate-45 text-purple-400" : ""} />
+                            <Pin size={14} className={isChatAlreadyPinned ? "rotate-45 text-purple-400 md:size-[18px]" : "md:size-[18px]"} />
                         </button>
                         <button
                             onClick={() => {
@@ -340,7 +340,7 @@ const OasisChat = ({
                                 }
                             }}
                             disabled={!activeConversationId || isLoading}
-                            className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
+                            className={`w-9 h-9 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 pointer-events-auto ${
                                 isChatPublished
                                     ? 'bg-green-500/20 border-green-500/35 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.35)]'
                                     : !activeConversationId || isLoading
@@ -349,14 +349,14 @@ const OasisChat = ({
                             }`}
                             title={isChatPublished ? "Retirar del Feed (Privado)" : "Publicar en Feed (Público)"}
                         >
-                            <Share2 size={18} className={isChatPublished ? "text-green-400" : ""} />
+                            <Share2 size={14} className={isChatPublished ? "text-green-400 md:size-[18px]" : "md:size-[18px]"} />
                         </button>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto"
+                        className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto"
                     >
-                        <X size={20} />
+                        <X size={16} className="md:size-5" />
                     </button>
                 </div>
 
@@ -426,46 +426,46 @@ const OasisChat = ({
                         {isLoading && (<div className="flex items-center gap-2 pl-1 animate-pulse"><div className="w-1 h-1 rounded-full bg-accent" /><div className="w-1 h-1 rounded-full bg-accent opacity-60" /><div className="w-1 h-1 rounded-full bg-accent opacity-30" /></div>)}
                         <div ref={chatEndRef} />
                     </div>
-                </div>
 
-                {/* COMMAND CENTER INPUT */}
-                <div className="relative z-10 p-6 md:p-12">
-                    <div className="max-w-2xl mx-auto relative group flex items-end gap-3 px-4 py-3 bg-white/5 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-all duration-500 shadow-2xl">
+                    {/* COMMAND CENTER INPUT */}
+                    <div className="relative z-10 p-3 md:p-12">
+                        <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-all duration-500 shadow-2xl">
 
-                        <div className="relative mb-1">
-                            <button onClick={() => setShowAttachmentMenu(!showAttachmentMenu)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showAttachmentMenu ? 'bg-accent text-black rotate-45' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Plus size={20} /></button>
-                            {showAttachmentMenu && (
-                                <div className="absolute bottom-14 left-0 w-48 bg-[#0c0c0d] border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl p-2 animate-in fade-in slide-in-from-bottom-4 duration-300 z-[1000]">
-                                    <button onClick={() => { document.getElementById('chat-attach-image')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-3 p-4 text-[10px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-2xl transition-all"><ImageIcon size={16} /> Imagen de PC</button>
-                                    <button onClick={() => { document.getElementById('chat-attach-doc')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-3 p-4 text-[10px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-2xl transition-all"><FileText size={16} /> Documento / PDF</button>
-                                    <input id="chat-attach-image" type="file" accept="image/*" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
-                                    <input id="chat-attach-doc" type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
-                                </div>
-                            )}
+                            <div className="relative mb-0.5">
+                                <button onClick={() => setShowAttachmentMenu(!showAttachmentMenu)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${showAttachmentMenu ? 'bg-accent text-black rotate-45' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Plus size={16} className="md:size-5" /></button>
+                                {showAttachmentMenu && (
+                                    <div className="absolute bottom-12 left-0 w-48 bg-[#0c0c0d] border border-white/10 rounded-[1.5rem] overflow-hidden shadow-2xl p-1.5 animate-in fade-in slide-in-from-bottom-4 duration-300 z-[1000]">
+                                        <button onClick={() => { document.getElementById('chat-attach-image')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><ImageIcon size={14} /> Imagen de PC</button>
+                                        <button onClick={() => { document.getElementById('chat-attach-doc')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><FileText size={14} /> Documento / PDF</button>
+                                        <input id="chat-attach-image" type="file" accept="image/*" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
+                                        <input id="chat-attach-doc" type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={toggleRecording} className={`mb-0.5 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`} title="Hablar (Voz a Texto)"><Mic size={15} className="md:size-[18px]" /></button>
+
+                            <textarea
+                                ref={textareaRef}
+                                rows={1}
+                                autoFocus
+                                value={input + (interimText ? (input.trim() ? ' ' : '') + interimText : '')}
+                                onChange={handleTextareaChange}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Escribe un mensaje o pregunta..."
+                                className="flex-1 bg-transparent py-1.5 px-1.5 text-sm md:text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[32px] max-h-[200px]"
+                            />
+
+                            <button
+                                onClick={() => onSend()}
+                                disabled={!input.trim() && !isLoading}
+                                className="mb-0.5 w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-accent text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-accent/20 z-[100] disabled:opacity-30 disabled:scale-100 pointer-events-auto"
+                            >
+                                <Send size={15} className="md:size-[18px]" strokeWidth={3} />
+                            </button>
                         </div>
-
-                        <button onClick={toggleRecording} className={`mb-1 w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`} title="Hablar (Voz a Texto)"><Mic size={18} /></button>
-
-                        <textarea
-                            ref={textareaRef}
-                            rows={1}
-                            autoFocus
-                            value={input + (interimText ? (input.trim() ? ' ' : '') + interimText : '')}
-                            onChange={handleTextareaChange}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Escribe un mensaje o pregunta..."
-                            className="flex-1 bg-transparent py-2 px-2 text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[40px] max-h-[200px]"
-                        />
-
-                        <button
-                            onClick={() => onSend()}
-                            disabled={!input.trim() && !isLoading}
-                            className="mb-1 w-10 h-10 shrink-0 rounded-full bg-accent text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-accent/20 z-[100] disabled:opacity-30 disabled:scale-100 pointer-events-auto"
-                        >
-                            <Send size={18} strokeWidth={3} />
-                        </button>
+                        <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-3 md:mt-6 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
                     </div>
-                    <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-6 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
                 </div>
             </div>
         </div>

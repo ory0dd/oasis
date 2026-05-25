@@ -1297,21 +1297,6 @@
           "folderId": ""
         },
         {
-          "id": "anchor-loop-1779667679795",
-          "type": "loop_map_mini",
-          "x": -300,
-          "y": 450,
-          "content": "",
-          "rotation": 0,
-          "color": "#06b6d4",
-          "isPublic": false,
-          "caption": "",
-          "username": "clinical_test",
-          "timestamp": "2026-05-25T00:08:00.82582Z",
-          "metadata": {},
-          "folderId": ""
-        },
-        {
           "id": "anchor-conversation-1779667679795",
           "type": "conversation_notebook",
           "x": 700,
