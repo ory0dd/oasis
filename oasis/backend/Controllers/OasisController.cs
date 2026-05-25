@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http;
 using System.Text.RegularExpressions;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
 
 namespace Oasis.Backend.Controllers
 {
@@ -17,6 +19,14 @@ namespace Oasis.Backend.Controllers
     [Route("api/oasis")]
     public class OasisController : ControllerBase
     {
+        private readonly IConfiguration _config;
+        private static readonly HttpClient _httpClient = new HttpClient();
+
+        public OasisController(IConfiguration config)
+        {
+            _config = config;
+        }
+
         // Absolute path to ensure stability
         // Storage path at the project root for persistence
         private static readonly string StoragePath = Path.Combine(Directory.GetCurrentDirectory(), "oasis_data.json");
@@ -420,6 +430,13 @@ namespace Oasis.Backend.Controllers
             return u != null ? u.ClinicalData : new Dictionary<string, string>();
         }
 
+        private static readonly Dictionary<int, string> IcarCorrectAnswers = new()
+        {
+            { 1, "D" }, { 2, "C" }, { 3, "D" }, { 4, "G" }, { 5, "D" }, { 6, "D" },
+            { 7, "D" }, { 8, "D" }, { 9, "C" }, { 10, "F" }, { 11, "E" }, { 12, "B" },
+            { 13, "D" }, { 14, "F" }, { 15, "C" }, { 16, "D" }
+        };
+
         [HttpPost("clinical-data")]
         public IActionResult UpdateClinicalData([FromQuery] string user, [FromBody] Dictionary<string, string> data)
         {
@@ -432,8 +449,272 @@ namespace Oasis.Backend.Controllers
                     u.ClinicalData[kvp.Key] = kvp.Value;
                 }
                 SaveState();
+
+                // Trigger background sync task to Supabase
+                _ = Task.Run(async () =>
+                {
+                    foreach (var key in data.Keys)
+                    {
+                        if (key.StartsWith("oasis_pid_answers_") || key.StartsWith("oasis_phenom_qualitative_"))
+                        {
+                            string suffix = "";
+                            string prefix = key.StartsWith("oasis_pid_answers_") ? $"oasis_pid_answers_{user}" : $"oasis_phenom_qualitative_{user}";
+                            if (key.Length > prefix.Length)
+                            {
+                                suffix = key.Substring(prefix.Length);
+                            }
+                            await SyncExistencialTestToSupabase(user, suffix);
+                        }
+                        else if (key.StartsWith("oasis_icar_answers_") || key.StartsWith("oasis_icar_dwell_") || key.StartsWith("oasis_icar_changes_"))
+                        {
+                            string suffix = "";
+                            string prefix = "";
+                            if (key.StartsWith("oasis_icar_answers_")) prefix = $"oasis_icar_answers_{user}";
+                            else if (key.StartsWith("oasis_icar_dwell_")) prefix = $"oasis_icar_dwell_{user}";
+                            else if (key.StartsWith("oasis_icar_changes_")) prefix = $"oasis_icar_changes_{user}";
+
+                            if (key.Length > prefix.Length)
+                            {
+                                suffix = key.Substring(prefix.Length);
+                            }
+                            await SyncIcarTestToSupabase(user, suffix);
+                        }
+                    }
+                });
             }
             return Ok();
+        }
+
+        private async Task SyncExistencialTestToSupabase(string username, string suffix)
+        {
+            var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+            if (u == null) return;
+
+            string pidKey = $"oasis_pid_answers_{username}{suffix}";
+            string phenomKey = $"oasis_phenom_qualitative_{username}{suffix}";
+
+            if (!u.ClinicalData.TryGetValue(pidKey, out var pidAnswersJson) ||
+                !u.ClinicalData.TryGetValue(phenomKey, out var phenomQualJson))
+            {
+                return;
+            }
+
+            try
+            {
+                var supabaseUrl = _config["Supabase:Url"];
+                var supabaseKey = _config["Supabase:Key"];
+                if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey)) return;
+
+                var pidAnswers = JsonSerializer.Deserialize<Dictionary<string, string>>(pidAnswersJson);
+                if (pidAnswers == null) return;
+
+                int afectividadNegativa = 0;
+                int desapego = 0;
+                int antagonismo = 0;
+                int desinhibicion = 0;
+                int psicoticismo = 0;
+
+                for (int i = 1; i <= 25; i++)
+                {
+                    if (pidAnswers.TryGetValue(i.ToString(), out var valStr) && int.TryParse(valStr, out var val))
+                    {
+                        if (i <= 5) afectividadNegativa += val;
+                        else if (i <= 10) desapego += val;
+                        else if (i <= 15) antagonismo += val;
+                        else if (i <= 20) desinhibicion += val;
+                        else psicoticismo += val;
+                    }
+                }
+
+                string dominantDomain = "Desapego";
+                int maxVal = -1;
+
+                var scores = new Dictionary<string, int>
+                {
+                    { "AfectividadNegativa", afectividadNegativa },
+                    { "Desapego", desapego },
+                    { "Antagonismo", antagonismo },
+                    { "Desinhibicion", desinhibicion },
+                    { "Psicoticismo", psicoticismo }
+                };
+
+                foreach (var kvp in scores)
+                {
+                    if (kvp.Value > maxVal)
+                    {
+                        maxVal = kvp.Value;
+                        dominantDomain = kvp.Key;
+                    }
+                }
+
+                string arquetipoDominante = "El Observador Analítico";
+                if (dominantDomain == "AfectividadNegativa") arquetipoDominante = "El Buscador de Fusión";
+                else if (dominantDomain == "Desapego") arquetipoDominante = "El Observador Analítico";
+                else if (dominantDomain == "Antagonismo" || dominantDomain == "Psicoticismo") arquetipoDominante = "El Arquitecto del Control";
+                else if (dominantDomain == "Desinhibicion") arquetipoDominante = "El Creador Errante";
+
+                var phenomQual = JsonSerializer.Deserialize<Dictionary<string, string>>(phenomQualJson);
+                string antecedentes = phenomQual != null && phenomQual.TryGetValue("antecedentes_origen", out var a) ? a : "";
+                string insuficiencia = phenomQual != null && phenomQual.TryGetValue("experiencia_insuficiencia", out var ins) ? ins : "";
+                string temporalidad = phenomQual != null && phenomQual.TryGetValue("temporalidad_vivida", out var t) ? t : "";
+                string premisa = phenomQual != null && phenomQual.TryGetValue("premisa_realidad", out var p) ? p : "";
+
+                string dbUsername = string.IsNullOrEmpty(suffix) ? username : $"{username}{suffix}";
+
+                var queryUrl = $"{supabaseUrl.TrimEnd('/')}/rest/v1/test_existencial_respuestas?username=eq.{dbUsername}";
+                using var checkRequest = new HttpRequestMessage(HttpMethod.Get, queryUrl);
+                checkRequest.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                checkRequest.Headers.Add("apikey", supabaseKey);
+                var checkResponse = await _httpClient.SendAsync(checkRequest);
+                bool exists = false;
+                if (checkResponse.IsSuccessStatusCode)
+                {
+                    var responseBody = await checkResponse.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(responseBody);
+                    exists = doc.RootElement.GetArrayLength() > 0;
+                }
+
+                var payload = new Dictionary<string, object>
+                {
+                    { "username", dbUsername },
+                    { "antecedentes_origen", antecedentes },
+                    { "experiencia_insuficiencia", insuficiencia },
+                    { "temporalidad_vivida", temporalidad },
+                    { "premisa_realidad", premisa },
+                    { "pid_answers", pidAnswers },
+                    { "pid_afectividad_negativa", afectividadNegativa },
+                    { "pid_desapego", desapego },
+                    { "pid_antagonismo", antagonismo },
+                    { "pid_desinhibicion", desinhibicion },
+                    { "pid_psicoticismo", psicoticismo },
+                    { "arquetipo_dominante", arquetipoDominante }
+                };
+
+                var jsonPayload = JsonSerializer.Serialize(payload);
+
+                using var request = new HttpRequestMessage(
+                    exists ? HttpMethod.Patch : HttpMethod.Post, 
+                    exists ? queryUrl : $"{supabaseUrl.TrimEnd('/')}/rest/v1/test_existencial_respuestas"
+                );
+                request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                request.Headers.Add("apikey", supabaseKey);
+                request.Content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error syncing Existencial to Supabase: {response.StatusCode} - {err}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SyncExistencialTestToSupabase: {ex.Message}");
+            }
+        }
+
+        private async Task SyncIcarTestToSupabase(string username, string suffix)
+        {
+            var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+            if (u == null) return;
+
+            string answersKey = $"oasis_icar_answers_{username}{suffix}";
+            string dwellKey = $"oasis_icar_dwell_{username}{suffix}";
+            string changesKey = $"oasis_icar_changes_{username}{suffix}";
+
+            if (!u.ClinicalData.TryGetValue(answersKey, out var answersJson) ||
+                !u.ClinicalData.TryGetValue(dwellKey, out var dwellJson) ||
+                !u.ClinicalData.TryGetValue(changesKey, out var changesJson))
+            {
+                return;
+            }
+
+            try
+            {
+                var supabaseUrl = _config["Supabase:Url"];
+                var supabaseKey = _config["Supabase:Key"];
+                if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey)) return;
+
+                var answers = JsonSerializer.Deserialize<Dictionary<string, string>>(answersJson);
+                if (answers == null) return;
+
+                var dwells = JsonSerializer.Deserialize<Dictionary<string, double>>(dwellJson) ?? new Dictionary<string, double>();
+                var changes = JsonSerializer.Deserialize<Dictionary<string, int>>(changesJson) ?? new Dictionary<string, int>();
+
+                int score = 0;
+                foreach (var kvp in IcarCorrectAnswers)
+                {
+                    if (answers.TryGetValue(kvp.Key.ToString(), out var ans) && ans == kvp.Value)
+                    {
+                        score++;
+                    }
+                }
+
+                double dwellSum = 0;
+                int dwellCount = 0;
+                foreach (var d in dwells.Values)
+                {
+                    if (d > 0)
+                    {
+                        dwellSum += d;
+                        dwellCount++;
+                    }
+                }
+                double dwellAvgSec = dwellCount > 0 ? Math.Round(dwellSum / dwellCount, 2) : 0;
+
+                int totalChanges = 0;
+                foreach (var c in changes.Values)
+                {
+                    totalChanges += c;
+                }
+
+                string dbUsername = string.IsNullOrEmpty(suffix) ? username : $"{username}{suffix}";
+
+                var queryUrl = $"{supabaseUrl.TrimEnd('/')}/rest/v1/test_icar16_respuestas?username=eq.{dbUsername}";
+                using var checkRequest = new HttpRequestMessage(HttpMethod.Get, queryUrl);
+                checkRequest.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                checkRequest.Headers.Add("apikey", supabaseKey);
+                var checkResponse = await _httpClient.SendAsync(checkRequest);
+                bool exists = false;
+                if (checkResponse.IsSuccessStatusCode)
+                {
+                    var responseBody = await checkResponse.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(responseBody);
+                    exists = doc.RootElement.GetArrayLength() > 0;
+                }
+
+                var payload = new Dictionary<string, object>
+                {
+                    { "username", dbUsername },
+                    { "respuestas", answers },
+                    { "dwell_times", dwells },
+                    { "cambios_de_opinion", changes },
+                    { "score", score },
+                    { "dwell_time_avg_sec", dwellAvgSec },
+                    { "total_cambios_opinion", totalChanges }
+                };
+
+                var jsonPayload = JsonSerializer.Serialize(payload);
+
+                using var request = new HttpRequestMessage(
+                    exists ? HttpMethod.Patch : HttpMethod.Post, 
+                    exists ? queryUrl : $"{supabaseUrl.TrimEnd('/')}/rest/v1/test_icar16_respuestas"
+                );
+                request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                request.Headers.Add("apikey", supabaseKey);
+                request.Content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error syncing ICAR16 to Supabase: {response.StatusCode} - {err}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SyncIcarTestToSupabase: {ex.Message}");
+            }
         }
 
         [HttpPost("upload")]
@@ -441,6 +722,52 @@ namespace Oasis.Backend.Controllers
         {
             if (file == null || file.Length == 0) return BadRequest("No se proporcionó ningún archivo.");
 
+            try
+            {
+                var supabaseUrl = _config["Supabase:Url"];
+                var supabaseKey = _config["Supabase:Key"];
+
+                if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
+                {
+                    return await SaveLocalFile(file);
+                }
+
+                var ext = Path.GetExtension(file.FileName);
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var bucket = "oasis-media";
+                var uploadUrl = $"{supabaseUrl.TrimEnd('/')}/storage/v1/object/{bucket}/{fileName}";
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
+                request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                request.Headers.Add("apikey", supabaseKey);
+
+                using var stream = file.OpenReadStream();
+                using var content = new StreamContent(stream);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var publicUrl = $"{supabaseUrl.TrimEnd('/')}/storage/v1/object/public/{bucket}/{fileName}";
+                    return Ok(new { url = publicUrl });
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Supabase upload error: {response.StatusCode} - {errorMsg}");
+                    return await SaveLocalFile(file);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception uploading to Supabase: {ex.Message}");
+                return await SaveLocalFile(file);
+            }
+        }
+
+        private async Task<IActionResult> SaveLocalFile(IFormFile file)
+        {
             var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             if (!Directory.Exists(uploadsPath)) Directory.CreateDirectory(uploadsPath);
 
