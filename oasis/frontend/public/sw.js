@@ -61,11 +61,15 @@ self.addEventListener('sync', (e) => {
     console.log('⚡ Evento Sync disparado: Sincronizando notas...');
     e.waitUntil(sincronizarConServidor());
   }
+  if (e.tag === 'sync-blocks') {
+    console.log('⚡ Evento Sync disparado: Sincronizando blocks...');
+    e.waitUntil(sincronizarBlocksConServidor());
+  }
 });
 
 function sincronizarConServidor() {
   return new Promise((resolve, reject) => {
-    const requestDB = indexedDB.open('RuidoInteriorDB', 1);
+    const requestDB = indexedDB.open('RuidoInteriorDB', 2);
     
     requestDB.onsuccess = (e) => {
       const db = e.target.result;
@@ -80,7 +84,6 @@ function sincronizarConServidor() {
         if (notas.length === 0) return resolve(); // No hay nada que subir
 
         try {
-          // AQUI CONECTAS CON TU BACKEND
           const response = await fetch('/api/notas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -88,7 +91,6 @@ function sincronizarConServidor() {
           });
 
           if (response.ok) {
-            // Si se subieron bien, las borramos del dispositivo local
             const limpiaTx = db.transaction('notas_pendientes', 'readwrite');
             limpiaTx.objectStore('notas_pendientes').clear();
             
@@ -101,7 +103,56 @@ function sincronizarConServidor() {
           }
         } catch (error) {
           console.error('❌ Error al sincronizar, se reintentará luego:', error);
-          reject(error); // Rechazar obliga al Service Worker a intentar de nuevo más tarde
+          reject(error);
+        }
+      };
+    };
+    
+    requestDB.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function sincronizarBlocksConServidor() {
+  return new Promise((resolve, reject) => {
+    const requestDB = indexedDB.open('RuidoInteriorDB', 2);
+    
+    requestDB.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('blocks_pendientes')) return resolve();
+      
+      const tx = db.transaction('blocks_pendientes', 'readonly');
+      const store = tx.objectStore('blocks_pendientes');
+      const requestAll = store.getAll();
+
+      requestAll.onsuccess = async () => {
+        const usersBlocks = requestAll.result;
+        if (usersBlocks.length === 0) return resolve(); 
+
+        try {
+          // Send all pending block sets sequentially
+          for (const pending of usersBlocks) {
+            const response = await fetch(`http://localhost:5046/api/oasis/blocks?user=${pending.user}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(pending.blocks)
+            });
+
+            if (!response.ok) {
+              throw new Error('Fallo en el servidor de bloques');
+            }
+          }
+
+          // If all uploads ok, clear store
+          const limpiaTx = db.transaction('blocks_pendientes', 'readwrite');
+          limpiaTx.objectStore('blocks_pendientes').clear();
+          
+          limpiaTx.oncomplete = () => {
+            console.log('✅ Blocks sincronizados y eliminados de local.');
+            resolve();
+          };
+        } catch (error) {
+          console.error('❌ Error al sincronizar blocks:', error);
+          reject(error); 
         }
       };
     };

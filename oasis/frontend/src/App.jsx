@@ -5490,7 +5490,17 @@ export default function App() {
 
                     setIsDataLoaded(true);
                 } catch (err) {
-                    console.error("Error al cargar datos del usuario:", err);
+                    console.error("Error al cargar datos del usuario o modo offline:", err);
+                    // OFFLINE FALLBACK
+                    try {
+                        const localBlocks = JSON.parse(localStorage.getItem('oasis_canvas_nodes_' + user));
+                        if (localBlocks) setBlocks(localBlocks);
+                        const localLinks = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user));
+                        if (localLinks) setLinks(localLinks);
+                    } catch (e) {
+                        console.error("No se pudo cargar el caché local:", e);
+                    }
+                    setIsDataLoaded(true); // Always let the user in
                 }
             };
             loadUserResonances();
@@ -5584,6 +5594,16 @@ export default function App() {
         setBlocks(newBlocks);
         if (user) {
             localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(newBlocks));
+            // Trigger offline background sync preparation
+            if (window.guardarBlocksLocales) {
+                window.guardarBlocksLocales(user, newBlocks).then(() => {
+                    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.sync.register('sync-blocks').catch(e => console.error("Sync register failed", e));
+                        });
+                    }
+                }).catch(e => console.error("Error saving pending blocks to IndexedDB", e));
+            }
         }
 
         if (!isLoggedIn || !user || !isDataLoaded) return;
@@ -5592,7 +5612,7 @@ export default function App() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newBlocks)
         }).then(() => fetchFeed()).catch(() => {
-            console.log('Saved locally (Offline Mode)');
+            console.log('Saved locally (Offline Mode), waiting for sync event.');
         });
     };
 
