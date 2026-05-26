@@ -772,10 +772,7 @@ const WordByWordRenderer = ({ content, speed = 8, wordsPerTick = 2, onComplete }
 
 // OasisChat has been refactored to src/components/OasisChat.jsx
 
-const INITIAL_BLOCKS = [
-    { id: '1', type: 'text', x: -120, y: -80, content: 'La realidad es un glitch en el sistema.', rotation: -3, color: '#bef264', caption: 'Mantra del Oasis' },
-    { id: '2', type: 'image', x: 80, y: -160, content: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400', rotation: 5, color: '#22d3ee', caption: 'Reliquia Visual' },
-]; // Datos Iniciales
+const INITIAL_BLOCKS = []; // Datos Iniciales
 
 const INITIAL_SOUL_PIECES = [
     { id: 's1', title: 'Esencia', img: '', x: -200, y: -150 },
@@ -1382,6 +1379,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         >
                             <Sparkles size={isChildNote ? 8 : 12} className={`${isAnalyzing ? 'animate-spin' : 'group-hover/spark:animate-spin-slow'} transition-transform`} />
                         </button>
+
                         <button
                             onClick={(e) => { e.stopPropagation(); onSelect(block); }}
                             className={`${isChildNote ? 'p-0.5' : 'p-1.5'} hover:bg-white/10 rounded transition-all text-zinc-500 hover:text-white`}
@@ -1389,6 +1387,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         >
                             <Edit2 size={isChildNote ? 7 : 10} />
                         </button>
+
                         <button
                             onClick={(e) => { e.stopPropagation(); onDelete(block.id); }}
                             className={`${isChildNote ? 'p-0.5' : 'p-1.5'} hover:bg-red-500/20 rounded transition-all text-zinc-500 hover:text-red-500 group/del`}
