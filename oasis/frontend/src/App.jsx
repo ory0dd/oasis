@@ -9,13 +9,14 @@ import {
     FolderPlus, ChevronDown, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
     Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
-    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers
+    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
 import PsychologistDashboard from './components/PsychologistDashboard';
 import { ResonanceNotebook } from './components/ResonanceNotebook';
 import { DiaryNotebook } from './components/DiaryNotebook';
+import SimpleNotesView from './components/SimpleNotesView';
 import icarQuestions from './data/icar16_questions.json';
 import icarRationale from './data/icar16_rationale.json';
 import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
@@ -3007,6 +3008,7 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpen] = useState(false);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [bgType, setBgType] = useState('color');
     const [bgValue, setBgValue] = useState('#030304');
@@ -5428,43 +5430,55 @@ export default function App() {
                     const blocksRes = await fetch(`${API_URL}/api/oasis/blocks?user=${user}`);
                     if (blocksRes.ok) {
                         const data = await blocksRes.json();
-                        if (data && data.length > 0) {
-                            const serverFiltered = data.filter(b => b.type !== 'insight');
-                            if (serverFiltered.length !== data.length) {
-                                console.log(`[Oasis] Filtrando ${data.length - serverFiltered.length} bloques de tipo 'insight'.`);
+                        // SIEMPRE hacer merge, incluso si el servidor devuelve [] (restart de Render)
+                        const serverFiltered = (data || []).filter(b => b.type !== 'insight');
+                        if (data && data.length > 0 && serverFiltered.length !== data.length) {
+                            console.log(`[Oasis] Filtrando ${data.length - serverFiltered.length} bloques de tipo 'insight'.`);
+                        }
+
+                        // MERGE: localStorage es el backup, servidor es la fuente de verdad
+                        // Si servidor está vacío (restart), los datos locales son los reales
+                        const serverIds = new Set(serverFiltered.map(b => b.id));
+                        try {
+                            const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
+                            const localBlocks = localRaw ? JSON.parse(localRaw) : [];
+                            const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
+                            const merged = [...serverFiltered, ...pendingLocal];
+
+                            setBlocks(merged);
+                            activeBlocks = merged;
+                            localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
+
+                            // Si había pendientes (incluyendo el caso de servidor vacío por restart),
+                            // subirlos de vuelta al servidor para restaurarlos
+                            if (pendingLocal.length > 0) {
+                                console.log(`[Oasis] Restaurando ${pendingLocal.length} bloque(s) desde localStorage al servidor.`);
                                 fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(serverFiltered)
+                                    body: JSON.stringify(merged)
                                 });
+                            } else if (serverFiltered.length > 0) {
+                                setBlocks(serverFiltered);
+                                activeBlocks = serverFiltered;
                             }
-                            // MERGE: el servidor es la fuente de verdad,
-                            // pero conservamos bloques locales que aún no llegaron al servidor
-                            // (guardados mientras el servidor estaba dormido).
-                            const serverIds = new Set(serverFiltered.map(b => b.id));
-                            try {
-                                const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
-                                const localBlocks = localRaw ? JSON.parse(localRaw) : [];
-                                const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
-                                const merged = [...serverFiltered, ...pendingLocal];
-                                setBlocks(merged);
-                                activeBlocks = merged;
-                                // Actualizar localStorage con la versión mergeada
-                                localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
-                                // Si había pendientes, también subirlos al servidor
-                                if (pendingLocal.length > 0) {
-                                    console.log(`[Oasis] Subiendo ${pendingLocal.length} bloque(s) pendiente(s) al servidor.`);
-                                    fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(merged)
-                                    });
-                                }
-                            } catch (_) {
+                        } catch (_) {
+                            if (serverFiltered.length > 0) {
                                 setBlocks(serverFiltered);
                                 activeBlocks = serverFiltered;
                             }
                         }
+                    } else {
+                        // Fallo de red — usar localStorage como fallback
+                        try {
+                            const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
+                            const localBlocks = localRaw ? JSON.parse(localRaw) : [];
+                            if (localBlocks.length > 0) {
+                                setBlocks(localBlocks);
+                                activeBlocks = localBlocks;
+                                console.log(`[Oasis] Red caída. Cargando ${localBlocks.length} bloques desde localStorage.`);
+                            }
+                        } catch (_) {}
                     }
 
                     // Vínculos
@@ -6362,47 +6376,46 @@ export default function App() {
 
     useEffect(() => {
         if (view !== 'canvas') {
+            // Reset so we re-center every time the user comes back to the canvas
             hasCenteredCanvasRef.current = false;
             return;
         }
 
-        const hasDiary = blocks.some(b => b.type === 'diary_notebook');
-        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0 && hasDiary && !hasCenteredCanvasRef.current) {
+        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0 && !hasCenteredCanvasRef.current) {
             hasCenteredCanvasRef.current = true;
 
-            const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
-            const targetScale = 0.8;
-            let targetX, targetY;
+            const targetScale = window.innerWidth < 768 ? 0.45 : 0.8;
 
-            const diaryBlock = renderedBlocks.find(b => b.type === 'diary_notebook');
-            if (diaryBlock) {
-                targetX = -diaryBlock.x * targetScale;
-                targetY = -diaryBlock.y * targetScale;
-            } else if (renderedBlocks.length === 0) {
-                targetX = 0;
-                targetY = 0;
-            } else {
-                let minX = Infinity;
-                let maxX = -Infinity;
-                let minY = Infinity;
-                let maxY = -Infinity;
+            // ── Encontrar la nota de texto más reciente (excluir diarios, insights, públicas) ──
+            const textNotes = blocks.filter(b =>
+                b.type === 'text' &&
+                !b.isPublic &&
+                b.x !== undefined &&
+                b.y !== undefined &&
+                !(b.entries && b.entries.length > 0) // excluir diarios
+            );
 
-                renderedBlocks.forEach(b => {
-                    const bx = b.x !== undefined ? b.x : 0;
-                    const by = b.y !== undefined ? b.y : 0;
-                    const bw = getBWidth(b, false);
-                    const bh = getBHeight(b, false);
-                    if (bx - bw/2 < minX) minX = bx - bw/2;
-                    if (bx + bw/2 > maxX) maxX = bx + bw/2;
-                    if (by - bh/2 < minY) minY = by - bh/2;
-                    if (by + bh/2 > maxY) maxY = by + bh/2;
+            let targetX = 0, targetY = 0;
+
+            if (textNotes.length > 0) {
+                // Ordenar por timestamp (más reciente primero), usar id como fallback
+                const sorted = [...textNotes].sort((a, b) => {
+                    const tA = a.metadata?.timestamp ? new Date(a.metadata.timestamp).getTime() : Number(a.id) || 0;
+                    const tB = b.metadata?.timestamp ? new Date(b.metadata.timestamp).getTime() : Number(b.id) || 0;
+                    return tB - tA;
                 });
-
-                const centerX = (minX + maxX) / 2;
-                const centerY = (minY + maxY) / 2;
-
-                targetX = -centerX * targetScale;
-                targetY = -centerY * targetScale;
+                const latest = sorted[0];
+                targetX = -latest.x * targetScale;
+                targetY = -latest.y * targetScale;
+            } else {
+                // Sin notas de texto — centrar en todos los bloques visibles
+                const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic && b.x !== undefined);
+                if (renderedBlocks.length > 0) {
+                    const cx = renderedBlocks.reduce((s, b) => s + b.x, 0) / renderedBlocks.length;
+                    const cy = renderedBlocks.reduce((s, b) => s + b.y, 0) / renderedBlocks.length;
+                    targetX = -cx * targetScale;
+                    targetY = -cy * targetScale;
+                }
             }
 
             animateMainCamera(targetX, targetY, targetScale);
@@ -10344,7 +10357,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     key={`tile-${i}`}
                                     src={formatUrl(bgValue)}
                                     autoPlay loop muted playsInline
-                                    preload="auto"
+                                    preload="metadata"
                                     className="w-full h-full object-cover"
                                 />
                             ))}
@@ -10354,7 +10367,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             key={bgValue}
                             src={formatUrl(bgValue)}
                             autoPlay loop muted playsInline
-                            preload="auto"
+                            preload="metadata"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
                         />
                     )
@@ -10778,6 +10791,14 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(true); }}
+                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
+                        title="Notas Simples"
+                    >
+                        <List size={14} className="md:size-[18px] hover-float-icon" />
+                    </button>
+
+                    <button
                         onClick={(e) => { e.stopPropagation(); setActiveNotebook('diary'); }}
                         className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-amber-500 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110"
                         title="Libreta de Diario"
@@ -10809,6 +10830,16 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <User size={14} className="md:size-[20px] hover-float-icon" />
                     </button>
                 </div>
+            )}
+
+            {isSimpleNotesOpen && (
+                <SimpleNotesView
+                    blocks={blocks}
+                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
+                    accent={accent}
+                    user={user}
+                    onClose={() => setIsSimpleNotesOpen(false)}
+                />
             )}
 
             {activeNotebook === 'diary' && (
@@ -12336,7 +12367,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     key={`tile-${i}`}
                                     src={formatUrl(bgValue)}
                                     autoPlay loop muted playsInline
-                                    preload="auto"
+                                    preload="metadata"
                                     className="w-full h-full object-cover"
                                 />
                             ))}
@@ -12346,7 +12377,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                             key={bgValue}
                             src={formatUrl(bgValue)}
                             autoPlay loop muted playsInline
-                            preload="auto"
+                            preload="metadata"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
                         />
                     )
