@@ -5429,17 +5429,41 @@ export default function App() {
                     if (blocksRes.ok) {
                         const data = await blocksRes.json();
                         if (data && data.length > 0) {
-                            const filtered = data.filter(b => b.type !== 'insight');
-                            if (filtered.length !== data.length) {
-                                console.log(`[Oasis] Filtrando ${data.length - filtered.length} bloques de tipo 'insight'.`);
+                            const serverFiltered = data.filter(b => b.type !== 'insight');
+                            if (serverFiltered.length !== data.length) {
+                                console.log(`[Oasis] Filtrando ${data.length - serverFiltered.length} bloques de tipo 'insight'.`);
                                 fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(filtered)
+                                    body: JSON.stringify(serverFiltered)
                                 });
                             }
-                            setBlocks(filtered);
-                            activeBlocks = filtered;
+                            // MERGE: el servidor es la fuente de verdad,
+                            // pero conservamos bloques locales que aún no llegaron al servidor
+                            // (guardados mientras el servidor estaba dormido).
+                            const serverIds = new Set(serverFiltered.map(b => b.id));
+                            try {
+                                const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
+                                const localBlocks = localRaw ? JSON.parse(localRaw) : [];
+                                const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
+                                const merged = [...serverFiltered, ...pendingLocal];
+                                setBlocks(merged);
+                                activeBlocks = merged;
+                                // Actualizar localStorage con la versión mergeada
+                                localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
+                                // Si había pendientes, también subirlos al servidor
+                                if (pendingLocal.length > 0) {
+                                    console.log(`[Oasis] Subiendo ${pendingLocal.length} bloque(s) pendiente(s) al servidor.`);
+                                    fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(merged)
+                                    });
+                                }
+                            } catch (_) {
+                                setBlocks(serverFiltered);
+                                activeBlocks = serverFiltered;
+                            }
                         }
                     }
 
@@ -5519,12 +5543,37 @@ export default function App() {
     }, [isLoggedIn, user, isDataLoaded]);
 
     // ── SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO ──────────────────────
-    // Cuando el usuario vuelve a la pestaña/app (desde móvil a PC o viceversa),
-    // se re-obtienen bloques y vínculos del servidor silenciosamente.
+    // Ref para saber cuándo fue el último guardado local.
+    // Si guardamos localmente hace menos de 30s, NO traemos datos del servidor
+    // (el servidor puede estar dormido en Render y devolver data antigua).
+    const lastLocalSaveRef = React.useRef(0);
+
     useEffect(() => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
 
+        // Función de MERGE: preferimos los datos del servidor, pero
+        // conservamos cualquier bloque LOCAL que no esté en el servidor
+        // (puede ser un guardado pendiente mientras el servidor dormía).
+        const mergeWithServer = (serverData) => {
+            const serverBlocks = serverData.filter(b => b.type !== 'insight');
+            const serverIds = new Set(serverBlocks.map(b => b.id));
+            try {
+                const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
+                const localBlocks = localRaw ? JSON.parse(localRaw) : [];
+                // Bloques locales que el servidor aún no tiene (pendientes de sync)
+                const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
+                const merged = [...serverBlocks, ...pendingLocal];
+                localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
+                setBlocks(merged);
+            } catch (_) {
+                setBlocks(serverBlocks);
+            }
+        };
+
         const fetchLatest = async () => {
+            // No sobreescribir si acaba de haber un guardado local reciente
+            const secsSinceLocalSave = (Date.now() - lastLocalSaveRef.current) / 1000;
+            if (secsSinceLocalSave < 30) return;
             try {
                 const [blocksRes, linksRes] = await Promise.all([
                     fetch(`${API_URL}/api/oasis/blocks?user=${user}`),
@@ -5532,35 +5581,24 @@ export default function App() {
                 ]);
                 if (blocksRes.ok) {
                     const data = await blocksRes.json();
-                    if (data && data.length > 0) {
-                        const filtered = data.filter(b => b.type !== 'insight');
-                        // Save to localStorage for offline
-                        localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(filtered));
-                        setBlocks(filtered);
-                    }
+                    if (data && data.length > 0) mergeWithServer(data);
                 }
                 if (linksRes.ok) {
                     const data = await linksRes.json();
                     if (data) setLinks(data);
                 }
-            } catch (e) {
-                // Offline or server error — silently ignore, use current state
-            }
+            } catch (_) { /* offline — ignorar */ }
         };
 
         const handleVisibility = () => {
-            if (document.visibilityState === 'visible') {
-                fetchLatest();
-            }
+            if (document.visibilityState === 'visible') fetchLatest();
         };
-        const handleFocus = () => fetchLatest();
 
         document.addEventListener('visibilitychange', handleVisibility);
-        window.addEventListener('focus', handleFocus);
-
+        window.addEventListener('focus', fetchLatest);
         return () => {
             document.removeEventListener('visibilitychange', handleVisibility);
-            window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('focus', fetchLatest);
         };
     }, [isLoggedIn, user, isDataLoaded]);
     // ─────────────────────────────────────────────────────────────────────────
@@ -5653,6 +5691,9 @@ export default function App() {
     }, [blocks, isLoggedIn, isDataLoaded]);
 
     const syncBlocks = (newBlocks) => {
+        // Registrar timestamp del último guardado local para proteger contra
+        // el re-fetch del servidor que podría sobreescribir datos recientes.
+        lastLocalSaveRef.current = Date.now();
         setBlocks(newBlocks);
         if (user) {
             localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(newBlocks));
