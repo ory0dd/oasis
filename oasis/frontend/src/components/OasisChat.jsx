@@ -265,8 +265,8 @@ const OasisChat = ({
 
     return (
         <div
-            className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000"
-            style={{ height: viewportHeight + 'px' }}
+            className="fixed inset-x-0 bottom-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden transition-colors duration-1000 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none"
+            style={{ height: window.innerWidth < 768 && viewportHeight > 96 ? (viewportHeight - 96) + 'px' : viewportHeight + 'px' }}
         >
             {isSidebarVisible && (
                 <>
@@ -320,7 +320,7 @@ const OasisChat = ({
                     <div className={`w-64 h-64 md:w-96 md:h-96 rounded-full blur-[100px] transition-all duration-1000 ${isLoading ? 'bg-purple-600 scale-125 animate-pulse' : 'bg-accent/20 scale-100'}`} />
                 </div>
 
-                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-[1600] flex justify-between items-center pointer-events-none">
+                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-[1600] flex justify-between items-center pointer-events-none">
                     <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarVisible && (
                             <button
@@ -394,8 +394,8 @@ const OasisChat = ({
                 </div>
 
                 {/* Scrollable messages container */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 pb-4 min-h-0">
-                    <div className="max-w-2xl mx-auto px-6 space-y-4">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-24 pb-4 min-h-0 min-w-0">
+                    <div className="max-w-2xl mx-auto px-8 md:px-12 space-y-4">
                         {isAnalyzingNote && (
                             <div className="flex items-center gap-4 p-6 rounded-3xl bg-accent/5 border border-accent/10 mb-8 animate-in slide-in-from-top-4 duration-700">
                                 <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent"><Radio size={18} className="animate-spin-slow" /></div>

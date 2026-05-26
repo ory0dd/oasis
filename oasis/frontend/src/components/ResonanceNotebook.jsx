@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Plus, Save, Mic, PanelLeft, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, className = "fixed inset-0 z-[1500] bg-[#050506]/95 backdrop-blur-3xl" }) => {
+export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, className = "fixed inset-x-0 bottom-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
     const [activeResId, setActiveResId] = useState(null);
     const [resName, setResName] = useState('');
     const [resPrimal, setResPrimal] = useState('');
@@ -161,8 +161,8 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
 
     return (
         <div 
-            className={`${className} text-white flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} 
-            style={{ height: viewportHeight + 'px' }} 
+            className={`${className} text-white flex animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden`} 
+            style={{ height: window.innerWidth < 768 && viewportHeight > 96 ? (viewportHeight - 96) + 'px' : viewportHeight + 'px' }} 
             onClick={e => e.stopPropagation()}
         >
             {/* Sidebar / Menu */}
@@ -205,14 +205,14 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
             )}
 
             {/* Main Area */}
-            <div className="flex-1 flex flex-col relative h-full">
+            <div className="flex-1 flex flex-col relative h-full min-w-0">
                 {/* Background glow */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                     <div className="w-96 h-96 rounded-full blur-[120px] bg-purple-500/10" />
                 </div>
 
                 {/* Top bar (Header) */}
-                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
+                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
                     <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarOpen && (
                             <button
@@ -240,15 +240,15 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                 </div>
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-20 md:pt-32">
-                    <div className="max-w-2xl mx-auto px-6 space-y-6 pb-32">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-36 min-w-0">
+                    <div className="max-w-2xl mx-auto px-8 md:px-12 space-y-6 pb-32">
                         {/* Title input */}
                         <div className="flex items-center justify-between">
                             <input 
                                 value={resName}
                                 onChange={e => setResName(e.target.value)}
                                 placeholder="Nombre del Ruido..."
-                                className="bg-transparent border-none text-xl sm:text-4xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
+                                className="flex-1 min-w-0 mr-4 bg-transparent border-none text-xl sm:text-4xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
                             />
                             
                             {/* Step Indicators */}
@@ -324,7 +324,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
 
                 {/* Floating Bottom Bar (Command Center style) */}
                 <div className="relative z-10 p-3 md:p-12">
-                    <div className="max-w-2xl mx-auto relative flex items-center justify-between gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
+                    <div className="w-fit max-w-full mx-auto relative flex items-center justify-between gap-4 md:gap-8 px-3 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
                         <div className="flex items-center gap-1.5 md:gap-3">
                             <button
                                 onClick={() => step > 0 && setStep(prev => prev - 1)}
@@ -352,7 +352,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                             {step < 2 ? (
                                 <button
                                     onClick={() => setStep(prev => prev + 1)}
-                                    className="px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10"
+                                    className="px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10 shrink-0"
                                 >
                                     <span>Continuar</span>
                                     <ArrowRight size={10} className="md:size-3" />

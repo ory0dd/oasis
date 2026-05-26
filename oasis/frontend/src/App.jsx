@@ -2474,14 +2474,7 @@ const ProfileView = ({
     return (
         <div className="w-full h-screen relative overflow-hidden bg-[#0a0a0b]/85 backdrop-blur-xl">
             {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
-            <div className="absolute top-6 left-6 right-6 md:left-10 md:right-10 flex justify-between items-start pointer-events-none z-50">
-                <button
-                    onClick={() => setView('canvas')}
-                    className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl pointer-events-auto hover:scale-105 active:scale-95"
-                >
-                    ← Volver
-                </button>
-
+            <div className="absolute top-20 left-6 right-6 md:left-10 md:right-10 flex justify-between items-start pointer-events-none z-50">
                 <div className="flex gap-2 pointer-events-auto">
                     {isEditingProfile && (
                         <button
@@ -2491,12 +2484,6 @@ const ProfileView = ({
                             <Camera size={12} /> Cambiar Portada
                         </button>
                     )}
-                    <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
-                    >
-                        <Settings size={12} className="hover:rotate-45 transition-transform duration-300" /> Configuración
-                    </button>
                 </div>
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
@@ -2523,7 +2510,7 @@ const ProfileView = ({
                 {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
                 <div 
                     data-index={0}
-                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-24 pb-6 px-6 md:px-10 z-10 overflow-hidden"
+                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-20 md:pt-32 pb-4 px-6 md:px-10 z-10 overflow-hidden"
                 >
 
                 {/* HERO MAIN CARD (CONSOLIDATED) */}
@@ -2533,7 +2520,7 @@ const ProfileView = ({
                     {/* Avatar & Name & Primary Actions Row */}
                     <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-2 border-b border-white/5">
                         {/* Circular Avatar */}
-                        <div className={`relative group/avatar shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
+                        <div className={`relative group/avatar shrink-0 w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
                             {avatar ? (
                                 <img src={formatUrl(avatar)} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
                             ) : (
@@ -2594,21 +2581,25 @@ const ProfileView = ({
                                     )}
                                 </button>
 
-                                <button className="px-4 py-1.5 md:py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-[9px] font-black uppercase tracking-widest text-white transition-all backdrop-blur-md">
-                                    Compartir Alma
+                                <button
+                                    onClick={() => setIsSettingsOpen(true)}
+                                    className="p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-white transition-all backdrop-blur-md flex items-center justify-center hover:scale-105 active:scale-95"
+                                    title="Configuración"
+                                >
+                                    <Settings size={12} className="hover:rotate-45 transition-transform duration-300" />
                                 </button>
                             </div>
                         </div>
                     </div>
 
                     {/* BIO DESCRIPTION (COMPACT) */}
-                    <div className="w-full p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/5 shadow-xl">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 block text-left">Descripción</span>
+                    <div className="w-full p-3 rounded-xl bg-black/40 backdrop-blur-md border border-white/5 shadow-xl">
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1.5 block text-left">Descripción</span>
                         {isEditingProfile ? (
                             <textarea
                                 value={bio}
                                 onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[70px]"
+                                className="w-full bg-black/30 border border-white/10 rounded-xl p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[50px]"
                                 placeholder="Escribe la descripción de tu alma o biografía..."
                             />
                         ) : (
@@ -2619,7 +2610,7 @@ const ProfileView = ({
                     </div>
 
                     {/* BITÁCORA HUB FILTERS & UTILITIES (MERGED FROM SLIDE 2) */}
-                    <div className="w-full p-4 rounded-2xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-4">
+                    <div className="w-full p-3 rounded-xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-2.5">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2">
                             <div className="flex items-center gap-2">
                                 <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
@@ -2681,7 +2672,7 @@ const ProfileView = ({
                         </div>
 
                         {/* COMPACT NOTES HUB (RECUADRO DE NOTAS DEBAJO DE FILTROS) */}
-                        <div className="w-full flex flex-col gap-3 mt-2 border-t border-white/5 pt-4">
+                        <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
                             <div className="flex justify-between items-center px-1">
                                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
                                     {releaseTab === 'all' ? 'Todos los Registros' : 
@@ -2708,9 +2699,9 @@ const ProfileView = ({
                                 </button>
                             </div>
 
-                            <div className="w-full max-h-[30vh] overflow-y-auto no-scrollbar pr-1">
+                            <div className="w-full max-h-[160px] md:max-h-[25vh] overflow-y-auto no-scrollbar pr-1">
                                 {filteredReleases.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-8 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
+                                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
                                         <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
                                             No se encontraron registros
                                         </p>
@@ -2719,7 +2710,7 @@ const ProfileView = ({
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2 animate-fade-in">
+                                    <div className="flex flex-col gap-1 pb-1 animate-fade-in">
                                         {filteredReleases.map(b => {
                                             const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
                                             const isDia = b.entries && b.entries.length > 0;
@@ -2754,35 +2745,34 @@ const ProfileView = ({
                                                 <div
                                                     key={b.id}
                                                     onClick={() => handleCardClick(b.id)}
-                                                    className="group/note bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 rounded-xl p-3.5 transition-all duration-300 flex flex-col justify-between gap-3 text-left relative overflow-hidden cursor-pointer active:scale-[0.98]"
-                                                    style={{ borderLeft: `3px solid ${cardBorderColor}` }}
+                                                    className="group/note bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden"
                                                 >
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors">
+                                                    <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: cardBorderColor }} />
+
+                                                    <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
+                                                        <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
                                                             {typeLabel}
                                                         </span>
-                                                        <span className="text-[7px] font-mono text-zinc-600">
-                                                            {timeString}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="space-y-1">
-                                                        {b.caption && (
-                                                            <h4 className="text-[11px] font-bold text-white/95 truncate leading-tight">
-                                                                {b.caption}
+                                                        
+                                                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                            <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
+                                                                {b.caption || 'Sin título'}
                                                             </h4>
-                                                        )}
-                                                        <p className="text-[10px] text-zinc-400 font-sans line-clamp-2 leading-relaxed italic">
-                                                            {textSnippet || 'Sin contenido adicional'}
-                                                        </p>
+                                                            <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
+                                                                {textSnippet || 'Sin contenido'}
+                                                            </p>
+                                                        </div>
                                                     </div>
 
-                                                    <div className="flex justify-between items-center mt-1 border-t border-white/[0.03] pt-2">
-                                                        <span className="text-[6px] font-bold text-zinc-600 group-hover/note:text-zinc-400 transition-colors uppercase tracking-widest">
+                                                    <div className="flex items-center gap-4 shrink-0">
+                                                        <span className="text-[8px] font-mono text-zinc-600 sm:block hidden">
                                                             {b.isPublic ? 'Público' : 'Privado'}
                                                         </span>
-                                                        <span className="text-[7px] font-mono text-accent opacity-0 group-hover/note:opacity-100 transition-opacity" style={{ color: accent }}>
-                                                            Abrir →
+                                                        <span className="text-[8px] font-mono text-zinc-500">
+                                                            {timeString}
+                                                        </span>
+                                                        <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
+                                                            →
                                                         </span>
                                                     </div>
                                                 </div>
@@ -3196,8 +3186,8 @@ export default function App() {
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
     const [feed, setFeed] = useState([]);
 
-    const [isComposerOpen, setIsComposerOpen] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(false);
+    const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
     const [isSimpleNotesEditorOpen, setIsSimpleNotesEditorOpen] = useState(false);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
@@ -3259,7 +3249,7 @@ export default function App() {
     const [folders, setFolders] = useState([]);
     const [userMemory, setUserMemory] = useState([]); // Persistent AI facts
 
-    const [activeNotebook, setActiveNotebook] = useState(null); // 'diary' | 'resonance'
+    const [activeNotebook, setActiveNotebookRaw] = useState(null); // 'diary' | 'resonance'
 
     const [avatar, setAvatar] = useState(() => localStorage.getItem('oasis_avatar_' + (localStorage.getItem('oasis_user') || '')) || '');
 
@@ -3273,7 +3263,7 @@ export default function App() {
 
     // Psychometrics and Soul Archive states (moved to App level)
     const [soulTab, setSoulTab] = useState('tests'); // 'loop_map' | 'memory' | 'tests'
-    const [activeTest, setActiveTest] = useState(null); // 'phenom' | 'pid5' | 'icar16' | null
+    const [activeTest, setActiveTestRaw] = useState(null); // 'phenom' | 'pid5' | 'icar16' | null
     const [activeTestCardIndex, setActiveTestCardIndex] = useState(0);
 
     // Versioning and ICAR-16 question-level video recording states
@@ -5180,7 +5170,7 @@ export default function App() {
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatLoading, setIsChatLoading] = useState(false);
-    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isChatOpen, setIsChatOpenRaw] = useState(false);
     const [isAnalyzingNote, setIsAnalyzingNote] = useState(false);
     const [isDiaryMode, setIsDiaryMode] = useState(false);
     const [focusedResonanceField, setFocusedResonanceField] = useState(null);
@@ -5198,6 +5188,142 @@ export default function App() {
     const [muralScale, setMuralScale] = useState(1);
     const [isAddingText, setIsAddingText] = useState(false);
     const muralFileInputRef = useRef(null);
+
+    // Safe wrapped setters for non-overlapping states
+    const setIsComposerOpen = useCallback((val) => {
+        setIsComposerOpenRaw(prev => {
+            const nextVal = typeof val === 'function' ? val(prev) : val;
+            if (nextVal) {
+                setIsSimpleNotesOpenRaw(false);
+                setIsChatOpenRaw(false);
+                setActiveNotebookRaw(null);
+                setActiveTestRaw(null);
+            }
+            return nextVal;
+        });
+    }, []);
+
+    const setIsSimpleNotesOpen = useCallback((val) => {
+        setIsSimpleNotesOpenRaw(prev => {
+            const nextVal = typeof val === 'function' ? val(prev) : val;
+            if (nextVal) {
+                setIsComposerOpenRaw(false);
+                setIsChatOpenRaw(false);
+                setActiveNotebookRaw(null);
+                setActiveTestRaw(null);
+            }
+            return nextVal;
+        });
+    }, []);
+
+    const setIsChatOpen = useCallback((val) => {
+        setIsChatOpenRaw(prev => {
+            const nextVal = typeof val === 'function' ? val(prev) : val;
+            if (nextVal) {
+                setIsSimpleNotesOpenRaw(false);
+                setIsComposerOpenRaw(false);
+                setActiveNotebookRaw(null);
+                setActiveTestRaw(null);
+            }
+            return nextVal;
+        });
+    }, []);
+
+    const setActiveNotebook = useCallback((val) => {
+        setActiveNotebookRaw(prev => {
+            const nextVal = typeof val === 'function' ? val(prev) : val;
+            if (nextVal) {
+                setIsSimpleNotesOpenRaw(false);
+                setIsComposerOpenRaw(false);
+                setIsChatOpenRaw(false);
+                setActiveTestRaw(null);
+            }
+            return nextVal;
+        });
+    }, []);
+
+    const setActiveTest = useCallback((val) => {
+        setActiveTestRaw(prev => {
+            const nextVal = typeof val === 'function' ? val(prev) : val;
+            if (nextVal) {
+                setIsSimpleNotesOpenRaw(false);
+                setIsComposerOpenRaw(false);
+                setIsChatOpenRaw(false);
+                setActiveNotebookRaw(null);
+            }
+            return nextVal;
+        });
+    }, []);
+
+    // Swipe navigation logic for navbar
+    const TABS = [
+        { id: 'canvas', label: 'Lienzo' },
+        { id: 'chat', label: 'Diálogos AI' },
+        { id: 'diary', label: 'Diario' },
+        { id: 'resonance', label: 'Resonancia' },
+        { id: 'soul', label: 'Archivo' },
+        { id: 'profile', label: 'Perfil' }
+    ];
+
+    const getActiveTabIndex = useCallback(() => {
+        if (isChatOpen) return 1;
+        if (activeNotebook === 'diary') return 2;
+        if (activeNotebook === 'resonance') return 3;
+        if (view === 'soul') return 4;
+        if (view === 'profile') return 5;
+        return 0; // canvas
+    }, [isChatOpen, activeNotebook, view]);
+
+    const switchToTabIndex = useCallback((index) => {
+        if (index < 0 || index >= TABS.length) return;
+        const tab = TABS[index];
+        setIsSimpleNotesOpenRaw(false);
+        setIsComposerOpenRaw(false);
+        setIsChatOpenRaw(false);
+        setActiveNotebookRaw(null);
+        setActiveTestRaw(null);
+
+        if (tab.id === 'canvas') {
+            setView('canvas');
+        } else if (tab.id === 'chat') {
+            setView('canvas');
+            setIsChatOpenRaw(true);
+        } else if (tab.id === 'diary') {
+            setView('canvas');
+            setActiveNotebookRaw('diary');
+        } else if (tab.id === 'resonance') {
+            setView('canvas');
+            setActiveNotebookRaw('resonance');
+        } else if (tab.id === 'soul') {
+            setView('soul');
+        } else if (tab.id === 'profile') {
+            setView('profile');
+        }
+    }, []);
+
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+
+    const handleNavbarTouchStart = useCallback((e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+    }, []);
+
+    const handleNavbarTouchEnd = useCallback((e) => {
+        const diffX = e.changedTouches[0].clientX - touchStartX.current;
+        const diffY = e.changedTouches[0].clientY - touchStartY.current;
+
+        if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
+            const currentIndex = getActiveTabIndex();
+            if (diffX > 0) {
+                // Swipe right -> Go to previous tab
+                switchToTabIndex(currentIndex - 1);
+            } else {
+                // Swipe left -> Go to next tab
+                switchToTabIndex(currentIndex + 1);
+            }
+        }
+    }, [getActiveTabIndex, switchToTabIndex]);
 
     const syncConversations = useCallback((updated) => {
         setConversations(updated);
@@ -9057,11 +9183,11 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
         }
 
         return (
-            <div className="w-full h-full relative overflow-y-auto no-scrollbar bg-black/5 backdrop-blur-xl pt-3 pb-6 px-4 md:px-8 transition-all duration-300 animate-in fade-in">
+            <div className="w-full h-full relative overflow-y-auto no-scrollbar bg-black/40 backdrop-blur-3xl pt-28 md:pt-24 pb-36 px-4 md:px-8 transition-all duration-300 animate-in fade-in">
                 {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
                 <button
                     onClick={() => setView('canvas')}
-                    className="fixed top-6 left-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl group"
+                    className="hidden md:flex fixed top-6 left-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-3xl border border-white/10 items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl group"
                     title="Volver al Lienzo"
                 >
                     <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -9153,34 +9279,10 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     {/* MINIMALIST HEADER WITH TAB NAVIGATION ONLY */}
-                    <div className="flex items-center justify-center pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
-
-
-                        <div className="flex bg-white/5 p-1 rounded-full border border-white/10 shadow-2xl backdrop-blur-md gap-0.5">
-                            {[
-                                { id: 'tests', label: 'Pruebas de Consciencia', icon: Heart },
-                                ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
-                                { id: 'memory', label: 'Ecos de Memoria', icon: Aperture }
-                            ].map(tab => {
-                                const Icon = tab.icon;
-                                const isActive = activeTabName === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => {
-                                            setSoulTab(tab.id);
-                                            setSelectedLoopNode('trigger');
-                                        }}
-                                        title={tab.label}
-                                        className={`px-3.5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 sm:gap-2 ${isActive
-                                            ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/5'
-                                            : 'text-zinc-500 hover:text-white border border-transparent'
-                                            }`}
-                                    >
-                                        <Icon size={16} className="shrink-0" />
-                                    </button>
-                                );
-                            })}
+                    <div className="flex items-center justify-between pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
+                        <div className="flex items-center gap-2">
+                            <Aperture size={16} className="text-accent animate-spin-slow" style={{ color: accent }} />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Archivo del Alma</span>
                         </div>
 
                         {/* Mini Session History Button & Dropdown */}
@@ -9623,7 +9725,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="mt-auto pt-6">
+                                                                    <div className="mt-auto pt-6 pb-20 md:pb-0">
                                                                         <button
                                                                             onClick={card.action}
                                                                             className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
@@ -10443,6 +10545,36 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             )}
                         </div>
                     )}
+
+                    {/* SOUL ARCHIVE TAB NAVIGATION (FLOATING AT BOTTOM) */}
+                    <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex bg-[#0c0c0e]/95 p-1.5 rounded-full border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.9)] backdrop-blur-3xl gap-1.5 animate-in slide-in-from-bottom duration-500">
+                        {[
+                            { id: 'tests', label: 'Pruebas', icon: Heart },
+                            ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
+                            { id: 'memory', label: 'Ecos de Memoria', icon: Aperture }
+                        ].map(tab => {
+                            const Icon = tab.icon;
+                            const isActive = activeTabName === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setSoulTab(tab.id);
+                                        setSelectedLoopNode('trigger');
+                                    }}
+                                    title={tab.label}
+                                    className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isActive
+                                        ? 'bg-accent text-black border-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)] hover:scale-105'
+                                        : 'bg-transparent text-zinc-500 hover:text-white border-transparent hover:bg-white/5'
+                                        }`}
+                                    style={isActive ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                                >
+                                    <Icon size={14} className="shrink-0" />
+                                    <span className="hidden md:inline">{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         );
@@ -11025,8 +11157,31 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             )}
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
-            {(view === 'canvas' || (isSimpleNotesOpen && !isSimpleNotesEditorOpen)) && view !== 'soul' && view !== 'profile' && view !== 'clinical' && (
-                <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[600] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar">
+            {(view === 'canvas' || view === 'profile' || view === 'soul' || (isSimpleNotesOpen && !isSimpleNotesEditorOpen)) && view !== 'clinical' && (
+                <div 
+                    onTouchStart={handleNavbarTouchStart}
+                    onTouchEnd={handleNavbarTouchEnd}
+                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 slide-in-from-top-5"
+                >
+                    
+                    {/* Lienzo Principal Button */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook(null); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                            setView('canvas'); 
+                        }}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'canvas' && !activeNotebook ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
+                        style={view === 'canvas' && !activeNotebook ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Lienzo Principal"
+                    >
+                        <Compass size={14} className="md:size-[20px] hover-float-icon" />
+                    </button>
+
                     <div className="relative group mx-0.5 shrink-0">
                         <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
                         <button
@@ -11062,32 +11217,66 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setActiveNotebook('diary'); }}
-                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-amber-500 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110"
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('diary'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${activeNotebook === 'diary' ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110'}`}
+                        style={activeNotebook === 'diary' ? { backgroundColor: '#f59e0b', borderColor: '#fbbf24', color: '#000' } : undefined}
                         title="Libreta de Diario"
                     >
                         <StickyNote size={14} className="md:size-[18px] hover-float-icon" />
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setActiveNotebook('resonance'); }}
-                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-purple-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110"
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('resonance'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${activeNotebook === 'resonance' ? 'bg-purple-500 text-black border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110'}`}
+                        style={activeNotebook === 'resonance' ? { backgroundColor: '#a855f7', borderColor: '#c084fc', color: '#000' } : undefined}
                         title="Análisis de Ruido"
                     >
                         <Sparkles size={14} className="md:size-[18px] hover-float-icon" />
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setView('soul'); }}
-                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook(null); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                            setView('soul'); 
+                        }}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'soul' ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
+                        style={view === 'soul' ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Archivo del Alma"
                     >
                         <Aperture size={14} className="md:size-[20px] hover-float-icon" />
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setView('profile'); }}
-                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook(null); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                            setView('profile'); 
+                        }}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'profile' && !activeNotebook ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
+                        style={view === 'profile' && !activeNotebook ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Perfil"
                     >
                         <User size={14} className="md:size-[20px] hover-float-icon" />
@@ -11280,9 +11469,9 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {isComposerOpen && (
                 <div className={`fixed inset-0 z-[500] flex flex-col animate-in fade-in duration-300 ${composerStep === 'note' ? 'bg-[#0a0a0b]' : 'bg-black/80 backdrop-blur-3xl'}`}>
 
-                    {/* TOP FLOATING TOOLBAR */}
+                    {/* BOTTOM FLOATING TOOLBAR */}
                     {composerStep === 'note' && (
-                        <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-top-5 duration-700 w-max max-w-[95%]">
+                        <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]">
                             <div className="flex items-center gap-1">
                                 {/* PRIMARY CANCEL */}
                                 <button onClick={() => setIsComposerOpen(false)} className="w-9 h-9 md:w-12 md:h-12 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group" title="Cerrar (ESC)">

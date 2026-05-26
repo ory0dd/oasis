@@ -16,7 +16,7 @@ const getBlockTime = (b) => {
     return 0;
 };
 
-export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent, className = "fixed inset-0 z-[1500] bg-[#050506]/95 backdrop-blur-3xl" }) => {
+export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent, className = "fixed inset-x-0 bottom-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
 
@@ -239,8 +239,8 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
 
     return (
         <div 
-            className={`${className} text-white flex bg-[#050506] backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} 
-            style={{ height: viewportHeight + 'px' }} 
+            className={`${className} text-white flex animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden`} 
+            style={{ height: window.innerWidth < 768 && viewportHeight > 96 ? (viewportHeight - 96) + 'px' : viewportHeight + 'px' }} 
             onClick={e => e.stopPropagation()}
         >
             {/* Sidebar / Menu */}
@@ -288,14 +288,14 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
             )}
 
             {/* Main Area */}
-            <div className="flex-1 flex flex-col relative h-full">
+            <div className="flex-1 flex flex-col relative h-full min-w-0">
                 {/* Background glow */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                     <div className="w-96 h-96 rounded-full blur-[120px] bg-amber-500/10" />
                 </div>
 
                 {/* Top bar (Header) */}
-                <div className="absolute top-3 left-3 right-3 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
+                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
                     <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarOpen && (
                             <button
@@ -314,17 +314,47 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                         </div>
                     </div>
 
-                    <button
-                        onClick={onClose}
-                        className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
-                    >
-                        <X size={16} className="md:size-5" />
-                    </button>
+                    <div className="flex items-center gap-2 pointer-events-auto">
+                        <button
+                            onClick={toggleRecording}
+                            className={`w-9 h-9 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 shadow-2xl ${
+                                isRecording
+                                    ? 'bg-red-500 text-white border-red-400 animate-pulse'
+                                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+                            }`}
+                            title="Hablar (Voz a Texto)"
+                        >
+                            <Mic size={16} className="md:size-5" />
+                        </button>
+
+                        <button
+                            onClick={handleSave}
+                            disabled={!diaryContent.trim()}
+                            className={`h-9 md:h-12 px-4 rounded-full border transition-all font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 shadow-2xl ${
+                                saveSuccess
+                                    ? 'bg-green-600 border-green-500 text-white'
+                                    : !diaryContent.trim()
+                                        ? 'bg-white/5 border-white/5 text-zinc-600 cursor-not-allowed'
+                                        : 'bg-amber-500 border-amber-400 text-black hover:bg-amber-400 hover:scale-105 active:scale-95'
+                            }`}
+                        >
+                            <Save size={12} />
+                            <span>{saveSuccess ? 'Guardado ✓' : (activeEntryId ? 'Actualizar' : 'Guardar')}</span>
+                        </button>
+
+                        <button
+                            onClick={onClose}
+                            className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
+                            title="Cerrar"
+                        >
+                            <X size={16} className="md:size-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-20 md:pt-32">
-                    <div className="max-w-2xl mx-auto px-6 space-y-6 pb-32">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-36 min-w-0">
+                    <div className="max-w-2xl mx-auto px-8 md:px-12 space-y-6 pb-32">
                         {/* Title input */}
                         <input 
                             value={diaryTitle}
@@ -345,38 +375,8 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                     </div>
                 </div>
 
-                {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-2 md:p-12 bg-[#050506]" style={{ paddingBottom: `max(8px, env(safe-area-inset-bottom))` }}>
-                    <div className="max-w-2xl mx-auto relative flex items-center gap-1.5 md:gap-3 px-2 py-1.5 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl overflow-hidden w-full">
-                        <button 
-                            onClick={toggleRecording}
-                            className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
-                            title="Hablar (Voz a Texto)"
-                        >
-                            <Mic size={15} className="md:size-[18px]" />
-                        </button>
-
-                        <div className="flex-1 text-[8px] md:text-[10px] text-zinc-500 font-mono tracking-widest uppercase pl-1 truncate min-w-0">
-                            {isRecording ? 'Escuchando tu voz...' : 'Escribe tu entrada...'}
-                        </div>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={!diaryContent.trim()}
-                            className={`px-3 py-2 md:px-5 md:py-2.5 rounded-full transition-all font-black uppercase tracking-widest text-[8px] md:text-[9px] flex items-center gap-1 shadow-xl shrink-0 ${
-                                saveSuccess 
-                                    ? 'bg-green-600 text-white' 
-                                    : !diaryContent.trim() 
-                                        ? 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/5'
-                                        : 'bg-amber-500 text-black hover:bg-amber-400 hover:scale-105 active:scale-95'
-                            }`}
-                        >
-                            <Save size={10} className="md:size-3" />
-                            <span>{saveSuccess ? 'Guardado ✓' : (activeEntryId ? 'Actualizar' : 'Guardar')}</span>
-                        </button>
-                    </div>
-                    <p className="text-center text-[7px] font-black uppercase text-zinc-950 tracking-[0.4em] mt-3 md:mt-6 select-none italic">Oasis Diary Module — v1.6</p>
-                </div>
+                {/* Empty footer space */}
+                <div className="pb-12" />
             </div>
         </div>
     );
