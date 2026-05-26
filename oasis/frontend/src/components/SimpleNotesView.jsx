@@ -53,7 +53,7 @@ const groupByDate = (notes) => {
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
-const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
+const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, user, onEditorToggle }, ref) => {
     const [selectedId, setSelectedId] = useState(null);
     const [search, setSearch] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -66,6 +66,16 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
     const textareaRef = useRef(null);
     const recognitionRef = useRef(null);
     const saveTimerRef = useRef(null);
+
+    React.useImperativeHandle(ref, () => ({
+        createNewNote
+    }));
+
+    useEffect(() => {
+        if (onEditorToggle) {
+            onEditorToggle(!!selectedId);
+        }
+    }, [selectedId, onEditorToggle]);
 
     // Visual viewport (iOS keyboard fix)
     useEffect(() => {
@@ -344,7 +354,7 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
     // ── LIST VIEW ──────────────────────────────────────────────────────────
     return (
         <div
-            className="fixed inset-0 z-[500] flex flex-col bg-[#080809] text-white"
+            className="fixed inset-0 z-[500] flex flex-col bg-[#080809] text-white pt-24 md:pt-28"
             style={{ height: viewportHeight + 'px' }}
         >
             {/* TOP BAR */}
@@ -461,6 +471,6 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
             </div>
         </div>
     );
-};
+});
 
 export default SimpleNotesView;

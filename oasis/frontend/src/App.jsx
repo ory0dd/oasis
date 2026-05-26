@@ -2474,14 +2474,6 @@ const ProfileView = ({
                             <Camera size={12} /> Cambiar Portada
                         </button>
                     )}
-                    {onOpenSimpleNotes && (
-                        <button
-                            onClick={onOpenSimpleNotes}
-                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95"
-                        >
-                            <List size={12} /> Notas
-                        </button>
-                    )}
                     <button
                         onClick={() => setIsSettingsOpen(true)}
                         className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
@@ -3068,7 +3060,11 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpen] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(false);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(true);
+    const [isSimpleNotesEditorOpen, setIsSimpleNotesEditorOpen] = useState(false);
+    const simpleNotesRef = useRef(null);
+    const composerLongPressTimerRef = useRef(null);
+    const isComposerLongPressRef = useRef(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [bgType, setBgType] = useState('color');
     const [bgValue, setBgValue] = useState('#030304');
@@ -3096,6 +3092,25 @@ export default function App() {
             window.guardarApiUrl(API_URL).catch(err => console.error("Error saving API_URL:", err));
         }
     }, [user]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Tab') {
+                const active = document.activeElement;
+                if (active && (
+                    active.tagName === 'INPUT' || 
+                    active.tagName === 'TEXTAREA' || 
+                    active.isContentEditable
+                )) {
+                    return;
+                }
+                e.preventDefault();
+                setIsSimpleNotesOpen(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [deepseekKey, setDeepseekKey] = useState(() => localStorage.getItem('oasis_deepseek_key') || ''); // DeepSeek API Key
@@ -6283,6 +6298,32 @@ export default function App() {
         setResStrange('');
         setTempMuralBlocks([]);
         setIsComposerOpen(true);
+    };
+
+    const handleComposerPointerDown = (e) => {
+        e.stopPropagation();
+        isComposerLongPressRef.current = false;
+        if (composerLongPressTimerRef.current) clearTimeout(composerLongPressTimerRef.current);
+        composerLongPressTimerRef.current = setTimeout(() => {
+            isComposerLongPressRef.current = true;
+            setIsSimpleNotesOpen(prev => !prev);
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, 600);
+    };
+
+    const handleComposerPointerUp = (e) => {
+        e.stopPropagation();
+        if (composerLongPressTimerRef.current) {
+            clearTimeout(composerLongPressTimerRef.current);
+            composerLongPressTimerRef.current = null;
+        }
+    };
+
+    const handleComposerPointerCancel = (e) => {
+        if (composerLongPressTimerRef.current) {
+            clearTimeout(composerLongPressTimerRef.current);
+            composerLongPressTimerRef.current = null;
+        }
     };
 
     const handleNewDiaryClick = () => {
@@ -10831,12 +10872,26 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             )}
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
-            {view === 'canvas' && (
-                <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar">
+            {(view === 'canvas' || (isSimpleNotesOpen && !isSimpleNotesEditorOpen)) && view !== 'soul' && view !== 'profile' && view !== 'clinical' && (
+                <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[600] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar">
                     <div className="relative group mx-0.5 shrink-0">
                         <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
                         <button
-                            onClick={(e) => { e.stopPropagation(); openNewComposer(); }}
+                            onPointerDown={handleComposerPointerDown}
+                            onPointerUp={handleComposerPointerUp}
+                            onPointerCancel={handleComposerPointerCancel}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isComposerLongPressRef.current) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                if (isSimpleNotesOpen) {
+                                    simpleNotesRef.current?.createNewNote();
+                                } else {
+                                    openNewComposer();
+                                }
+                            }}
                             className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
                             style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
                             title="Nueva Nota Libre"
@@ -10854,7 +10909,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setActiveNotebook('diary'); }}
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setActiveNotebook('diary'); }}
                         className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-amber-500 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110"
                         title="Libreta de Diario"
                     >
@@ -10862,7 +10917,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setActiveNotebook('resonance'); }}
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setActiveNotebook('resonance'); }}
                         className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-purple-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110"
                         title="Análisis de Ruido"
                     >
@@ -10870,7 +10925,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setView('soul'); }}
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setView('soul'); }}
                         className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
                         title="Archivo del Alma"
                     >
@@ -10878,7 +10933,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setView('profile'); }}
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(false); setView('profile'); }}
                         className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
                         title="Perfil"
                     >
@@ -10889,11 +10944,13 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
             {isSimpleNotesOpen && (
                 <SimpleNotesView
+                    ref={simpleNotesRef}
                     blocks={blocks}
                     setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
                     accent={accent}
                     user={user}
                     onClose={() => setIsSimpleNotesOpen(false)}
+                    onEditorToggle={setIsSimpleNotesEditorOpen}
                 />
             )}
 
