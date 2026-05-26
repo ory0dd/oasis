@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StickyNote, X, Plus, Save, Mic, PanelLeft, ChevronLeft } from 'lucide-react';
 
-export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = "fixed inset-0 z-[1500] bg-[#050506]/95 backdrop-blur-3xl" }) => {
+export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent, className = "fixed inset-0 z-[1500] bg-[#050506]/95 backdrop-blur-3xl" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
 
@@ -127,7 +127,12 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
         }
 
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
+        setTimeout(() => {
+            setSaveSuccess(false);
+            if (onFocusNode) {
+                onFocusNode(newBlock.x, newBlock.y);
+            }
+        }, 1200);
     };
 
     return (

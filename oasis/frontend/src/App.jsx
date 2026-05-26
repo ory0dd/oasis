@@ -5581,12 +5581,19 @@ export default function App() {
     }, [blocks, isLoggedIn, isDataLoaded]);
 
     const syncBlocks = (newBlocks) => {
+        setBlocks(newBlocks);
+        if (user) {
+            localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(newBlocks));
+        }
+
         if (!isLoggedIn || !user || !isDataLoaded) return;
         fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newBlocks)
-        }).then(() => fetchFeed()); // Refresh feed
+        }).then(() => fetchFeed()).catch(() => {
+            console.log('Saved locally (Offline Mode)');
+        });
     };
 
     const handleSaveProfile = useCallback((updates) => {
@@ -6183,6 +6190,8 @@ export default function App() {
 
     const mainCamAnimRef = useRef(null);
     const hasCenteredCanvasRef = useRef(false);
+    const canvasLastTapTimeRef = useRef(0);
+    const canvasLongPressTimerRef = useRef(null);
 
     const animateMainCamera = (targetX, targetY, targetScale = 0.8) => {
         const startX = cam.x;
@@ -7360,6 +7369,33 @@ ${searchContext}
             setLastInteractedBlockId(id);
         }
 
+        if (id === 'canvas' && e.touches && e.touches.length === 1) {
+            const now = Date.now();
+            if (now - canvasLastTapTimeRef.current < 300) {
+                // Double tap zoom in
+                clearTimeout(canvasLongPressTimerRef.current);
+                setCam(c => {
+                    const newScale = Math.min(c.scale + 0.5, 3);
+                    const newX = clientX - (clientX - c.x) * (newScale / c.scale);
+                    const newY = clientY - (clientY - c.y) * (newScale / c.scale);
+                    return { x: newX, y: newY, scale: newScale };
+                });
+                canvasLastTapTimeRef.current = 0;
+            } else {
+                canvasLastTapTimeRef.current = now;
+                if (canvasLongPressTimerRef.current) clearTimeout(canvasLongPressTimerRef.current);
+                canvasLongPressTimerRef.current = setTimeout(() => {
+                    // Long press zoom out
+                    setCam(c => {
+                        const newScale = Math.max(c.scale - 0.5, 0.1);
+                        const newX = window.innerWidth / 2 - ((window.innerWidth / 2) - c.x) * (newScale / c.scale);
+                        const newY = window.innerHeight / 2 - ((window.innerHeight / 2) - c.y) * (newScale / c.scale);
+                        return { x: newX, y: newY, scale: newScale };
+                    });
+                }, 500);
+            }
+        }
+
         if (e.touches && e.touches.length === 2) {
             initialPinchDist.current = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             initialPinchScale.current = cam.scale;
@@ -7397,6 +7433,7 @@ ${searchContext}
     };
 
     const handleMove = (e) => {
+        if (canvasLongPressTimerRef.current) clearTimeout(canvasLongPressTimerRef.current);
         const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
         const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
 
@@ -7551,6 +7588,7 @@ ${searchContext}
     };
 
     const handleEnd = () => {
+        if (canvasLongPressTimerRef.current) clearTimeout(canvasLongPressTimerRef.current);
         isPointerDown.current = false;
         if (draggingId && draggingId !== 'canvas' && draggingId !== 'universe' && draggingId !== 'feed' && draggingId !== 'player') {
             window.lastRelease = {
@@ -10630,8 +10668,9 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {activeNotebook === 'diary' && (
                 <DiaryNotebook
                     onClose={() => setActiveNotebook(null)}
+                    onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={syncBlocks}
+                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
                     accent={accent}
                 />
             )}
@@ -10639,8 +10678,9 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {activeNotebook === 'resonance' && (
                 <ResonanceNotebook
                     onClose={() => setActiveNotebook(null)}
+                    onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={syncBlocks}
+                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
                     accent={accent}
                 />
             )}
