@@ -85,8 +85,8 @@
         {
           "id": "1779528666517",
           "type": "diary_notebook",
-          "x": 1551.0597668588646,
-          "y": -2470.4421702686855,
+          "x": 1520,
+          "y": -2580,
           "content": "",
           "rotation": 0,
           "color": "#f59e0b",
@@ -202,7 +202,7 @@
         "playlistName": "",
         "position": 0,
         "isPlaying": false,
-        "lastUpdated": "2026-05-26T04:10:48.8797244Z"
+        "lastUpdated": "2026-05-26T04:29:40.7044968Z"
       },
       "conversations": [
         {

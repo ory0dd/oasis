@@ -2833,17 +2833,7 @@ export default function App() {
         localStorage.setItem('oasis_accent', accent);
     }, [accent]);
 
-    // Keyboard shortcuts (Escape to close composer)
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                setIsComposerOpen(false);
-                setIsMuralMode(false);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+
     const [blocks, setBlocks] = useState(INITIAL_BLOCKS);
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
     const [feed, setFeed] = useState([]);
@@ -2893,7 +2883,7 @@ export default function App() {
     }, [user]);
 
     // Psychometrics and Soul Archive states (moved to App level)
-    const [soulTab, setSoulTab] = useState('loop_map'); // 'loop_map' | 'memory' | 'tests'
+    const [soulTab, setSoulTab] = useState('tests'); // 'loop_map' | 'memory' | 'tests'
     const [activeTest, setActiveTest] = useState(null); // 'phenom' | 'pid5' | 'icar16' | null
     const [activeTestCardIndex, setActiveTestCardIndex] = useState(0);
 
@@ -2908,6 +2898,7 @@ export default function App() {
     const [icarVideos, setIcarVideos] = useState({});
     const icarVideosRef = useRef({});
     const icarWebcamRef = useRef(null);
+    const longPressTimerRef = useRef(null);
 
     const [phenomAnswers, setPhenomAnswers] = useState({});
     const [phenomQualitative, setPhenomQualitative] = useState({ antecedentes_origen: "", experiencia_insuficiencia: "", temporalidad_vivida: "", premisa_realidad: "" });
@@ -6071,20 +6062,27 @@ export default function App() {
         };
     }, []);
 
+
+
     useEffect(() => {
         if (view !== 'canvas') {
             hasCenteredCanvasRef.current = false;
             return;
         }
 
-        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0 && !hasCenteredCanvasRef.current) {
+        const hasDiary = blocks.some(b => b.type === 'diary_notebook');
+        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0 && hasDiary && !hasCenteredCanvasRef.current) {
             hasCenteredCanvasRef.current = true;
 
             const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
             const targetScale = 0.8;
             let targetX, targetY;
 
-            if (renderedBlocks.length === 0) {
+            const diaryBlock = renderedBlocks.find(b => b.type === 'diary_notebook');
+            if (diaryBlock) {
+                targetX = -diaryBlock.x * targetScale;
+                targetY = -diaryBlock.y * targetScale;
+            } else if (renderedBlocks.length === 0) {
                 targetX = 0;
                 targetY = 0;
             } else {
@@ -6148,6 +6146,87 @@ export default function App() {
     const [isPlaylistExpanded, setIsPlaylistExpanded] = useState(false);
     const [expandedPlaylistName, setExpandedPlaylistName] = useState('');
 
+    // Escape keyboard shortcut to exit subpages and spaces
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                if (selectedContemplationFact) {
+                    setSelectedContemplationFact(null);
+                    return;
+                }
+                if (activeTest) {
+                    setActiveTest(null);
+                    return;
+                }
+                if (isDrawingModalOpen) {
+                    setIsDrawingModalOpen(false);
+                    return;
+                }
+                if (isMuralMode) {
+                    setIsMuralMode(false);
+                    return;
+                }
+                if (isChatOpen) {
+                    setIsChatOpen(false);
+                    return;
+                }
+                if (activeNotebook) {
+                    setActiveNotebook(null);
+                    return;
+                }
+                if (isPlayerFull) {
+                    setIsPlayerFull(false);
+                    return;
+                }
+                if (isComposerOpen) {
+                    const currentBlock = blocks.find(b => b.id === editingId);
+                    const parentId = currentBlock?.metadata?.parentId;
+                    if (parentId) {
+                        const parentBlock = blocks.find(b => b.id === parentId);
+                        if (parentBlock) {
+                            editBlock(parentBlock);
+                            return;
+                        }
+                    }
+                    setIsComposerOpen(false);
+                    return;
+                }
+                if (view === 'soul') {
+                    setView('canvas');
+                    return;
+                }
+                if (view === 'profile') {
+                    if (isEditingProfile) {
+                        setIsEditingProfile(false);
+                    } else {
+                        setView('canvas');
+                    }
+                    return;
+                }
+                if (isSettingsOpen) {
+                    setIsSettingsOpen(false);
+                    return;
+                }
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [
+        selectedContemplationFact,
+        activeTest,
+        isDrawingModalOpen,
+        isMuralMode,
+        isChatOpen,
+        activeNotebook,
+        isPlayerFull,
+        isComposerOpen,
+        editingId,
+        blocks,
+        view,
+        isEditingProfile,
+        isSettingsOpen,
+        editBlock
+    ]);
 
     // Initialize queue with default tracks
     useEffect(() => {
@@ -7646,7 +7725,11 @@ ${searchContext}
                         const targetScale = 0.8;
                         let targetX, targetY;
 
-                        if (renderedBlocks.length === 0) {
+                        const diaryBlock = renderedBlocks.find(b => b.type === 'diary_notebook');
+                        if (diaryBlock) {
+                            targetX = -diaryBlock.x * targetScale;
+                            targetY = -diaryBlock.y * targetScale;
+                        } else if (renderedBlocks.length === 0) {
                             targetX = 0;
                             targetY = 0;
                         } else {
@@ -8461,17 +8544,12 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     {/* MINIMALIST HEADER WITH TAB NAVIGATION ONLY */}
                     <div className="flex items-center justify-center pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
-                        <button
-                            onClick={() => setView('canvas')}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl absolute left-0"
-                        >
-                            ← Volver
-                        </button>
+
 
                         <div className="flex bg-white/5 p-1 rounded-full border border-white/10 shadow-2xl backdrop-blur-md gap-0.5">
                             {[
-                                ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
                                 { id: 'tests', label: 'Pruebas de Consciencia', icon: Heart },
+                                ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
                                 { id: 'memory', label: 'Ecos de Memoria', icon: Aperture }
                             ].map(tab => {
                                 const Icon = tab.icon;
@@ -10233,7 +10311,42 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <div className="space-y-8">
                             <div className="space-y-4">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Utilidades de Red</span>
-                                <button onClick={() => setCam({ x: 0, y: 0, scale: 0.8 })} className="w-full py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:bg-white/10 hover:text-white transition-all border border-white/5">Recentrar Lienzo Maestro</button>
+                                <button 
+                                    onClick={() => {
+                                        const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
+                                        const targetScale = 0.8;
+                                        let targetX = 0;
+                                        let targetY = 0;
+                                        const diaryBlock = renderedBlocks.find(b => b.type === 'diary_notebook');
+                                        if (diaryBlock) {
+                                            targetX = -diaryBlock.x * targetScale;
+                                            targetY = -diaryBlock.y * targetScale;
+                                        } else if (renderedBlocks.length > 0) {
+                                            let minX = Infinity;
+                                            let maxX = -Infinity;
+                                            let minY = Infinity;
+                                            let maxY = -Infinity;
+                                            renderedBlocks.forEach(b => {
+                                                const bx = b.x !== undefined ? b.x : 0;
+                                                const by = b.y !== undefined ? b.y : 0;
+                                                const bw = getBWidth(b, false);
+                                                const bh = getBHeight(b, false);
+                                                if (bx - bw/2 < minX) minX = bx - bw/2;
+                                                if (bx + bw/2 > maxX) maxX = bx + bw/2;
+                                                if (by - bh/2 < minY) minY = by - bh/2;
+                                                if (by + bh/2 > maxY) maxY = by + bh/2;
+                                            });
+                                            const centerX = (minX + maxX) / 2;
+                                            const centerY = (minY + maxY) / 2;
+                                            targetX = -centerX * targetScale;
+                                            targetY = -centerY * targetScale;
+                                        }
+                                        setCam({ x: targetX, y: targetY, scale: targetScale });
+                                    }} 
+                                    className="w-full py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:bg-white/10 hover:text-white transition-all border border-white/5"
+                                >
+                                    Recentrar Lienzo Maestro
+                                </button>
                                 <button onClick={() => setProfileCam({ x: 0, y: 0, scale: 0.7 })} className="w-full py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:bg-white/10 transition-all border border-white/5">Resetear Mapa Santuario</button>
                                 <button onClick={() => { setPasswordInput(''); setPasswordError(false); setIsPasswordModalOpen(true); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>
                             </div>
@@ -10548,9 +10661,19 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                 <button onClick={() => inlineMediaInputRef.current.click()} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all" title="Adjuntar Archivo">
                                     <Paperclip size={14} className="md:size-[16px]" />
                                 </button>
-                                <button onClick={() => setIsDrawingModalOpen(true)} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all" title="Dibujo a Mano">
-                                    <Pencil size={14} className="md:size-[16px]" />
+                                <button
+                                    onClick={() => {
+                                        const title = prompt("Título de la subpágina:");
+                                        if (title !== null) {
+                                            handleAddAttribute(title);
+                                        }
+                                    }}
+                                    className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all"
+                                    title="Añadir Subpágina"
+                                >
+                                    <StickyNote size={14} className="md:size-[16px]" />
                                 </button>
+
                                 {(() => {
                                     const hasMuralData = editingId ? (blocks.find(b => b.id === editingId)?.muralBlocks?.length > 0) : (tempMuralBlocks?.length > 0);
                                     return (
@@ -10653,16 +10776,17 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                             )}
                                         </div>
 
-                                        {!isDiaryMode && editingId && (
-                                            <div className="w-full flex items-center flex-wrap gap-2 pb-6 border-b border-white/5 mb-6 animate-in fade-in duration-300">
-                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mr-2 flex items-center gap-1" style={{ color: accent }}>
-                                                    <FileText size={12} />
-                                                    Subpáginas:
-                                                </span>
+                                        {!isDiaryMode && (() => {
+                                            const childNotes = editingId ? blocks.filter(b => b.metadata?.parentId === editingId) : [];
+                                            if (childNotes.length === 0) return null;
+                                            return (
+                                                <div className="w-full flex items-center flex-wrap gap-2 pb-6 border-b border-white/5 mb-6 animate-in fade-in duration-300">
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mr-2 flex items-center gap-1" style={{ color: accent }}>
+                                                        <FileText size={12} />
+                                                        Subpáginas:
+                                                    </span>
 
-                                                {(() => {
-                                                    const childNotes = blocks.filter(b => b.metadata?.parentId === editingId);
-                                                    return childNotes.map((child, idx) => (
+                                                    {childNotes.map((child, idx) => (
                                                         <div key={child.id} className="group flex items-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-3 pr-1 py-1 transition-all animate-in zoom-in-95 duration-200">
                                                             <span
                                                                 onClick={() => editBlock(child)}
@@ -10677,35 +10801,10 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                 <X size={10} />
                                                             </button>
                                                         </div>
-                                                    ));
-                                                })()}
-
-                                                <div className="flex items-center gap-1 ml-auto">
-                                                    <input
-                                                        type="text"
-                                                        value={newAttrTitle}
-                                                        onChange={e => setNewAttrTitle(e.target.value)}
-                                                        placeholder="Añadir subpágina..."
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter') {
-                                                                e.preventDefault();
-                                                                handleAddAttribute(newAttrTitle);
-                                                            }
-                                                        }}
-                                                        className="bg-transparent border border-white/10 rounded-full px-3 py-1.5 text-[10px] text-white placeholder:text-zinc-600 focus:ring-1 focus:border-accent outline-none w-32 transition-all focus:w-48"
-                                                    />
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            handleAddAttribute(newAttrTitle);
-                                                        }}
-                                                        className="w-7 h-7 rounded-full bg-white/10 text-white hover:bg-accent hover:text-black hover:scale-105 active:scale-95 transition-all flex items-center justify-center shrink-0"
-                                                    >
-                                                        <Plus size={14} />
-                                                    </button>
+                                                    ))}
                                                 </div>
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
 
                                         {(() => {
                                             const currentMuralBlocks = editingId ? (blocks.find(b => b.id === editingId)?.muralBlocks || []) : tempMuralBlocks;
@@ -10980,19 +11079,34 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                 }} className="p-1 hover:bg-white/10 rounded-md text-zinc-600 hover:text-white transition-colors">
                                                                     <Plus size={14} />
                                                                 </button>
-                                                                <button onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setActiveMenu({ idx, type: 'actions' });
-                                                                }} className="p-1 hover:bg-white/10 rounded-md text-zinc-600 hover:text-white transition-colors cursor-grab active:cursor-grabbing">
-                                                                    <div className="grid grid-cols-2 gap-0.5 opacity-40 group-hover:opacity-100">
-                                                                        {[...Array(6)].map((_, i) => <div key={i} className="w-0.5 h-0.5 bg-current rounded-full" />)}
-                                                                    </div>
-                                                                </button>
                                                             </div>
 
                                                             {/* EDITABLE LINE */}
                                                             <textarea
                                                                 ref={idx === 0 ? firstLineRef : null}
+                                                                onContextMenu={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setActiveMenu({ idx, type: 'actions' });
+                                                                }}
+                                                                onTouchStart={(e) => {
+                                                                    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                                                                    longPressTimerRef.current = setTimeout(() => {
+                                                                        setActiveMenu({ idx, type: 'actions' });
+                                                                    }, 600);
+                                                                }}
+                                                                onTouchEnd={() => {
+                                                                    if (longPressTimerRef.current) {
+                                                                        clearTimeout(longPressTimerRef.current);
+                                                                        longPressTimerRef.current = null;
+                                                                    }
+                                                                }}
+                                                                onTouchMove={() => {
+                                                                    if (longPressTimerRef.current) {
+                                                                        clearTimeout(longPressTimerRef.current);
+                                                                        longPressTimerRef.current = null;
+                                                                    }
+                                                                }}
                                                                 className={`w-full bg-transparent border-none focus:ring-0 p-0 leading-[1.3] placeholder:text-zinc-900 resize-none overflow-hidden min-h-[1.5em] transition-all selection:bg-accent/20 typing-aura ${isHeading ? 'text-4xl md:text-5xl font-black text-white/95 mb-6 tracking-tight' :
                                                                     isQuote ? 'text-2xl md:text-3xl font-serif italic text-accent border-l-2 border-accent/30 pl-8 py-4 my-8 bg-accent/5 rounded-r-3xl' :
                                                                         isCode ? 'font-mono text-base text-cyan-400 bg-black/40 p-6 rounded-2xl border border-white/5 drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]' :
