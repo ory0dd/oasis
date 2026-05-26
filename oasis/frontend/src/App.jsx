@@ -10630,30 +10630,30 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
             {view === 'canvas' && (
-                <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 max-w-[95vw]">
-                    <div className="relative group mx-0.5">
+                <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar">
+                    <div className="relative group mx-0.5 shrink-0">
                         <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
                         <button
                             onClick={(e) => { e.stopPropagation(); openNewComposer(); }}
-                            className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
+                            className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
                             style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
                             title="Nueva Nota Libre"
                         >
-                            <Edit3 size={18} className="md:size-[22px] hover-float-icon" />
+                            <Edit3 size={16} className="md:size-[22px] hover-float-icon" />
                         </button>
                     </div>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
+                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
                         title="Nueva Conversación IA"
                     >
-                        <MessageCircle size={16} className="md:size-[20px] hover-float-icon transition-colors" />
+                        <MessageCircle size={14} className="md:size-[20px] hover-float-icon transition-colors" />
                     </button>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setActiveNotebook('diary'); }}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-amber-500 flex items-center justify-center shadow-lg transition-all duration-300 group hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110"
+                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-amber-500 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110"
                         title="Libreta de Diario"
                     >
                         <StickyNote size={14} className="md:size-[18px] hover-float-icon" />
@@ -10661,7 +10661,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setActiveNotebook('resonance'); }}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-purple-400 flex items-center justify-center shadow-lg transition-all duration-300 group hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110"
+                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-purple-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110"
                         title="Análisis de Ruido"
                     >
                         <Sparkles size={14} className="md:size-[18px] hover-float-icon" />
@@ -10669,18 +10669,18 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setView('soul'); }}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
+                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
                         title="Archivo del Alma"
                     >
-                        <Aperture size={16} className="md:size-[20px] hover-float-icon" />
+                        <Aperture size={14} className="md:size-[20px] hover-float-icon" />
                     </button>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setView('profile'); }}
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
+                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
                         title="Perfil"
                     >
-                        <User size={16} className="md:size-[20px] hover-float-icon" />
+                        <User size={14} className="md:size-[20px] hover-float-icon" />
                     </button>
                 </div>
             )}

@@ -235,8 +235,8 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                 </div>
 
                 {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-3 md:p-12">
-                    <div className="max-w-2xl mx-auto relative flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
+                <div className="relative z-10 p-2 md:p-12">
+                    <div className="max-w-2xl mx-auto relative flex items-center gap-1.5 md:gap-3 px-2 py-1.5 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl overflow-hidden w-full">
                         <button 
                             onClick={toggleRecording}
                             className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`}
@@ -245,14 +245,14 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                             <Mic size={15} className="md:size-[18px]" />
                         </button>
 
-                        <div className="flex-1 text-[9px] md:text-[10px] text-zinc-500 font-mono tracking-widest uppercase pl-1 truncate">
-                            {isRecording ? 'Escuchando tu voz...' : 'Escribe arriba tu entrada diaria'}
+                        <div className="flex-1 text-[8px] md:text-[10px] text-zinc-500 font-mono tracking-widest uppercase pl-1 truncate min-w-0">
+                            {isRecording ? 'Escuchando tu voz...' : 'Escribe tu entrada...'}
                         </div>
 
                         <button
                             onClick={handleSave}
                             disabled={!diaryContent.trim()}
-                            className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full transition-all font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 shadow-xl shrink-0 ${
+                            className={`px-3 py-2 md:px-5 md:py-2.5 rounded-full transition-all font-black uppercase tracking-widest text-[8px] md:text-[9px] flex items-center gap-1 shadow-xl shrink-0 ${
                                 saveSuccess 
                                     ? 'bg-green-600 text-white' 
                                     : !diaryContent.trim() 

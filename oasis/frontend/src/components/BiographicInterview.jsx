@@ -264,42 +264,42 @@ export const BiographicInterview = ({ username, activeVersion = 1, onClose, onCo
 
     if (!isStarted) {
         return (
-            <div className="max-w-3xl mx-auto space-y-4 md:space-y-8 animate-in slide-in-from-bottom duration-500 pt-4 md:pt-12">
-                <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Entrevista Biográfica</span>
-                    <button onClick={onClose} className="text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Salir de la Prueba</button>
+            <div className="max-w-3xl mx-auto space-y-3 md:space-y-8 animate-in slide-in-from-bottom duration-500 pt-2 md:pt-12 px-2">
+                <div className="flex justify-between items-center border-b border-white/5 pb-2 md:pb-4">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Entrevista Biográfica</span>
+                    <button onClick={onClose} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Salir</button>
                 </div>
 
-                <div className="bg-[#08080a] border border-white/5 rounded-2xl md:rounded-[2.5rem] p-4 md:p-12 shadow-2xl relative overflow-hidden">
+                <div className="bg-[#08080a] border border-white/5 rounded-2xl md:rounded-[2.5rem] p-3 sm:p-4 md:p-12 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none rounded-full" />
                     
-                    <div className="space-y-8 relative z-10">
-                        <div className="space-y-4">
-                            <h2 className="text-xl md:text-3xl font-serif italic text-white leading-tight tracking-tight">Antes de comenzar...</h2>
-                            <p className="text-xs md:text-lg text-zinc-300 font-sans leading-relaxed">
+                    <div className="space-y-4 md:space-y-8 relative z-10">
+                        <div className="space-y-2 md:space-y-4">
+                            <h2 className="text-lg md:text-3xl font-serif italic text-white leading-tight tracking-tight">Antes de comenzar...</h2>
+                            <p className="text-[10px] sm:text-xs md:text-lg text-zinc-300 font-sans leading-relaxed">
                                 "Antes de comenzar con las preguntas, quiero platicarte un poco sobre cómo será nuestra plática hoy. El objetivo de esta entrevista no es solo recopilar datos, sino identificar procesos emocionales profundos o complejos que estás viviendo. 
                                 <br/><br/>
                                 Es muy probable que al explorar esto surjan emociones difíciles o incomodidad; quiero que sepas que es completamente normal y esperado. Este es un espacio seguro para que te permitas sentir lo que sea que aparezca, sin juzgarlo y a tu propio ritmo."
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t border-white/5">
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Duración Estimada</span>
-                                <span className="text-xs md:text-sm text-zinc-200">15 - 20 minutos</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 pt-3 md:pt-4 border-t border-white/5">
+                            <div className="p-2 md:p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1">
+                                <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-emerald-400">Duración Estimada</span>
+                                <span className="text-[10px] md:text-sm text-zinc-200">15 - 20 minutos</span>
                             </div>
-                            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Recomendación del Entorno</span>
-                                <span className="text-sm font-bold text-white">Busca un lugar tranquilo (ej: tu cuarto o un parque seguro) para poder hablar de manera abierta.</span>
+                            <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1 md:gap-2">
+                                <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-emerald-400">Recomendación del Entorno</span>
+                                <span className="text-[10px] md:text-sm font-bold text-white">Busca un lugar tranquilo para poder hablar de manera abierta.</span>
                             </div>
                         </div>
 
-                        <div className="pt-6">
+                        <div className="pt-3 md:pt-6">
                             <button
                                 onClick={() => setIsStarted(true)}
-                                className="w-full py-4 md:py-5 rounded-xl md:rounded-2xl bg-emerald-900/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-600 hover:text-black font-black uppercase tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] text-[10px] md:text-xs"
+                                className="w-full py-3 md:py-5 rounded-xl md:rounded-2xl bg-emerald-900/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-600 hover:text-black font-black uppercase tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] text-[9px] md:text-xs"
                             >
-                                Iniciar Entrevista Clínica
+                                Iniciar Entrevista
                             </button>
                         </div>
                     </div>
@@ -309,23 +309,23 @@ export const BiographicInterview = ({ username, activeVersion = 1, onClose, onCo
     }
 
     return (
-        <div className="max-w-5xl mx-auto space-y-2 animate-in slide-in-from-bottom duration-500 pt-2">
+        <div className="max-w-5xl mx-auto space-y-2 animate-in slide-in-from-bottom duration-500 pt-2 h-full flex flex-col">
             {/* Header */}
-            <div className="flex justify-between items-center mb-1 px-1">
+            <div className="flex justify-between items-center mb-1 px-2">
                 <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-400">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-400 shrink-0">
                         <Camera size={10} />
                     </div>
                     <span className="text-[8px] font-mono uppercase text-zinc-500 tracking-widest">Tarjeta {currentIndex + 1} de {BIO_QUESTIONS.length}</span>
                 </div>
-                <button onClick={onClose} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-3 py-1 rounded-full">Salir</button>
+                <button onClick={onClose} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-3 py-1 rounded-full shrink-0">Salir</button>
             </div>
 
             {/* Layout: Video Left, Text/Controls Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-6 bg-[#08080a] border border-white/5 rounded-2xl lg:rounded-[2.5rem] p-2 sm:p-3 lg:p-6 shadow-2xl">
+            <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-6 bg-[#08080a] border border-white/5 rounded-2xl lg:rounded-[2.5rem] p-2 sm:p-3 lg:p-6 shadow-2xl">
                 
                 {/* Left Column: Video & Question Card */}
-                <div className="lg:col-span-7 flex flex-col gap-2 lg:gap-4">
+                <div className="lg:col-span-7 flex flex-col gap-2 lg:gap-4 h-full">
                     {/* Question Card */}
                     <div className="bg-emerald-950/20 border border-emerald-800/30 rounded-xl lg:rounded-3xl p-3 lg:p-6 relative overflow-hidden shadow-inner shrink-0">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[50px] pointer-events-none" />
@@ -333,12 +333,12 @@ export const BiographicInterview = ({ username, activeVersion = 1, onClose, onCo
                         <p className="text-sm sm:text-base lg:text-3xl font-serif italic text-white/90 leading-tight">"{BIO_QUESTIONS[currentIndex].text}"</p>
                     </div>
 
-                    {/* Video Player / Recording Studio Box */}
-                    <div className="relative w-full h-[240px] xs:h-[280px] lg:h-auto lg:aspect-video bg-black rounded-xl lg:rounded-3xl overflow-hidden border border-white/10 group shadow-2xl flex flex-col justify-between">
+                    {/* Video Player Box */}
+                    <div className="relative w-full h-[180px] xs:h-[220px] lg:h-auto lg:flex-1 lg:aspect-video bg-black rounded-xl lg:rounded-3xl overflow-hidden border border-white/10 group shadow-2xl flex flex-col justify-between shrink-0">
                         <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover scale-x-[-1]" />
                         
                         {/* Recording HUD */}
-                        <div className="absolute top-3 left-3 right-3 lg:top-5 lg:left-5 lg:right-5 flex justify-between items-start pointer-events-none z-10">
+                        <div className="absolute top-2 left-2 right-2 lg:top-5 lg:left-5 lg:right-5 flex justify-between items-start pointer-events-none z-10">
                             <div className="flex gap-2">
                                 <div className="px-2 py-1 lg:px-3 lg:py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 lg:gap-2">
                                     <Mic size={10} className={volume > 10 ? "text-emerald-400" : "text-white/50"} />
@@ -372,79 +372,79 @@ export const BiographicInterview = ({ username, activeVersion = 1, onClose, onCo
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        {/* Mobile transcription & controls overlay */}
-                        <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-col gap-2 lg:hidden pointer-events-auto">
-                            {/* Glassmorphic Live Transcription Card */}
-                            <div className="bg-black/75 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-[7px] font-black uppercase tracking-wider text-emerald-400/90 flex items-center gap-1">
-                                        <Activity size={10} className={isRecording && !isPaused ? "text-emerald-400 animate-pulse" : "text-zinc-500"} />
-                                        Traducción de Voz
-                                    </span>
-                                    <span className="text-[6px] font-mono text-zinc-400 uppercase tracking-widest">
-                                        {isRecording && !isPaused ? 'Habla ahora...' : 'Toca para editar'}
-                                    </span>
-                                </div>
-                                <textarea
-                                    value={
-                                        (transcriptions[currentIndex] || '') + 
-                                        (interimTranscript ? (((transcriptions[currentIndex] || '').trim() ? ' ' : '') + interimTranscript) : '')
-                                    }
-                                    onChange={handleTextChange}
-                                    disabled={isRecording && !isPaused}
-                                    placeholder="Tu voz aparecerá aquí..."
-                                    className="w-full bg-transparent text-xs text-white font-sans leading-relaxed resize-none focus:outline-none h-12 disabled:opacity-80"
-                                />
+                    {/* Mobile transcription & controls overlay (Moved OUTSIDE video) */}
+                    <div className="flex flex-col gap-2 lg:hidden flex-1 shrink-0">
+                        {/* Glassmorphic Live Transcription Card */}
+                        <div className="bg-black/50 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-sm h-[100px] flex flex-col">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-[7px] font-black uppercase tracking-wider text-emerald-400/90 flex items-center gap-1">
+                                    <Activity size={10} className={isRecording && !isPaused ? "text-emerald-400 animate-pulse" : "text-zinc-500"} />
+                                    Traducción
+                                </span>
+                                <span className="text-[6px] font-mono text-zinc-400 uppercase tracking-widest">
+                                    {isRecording && !isPaused ? 'Habla ahora...' : 'Toca para editar'}
+                                </span>
                             </div>
+                            <textarea
+                                value={
+                                    (transcriptions[currentIndex] || '') + 
+                                    (interimTranscript ? (((transcriptions[currentIndex] || '').trim() ? ' ' : '') + interimTranscript) : '')
+                                }
+                                onChange={handleTextChange}
+                                disabled={isRecording && !isPaused}
+                                placeholder="Tu voz aparecerá aquí..."
+                                className="w-full h-full bg-transparent text-xs text-white font-sans leading-relaxed resize-none focus:outline-none disabled:opacity-80"
+                            />
+                        </div>
 
-                            {/* Floating Action Buttons Overlay */}
-                            <div className="grid grid-cols-2 gap-2">
-                                {isRecording ? (
-                                    <>
-                                        <button
-                                            onClick={togglePause}
-                                            className={`py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
-                                                isPaused
-                                                    ? 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/20'
-                                                    : 'bg-black/60 backdrop-blur-md border-white/20 text-white'
-                                            }`}
-                                        >
-                                            {isPaused ? <Play size={12} /> : <Pause size={12} />}
-                                            <span>{isPaused ? 'Reanudar' : 'Pausar'}</span>
-                                        </button>
-                                        <button
-                                            onClick={toggleRecording}
-                                            className="py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all border bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20"
-                                        >
-                                            <Square size={12} className="fill-current" />
-                                            <span>Detener</span>
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={toggleRecording}
-                                            className="py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border bg-white text-black font-black uppercase tracking-wider shadow-lg"
-                                        >
-                                            <Mic size={12} />
-                                            <span>{hasRecorded[currentIndex] ? 'Re-grabar' : 'Grabar'}</span>
-                                        </button>
-                                        <button
-                                            onClick={handleNext}
-                                            disabled={!hasRecorded[currentIndex]}
-                                            className={`py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
-                                                hasRecorded[currentIndex]
-                                                    ? 'bg-emerald-500 border-emerald-400 text-black shadow-lg shadow-emerald-500/20'
-                                                    : 'bg-black/40 border-white/5 text-zinc-600 opacity-50 pointer-events-none'
-                                            }`}
-                                        >
-                                            <span>{currentIndex === BIO_QUESTIONS.length - 1 ? 'Finalizar' : 'Siguiente'}</span>
-                                            {currentIndex === BIO_QUESTIONS.length - 1 ? <Check size={12} /> : <ArrowRight size={12} />}
-                                        </button>
-                                    </>
-                                )}
-                            </div>
+                        {/* Floating Action Buttons Overlay */}
+                        <div className="grid grid-cols-2 gap-2 mt-auto pb-1">
+                            {isRecording ? (
+                                <>
+                                    <button
+                                        onClick={togglePause}
+                                        className={`py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
+                                            isPaused
+                                                ? 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/20'
+                                                : 'bg-white/5 border-white/20 text-white'
+                                        }`}
+                                    >
+                                        {isPaused ? <Play size={12} /> : <Pause size={12} />}
+                                        <span>{isPaused ? 'Reanudar' : 'Pausar'}</span>
+                                    </button>
+                                    <button
+                                        onClick={toggleRecording}
+                                        className="py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/20 text-[9px] font-black uppercase tracking-wider"
+                                    >
+                                        <Square size={12} className="fill-current" />
+                                        <span>Detener</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={toggleRecording}
+                                        className="py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border bg-white text-black font-black uppercase tracking-wider shadow-lg text-[9px]"
+                                    >
+                                        <Mic size={12} />
+                                        <span>{hasRecorded[currentIndex] ? 'Re-grabar' : 'Grabar'}</span>
+                                    </button>
+                                    <button
+                                        onClick={handleNext}
+                                        disabled={!hasRecorded[currentIndex]}
+                                        className={`py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
+                                            hasRecorded[currentIndex]
+                                                ? 'bg-emerald-500 border-emerald-400 text-black shadow-lg shadow-emerald-500/20'
+                                                : 'bg-white/5 border-white/5 text-zinc-600 opacity-50 pointer-events-none'
+                                        }`}
+                                    >
+                                        <span>{currentIndex === BIO_QUESTIONS.length - 1 ? 'Finalizar' : 'Siguiente'}</span>
+                                        {currentIndex === BIO_QUESTIONS.length - 1 ? <Check size={12} /> : <ArrowRight size={12} />}
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
