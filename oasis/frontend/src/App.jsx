@@ -5236,6 +5236,8 @@ export default function App() {
                         const data = await bgRes.json();
                         if (data && data.value && data.value !== '#030304') {
                             setBgType(data.type); setBgValue(data.value); setIsTiled(data.isTiled);
+                            // Cache locally for offline
+                            localStorage.setItem('oasis_bg_' + user, JSON.stringify({ type: data.type, value: data.value, isTiled: data.isTiled }));
                             gotBg = true;
                         }
                     }
@@ -5499,6 +5501,13 @@ export default function App() {
                         if (localBlocks) setBlocks(localBlocks);
                         const localLinks = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user));
                         if (localLinks) setLinks(localLinks);
+                        // Restore background from local cache
+                        const localBg = JSON.parse(localStorage.getItem('oasis_bg_' + user));
+                        if (localBg && localBg.value) {
+                            setBgType(localBg.type);
+                            setBgValue(localBg.value);
+                            setIsTiled(localBg.isTiled || false);
+                        }
                     } catch (e) {
                         console.error("No se pudo cargar el caché local:", e);
                     }
@@ -5508,6 +5517,53 @@ export default function App() {
             loadUserResonances();
         }
     }, [isLoggedIn, user, isDataLoaded]);
+
+    // ── SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO ──────────────────────
+    // Cuando el usuario vuelve a la pestaña/app (desde móvil a PC o viceversa),
+    // se re-obtienen bloques y vínculos del servidor silenciosamente.
+    useEffect(() => {
+        if (!isLoggedIn || !user || !isDataLoaded) return;
+
+        const fetchLatest = async () => {
+            try {
+                const [blocksRes, linksRes] = await Promise.all([
+                    fetch(`${API_URL}/api/oasis/blocks?user=${user}`),
+                    fetch(`${API_URL}/api/oasis/links?user=${user}`)
+                ]);
+                if (blocksRes.ok) {
+                    const data = await blocksRes.json();
+                    if (data && data.length > 0) {
+                        const filtered = data.filter(b => b.type !== 'insight');
+                        // Save to localStorage for offline
+                        localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(filtered));
+                        setBlocks(filtered);
+                    }
+                }
+                if (linksRes.ok) {
+                    const data = await linksRes.json();
+                    if (data) setLinks(data);
+                }
+            } catch (e) {
+                // Offline or server error — silently ignore, use current state
+            }
+        };
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchLatest();
+            }
+        };
+        const handleFocus = () => fetchLatest();
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [isLoggedIn, user, isDataLoaded]);
+    // ─────────────────────────────────────────────────────────────────────────
 
     const syncPlaylists = useCallback((newPlaylists) => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
@@ -5541,6 +5597,10 @@ export default function App() {
     }, [isLoggedIn, user, isDataLoaded]);
 
     const syncAura = (type, val, tiled) => {
+        // Always persist to localStorage for offline access
+        if (user) {
+            localStorage.setItem('oasis_bg_' + user, JSON.stringify({ type, value: val, isTiled: tiled }));
+        }
         if (!isLoggedIn || !user || !isDataLoaded) return;
         fetch(`${API_URL}/api/oasis/background?user=${user}`, {
             method: 'POST',
@@ -5825,6 +5885,8 @@ export default function App() {
                     setBgType(userData.background.type);
                     setBgValue(userData.background.value);
                     setIsTiled(userData.background.isTiled);
+                    // Cache locally for offline
+                    localStorage.setItem('oasis_bg_' + userData.username, JSON.stringify({ type: userData.background.type, value: userData.background.value, isTiled: userData.background.isTiled }));
                 }
                 if (userData.lastPlayback && userData.lastPlayback.queue && userData.lastPlayback.queue.length > 0) {
                     setPlayQueue(userData.lastPlayback.queue);
@@ -6206,7 +6268,7 @@ export default function App() {
     };
 
 
-    const [cam, setCam] = useState({ x: 0, y: 0, scale: 0.8 });
+    const [cam, setCam] = useState(() => ({ x: 0, y: 0, scale: window.innerWidth < 768 ? 0.45 : 0.8 }));
     const [profileCam, setProfileCam] = useState({ x: 0, y: 0, scale: 0.7 });
     const [feedCam, setFeedCam] = useState({ x: 0, y: 0, scale: 1 });
 
@@ -7261,17 +7323,36 @@ ${searchContext}
             });
             setEditingId(null);
         } else {
-            const newX = (-cam.x) / cam.scale;
-            const newY = (-cam.y) / cam.scale;
+            // Smart placement: cluster new notes near existing user notes
+            const userBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic && b.x !== undefined && b.y !== undefined);
+            let spawnX, spawnY;
+            if (userBlocks.length > 0) {
+                // Find centroid of existing notes
+                const cx = userBlocks.reduce((s, b) => s + b.x, 0) / userBlocks.length;
+                const cy = userBlocks.reduce((s, b) => s + b.y, 0) / userBlocks.length;
+                // Place near the centroid with a small random offset so notes don't stack
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 220 + Math.random() * 180;
+                spawnX = cx + Math.cos(angle) * dist;
+                spawnY = cy + Math.sin(angle) * dist;
+            } else {
+                // No notes yet: place at current camera center
+                spawnX = (-cam.x) / cam.scale;
+                spawnY = (-cam.y) / cam.scale;
+            }
+            // Snap to grid (20px)
+            spawnX = Math.round(spawnX / 20) * 20;
+            spawnY = Math.round(spawnY / 20) * 20;
+
             const newBlock = {
                 id: Date.now().toString(),
                 type: composerStep === 'note' ? 'text' : composerStep,
-                x: newX, y: newY,
+                x: spawnX, y: spawnY,
                 content: (composerStep === 'note' && !isDiaryMode) ? finalContent : mediaFile,
                 caption: caption || (isResonanceMode ? 'Resonancia' : 'Sin título'),
                 isPublic: shouldBePublic,
                 color: isDiaryMode ? '#f59e0b' : (isResonanceMode ? '#a855f7' : accent),
-                rotation: (Math.random() - 0.5) * 10,
+                rotation: (Math.random() - 0.5) * 6,
                 username: user || 'anon',
                 metadata: { origin: 'user_action', timestamp: new Date().toISOString() },
                 entries: (isDiaryMode && composerStep === 'note' && finalContent.trim())
