@@ -2037,7 +2037,7 @@ const ProfileView = ({
     setView, playlists, setPlayQueue, setCurrentTrack, setIsPlaying,
     avatar, setAvatar, calculatedResults, noteKeywords, bgType, bgValue,
     conversations, setConversations, handleSelectConversation,
-    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen
+    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen, onOpenSimpleNotes
 }) => {
     const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
     const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
@@ -2420,6 +2420,14 @@ const ProfileView = ({
                             className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in hover:scale-105 active:scale-95"
                         >
                             <Camera size={12} /> Cambiar Portada
+                        </button>
+                    )}
+                    {onOpenSimpleNotes && (
+                        <button
+                            onClick={onOpenSimpleNotes}
+                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95"
+                        >
+                            <List size={12} /> Notas
                         </button>
                     )}
                     <button
@@ -10431,6 +10439,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     onOpenNotebook={setActiveNotebook}
                                     setActiveTest={setActiveTest}
                                     setIsSettingsOpen={setIsSettingsOpen}
+                                    onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
                                 />
                             )}
             </div>
@@ -10788,14 +10797,6 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         title="Nueva Conversación IA"
                     >
                         <MessageCircle size={14} className="md:size-[20px] hover-float-icon transition-colors" />
-                    </button>
-
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setIsSimpleNotesOpen(true); }}
-                        className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group shrink-0 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
-                        title="Notas Simples"
-                    >
-                        <List size={14} className="md:size-[18px] hover-float-icon" />
                     </button>
 
                     <button
