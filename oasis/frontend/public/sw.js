@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ruido-interior-v1';
+const CACHE_NAME = 'ruido-interior-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,12 +25,32 @@ self.addEventListener('activate', (e) => {
 
 // Interceptar peticiones: Si no hay red, sirve desde Caché
 self.addEventListener('fetch', (e) => {
-  // Ignoramos peticiones a la API para que no se guarden en caché erróneamente
-  if (e.request.url.includes('/api/')) return;
+  // Ignoramos peticiones a la API o de extensiones
+  if (e.request.url.includes('/api/') || e.request.url.startsWith('chrome-extension')) return;
+  if (e.request.method !== 'GET') return;
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+      if (cachedResponse) {
+        return cachedResponse; // Lo tenemos en caché
+      }
+      
+      // Si no, lo bajamos de la red y lo cacheamos dinámicamente
+      return fetch(e.request).then((networkResponse) => {
+        // Validar respuesta (200 o 0 para recursos externos opacos)
+        if (!networkResponse || (networkResponse.status !== 200 && networkResponse.status !== 0)) {
+          return networkResponse;
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, responseToCache);
+        });
+
+        return networkResponse;
+      }).catch((err) => {
+        console.error('App offline y recurso no en caché:', e.request.url);
+      });
     })
   );
 });
