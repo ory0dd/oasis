@@ -2105,7 +2105,8 @@ const ProfileView = ({
     setView, playlists, setPlayQueue, setCurrentTrack, setIsPlaying,
     avatar, setAvatar, calculatedResults, noteKeywords, bgType, bgValue,
     conversations, setConversations, handleSelectConversation,
-    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen, onOpenSimpleNotes
+    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen, onOpenSimpleNotes,
+    openNewComposer
 }) => {
     const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
     const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
@@ -2678,6 +2679,119 @@ const ProfileView = ({
                                 </button>
                             ))}
                         </div>
+
+                        {/* COMPACT NOTES HUB (RECUADRO DE NOTAS DEBAJO DE FILTROS) */}
+                        <div className="w-full flex flex-col gap-3 mt-2 border-t border-white/5 pt-4">
+                            <div className="flex justify-between items-center px-1">
+                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                                    {releaseTab === 'all' ? 'Todos los Registros' : 
+                                     releaseTab === 'notes' ? 'Tus Notas' : 
+                                     releaseTab === 'diary' ? 'Entradas del Diario' : 
+                                     releaseTab === 'resonance' ? 'Tus Resonancias' : 
+                                     releaseTab === 'chats' ? 'Diálogos de Inteligencia' : 'Archivos Multimedia'}
+                                </span>
+                                
+                                <button
+                                    onClick={() => {
+                                        if (releaseTab === 'diary') openNewComposer?.(true, false);
+                                        else if (releaseTab === 'resonance') openNewComposer?.(false, true);
+                                        else if (releaseTab === 'chats') onNewChat?.();
+                                        else openNewComposer?.(false, false);
+                                    }}
+                                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-accent transition-all text-[8px] font-black uppercase tracking-widest active:scale-95 shrink-0"
+                                    style={{ color: accent }}
+                                >
+                                    <Plus size={10} />
+                                    {releaseTab === 'diary' ? 'Nuevo Diario' : 
+                                     releaseTab === 'resonance' ? 'Nueva Resonancia' : 
+                                     releaseTab === 'chats' ? 'Nuevo Diálogo' : 'Nueva Nota'}
+                                </button>
+                            </div>
+
+                            <div className="w-full max-h-[30vh] overflow-y-auto no-scrollbar pr-1">
+                                {filteredReleases.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
+                                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                            No se encontraron registros
+                                        </p>
+                                        <p className="text-[8px] text-zinc-600 mt-1">
+                                            Usa el botón superior para crear tu primer elemento en esta sección.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2 animate-fade-in">
+                                        {filteredReleases.map(b => {
+                                            const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                            const isDia = b.entries && b.entries.length > 0;
+                                            const isInsight = b.type === 'insight';
+                                            const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                                            const isImg = b.type === 'image' || b.type === 'relic';
+                                            const isChat = b.type === 'conversation' || b.isVirtual;
+
+                                            const noteColor = b.color || accent;
+                                            const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                                            const typeLabel = isChat ? 'AI' : (isRes ? 'Resonancia' : (isDia ? 'Diario' : (isImg ? 'Imagen' : (isInsight ? 'Revelación' : 'Nota'))));
+
+                                            let textSnippet = '';
+                                            if (isDia) {
+                                                textSnippet = b.entries[0]?.text || '';
+                                            } else if (isRes) {
+                                                const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                                textSnippet = resMatch ? resMatch[1].trim() : b.content.replace(/\[resonancia\]|\[impacto\]|\[extrano\]/g, '').trim();
+                                            } else if (isChat) {
+                                                let msgs = [];
+                                                try { msgs = JSON.parse(b.content) || []; } catch(e){}
+                                                textSnippet = msgs[msgs.length - 1]?.content || '';
+                                            } else {
+                                                textSnippet = b.content || '';
+                                            }
+
+                                            const timeString = b.metadata?.timestamp
+                                                ? new Date(b.metadata.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+                                                : '';
+
+                                            return (
+                                                <div
+                                                    key={b.id}
+                                                    onClick={() => handleCardClick(b.id)}
+                                                    className="group/note bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 rounded-xl p-3.5 transition-all duration-300 flex flex-col justify-between gap-3 text-left relative overflow-hidden cursor-pointer active:scale-[0.98]"
+                                                    style={{ borderLeft: `3px solid ${cardBorderColor}` }}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors">
+                                                            {typeLabel}
+                                                        </span>
+                                                        <span className="text-[7px] font-mono text-zinc-600">
+                                                            {timeString}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        {b.caption && (
+                                                            <h4 className="text-[11px] font-bold text-white/95 truncate leading-tight">
+                                                                {b.caption}
+                                                            </h4>
+                                                        )}
+                                                        <p className="text-[10px] text-zinc-400 font-sans line-clamp-2 leading-relaxed italic">
+                                                            {textSnippet || 'Sin contenido adicional'}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center mt-1 border-t border-white/[0.03] pt-2">
+                                                        <span className="text-[6px] font-bold text-zinc-600 group-hover/note:text-zinc-400 transition-colors uppercase tracking-widest">
+                                                            {b.isPublic ? 'Público' : 'Privado'}
+                                                        </span>
+                                                        <span className="text-[7px] font-mono text-accent opacity-0 group-hover/note:opacity-100 transition-opacity" style={{ color: accent }}>
+                                                            Abrir →
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -3059,7 +3173,7 @@ const ProfileView = ({
 // --- COMPONENTE PRINCIPAL ---
 
 export default function App() {
-    const [view, setView] = useState('canvas');
+    const [view, setView] = useState('profile');
     const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
@@ -3083,7 +3197,7 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpen] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(true);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpen] = useState(false);
     const [isSimpleNotesEditorOpen, setIsSimpleNotesEditorOpen] = useState(false);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
@@ -10573,6 +10687,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     setActiveTest={setActiveTest}
                                     setIsSettingsOpen={setIsSettingsOpen}
                                     onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
+                                    openNewComposer={openNewComposer}
                                 />
                             )}
             </div>
