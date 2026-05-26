@@ -115,7 +115,7 @@ namespace Oasis.Backend.Controllers
                 { 
                     Username = "ory11", 
                     Password = "pass123",
-                    FullName = "Oasis Admin",
+                    FullName = "Ory11",
                     Age = 25,
                     Background = new BackgroundConfig { Type = "color", Value = "#030304" }
                 });

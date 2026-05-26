@@ -1886,21 +1886,21 @@ const ProfileView = ({
         if (profileBlock) {
             try {
                 const data = JSON.parse(profileBlock.content);
-                if (data.bio) {
-                    setBio(data.bio);
-                    localStorage.setItem('oasis_bio_' + user, data.bio);
+                if (data.bio !== undefined) {
+                    setBio(data.bio || '');
+                    localStorage.setItem('oasis_bio_' + user, data.bio || '');
                 }
-                if (data.fullName) {
-                    setFullName(data.fullName);
-                    localStorage.setItem('oasis_fullname_' + user, data.fullName);
+                if (data.fullName !== undefined) {
+                    setFullName(data.fullName || '');
+                    localStorage.setItem('oasis_fullname_' + user, data.fullName || '');
                 }
-                if (data.coverImage) {
-                    setCoverImage(data.coverImage);
-                    localStorage.setItem('oasis_cover_' + user, data.coverImage);
+                if (data.coverImage !== undefined) {
+                    setCoverImage(data.coverImage || '');
+                    localStorage.setItem('oasis_cover_' + user, data.coverImage || '');
                 }
-                if (data.avatar) {
-                    setAvatar(data.avatar);
-                    localStorage.setItem('oasis_avatar_' + user, data.avatar);
+                if (data.avatar !== undefined) {
+                    setAvatar(data.avatar || '');
+                    localStorage.setItem('oasis_avatar_' + user, data.avatar || '');
                 }
                 return;
             } catch (e) {
@@ -2320,16 +2320,24 @@ const ProfileView = ({
                         {/* Name & Primary Buttons */}
                         <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
                             {isEditingProfile ? (
-                                <input
-                                    value={fullName}
-                                    onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
-                                    className="bg-transparent border-b border-white/20 text-3xl md:text-4xl font-black text-white tracking-tighter outline-none w-full md:w-auto font-sans focus:border-white transition-colors text-center sm:text-left uppercase"
-                                    placeholder="Tu Nombre"
-                                />
+                                <div className="flex flex-col gap-1 w-full items-center sm:items-start">
+                                    <input
+                                        value={fullName}
+                                        onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
+                                        className="bg-transparent border-b border-white/20 text-3xl md:text-4xl font-black text-white tracking-tighter outline-none w-full md:w-auto font-sans focus:border-white transition-colors text-center sm:text-left uppercase"
+                                        placeholder="Tu Nombre"
+                                    />
+                                    <span className="text-[10px] font-mono text-zinc-500 tracking-wider">@{user}</span>
+                                </div>
                             ) : (
-                                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
-                                    {fullName}
-                                </h1>
+                                <div className="flex flex-col items-center sm:items-start">
+                                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
+                                        {fullName}
+                                    </h1>
+                                    <span className="text-[10px] font-bold text-accent tracking-widest font-mono opacity-80 mt-0.5" style={{ color: accent }}>
+                                        @{user}
+                                    </span>
+                                </div>
                             )}
 
                             <div className="flex flex-wrap justify-center sm:justify-start gap-2">
@@ -5586,12 +5594,8 @@ export default function App() {
                 setUser(userData.username);
                 setIsLoggedIn(true);
                 localStorage.setItem('oasis_user', userData.username);
-                if (userData.fullName) {
-                    localStorage.setItem('oasis_fullname_' + userData.username, userData.fullName);
-                }
-                if (userData.age !== undefined && userData.age !== null) {
-                    localStorage.setItem('oasis_age_' + userData.username, userData.age.toString());
-                }
+                localStorage.setItem('oasis_fullname_' + userData.username, userData.fullName || '');
+                localStorage.setItem('oasis_age_' + userData.username, userData.age !== undefined && userData.age !== null ? userData.age.toString() : '');
                 if (userData.clinicalData) {
                     Object.keys(userData.clinicalData).forEach(key => {
                         localStorage.setItem(key, userData.clinicalData[key]);

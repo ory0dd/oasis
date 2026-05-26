@@ -202,7 +202,7 @@
         "playlistName": "",
         "position": 0,
         "isPlaying": false,
-        "lastUpdated": "2026-05-26T04:43:55.9397963Z"
+        "lastUpdated": "2026-05-26T05:05:22.8426721Z"
       },
       "conversations": [
         {
@@ -312,7 +312,12 @@
         "oasis_credits_somn": "100",
         "oasis_credits_clinical_test": "100",
         "oasis_fullname_floyd1": "floid",
-        "oasis_age_floyd1": "45"
+        "oasis_age_floyd1": "45",
+        "oasis_credits_susurro111": "100",
+        "oasis_credits_floyd1": "100",
+        "oasis_age_explorador": "25",
+        "oasis_fullname_explorador": "Explorador",
+        "oasis_credits_explorador": "100"
       }
     },
     {
@@ -1337,7 +1342,7 @@
         "playlistName": "",
         "position": 0,
         "isPlaying": false,
-        "lastUpdated": "2026-05-26T04:43:55.2387157Z"
+        "lastUpdated": "2026-05-26T05:05:22.4992582Z"
       },
       "conversations": [],
       "folders": [],
