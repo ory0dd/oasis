@@ -202,7 +202,7 @@
         "playlistName": "",
         "position": 0,
         "isPlaying": false,
-        "lastUpdated": "2026-05-25T08:19:50.2249542Z"
+        "lastUpdated": "2026-05-26T02:42:17.2474018Z"
       },
       "conversations": [
         {
@@ -1267,6 +1267,24 @@
       },
       "blocks": [
         {
+          "id": "1779762701537",
+          "type": "text",
+          "x": -1013.75,
+          "y": -870,
+          "content": "Esta es mi nota de prueba en la bitacora digital. Espero que todo se renderice correctamente en las diapositivas de snap vertical.",
+          "rotation": 0.06695930167251896,
+          "color": "#bef264",
+          "isPublic": true,
+          "caption": "Bitacora Test",
+          "username": "clinical_test",
+          "timestamp": "2026-05-26T02:31:41.5468666Z",
+          "metadata": {
+            "origin": "user_action",
+            "timestamp": "2026-05-26T02:31:41.537Z"
+          },
+          "folderId": ""
+        },
+        {
           "id": "anchor-diary-1779667679795",
           "type": "diary_notebook",
           "x": -700,
@@ -1319,7 +1337,7 @@
         "playlistName": "",
         "position": 0,
         "isPlaying": false,
-        "lastUpdated": "2026-05-25T03:10:29.0234902Z"
+        "lastUpdated": "2026-05-26T02:30:12.5462166Z"
       },
       "conversations": [],
       "folders": [],

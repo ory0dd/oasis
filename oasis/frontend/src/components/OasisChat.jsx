@@ -243,43 +243,50 @@ const OasisChat = ({
     return (
         <div className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000">
             {isSidebarVisible && (
-                <ChatSidebar
-                    conversations={conversations}
-                    activeConversationId={activeConversationId}
-                    onSelectConversation={handleSelectConversation}
-                    onDeleteConversation={handleDeleteConversation}
-                    onPinConversation={handlePinConversation}
-                    onRenameConversation={handleRenameConversation}
-                    onCreateFolder={handleCreateFolder}
-                    blocks={blocks}
-                    setBlocks={setBlocks}
-                    syncBlocks={syncBlocks}
-                    folders={folders}
-                    user={user}
-                    setConversations={setConversations}
-                    onSelectNote={(id) => handleSelectNote(id)}
-                    onClose={() => setIsSidebarVisible(false)}
-                    userMemory={userMemory}
-                    setUserMemory={setUserMemory}
-                    syncMemory={syncMemory}
-                    onNewChat={() => {
-                        onNewChat();
-                        if (window.innerWidth < 768) {
-                            setIsSidebarVisible(false);
-                        }
-                    }}
-                    playQueue={playQueue}
-                    currentTrack={currentTrack}
-                    isPlaying={isPlaying}
-                    setIsPlaying={setIsPlaying}
-                    setCurrentTrack={setCurrentTrack}
-                    handlePrevTrack={handlePrevTrack}
-                    handleNextTrack={handleNextTrack}
-                    audioRef={audioRef}
-                    accent={accent}
-                    setAccent={setAccent}
-                    onTogglePinFact={onTogglePinFact}
-                />
+                <>
+                    {/* Mobile backdrop overlay to close sidebar by tapping outside */}
+                    <div 
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1700] md:hidden animate-in fade-in duration-300 pointer-events-auto"
+                        onClick={() => setIsSidebarVisible(false)}
+                    />
+                    <ChatSidebar
+                        conversations={conversations}
+                        activeConversationId={activeConversationId}
+                        onSelectConversation={handleSelectConversation}
+                        onDeleteConversation={handleDeleteConversation}
+                        onPinConversation={handlePinConversation}
+                        onRenameConversation={handleRenameConversation}
+                        onCreateFolder={handleCreateFolder}
+                        blocks={blocks}
+                        setBlocks={setBlocks}
+                        syncBlocks={syncBlocks}
+                        folders={folders}
+                        user={user}
+                        setConversations={setConversations}
+                        onSelectNote={(id) => handleSelectNote(id)}
+                        onClose={() => setIsSidebarVisible(false)}
+                        userMemory={userMemory}
+                        setUserMemory={setUserMemory}
+                        syncMemory={syncMemory}
+                        onNewChat={() => {
+                            onNewChat();
+                            if (window.innerWidth < 768) {
+                                setIsSidebarVisible(false);
+                            }
+                        }}
+                        playQueue={playQueue}
+                        currentTrack={currentTrack}
+                        isPlaying={isPlaying}
+                        setIsPlaying={setIsPlaying}
+                        setCurrentTrack={setCurrentTrack}
+                        handlePrevTrack={handlePrevTrack}
+                        handleNextTrack={handleNextTrack}
+                        audioRef={audioRef}
+                        accent={accent}
+                        setAccent={setAccent}
+                        onTogglePinFact={onTogglePinFact}
+                    />
+                </>
             )}
 
             <div className="flex-1 flex flex-col relative h-full">
@@ -428,8 +435,8 @@ const OasisChat = ({
                     </div>
 
                     {/* COMMAND CENTER INPUT */}
-                    <div className="relative z-10 p-3 md:p-12">
-                        <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-all duration-500 shadow-2xl">
+                    <div className="relative z-10 px-3 pb-3 pt-1 md:px-12 md:pb-8 md:pt-4">
+                        <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-colors duration-300 shadow-2xl">
 
                             <div className="relative mb-0.5">
                                 <button onClick={() => setShowAttachmentMenu(!showAttachmentMenu)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${showAttachmentMenu ? 'bg-accent text-black rotate-45' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Plus size={16} className="md:size-5" /></button>
@@ -448,7 +455,6 @@ const OasisChat = ({
                             <textarea
                                 ref={textareaRef}
                                 rows={1}
-                                autoFocus
                                 value={input + (interimText ? (input.trim() ? ' ' : '') + interimText : '')}
                                 onChange={handleTextareaChange}
                                 onKeyDown={handleKeyDown}
@@ -464,7 +470,7 @@ const OasisChat = ({
                                 <Send size={15} className="md:size-[18px]" strokeWidth={3} />
                             </button>
                         </div>
-                        <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-3 md:mt-6 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
+                        <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-1 md:mt-2 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
                     </div>
                 </div>
             </div>

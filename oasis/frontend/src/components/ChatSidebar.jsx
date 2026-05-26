@@ -66,7 +66,7 @@ const ChatSidebar = ({
     };
 
     return (
-        <div className="fixed md:relative inset-y-0 left-0 w-full md:w-80 h-full bg-[#080809] border-r border-white/5 flex flex-col animate-in slide-in-from-left duration-500 z-[1750] shadow-2xl md:shadow-none transition-colors duration-1000">
+        <div className="fixed md:relative inset-y-0 left-0 w-[280px] sm:w-80 h-full bg-[#080809] border-r border-white/5 flex flex-col animate-in slide-in-from-left duration-300 z-[1750] shadow-2xl md:shadow-none transition-colors duration-1000">
             <div className="p-4 border-b border-white/[0.03] flex items-center gap-2">
                 <div className="flex bg-white/5 p-1 rounded-xl w-full">
                     <button onClick={() => setActiveTab('chats')} className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-widest transition-all ${activeTab === 'chats' ? 'bg-white/10 text-white shadow-md' : 'text-white/30 hover:text-white/60'}`}><MessageSquare size={10} /> Chats</button>

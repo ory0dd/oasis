@@ -1840,12 +1840,11 @@ const ProfileView = ({
     setView, playlists, setPlayQueue, setCurrentTrack, setIsPlaying,
     avatar, setAvatar, calculatedResults, noteKeywords, bgType, bgValue,
     conversations, setConversations, handleSelectConversation,
-    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest
+    onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen
 }) => {
     const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
     const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
     const [coverImage, setCoverImage] = useState(() => localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
-    const [profileTab, setProfileTab] = useState('board'); // 'board' | 'psychic'
 
     React.useEffect(() => {
         const profileBlock = blocks.find(b => b.id === 'profile_settings');
@@ -2144,799 +2143,603 @@ const ProfileView = ({
         };
     }, [calculatedResults, noteKeywords]);
 
+    const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+    const containerRef = useRef(null);
+    const isScrollingRef = useRef(false);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const slides = container.querySelectorAll('.profile-slide');
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const idx = parseInt(entry.target.getAttribute('data-index') || '0', 10);
+                        setActiveSlideIndex(idx);
+                    }
+                });
+            },
+            {
+                root: container,
+                threshold: 0.5,
+                rootMargin: "0px"
+            }
+        );
+
+        slides.forEach((slide) => observer.observe(slide));
+
+        const handleWheel = (e) => {
+            const targetTag = e.target.tagName?.toLowerCase();
+            if (targetTag === 'textarea' || targetTag === 'input' || e.target.closest('.no-wheel-snap')) {
+                return;
+            }
+
+            e.preventDefault();
+            if (isScrollingRef.current) return;
+
+            const direction = e.deltaY > 0 ? 1 : -1;
+            let nextIndex = activeSlideIndex + direction;
+            if (nextIndex < 0) nextIndex = 0;
+            if (nextIndex >= slides.length) nextIndex = slides.length - 1;
+
+            if (nextIndex === activeSlideIndex) return;
+
+            isScrollingRef.current = true;
+            const targetSlide = slides[nextIndex];
+            if (targetSlide) {
+                targetSlide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            setTimeout(() => {
+                isScrollingRef.current = false;
+            }, 800);
+        };
+
+        container.addEventListener('wheel', handleWheel, { passive: false });
+
+        return () => {
+            slides.forEach((slide) => observer.unobserve(slide));
+            container.removeEventListener('wheel', handleWheel);
+        };
+    }, [activeSlideIndex, filteredReleases, releaseTab]);
+
     return (
-        <div className="w-full h-full min-h-screen relative text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar">
-            {/* FIXED GRADIENT OVERLAY TO FADE GLOBAL BACKGROUND TO BLACK */}
-            <div className="fixed inset-0 z-0 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none" />
-
-            {/* 1. TOP BACKGROUND (IMAGE) */}
-            <div className="absolute top-0 left-0 w-full h-[80vh] z-0 pointer-events-none">
+        <div 
+            id="profile-scroll-container" 
+            ref={containerRef}
+            className="w-full h-screen relative text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar bg-[#0a0a0b]/85 backdrop-blur-xl snap-y snap-mandatory scroll-smooth will-change-scroll"
+        >
+            {/* 1. TOP COVER BANNER (BACKGROUND OF FIRST SLIDE) */}
+            <div className="absolute top-0 left-0 w-full h-[100vh] z-0 pointer-events-none overflow-hidden">
                 <div
-                    className="absolute inset-0 transition-all duration-1000 ease-in-out opacity-80"
+                    className="absolute inset-0 transition-all duration-700 ease-in-out"
                     style={{
                         backgroundImage: `url(${formatUrl(coverImage)})`,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center center'
+                        backgroundPosition: 'center center',
+                        opacity: activeSlideIndex === 0 ? 0.35 : 0.05
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-transparent to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0b]/60 to-[#0a0a0b]" />
             </div>
 
-            {/* 1B. BOTTOM BACKGROUND (IMAGE) */}
-            <div className="absolute bottom-0 left-0 w-full h-[80vh] z-0 pointer-events-none">
-                <div
-                    className="absolute inset-0 transition-all duration-1000 ease-in-out opacity-40"
-                    style={{
-                        backgroundImage: `url(${formatUrl(coverImage)})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center'
-                    }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-transparent to-transparent" />
-                {/* Fade starting from the top */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-transparent" />
-            </div>
-
-            {/* TOP NAVIGATION / ACTIONS OVERLAY */}
-            <div className="relative z-20 w-full p-6 md:p-10 flex justify-between items-start pointer-events-auto">
-                <button
-                    onClick={() => setView('canvas')}
-                    className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl"
-                >
-                    ← Volver
-                </button>
-
-                {isEditingProfile && (
+            {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
+            <div 
+                data-index={0}
+                className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-6 pb-6 px-6 md:px-10 z-10 overflow-hidden"
+            >
+                {/* TOP NAVIGATION / ACTIONS OVERLAY */}
+                <div className="w-full flex justify-between items-start pointer-events-auto">
                     <button
-                        onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                        className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl"
+                        onClick={() => setView('canvas')}
+                        className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl"
                     >
-                        <Camera size={12} /> Cambiar Portada
+                        ← Volver
                     </button>
-                )}
-                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-            </div>
 
-            {/* 2. PROFILE HERO CONTENT */}
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-10 mt-[10vh] md:mt-[20vh] pb-12 flex flex-col md:flex-row gap-8 items-end pointer-events-auto">
-                {/* Circular Avatar */}
-                <div className={`relative group/avatar shrink-0 w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
-                    {avatar ? (
-                        <img src={formatUrl(avatar)} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
-                    ) : (
-                        <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user || 'anon'}`} className="w-full h-full object-cover opacity-80" />
-                    )}
-                    {isEditingProfile && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm">
-                            <Camera size={24} className="text-white mb-2" />
-                            <span className="text-[8px] font-black uppercase tracking-widest text-white">Subir Foto</span>
-                        </div>
-                    )}
-                    <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                </div>
-
-                {/* Name & Primary Actions */}
-                <div className="flex-1 pb-2">
-                    {isEditingProfile ? (
-                        <input
-                            value={fullName}
-                            onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
-                            className="bg-transparent border-b border-white/20 text-4xl md:text-6xl font-black text-white tracking-tighter outline-none w-full md:w-auto font-sans mb-4 drop-shadow-lg focus:border-white transition-colors"
-                            placeholder="Tu Nombre"
-                        />
-                    ) : (
-                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 drop-shadow-2xl font-sans">
-                            {fullName}
-                        </h1>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex gap-2">
+                        {isEditingProfile && (
+                            <button
+                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in"
+                            >
+                                <Camera size={12} /> Cambiar Portada
+                            </button>
+                        )}
                         <button
-                            onClick={() => {
-                                if (isEditingProfile && onSaveProfile) {
-                                    onSaveProfile({ fullName, bio });
-                                }
-                                setIsEditingProfile(!isEditingProfile);
-                            }}
-                            className="px-6 md:px-8 py-2.5 md:py-3 rounded-[1rem] md:rounded-[1.25rem] text-[10px] md:text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-all"
-                            style={{
-                                backgroundColor: isEditingProfile ? 'rgba(255,255,255,0.1)' : accent,
-                                color: isEditingProfile ? 'white' : 'black',
-                                border: isEditingProfile ? '1px solid rgba(255,255,255,0.2)' : 'none',
-                                boxShadow: isEditingProfile ? 'none' : `0 0 20px ${accent}40`
-                            }}
+                            onClick={() => setIsSettingsOpen(true)}
+                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
                         >
-                            {isEditingProfile ? (
-                                <>Terminar Edición</>
-                            ) : (
-                                <><span className="w-2 h-2 rounded-full bg-black animate-pulse" /> Modificar Perfil</>
-                            )}
-                        </button>
-
-                        <button className="px-6 md:px-8 py-2.5 md:py-3 rounded-[1rem] md:rounded-[1.25rem] bg-white/10 hover:bg-white/20 border border-white/5 text-[10px] md:text-[11px] font-black uppercase tracking-widest text-white transition-all backdrop-blur-md">
-                            Compartir Alma
+                            <Settings size={12} className="hover:rotate-45 transition-transform duration-300" /> Configuración
                         </button>
                     </div>
+                    <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
+                </div>
+
+                {/* HERO MAIN CARD (CONSOLIDATED) */}
+                <div className={`w-full max-w-3xl mx-auto flex flex-col justify-center my-auto gap-4 md:gap-5 pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
+                    activeSlideIndex === 0 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                }`}>
+                    {/* Avatar & Name & Primary Actions Row */}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-2 border-b border-white/5">
+                        {/* Circular Avatar */}
+                        <div className={`relative group/avatar shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
+                            {avatar ? (
+                                <img src={formatUrl(avatar)} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
+                            ) : (
+                                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user || 'anon'}`} className="w-full h-full object-cover opacity-80" />
+                            )}
+                            {isEditingProfile && (
+                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm">
+                                    <Camera size={18} className="text-white mb-1" />
+                                    <span className="text-[7px] font-black uppercase tracking-widest text-white">Subir Foto</span>
+                                </div>
+                            )}
+                            <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
+                        </div>
+
+                        {/* Name & Primary Buttons */}
+                        <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
+                            {isEditingProfile ? (
+                                <input
+                                    value={fullName}
+                                    onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
+                                    className="bg-transparent border-b border-white/20 text-3xl md:text-4xl font-black text-white tracking-tighter outline-none w-full md:w-auto font-sans focus:border-white transition-colors text-center sm:text-left uppercase"
+                                    placeholder="Tu Nombre"
+                                />
+                            ) : (
+                                <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
+                                    {fullName}
+                                </h1>
+                            )}
+
+                            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                                <button
+                                    onClick={() => {
+                                        if (isEditingProfile && onSaveProfile) {
+                                            onSaveProfile({ fullName, bio });
+                                        }
+                                        setIsEditingProfile(!isEditingProfile);
+                                    }}
+                                    className="px-4 py-1.5 md:py-2 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all"
+                                    style={{
+                                        backgroundColor: isEditingProfile ? 'rgba(255,255,255,0.1)' : accent,
+                                        color: isEditingProfile ? 'white' : 'black',
+                                        border: isEditingProfile ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                                        boxShadow: isEditingProfile ? 'none' : `0 0 15px ${accent}40`
+                                    }}
+                                >
+                                    {isEditingProfile ? (
+                                        <>Terminar</>
+                                    ) : (
+                                        <><span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" /> Modificar Perfil</>
+                                    )}
+                                </button>
+
+                                <button className="px-4 py-1.5 md:py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-[9px] font-black uppercase tracking-widest text-white transition-all backdrop-blur-md">
+                                    Compartir Alma
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* BIO DESCRIPTION (COMPACT) */}
+                    <div className="w-full p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/5 shadow-xl">
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2 block text-left">Descripción</span>
+                        {isEditingProfile ? (
+                            <textarea
+                                value={bio}
+                                onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
+                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[70px]"
+                                placeholder="Escribe la descripción de tu alma o biografía..."
+                            />
+                        ) : (
+                            <p className="text-xs text-zinc-300 leading-relaxed font-sans text-left">
+                                {bio}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* BITÁCORA HUB FILTERS & UTILITIES (MERGED FROM SLIDE 2) */}
+                    <div className="w-full p-4 rounded-2xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2">
+                            <div className="flex items-center gap-2">
+                                <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
+                                <span className="text-[9px] font-black uppercase tracking-[0.15em]">Bitácora del Camino Existencial</span>
+                            </div>
+                            
+                            {/* Utility Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setIsSelectionMode(!isSelectionMode);
+                                        setSelectedIds([]);
+                                    }}
+                                    className={`px-3 py-1 rounded-full border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${isSelectionMode
+                                        ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20'
+                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+                                        }`}
+                                >
+                                    <CheckSquare size={10} />
+                                    {isSelectionMode ? 'Cancelar' : 'Seleccionar'}
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm("¿Estás seguro de eliminar todos los datos de prueba? Esta acción no se puede deshacer.")) {
+                                            deleteBlocks(blocks.map(b => b.id));
+                                        }
+                                    }}
+                                    className="px-3 py-1 rounded-full border border-red-900/30 bg-red-950/20 transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1 text-red-500 hover:bg-red-600 hover:text-black"
+                                >
+                                    <Trash2 size={10} />
+                                    Borrar Todo
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Horizontal scrolling chips list */}
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 whitespace-nowrap">
+                            {[
+                                { id: 'all', label: 'Todos' },
+                                { id: 'notes', label: 'Notas' },
+                                { id: 'diary', label: 'Diario' },
+                                { id: 'resonance', label: 'Resonancias' },
+                                { id: 'chats', label: 'Diálogos AI' },
+                                { id: 'images', label: 'Multimedia' }
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setReleaseTab(tab.id)}
+                                    className={`px-4 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
+                                        ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
+                                        : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
+                                        }`}
+                                    style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Animated Scroll Down Indicator */}
+                <div 
+                    className="flex flex-col items-center gap-1 animate-bounce cursor-pointer pb-2 pointer-events-auto"
+                    onClick={() => {
+                        const scrollContainer = document.getElementById('profile-scroll-container');
+                        if (scrollContainer) {
+                            scrollContainer.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+                        }
+                    }}
+                >
+                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para ver publicaciones</span>
+                    <ChevronDown size={12} className="text-zinc-500" />
                 </div>
             </div>
 
-            {/* 3. DETAILS PANELS */}
-            <div className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pb-32 flex flex-col gap-8 pointer-events-auto">
+            {/* SLIDES 3+: PUBLICACIONES / TARJETAS (TIKTOK STYLE INDIVIDUAL SCROLL SNAP) */}
+            {filteredReleases.length > 0 ? (
+                filteredReleases.map((b, index) => {
+                    const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                    const isDia = b.entries && b.entries.length > 0;
+                    const isInsight = b.type === 'insight';
+                    const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                    const isImg = b.type === 'image' || b.type === 'relic';
+                    const isChat = b.type === 'conversation';
+                    const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
 
-                {/* DESCRIPCIÓN */}
-                <div className="p-6 md:p-8 rounded-[2rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl">
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-6 border-b border-white/5 pb-3">Descripción</h3>
+                    const noteColor = b.color || accent;
+                    const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                    const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
+                    const isSelected = selectedIds.includes(b.id);
 
-                    {isEditingProfile ? (
-                        <textarea
-                            value={bio}
-                            onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                            className="w-full bg-black/30 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[120px]"
-                            placeholder="Escribe la descripción de tu alma o biografía..."
-                        />
-                    ) : (
-                        <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans">
-                            {bio}
-                        </p>
-                    )}
-                </div>
-
-                {/* TABS SELECTOR FOR BOARD OR CLINICAL STUDY */}
-                <div className="flex border-b border-white/5 pb-px gap-2">
-                    <button
-                        onClick={() => setProfileTab('board')}
-                        className={`pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${profileTab === 'board' ? 'text-accent' : 'text-zinc-500 hover:text-white'}`}
-                        style={profileTab === 'board' ? { color: accent } : undefined}
-                    >
-                        Bitácora Creativa
-                        {profileTab === 'board' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: accent }} />
-                        )}
-                    </button>
-                    <button
-                        onClick={() => setProfileTab('psychic')}
-                        className={`pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${profileTab === 'psychic' ? 'text-accent' : 'text-zinc-500 hover:text-white'}`}
-                        style={profileTab === 'psychic' ? { color: accent } : undefined}
-                    >
-                        Estructura Psíquica & Clínicas
-                        {profileTab === 'psychic' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: accent }} />
-                        )}
-                    </button>
-                </div>
-
-                {/* RENDERING DYNAMIC SECTION */}
-                {profileTab === 'psychic' ? (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        {/* SECCIÓN 1: PID-5 Y ARQUETIPO */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* TARGET ARQUETIPO CARD */}
-                            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden"
-                                 style={{ borderTop: `4px solid ${calculatedResults.isPid5Complete ? accent : 'rgba(255,255,255,0.05)'}` }}>
-                                {!calculatedResults.isPid5Complete ? (
-                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
-                                        <Layers size={36} className="text-zinc-600 mb-4 animate-pulse" />
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Estructura Existencial Bloqueada</h4>
-                                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test breve de personalidad PID-5 para trazar tu arquetipo clínico y estructura fenomenológica.</p>
-                                        <button onClick={() => { setActiveTest('pid5'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Realizar Test</button>
-                                    </div>
-                                ) : null}
-
-                                <div className="space-y-4">
-                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Arquetipo Dominante de Identidad</span>
-                                    <h2 className="text-3xl font-black italic tracking-tighter text-white font-sans uppercase">
-                                        {calculatedResults.archetype?.name}
-                                    </h2>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 font-mono">
-                                        {calculatedResults.archetype?.subtitle}
-                                    </p>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-white/5">
-                                        <div className="space-y-1">
-                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Vulnerabilidad Nuclear</span>
-                                            <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">{calculatedResults.archetype?.vulnerability}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Respuesta de Bloqueo</span>
-                                            <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">{calculatedResults.archetype?.blockage}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Camino de Liberación</span>
-                                            <p className="text-[10px] leading-relaxed text-accent font-sans" style={{ color: accent }}>{calculatedResults.archetype?.liberation}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* PID-5 SUBDOMINIOS SCORES */}
-                            <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-                                {!calculatedResults.isPid5Complete ? (
-                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
-                                        <Activity size={32} className="text-zinc-600 mb-4" />
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-500">Sin Datos de Subdominios</h4>
-                                    </div>
-                                ) : null}
-
-                                <div className="space-y-6 w-full">
-                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Subdominios de Personalidad (PID-5)</span>
-                                    
-                                    <div className="space-y-4">
-                                        {[
-                                            { key: 'AfectividadNegativa', label: 'Afectividad Negativa', max: 15 },
-                                            { key: 'Desapego', label: 'Desapego', max: 15 },
-                                            { key: 'Antagonismo', label: 'Antagonismo', max: 15 },
-                                            { key: 'Desinhibicion', label: 'Desinhibición', max: 15 },
-                                            { key: 'Psicoticismo', label: 'Psicoticismo', max: 10 }
-                                        ].map(dom => {
-                                            const score = calculatedResults.pidScores?.[dom.key] || 0;
-                                            const percentage = Math.min((score / dom.max) * 100, 100);
-                                            const isDominant = calculatedResults.dominantDomain === dom.key;
-                                            return (
-                                                <div key={dom.key} className="space-y-1.5">
-                                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider">
-                                                        <span className={isDominant ? "text-accent" : "text-zinc-400"} style={isDominant ? { color: accent } : undefined}>
-                                                            {dom.label} {isDominant && "★"}
-                                                        </span>
-                                                        <span className="font-mono text-zinc-500">{score} / {dom.max}</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full rounded-full transition-all duration-1000"
-                                                            style={{ 
-                                                                width: `${percentage}%`,
-                                                                backgroundColor: isDominant ? accent : 'rgba(255, 255, 255, 0.25)',
-                                                                boxShadow: isDominant ? `0 0 10px ${accent}80` : 'none'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* SECCIÓN 2: COGNITIVO ICAR-16 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* DETAILED STATS GRID */}
-                            <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-                                {!calculatedResults.isIcarComplete ? (
-                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
-                                        <Zap size={36} className="text-zinc-600 mb-4 animate-pulse" />
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Procesamiento Bloqueado</h4>
-                                        <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test ICAR-16 para mapear tus velocidades y habilidades de procesamiento analítico.</p>
-                                        <button onClick={() => { setActiveTest('icar16'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Realizar Test</button>
-                                    </div>
-                                ) : null}
-
-                                <div className="space-y-6 w-full">
-                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Procesamiento Cognitivo (ICAR-16)</span>
-
-                                    <div className="grid grid-cols-3 gap-4 text-center">
-                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
-                                            <span className="text-2xl font-black italic tracking-tighter text-accent font-sans" style={{ color: accent }}>
-                                                {calculatedResults.score}/16
-                                            </span>
-                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Aciertos</span>
-                                        </div>
-                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
-                                            <span className="text-2xl font-black italic tracking-tighter text-white font-sans">
-                                                {calculatedResults.dwellAvg}s
-                                            </span>
-                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Reacción</span>
-                                        </div>
-                                        <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
-                                            <span className="text-2xl font-black italic tracking-tighter text-white font-sans">
-                                                {calculatedResults.totalChanges}
-                                            </span>
-                                            <span className="text-[6px] font-black text-zinc-500 uppercase tracking-widest mt-1">Titubeos</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1.5">
-                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 block">Estilo de Ejecución Atencional</span>
-                                        <p className="text-[10px] font-black uppercase tracking-wider text-accent italic" style={{ color: accent }}>
-                                            {calculatedResults.estado_cognitivo?.estilo_ejecucion === 'eficiente' ? 'Alta Eficiencia Analítica' : 
-                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'impulsivo' ? 'Desconexión / Estilo Impulsivo' :
-                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'analítico_sostenido' ? 'Procesamiento Analítico Sostenido' : 'Sobrecarga Cognitiva'}
-                                        </p>
-                                        <p className="text-[9px] leading-relaxed text-zinc-400 font-sans">
-                                            {calculatedResults.estado_cognitivo?.estilo_ejecucion === 'eficiente' ? 'Procesamiento de alta precisión a velocidades óptimas, sugiriendo alta automatización visoespacial.' :
-                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'impulsivo' ? 'Baja persistencia en el razonamiento de problemas complejos. Respuestas rápidas pero imprecisas.' :
-                                             calculatedResults.estado_cognitivo?.estilo_ejecucion === 'analítico_sostenido' ? 'Alta inversión de tiempo de procesamiento garantizando máxima exactitud en la resolución atencional.' : 
-                                             'Sobrecarga en la memoria de trabajo ejecutivo que desencadena saturación rápida y fatiga.'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* COGNITIVE DIMENSIONS BREAKDOWN */}
-                            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl flex flex-col justify-between relative overflow-hidden">
-                                {!calculatedResults.isIcarComplete ? (
-                                    <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
-                                        <Database size={32} className="text-zinc-600 mb-4" />
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-zinc-500">Sin Dimensiones de Inteligencia</h4>
-                                    </div>
-                                ) : null}
-
-                                <div className="space-y-4 w-full">
-                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Análisis por Dominios de Razonamiento</span>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {[
-                                            { key: 'verbal', label: 'Razonamiento Verbal / Lógico' },
-                                            { key: 'visuospatial', label: 'Razonamiento Rotacional 3D' },
-                                            { key: 'sequential', label: 'Lógica Secuencial / Patrones' },
-                                            { key: 'inductive', label: 'Inferencia Inductiva' }
-                                        ].map(dim => {
-                                            const details = calculatedResults.indices_referencia?.dimensions?.[dim.key] || { correct: 0, average_dwell: 0, status: 'normal', interpretation: '' };
-                                            return (
-                                                <div key={dim.key} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col justify-between space-y-2">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <h5 className="text-[9px] font-black uppercase tracking-wider text-white">{dim.label}</h5>
-                                                            <span className="text-[7px] text-zinc-500 font-mono uppercase">Reactivos correctos: {details.correct} de 4</span>
-                                                        </div>
-                                                        <span className="px-2 py-0.5 rounded bg-white/10 text-[6px] font-mono font-black uppercase text-zinc-400">
-                                                            {details.status}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[9px] leading-relaxed text-zinc-400 font-sans italic">
-                                                        "{details.interpretation}"
-                                                    </p>
-                                                    <div className="flex gap-2 text-[6px] font-mono font-black text-zinc-500 uppercase tracking-widest pt-1 border-t border-white/5">
-                                                        <span>Dwell: {details.average_dwell}s</span>
-                                                        <span>•</span>
-                                                        <span>Cambios: {details.total_changes || 0}</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* SECCIÓN 3: FORMULACIÓN DE CASO FUNCIONAL */}
-                        <div className="p-8 rounded-[2.5rem] bg-black/40 backdrop-blur-md border border-white/5 shadow-2xl relative overflow-hidden"
-                             style={{ borderTop: `4px solid ${calculatedResults.isPhenomComplete && calculatedResults.isPid5Complete ? accent : 'rgba(255,255,255,0.05)'}` }}>
-                            {!calculatedResults.isPhenomComplete || !calculatedResults.isPid5Complete ? (
-                                <div className="absolute inset-0 bg-[#09090b]/85 backdrop-blur-md z-10 flex flex-col items-center justify-center p-6 text-center">
-                                    <Compass size={36} className="text-zinc-600 mb-4 animate-pulse" />
-                                    <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">Formulación de Caso Bloqueada</h4>
-                                    <p className="text-[9px] text-zinc-600 uppercase tracking-wider max-w-xs mb-6">Completa el test Fenomenológico Cualitativo y el PID-5 para sintetizar la formulación clínica funcional de tu psique.</p>
-                                    <button onClick={() => { setActiveTest('phenom'); setView('soul'); }} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-[9px] font-black uppercase tracking-widest text-white transition-all hover:scale-105 active:scale-95">Comenzar Fenomenología</button>
-                                </div>
-                            ) : null}
-
-                            <div className="space-y-6">
-                                <div>
-                                    <span className="text-[7px] font-black tracking-widest text-zinc-500 uppercase font-mono block">Ecosistema Dinámico</span>
-                                    <h3 className="text-xl font-black uppercase italic tracking-tight text-white mt-1">Formulación de Caso Clínico Funcional</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
-                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>01</div>
-                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">A. Disparador / Antecedente</h5>
-                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
-                                            {calculatedResults.isPhenomComplete ? (
-                                                <>Susceptibilidad y reactividad emocional cuando enfrentas densidades existenciales como: <span className="text-accent" style={{ color: accent }}>"{noteKeywords.slice(0, 3).join(', ') || 'ideas caóticas'}"</span>. Sueles percibir el caos como una amenaza existencial directa.</>
-                                            ) : 'Vacío'}
-                                        </p>
-                                    </div>
-                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
-                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>02</div>
-                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">B. Vulnerabilidad Nuclear</h5>
-                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
-                                            {calculatedResults.isPid5Complete ? (
-                                                <>La base de tu vulnerabilidad nuclear fenomenológica se asienta en: <span className="italic text-zinc-400">"{calculatedResults.archetype?.vulnerability}"</span>. Actúa como el filtro a través del cual moldeas tus miedos en el lienzo.</>
-                                            ) : 'Vacío'}
-                                        </p>
-                                    </div>
-                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
-                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>03</div>
-                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">C. Respuesta de Evitación</h5>
-                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
-                                            {calculatedResults.isPid5Complete ? (
-                                                <>Ante la sobrecarga conceptual y emocional, respondes activando un bucle protector de <span className="font-bold text-white uppercase">{calculatedResults.archetype?.subtitle}</span>, manifestándose en el bloqueo: <span className="text-red-400 font-sans">"{calculatedResults.archetype?.blockage}"</span>.</>
-                                            ) : 'Vacío'}
-                                        </p>
-                                    </div>
-                                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2 relative">
-                                        <div className="w-6 h-6 rounded-full bg-accent/20 border border-accent/40 text-[9px] font-black flex items-center justify-center text-accent font-mono mb-2" style={{ color: accent, borderColor: accent }}>04</div>
-                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-zinc-400">D. Bucle Autoperpetuador</h5>
-                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans">
-                                            {calculatedResults.isPid5Complete ? (
-                                                <>Aunque el repliegue disminuye la ansiedad en el corto plazo, a largo plazo refuerza la vulnerabilidad existencial primordial, consolidando un bucle psicológico que frena tu libertad creativa en el canvas.</>
-                                            ) : 'Vacío'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    /* CREATIVE BOARD / FEED (LEGACY CONTENT WELL STYLE) */
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        {/* THE CREATIVE BOARD */}
-                        <div className="space-y-8">
-                            <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b border-white/5 pb-4">
-                                <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                                    <Compass size={18} className="text-accent" style={{ color: accent }} />
-                                    <div>
-                                        <h3 className="text-xl font-black uppercase italic tracking-tight">Bitácora del Camino Existencial</h3>
-                                        <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Espacio descriptivo para la auto-indagación y disolución del ruido interno</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2 items-center">
-                                    {[
-                                        { id: 'all', label: 'Todos' },
-                                        { id: 'notes', label: 'Notas' },
-                                        { id: 'diary', label: 'Diario' },
-                                        { id: 'resonance', label: 'Resonancias' },
-                                        { id: 'chats', label: 'Diálogos AI' },
-                                        { id: 'images', label: 'Multimedia' }
-                                    ].map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setReleaseTab(tab.id)}
-                                            className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
-                                                ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
-                                                : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
-                                                }`}
-                                            style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-
-                                    <div className="w-px h-4 bg-white/10 mx-1 hidden sm:block" />
-
-                                    <button
-                                        onClick={() => {
-                                            setIsSelectionMode(!isSelectionMode);
-                                            setSelectedIds([]);
-                                        }}
-                                        className={`px-4 py-1.5 rounded-full border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${isSelectionMode
-                                            ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
-                                            : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
-                                            }`}
-                                    >
-                                        <CheckSquare size={10} />
-                                        {isSelectionMode ? 'Cancelar' : 'Seleccionar'}
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm("¿Estás seguro de eliminar todos los datos de prueba? Esta acción no se puede deshacer.")) {
-                                                deleteBlocks(blocks.map(b => b.id));
-                                            }
-                                        }}
-                                        className="px-4 py-1.5 rounded-full border border-red-900/30 bg-red-950/20 transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 text-red-500 hover:bg-red-600 hover:text-black shadow-lg"
-                                        title="Restablecer Pizarrón / Borrar Todo"
-                                    >
-                                        <Trash2 size={10} />
-                                        Borrar Todo
-                                    </button>
-                                </div>
-                            </div>
-
-                            {filteredReleases.length > 0 ? (
-                                <>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-[280px] grid-flow-dense pb-8 pt-2 w-full">
-                                        {filteredReleases.map(b => {
-                                            const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                            const isDia = b.entries && b.entries.length > 0;
-                                            const isInsight = b.type === 'insight';
-                                            const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-                                            const isImg = b.type === 'image' || b.type === 'relic';
-                                            const isChat = b.type === 'conversation';
-                                            const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
-
-                                            const noteColor = b.color || accent;
-                                            const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
-                                            const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
-                                            const isSelected = selectedIds.includes(b.id);
-
-                                            // SUDOKU TILE LOGIC (Masonry / Windows Tiles)
-                                            let spanClass = "col-span-1 row-span-1";
-                                            if (isImg) {
-                                                spanClass = "col-span-1 sm:col-span-2 row-span-2";
-                                            } else if (hasSubNotes) {
-                                                spanClass = "col-span-1 sm:col-span-2 md:col-span-3 row-span-1 lg:row-span-2";
-                                            } else if (isDia || isChat) {
-                                                spanClass = "col-span-1 sm:col-span-2 row-span-1 md:row-span-2";
-                                            } else if (isNote && b.content && b.content.length > 250) {
-                                                spanClass = "col-span-1 sm:col-span-2 row-span-1 lg:row-span-2";
-                                            } else if (isNote && b.content && b.content.length > 120) {
-                                                spanClass = "col-span-1 row-span-2";
-                                            }
-
-                                            return (
-                                                <div
-                                                    key={b.id}
-                                                    onClick={() => handleCardClick(b.id)}
-                                                    draggable={!isSelectionMode}
-                                                    onDragStart={(e) => {
-                                                        e.dataTransfer.setData("text/plain", b.id);
-                                                        e.dataTransfer.effectAllowed = "move";
+                    const isActive = activeSlideIndex === (index + 1);
+                    return (
+                        <div 
+                            key={b.id || index} 
+                            data-index={index + 1}
+                            className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                        >
+                            <div
+                                onClick={() => handleCardClick(b.id)}
+                                draggable={!isSelectionMode}
+                                onDragStart={(e) => {
+                                    e.dataTransfer.setData("text/plain", b.id);
+                                    e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    if (dragOverId !== b.id) setDragOverId(b.id);
+                                }}
+                                onDragLeave={() => {
+                                    if (dragOverId === b.id) setDragOverId(null);
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    setDragOverId(null);
+                                    const draggedId = e.dataTransfer.getData("text/plain");
+                                    handleReorderBlocks(draggedId, b.id);
+                                }}
+                                className={`w-full max-w-3xl h-[65vh] md:h-[70vh] bg-black/40 border rounded-[2.5rem] p-6 md:p-8 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${
+                                    isActive
+                                        ? 'scale-100 opacity-100 blur-0'
+                                        : 'scale-90 opacity-20 blur-[1px]'
+                                } ${isSelectionMode
+                                    ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
+                                    : 'border-white/10 hover:border-white/20'
+                                }`}
+                                style={{
+                                    borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
+                                    borderColor: dragOverId === b.id ? accent : '',
+                                    boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
+                                    opacity: dragOverId === b.id ? 0.7 : ''
+                                }}
+                            >
+                                {/* Header Info */}
+                                <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity pb-2 border-b border-white/5">
+                                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
+                                        {typeLabel}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {isSelectionMode ? (
+                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
+                                                ? 'bg-red-500 border-red-500 text-white'
+                                                : 'border-white/30 bg-black/40'
+                                                }`}>
+                                                {isSelected && <Check size={8} />}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="text-[7px] font-mono text-zinc-600">
+                                                    {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (b.isVirtual) {
+                                                            if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
+                                                                const updated = conversations.filter(c => c.id !== b.id);
+                                                                setConversations(updated);
+                                                                fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify(updated)
+                                                                });
+                                                            }
+                                                        } else {
+                                                            deleteBlock(b.id);
+                                                        }
                                                     }}
-                                                    onDragOver={(e) => {
-                                                        e.preventDefault();
-                                                        if (dragOverId !== b.id) setDragOverId(b.id);
-                                                    }}
-                                                    onDragLeave={() => {
-                                                        if (dragOverId === b.id) setDragOverId(null);
-                                                    }}
-                                                    onDrop={(e) => {
-                                                        e.preventDefault();
-                                                        setDragOverId(null);
-                                                        const draggedId = e.dataTransfer.getData("text/plain");
-                                                        handleReorderBlocks(draggedId, b.id);
-                                                    }}
-                                                    className={`${spanClass} w-full h-full bg-black/40 border rounded-[2.5rem] p-6 flex flex-col transition-all duration-300 relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${isSelectionMode
-                                                        ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
-                                                        : 'border-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 hover:z-10'
-                                                        }`}
-                                                    style={{
-                                                        borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
-                                                        borderColor: dragOverId === b.id ? accent : '',
-                                                        boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
-                                                        opacity: dragOverId === b.id ? 0.7 : ''
-                                                    }}
+                                                    className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
+                                                    title="Eliminar registro"
                                                 >
-                                                    <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity">
-                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
-                                                            {typeLabel}
-                                                        </span>
-                                                        <div className="flex items-center gap-2">
-                                                            {isSelectionMode ? (
-                                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
-                                                                    ? 'bg-red-500 border-red-500 text-white'
-                                                                    : 'border-white/30 bg-black/40'
-                                                                    }`}>
-                                                                    {isSelected && <Check size={8} />}
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="text-[7px] font-mono text-zinc-600">
-                                                                        {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (b.isVirtual) {
-                                                                                if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
-                                                                                    const updated = conversations.filter(c => c.id !== b.id);
-                                                                                    setConversations(updated);
-                                                                                    fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
-                                                                                        method: 'POST',
-                                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                                        body: JSON.stringify(updated)
-                                                                                    });
-                                                                                }
-                                                                            } else {
-                                                                                deleteBlock(b.id);
-                                                                            }
-                                                                        }}
-                                                                        className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
-                                                                        title="Eliminar registro"
-                                                                    >
-                                                                        <Trash2 size={10} />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {isImg && (
-                                                        <div className="flex-1 min-h-0 space-y-3 pt-2 flex flex-col">
-                                                            <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
-                                                                <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
-                                                            </div>
-                                                            {b.caption && (
-                                                                <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
-                                                                    {b.caption}
-                                                                </h4>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {isChat && (() => {
-                                                        let msgs = [];
-                                                        try { msgs = JSON.parse(b.content) || []; } catch (e) { }
-                                                        return (
-                                                            <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
-                                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                                    {b.caption || 'Diálogo AI'}
-                                                                </h4>
-                                                                <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
-                                                                    {msgs.map((msg, idx) => (
-                                                                        <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                                                            <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
-                                                                                {msg.role === 'user' ? 'Tú' : 'Kio'}
-                                                                            </span>
-                                                                            <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
-                                                                                ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
-                                                                                : 'bg-white/5 border border-white/5 text-white/80'
-                                                                                } max-w-[90%] whitespace-pre-wrap`}>
-                                                                                {msg.content}
-                                                                            </p>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })()}
-
-                                                    {isRes && (() => {
-                                                        const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
-                                                        const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
-                                                        const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
-
-                                                        const resonanceText = resMatch ? resMatch[1].trim() : '';
-                                                        const impactText = impMatch ? impMatch[1].trim() : '';
-                                                        const strangeText = extMatch ? extMatch[1].trim() : '';
-
-                                                        return (
-                                                            <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
-                                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                                    {b.caption || 'Resonancia Psíquica'}
-                                                                </h4>
-                                                                <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
-                                                                    {resonanceText && (
-                                                                        <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
-                                                                            <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
-                                                                            <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
-                                                                        </div>
-                                                                    )}
-                                                                    {impactText && (
-                                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
-                                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
-                                                                            <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
-                                                                        </div>
-                                                                    )}
-                                                                    {strangeText && (
-                                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
-                                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
-                                                                            <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })()}
-
-                                                    {isDia && (
-                                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-2">
-                                                            <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
-                                                                {b.caption || 'Bitácora / Diario'}
-                                                            </h4>
-                                                            <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
-                                                                {b.entries.map((entry, idx) => (
-                                                                    <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
-                                                                        <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                                                                            <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
-                                                                            <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                        </div>
-                                                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
-                                                                            "{entry.text}"
-                                                                        </p>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {isNote && (
-                                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-2">
-                                                            <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
-                                                                    {b.caption || 'Nota Personal'}
-                                                            </h4>
-
-                                                            {(() => {
-                                                                const lines = (b.content || '').split('\n');
-                                                                const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
-                                                                const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
-
-                                                                return (
-                                                                    <>
-                                                                        <div className="flex-1 overflow-y-auto no-scrollbar relative">
-                                                                            <p className={`text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap ${!hasSubNotes ? 'h-full' : ''}`}>
-                                                                                {textLines}
-                                                                            </p>
-                                                                        </div>
-                                                                        {inlineImage && (
-                                                                            <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
-                                                                                <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                );
-                                                            })()}
-
-                                                            {b.muralBlocks && b.muralBlocks.length > 0 && (
-                                                                <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
-                                                                    {b.muralBlocks.map((mb, i) => (
-                                                                        <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
-                                                                            {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
-                                                                            {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
-                                                                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center">
-                                                        <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
-                                                        {!isSelectionMode && (
-                                                            <div className="flex gap-2">
-                                                                {isChat && (
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleSelectConversation(b.id);
-                                                                            setView('canvas');
-                                                                        }}
-                                                                        className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                                    >
-                                                                        <MessageSquare size={8} /> Abrir Diálogo
-                                                                    </button>
-                                                                )}
-                                                                {!b.isVirtual && (
-                                                                    <button
-                                                                        onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
-                                                                        className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                                        style={{ '--accent-color': noteColor }}
-                                                                    >
-                                                                        <Focus size={8} /> Enfocar
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                                    <Trash2 size={10} />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
+                                </div>
 
-                                    {/* DROP ZONE AT THE END OF THE FEED */}
+                                {/* Body Content */}
+                                {isImg && (
+                                    <div className="flex-1 min-h-0 space-y-3 pt-4 flex flex-col">
+                                        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
+                                            <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
+                                        </div>
+                                        {b.caption && (
+                                            <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
+                                                {b.caption}
+                                            </h4>
+                                        )}
+                                    </div>
+                                )}
+
+                                {isChat && (() => {
+                                    let msgs = [];
+                                    try { msgs = JSON.parse(b.content) || []; } catch (e) { }
+                                    return (
+                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
+                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                {b.caption || 'Diálogo AI'}
+                                            </h4>
+                                            <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
+                                                {msgs.map((msg, idx) => (
+                                                    <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
+                                                            {msg.role === 'user' ? 'Tú' : 'Kio'}
+                                                        </span>
+                                                        <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
+                                                            ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
+                                                            : 'bg-white/5 border border-white/5 text-white/80'
+                                                            } max-w-[90%] whitespace-pre-wrap`}>
+                                                            {msg.content}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {isRes && (() => {
+                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                    const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
+                                    const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
+
+                                    const resonanceText = resMatch ? resMatch[1].trim() : '';
+                                    const impactText = impMatch ? impMatch[1].trim() : '';
+                                    const strangeText = extMatch ? extMatch[1].trim() : '';
+
+                                    return (
+                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
+                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                {b.caption || 'Resonancia Psíquica'}
+                                            </h4>
+                                            <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
+                                                {resonanceText && (
+                                                    <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
+                                                        <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
+                                                        <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
+                                                    </div>
+                                                )}
+                                                {impactText && (
+                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
+                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
+                                                        <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
+                                                    </div>
+                                                )}
+                                                {strangeText && (
+                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
+                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
+                                                        <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {isDia && (
+                                    <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
+                                        <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
+                                            {b.caption || 'Bitácora / Diario'}
+                                        </h4>
+                                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
+                                            {b.entries.map((entry, idx) => (
+                                                <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
+                                                    <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
+                                                        <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                                                        <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </div>
+                                                    <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
+                                                        "{entry.text}"
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {isNote && (
+                                    <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
+                                        <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
+                                            {b.caption || 'Nota Personal'}
+                                        </h4>
+
+                                        {(() => {
+                                            const lines = (b.content || '').split('\n');
+                                            const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
+                                            const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
+
+                                            return (
+                                                <>
+                                                    <div className="flex-1 overflow-y-auto no-scrollbar relative">
+                                                        <p className="text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap">
+                                                            {textLines}
+                                                        </p>
+                                                    </div>
+                                                    {inlineImage && (
+                                                        <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
+                                                            <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+
+                                        {b.muralBlocks && b.muralBlocks.length > 0 && (
+                                            <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
+                                                {b.muralBlocks.map((mb, i) => (
+                                                    <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
+                                                        {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
+                                                        {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
+                                                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Footer Controls */}
+                                <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center shrink-0">
+                                    <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
                                     {!isSelectionMode && (
-                                        <div
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
-                                            }}
-                                            onDragLeave={(e) => {
-                                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                                            }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                                                const draggedId = e.dataTransfer.getData("text/plain");
-                                                handleReorderBlocks(draggedId, 'FEED_END');
-                                            }}
-                                            className="w-full h-16 border border-dashed border-white/10 rounded-[1.5rem] flex items-center justify-center text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all cursor-pointer mt-6 backdrop-blur-md"
-                                        >
-                                            Arrastrar aquí para mover al final del feed
+                                        <div className="flex gap-2">
+                                            {isChat && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSelectConversation(b.id);
+                                                        setView('canvas');
+                                                    }}
+                                                    className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                >
+                                                    <MessageSquare size={8} /> Abrir Diálogo
+                                                </button>
+                                            )}
+                                            {!b.isVirtual && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
+                                                    className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                    style={{ '--accent-color': noteColor }}
+                                                >
+                                                    <Focus size={8} /> Enfocar
+                                                </button>
+                                            )}
                                         </div>
                                     )}
-                                </>
-                            ) : (
-                                <div className="h-[300px] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] animate-in fade-in duration-500">
-                                    <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
-                                    <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
                                 </div>
-                            )}
+                            </div>
                         </div>
+                    );
+                })
+            ) : (
+                <div 
+                    data-index={1}
+                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                >
+                    <div className={`w-full max-w-3xl h-[40vh] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
+                        activeSlideIndex === 1 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                    }`}>
+                        <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* SLIDE LAST: REORDER DROP ZONE */}
+            {!isSelectionMode && filteredReleases.length > 0 && (
+                <div 
+                    data-index={filteredReleases.length + 1}
+                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                >
+                    <div
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
+                        }}
+                        onDragLeave={(e) => {
+                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                            const draggedId = e.dataTransfer.getData("text/plain");
+                            handleReorderBlocks(draggedId, 'FEED_END');
+                        }}
+                        className={`w-full max-w-3xl h-[25vh] border border-dashed border-white/10 rounded-[2.5rem] flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu cursor-pointer backdrop-blur-md shadow-2xl ${
+                            activeSlideIndex === (filteredReleases.length + 1) ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                        }`}
+                    >
+                        Arrastrar aquí para mover al final del feed
+                    </div>
+                </div>
+            )}
 
             {/* FLOATING ACTION BAR FOR SELECTION DELETE */}
             {isSelectionMode && selectedIds.length > 0 && (
@@ -6170,6 +5973,42 @@ export default function App() {
     const [profileCam, setProfileCam] = useState({ x: 0, y: 0, scale: 0.7 });
     const [feedCam, setFeedCam] = useState({ x: 0, y: 0, scale: 1 });
 
+    useEffect(() => {
+        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0) {
+            let targetBlock = null;
+            if (lastInteractedBlockId) {
+                targetBlock = blocks.find(b => b.id === lastInteractedBlockId);
+            }
+            if (!targetBlock) {
+                targetBlock = blocks.find(b =>
+                    b.type === 'diary_notebook' ||
+                    b.type === 'resonance_notebook' ||
+                    b.type === 'conversation_notebook'
+                );
+            }
+            if (!targetBlock) {
+                targetBlock = blocks.find(b => b.type === 'text');
+            }
+            if (!targetBlock && blocks.length > 0) {
+                targetBlock = blocks[0];
+            }
+
+            if (targetBlock) {
+                setCam({
+                    x: -targetBlock.x * 0.8 + window.innerWidth / 2,
+                    y: -targetBlock.y * 0.8 + window.innerHeight / 2,
+                    scale: 0.8
+                });
+            } else {
+                setCam({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    scale: 0.8
+                });
+            }
+        }
+    }, [view, isDataLoaded]);
+
     const [draggingId, setDraggingId] = useState(null);
     const dragStart = useRef({ x: 0, y: 0 });
     const isPointerDown = useRef(false);
@@ -8512,6 +8351,13 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     {/* MINIMALIST HEADER WITH TAB NAVIGATION ONLY */}
                     <div className="flex items-center justify-center pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
+                        <button
+                            onClick={() => setView('canvas')}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl absolute left-0"
+                        >
+                            ← Volver
+                        </button>
+
                         <div className="flex bg-white/5 p-1 rounded-full border border-white/10 shadow-2xl backdrop-blur-md gap-0.5">
                             {[
                                 ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
@@ -8540,7 +8386,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         </div>
 
                         {/* Mini Session History Button & Dropdown */}
-                        <div className="relative">
+                        <div className="absolute right-0">
                             <button
                                 onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
                                 className={`h-9 px-3.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 backdrop-blur-md shadow-2xl ${
@@ -10037,6 +9883,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     onNewChat={handleNewChat}
                                     onOpenNotebook={setActiveNotebook}
                                     setActiveTest={setActiveTest}
+                                    setIsSettingsOpen={setIsSettingsOpen}
                                 />
                             )}
             </div>
@@ -10120,15 +9967,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 document.getElementById('background-media-engine') || document.body
             )}
 
-            {/* SETTINGS GEAR */}
-            {view !== 'canvas' && (
-                <button
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="fixed top-6 right-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all hover:rotate-90 duration-500 shadow-2xl group"
-                >
-                    <Settings size={16} className="group-hover:scale-110 transition-transform" />
-                </button>
-            )}
+
 
             {/* SETTINGS PANEL (MODAL) */}
             {isSettingsOpen && (
@@ -10349,6 +10188,18 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
             {view === 'canvas' && (
                 <div className="fixed top-6 md:top-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in slide-in-from-top-5 duration-700 max-w-[95vw]">
+                    <div className="relative group mx-0.5">
+                        <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openNewComposer(); }}
+                            className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
+                            style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
+                            title="Nueva Nota Libre"
+                        >
+                            <Edit3 size={18} className="md:size-[22px] hover-float-icon" />
+                        </button>
+                    </div>
+
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
                         className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
@@ -10364,18 +10215,6 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     >
                         <StickyNote size={14} className="md:size-[18px] hover-float-icon" />
                     </button>
-
-                    <div className="relative group mx-0.5">
-                        <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
-                        <button
-                            onClick={(e) => { e.stopPropagation(); openNewComposer(); }}
-                            className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
-                            style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
-                            title="Nueva Nota Libre"
-                        >
-                            <Edit3 size={18} className="md:size-[22px] hover-float-icon" />
-                        </button>
-                    </div>
 
                     <button
                         onClick={(e) => { e.stopPropagation(); setActiveNotebook('resonance'); }}
@@ -10394,11 +10233,11 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     </button>
 
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}
+                        onClick={(e) => { e.stopPropagation(); setView('profile'); }}
                         className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#18181b] border border-white/5 text-zinc-400 flex items-center justify-center shadow-lg transition-all duration-300 group hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110"
-                        title="Configuración"
+                        title="Perfil"
                     >
-                        <Settings size={16} className="md:size-[20px] hover-float-icon transition-transform duration-500 group-hover:rotate-90" />
+                        <User size={16} className="md:size-[20px] hover-float-icon" />
                     </button>
                 </div>
             )}
@@ -10568,18 +10407,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 </div>
             )}
 
-            {!activeTest && view !== 'soul' && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center bg-[#0c0c0d]/90 backdrop-blur-3xl px-8 py-3 rounded-full border border-white/10 gap-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
-                    {[
-                        { id: 'canvas', icon: <Radio size={18} />, label: 'Lienzo' },
-                        { id: 'profile', icon: <Zap size={18} />, label: 'Perfil' }
-                    ].map(v => (
-                        <button key={v.id} onClick={() => setView(v.id)} className={`flex flex-col items-center gap-1 transition-all ${view === v.id ? 'text-accent scale-110' : 'text-zinc-600 hover:text-zinc-400'}`} title={v.label}>
-                            {v.icon}
-                        </button>
-                    ))}
-                </div>
-            )}
+
 
             {/* COMPOSER */}
             {isComposerOpen && (
@@ -11401,6 +11229,37 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
     const touchStartZoomRef = useRef(1);
     const touchStartPanRef = useRef({ x: 0, y: 0 });
     const touchStartMidRef = useRef({ x: 0, y: 0 });
+
+    useEffect(() => {
+        if (!blocks || blocks.length === 0) {
+            setPan({ x: window.innerWidth / 2 - 125, y: window.innerHeight / 2 - 100 });
+            return;
+        }
+
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+
+        blocks.forEach(b => {
+            const bx = b.x !== undefined ? b.x : 0;
+            const by = b.y !== undefined ? b.y : 0;
+            const bw = b.w !== undefined ? b.w : 250;
+            const bh = b.h !== undefined ? b.h : 200;
+            if (bx < minX) minX = bx;
+            if (bx + bw > maxX) maxX = bx + bw;
+            if (by < minY) minY = by;
+            if (by + bh > maxY) maxY = by + bh;
+        });
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        setPan({
+            x: (window.innerWidth / 2) - centerX,
+            y: (window.innerHeight / 2) - centerY
+        });
+    }, []);
 
     const renderShapeSVG = (shapeType, color) => {
         const svgColor = color || accent;
