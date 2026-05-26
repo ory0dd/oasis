@@ -63,6 +63,7 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
     const [viewportHeight, setViewportHeight] = useState(
         () => window.visualViewport?.height || window.innerHeight
     );
+
     const textareaRef = useRef(null);
     const recognitionRef = useRef(null);
     const saveTimerRef = useRef(null);
@@ -77,14 +78,22 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
         }
     }, [selectedId, onEditorToggle]);
 
-    // Visual viewport (iOS keyboard fix)
     useEffect(() => {
-        const update = () => setViewportHeight(window.visualViewport?.height || window.innerHeight);
-        window.visualViewport?.addEventListener('resize', update);
+        const update = () => {
+            const h = window.visualViewport?.height || window.innerHeight;
+            setViewportHeight(h);
+        };
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', update);
+            window.visualViewport.addEventListener('scroll', update);
+        }
         window.addEventListener('resize', update);
         update();
         return () => {
-            window.visualViewport?.removeEventListener('resize', update);
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', update);
+                window.visualViewport.removeEventListener('scroll', update);
+            }
             window.removeEventListener('resize', update);
         };
     }, []);
@@ -107,6 +116,19 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
             recognitionRef.current.onend = () => setIsRecording(false);
         }
     }, []);
+
+    // Auto-save debounced
+    const persistEdit = useCallback((id, caption, content) => {
+        setBlocks(prev => {
+            const updated = prev.map(b => b.id === id ? {
+                ...b,
+                caption,
+                content,
+                metadata: { ...b.metadata, timestamp: new Date().toISOString() }
+            } : b);
+            return updated;
+        });
+    }, [setBlocks]);
 
     // Save immediately on app switch / exit / screen lock
     useEffect(() => {
@@ -146,19 +168,6 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
     const grouped = groupByDate(filtered);
 
     const selectedNote = notes.find(n => n.id === selectedId);
-
-    // Auto-save debounced
-    const persistEdit = useCallback((id, caption, content) => {
-        setBlocks(prev => {
-            const updated = prev.map(b => b.id === id ? {
-                ...b,
-                caption,
-                content,
-                metadata: { ...b.metadata, timestamp: new Date().toISOString() }
-            } : b);
-            return updated;
-        });
-    }, [setBlocks]);
 
     const scheduleAutoSave = (id, caption, content) => {
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);

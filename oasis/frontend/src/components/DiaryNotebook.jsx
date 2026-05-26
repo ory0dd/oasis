@@ -238,7 +238,11 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
     }, [diaryTitle, diaryContent, activeEntryId, blocks, setBlocks]);
 
     return (
-        <div className={`${className} text-white flex bg-[#050506] backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} style={{ height: viewportHeight + 'px' }} onClick={e => e.stopPropagation()}>
+        <div 
+            className={`${className} text-white flex bg-[#050506] backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} 
+            style={{ height: viewportHeight + 'px' }} 
+            onClick={e => e.stopPropagation()}
+        >
             {/* Sidebar / Menu */}
             {isSidebarOpen && (
                 <div className="w-80 bg-[#0a0a0d]/98 border-r border-white/5 flex flex-col z-40 animate-in slide-in-from-left duration-300">

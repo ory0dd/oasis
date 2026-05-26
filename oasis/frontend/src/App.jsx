@@ -274,14 +274,30 @@ const getBlockTime = (b) => {
     return 0;
 };
 
+const deduplicateBlocks = (blocksList) => {
+    const seen = new Set();
+    const result = [];
+    for (const b of (blocksList || [])) {
+        if (b && b.id) {
+            if (!seen.has(b.id)) {
+                seen.add(b.id);
+                result.push(b);
+            }
+        }
+    }
+    return result;
+};
+
 const smartMergeBlocks = (serverBlocks, username) => {
-    const serverIds = new Set(serverBlocks.map(b => b.id));
+    const cleanServer = deduplicateBlocks(serverBlocks);
+    const serverIds = new Set(cleanServer.map(b => b.id));
     try {
         const localRaw = localStorage.getItem('oasis_canvas_nodes_' + username);
         const localBlocks = localRaw ? JSON.parse(localRaw) : [];
-        const localMap = new Map(localBlocks.map(b => [b.id, b]));
+        const cleanLocal = deduplicateBlocks(localBlocks);
+        const localMap = new Map(cleanLocal.map(b => [b.id, b]));
 
-        const smartMergedServer = serverBlocks.map(serverBlock => {
+        const smartMergedServer = cleanServer.map(serverBlock => {
             const localBlock = localMap.get(serverBlock.id);
             if (!localBlock) return serverBlock;
 
@@ -301,13 +317,13 @@ const smartMergeBlocks = (serverBlocks, username) => {
             return serverBlock;
         });
 
-        const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
-        const merged = [...smartMergedServer, ...pendingLocal];
-        const hasChanges = pendingLocal.length > 0 || smartMergedServer.some((b, i) => b !== serverBlocks[i]);
+        const pendingLocal = cleanLocal.filter(b => !serverIds.has(b.id));
+        const merged = deduplicateBlocks([...smartMergedServer, ...pendingLocal]);
+        const hasChanges = pendingLocal.length > 0 || smartMergedServer.some((b, i) => b !== cleanServer[i]);
 
         return { merged, hasChanges };
     } catch (_) {
-        return { merged: serverBlocks, hasChanges: false };
+        return { merged: cleanServer, hasChanges: false };
     }
 };
 
@@ -3055,7 +3071,14 @@ export default function App() {
     }, [accent]);
 
 
-    const [blocks, setBlocks] = useState(INITIAL_BLOCKS);
+    const [blocks, setBlocksRaw] = useState(INITIAL_BLOCKS);
+    const setBlocks = useCallback((newVal) => {
+        if (typeof newVal === 'function') {
+            setBlocksRaw(prev => deduplicateBlocks(newVal(prev)));
+        } else {
+            setBlocksRaw(deduplicateBlocks(newVal));
+        }
+    }, []);
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
     const [feed, setFeed] = useState([]);
 
@@ -5787,29 +5810,44 @@ export default function App() {
         // Registrar timestamp del último guardado local para proteger contra
         // el re-fetch del servidor que podría sobreescribir datos recientes.
         lastLocalSaveRef.current = Date.now();
-        setBlocks(newBlocks);
-        if (user) {
-            localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(newBlocks));
-            // Trigger offline background sync preparation
-            if (window.guardarBlocksLocales) {
-                window.guardarBlocksLocales(user, newBlocks).then(() => {
-                    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.sync.register('sync-blocks').catch(e => console.error("Sync register failed", e));
-                        });
-                    }
-                }).catch(e => console.error("Error saving pending blocks to IndexedDB", e));
-            }
-        }
 
-        if (!isLoggedIn || !user || !isDataLoaded) return;
-        fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newBlocks)
-        }).then(() => fetchFeed()).catch(() => {
-            console.log('Saved locally (Offline Mode), waiting for sync event.');
-        });
+        const performSync = (resolvedBlocks) => {
+            const cleanBlocks = deduplicateBlocks(resolvedBlocks);
+            if (user) {
+                localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(cleanBlocks));
+                // Trigger offline background sync preparation
+                if (window.guardarBlocksLocales) {
+                    window.guardarBlocksLocales(user, cleanBlocks).then(() => {
+                        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                            navigator.serviceWorker.ready.then(reg => {
+                                reg.sync.register('sync-blocks').catch(e => console.error("Sync register failed", e));
+                            });
+                        }
+                    }).catch(e => console.error("Error saving pending blocks to IndexedDB", e));
+                }
+            }
+
+            if (!isLoggedIn || !user || !isDataLoaded) return;
+            fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cleanBlocks)
+            }).then(() => fetchFeed()).catch(() => {
+                console.log('Saved locally (Offline Mode), waiting for sync event.');
+            });
+        };
+
+        if (typeof newBlocks === 'function') {
+            setBlocks(prev => {
+                const resolved = deduplicateBlocks(newBlocks(prev));
+                performSync(resolved);
+                return resolved;
+            });
+        } else {
+            const resolved = deduplicateBlocks(newBlocks);
+            setBlocks(resolved);
+            performSync(resolved);
+        }
     };
 
     const handleSaveProfile = useCallback((updates) => {
@@ -10946,7 +10984,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 <SimpleNotesView
                     ref={simpleNotesRef}
                     blocks={blocks}
-                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
+                    setBlocks={syncBlocks}
                     accent={accent}
                     user={user}
                     onClose={() => setIsSimpleNotesOpen(false)}
@@ -10959,7 +10997,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     onClose={() => setActiveNotebook(null)}
                     onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
+                    setBlocks={syncBlocks}
                     accent={accent}
                 />
             )}
@@ -10969,7 +11007,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     onClose={() => setActiveNotebook(null)}
                     onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={(newBlocks) => { setBlocks(newBlocks); syncBlocks(newBlocks); }}
+                    setBlocks={syncBlocks}
                     accent={accent}
                 />
             )}
@@ -12100,10 +12138,6 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             }
         };
         input.click();
-    };
-
-    const syncBlocks = (updated) => {
-        setBlocks(updated);
     };
 
     // DRAG & DROP FOR CANVAS UPLOAD
