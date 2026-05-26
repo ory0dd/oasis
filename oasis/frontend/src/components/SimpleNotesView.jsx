@@ -2,9 +2,25 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, Plus, Search, Mic, Trash2, Check, X } from 'lucide-react';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const formatRelative = (isoStr) => {
-    if (!isoStr) return '';
-    const d = new Date(isoStr);
+const getBlockTime = (b) => {
+    if (!b) return 0;
+    if (b.metadata?.timestamp) {
+        const t = new Date(b.metadata.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    if (b.timestamp) {
+        const t = new Date(b.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    const match = String(b.id).match(/\d+/);
+    if (match) return Number(match[0]);
+    return 0;
+};
+
+const formatRelative = (val) => {
+    if (!val) return '';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '';
     const now = new Date();
     const diffMs = now - d;
     const diffMins = Math.floor(diffMs / 60000);
@@ -21,7 +37,8 @@ const formatRelative = (isoStr) => {
 const groupByDate = (notes) => {
     const groups = {};
     notes.forEach(n => {
-        const ts = n.metadata?.timestamp || new Date(Number(n.id) || Date.now()).toISOString();
+        const blockTime = getBlockTime(n);
+        const ts = blockTime ? new Date(blockTime).toISOString() : new Date().toISOString();
         const d = new Date(ts);
         const today = new Date();
         const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
@@ -81,6 +98,25 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
         }
     }, []);
 
+    // Save immediately on app switch / exit / screen lock
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden' && selectedId) {
+                if (saveTimerRef.current) {
+                    clearTimeout(saveTimerRef.current);
+                }
+                persistEdit(selectedId, editCaption, editContent);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('pagehide', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('pagehide', handleVisibilityChange);
+        };
+    }, [selectedId, editCaption, editContent, persistEdit]);
+
     // Filter: only text notes, no diary entries, not public
     const notes = blocks
         .filter(b =>
@@ -88,11 +124,7 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
             !b.isPublic &&
             !(b.entries && b.entries.length > 0)
         )
-        .sort((a, b) => {
-            const tA = a.metadata?.timestamp ? new Date(a.metadata.timestamp).getTime() : Number(a.id) || 0;
-            const tB = b.metadata?.timestamp ? new Date(b.metadata.timestamp).getTime() : Number(b.id) || 0;
-            return tB - tA;
-        });
+        .sort((a, b) => getBlockTime(b) - getBlockTime(a));
 
     const filtered = search.trim()
         ? notes.filter(n =>
@@ -240,7 +272,7 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
                 <div className="flex-1 overflow-y-auto no-scrollbar px-5 pt-4 pb-2">
                     {/* Timestamp */}
                     <p className="text-[11px] text-zinc-600 mb-3 text-center font-medium">
-                        {formatRelative(selectedNote?.metadata?.timestamp)}
+                        {formatRelative(getBlockTime(selectedNote))}
                     </p>
 
                     {/* Title */}
@@ -396,7 +428,7 @@ const SimpleNotesView = ({ blocks, setBlocks, accent, onClose, user }) => {
                                                     {note.caption || 'Sin título'}
                                                 </p>
                                                 <span className="text-[11px] text-zinc-600 shrink-0">
-                                                    {formatRelative(note.metadata?.timestamp)}
+                                                    {formatRelative(getBlockTime(note))}
                                                 </span>
                                             </div>
                                             <p className="text-[13px] text-zinc-500 truncate leading-snug">

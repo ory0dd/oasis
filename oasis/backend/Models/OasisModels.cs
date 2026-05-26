@@ -18,6 +18,14 @@ namespace Oasis.Backend.Models
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         public Dictionary<string, string>? Metadata { get; set; } = new();
         public string? FolderId { get; set; } = string.Empty; // For sidebar organization
+        public List<DiaryEntry>? Entries { get; set; } = new();
+    }
+
+    public class DiaryEntry
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Timestamp { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
     }
 
     public class SoulPiece

@@ -259,6 +259,58 @@ const formatUrl = (url) => {
     return url;
 };
 
+const getBlockTime = (b) => {
+    if (!b) return 0;
+    if (b.metadata?.timestamp) {
+        const t = new Date(b.metadata.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    if (b.timestamp) {
+        const t = new Date(b.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    const match = String(b.id).match(/\d+/);
+    if (match) return Number(match[0]);
+    return 0;
+};
+
+const smartMergeBlocks = (serverBlocks, username) => {
+    const serverIds = new Set(serverBlocks.map(b => b.id));
+    try {
+        const localRaw = localStorage.getItem('oasis_canvas_nodes_' + username);
+        const localBlocks = localRaw ? JSON.parse(localRaw) : [];
+        const localMap = new Map(localBlocks.map(b => [b.id, b]));
+
+        const smartMergedServer = serverBlocks.map(serverBlock => {
+            const localBlock = localMap.get(serverBlock.id);
+            if (!localBlock) return serverBlock;
+
+            const serverTs = getBlockTime(serverBlock);
+            const localTs = getBlockTime(localBlock);
+
+            if (localTs > serverTs) {
+                return localBlock;
+            }
+
+            const localEntries = localBlock.entries?.length || 0;
+            const serverEntries = serverBlock.entries?.length || 0;
+            if (localEntries > serverEntries) {
+                return localBlock;
+            }
+
+            return serverBlock;
+        });
+
+        const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
+        const merged = [...smartMergedServer, ...pendingLocal];
+        const hasChanges = pendingLocal.length > 0 || smartMergedServer.some((b, i) => b !== serverBlocks[i]);
+
+        return { merged, hasChanges };
+    } catch (_) {
+        return { merged: serverBlocks, hasChanges: false };
+    }
+};
+
 const ReasoningBlock = ({ thought, isStreaming }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     if (!thought) return null;
@@ -911,7 +963,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks }) => 
                 {(displayImage || displayVideo) ? (
                     <div className="w-full h-1/2 md:h-3/5 relative overflow-hidden bg-black/40">
                         {displayImage && <img src={displayImage} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-110" />}
-                        {displayVideo && <video src={displayVideo} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover" />}
+                        {displayVideo && <video src={displayVideo} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0d] via-transparent to-transparent opacity-60" />
                     </div>
                 ) : hasMedia && displayAudio ? (
@@ -1013,7 +1065,7 @@ const SimpleNarrativeRenderer = React.memo(({ content, isChild = false }) => {
                 }
                 if (trimmed.startsWith('[vid]')) {
                     const url = formatUrl(trimmed.replace('[vid]', '').trim());
-                    return <div key={i} className="my-6 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black/20 aspect-video"><video src={url} controls className="w-full h-full object-cover" /></div>;
+                    return <div key={i} className="my-6 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black/20 aspect-video"><video src={url} controls className="w-full h-full object-cover" crossOrigin="anonymous" /></div>;
                 }
                 if (trimmed.startsWith('[aud]')) {
                     const url = formatUrl(trimmed.replace('[aud]', '').trim());
@@ -1837,7 +1889,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         </div>
                     ) : isVideo ? (
                         <div className="flex-1 w-full rounded-xl overflow-hidden border border-white/5 relative">
-                            <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover" src={formatUrl(block.content)} />
+                            <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover" src={formatUrl(block.content)} crossOrigin="anonymous" />
                         </div>
                     ) : isAudio ? (
                         <div className="flex flex-col gap-4 py-2">
@@ -3038,6 +3090,13 @@ export default function App() {
             localStorage.setItem('oasis_credits_' + user, credits);
         }
     }, [credits, user]);
+
+    useEffect(() => {
+        if (window.guardarApiUrl) {
+            window.guardarApiUrl(API_URL).catch(err => console.error("Error saving API_URL:", err));
+        }
+    }, [user]);
+
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [deepseekKey, setDeepseekKey] = useState(() => localStorage.getItem('oasis_deepseek_key') || ''); // DeepSeek API Key
 
@@ -5444,31 +5503,23 @@ export default function App() {
                             console.log(`[Oasis] Filtrando ${data.length - serverFiltered.length} bloques de tipo 'insight'.`);
                         }
 
-                        // MERGE: localStorage es el backup, servidor es la fuente de verdad
-                        // Si servidor está vacío (restart), los datos locales son los reales
-                        const serverIds = new Set(serverFiltered.map(b => b.id));
+                        // MERGE: para bloques que existen en ambos lados,
+                        // usar el más reciente por timestamp o el que tenga más entries de diario.
                         try {
-                            const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
-                            const localBlocks = localRaw ? JSON.parse(localRaw) : [];
-                            const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
-                            const merged = [...serverFiltered, ...pendingLocal];
+                            const { merged, hasChanges } = smartMergeBlocks(serverFiltered, user);
 
                             setBlocks(merged);
                             activeBlocks = merged;
                             localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
 
-                            // Si había pendientes (incluyendo el caso de servidor vacío por restart),
-                            // subirlos de vuelta al servidor para restaurarlos
-                            if (pendingLocal.length > 0) {
-                                console.log(`[Oasis] Restaurando ${pendingLocal.length} bloque(s) desde localStorage al servidor.`);
+                            // Si hubo cambios locales, re-subir al servidor
+                            if (hasChanges) {
+                                console.log(`[Oasis] Sincronizando pendientes + cambios locales más recientes en carga inicial.`);
                                 fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(merged)
                                 });
-                            } else if (serverFiltered.length > 0) {
-                                setBlocks(serverFiltered);
-                                activeBlocks = serverFiltered;
                             }
                         } catch (_) {
                             if (serverFiltered.length > 0) {
@@ -5578,15 +5629,20 @@ export default function App() {
         // (puede ser un guardado pendiente mientras el servidor dormía).
         const mergeWithServer = (serverData) => {
             const serverBlocks = serverData.filter(b => b.type !== 'insight');
-            const serverIds = new Set(serverBlocks.map(b => b.id));
             try {
-                const localRaw = localStorage.getItem('oasis_canvas_nodes_' + user);
-                const localBlocks = localRaw ? JSON.parse(localRaw) : [];
-                // Bloques locales que el servidor aún no tiene (pendientes de sync)
-                const pendingLocal = localBlocks.filter(b => !serverIds.has(b.id));
-                const merged = [...serverBlocks, ...pendingLocal];
+                const { merged, hasChanges } = smartMergeBlocks(serverBlocks, user);
                 localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
                 setBlocks(merged);
+
+                // Si detectamos cambios locales más nuevos o entradas que no están en el servidor, subir
+                if (hasChanges) {
+                    console.log(`[Oasis] Sincronizando cambios locales pendientes detectados al volver a la app.`);
+                    fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(merged)
+                    });
+                }
             } catch (_) {
                 setBlocks(serverBlocks);
             }
@@ -6383,8 +6439,8 @@ export default function App() {
 
 
     useEffect(() => {
-        if (view !== 'canvas') {
-            // Reset so we re-center every time the user comes back to the canvas
+        if (view !== 'canvas' || isSimpleNotesOpen || activeNotebook) {
+            // Reset so we re-center every time the user comes back to the canvas or closes an overlay
             hasCenteredCanvasRef.current = false;
             return;
         }
@@ -6406,12 +6462,8 @@ export default function App() {
             let targetX = 0, targetY = 0;
 
             if (textNotes.length > 0) {
-                // Ordenar por timestamp (más reciente primero), usar id como fallback
-                const sorted = [...textNotes].sort((a, b) => {
-                    const tA = a.metadata?.timestamp ? new Date(a.metadata.timestamp).getTime() : Number(a.id) || 0;
-                    const tB = b.metadata?.timestamp ? new Date(b.metadata.timestamp).getTime() : Number(b.id) || 0;
-                    return tB - tA;
-                });
+                // Ordenar por timestamp (más reciente primero), usar getBlockTime
+                const sorted = [...textNotes].sort((a, b) => getBlockTime(b) - getBlockTime(a));
                 const latest = sorted[0];
                 targetX = -latest.x * targetScale;
                 targetY = -latest.y * targetScale;
@@ -6428,7 +6480,7 @@ export default function App() {
 
             animateMainCamera(targetX, targetY, targetScale);
         }
-    }, [view, isDataLoaded, blocks]);
+    }, [view, isDataLoaded, blocks, isSimpleNotesOpen, activeNotebook]);
 
     const [draggingId, setDraggingId] = useState(null);
     const dragStart = useRef({ x: 0, y: 0 });
@@ -10367,6 +10419,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     autoPlay loop muted playsInline
                                     preload="metadata"
                                     className="w-full h-full object-cover"
+                                    crossOrigin="anonymous"
                                 />
                             ))}
                         </div>
@@ -10377,6 +10430,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             autoPlay loop muted playsInline
                             preload="metadata"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
+                            crossOrigin="anonymous"
                         />
                     )
                 )}
@@ -10580,7 +10634,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                     <img src={formatUrl(tpl.value)} className="absolute inset-0 w-full h-full object-cover opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" />
                                                 )}
                                                 {tpl.type === 'video' && (
-                                                    <video src={formatUrl(tpl.value)} muted loop autoPlay playsInline className="absolute inset-0 w-full h-full object-cover opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" />
+                                                    <video src={formatUrl(tpl.value)} muted loop autoPlay playsInline className="absolute inset-0 w-full h-full object-cover opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" crossOrigin="anonymous" />
                                                 )}
 
                                                 <div className="relative z-10 space-y-1">
@@ -11420,7 +11474,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                     </button>
                                                                 </div>
                                                                 <div className="relative rounded-[3rem] overflow-hidden border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.4)] ring-1 ring-white/10 aspect-video">
-                                                                    <video src={url} controls className="w-full h-full object-cover" />
+                                                                    <video src={url} controls className="w-full h-full object-cover" crossOrigin="anonymous" />
                                                                 </div>
                                                             </div>
                                                         );
@@ -12370,6 +12424,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     autoPlay loop muted playsInline
                                     preload="metadata"
                                     className="w-full h-full object-cover"
+                                    crossOrigin="anonymous"
                                 />
                             ))}
                         </div>
@@ -12380,6 +12435,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                             autoPlay loop muted playsInline
                             preload="metadata"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
+                            crossOrigin="anonymous"
                         />
                     )
                 )}

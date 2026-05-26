@@ -48,3 +48,21 @@ async function guardarBlocksLocales(user, blocks) {
     request.onerror = (e) => reject(e.target.error);
   });
 }
+
+// Guardar la URL del API activa para el Service Worker
+async function guardarApiUrl(apiUrl) {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BLOCKS_STORE, 'readwrite');
+    const store = tx.objectStore(BLOCKS_STORE);
+    const request = store.put({ user: 'config_api_url', apiUrl });
+    
+    request.onsuccess = () => resolve();
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+window.guardarNotaLocal = guardarNotaLocal;
+window.guardarBlocksLocales = guardarBlocksLocales;
+window.guardarApiUrl = guardarApiUrl;
+window.initDB = initDB;

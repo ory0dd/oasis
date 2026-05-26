@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StickyNote, X, Plus, Save, Mic, PanelLeft, ChevronLeft } from 'lucide-react';
 
+const getBlockTime = (b) => {
+    if (!b) return 0;
+    if (b.metadata?.timestamp) {
+        const t = new Date(b.metadata.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    if (b.timestamp) {
+        const t = new Date(b.timestamp).getTime();
+        if (!isNaN(t)) return t;
+    }
+    const match = String(b.id).match(/\d+/);
+    if (match) return Number(match[0]);
+    return 0;
+};
+
 export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent, className = "fixed inset-0 z-[1500] bg-[#050506]/95 backdrop-blur-3xl" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
@@ -78,7 +93,7 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
     };
 
     const diaryBlocks = blocks.filter(b => b.entries && b.entries.length > 0)
-        .sort((a, b) => new Date(b.metadata?.timestamp || 0) - new Date(a.metadata?.timestamp || 0));
+        .sort((a, b) => getBlockTime(b) - getBlockTime(a));
 
     // Handle selecting a past diary entry
     const handleSelectEntry = (block) => {
@@ -102,17 +117,18 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
 
         const entryId = activeEntryId || Date.now().toString();
         const timestamp = new Date().toISOString();
+        const existingBlock = blocks.find(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
 
         const newBlock = {
             id: entryId,
             type: 'text',
-            x: (Math.random() - 0.5) * 100,
-            y: (Math.random() - 0.5) * 100,
+            x: existingBlock ? existingBlock.x : (Math.random() - 0.5) * 100,
+            y: existingBlock ? existingBlock.y : (Math.random() - 0.5) * 100,
             caption: diaryTitle || formattedDefaultDate,
-            color: '#f59e0b', // Amber/Yellow for Diary
+            color: existingBlock ? existingBlock.color : '#f59e0b', // Amber/Yellow for Diary
             metadata: { timestamp },
             entries: [{
-                id: Date.now().toString(),
+                id: existingBlock?.entries?.[0]?.id || Date.now().toString(),
                 timestamp,
                 text: diaryContent
             }]
@@ -133,6 +149,93 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
             }
         }, 1200);
     };
+
+    // Auto-save changes locally as you type (debounced)
+    useEffect(() => {
+        if (!diaryContent.trim()) return;
+
+        const timer = setTimeout(() => {
+            const entryId = activeEntryId || Date.now().toString();
+            const timestamp = new Date().toISOString();
+            const existingBlock = blocks.find(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
+
+            const newBlock = {
+                id: entryId,
+                type: 'text',
+                x: existingBlock ? existingBlock.x : (Math.random() - 0.5) * 100,
+                y: existingBlock ? existingBlock.y : (Math.random() - 0.5) * 100,
+                caption: diaryTitle || formattedDefaultDate,
+                color: existingBlock ? existingBlock.color : '#f59e0b',
+                metadata: { timestamp },
+                entries: [{
+                    id: existingBlock?.entries?.[0]?.id || Date.now().toString(),
+                    timestamp,
+                    text: diaryContent
+                }]
+            };
+
+            setBlocks(prev => {
+                const exists = prev.some(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
+                if (exists) {
+                    return prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b);
+                } else {
+                    return [...prev, newBlock];
+                }
+            });
+
+            if (!activeEntryId) {
+                setActiveEntryId(entryId);
+            }
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [diaryTitle, diaryContent, activeEntryId]);
+
+    // Save immediately on app switch / exit / screen lock
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden' && diaryContent.trim()) {
+                const entryId = activeEntryId || Date.now().toString();
+                const timestamp = new Date().toISOString();
+                const existingBlock = blocks.find(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
+
+                const newBlock = {
+                    id: entryId,
+                    type: 'text',
+                    x: existingBlock ? existingBlock.x : (Math.random() - 0.5) * 100,
+                    y: existingBlock ? existingBlock.y : (Math.random() - 0.5) * 100,
+                    caption: diaryTitle || formattedDefaultDate,
+                    color: existingBlock ? existingBlock.color : '#f59e0b',
+                    metadata: { timestamp },
+                    entries: [{
+                        id: existingBlock?.entries?.[0]?.id || Date.now().toString(),
+                        timestamp,
+                        text: diaryContent
+                    }]
+                };
+
+                setBlocks(prev => {
+                    const exists = prev.some(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
+                    if (exists) {
+                        return prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b);
+                    } else {
+                        return [...prev, newBlock];
+                    }
+                });
+
+                if (!activeEntryId) {
+                    setActiveEntryId(entryId);
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('pagehide', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('pagehide', handleVisibilityChange);
+        };
+    }, [diaryTitle, diaryContent, activeEntryId, blocks, setBlocks]);
 
     return (
         <div className={`${className} text-white flex bg-[#050506] backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} style={{ height: viewportHeight + 'px' }} onClick={e => e.stopPropagation()}>
@@ -164,7 +267,12 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                             >
                                 <div className="flex justify-between items-start mb-1.5 font-sans">
                                     <h4 className={`text-xs font-black uppercase truncate max-w-[170px] ${activeEntryId === b.id ? 'text-amber-400' : 'text-zinc-300 group-hover:text-amber-400'}`}>{b.caption}</h4>
-                                    <span className="text-[8px] font-mono text-zinc-600">{new Date(b.metadata?.timestamp).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'})}</span>
+                                    <span className="text-[8px] font-mono text-zinc-600">
+                                        {(() => {
+                                            const time = getBlockTime(b);
+                                            return time ? new Date(time).toLocaleDateString('es-ES', {day: 'numeric', month: 'short'}) : '';
+                                        })()}
+                                    </span>
                                 </div>
                                 <p className="text-[10px] font-sans text-zinc-500 line-clamp-2 italic leading-relaxed">
                                     {b.entries[0]?.text}
