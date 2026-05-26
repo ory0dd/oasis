@@ -13,28 +13,27 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
     const [isRecording, setIsRecording] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const recognitionRef = useRef(null);
-    const [viewportStyle, setViewportStyle] = useState({});
+    const [viewportHeight, setViewportHeight] = useState(
+        () => window.visualViewport?.height || window.innerHeight
+    );
 
     useEffect(() => {
-        const handleResize = () => {
-            if (window.visualViewport) {
-                setViewportStyle({
-                    height: `${window.visualViewport.height}px`,
-                    top: `${window.visualViewport.offsetTop}px`,
-                    position: 'fixed'
-                });
-            }
+        const update = () => {
+            const h = window.visualViewport?.height || window.innerHeight;
+            setViewportHeight(h);
         };
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleResize);
-            window.visualViewport.addEventListener('scroll', handleResize);
-            handleResize();
+            window.visualViewport.addEventListener('resize', update);
+            window.visualViewport.addEventListener('scroll', update);
         }
+        window.addEventListener('resize', update);
+        update();
         return () => {
             if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', handleResize);
-                window.visualViewport.removeEventListener('scroll', handleResize);
+                window.visualViewport.removeEventListener('resize', update);
+                window.visualViewport.removeEventListener('scroll', update);
             }
+            window.removeEventListener('resize', update);
         };
     }, []);
 
@@ -136,7 +135,7 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
     };
 
     return (
-        <div className={`${className} text-white flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} style={viewportStyle} onClick={e => e.stopPropagation()}>
+        <div className={`${className} text-white flex bg-[#050506] backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} style={{ height: viewportHeight + 'px' }} onClick={e => e.stopPropagation()}>
             {/* Sidebar / Menu */}
             {isSidebarOpen && (
                 <div className="w-80 bg-[#0a0a0d]/98 border-r border-white/5 flex flex-col z-40 animate-in slide-in-from-left duration-300">
@@ -235,7 +234,7 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                 </div>
 
                 {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-2 md:p-12">
+                <div className="relative z-10 p-2 md:p-12 bg-[#050506]" style={{ paddingBottom: `max(8px, env(safe-area-inset-bottom))` }}>
                     <div className="max-w-2xl mx-auto relative flex items-center gap-1.5 md:gap-3 px-2 py-1.5 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl overflow-hidden w-full">
                         <button 
                             onClick={toggleRecording}

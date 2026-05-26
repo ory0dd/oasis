@@ -10344,6 +10344,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     key={`tile-${i}`}
                                     src={formatUrl(bgValue)}
                                     autoPlay loop muted playsInline
+                                    preload="auto"
                                     className="w-full h-full object-cover"
                                 />
                             ))}
@@ -10353,6 +10354,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             key={bgValue}
                             src={formatUrl(bgValue)}
                             autoPlay loop muted playsInline
+                            preload="auto"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
                         />
                     )
@@ -12334,6 +12336,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     key={`tile-${i}`}
                                     src={formatUrl(bgValue)}
                                     autoPlay loop muted playsInline
+                                    preload="auto"
                                     className="w-full h-full object-cover"
                                 />
                             ))}
@@ -12343,6 +12346,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                             key={bgValue}
                             src={formatUrl(bgValue)}
                             autoPlay loop muted playsInline
+                            preload="auto"
                             className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000"
                         />
                     )

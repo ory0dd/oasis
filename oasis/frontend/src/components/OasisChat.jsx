@@ -49,28 +49,27 @@ const OasisChat = ({
 
     const [isSaving, setIsSaving] = React.useState(false);
     const [saveSuccess, setSaveSuccess] = React.useState(false);
-    const [viewportStyle, setViewportStyle] = React.useState({});
+    const [viewportHeight, setViewportHeight] = React.useState(
+        () => window.visualViewport?.height || window.innerHeight
+    );
 
     React.useEffect(() => {
-        const handleResize = () => {
-            if (window.visualViewport) {
-                setViewportStyle({
-                    height: `${window.visualViewport.height}px`,
-                    top: `${window.visualViewport.offsetTop}px`,
-                    position: 'fixed'
-                });
-            }
+        const update = () => {
+            const h = window.visualViewport?.height || window.innerHeight;
+            setViewportHeight(h);
         };
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleResize);
-            window.visualViewport.addEventListener('scroll', handleResize);
-            handleResize();
+            window.visualViewport.addEventListener('resize', update);
+            window.visualViewport.addEventListener('scroll', update);
         }
+        window.addEventListener('resize', update);
+        update();
         return () => {
             if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', handleResize);
-                window.visualViewport.removeEventListener('scroll', handleResize);
+                window.visualViewport.removeEventListener('resize', update);
+                window.visualViewport.removeEventListener('scroll', update);
             }
+            window.removeEventListener('resize', update);
         };
     }, []);
 
@@ -265,7 +264,10 @@ const OasisChat = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000" style={viewportStyle}>
+        <div
+            className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000"
+            style={{ height: viewportHeight + 'px' }}
+        >
             {isSidebarVisible && (
                 <>
                     {/* Mobile backdrop overlay to close sidebar by tapping outside */}
@@ -461,7 +463,7 @@ const OasisChat = ({
                 </div>
 
                 {/* COMMAND CENTER INPUT */}
-                <div className="relative z-10 px-3 pb-3 pt-1 md:px-12 md:pb-8 md:pt-4 border-t border-white/5 bg-[#050506]/30 backdrop-blur-md shrink-0">
+                <div className="relative z-10 px-3 pb-safe pt-1 md:px-12 md:pb-8 md:pt-4 border-t border-white/5 bg-[#050506] backdrop-blur-md shrink-0" style={{ paddingBottom: `max(12px, env(safe-area-inset-bottom))` }}>
                     <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-colors duration-300 shadow-2xl">
 
                         <div className="relative mb-0.5">
