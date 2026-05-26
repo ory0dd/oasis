@@ -1854,8 +1854,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     <div className={`${isChildNote ? 'py-1' : 'py-3'} flex justify-center items-center border-t border-white/5 bg-black/40 mt-auto shrink-0`}>
                         <div
                             className="port group/port flex flex-col items-center gap-1 cursor-crosshair relative"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                e.preventDefault();
                                 onStartConnecting(block.id);
                             }}
                         >
@@ -7628,7 +7630,7 @@ ${searchContext}
 
             // Guardar posición final con garantía de estado actual
             setBlocks(prev => {
-                syncBlocks(prev);
+                setTimeout(() => syncBlocks(prev), 0);
                 return prev;
             });
         }
@@ -7642,7 +7644,7 @@ ${searchContext}
             if (!exists) {
                 setLinks(prev => {
                     const updated = [...prev, { from: linkSource, to: targetId }];
-                    syncLinks(updated);
+                    setTimeout(() => syncLinks(updated), 0);
                     return updated;
                 });
 
@@ -7661,7 +7663,7 @@ ${searchContext}
     const removeConnection = (fromId, toId) => {
         setLinks(prev => {
             const updated = prev.filter(l => !(l.from === fromId && l.to === toId));
-            syncLinks(updated);
+            setTimeout(() => syncLinks(updated), 0);
             return updated;
         });
     };
@@ -7936,9 +7938,9 @@ ${searchContext}
 
             {/* El botón de Resonancia fue removido a petición del usuario por redundancia */}
 
-            <div className="absolute top-24 right-8 flex flex-col gap-4">
-                <button onClick={() => setCam(c => ({ ...c, scale: Math.min(c.scale + 0.2, 3) }))} className="w-10 h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom In"><Plus size={18} /></button>
-                <button onClick={() => setCam(c => ({ ...c, scale: Math.max(c.scale - 0.2, 0.1) }))} className="w-10 h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom Out"><Minus size={18} /></button>
+            <div className="absolute top-20 right-4 md:top-24 md:right-8 flex flex-col gap-2 md:gap-4">
+                <button onClick={() => setCam(c => ({ ...c, scale: Math.min(c.scale + 0.2, 3) }))} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom In"><Plus size={14} className="md:size-[18px]" /></button>
+                <button onClick={() => setCam(c => ({ ...c, scale: Math.max(c.scale - 0.2, 0.1) }))} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom Out"><Minus size={14} className="md:size-[18px]" /></button>
                 <button
                     onClick={() => {
                         const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
@@ -7978,10 +7980,10 @@ ${searchContext}
 
                         animateMainCamera(targetX, targetY, targetScale);
                     }}
-                    className="w-12 h-12 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl"
+                    className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl"
                     title="Centrar en Elementos Principales"
                 >
-                    <Focus size={20} />
+                    <Focus size={16} className="md:size-[20px]" />
                 </button>
             </div>
 
@@ -11054,7 +11056,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                 <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-10 duration-1000 max-w-3xl mx-auto">
                                                     {/* PREVIOUS ENTRIES */}
                                                     {blocks.find(b => b.id === editingId)?.entries?.map((entry, idx) => (
-                                                        <div key={idx} className="flex flex-col gap-3 p-5 bg-white/5 backdrop-blur-3xl rounded-[2rem] border border-white/5 opacity-40 hover:opacity-100 transition-all">
+                                                        <div key={idx} className="flex flex-col gap-3 p-5 bg-white/5 backdrop-blur-3xl rounded-[2rem] border border-white/5 opacity-80 md:opacity-40 md:hover:opacity-100 transition-all">
                                                             <div className="flex items-center justify-between opacity-50">
                                                                 <span className="text-[8px] font-black uppercase tracking-widest text-accent">{new Date(entry.timestamp).toLocaleDateString()}</span>
                                                                 <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
