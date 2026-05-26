@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ruido-interior-v2';
+const CACHE_NAME = 'ruido-interior-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -23,33 +23,29 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Interceptar peticiones: Si no hay red, sirve desde Caché
+// Interceptar peticiones: Network First (prioridad a red), fallback a caché (offline)
 self.addEventListener('fetch', (e) => {
   // Ignoramos peticiones a la API o de extensiones
   if (e.request.url.includes('/api/') || e.request.url.startsWith('chrome-extension')) return;
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse; // Lo tenemos en caché
-      }
-      
-      // Si no, lo bajamos de la red y lo cacheamos dinámicamente
-      return fetch(e.request).then((networkResponse) => {
-        // Validar respuesta (200 o 0 para recursos externos opacos)
-        if (!networkResponse || (networkResponse.status !== 200 && networkResponse.status !== 0)) {
-          return networkResponse;
-        }
-
+    fetch(e.request).then((networkResponse) => {
+      // Guardar una copia en caché de respuestas válidas
+      if (networkResponse && networkResponse.status === 200) {
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(e.request, responseToCache);
         });
-
-        return networkResponse;
-      }).catch((err) => {
-        console.error('App offline y recurso no en caché:', e.request.url);
+      }
+      return networkResponse;
+    }).catch(() => {
+      // Si la red falla (offline), buscamos en caché
+      return caches.match(e.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Opcional: podrías retornar una página offline aquí si lo deseas
       });
     })
   );
