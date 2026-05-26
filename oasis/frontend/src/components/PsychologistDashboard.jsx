@@ -2580,11 +2580,162 @@ Varianza Interna Global: ${pidState.globalVariance}
         );
     };
 
+    const renderFunctionalAnalysisTab = () => {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Análisis Funcional del Caso (Parte VI)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Identificación y delimitación de contextos, detonantes, respuestas y consecuencias para explicar los bucles de mantenimiento</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sección 1: Estímulos Antecedentes */}
+                    <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                        <div>
+                            <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">1. Estímulos Antecedentes (Contextos / Detonantes)</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Qué ocurre inmediatamente antes de la conducta problema</p>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Externos (Situaciones / Ambientes)</label>
+                                <textarea
+                                    value={clinicianNotes['func_antecedents_external'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_antecedents_external', e.target.value)}
+                                    placeholder="¿En qué situaciones, lugares, momentos del día o frente a qué personas o eventos se inicia el bucle?..."
+                                    className="w-full h-24 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Internos (Sensaciones / Cognición)</label>
+                                <textarea
+                                    value={clinicianNotes['func_antecedents_internal'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_antecedents_internal', e.target.value)}
+                                    placeholder="¿Qué pensamientos automáticos, emociones previas, recuerdos o sensaciones corporales actúan como detonante interno?..."
+                                    className="w-full h-24 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sección 2: Variables del Organismo */}
+                    <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                        <div>
+                            <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">2. Variables del Organismo (El Individuo)</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Factores biológicos y cognitivos previos del paciente</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Esquemas Nucleares e Historia de Aprendizaje</label>
+                                <textarea
+                                    value={clinicianNotes['func_organism_history'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_organism_history', e.target.value)}
+                                    placeholder="Esquemas de pensamiento arraigados, rasgos de personalidad (como se evidencian en el PID-5) o condiciones biológicas y fisiológicas que modulan la respuesta..."
+                                    className="w-full h-56 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sección 3: Respuesta Triple */}
+                <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                    <div>
+                        <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">3. Sistema de Respuesta Triple (El Bucle de Reacción)</h4>
+                        <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Cómo procesa y reacciona el individuo ante el detonante</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Cognitiva</label>
+                            <textarea
+                                value={clinicianNotes['func_response_cognitive'] || ''}
+                                onChange={(e) => handleSaveClinicianNote('func_response_cognitive', e.target.value)}
+                                placeholder="Ideas recurrentes, rumiaciones, auto-verbalizaciones negativas, sobre-análisis del caso o interpretaciones sesgadas..."
+                                className="w-full h-32 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Fisiológica</label>
+                            <textarea
+                                value={clinicianNotes['func_response_physiological'] || ''}
+                                onChange={(e) => handleSaveClinicianNote('func_response_physiological', e.target.value)}
+                                placeholder="Respuestas somáticas, taquicardia, tensión muscular, cambios en la velocidad del habla (visto en ICAR/biográfica), hiperventilación..."
+                                className="w-full h-32 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Motora / Conductual</label>
+                            <textarea
+                                value={clinicianNotes['func_response_motor'] || ''}
+                                onChange={(e) => handleSaveClinicianNote('func_response_motor', e.target.value)}
+                                placeholder="Acciones realizadas por el paciente, conductas de evitación, escape, ritos obsesivos, silencios prolongados o confrontación..."
+                                className="w-full h-32 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sección 4: Consecuencias */}
+                    <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                        <div>
+                            <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">4. Consecuencias del Comportamiento</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Efectos inmediatos y a largo plazo de la conducta</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Corto Plazo (Refuerzo / Alivio)</label>
+                                <textarea
+                                    value={clinicianNotes['func_consequences_short'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_consequences_short', e.target.value)}
+                                    placeholder="¿Qué alivio momentáneo u obtención de control inmediato percibe el paciente tras la conducta? (Refuerzo negativo o positivo inmediato)..."
+                                    className="w-full h-24 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Largo Plazo (Pérdidas / Perpetuación)</label>
+                                <textarea
+                                    value={clinicianNotes['func_consequences_long'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_consequences_long', e.target.value)}
+                                    placeholder="¿Qué consecuencias negativas persistentes produce a la larga esta respuesta? ¿Cómo perpetúa el malestar original del paciente?..."
+                                    className="w-full h-24 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sección 5: Hipótesis de Mantenimiento */}
+                    <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                        <div>
+                            <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">5. Hipótesis Integradora y Ciclo de Mantenimiento</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Integración clínica final del bucle recurrente</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Descripción del Bucle del Caso</label>
+                                <textarea
+                                    value={clinicianNotes['func_maintenance_hypothesis'] || ''}
+                                    onChange={(e) => handleSaveClinicianNote('func_maintenance_hypothesis', e.target.value)}
+                                    placeholder="Redacta cómo interactúan los detonantes, esquemas organísmicos y respuestas en un bucle cerrado. Explica el mecanismo de retroalimentación por el cual el síntoma no se resuelve..."
+                                    className="w-full h-56 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderSummaryTab = () => {
         return (
             <div className="space-y-8">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">Formulación y Firma de Caso (Parte VI)</h3>
+                    <h3 className="text-lg font-black text-white italic">Formulación y Firma de Caso (Parte VII)</h3>
                     <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cierre y publicación oficial del registro clínico</p>
                 </div>
 
@@ -2649,7 +2800,8 @@ Varianza Interna Global: ${pidState.globalVariance}
             { id: 'PID5', label: 'III. Inventario PID-5', desc: 'Rasgos de Personalidad', icon: AlertTriangle },
             { id: 'ICAR16', label: 'IV. Desempeño ICAR-16', desc: 'Eficiencia Cognitiva', icon: Brain },
             { id: 'CANVAS', label: 'V. Pizarrón de Formulación', desc: 'Modelado Relacional', icon: Hexagon },
-            { id: 'SUMMARY', label: 'VI. Resumen y Publicación', desc: 'Firma y Cierre', icon: Save }
+            { id: 'FUNCTIONAL_ANALYSIS', label: 'VI. Análisis Funcional', desc: 'Análisis de Procesos y Contextos', icon: FileText },
+            { id: 'SUMMARY', label: 'VII. Resumen y Publicación', desc: 'Firma y Cierre', icon: Save }
         ];
 
         return (
@@ -2752,6 +2904,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                         {activeTab === 'PID5' && renderPid5Tab()}
                         {activeTab === 'ICAR16' && renderIcarTab()}
                         {activeTab === 'CANVAS' && renderCanvasTab()}
+                        {activeTab === 'FUNCTIONAL_ANALYSIS' && renderFunctionalAnalysisTab()}
                         {activeTab === 'SUMMARY' && renderSummaryTab()}
                     </div>
                 </main>

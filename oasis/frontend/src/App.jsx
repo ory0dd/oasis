@@ -1625,27 +1625,186 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                 </button>
                                             </div>
                                         </div>
-                                    ) : block.type === 'loop_map_mini' ? (
-                                        <div className="flex flex-col h-full w-full relative group/notebook pointer-events-auto">
-                                            <div className="flex-1 overflow-hidden p-6 relative flex flex-col items-center justify-center text-center">
-                                                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #06b6d4 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                                                <Compass size={48} className="text-zinc-600 mb-6 animate-pulse" />
-                                                <h3 className="text-2xl font-black italic uppercase text-white/40 tracking-widest text-center mb-4">
-                                                    Sin Cartografía Asignada
-                                                </h3>
-                                                <p className="text-[10px] font-mono text-zinc-500 max-w-[80%] leading-relaxed">
-                                                    AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
-                                                </p>
+                                    ) : block.type === 'loop_map_mini' ? (() => {
+                                        let patientNodes = [];
+                                        let patientEdges = [];
+                                        try {
+                                            patientNodes = JSON.parse(localStorage.getItem('oasis_canvas_nodes_' + user)) || [];
+                                            patientEdges = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user)) || [];
+                                        } catch (e) {}
+
+                                        const hasLocalMap = patientNodes.length > 0;
+
+                                        return (
+                                            <div className="flex flex-col h-full w-full relative group/notebook pointer-events-auto">
+                                                {hasLocalMap ? (() => {
+                                                    let minX = 0, minY = 0, width = 800, height = 600;
+                                                    let minNodeX = Infinity, minNodeY = Infinity, maxNodeX = -Infinity, maxNodeY = -Infinity;
+                                                    patientNodes.forEach(n => {
+                                                        const w = n.width || 120;
+                                                        const h = n.height || 120;
+                                                        if (n.x < minNodeX) minNodeX = n.x;
+                                                        if (n.y < minNodeY) minNodeY = n.y;
+                                                        if (n.x + w > maxNodeX) maxNodeX = n.x + w;
+                                                        if (n.y + h > maxNodeY) maxNodeY = n.y + h;
+                                                    });
+                                                    const padding = 60;
+                                                    minX = minNodeX - padding;
+                                                    minY = minNodeY - padding;
+                                                    width = (maxNodeX - minNodeX) + padding * 2;
+                                                    height = (maxNodeY - minNodeY) + padding * 2;
+
+                                                    const drawGravityLine = (x1, y1, x2, y2) => {
+                                                        const dx = x2 - x1;
+                                                        const dy = y2 - y1;
+                                                        const cp1x = x1 + dx * 0.1;
+                                                        const cp1y = y1 + dy * 0.7;
+                                                        const cp2x = x2 - dx * 0.1;
+                                                        const cp2y = y2 - dy * 0.3;
+                                                        return `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
+                                                    };
+
+                                                    return (
+                                                        <div className="flex-1 overflow-hidden p-2 relative flex flex-col items-center justify-center text-center w-full h-full min-h-0 bg-[#09090b]/40 rounded-xl">
+                                                            <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+                                                            <svg viewBox={`${minX} ${minY} ${width} ${height}`} className="w-full h-full z-10 relative select-none">
+                                                                {patientEdges.map((edge, i) => {
+                                                                    const source = patientNodes.find(n => n.id === edge.source);
+                                                                    const target = patientNodes.find(n => n.id === edge.target);
+                                                                    if (!source || !target) return null;
+
+                                                                    const sx = source.x + (source.width || 120) / 2;
+                                                                    const sy = source.y + (source.height || 120);
+                                                                    const tx = target.x + (target.width || 120) / 2;
+                                                                    const ty = target.y;
+
+                                                                    const pathString = drawGravityLine(sx, sy, tx, ty);
+                                                                    
+                                                                    return (
+                                                                        <g key={i}>
+                                                                            <path d={pathString} fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="4" />
+                                                                            <path d={pathString} fill="none" stroke={edge.color || 'rgba(255, 255, 255, 0.3)'} strokeWidth="1" />
+                                                                        </g>
+                                                                    );
+                                                                })}
+
+                                                                {patientNodes.map(node => {
+                                                                    const isContext = node.type === 'CONTEXT';
+                                                                    const isState = node.type === 'INTERNAL_STATE' || node.type === 'MACRO_MECHANISM';
+                                                                    const isSymptom = node.type === 'CRITICAL_SYMPTOM';
+                                                                    const isChain = node.type === 'IMPACT_CHAIN';
+
+                                                                    let strokeColor = 'rgba(255,255,255,0.15)';
+                                                                    let bgColor = 'rgba(24, 24, 27, 0.4)';
+                                                                    let textColor = 'rgba(255, 255, 255, 0.8)';
+                                                                    let title = 'NODO';
+
+                                                                    if (isContext) {
+                                                                        strokeColor = '#0ea5e9';
+                                                                        bgColor = 'rgba(3, 105, 161, 0.2)';
+                                                                        textColor = '#bae6fd';
+                                                                        title = 'CONTEXTO INICIAL';
+                                                                    } else if (isState) {
+                                                                        strokeColor = '#10b981';
+                                                                        bgColor = 'rgba(4, 120, 87, 0.2)';
+                                                                        textColor = '#a7f3d0';
+                                                                        title = node.type === 'MACRO_MECHANISM' ? 'MACRO MECANISMO' : 'ESTADO INTERNO';
+                                                                    } else if (isSymptom) {
+                                                                        strokeColor = '#ef4444';
+                                                                        bgColor = 'rgba(185, 28, 28, 0.2)';
+                                                                        textColor = '#fecaca';
+                                                                        title = 'SÍNTOMA CRÍTICO';
+                                                                    } else if (isChain) {
+                                                                        strokeColor = '#71717a';
+                                                                        bgColor = 'rgba(63, 63, 70, 0.2)';
+                                                                        textColor = '#e4e4e7';
+                                                                        title = 'CADENA DE IMPACTO';
+                                                                    }
+
+                                                                    const cx = node.x + (node.width || 120) / 2;
+                                                                    const cy = node.y + (node.height || 120) / 2;
+                                                                    const rx = (node.width || 120) / 2;
+                                                                    const ry = (node.height || 120) / 2;
+
+                                                                    return (
+                                                                        <g key={node.id}>
+                                                                            <ellipse cx={cx} cy={cy} rx={rx + 8} ry={ry + 8} fill={strokeColor} className="opacity-[0.02]" />
+                                                                            
+                                                                            {isContext && (
+                                                                                <polygon 
+                                                                                    points={`${cx},${node.y} ${node.x + (node.width || 120)},${cy} ${cx},${node.y + (node.height || 120)} ${node.x},${cy}`}
+                                                                                    fill={bgColor}
+                                                                                    stroke={strokeColor}
+                                                                                    strokeWidth="1"
+                                                                                />
+                                                                            )}
+                                                                            {isState && (
+                                                                                <ellipse 
+                                                                                    cx={cx} cy={cy} rx={rx} ry={ry}
+                                                                                    fill={bgColor}
+                                                                                    stroke={strokeColor}
+                                                                                    strokeWidth="1"
+                                                                                />
+                                                                            )}
+                                                                            {(isSymptom || isChain) && (
+                                                                                <rect 
+                                                                                    x={node.x} y={node.y} width={node.width || 120} height={node.height || 120} rx="12" ry="12"
+                                                                                    fill={bgColor}
+                                                                                    stroke={strokeColor}
+                                                                                    strokeWidth="1"
+                                                                                />
+                                                                            )}
+
+                                                                            <text 
+                                                                                x={cx} y={node.y - 8} 
+                                                                                textAnchor="middle" 
+                                                                                className="text-[6px] font-bold font-mono tracking-widest fill-zinc-500 uppercase select-none"
+                                                                            >
+                                                                                {title}
+                                                                            </text>
+
+                                                                            <foreignObject 
+                                                                                x={node.x + 6} y={node.y + 6} 
+                                                                                width={(node.width || 120) - 12} height={(node.height || 120) - 12}
+                                                                            >
+                                                                                <div className="w-full h-full flex items-center justify-center text-center p-1 overflow-hidden select-none">
+                                                                                    <span 
+                                                                                        className="text-[7px] font-black uppercase tracking-wider leading-relaxed font-mono"
+                                                                                        style={{ color: textColor }}
+                                                                                    >
+                                                                                        {node.label}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </foreignObject>
+                                                                        </g>
+                                                                    );
+                                                                })}
+                                                            </svg>
+                                                        </div>
+                                                    );
+                                                })() : (
+                                                    <div className="flex-1 overflow-hidden p-6 relative flex flex-col items-center justify-center text-center">
+                                                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #06b6d4 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                                                        <Compass size={48} className="text-zinc-600 mb-6 animate-pulse" />
+                                                        <h3 className="text-2xl font-black italic uppercase text-white/40 tracking-widest text-center mb-4">
+                                                            Sin Cartografía Asignada
+                                                        </h3>
+                                                        <p className="text-[10px] font-mono text-zinc-500 max-w-[80%] leading-relaxed">
+                                                            AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                <div className="pt-2 mt-auto border-t border-cyan-500/10">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setView('soul'); }}
+                                                        className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Aperture size={14} /> Abrir Archivo del Alma
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="pt-2 mt-auto border-t border-cyan-500/10">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setView('soul'); }}
-                                                    className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <Aperture size={14} /> Abrir Archivo del Alma
-                                                </button>
-                                            </div>
-                                        </div>
+                                        )
+                                    }
                                     ) : (
                                         <>
                                             <SimpleNarrativeRenderer content={block.type === 'insight' ? `[insight] ${block.content}` : block.content} isChild={isChildNote} />

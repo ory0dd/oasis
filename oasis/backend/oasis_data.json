@@ -7,7 +7,7 @@
       "age": null,
       "background": {
         "type": "video",
-        "value": "/uploads/2c6a5bb1-2988-49eb-a1c7-daeb9b417d38.mp4",
+        "value": "/uploads/e2c98a01-9799-4aa1-afb8-a59f8d226d52.mp4",
         "isTiled": false,
         "opacity": 0.8
       },
@@ -1693,6 +1693,15 @@
       "isTiled": false,
       "creator": "ory11",
       "createdAt": "2026-05-25T00:10:21.3967096Z"
+    },
+    {
+      "id": "215fd682-c9f7-4011-a15f-4a8f39e405db",
+      "name": "hardstyle bro",
+      "type": "video",
+      "value": "/uploads/e2c98a01-9799-4aa1-afb8-a59f8d226d52.mp4",
+      "isTiled": false,
+      "creator": "ory11",
+      "createdAt": "2026-05-26T05:07:24.7748891Z"
     }
   ],
   "trackFingerprints": [
