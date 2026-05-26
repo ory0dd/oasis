@@ -78,6 +78,22 @@ const hexToRgb = (hex) => {
     return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '190, 242, 100';
 };
 
+const getBWidth = (block, isPoint) => {
+    if (isPoint) return 0;
+    if (block.width || block.w) return block.width || block.w;
+    if (block.type === 'loop_map_mini') return 850;
+    if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 480;
+    return block.metadata?.parentId ? 160 : 288;
+};
+
+const getBHeight = (block, isPoint) => {
+    if (isPoint) return 0;
+    if (block.height || block.h) return block.height || block.h;
+    if (block.type === 'loop_map_mini') return 700;
+    if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 600;
+    return block.metadata?.parentId ? 160 : 288;
+};
+
 const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale = 1) => {
     const b2X = b2.x;
     const b2Y = b2.y;
@@ -85,32 +101,41 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
     const b1IsChild = !!b1.metadata?.parentId;
     const b2IsChild = !isB2Point && !!b2.metadata?.parentId;
 
-    const getBWidth = (block, isPoint) => {
-        if (isPoint) return 0;
-        if (block.width || block.w) return block.width || block.w;
-        if (block.type === 'loop_map_mini') return 850;
-        if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 480;
-        return block.metadata?.parentId ? 160 : 288;
-    };
-
-    const getBHeight = (block, isPoint) => {
-        if (isPoint) return 0;
-        if (block.height || block.h) return block.height || block.h;
-        if (block.type === 'loop_map_mini') return 700;
-        if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 600;
-        return block.metadata?.parentId ? 160 : 288;
-    };
-
     const b1W = getBWidth(b1, false);
     const b2W = getBWidth(b2, isB2Point);
     const b1H = getBHeight(b1, false);
     const b2H = getBHeight(b2, isB2Point);
 
     // The nodes are positioned with translate(-50%, -50%), so b.x and b.y represent their exact CENTER.
-    // To anchor to the bottom center, we use x = center, y = center + height / 2.
-    // The visual dots are exactly at the bottom-center of the border!
-    const p1 = { x: 5000 + b1.x, y: 5000 + b1.y + (b1H / 2) };
-    const p2 = { x: 5000 + b2.x, y: 5000 + b2.y + (isB2Point ? 0 : (b2H / 2)) };
+    // Dynamic border connection points based on node placement.
+    let p1, p2;
+    if (isB2Point) {
+        p1 = { x: 5000 + b1.x, y: 5000 + b1.y + (b1H / 2) };
+        p2 = { x: 5000 + b2.x, y: 5000 + b2.y };
+    } else {
+        const dx = b2.x - b1.x;
+        const dy = b2.y - b1.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal connection
+            if (dx > 0) {
+                p1 = { x: 5000 + b1.x + (b1W / 2), y: 5000 + b1.y };
+                p2 = { x: 5000 + b2.x - (b2W / 2), y: 5000 + b2.y };
+            } else {
+                p1 = { x: 5000 + b1.x - (b1W / 2), y: 5000 + b1.y };
+                p2 = { x: 5000 + b2.x + (b2W / 2), y: 5000 + b2.y };
+            }
+        } else {
+            // Vertical connection
+            if (dy > 0) {
+                p1 = { x: 5000 + b1.x, y: 5000 + b1.y + (b1H / 2) };
+                p2 = { x: 5000 + b2.x, y: 5000 + b2.y - (b2H / 2) };
+            } else {
+                p1 = { x: 5000 + b1.x, y: 5000 + b1.y - (b1H / 2) };
+                p2 = { x: 5000 + b2.x, y: 5000 + b2.y + (b2H / 2) };
+            }
+        }
+    }
 
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
@@ -130,11 +155,6 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
     let cp1WaveY = Math.cos(time) * 10;
     let cp2WaveX = Math.sin(time + 2.5) * 20;
     let cp2WaveY = Math.cos(time + 2.5) * 10;
-
-    // Asymmetric Dual-Curve: Right control point Y-dip is higher up (dip * 0.62)
-    // This creates two distinct organic bending curves/shoulders, one higher than the other!
-    let cp1Dip = dip;
-    let cp2Dip = dip * 0.62;
 
     // Apply springy physical drag lag (sway) in opposite direction of motion
     if (draggingId) {
@@ -169,8 +189,24 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
         }
     }
 
-    const cp1 = { x: p1.x + cp1WaveX, y: p1.y + cp1Dip + cp1WaveY };
-    const cp2 = { x: p2.x + cp2WaveX, y: p2.y + cp2Dip + cp2WaveY };
+    let cp1, cp2;
+    const isHorizontal = !isB2Point && Math.abs(b2.x - b1.x) > Math.abs(b2.y - b1.y);
+
+    if (isHorizontal) {
+        const dir = Math.sign(p2.x - p1.x) || 1;
+        cp1 = { x: p1.x + dir * (distance * 0.35) + cp1WaveX, y: p1.y + cp1WaveY };
+        cp2 = { x: p2.x - dir * (distance * 0.35) + cp2WaveX, y: p2.y + cp2WaveY };
+    } else {
+        const dir = Math.sign(p2.y - p1.y) || 1;
+        let cp1Dip = dip;
+        let cp2Dip = dip * 0.62;
+        if (dir < 0) {
+            cp1Dip = -dip;
+            cp2Dip = -dip * 0.62;
+        }
+        cp1 = { x: p1.x + cp1WaveX, y: p1.y + cp1Dip + cp1WaveY };
+        cp2 = { x: p2.x + cp2WaveX, y: p2.y + cp2Dip + cp2WaveY };
+    }
 
     return { p1, p2, cp1, cp2 };
 };
@@ -2206,57 +2242,59 @@ const ProfileView = ({
     }, [activeSlideIndex, filteredReleases, releaseTab]);
 
     return (
-        <div 
-            id="profile-scroll-container" 
-            ref={containerRef}
-            className="w-full h-screen relative text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar bg-[#0a0a0b]/85 backdrop-blur-xl snap-y snap-mandatory scroll-smooth will-change-scroll"
-        >
-            {/* 1. TOP COVER BANNER (BACKGROUND OF FIRST SLIDE) */}
-            <div className="absolute top-0 left-0 w-full h-[100vh] z-0 pointer-events-none overflow-hidden">
-                <div
-                    className="absolute inset-0 transition-all duration-700 ease-in-out"
-                    style={{
-                        backgroundImage: `url(${formatUrl(coverImage)})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center',
-                        opacity: activeSlideIndex === 0 ? 0.35 : 0.05
-                    }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0b]/60 to-[#0a0a0b]" />
+        <div className="w-full h-screen relative overflow-hidden bg-[#0a0a0b]/85 backdrop-blur-xl">
+            {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
+            <div className="absolute top-6 left-6 right-6 md:left-10 md:right-10 flex justify-between items-start pointer-events-none z-50">
+                <button
+                    onClick={() => setView('canvas')}
+                    className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl pointer-events-auto hover:scale-105 active:scale-95"
+                >
+                    ← Volver
+                </button>
+
+                <div className="flex gap-2 pointer-events-auto">
+                    {isEditingProfile && (
+                        <button
+                            onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in hover:scale-105 active:scale-95"
+                        >
+                            <Camera size={12} /> Cambiar Portada
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
+                    >
+                        <Settings size={12} className="hover:rotate-45 transition-transform duration-300" /> Configuración
+                    </button>
+                </div>
+                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
 
-            {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
             <div 
-                data-index={0}
-                className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-6 pb-6 px-6 md:px-10 z-10 overflow-hidden"
+                id="profile-scroll-container" 
+                ref={containerRef}
+                className="w-full h-full text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll"
             >
-                {/* TOP NAVIGATION / ACTIONS OVERLAY */}
-                <div className="w-full flex justify-between items-start pointer-events-auto">
-                    <button
-                        onClick={() => setView('canvas')}
-                        className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white shadow-xl"
-                    >
-                        ← Volver
-                    </button>
-
-                    <div className="flex gap-2">
-                        {isEditingProfile && (
-                            <button
-                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in"
-                            >
-                                <Camera size={12} /> Cambiar Portada
-                            </button>
-                        )}
-                        <button
-                            onClick={() => setIsSettingsOpen(true)}
-                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all duration-300"
-                        >
-                            <Settings size={12} className="hover:rotate-45 transition-transform duration-300" /> Configuración
-                        </button>
-                    </div>
-                    <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
+                {/* 1. TOP COVER BANNER (BACKGROUND OF FIRST SLIDE) */}
+                <div className="absolute top-0 left-0 w-full h-[100vh] z-0 pointer-events-none overflow-hidden">
+                    <div
+                        className="absolute inset-0 transition-all duration-700 ease-in-out"
+                        style={{
+                            backgroundImage: `url(${formatUrl(coverImage)})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center',
+                            opacity: activeSlideIndex === 0 ? 0.35 : 0.05
+                        }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0b]/60 to-[#0a0a0b]" />
                 </div>
+
+                {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
+                <div 
+                    data-index={0}
+                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-24 pb-6 px-6 md:px-10 z-10 overflow-hidden"
+                >
 
                 {/* HERO MAIN CARD (CONSOLIDATED) */}
                 <div className={`w-full max-w-3xl mx-auto flex flex-col justify-center my-auto gap-4 md:gap-5 pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
@@ -2776,6 +2814,7 @@ const ProfileView = ({
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };
@@ -2832,7 +2871,7 @@ export default function App() {
         }
     }, [credits, user]);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
-    const [deepseekKey, setDeepseekKey] = useState('sk-07b18eb6601a4b11a109c96a56c92a16'); // DeepSeek API Key
+    const [deepseekKey, setDeepseekKey] = useState(() => localStorage.getItem('oasis_deepseek_key') || ''); // DeepSeek API Key
 
     // --- APP STATE ---
     // Sidebar & Conversations
@@ -3116,15 +3155,15 @@ export default function App() {
         const existing = blocks.find(b => b.type === type);
         if (existing) {
             setCam({
-                x: -existing.x * 0.8 + window.innerWidth / 2,
-                y: -existing.y * 0.8 + window.innerHeight / 2,
+                x: -existing.x * 0.8,
+                y: -existing.y * 0.8,
                 scale: 0.8
             });
             return;
         }
 
-        let spawnX = -cam.x / cam.scale + (window.innerWidth / 2) / cam.scale - 200;
-        let spawnY = -cam.y / cam.scale + (window.innerHeight / 2) / cam.scale - 300;
+        let spawnX = -cam.x / cam.scale - 200;
+        let spawnY = -cam.y / cam.scale - 300;
 
         if (type === 'diary_notebook') { spawnX = -700; spawnY = -350; }
         if (type === 'resonance_notebook') { spawnX = 100; spawnY = -350; }
@@ -5796,8 +5835,24 @@ export default function App() {
     const [isDrawing, setIsDrawing] = useState(false);
 
     useEffect(() => {
-        // En DeepSeek los modelos son estáticos para esta implementación
         setAvailableModels(['deepseek-chat', 'deepseek-reasoner']);
+
+        const fetchDeepseekKey = async () => {
+            if (!localStorage.getItem('oasis_deepseek_key')) {
+                try {
+                    const res = await fetch(`${API_URL}/api/oasis/config/deepseek-key`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.key) {
+                            setDeepseekKey(data.key);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error fetching Deepseek Key:", err);
+                }
+            }
+        };
+        fetchDeepseekKey();
     }, [deepseekKey]);
 
     const editBlock = (block) => {
@@ -5973,41 +6028,92 @@ export default function App() {
     const [profileCam, setProfileCam] = useState({ x: 0, y: 0, scale: 0.7 });
     const [feedCam, setFeedCam] = useState({ x: 0, y: 0, scale: 1 });
 
+    const mainCamAnimRef = useRef(null);
+    const hasCenteredCanvasRef = useRef(false);
+
+    const animateMainCamera = (targetX, targetY, targetScale = 0.8) => {
+        const startX = cam.x;
+        const startY = cam.y;
+        const startScale = cam.scale;
+
+        const initialX = startX;
+        const initialY = startY;
+        const initialScale = startScale;
+
+        const duration = 1500; // 1.5s fluid glide transition
+        const startTime = performance.now();
+
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = easeOutCubic(progress);
+
+            setCam({
+                x: initialX + (targetX - initialX) * easeProgress,
+                y: initialY + (targetY - initialY) * easeProgress,
+                scale: initialScale + (targetScale - initialScale) * easeProgress
+            });
+
+            if (progress < 1) {
+                mainCamAnimRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        if (mainCamAnimRef.current) cancelAnimationFrame(mainCamAnimRef.current);
+        mainCamAnimRef.current = requestAnimationFrame(animate);
+    };
+
     useEffect(() => {
-        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0) {
-            let targetBlock = null;
-            if (lastInteractedBlockId) {
-                targetBlock = blocks.find(b => b.id === lastInteractedBlockId);
-            }
-            if (!targetBlock) {
-                targetBlock = blocks.find(b =>
-                    b.type === 'diary_notebook' ||
-                    b.type === 'resonance_notebook' ||
-                    b.type === 'conversation_notebook'
-                );
-            }
-            if (!targetBlock) {
-                targetBlock = blocks.find(b => b.type === 'text');
-            }
-            if (!targetBlock && blocks.length > 0) {
-                targetBlock = blocks[0];
+        return () => {
+            if (mainCamAnimRef.current) cancelAnimationFrame(mainCamAnimRef.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (view !== 'canvas') {
+            hasCenteredCanvasRef.current = false;
+            return;
+        }
+
+        if (view === 'canvas' && isDataLoaded && blocks && blocks.length > 0 && !hasCenteredCanvasRef.current) {
+            hasCenteredCanvasRef.current = true;
+
+            const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
+            const targetScale = 0.8;
+            let targetX, targetY;
+
+            if (renderedBlocks.length === 0) {
+                targetX = 0;
+                targetY = 0;
+            } else {
+                let minX = Infinity;
+                let maxX = -Infinity;
+                let minY = Infinity;
+                let maxY = -Infinity;
+
+                renderedBlocks.forEach(b => {
+                    const bx = b.x !== undefined ? b.x : 0;
+                    const by = b.y !== undefined ? b.y : 0;
+                    const bw = getBWidth(b, false);
+                    const bh = getBHeight(b, false);
+                    if (bx - bw/2 < minX) minX = bx - bw/2;
+                    if (bx + bw/2 > maxX) maxX = bx + bw/2;
+                    if (by - bh/2 < minY) minY = by - bh/2;
+                    if (by + bh/2 > maxY) maxY = by + bh/2;
+                });
+
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+
+                targetX = -centerX * targetScale;
+                targetY = -centerY * targetScale;
             }
 
-            if (targetBlock) {
-                setCam({
-                    x: -targetBlock.x * 0.8 + window.innerWidth / 2,
-                    y: -targetBlock.y * 0.8 + window.innerHeight / 2,
-                    scale: 0.8
-                });
-            } else {
-                setCam({
-                    x: window.innerWidth / 2,
-                    y: window.innerHeight / 2,
-                    scale: 0.8
-                });
-            }
+            animateMainCamera(targetX, targetY, targetScale);
         }
-    }, [view, isDataLoaded]);
+    }, [view, isDataLoaded, blocks]);
 
     const [draggingId, setDraggingId] = useState(null);
     const dragStart = useRef({ x: 0, y: 0 });
@@ -7168,9 +7274,13 @@ ${searchContext}
 
             if (bestSnapX !== null) {
                 nx = view === 'profile' ? bestSnapX + 400 : bestSnapX;
+            } else {
+                nx = Math.round(nx / 20) * 20;
             }
             if (bestSnapY !== null) {
                 ny = view === 'profile' ? bestSnapY + 400 : bestSnapY;
+            } else {
+                ny = Math.round(ny / 20) * 20;
             }
 
             if (view === 'profile') {
@@ -7530,40 +7640,40 @@ ${searchContext}
             <div className="absolute top-24 right-8 flex flex-col gap-4">
                 <button onClick={() => setCam(c => ({ ...c, scale: Math.min(c.scale + 0.2, 3) }))} className="w-10 h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom In"><Plus size={18} /></button>
                 <button onClick={() => setCam(c => ({ ...c, scale: Math.max(c.scale - 0.2, 0.1) }))} className="w-10 h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom Out"><Minus size={18} /></button>
-                <div className="h-px w-full bg-white/5 mx-auto" />
                 <button
                     onClick={() => {
-                        let targetBlock = null;
-                        if (lastInteractedBlockId) {
-                            targetBlock = blocks.find(b => b.id === lastInteractedBlockId);
-                        }
-                        if (!targetBlock) {
-                            targetBlock = blocks.find(b =>
-                                b.type === 'diary_notebook' ||
-                                b.type === 'resonance_notebook' ||
-                                b.type === 'conversation_notebook'
-                            );
-                        }
-                        if (!targetBlock) {
-                            targetBlock = blocks.find(b => b.type === 'text');
-                        }
-                        if (!targetBlock && blocks.length > 0) {
-                            targetBlock = blocks[0];
+                        const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
+                        const targetScale = 0.8;
+                        let targetX, targetY;
+
+                        if (renderedBlocks.length === 0) {
+                            targetX = 0;
+                            targetY = 0;
+                        } else {
+                            let minX = Infinity;
+                            let maxX = -Infinity;
+                            let minY = Infinity;
+                            let maxY = -Infinity;
+
+                            renderedBlocks.forEach(b => {
+                                const bx = b.x !== undefined ? b.x : 0;
+                                const by = b.y !== undefined ? b.y : 0;
+                                const bw = getBWidth(b, false);
+                                const bh = getBHeight(b, false);
+                                if (bx - bw/2 < minX) minX = bx - bw/2;
+                                if (bx + bw/2 > maxX) maxX = bx + bw/2;
+                                if (by - bh/2 < minY) minY = by - bh/2;
+                                if (by + bh/2 > maxY) maxY = by + bh/2;
+                            });
+
+                            const centerX = (minX + maxX) / 2;
+                            const centerY = (minY + maxY) / 2;
+
+                            targetX = -centerX * targetScale;
+                            targetY = -centerY * targetScale;
                         }
 
-                        if (targetBlock) {
-                            setCam({
-                                x: -targetBlock.x * 0.8 + window.innerWidth / 2,
-                                y: -targetBlock.y * 0.8 + window.innerHeight / 2,
-                                scale: 0.8
-                            });
-                        } else {
-                            setCam({
-                                x: window.innerWidth / 2,
-                                y: window.innerHeight / 2,
-                                scale: 0.8
-                            });
-                        }
+                        animateMainCamera(targetX, targetY, targetScale);
                     }}
                     className="w-12 h-12 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl"
                     title="Centrar en Elementos Principales"
@@ -10543,6 +10653,60 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                             )}
                                         </div>
 
+                                        {!isDiaryMode && editingId && (
+                                            <div className="w-full flex items-center flex-wrap gap-2 pb-6 border-b border-white/5 mb-6 animate-in fade-in duration-300">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mr-2 flex items-center gap-1" style={{ color: accent }}>
+                                                    <FileText size={12} />
+                                                    Subpáginas:
+                                                </span>
+
+                                                {(() => {
+                                                    const childNotes = blocks.filter(b => b.metadata?.parentId === editingId);
+                                                    return childNotes.map((child, idx) => (
+                                                        <div key={child.id} className="group flex items-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-3 pr-1 py-1 transition-all animate-in zoom-in-95 duration-200">
+                                                            <span
+                                                                onClick={() => editBlock(child)}
+                                                                className="text-[10px] font-bold text-white cursor-pointer mr-2 truncate max-w-[120px] hover:text-accent transition-colors"
+                                                            >
+                                                                {child.caption || `Subpágina ${idx + 1}`}
+                                                            </span>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteAttribute(child.id); }}
+                                                                className="w-5 h-5 rounded-full hover:bg-red-500/20 text-zinc-500 hover:text-red-500 flex items-center justify-center transition-all"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                        </div>
+                                                    ));
+                                                })()}
+
+                                                <div className="flex items-center gap-1 ml-auto">
+                                                    <input
+                                                        type="text"
+                                                        value={newAttrTitle}
+                                                        onChange={e => setNewAttrTitle(e.target.value)}
+                                                        placeholder="Añadir subpágina..."
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                handleAddAttribute(newAttrTitle);
+                                                            }
+                                                        }}
+                                                        className="bg-transparent border border-white/10 rounded-full px-3 py-1.5 text-[10px] text-white placeholder:text-zinc-600 focus:ring-1 focus:border-accent outline-none w-32 transition-all focus:w-48"
+                                                    />
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleAddAttribute(newAttrTitle);
+                                                        }}
+                                                        className="w-7 h-7 rounded-full bg-white/10 text-white hover:bg-accent hover:text-black hover:scale-105 active:scale-95 transition-all flex items-center justify-center shrink-0"
+                                                    >
+                                                        <Plus size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {(() => {
                                             const currentMuralBlocks = editingId ? (blocks.find(b => b.id === editingId)?.muralBlocks || []) : tempMuralBlocks;
                                             if (!currentMuralBlocks || currentMuralBlocks.length === 0) return null;
@@ -11013,59 +11177,6 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                         {/* ELIMINADO EL TOOLBAR INLINE AQUI - MOVIDO ARRIBA */}
                                     </div> {/* Close editor div */}
 
-                                    {!isDiaryMode && (
-                                        <div className="w-full flex items-center flex-wrap gap-2 pt-6 border-t border-white/5 mt-6">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mr-2 flex items-center gap-1" style={{ color: accent }}>
-                                                <FileText size={12} />
-                                                Subpáginas:
-                                            </span>
-
-                                            {(() => {
-                                                const childNotes = blocks.filter(b => b.metadata?.parentId === editingId);
-                                                return childNotes.map((child, idx) => (
-                                                    <div key={child.id} className="group flex items-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-3 pr-1 py-1 transition-all">
-                                                        <span
-                                                            onClick={() => editBlock(child)}
-                                                            className="text-[10px] font-bold text-white cursor-pointer mr-2 truncate max-w-[120px]"
-                                                        >
-                                                            {child.caption || `Subpágina ${idx + 1}`}
-                                                        </span>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleDeleteAttribute(child.id); }}
-                                                            className="w-5 h-5 rounded-full hover:bg-red-500/20 text-zinc-500 hover:text-red-500 flex items-center justify-center transition-all"
-                                                        >
-                                                            <X size={10} />
-                                                        </button>
-                                                    </div>
-                                                ));
-                                            })()}
-
-                                            <div className="flex items-center gap-1 ml-auto">
-                                                <input
-                                                    type="text"
-                                                    value={newAttrTitle}
-                                                    onChange={e => setNewAttrTitle(e.target.value)}
-                                                    placeholder="Añadir subpágina..."
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                            handleAddAttribute(newAttrTitle);
-                                                        }
-                                                    }}
-                                                    className="bg-transparent border border-white/10 rounded-full px-3 py-1.5 text-[10px] text-white placeholder:text-zinc-600 focus:ring-1 focus:border-accent outline-none w-32 transition-all focus:w-48"
-                                                />
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleAddAttribute(newAttrTitle);
-                                                    }}
-                                                    className="w-7 h-7 rounded-full bg-white/10 text-white hover:bg-accent hover:text-black hover:scale-105 active:scale-95 transition-all flex items-center justify-center shrink-0"
-                                                >
-                                                    <Plus size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -11230,9 +11341,67 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
     const touchStartPanRef = useRef({ x: 0, y: 0 });
     const touchStartMidRef = useRef({ x: 0, y: 0 });
 
+    const hasCenteredRef = useRef(false);
+    const animationFrameRef = useRef(null);
+
+    const animatePan = (targetX, targetY) => {
+        const startX = pan.x;
+        const startY = pan.y;
+        const duration = 1200; // 1.2s smooth fluid animation
+        const startTime = performance.now();
+
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+        const animate = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easeProgress = easeOutCubic(progress);
+
+            setPan({
+                x: startX + (targetX - startX) * easeProgress,
+                y: startY + (targetY - startY) * easeProgress
+            });
+
+            if (progress < 1) {
+                animationFrameRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    const stopPanAnimation = () => {
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+    };
+
     useEffect(() => {
+        return () => {
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        setBlocks(initialBlocks || []);
+        hasCenteredRef.current = false;
+    }, [initialBlocks]);
+
+    useEffect(() => {
+        if (hasCenteredRef.current) return;
+
+        if (initialBlocks && initialBlocks.length > 0 && (!blocks || blocks.length === 0)) {
+            return;
+        }
+
+        hasCenteredRef.current = true;
+
         if (!blocks || blocks.length === 0) {
-            setPan({ x: window.innerWidth / 2 - 125, y: window.innerHeight / 2 - 100 });
+            const targetX = window.innerWidth / 2 - 125;
+            const targetY = window.innerHeight / 2 - 100;
+            animatePan(targetX, targetY);
             return;
         }
 
@@ -11255,11 +11424,11 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
 
-        setPan({
-            x: (window.innerWidth / 2) - centerX,
-            y: (window.innerHeight / 2) - centerY
-        });
-    }, []);
+        const targetX = (window.innerWidth / 2) - centerX;
+        const targetY = (window.innerHeight / 2) - centerY;
+
+        animatePan(targetX, targetY);
+    }, [blocks, initialBlocks]);
 
     const renderShapeSVG = (shapeType, color) => {
         const svgColor = color || accent;
@@ -11496,6 +11665,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
 
     // PANNING THE CANVAS
     const handleMouseDown = (e) => {
+        stopPanAnimation();
         if (e.target === containerRef.current || e.target.classList.contains('canvas-grid')) {
             setIsPanning(true);
             setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -11514,6 +11684,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
     };
 
     const handleTouchStart = (e) => {
+        stopPanAnimation();
         if (e.touches.length === 1 && (e.target === containerRef.current || e.target.classList.contains('canvas-grid'))) {
             const touch = e.touches[0];
             setIsPanning(true);

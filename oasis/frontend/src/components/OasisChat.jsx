@@ -49,6 +49,30 @@ const OasisChat = ({
 
     const [isSaving, setIsSaving] = React.useState(false);
     const [saveSuccess, setSaveSuccess] = React.useState(false);
+    const [viewportStyle, setViewportStyle] = React.useState({});
+
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                setViewportStyle({
+                    height: `${window.visualViewport.height}px`,
+                    top: `${window.visualViewport.offsetTop}px`,
+                    position: 'fixed'
+                });
+            }
+        };
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            window.visualViewport.addEventListener('scroll', handleResize);
+            handleResize();
+        }
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.removeEventListener('scroll', handleResize);
+            }
+        };
+    }, []);
 
     const handleForceSave = async () => {
         if (messages.length === 0 || isLoading) return;
@@ -241,7 +265,7 @@ const OasisChat = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000">
+        <div className="fixed inset-0 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden transition-colors duration-1000" style={viewportStyle}>
             {isSidebarVisible && (
                 <>
                     {/* Mobile backdrop overlay to close sidebar by tapping outside */}
@@ -367,8 +391,9 @@ const OasisChat = ({
                     </button>
                 </div>
 
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-20">
-                    <div className="max-w-2xl mx-auto px-6 space-y-12 pb-32">
+                {/* Scrollable messages container */}
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 pb-4 min-h-0">
+                    <div className="max-w-2xl mx-auto px-6 space-y-4">
                         {isAnalyzingNote && (
                             <div className="flex items-center gap-4 p-6 rounded-3xl bg-accent/5 border border-accent/10 mb-8 animate-in slide-in-from-top-4 duration-700">
                                 <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent"><Radio size={18} className="animate-spin-slow" /></div>
@@ -411,7 +436,7 @@ const OasisChat = ({
                                 ) : (
                                     <>
                                         {m.role === 'assistant' && m.thought && (<div className="mb-3 opacity-60"><ReasoningBlock thought={m.thought} isStreaming={!m.content && isLoading} /></div>)}
-                                        <div className={`max-w-[85%] px-1 font-sans text-sm md:text-base leading-relaxed tracking-normal ${m.role === 'user' ? 'text-accent text-right' : 'text-white/80 text-left'}`}>
+                                        <div className={`max-w-[85%] px-1 font-sans text-sm md:text-base leading-relaxed tracking-normal whitespace-pre-wrap ${m.role === 'user' ? 'text-accent text-right' : 'text-white/80 text-left'}`}>
                                             {m.role === 'assistant' ? (
                                                 (i === messages.length - 1 && !isLoading) ? <WordByWordRenderer content={m.content} /> : <SimpleNarrativeRenderer content={m.content} />
                                             ) : m.content}
@@ -433,45 +458,45 @@ const OasisChat = ({
                         {isLoading && (<div className="flex items-center gap-2 pl-1 animate-pulse"><div className="w-1 h-1 rounded-full bg-accent" /><div className="w-1 h-1 rounded-full bg-accent opacity-60" /><div className="w-1 h-1 rounded-full bg-accent opacity-30" /></div>)}
                         <div ref={chatEndRef} />
                     </div>
+                </div>
 
-                    {/* COMMAND CENTER INPUT */}
-                    <div className="relative z-10 px-3 pb-3 pt-1 md:px-12 md:pb-8 md:pt-4">
-                        <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-colors duration-300 shadow-2xl">
+                {/* COMMAND CENTER INPUT */}
+                <div className="relative z-10 px-3 pb-3 pt-1 md:px-12 md:pb-8 md:pt-4 border-t border-white/5 bg-[#050506]/30 backdrop-blur-md shrink-0">
+                    <div className="max-w-2xl mx-auto relative group flex items-end gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 group-focus-within:border-accent/40 group-focus-within:bg-white/10 transition-colors duration-300 shadow-2xl">
 
-                            <div className="relative mb-0.5">
-                                <button onClick={() => setShowAttachmentMenu(!showAttachmentMenu)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${showAttachmentMenu ? 'bg-accent text-black rotate-45' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Plus size={16} className="md:size-5" /></button>
-                                {showAttachmentMenu && (
-                                    <div className="absolute bottom-12 left-0 w-48 bg-[#0c0c0d] border border-white/10 rounded-[1.5rem] overflow-hidden shadow-2xl p-1.5 animate-in fade-in slide-in-from-bottom-4 duration-300 z-[1000]">
-                                        <button onClick={() => { document.getElementById('chat-attach-image')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><ImageIcon size={14} /> Imagen de PC</button>
-                                        <button onClick={() => { document.getElementById('chat-attach-doc')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><FileText size={14} /> Documento / PDF</button>
-                                        <input id="chat-attach-image" type="file" accept="image/*" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
-                                        <input id="chat-attach-doc" type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
-                                    </div>
-                                )}
-                            </div>
-
-                            <button onClick={toggleRecording} className={`mb-0.5 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`} title="Hablar (Voz a Texto)"><Mic size={15} className="md:size-[18px]" /></button>
-
-                            <textarea
-                                ref={textareaRef}
-                                rows={1}
-                                value={input + (interimText ? (input.trim() ? ' ' : '') + interimText : '')}
-                                onChange={handleTextareaChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Escribe un mensaje o pregunta..."
-                                className="flex-1 bg-transparent py-1.5 px-1.5 text-sm md:text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[32px] max-h-[200px]"
-                            />
-
-                            <button
-                                onClick={() => onSend()}
-                                disabled={!input.trim() && !isLoading}
-                                className="mb-0.5 w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-accent text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-accent/20 z-[100] disabled:opacity-30 disabled:scale-100 pointer-events-auto"
-                            >
-                                <Send size={15} className="md:size-[18px]" strokeWidth={3} />
-                            </button>
+                        <div className="relative mb-0.5">
+                            <button onClick={() => setShowAttachmentMenu(!showAttachmentMenu)} className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${showAttachmentMenu ? 'bg-accent text-black rotate-45' : 'bg-white/5 text-zinc-500 hover:text-white'}`}><Plus size={16} className="md:size-5" /></button>
+                            {showAttachmentMenu && (
+                                <div className="absolute bottom-12 left-0 w-48 bg-[#0c0c0d] border border-white/10 rounded-[1.5rem] overflow-hidden shadow-2xl p-1.5 animate-in fade-in slide-in-from-bottom-4 duration-300 z-[1000]">
+                                    <button onClick={() => { document.getElementById('chat-attach-image')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><ImageIcon size={14} /> Imagen de PC</button>
+                                    <button onClick={() => { document.getElementById('chat-attach-doc')?.click(); setShowAttachmentMenu(false); }} className="w-full flex items-center gap-2.5 p-3 text-[9px] font-black uppercase text-zinc-500 hover:text-accent hover:bg-accent/5 rounded-xl transition-all"><FileText size={14} /> Documento / PDF</button>
+                                    <input id="chat-attach-image" type="file" accept="image/*" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
+                                    <input id="chat-attach-doc" type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={(e) => console.log('File:', e.target.files[0])} />
+                                </div>
+                            )}
                         </div>
-                        <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-1 md:mt-2 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
+
+                        <button onClick={toggleRecording} className={`mb-0.5 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-zinc-500 hover:text-white'}`} title="Hablar (Voz a Texto)"><Mic size={15} className="md:size-[18px]" /></button>
+
+                        <textarea
+                            ref={textareaRef}
+                            rows={1}
+                            value={input + (interimText ? (input.trim() ? ' ' : '') + interimText : '')}
+                            onChange={handleTextareaChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Escribe un mensaje o pregunta..."
+                            className="flex-1 bg-transparent py-1.5 px-1.5 text-sm md:text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[32px] max-h-[200px]"
+                        />
+
+                        <button
+                            onClick={() => onSend()}
+                            disabled={!input.trim() && !isLoading}
+                            className="mb-0.5 w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-accent text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-accent/20 z-[100] disabled:opacity-30 disabled:scale-100 pointer-events-auto"
+                        >
+                            <Send size={15} className="md:size-[18px]" strokeWidth={3} />
+                        </button>
                     </div>
+                    <p className="text-center text-[7px] font-black uppercase text-zinc-900 tracking-[0.4em] mt-1 md:mt-2 select-none italic">Oasis Core Chat — v1.6 (Refactored)</p>
                 </div>
             </div>
         </div>

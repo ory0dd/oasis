@@ -230,11 +230,99 @@ namespace Oasis.Backend.Controllers
             if (_state.Users.Any(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase)))
                 return BadRequest(new { msg = "Esta Identidad ya existe en el Oasis." });
 
+            var angelCoreTemplate = _state.BackgroundTemplates?.FirstOrDefault(t => t.Name.Equals("AngelCore", StringComparison.OrdinalIgnoreCase));
+            var defaultBackground = new BackgroundConfig();
+            if (angelCoreTemplate != null)
+            {
+                defaultBackground.Type = angelCoreTemplate.Type;
+                defaultBackground.Value = angelCoreTemplate.Value;
+                defaultBackground.IsTiled = angelCoreTemplate.IsTiled;
+                defaultBackground.Opacity = 0.8;
+            }
+            else
+            {
+                defaultBackground.Type = "image";
+                defaultBackground.Value = "/uploads/36d7f8bb-3bf4-4be3-9521-a08aa2bfebc7.jpg";
+                defaultBackground.IsTiled = false;
+                defaultBackground.Opacity = 0.8;
+            }
+
+            var timestamp = DateTime.UtcNow;
+            var defaultBlocks = new List<Block>
+            {
+                new Block
+                {
+                    Id = $"anchor-diary-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                    Type = "diary_notebook",
+                    X = -700,
+                    Y = -350,
+                    Content = "",
+                    Rotation = 0,
+                    Color = "#f59e0b",
+                    IsPublic = false,
+                    Caption = "Diario Personal",
+                    Username = req.Username,
+                    Timestamp = timestamp,
+                    Metadata = new Dictionary<string, string>(),
+                    FolderId = ""
+                },
+                new Block
+                {
+                    Id = $"anchor-resonance-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 1}",
+                    Type = "resonance_notebook",
+                    X = 100,
+                    Y = -350,
+                    Content = "",
+                    Rotation = 0,
+                    Color = "#a855f7",
+                    IsPublic = false,
+                    Caption = "Resonancias Psíquicas",
+                    Username = req.Username,
+                    Timestamp = timestamp,
+                    Metadata = new Dictionary<string, string>(),
+                    FolderId = ""
+                },
+                new Block
+                {
+                    Id = $"anchor-loop-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 2}",
+                    Type = "loop_map_mini",
+                    X = -300,
+                    Y = 450,
+                    Content = "",
+                    Rotation = 0,
+                    Color = "#06b6d4",
+                    IsPublic = false,
+                    Caption = "Mapa de Bucles",
+                    Username = req.Username,
+                    Timestamp = timestamp,
+                    Metadata = new Dictionary<string, string>(),
+                    FolderId = ""
+                },
+                new Block
+                {
+                    Id = $"anchor-conversation-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 3}",
+                    Type = "conversation_notebook",
+                    X = 700,
+                    Y = -350,
+                    Content = "",
+                    Rotation = 0,
+                    Color = "#d946ef",
+                    IsPublic = false,
+                    Caption = "Diálogos Recientes",
+                    Username = req.Username,
+                    Timestamp = timestamp,
+                    Metadata = new Dictionary<string, string>(),
+                    FolderId = ""
+                }
+            };
+
             var user = new User { 
                 Username = req.Username, 
                 Password = req.Password,
                 FullName = req.FullName ?? string.Empty,
-                Age = req.Age
+                Age = req.Age,
+                Background = defaultBackground,
+                Blocks = defaultBlocks
             };
             _state.Users.Add(user);
             SaveState();
@@ -274,6 +362,18 @@ namespace Oasis.Backend.Controllers
         public ActionResult<List<BackgroundTemplate>> GetBackgroundTemplates()
         {
             return _state.BackgroundTemplates ?? new List<BackgroundTemplate>();
+        }
+
+        [HttpGet("config/deepseek-key")]
+        public IActionResult GetDeepseekKey()
+        {
+            var key = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+            if (string.IsNullOrEmpty(key))
+            {
+                // Fallback to the default key in case environment variable is not defined
+                key = "sk-07b18eb6601a4b11a109c96a56c92a16";
+            }
+            return Ok(new { key });
         }
 
         [HttpPost("backgrounds/templates")]

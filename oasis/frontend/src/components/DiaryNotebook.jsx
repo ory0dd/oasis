@@ -13,6 +13,30 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
     const [isRecording, setIsRecording] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const recognitionRef = useRef(null);
+    const [viewportStyle, setViewportStyle] = useState({});
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                setViewportStyle({
+                    height: `${window.visualViewport.height}px`,
+                    top: `${window.visualViewport.offsetTop}px`,
+                    position: 'fixed'
+                });
+            }
+        };
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            window.visualViewport.addEventListener('scroll', handleResize);
+            handleResize();
+        }
+        return () => {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', handleResize);
+                window.visualViewport.removeEventListener('scroll', handleResize);
+            }
+        };
+    }, []);
 
     // Load Speech Recognition
     useEffect(() => {
@@ -107,7 +131,7 @@ export const DiaryNotebook = ({ onClose, blocks, setBlocks, accent, className = 
     };
 
     return (
-        <div className={`${className} text-white flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} onClick={e => e.stopPropagation()}>
+        <div className={`${className} text-white flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden`} style={viewportStyle} onClick={e => e.stopPropagation()}>
             {/* Sidebar / Menu */}
             {isSidebarOpen && (
                 <div className="w-80 bg-[#0a0a0d]/98 border-r border-white/5 flex flex-col z-40 animate-in slide-in-from-left duration-300">
