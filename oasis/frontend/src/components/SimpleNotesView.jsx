@@ -124,23 +124,8 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
         >
             {/* TOP BAR */}
             <div className="shrink-0 px-4 pt-5 pb-3 border-b border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                    <button
-                        onClick={onClose}
-                        className="flex items-center gap-1.5 text-sm font-semibold"
-                        style={{ color: accentColor }}
-                    >
-                        <ArrowLeft size={18} />
-                        Pizarrón
-                    </button>
+                <div className="flex items-center justify-center mb-4 relative h-9">
                     <h1 className="text-base font-bold text-white">Notas</h1>
-                    <button
-                        onClick={createNewNote}
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{ color: accentColor }}
-                    >
-                        <Plus size={20} />
-                    </button>
                 </div>
 
                 {/* Search */}
@@ -220,8 +205,8 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
 
             {/* BOTTOM FAB */}
             <div
-                className="shrink-0 px-4 pb-4 pt-2 flex items-center justify-between border-t border-white/5 bg-[#080809]"
-                style={{ paddingBottom: `max(16px, env(safe-area-inset-bottom))` }}
+                className="shrink-0 px-4 pt-6 flex items-center justify-between border-t-0 bg-gradient-to-t from-black via-black/95 to-transparent relative z-20"
+                style={{ paddingBottom: `max(64px, calc(env(safe-area-inset-bottom) + 40px))` }}
             >
                 <span className="text-[12px] text-zinc-700 font-medium">
                     {notes.length} {notes.length === 1 ? 'nota' : 'notas'}

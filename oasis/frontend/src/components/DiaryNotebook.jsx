@@ -298,73 +298,28 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlo
                     <div className="w-[120vw] h-[120vw] sm:w-[600px] sm:h-[600px]" style={{ background: 'radial-gradient(circle, #f59e0b 0%, transparent 60%)' }} />
                 </div>
 
-                {/* Top bar (Header) */}
-                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
-                    <div className="flex items-center gap-1.5 md:gap-3">
-                        {!isSidebarOpen && (
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
-                                title="Ver Historial"
-                            >
-                                <PanelLeft size={16} className="md:size-5" />
-                            </button>
-                        )}
-                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border border-white/5 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                            <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-amber-400">
-                                Diario
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pointer-events-auto">
-                        <button
-                            onClick={toggleRecording}
-                            className={`w-9 h-9 md:w-12 md:h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 shadow-2xl ${
-                                isRecording
-                                    ? 'bg-red-500 text-white border-red-400 animate-pulse'
-                                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
-                            }`}
-                            title="Hablar (Voz a Texto)"
-                        >
-                            <Mic size={16} className="md:size-5" />
-                        </button>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={!diaryContent.trim()}
-                            className={`h-9 md:h-12 px-4 rounded-full border transition-all font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 shadow-2xl ${
-                                saveSuccess
-                                    ? 'bg-green-600 border-green-500 text-white'
-                                    : !diaryContent.trim()
-                                        ? 'bg-white/5 border-white/5 text-zinc-600 cursor-not-allowed'
-                                        : 'bg-amber-500 border-amber-400 text-black hover:bg-amber-400 hover:scale-105 active:scale-95'
-                            }`}
-                        >
-                            <Save size={12} />
-                            <span>{saveSuccess ? 'Guardado ✓' : (activeEntryId ? 'Actualizar' : 'Guardar')}</span>
-                        </button>
-
-                        <button
-                            onClick={onClose}
-                            className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
-                            title="Cerrar"
-                        >
-                            <X size={16} className="md:size-5" />
-                        </button>
-                    </div>
-                </div>
+                {/* Top bar removed - moved to bottom command center */}
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-36 min-w-0">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-12 md:pt-16 min-w-0">
                     <div className="max-w-2xl mx-auto px-8 md:px-12 space-y-6 pb-32">
                         {/* Title input */}
-                        <input 
+                        <textarea 
+                            ref={(el) => {
+                                if (el) {
+                                    el.style.height = 'auto';
+                                    el.style.height = el.scrollHeight + 'px';
+                                }
+                            }}
                             value={diaryTitle}
-                            onChange={e => setDiaryTitle(e.target.value)}
+                            onChange={e => {
+                                setDiaryTitle(e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            rows={1}
                             placeholder="Título del día..."
-                            className="w-full bg-transparent border-none text-2xl sm:text-5xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
+                            className="w-full bg-transparent border-none text-3xl sm:text-5xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans resize-none overflow-hidden"
                         />
 
                         {/* Large, beautiful borderless editor area */}
@@ -379,8 +334,63 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlo
                     </div>
                 </div>
 
-                {/* Empty footer space */}
-                <div className="pb-12" />
+                {/* Floating Bottom Bar (Command Center style) */}
+                <div 
+                    className="relative z-10 p-3 pt-8 md:p-8 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent"
+                    style={{ paddingBottom: `max(64px, calc(env(safe-area-inset-bottom) + 40px))` }}
+                >
+                    <div className="w-fit max-w-full mx-auto relative flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] transition-all duration-500">
+                        <div className="flex items-center gap-1 md:gap-1.5">
+                            <button onClick={onClose} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group shrink-0" title="Cerrar">
+                                <X size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+                            
+                            {!isSidebarOpen && (
+                                <button onClick={() => setIsSidebarOpen(true)} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group shrink-0" title="Ver Historial">
+                                    <PanelLeft size={16} className="group-hover:scale-110 transition-transform duration-300" />
+                                </button>
+                            )}
+
+                            <div className="w-px h-6 bg-white/10 mx-0.5 md:mx-1 hidden sm:block" />
+
+                            <div className="px-2 md:px-3 py-1.5 rounded-2xl flex items-center gap-1.5 mx-0.5 md:mx-1 shrink-0">
+                                <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                                <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-amber-400 hidden sm:inline">
+                                    Diario
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 md:gap-2 pr-1 shrink-0">
+                            <button
+                                onClick={toggleRecording}
+                                className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all shadow-xl shrink-0 ${
+                                    isRecording
+                                        ? 'bg-red-500 text-white animate-pulse'
+                                        : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
+                                }`}
+                                title="Hablar (Voz a Texto)"
+                            >
+                                <Mic size={14} className="md:size-[16px]" />
+                            </button>
+
+                            <button
+                                onClick={handleSave}
+                                disabled={!diaryContent.trim()}
+                                className={`h-9 md:h-10 px-4 rounded-full font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 shadow-xl transition-all shrink-0 ${
+                                    saveSuccess
+                                        ? 'bg-green-600 text-white'
+                                        : !diaryContent.trim()
+                                            ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
+                                            : 'bg-amber-500 text-black hover:bg-amber-400 hover:scale-105 active:scale-95'
+                                }`}
+                            >
+                                <Save size={12} />
+                                <span className="hidden sm:inline">{saveSuccess ? 'Guardado ✓' : (activeEntryId ? 'Actualizar' : 'Guardar')}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

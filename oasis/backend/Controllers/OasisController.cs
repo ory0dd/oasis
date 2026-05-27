@@ -478,6 +478,18 @@ namespace Oasis.Backend.Controllers
             return Ok(template);
         }
 
+        [HttpDelete("backgrounds/templates/{id}")]
+        public IActionResult DeleteBackgroundTemplate(string id)
+        {
+            if (_state.BackgroundTemplates == null) return NotFound();
+            var template = _state.BackgroundTemplates.FirstOrDefault(t => t.Id == id);
+            if (template == null) return NotFound();
+            
+            _state.BackgroundTemplates.Remove(template);
+            SaveState();
+            return Ok();
+        }
+
         [HttpGet("blocks")]
         public ActionResult<List<Block>> GetBlocks([FromQuery] string user)
         {

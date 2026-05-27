@@ -252,11 +252,13 @@ const AURAS = {
 const PALETTES = Object.values(AURAS).map(a => ({ name: a.name, color: a.primary, id: Object.keys(AURAS).find(k => AURAS[k] === a) }));
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+const SUPABASE_MEDIA_URL = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media';
 
 const formatUrl = (url) => {
     if (!url) return url;
-    if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
-    return url;
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    if (url.startsWith('/uploads/')) return `${SUPABASE_MEDIA_URL}${url.replace('/uploads', '')}`;
+    return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const getBlockTime = (b) => {
@@ -1235,9 +1237,9 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
 
     const formatUrl = (url) => {
         if (!url) return '';
-        if (url.startsWith('data:')) return url;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        return `http://localhost:5074${url}`;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('/uploads/')) return `${SUPABASE_MEDIA_URL}${url.replace('/uploads', '')}`;
+        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
     return (
@@ -1868,7 +1870,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                         onClick={(e) => { e.stopPropagation(); setView('soul'); }}
                                                         className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <Aperture size={14} /> Abrir Archivo del Alma
+                                                        <Aperture size={14} /> Abrir Pruebas Clínicas
                                                     </button>
                                                 </div>
                                             </div>
@@ -2302,7 +2304,7 @@ const ProfileView = ({
     const formatUrl = (url) => {
         if (!url) return '';
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-        if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
+        if (url.startsWith('/uploads/')) return `${SUPABASE_MEDIA_URL}${url.replace('/uploads', '')}`;
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
@@ -2537,26 +2539,11 @@ const ProfileView = ({
 
                         {/* Name & Primary Buttons */}
                         <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
-                            {isEditingProfile ? (
-                                <div className="flex flex-col gap-1 w-full items-center sm:items-start">
-                                    <input
-                                        value={fullName}
-                                        onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
-                                        className="bg-transparent border-b border-white/20 text-3xl md:text-4xl font-black text-white tracking-tighter outline-none w-full md:w-auto font-sans focus:border-white transition-colors text-center sm:text-left uppercase"
-                                        placeholder="Tu Nombre"
-                                    />
-                                    <span className="text-[10px] font-mono text-zinc-500 tracking-wider">@{user}</span>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center sm:items-start">
-                                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
-                                        {fullName}
-                                    </h1>
-                                    <span className="text-[10px] font-bold text-accent tracking-widest font-mono opacity-80 mt-0.5" style={{ color: accent }}>
-                                        @{user}
-                                    </span>
-                                </div>
-                            )}
+                            <div className="flex flex-col items-center sm:items-start mb-2">
+                                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
+                                    {user}
+                                </h1>
+                            </div>
 
                             <div className="flex flex-wrap justify-center sm:justify-start gap-2">
                                 <button
@@ -2608,6 +2595,18 @@ const ProfileView = ({
                             </p>
                         )}
                     </div>
+
+                    {!isEditingProfile && (
+                        <div className="w-full mt-1.5 mb-1 animate-fade-in">
+                            <button
+                                onClick={() => setView('soul')}
+                                className="w-full p-3.5 rounded-xl bg-gradient-to-r from-accent/10 to-purple-500/10 hover:from-accent/20 hover:to-purple-500/20 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all backdrop-blur-md flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.98] group"
+                            >
+                                <Aperture size={16} className="text-accent group-hover:rotate-180 transition-transform duration-700 ease-out" />
+                                <span>Entrar a Pruebas Clínicas</span>
+                            </button>
+                        </div>
+                    )}
 
                     {/* BITÁCORA HUB FILTERS & UTILITIES (MERGED FROM SLIDE 2) */}
                     <div className="w-full p-3 rounded-xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-2.5">
@@ -5270,22 +5269,22 @@ export default function App() {
 
     // Swipe navigation logic for navbar
     const TABS = [
-        { id: 'canvas', label: 'Lienzo' },
+        { id: 'profile', label: 'Perfil' },
+        { id: 'composer', label: 'Notas Rápidas' },
         { id: 'chat', label: 'Diálogos AI' },
         { id: 'diary', label: 'Diario' },
         { id: 'resonance', label: 'Resonancia' },
-        { id: 'soul', label: 'Archivo' },
-        { id: 'profile', label: 'Perfil' }
+        { id: 'canvas', label: 'Lienzo' }
     ];
 
     const getActiveTabIndex = useCallback(() => {
-        if (isChatOpen) return 1;
-        if (activeNotebook === 'diary') return 2;
-        if (activeNotebook === 'resonance') return 3;
-        if (view === 'soul') return 4;
-        if (view === 'profile') return 5;
-        return 0; // canvas
-    }, [isChatOpen, activeNotebook, view]);
+        if (view === 'profile') return 0;
+        if (isComposerOpen || isSimpleNotesOpen) return 1;
+        if (isChatOpen) return 2;
+        if (activeNotebook === 'diary') return 3;
+        if (activeNotebook === 'resonance') return 4;
+        return 5; // canvas
+    }, [isChatOpen, activeNotebook, view, isComposerOpen, isSimpleNotesOpen]);
 
     const switchToTabIndex = useCallback((index) => {
         if (index < 0 || index >= TABS.length) return;
@@ -5296,8 +5295,11 @@ export default function App() {
         setActiveNotebookRaw(null);
         setActiveTestRaw(null);
 
-        if (tab.id === 'canvas') {
+        if (tab.id === 'profile') {
+            setView('profile');
+        } else if (tab.id === 'composer') {
             setView('canvas');
+            setIsSimpleNotesOpenRaw(true);
         } else if (tab.id === 'chat') {
             setView('canvas');
             setIsChatOpenRaw(true);
@@ -5307,10 +5309,8 @@ export default function App() {
         } else if (tab.id === 'resonance') {
             setView('canvas');
             setActiveNotebookRaw('resonance');
-        } else if (tab.id === 'soul') {
-            setView('soul');
-        } else if (tab.id === 'profile') {
-            setView('profile');
+        } else if (tab.id === 'canvas') {
+            setView('canvas');
         }
     }, []);
 
@@ -5329,13 +5329,60 @@ export default function App() {
         if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
             const currentIndex = getActiveTabIndex();
             if (diffX > 0) {
-                // Swipe right -> Go to previous tab
                 switchToTabIndex(currentIndex - 1);
             } else {
-                // Swipe left -> Go to next tab
                 switchToTabIndex(currentIndex + 1);
             }
         }
+    }, [getActiveTabIndex, switchToTabIndex]);
+
+    // GLOBAL TWO-FINGER SWIPE LOGIC
+    useEffect(() => {
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let isTwoFingers = false;
+
+        const handleGlobalTouchStart = (e) => {
+            if (e.touches.length === 2) {
+                isTwoFingers = true;
+                swipeStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                swipeStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            } else {
+                isTwoFingers = false;
+            }
+        };
+
+        const handleGlobalTouchEnd = (e) => {
+            if (!isTwoFingers) return;
+            if (e.changedTouches.length > 0) {
+                let endX = e.changedTouches[0].clientX;
+                let endY = e.changedTouches[0].clientY;
+                if (e.changedTouches.length === 2) {
+                    endX = (e.changedTouches[0].clientX + e.changedTouches[1].clientX) / 2;
+                    endY = (e.changedTouches[0].clientY + e.changedTouches[1].clientY) / 2;
+                }
+                const diffX = endX - swipeStartX;
+                const diffY = endY - swipeStartY;
+
+                if (Math.abs(diffX) > 80 && Math.abs(diffY) < 60) {
+                    const currentIndex = getActiveTabIndex();
+                    if (diffX > 0) {
+                        switchToTabIndex(currentIndex - 1);
+                    } else {
+                        switchToTabIndex(currentIndex + 1);
+                    }
+                }
+            }
+            isTwoFingers = false;
+        };
+
+        window.addEventListener('touchstart', handleGlobalTouchStart, { passive: true });
+        window.addEventListener('touchend', handleGlobalTouchEnd, { passive: true });
+
+        return () => {
+            window.removeEventListener('touchstart', handleGlobalTouchStart);
+            window.removeEventListener('touchend', handleGlobalTouchEnd);
+        };
     }, [getActiveTabIndex, switchToTabIndex]);
 
     const syncConversations = useCallback((updated) => {
@@ -6029,18 +6076,11 @@ export default function App() {
             newBlocks.push({ id: `anchor-resonance-${Date.now()}`, type: 'resonance_notebook', x: 100, y: -350, content: '', color: '#a855f7', entries: [] });
             changed = true;
         }
-        const hasMap = !!localStorage.getItem('oasis_canvas_nodes_' + (user || localStorage.getItem('oasis_user') || ''));
-        if (hasMap) {
-            if (!newBlocks.find(b => b.type === 'loop_map_mini')) {
-                newBlocks.push({ id: `anchor-loop-${Date.now()}`, type: 'loop_map_mini', x: -300, y: 450, content: '', color: '#06b6d4', entries: [] });
-                changed = true;
-            }
-        } else {
-            const beforeLen = newBlocks.length;
-            newBlocks = newBlocks.filter(b => b.type !== 'loop_map_mini');
-            if (newBlocks.length !== beforeLen) {
-                changed = true;
-            }
+        // DISABLING LOOP MAP MINI FOR NOW (USER REQUEST)
+        const beforeLen = newBlocks.length;
+        newBlocks = newBlocks.filter(b => b.type !== 'loop_map_mini');
+        if (newBlocks.length !== beforeLen) {
+            changed = true;
         }
         if (!newBlocks.find(b => b.type === 'conversation_notebook')) {
             newBlocks.push({ id: `anchor-conversation-${Date.now()}`, type: 'conversation_notebook', x: 700, y: -350, content: '', color: '#d946ef', entries: [] });
@@ -8252,7 +8292,7 @@ ${searchContext}
 
     const renderCanvasView = () => (
         <div
-            className="w-full h-full relative overflow-hidden bg-transparent cursor-move active:cursor-grabbing touch-action-none"
+            className="w-full h-full relative overflow-hidden bg-black/40 backdrop-blur-3xl cursor-move active:cursor-grabbing touch-action-none"
             onMouseDown={(e) => handleStart(e, 'canvas')}
             onTouchStart={(e) => handleStart(e, 'canvas')}
             onWheel={(e) => {
@@ -8563,7 +8603,7 @@ ${searchContext}
         if (activeTest === 'phenom') {
             const safeIndex = Math.min(currentPhenomIndex, 3);
             return (
-                <div className="fixed inset-0 z-50 bg-black flex flex-col justify-between p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100">
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-3xl flex flex-col justify-between p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -8808,7 +8848,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
         if (activeTest === 'pid5') {
             return (
-                <div className="fixed inset-0 z-50 bg-black flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 animate-in fade-in duration-500">
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-3xl flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 animate-in fade-in duration-500">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -8904,7 +8944,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             "rgba(190,242,100,0.03)";
 
             return (
-                <div className="fixed inset-0 z-50 bg-[#060607] flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 transition-all duration-500">
+                <div className="fixed inset-0 z-50 bg-[#060607]/40 backdrop-blur-3xl flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 transition-all duration-500">
                     {/* Atmospheric Glow */}
                     <div
                         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[160px] pointer-events-none transition-all duration-1000 ease-in-out"
@@ -8924,7 +8964,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             />
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-400 font-mono">
-                                    Archivo del Alma // Cartografía Cognitiva
+                                    Pruebas Clínicas // Evaluaciones
                                 </span>
                                 <span className="text-[8px] font-bold text-zinc-600 uppercase font-mono mt-0.5">
                                     Reactivo {currentIcarIndex + 1} de 16
@@ -9177,7 +9217,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
         }
 
         return (
-            <div className="w-full h-full relative overflow-y-auto no-scrollbar bg-black/40 backdrop-blur-3xl pt-28 md:pt-24 pb-36 px-4 md:px-8 transition-all duration-300 animate-in fade-in">
+            <div className="fixed inset-x-0 top-[140px] md:top-0 md:relative w-full h-[calc(100vh-140px)] md:h-full z-[1500] md:z-10 bg-[#050506]/95 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-none border-t border-white/5 md:border-t-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] md:shadow-none flex flex-col transition-transform duration-500 animate-in slide-in-from-bottom-full md:slide-in-from-bottom-0">
+                <div className="flex-1 w-full relative overflow-y-auto no-scrollbar pt-8 md:pt-24 pb-36 px-4 md:px-8">
                 {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
                 <button
                     onClick={() => setView('canvas')}
@@ -9276,7 +9317,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     <div className="flex items-center justify-between pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
                         <div className="flex items-center gap-2">
                             <Aperture size={16} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Archivo del Alma</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Pruebas Clínicas</span>
                         </div>
 
                         {/* Mini Session History Button & Dropdown */}
@@ -9515,6 +9556,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                                 <span className="hidden sm:inline">{fact.isPinned ? ' en Núcleo' : ' / Pin'}</span>
                                                                             </button>
 
+                                                                            {/* BOTON PUBLICAR DESHABILITADO
                                                                             <button
                                                                                 onClick={isTop ? () => handlePublishFact(fact) : undefined}
                                                                                 className="px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl bg-purple-950/20 border border-purple-800/30 text-purple-300 hover:bg-purple-500 hover:text-black text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -9522,6 +9564,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                                 <span>Publicar</span>
                                                                                 <span className="hidden sm:inline"> en Perfil</span>
                                                                             </button>
+                                                                            */}
 
                                                                             <button
                                                                                 onClick={isTop ? () => handleDeleteFact(orgIdx) : undefined}
@@ -9722,7 +9765,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="mt-auto pt-6 pb-20 md:pb-0">
+                                                                    <div className="mt-auto pt-6 pb-[max(80px,calc(env(safe-area-inset-bottom)+50px))] md:pb-0">
                                                                         <button
                                                                             onClick={card.action}
                                                                             className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
@@ -10244,6 +10287,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     )}
 
 
+                    </div>
                 </div>
             </div>
         );
@@ -10604,46 +10648,57 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                             {/* PLANTILLAS DE LA COMUNIDAD */}
                             <div className="space-y-3 pt-2">
-                                <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 block px-2">Plantillas de la Comunidad</span>
-                                {bgTemplates.length === 0 ? (
-                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/5 text-center">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 block">No hay plantillas compartidas aún</span>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {bgTemplates.map(tpl => (
-                                            <button
-                                                key={tpl.id}
-                                                onClick={() => {
-                                                    setBgType(tpl.type);
-                                                    setBgValue(tpl.value);
-                                                    setIsTiled(tpl.isTiled);
-                                                    syncAura(tpl.type, tpl.value, tpl.isTiled);
-                                                }}
-                                                className={`p-4 rounded-2xl border transition-all text-left space-y-2 relative overflow-hidden group ${bgValue === tpl.value ? 'border-accent bg-accent/5' : 'border-white/5 bg-white/5 hover:border-white/10'}`}
-                                            >
-                                                {tpl.type === 'color' && (
-                                                    <div className="absolute inset-0 opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" style={{ backgroundColor: tpl.value }} />
-                                                )}
-                                                {tpl.type === 'image' && (
-                                                    <img src={formatUrl(tpl.value)} className="absolute inset-0 w-full h-full object-cover opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" />
-                                                )}
-                                                {tpl.type === 'video' && (
-                                                    <video src={formatUrl(tpl.value)} muted loop autoPlay playsInline className="absolute inset-0 w-full h-full object-cover opacity-[0.08] transition-opacity group-hover:opacity-15 pointer-events-none" crossOrigin="anonymous" />
-                                                )}
-
-                                                <div className="relative z-10 space-y-1">
-                                                    <span className="text-[8px] font-black uppercase text-white block truncate">{tpl.name}</span>
-                                                    <span className="text-[6px] font-black uppercase text-zinc-500 block truncate">Por @{tpl.creator || 'Anónimo'}</span>
-                                                    <div className="flex gap-1.5 items-center pt-0.5">
-                                                        <span className="px-1.5 py-0.5 rounded bg-white/10 text-[5px] font-black uppercase tracking-widest text-zinc-300">{tpl.type}</span>
-                                                        {tpl.isTiled && <span className="px-1.5 py-0.5 rounded bg-accent/10 text-[5px] font-black uppercase tracking-widest text-accent">Mosaico</span>}
-                                                    </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Plantillas de la Comunidad</span>
+                                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto no-scrollbar pr-2">
+                                    {bgTemplates.map((template) => (
+                                        <button
+                                            key={template.id}
+                                            onClick={() => {
+                                                setBgType(template.type);
+                                                setBgValue(template.value);
+                                                setIsTiled(template.isTiled || false);
+                                                syncAura(template.type, template.value, template.isTiled || false);
+                                            }}
+                                            className="group relative h-24 rounded-[1.5rem] overflow-hidden border border-white/5 hover:border-accent/40 transition-all text-left"
+                                        >
+                                            {template.type === 'image' && (
+                                                <img src={formatUrl(template.value)} alt={template.name} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} />
+                                            )}
+                                            {template.type === 'video' && (
+                                                <video src={formatUrl(template.value)} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} autoPlay muted loop playsInline />
+                                            )}
+                                            {template.type === 'color' && (
+                                                <div className="absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: template.value }} />
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                            <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                                                <div>
+                                                    <span className="text-[8px] font-black uppercase text-white block truncate">{template.name}</span>
+                                                    <span className="text-[6px] font-mono text-zinc-400">@{template.creator}</span>
                                                 </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                                {template.creator === user && (
+                                                    <button 
+                                                        onClick={async (e) => { 
+                                                            e.stopPropagation(); 
+                                                            try {
+                                                                const res = await fetch(`${API_URL}/api/oasis/backgrounds/templates/${template.id}`, { method: 'DELETE' });
+                                                                if (res.ok) setBgTemplates(prev => prev.filter(t => t.id !== template.id));
+                                                            } catch (err) { console.error(err); }
+                                                        }}
+                                                        className="w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors z-10"
+                                                    >
+                                                        <Trash2 size={10} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                    {bgTemplates.length === 0 && (
+                                        <div className="col-span-2 text-center py-4 text-[10px] font-mono text-zinc-600">
+                                            No hay plantillas públicas aún.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* CUSTOM MEDIA UPLOADER & FORMAT CONTROLS */}
@@ -10901,7 +10956,66 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <User size={18} className="hover-float-icon" />
                     </button>
 
-                    {/* 2. Lienzo Principal */}
+                    {/* 2. Lápiz / Notas */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setActiveNotebook(null);
+                            setIsChatOpen(false);
+                            setActiveTest(null);
+                            openNewComposer();
+                        }}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={(isSimpleNotesOpen || isComposerOpen) ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Notas Rápidas"
+                    >
+                        <Edit3 size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 3. Chat IA */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={isChatOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Nueva Conversación IA"
+                    >
+                        <MessageCircle size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 4. Diario */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('diary'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
+                        title="Libreta de Diario"
+                    >
+                        <StickyNote size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 5. Resonancia */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('resonance'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
+                        title="Análisis de Ruido"
+                    >
+                        <Sparkles size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 6. Lienzo Principal (Movido al final) */}
                     <button
                         onClick={(e) => { 
                             e.stopPropagation(); 
@@ -10919,83 +11033,12 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <Compass size={18} className="hover-float-icon" />
                     </button>
 
-                    {/* 3. Lápiz / Notas */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsSimpleNotesOpen(false);
-                            setActiveNotebook(null);
-                            setIsChatOpen(false);
-                            setActiveTest(null);
-                            openNewComposer();
-                        }}
-                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={(isSimpleNotesOpen || isComposerOpen) ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Notas Rápidas"
-                    >
-                        <Edit3 size={18} className="hover-float-icon" />
-                    </button>
-
-                    {/* 4. Chat IA */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
-                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={isChatOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Nueva Conversación IA"
-                    >
-                        <MessageCircle size={18} className="hover-float-icon" />
-                    </button>
-
-                    {/* 5. Diario */}
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('diary'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                        }}
-                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
-                        title="Libreta de Diario"
-                    >
-                        <StickyNote size={18} className="hover-float-icon" />
-                    </button>
-
-                    {/* 6. Resonancia */}
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('resonance'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                        }}
-                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
-                        title="Análisis de Ruido"
-                    >
-                        <Sparkles size={18} className="hover-float-icon" />
-                    </button>
-
-                    {/* 7. Alma */}
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook(null); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                            setView('soul'); 
-                        }}
-                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Archivo del Alma"
-                    >
-                        <Aperture size={18} className="hover-float-icon" />
-                    </button>
                 </div>
+            )}
+
+            {/* UNIFIED MODAL BACKDROP FOR MOBILE */}
+            {(isComposerOpen || isSimpleNotesOpen || activeNotebook || isChatOpen || activeTest) && (
+                <div className="fixed inset-0 z-[1399] bg-black/40 backdrop-blur-xl md:hidden transition-all duration-700 animate-in fade-in pointer-events-none" />
             )}
 
             {isSimpleNotesOpen && (
@@ -11194,7 +11237,10 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* BOTTOM FLOATING TOOLBAR */}
                     {composerStep === 'note' && (
-                        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]">
+                        <div 
+                            className="absolute left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]"
+                            style={{ bottom: 'max(64px, calc(env(safe-area-inset-bottom) + 40px))' }}
+                        >
                             <div className="flex items-center gap-1">
                                 {/* PRIMARY CANCEL */}
                                 <button onClick={() => setIsComposerOpen(false)} className="w-9 h-9 md:w-12 md:h-12 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group" title="Cerrar (ESC)">
@@ -11276,7 +11322,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     <span className="hidden md:inline">Guardar Nota</span>
                                 </button>
 
-                                {/* PUBLISH ACTION */}
+                                {/* PUBLISH ACTION DESHABILITADO
                                 <button
                                     onClick={() => launchMedia(true)}
                                     disabled={isResonanceMode ? !resResonance : (!caption || !noteText)}
@@ -11287,6 +11333,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     <Send size={14} className="md:size-[16px]" />
                                     <span className="hidden md:inline">Publicar</span>
                                 </button>
+                                */}
                             </div>
                         </div>
                     )}
@@ -13260,7 +13307,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
 
             {/* iOS Bottom Gradient ONLY for the Mural Canvas */}
             {!activeNotebook && view !== 'profile' && view !== 'soul' && (
-                <div className="fixed bottom-0 left-0 right-0 h-[calc(90px+env(safe-area-inset-bottom,20px))] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-[3000]" />
+                <div className="fixed bottom-0 left-0 right-0 h-[calc(90px+env(safe-area-inset-bottom,20px))] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-[10]" />
             )}
         </div>
     );

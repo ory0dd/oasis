@@ -215,36 +215,10 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                     <div className="w-[120vw] h-[120vw] sm:w-[600px] sm:h-[600px]" style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 60%)' }} />
                 </div>
 
-                {/* Top bar (Header) */}
-                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-40 flex justify-between items-center pointer-events-none">
-                    <div className="flex items-center gap-1.5 md:gap-3">
-                        {!isSidebarOpen && (
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
-                                title="Ver Historial de Ruido"
-                            >
-                                <PanelLeft size={16} className="md:size-5" />
-                            </button>
-                        )}
-                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-2xl border border-white/5 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-                            <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-purple-400">
-                                RESONANCIA
-                            </span>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={onClose}
-                        className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all hover:scale-110 pointer-events-auto shadow-2xl"
-                    >
-                        <X size={16} className="md:size-5" />
-                    </button>
-                </div>
+                {/* Top bar removed - moved to bottom command center */}
 
                 {/* Writer/Composer View */}
-                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-24 md:pt-36 min-w-0">
+                <div className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-12 md:pt-16 min-w-0">
                     <div className="max-w-2xl mx-auto px-8 md:px-12 space-y-6 pb-32">
                         {/* Title input */}
                         <div className="flex items-center justify-between">
@@ -327,16 +301,31 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                 </div>
 
                 {/* Floating Bottom Bar (Command Center style) */}
-                <div className="relative z-10 p-3 md:p-12">
-                    <div className="w-fit max-w-full mx-auto relative flex items-center justify-between gap-4 md:gap-8 px-3 py-2 md:px-6 md:py-3 bg-white/5 backdrop-blur-2xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 shadow-2xl">
-                        <div className="flex items-center gap-1.5 md:gap-3">
+                <div 
+                    className="relative z-10 p-4 pt-12 md:p-12 flex flex-col items-center bg-gradient-to-t from-black via-black/95 to-transparent"
+                    style={{ paddingBottom: `max(64px, calc(env(safe-area-inset-bottom) + 40px))` }}
+                >
+                    <div className="w-fit max-w-full mx-auto relative flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] transition-all duration-500">
+                        <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+                            <button onClick={onClose} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group shrink-0" title="Cerrar">
+                                <X size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+                            
+                            {!isSidebarOpen && (
+                                <button onClick={() => setIsSidebarOpen(true)} className="w-9 h-9 md:w-10 md:h-10 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group shrink-0" title="Ver Historial">
+                                    <PanelLeft size={16} className="group-hover:scale-110 transition-transform duration-300" />
+                                </button>
+                            )}
+
+                            <div className="w-px h-6 bg-white/10 mx-0.5 md:mx-1 hidden sm:block" />
+
                             <button
                                 onClick={() => step > 0 && setStep(prev => prev - 1)}
                                 disabled={step === 0}
-                                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 border border-white/10 text-zinc-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none"
+                                className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/5 border border-white/10 text-zinc-500 hover:text-white transition-all flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none shrink-0"
                                 title="Fase Anterior"
                             >
-                                <ArrowLeft size={14} className="md:size-4" />
+                                <ArrowLeft size={14} className="md:size-[16px]" />
                             </button>
 
                             <button 
@@ -356,25 +345,26 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                             {step < 2 ? (
                                 <button
                                     onClick={() => setStep(prev => prev + 1)}
-                                    className="px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10 shrink-0"
+                                    className="h-9 md:h-10 px-4 rounded-full bg-purple-600 hover:bg-purple-500 text-white transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-purple-600/10 shrink-0"
                                 >
-                                    <span>Continuar</span>
-                                    <ArrowRight size={10} className="md:size-3" />
+                                    <span className="hidden sm:inline">Continuar</span>
+                                    <span className="sm:hidden">Sig</span>
+                                    <ArrowRight size={12} />
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleSave}
                                     disabled={!resPrimal.trim()}
-                                    className={`px-4 py-2 md:px-5 md:py-2.5 rounded-full font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 transition-all shadow-xl ${
+                                    className={`h-9 md:h-10 px-4 rounded-full font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5 transition-all shadow-xl shrink-0 ${
                                         saveSuccess
                                             ? 'bg-green-600 text-white'
                                             : !resPrimal.trim()
-                                                ? 'bg-white/5 text-zinc-600 border border-white/5 cursor-not-allowed'
-                                                : 'bg-white text-black hover:bg-zinc-200'
+                                                ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
+                                                : 'bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95'
                                     }`}
                                 >
-                                    <Save size={10} className="md:size-3" />
-                                    <span>{saveSuccess ? 'Guardado ✓' : (activeResId ? 'Actualizar' : 'Guardar')}</span>
+                                    <Save size={12} />
+                                    <span className="hidden sm:inline">{saveSuccess ? 'Guardado ✓' : (activeResId ? 'Actualizar' : 'Guardar')}</span>
                                 </button>
                             )}
                         </div>
