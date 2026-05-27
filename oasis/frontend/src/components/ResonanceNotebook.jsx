@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Plus, Save, Mic, PanelLeft, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
+export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none pb-safe" }) => {
     const [activeResId, setActiveResId] = useState(null);
     const [resName, setResName] = useState('');
     const [resPrimal, setResPrimal] = useState('');
@@ -210,9 +210,9 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
 
             {/* Main Area */}
             <div className="flex-1 flex flex-col relative h-full min-w-0">
-                {/* Background glow */}
+                {/* Background glow (Fixed Safari Safari gray square bug by using radial-gradient instead of blur filter) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                    <div className="w-96 h-96 rounded-full blur-[120px] bg-purple-500/10" />
+                    <div className="w-[120vw] h-[120vw] sm:w-[600px] sm:h-[600px]" style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 60%)' }} />
                 </div>
 
                 {/* Top bar (Header) */}

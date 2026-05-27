@@ -16,7 +16,7 @@ const getBlockTime = (b) => {
     return 0;
 };
 
-export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
+export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none pb-safe" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
 
@@ -293,9 +293,9 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlo
 
             {/* Main Area */}
             <div className="flex-1 flex flex-col relative h-full min-w-0">
-                {/* Background glow */}
+                {/* Background glow (Fixed Safari gray square bug by using radial-gradient) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                    <div className="w-96 h-96 rounded-full blur-[120px] bg-amber-500/10" />
+                    <div className="w-[120vw] h-[120vw] sm:w-[600px] sm:h-[600px]" style={{ background: 'radial-gradient(circle, #f59e0b 0%, transparent 60%)' }} />
                 </div>
 
                 {/* Top bar (Header) */}

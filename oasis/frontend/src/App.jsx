@@ -8563,7 +8563,7 @@ ${searchContext}
         if (activeTest === 'phenom') {
             const safeIndex = Math.min(currentPhenomIndex, 3);
             return (
-                <div className="fixed inset-0 z-50 bg-[#070708] flex flex-col justify-between p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100">
+                <div className="fixed inset-0 z-50 bg-black flex flex-col justify-between p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -8808,7 +8808,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
         if (activeTest === 'pid5') {
             return (
-                <div className="fixed inset-0 z-50 bg-[#070708] flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 animate-in fade-in duration-500">
+                <div className="fixed inset-0 z-50 bg-black flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scrollbar font-sans select-none text-zinc-100 animate-in fade-in duration-500">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
                     <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
@@ -9680,8 +9680,11 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                             key={card.id}
                                                             className="w-full h-[calc(100vh-200px)] px-3 py-6 md:px-14 md:py-16 flex flex-col justify-between snap-start snap-always shrink-0 relative overflow-hidden"
                                                         >
-                                                            {/* Huge background ambient glow centered */}
-                                                            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full blur-[130px] pointer-events-none opacity-20 transition-all duration-700 ${card.bgGlow}`} />
+                                                            {/* Huge background ambient glow (Fixed Safari bug with native radial gradient) */}
+                                                            <div 
+                                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw] md:w-[900px] md:h-[900px] pointer-events-none opacity-20 transition-all duration-700" 
+                                                                style={{ background: `radial-gradient(circle, ${card.id === 'biographic' ? '#10b981' : card.id === 'icar16' ? '#fbbf24' : card.id === 'phenom' ? '#a855f7' : '#ec4899'} 0%, transparent 60%)` }} 
+                                                            />
 
                                                             {/* Flex Row layout: Main left, TikTok controls right */}
                                                             <div className="flex gap-4 md:gap-14 h-full items-stretch relative z-10 max-w-5xl mx-auto w-full">
@@ -9805,307 +9808,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                         );
                                     })()}
 
-                                    {/* Analytical summary if completed */}
-                                    {(calculatedResults.isPhenomComplete || calculatedResults.isPid5Complete || calculatedResults.isIcarComplete) && (
-                                        <div className="border-t border-white/5 pt-8 max-w-4xl mx-auto space-y-6">
-                                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                                <h3 className="text-base font-black uppercase tracking-widest text-zinc-400">Reporte Analítico Integrado</h3>
-                                                <button onClick={resetTests} className="text-[7px] font-black uppercase text-red-500/60 hover:text-red-500 tracking-widest bg-red-500/5 px-3 py-1.5 rounded-full border border-red-500/10 hover:border-red-500/30 transition-all">Wipe Data / Borrar Respuestas</button>
-                                            </div>
 
-                                            {/* Sub-tab selection */}
-                                            <div className="flex border-b border-white/5 pb-2 mb-6 gap-6">
-                                                {[
-                                                    { id: 'summary', label: 'Resumen General' },
-                                                    { id: 'phenom_detail', label: 'Detalle Fenomenológico' },
-                                                    { id: 'pid5_detail', label: 'Perfil PID-5-BF' },
-                                                    { id: 'icar_detail', label: 'Detalle Cognitivo (ICAR16)' }
-                                                ].map(tab => (
-                                                    <button
-                                                        key={tab.id}
-                                                        onClick={() => setResultsSubTab(tab.id)}
-                                                        className={`pb-2 px-1 text-[9px] font-black uppercase tracking-widest border-b-2 transition-all ${resultsSubTab === tab.id
-                                                            ? 'border-accent text-white'
-                                                            : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                                                            }`}
-                                                    >
-                                                        {tab.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            {resultsSubTab === 'summary' && (
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                                                    <div className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 flex flex-col justify-between hover:border-purple-500/20 transition-all duration-300">
-                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-600 block mb-3">Arquetipo de Conciencia</span>
-                                                        {calculatedResults.isPid5Complete ? (
-                                                            <div>
-                                                                <span className="text-lg font-black italic text-purple-400 uppercase leading-tight">{calculatedResults.archetype?.name}</span>
-                                                                <p className="text-[8px] text-zinc-500 mt-1 font-mono uppercase leading-tight">{calculatedResults.archetype?.subtitle}</p>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-[9px] text-zinc-700 italic font-mono">Requiere completar PID-5</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 flex flex-col justify-between hover:border-accent/20 transition-all duration-300">
-                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-600 block mb-3">Eficiencia Lógica (ICAR16)</span>
-                                                        {calculatedResults.isIcarComplete ? (
-                                                            <div>
-                                                                <span className="text-3xl font-black italic text-accent">{calculatedResults.score} / 16 Aciertos</span>
-                                                                <p className="text-[8px] text-zinc-500 mt-2 font-mono uppercase">Latencia media: {calculatedResults.dwellAvg}s // Cambios: {calculatedResults.totalChanges}</p>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-[9px] text-zinc-700 italic font-mono">Requiere completar ICAR16</span>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 flex flex-col justify-between hover:border-white/10 transition-all duration-300">
-                                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-600 block mb-3">Acción Integradora Sugerida</span>
-                                                        {calculatedResults.isPid5Complete ? (
-                                                            <p className="text-[9px] font-sans leading-relaxed text-zinc-400 italic">
-                                                                "{calculatedResults.archetype?.liberation}"
-                                                            </p>
-                                                        ) : (
-                                                            <span className="text-[9px] text-zinc-700 italic font-mono">Requiere completar PID-5</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {resultsSubTab === 'phenom_detail' && (
-                                                <div className="space-y-8 animate-in fade-in duration-300">
-                                                    {!calculatedResults.isPhenomComplete ? (
-                                                        <div className="p-8 text-center border border-white/5 rounded-3xl bg-white/[0.01]">
-                                                            <span className="text-[10px] font-mono font-black uppercase text-zinc-500 tracking-[0.3em]">Diagnóstico Existencial Incompleto</span>
-                                                            <p className="text-[9px] text-zinc-600 mt-2 font-sans">Por favor completa todo el Test Existencial para desbloquear las respuestas.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                            {PHENOM_PART_A.map(q => (
-                                                                <div key={q.key} className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 flex flex-col gap-3">
-                                                                    <span className="text-[8px] font-mono font-black uppercase text-purple-400 tracking-wider">{q.title}</span>
-                                                                    <span className="text-[10px] font-bold italic text-white/70 leading-snug">"{q.question}"</span>
-                                                                    <div className="p-4 rounded-2xl bg-zinc-950/40 border border-white/5 text-xs text-zinc-300 font-sans italic whitespace-pre-wrap leading-relaxed shadow-inner">
-                                                                        {phenomQualitative[q.key] || <span className="text-zinc-600">Sin respuesta</span>}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {resultsSubTab === 'pid5_detail' && (
-                                                <div className="space-y-8 animate-in fade-in duration-300">
-                                                    {!calculatedResults.isPid5Complete ? (
-                                                        <div className="p-8 text-center border border-white/5 rounded-3xl bg-white/[0.01]">
-                                                            <span className="text-[10px] font-mono font-black uppercase text-zinc-500 tracking-[0.3em]">Inventario PID-5 Incompleto</span>
-                                                            <p className="text-[9px] text-zinc-600 mt-2 font-sans">Por favor completa el inventario PID-5 para desbloquear el análisis de dominios.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            {/* PID-5 Domain Visuals */}
-                                                            <div className="p-8 rounded-3xl bg-white/[0.01] border border-white/5 space-y-6">
-                                                                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Dominios de la Personalidad (PID-5)</h4>
-                                                                <div className="space-y-4">
-                                                                    {[
-                                                                        { key: 'AfectividadNegativa', label: 'Reactividad Emocional', color: 'from-purple-500 to-indigo-500', desc: 'Sensibilidad y profundidad con la que se sienten y procesan las emociones.' },
-                                                                        { key: 'Desapego', label: 'Estilo de Conexión', color: 'from-blue-500 to-indigo-500', desc: 'Preferencia por el espacio de introspección personal y la recarga en solitario.' },
-                                                                        { key: 'Antagonismo', label: 'Gestión de la Asertividad', color: 'from-amber-500 to-indigo-500', desc: 'Nivel de firmeza, postura personal y asertividad frente al conflicto.' },
-                                                                        { key: 'Desinhibicion', label: 'Impulso y Planificación', color: 'from-pink-500 to-indigo-500', desc: 'Preferencia por la flexibilidad conductual y la adaptación libre.' },
-                                                                        { key: 'Psicoticismo', label: 'Singularidad Cognitiva', color: 'from-purple-500 to-indigo-500', desc: 'Procesamiento de ideas creativo, pensamiento divergente y perspectivas únicas de la realidad.' }
-                                                                    ].map(dom => {
-                                                                        const score = calculatedResults.pidScores[dom.key] || 0;
-                                                                        const pct = (score / 15) * 100;
-                                                                        return (
-                                                                            <div key={dom.key} className="space-y-2">
-                                                                                <div className="flex justify-between items-baseline">
-                                                                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">{dom.label}</span>
-                                                                                    <span className="text-[10px] font-mono font-bold text-purple-400">{score} / 15 Puntos</span>
-                                                                                </div>
-                                                                                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                                                                                    <div className={`h-full bg-gradient-to-r ${dom.color} rounded-full transition-all duration-1000`} style={{ width: `${pct}%` }} />
-                                                                                </div>
-                                                                                <p className="text-[9px] text-zinc-500 leading-normal font-sans">{dom.desc}</p>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Detailed PID-5 table */}
-                                                            <div className="p-6 rounded-3xl bg-white/[0.01] border border-white/5 space-y-4">
-                                                                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-400">Listado Completo de Ítems PID-5</h4>
-                                                                <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 no-scrollbar">
-                                                                    {PHENOM_PART_B.map((item, idx) => {
-                                                                        const val = pidAnswers[idx + 1];
-                                                                        const optLabels = ["Muy falso o a menudo falso", "A veces o un poco falso", "A veces o un poco verdadero", "Muy verdadero o a menudo verdadero"];
-                                                                        return (
-                                                                            <div key={item.id} className="p-3 rounded-2xl border border-white/5 bg-zinc-950/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                                                                                <div className="space-y-1">
-                                                                                    <div className="flex gap-2 items-center">
-                                                                                        <span className="px-2 py-0.5 rounded bg-white/5 text-[7px] font-mono font-bold text-zinc-500 uppercase">Ítem {item.id}</span>
-                                                                                        <span className="text-[7px] font-mono text-zinc-600 uppercase tracking-widest">{item.domain}</span>
-                                                                                    </div>
-                                                                                    <p className="text-xs text-zinc-300 font-sans font-medium">{item.text}</p>
-                                                                                </div>
-                                                                                <span className={`px-3 py-1 rounded-xl text-[8px] font-mono uppercase font-black shrink-0 ${val === 3 ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' :
-                                                                                    val === 2 ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' :
-                                                                                        val === 1 ? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/10' :
-                                                                                            'bg-zinc-950 text-zinc-600 border border-white/5'
-                                                                                    }`}>
-                                                                                    {val !== undefined ? `${val} - ${optLabels[val]}` : 'Sin responder'}
-                                                                                </span>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {resultsSubTab === 'icar_detail' && (
-                                                <div className="space-y-8 animate-in fade-in duration-300">
-                                                    {!calculatedResults.isIcarComplete ? (
-                                                        <div className="p-8 text-center border border-white/5 rounded-3xl bg-white/[0.01]">
-                                                            <span className="text-[10px] font-mono font-black uppercase text-zinc-500 tracking-[0.3em]">Cartografía Cognitiva Incompleta</span>
-                                                            <p className="text-[9px] text-zinc-600 mt-2 font-sans">Por favor completa el test ICAR16 para desbloquear este análisis detallado.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            {/* Summary Statistics */}
-                                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                                                {[
-                                                                    { label: 'Eficacia Global', value: `${Math.round((calculatedResults.score / 16) * 100)}%`, desc: `${calculatedResults.score} de 16 aciertos` },
-                                                                    { label: 'Tiempo Promedio', value: `${calculatedResults.dwellAvg}s`, desc: 'Latencia por reactivo' },
-                                                                    { label: 'Total Cambios', value: calculatedResults.totalChanges, desc: 'Disonancia/Modificaciones' },
-                                                                    { label: 'Precisión Espacial', value: `${calculatedResults.categories["Razonamiento Espacial"] ? Math.round((calculatedResults.categories["Razonamiento Espacial"].correct / calculatedResults.categories["Razonamiento Espacial"].total) * 100) : 0}%`, desc: 'Visualización 3D' }
-                                                                ].map((stat, i) => (
-                                                                    <div key={i} className="p-5 rounded-3xl bg-white/[0.01] border border-white/5 flex flex-col justify-between">
-                                                                        <span className="text-[8px] font-mono font-bold text-zinc-600 uppercase tracking-widest">{stat.label}</span>
-                                                                        <span className="text-3xl font-black italic text-accent my-2 leading-none">{stat.value}</span>
-                                                                        <span className="text-[8px] text-zinc-500 font-mono uppercase">{stat.desc}</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-
-                                                            {/* Reactivos List */}
-                                                            <div className="space-y-3">
-                                                                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-accent">Desglose de Reactivos (1-16)</h4>
-
-                                                                {icarQuestions.map((q, idx) => {
-                                                                    const userAns = icarAnswers[q.question_number];
-                                                                    const isCorrect = userAns === q.correct_answer;
-                                                                    const isExpanded = expandedIcarQuestion === q.question_number;
-                                                                    const latency = icarDwellTimes[q.question_number] || 0;
-                                                                    const changes = icarChanges[q.question_number] || 0;
-
-                                                                    return (
-                                                                        <div key={q.question_number} className={`rounded-3xl border transition-all duration-300 ${isExpanded ? 'border-accent/30 bg-accent/[0.01]' : 'border-white/5 bg-zinc-950/20 hover:border-white/10'}`}>
-                                                                            {/* Header row */}
-                                                                            <div
-                                                                                onClick={() => setExpandedIcarQuestion(isExpanded ? null : q.question_number)}
-                                                                                className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer select-none"
-                                                                            >
-                                                                                <div className="flex gap-4 items-center">
-                                                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-mono font-black text-xs ${isCorrect ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                                                                                        }`}>
-                                                                                        {isCorrect ? <Check size={14} /> : <X size={14} />}
-                                                                                    </span>
-                                                                                    <div>
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <span className="text-xs font-bold text-white uppercase font-sans">Reactivo {q.question_number}</span>
-                                                                                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[7px] font-mono text-zinc-500 uppercase tracking-wider">{q.category}</span>
-                                                                                        </div>
-                                                                                        <span className="text-[8px] font-mono text-zinc-500 uppercase mt-0.5 block">{q.construct}</span>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                <div className="flex items-center gap-6 self-end md:self-auto">
-                                                                                    <div className="flex gap-4">
-                                                                                        <span className="text-[8px] font-mono text-zinc-600 uppercase">LATENCIA: <strong className="text-zinc-400 font-bold">{latency.toFixed(1)}s</strong></span>
-                                                                                        <span className="text-[8px] font-mono text-zinc-600 uppercase">CAMBIOS: <strong className="text-zinc-400 font-bold">{changes}</strong></span>
-                                                                                    </div>
-                                                                                    <button className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-white transition-all">
-                                                                                        <ChevronDown size={14} className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {/* Expanded details */}
-                                                                            {isExpanded && (
-                                                                                <div className="border-t border-white/5 p-6 space-y-6 animate-in slide-in-from-top duration-300">
-                                                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                                                                                        {/* Left: instruction & diagram */}
-                                                                                        <div className="lg:col-span-7 space-y-4">
-                                                                                            <p className="text-sm font-bold text-white leading-relaxed italic">"{q.instruction_text}"</p>
-
-                                                                                            {renderTestStimulusDiagram(q)}
-                                                                                        </div>
-
-                                                                                        {/* Right: choices breakdown */}
-                                                                                        <div className="lg:col-span-5 space-y-2">
-                                                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-600 tracking-widest block mb-2">Desglose de Respuestas</span>
-                                                                                            {q.options.map(opt => {
-                                                                                                const isUserChoice = userAns === opt.label;
-                                                                                                const isCorrectAnswer = q.correct_answer === opt.label;
-                                                                                                return (
-                                                                                                    <div
-                                                                                                        key={opt.label}
-                                                                                                        className={`p-3 rounded-2xl border flex items-center gap-3 transition-all ${isCorrectAnswer ? 'bg-emerald-500/10 border-emerald-500/30 text-white' :
-                                                                                                            isUserChoice ? 'bg-red-500/10 border-red-500/30 text-white' :
-                                                                                                                'bg-zinc-950/20 border-white/5 text-zinc-400'
-                                                                                                            }`}
-                                                                                                    >
-                                                                                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-mono font-black border shrink-0 ${isCorrectAnswer ? 'bg-emerald-500 text-black border-emerald-500' :
-                                                                                                            isUserChoice ? 'bg-red-500 text-white border-red-500' :
-                                                                                                                'bg-zinc-900 border-white/10 text-zinc-500'
-                                                                                                            }`}>{opt.label}</span>
-                                                                                                        <span className="text-xs truncate font-medium">{opt.value}</span>
-                                                                                                        {isCorrectAnswer && <span className="ml-auto text-[7px] font-mono font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">Correcto</span>}
-                                                                                                        {!isCorrectAnswer && isUserChoice && <span className="ml-auto text-[7px] font-mono font-black uppercase text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/10">Tu Selección</span>}
-                                                                                                    </div>
-                                                                                                );
-                                                                                            })}
-                                                                                        </div>
-                                                                                    </div>
-
-                                                                                    {/* Bottom: Rationale & AI Opinion */}
-                                                                                    {(() => {
-                                                                                        const rationaleData = icarRationale.find(r => r.question_number === q.question_number);
-                                                                                        if (!rationaleData) return null;
-                                                                                        return (
-                                                                                            <div className="lg:col-span-12 mt-6 pt-6 border-t border-white/5 space-y-4">
-                                                                                                <div className="space-y-1">
-                                                                                                    <span className="text-[8px] font-mono font-black uppercase text-accent tracking-[0.2em] block">Base Lógica de Resolución</span>
-                                                                                                    <p className="text-[11px] text-zinc-300 font-sans italic leading-relaxed">{rationaleData.rationale}</p>
-                                                                                                </div>
-                                                                                                <div className={`p-4 rounded-2xl border ${isCorrect ? 'bg-emerald-950/20 border-emerald-500/20' : 'bg-red-950/10 border-red-500/10'}`}>
-                                                                                                    <span className={`text-[8px] font-mono font-black uppercase tracking-[0.2em] block mb-2 ${isCorrect ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                                                                        Opinión del Sistema // {isCorrect ? 'Procesamiento Exitoso' : 'Fallo en Procesamiento'}
-                                                                                                    </span>
-                                                                                                    <p className={`text-[11px] font-sans italic leading-relaxed ${isCorrect ? 'text-emerald-200/80' : 'text-red-200/80'}`}>
-                                                                                                        {isCorrect ? rationaleData.cognitive_implication_correct : rationaleData.cognitive_implication_incorrect}
-                                                                                                    </p>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        );
-                                                                                    })()}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             ) : activeTest === 'phenom' ? (
                                 <div className={`mx-auto animate-in slide-in-from-right duration-300 ${currentPhenomIndex < 4 ? 'max-w-5xl w-full' : 'max-w-2xl'}`}>
@@ -10540,35 +10243,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         </div>
                     )}
 
-                    {/* SOUL ARCHIVE TAB NAVIGATION (FLOATING AT BOTTOM) */}
-                    <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex bg-[#0c0c0e]/95 p-1.5 rounded-full border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.9)] backdrop-blur-3xl gap-1.5 animate-in slide-in-from-bottom duration-500">
-                        {[
-                            { id: 'tests', label: 'Pruebas', icon: Heart },
-                            ...(hasMap ? [{ id: 'loop_map', label: 'Mapa Psicológico', icon: Compass }] : []),
-                            { id: 'memory', label: 'Ecos de Memoria', icon: Aperture }
-                        ].map(tab => {
-                            const Icon = tab.icon;
-                            const isActive = activeTabName === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => {
-                                        setSoulTab(tab.id);
-                                        setSelectedLoopNode('trigger');
-                                    }}
-                                    title={tab.label}
-                                    className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${isActive
-                                        ? 'bg-accent text-black border-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)] hover:scale-105'
-                                        : 'bg-transparent text-zinc-500 hover:text-white border-transparent hover:bg-white/5'
-                                        }`}
-                                    style={isActive ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                                >
-                                    <Icon size={14} className="shrink-0" />
-                                    <span className="hidden md:inline">{tab.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
+
                 </div>
             </div>
         );
@@ -11411,7 +11086,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {zoomedImage && (
                 <div
                     onClick={() => setZoomedImage(null)}
-                    className="fixed inset-0 z-[9999] bg-[#070708]/95 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn"
+                    className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn"
                 >
                     <div className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center justify-center select-none" onClick={(e) => e.stopPropagation()}>
                         <button
@@ -13581,6 +13256,11 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* iOS Bottom Gradient ONLY for the Mural Canvas */}
+            {!activeNotebook && view !== 'profile' && view !== 'soul' && (
+                <div className="fixed bottom-0 left-0 right-0 h-[calc(90px+env(safe-area-inset-bottom,20px))] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-[3000]" />
             )}
         </div>
     );
