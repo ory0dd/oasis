@@ -262,6 +262,18 @@ html, body { position: fixed; overflow: hidden; width: 100%; height: 100%; overs
     0%, 100% { filter: drop-shadow(0 0 5px #bef264); transform: scale(1); }
     50% { filter: drop-shadow(0 0 15px #bef264); transform: scale(1.2); }
   }
+
+  /* Corrección de Franja Negra en iOS PWA (Estética de Fundido/Tarjeta) */
+  .ios-bottom-gradient {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(90px + env(safe-area-inset-bottom, 20px));
+    background: linear-gradient(to top, #000000 0%, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.5) 65%, transparent 100%);
+    pointer-events: none;
+    z-index: 9999;
+  }
 }
 
 html, body { touch-action: auto; }

@@ -82,24 +82,66 @@ namespace Oasis.Backend.Controllers
         {
             var state = new OasisState();
             try {
-                // Migration: If root doesn't exist but bin does, copy it
-                if (!System.IO.File.Exists(StoragePath) && System.IO.File.Exists(BackupStoragePath))
+                // 1. Try to load from Supabase Cloud First (to survive Render deploys)
+                var config = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: true)
+                    .AddEnvironmentVariables()
+                    .Build();
+
+                var supabaseUrl = config["Supabase:Url"];
+                var supabaseKey = config["Supabase:Key"];
+                bool loadedFromSupabase = false;
+
+                if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                 {
-                    System.IO.File.Copy(BackupStoragePath, StoragePath);
-                    Console.WriteLine("Oasis: Data migrated from bin to root.");
+                    try {
+                        var queryUrl = $"{supabaseUrl.TrimEnd('/')}/rest/v1/oasis_global_state?id=eq.1";
+                        using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
+                        request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                        request.Headers.Add("apikey", supabaseKey);
+                        
+                        var response = _httpClient.SendAsync(request).Result;
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseBody = response.Content.ReadAsStringAsync().Result;
+                            using var doc = JsonDocument.Parse(responseBody);
+                            if (doc.RootElement.GetArrayLength() > 0)
+                            {
+                                var dataElement = doc.RootElement[0].GetProperty("state_data");
+                                string json = dataElement.GetRawText();
+                                state = JsonSerializer.Deserialize<OasisState>(json, JsonOptions) ?? new OasisState();
+                                loadedFromSupabase = true;
+                                Console.WriteLine("Oasis: Data loaded directly from Supabase Cloud.");
+                            }
+                        }
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Error fetching from Supabase: {ex.Message}");
+                    }
                 }
 
-                if (System.IO.File.Exists(StoragePath))
+                // 2. Fallback to Local Disk if Supabase fails or is empty
+                if (!loadedFromSupabase)
                 {
-                    using (var fs = new FileStream(StoragePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (var reader = new StreamReader(fs))
+                    // Migration: If root doesn't exist but bin does, copy it
+                    if (!System.IO.File.Exists(StoragePath) && System.IO.File.Exists(BackupStoragePath))
                     {
-                        string json = reader.ReadToEnd();
-                        state = JsonSerializer.Deserialize<OasisState>(json, JsonOptions) ?? new OasisState();
-                        if (MigrateBase64Assets(state))
+                        System.IO.File.Copy(BackupStoragePath, StoragePath);
+                        Console.WriteLine("Oasis: Data migrated from bin to root.");
+                    }
+
+                    if (System.IO.File.Exists(StoragePath))
+                    {
+                        using (var fs = new FileStream(StoragePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (var reader = new StreamReader(fs))
                         {
-                            SaveStateInternal(state);
-                            Console.WriteLine("Oasis: Assets migrados y archivo optimizado.");
+                            string json = reader.ReadToEnd();
+                            state = JsonSerializer.Deserialize<OasisState>(json, JsonOptions) ?? new OasisState();
+                            if (MigrateBase64Assets(state))
+                            {
+                                SaveStateInternal(state);
+                                Console.WriteLine("Oasis: Assets migrados y archivo optimizado.");
+                            }
                         }
                     }
                 }
@@ -204,11 +246,51 @@ namespace Oasis.Backend.Controllers
         {
             try {
                 string json = JsonSerializer.Serialize(state, JsonOptions);
+                // 1. Local Backup
                 using (var fs = new FileStream(StoragePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
                 using (var writer = new StreamWriter(fs))
                 {
                     writer.Write(json);
                 }
+
+                // 2. Cloud Sync (Supabase) - Fire and Forget to avoid blocking UI
+                _ = Task.Run(async () => {
+                    try {
+                        var config = new ConfigurationBuilder()
+                            .SetBasePath(Directory.GetCurrentDirectory())
+                            .AddJsonFile("appsettings.json", optional: true)
+                            .AddEnvironmentVariables()
+                            .Build();
+
+                        var supabaseUrl = config["Supabase:Url"];
+                        var supabaseKey = config["Supabase:Key"];
+
+                        if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
+                        {
+                            var postPayload = new Dictionary<string, object>
+                            {
+                                { "id", 1 },
+                                { "state_data", state }
+                            };
+                            
+                            using var request = new HttpRequestMessage(HttpMethod.Post, $"{supabaseUrl.TrimEnd('/')}/rest/v1/oasis_global_state");
+                            request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                            request.Headers.Add("apikey", supabaseKey);
+                            request.Headers.Add("Prefer", "resolution=merge-duplicates");
+                            request.Content = new StringContent(JsonSerializer.Serialize(postPayload, JsonOptions), System.Text.Encoding.UTF8, "application/json");
+                            
+                            var response = await _httpClient.SendAsync(request);
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                var err = await response.Content.ReadAsStringAsync();
+                                Console.WriteLine($"Supabase Global Sync Failed: {response.StatusCode} - {err}");
+                            }
+                        }
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Supabase Sync Error: {ex.Message}");
+                    }
+                });
+
             } catch (Exception ex) {
                 Console.WriteLine($"Error guardando oasis: {ex.Message}");
             }
