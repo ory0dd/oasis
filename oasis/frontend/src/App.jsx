@@ -11206,115 +11206,19 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 </div>
             )}
 
+            {/* CANVAS BLUR BACKDROP WHEN MODULES ARE OPEN */}
+            {((view !== 'canvas' && view !== 'clinical') || activeNotebook || isChatOpen || isSimpleNotesOpen || isComposerOpen) && (
+                <div className="fixed inset-0 bg-[#050506]/40 backdrop-blur-xl z-[1400] transition-all duration-500 pointer-events-none" />
+            )}
+
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
             {(view === 'canvas' || view === 'profile' || view === 'soul' || (isSimpleNotesOpen && !isSimpleNotesEditorOpen)) && view !== 'clinical' && (
                 <div 
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 md:gap-3 p-1.5 md:p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] animate-in duration-700 w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 slide-in-from-top-5"
+                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 animate-in slide-in-from-top-5 duration-700"
                 >
-                    
-                    {/* Lienzo Principal Button */}
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook(null); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                            setView('canvas'); 
-                        }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'canvas' && !activeNotebook ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
-                        style={view === 'canvas' && !activeNotebook ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Lienzo Principal"
-                    >
-                        <Compass size={14} className="md:size-[20px] hover-float-icon" />
-                    </button>
-
-                    <div className="relative group mx-0.5 shrink-0">
-                        <div className="absolute inset-0 bg-accent/20 animate-blob blur-xl group-hover:bg-accent/40 transition-colors" />
-                        <button
-                            onPointerDown={handleComposerPointerDown}
-                            onPointerUp={handleComposerPointerUp}
-                            onPointerCancel={handleComposerPointerCancel}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (isComposerLongPressRef.current) {
-                                    e.preventDefault();
-                                    return;
-                                }
-                                if (isSimpleNotesOpen) {
-                                    simpleNotesRef.current?.createNewNote();
-                                } else {
-                                    openNewComposer();
-                                }
-                            }}
-                            className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-accent text-black flex items-center justify-center shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)] active:scale-95 transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 relative border border-white/20 z-10 btn-pulse-ring group-hover:shadow-[0_0_40px_rgba(var(--accent-rgb),0.5)]"
-                            style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
-                            title="Nueva Nota Libre"
-                        >
-                            <Edit3 size={16} className="md:size-[22px] hover-float-icon" />
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
-                        title="Nueva Conversación IA"
-                    >
-                        <MessageCircle size={14} className="md:size-[20px] hover-float-icon transition-colors" />
-                    </button>
-
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('diary'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                        }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${activeNotebook === 'diary' ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:text-amber-400 hover:-translate-y-0.5 hover:scale-110'}`}
-                        style={activeNotebook === 'diary' ? { backgroundColor: '#f59e0b', borderColor: '#fbbf24', color: '#000' } : undefined}
-                        title="Libreta de Diario"
-                    >
-                        <StickyNote size={14} className="md:size-[18px] hover-float-icon" />
-                    </button>
-
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('resonance'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                        }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${activeNotebook === 'resonance' ? 'bg-purple-500 text-black border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-purple-400 hover:bg-purple-500/10 hover:border-purple-500/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:text-purple-300 hover:-translate-y-0.5 hover:scale-110'}`}
-                        style={activeNotebook === 'resonance' ? { backgroundColor: '#a855f7', borderColor: '#c084fc', color: '#000' } : undefined}
-                        title="Análisis de Ruido"
-                    >
-                        <Sparkles size={14} className="md:size-[18px] hover-float-icon" />
-                    </button>
-
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook(null); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                            setView('soul'); 
-                        }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'soul' ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
-                        style={view === 'soul' ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Archivo del Alma"
-                    >
-                        <Aperture size={14} className="md:size-[20px] hover-float-icon" />
-                    </button>
-
+                    {/* 1. Perfil */}
                     <button
                         onClick={(e) => { 
                             e.stopPropagation(); 
@@ -11325,11 +11229,113 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setActiveTest(null); 
                             setView('profile'); 
                         }}
-                        className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border group shrink-0 ${view === 'profile' && !activeNotebook ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] scale-110 -translate-y-0.5' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 hover:scale-110'}`}
-                        style={view === 'profile' && !activeNotebook ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Perfil"
                     >
-                        <User size={14} className="md:size-[20px] hover-float-icon" />
+                        <User size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 2. Lienzo Principal */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook(null); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                            setView('canvas'); 
+                        }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Lienzo Principal"
+                    >
+                        <Compass size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 3. Lápiz / Notas */}
+                    <button
+                        onPointerDown={handleComposerPointerDown}
+                        onPointerUp={handleComposerPointerUp}
+                        onPointerCancel={handleComposerPointerCancel}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (isComposerLongPressRef.current) {
+                                e.preventDefault();
+                                return;
+                            }
+                            if (isSimpleNotesOpen) {
+                                simpleNotesRef.current?.createNewNote();
+                            } else {
+                                openNewComposer();
+                            }
+                        }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={(isSimpleNotesOpen || isComposerOpen) ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Notas Rápidas"
+                    >
+                        <Edit3 size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 4. Chat IA */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={isChatOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Nueva Conversación IA"
+                    >
+                        <MessageCircle size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 5. Diario */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('diary'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
+                        title="Libreta de Diario"
+                    >
+                        <StickyNote size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 6. Resonancia */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook('resonance'); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                        }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
+                        title="Análisis de Ruido"
+                    >
+                        <Sparkles size={18} className="hover-float-icon" />
+                    </button>
+
+                    {/* 7. Alma */}
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIsSimpleNotesOpen(false); 
+                            setIsComposerOpen(false); 
+                            setActiveNotebook(null); 
+                            setIsChatOpen(false); 
+                            setActiveTest(null); 
+                            setView('soul'); 
+                        }}
+                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        style={view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        title="Archivo del Alma"
+                    >
+                        <Aperture size={18} className="hover-float-icon" />
                     </button>
                 </div>
             )}
