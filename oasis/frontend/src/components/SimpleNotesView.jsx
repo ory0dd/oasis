@@ -150,7 +150,7 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar..."
-                        className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-700"
+                        className="flex-1 bg-transparent text-base text-white outline-none placeholder:text-zinc-700"
                     />
                     {search && (
                         <button onClick={() => setSearch('')}>

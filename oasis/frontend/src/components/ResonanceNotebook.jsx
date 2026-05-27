@@ -282,7 +282,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                                         value={resPrimal}
                                         onChange={e => setResPrimal(e.target.value)}
                                         placeholder="Escribe aquí con total honestidad sobre el ruido o loop mental..."
-                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-base text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}
@@ -300,7 +300,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                                         value={resImpact}
                                         onChange={e => setResImpact(e.target.value)}
                                         placeholder="Qué nuevo pensamiento o emoción residual quedó flotando..."
-                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-base text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}
@@ -318,7 +318,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                                         value={resAnomaly}
                                         onChange={e => setResAnomaly(e.target.value)}
                                         placeholder="Identifica el origen del bucle existencial, el nudo o conflicto central..."
-                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-base text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}

@@ -487,7 +487,7 @@ const OasisChat = ({
                             onChange={handleTextareaChange}
                             onKeyDown={handleKeyDown}
                             placeholder="Escribe un mensaje o pregunta..."
-                            className="flex-1 bg-transparent py-1.5 px-1.5 text-sm md:text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[32px] max-h-[200px]"
+                            className="flex-1 bg-transparent py-1.5 px-1.5 text-base font-sans text-white placeholder:text-zinc-800 outline-none resize-none no-scrollbar min-h-[32px] max-h-[200px]"
                         />
 
                         <button

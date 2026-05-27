@@ -9252,7 +9252,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                         value={reinterpretationText}
                                         onChange={(e) => setReinterpretationText(e.target.value)}
                                         rows={6}
-                                        className="w-full p-6 bg-zinc-950/80 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/40 transition-all font-sans text-sm leading-relaxed resize-none"
+                                        className="w-full p-6 bg-zinc-950/80 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/40 transition-all font-sans text-base leading-relaxed resize-none"
                                     />
                                 </div>
                                 <button
@@ -10633,7 +10633,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             type="text"
                             id="oasis_user_input"
                             placeholder="@IDENTIDAD"
-                            className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
+                            className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-base md:text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                         />
                     </div>
 
@@ -10644,7 +10644,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                 type={showPass ? "text" : "password"}
                                 id="oasis_key_input"
                                 placeholder="••••••••"
-                                className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
+                                className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-base md:text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                             />
                             <button
                                 onClick={() => setShowPass(!showPass)}
@@ -10663,7 +10663,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     type="text"
                                     id="oasis_fullname_input"
                                     placeholder="NOMBRE COMPLETO"
-                                    className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
+                                    className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-base md:text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                                 />
                             </div>
 
@@ -10673,7 +10673,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     type="number"
                                     id="oasis_age_input"
                                     placeholder="EDAD"
-                                    className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
+                                    className="w-full h-14 bg-black/20 border border-white/5 rounded-2xl px-6 text-base md:text-[10px] font-black uppercase tracking-widest text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                                 />
                             </div>
                         </>
@@ -12078,7 +12078,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                             {/* FLOATING MICRO-WINDOW (NOTION STYLE) - COMPACT VERSION */}
                                                             {activeMenu?.idx === idx && (
                                                                 <div className="absolute left-0 top-10 w-56 bg-[#232323] border border-white/5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[700] p-1 animate-in zoom-in-95 duration-200 ring-1 ring-white/10">
-                                                                    <input placeholder="Buscar acciones..." className="w-full bg-white/5 border-none focus:ring-1 focus:ring-accent/40 rounded-xl text-[9px] p-2 mb-1.5 text-white/80 placeholder:text-zinc-600" />
+                                                                    <input placeholder="Buscar acciones..." className="w-full bg-white/5 border-none focus:ring-1 focus:ring-accent/40 rounded-xl text-base md:text-[9px] p-2 mb-1.5 text-white/80 placeholder:text-zinc-600" />
 
                                                                     <div className="max-h-[350px] overflow-y-auto no-scrollbar py-0.5">
                                                                         <span className="text-[6px] font-black uppercase tracking-[0.2em] text-zinc-600 px-2 py-1.5 block">Texto</span>
