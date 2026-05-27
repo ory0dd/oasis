@@ -11205,7 +11205,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 <div 
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506]/60 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 animate-in slide-in-from-top-5 duration-700"
+                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506]/60 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in slide-in-from-top-5 duration-700"
+                    style={{ top: 'max(24px, calc(env(safe-area-inset-top) + 12px))' }}
                 >
                     {/* 1. Perfil */}
                     <button
@@ -11509,7 +11510,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {/* COMPOSER */}
             {isComposerOpen && (
                 <div 
-                    className={`fixed inset-x-0 top-[112px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
+                    className={`fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
                     style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
                     onTouchStart={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
