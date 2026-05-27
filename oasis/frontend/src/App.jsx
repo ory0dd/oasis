@@ -9,7 +9,7 @@ import {
     FolderPlus, ChevronDown, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
     Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
-    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download
+    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -2624,25 +2624,43 @@ const ProfileView = ({
                                         setIsSelectionMode(!isSelectionMode);
                                         setSelectedIds([]);
                                     }}
-                                    className={`px-3 py-1 rounded-full border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${isSelectionMode
-                                        ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20'
-                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white'
+                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 ${isSelectionMode
+                                        ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
                                         }`}
+                                    title={isSelectionMode ? 'Cancelar Selección' : 'Seleccionar Registros'}
                                 >
-                                    <CheckSquare size={10} />
-                                    {isSelectionMode ? 'Cancelar' : 'Seleccionar'}
+                                    <CheckSquare size={14} />
                                 </button>
 
                                 <button
                                     onClick={() => {
-                                        if (window.confirm("¿Estás seguro de eliminar todos los datos de prueba? Esta acción no se puede deshacer.")) {
-                                            deleteBlocks(blocks.map(b => b.id));
+                                        if (window.confirm("¿Estás seguro de eliminar todos los datos seleccionados o todos los datos de prueba?")) {
+                                            if (isSelectionMode && selectedIds.length > 0) {
+                                                deleteBlocks(selectedIds);
+                                                setSelectedIds([]);
+                                                setIsSelectionMode(false);
+                                            } else {
+                                                deleteBlocks(blocks.map(b => b.id));
+                                            }
                                         }
                                     }}
-                                    className="px-3 py-1 rounded-full border border-red-900/30 bg-red-950/20 transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1 text-red-500 hover:bg-red-600 hover:text-black"
+                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 text-red-500 hover:bg-red-600 hover:text-black shadow-[0_0_15px_rgba(239,68,68,0.1)] ${isSelectionMode && selectedIds.length > 0 ? 'bg-red-500/30 border-red-500' : 'bg-red-950/20 border-red-900/30'}`}
+                                    title="Borrar Registros"
                                 >
-                                    <Trash2 size={10} />
-                                    Borrar Todo
+                                    <Trash2 size={14} />
+                                </button>
+
+                                {/* BOTON PARA ABRIR SIMPLE NOTES (NOTAS DEL PIZARRON) */}
+                                <button
+                                    onClick={() => {
+                                        onOpenSimpleNotes();
+                                    }}
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-white/5 transition-all flex items-center justify-center text-accent hover:bg-accent hover:text-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] shrink-0"
+                                    style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
+                                    title="Abrir Lista de Notas Rápidas"
+                                >
+                                    <Edit3 size={14} />
                                 </button>
                             </div>
                         </div>
@@ -2741,13 +2759,27 @@ const ProfileView = ({
                                                 ? new Date(b.metadata.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
                                                 : '';
 
+                                            const isSelected = selectedIds.includes(b.id);
+
                                             return (
                                                 <div
                                                     key={b.id}
                                                     onClick={() => handleCardClick(b.id)}
-                                                    className="group/note bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden"
+                                                    className={`group/note border rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${
+                                                        isSelected
+                                                            ? 'bg-accent/10 border-accent/60 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]'
+                                                            : 'bg-white/[0.01] hover:bg-white/[0.04] border-white/5 hover:border-white/10'
+                                                    }`}
+                                                    style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
                                                 >
                                                     <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: cardBorderColor }} />
+
+                                                    {/* Selection indicator checkbox if in selection mode */}
+                                                    {isSelectionMode && (
+                                                        <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
+                                                            {isSelected && <Check size={10} strokeWidth={4} />}
+                                                        </div>
+                                                    )}
 
                                                     <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
                                                         <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
@@ -3188,7 +3220,6 @@ export default function App() {
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
     const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
-    const [isSimpleNotesEditorOpen, setIsSimpleNotesEditorOpen] = useState(false);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
     const isComposerLongPressRef = useRef(false);
@@ -3220,25 +3251,7 @@ export default function App() {
         }
     }, [user]);
 
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Tab') {
-                const active = document.activeElement;
-                if (active && (
-                    active.tagName === 'INPUT' || 
-                    active.tagName === 'TEXTAREA' || 
-                    active.isContentEditable
-                )) {
-                    return;
-                }
-                e.preventDefault();
-                setIsSimpleNotesOpen(prev => !prev);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
+    // Tab listener was removed as requested
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [deepseekKey, setDeepseekKey] = useState(() => localStorage.getItem('oasis_deepseek_key') || ''); // DeepSeek API Key
 
@@ -6578,31 +6591,7 @@ export default function App() {
         setIsComposerOpen(true);
     };
 
-    const handleComposerPointerDown = (e) => {
-        e.stopPropagation();
-        isComposerLongPressRef.current = false;
-        if (composerLongPressTimerRef.current) clearTimeout(composerLongPressTimerRef.current);
-        composerLongPressTimerRef.current = setTimeout(() => {
-            isComposerLongPressRef.current = true;
-            setIsSimpleNotesOpen(prev => !prev);
-            if (navigator.vibrate) navigator.vibrate(50);
-        }, 600);
-    };
-
-    const handleComposerPointerUp = (e) => {
-        e.stopPropagation();
-        if (composerLongPressTimerRef.current) {
-            clearTimeout(composerLongPressTimerRef.current);
-            composerLongPressTimerRef.current = null;
-        }
-    };
-
-    const handleComposerPointerCancel = (e) => {
-        if (composerLongPressTimerRef.current) {
-            clearTimeout(composerLongPressTimerRef.current);
-            composerLongPressTimerRef.current = null;
-        }
-    };
+    // Long press composer handlers were removed as requested
 
     const handleNewDiaryClick = () => {
         // Find if there is an existing single diary node anywhere on the canvas
@@ -8528,6 +8517,11 @@ ${searchContext}
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* CANVAS BLUR OVERLAY WHEN A MODULE IS OPEN */}
+            {(activeNotebook || isChatOpen || isSimpleNotesOpen || isComposerOpen) && (
+                <div className="absolute inset-0 bg-[#050506]/40 backdrop-blur-xl z-[9000] pointer-events-none transition-all duration-500" />
             )}
         </div>
     );
@@ -11206,17 +11200,12 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 </div>
             )}
 
-            {/* CANVAS BLUR BACKDROP WHEN MODULES ARE OPEN */}
-            {((view !== 'canvas' && view !== 'clinical') || activeNotebook || isChatOpen || isSimpleNotesOpen || isComposerOpen) && (
-                <div className="fixed inset-0 bg-[#050506]/40 backdrop-blur-xl z-[1400] transition-all duration-500 pointer-events-none" />
-            )}
-
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
-            {(view === 'canvas' || view === 'profile' || view === 'soul' || (isSimpleNotesOpen && !isSimpleNotesEditorOpen)) && view !== 'clinical' && (
+            {(view === 'canvas' || view === 'profile' || view === 'soul' || isSimpleNotesOpen) && view !== 'clinical' && (
                 <div 
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506] border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 animate-in slide-in-from-top-5 duration-700"
+                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506]/60 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar top-6 md:top-8 animate-in slide-in-from-top-5 duration-700"
                 >
                     {/* 1. Perfil */}
                     <button
@@ -11256,20 +11245,13 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* 3. Lápiz / Notas */}
                     <button
-                        onPointerDown={handleComposerPointerDown}
-                        onPointerUp={handleComposerPointerUp}
-                        onPointerCancel={handleComposerPointerCancel}
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (isComposerLongPressRef.current) {
-                                e.preventDefault();
-                                return;
-                            }
-                            if (isSimpleNotesOpen) {
-                                simpleNotesRef.current?.createNewNote();
-                            } else {
-                                openNewComposer();
-                            }
+                            setIsSimpleNotesOpen(false);
+                            setActiveNotebook(null);
+                            setIsChatOpen(false);
+                            setActiveTest(null);
+                            openNewComposer();
                         }}
                         className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={(isSimpleNotesOpen || isComposerOpen) ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
@@ -11348,7 +11330,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     accent={accent}
                     user={user}
                     onClose={() => setIsSimpleNotesOpen(false)}
-                    onEditorToggle={setIsSimpleNotesEditorOpen}
+                    editBlock={editBlock}
+                    openNewComposer={openNewComposer}
                 />
             )}
 
@@ -11525,15 +11508,29 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
             {/* COMPOSER */}
             {isComposerOpen && (
-                <div className={`fixed inset-0 z-[500] flex flex-col animate-in fade-in duration-300 ${composerStep === 'note' ? 'bg-[#0a0a0b]' : 'bg-black/80 backdrop-blur-3xl'}`}>
+                <div 
+                    className={`fixed inset-x-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
+                    style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
+                    onTouchStart={e => e.stopPropagation()}
+                    onPointerDown={e => e.stopPropagation()}
+                    onWheel={e => e.stopPropagation()}
+                >
 
                     {/* BOTTOM FLOATING TOOLBAR */}
                     {composerStep === 'note' && (
-                        <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]">
+                        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]">
                             <div className="flex items-center gap-1">
                                 {/* PRIMARY CANCEL */}
                                 <button onClick={() => setIsComposerOpen(false)} className="w-9 h-9 md:w-12 md:h-12 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group" title="Cerrar (ESC)">
                                     <X size={16} className="md:size-[18px] group-hover:rotate-90 transition-transform duration-300" />
+                                </button>
+
+                                {/* ABRIR ÍNDICE DE NOTAS */}
+                                <button onClick={() => {
+                                    setIsComposerOpen(false);
+                                    setIsSimpleNotesOpen(true);
+                                }} className="w-9 h-9 md:w-12 md:h-12 rounded-full hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white transition-all group" title="Ver Índice de Notas">
+                                    <Sidebar size={14} className="md:size-[16px] group-hover:scale-110 transition-transform duration-300" />
                                 </button>
 
                                 {editingId && (
@@ -11619,7 +11616,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     )}
 
 
-                    <div className={`flex-1 overflow-y-auto no-scrollbar ${composerStep === 'note' ? 'w-full max-w-6xl mx-auto px-8 md:px-0 pt-32 pb-32 md:pt-40 md:pb-48' : 'flex items-center justify-center p-4'}`}>
+                    <div className={`flex-1 overflow-y-auto no-scrollbar relative ${composerStep === 'note' ? 'w-full max-w-5xl mx-auto px-6 md:px-12 pt-12 pb-32 md:pt-16 md:pb-40' : 'flex items-center justify-center p-4'}`}>
                         {composerStep === 'note' ? (
                             <div className="space-y-4 animate-in slide-in-from-bottom-10 duration-1000 relative">
 
