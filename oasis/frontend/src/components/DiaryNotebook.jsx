@@ -16,7 +16,7 @@ const getBlockTime = (b) => {
     return 0;
 };
 
-export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
+export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[112px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
 

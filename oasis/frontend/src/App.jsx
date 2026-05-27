@@ -11218,7 +11218,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setActiveTest(null); 
                             setView('profile'); 
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Perfil"
                     >
@@ -11236,7 +11236,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setActiveTest(null); 
                             setView('canvas'); 
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Lienzo Principal"
                     >
@@ -11253,7 +11253,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setActiveTest(null);
                             openNewComposer();
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${(isSimpleNotesOpen || isComposerOpen) ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={(isSimpleNotesOpen || isComposerOpen) ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Notas Rápidas"
                     >
@@ -11263,7 +11263,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     {/* 4. Chat IA */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={isChatOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Nueva Conversación IA"
                     >
@@ -11280,7 +11280,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setIsChatOpen(false); 
                             setActiveTest(null); 
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
                         title="Libreta de Diario"
                     >
                         <StickyNote size={18} className="hover-float-icon" />
@@ -11296,7 +11296,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setIsChatOpen(false); 
                             setActiveTest(null); 
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
                         title="Análisis de Ruido"
                     >
                         <Sparkles size={18} className="hover-float-icon" />
@@ -11313,7 +11313,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             setActiveTest(null); 
                             setView('soul'); 
                         }}
-                        className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'soul' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Archivo del Alma"
                     >
@@ -11509,7 +11509,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {/* COMPOSER */}
             {isComposerOpen && (
                 <div 
-                    className={`fixed inset-x-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
+                    className={`fixed inset-x-0 top-[112px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
                     style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
                     onTouchStart={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
