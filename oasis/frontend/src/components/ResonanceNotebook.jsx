@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Plus, Save, Mic, PanelLeft, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, className = "fixed inset-x-0 bottom-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
+export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
     const [activeResId, setActiveResId] = useState(null);
     const [resName, setResName] = useState('');
     const [resPrimal, setResPrimal] = useState('');
@@ -143,9 +143,13 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
         };
 
         if (activeResId) {
-            setBlocks(blocks.map(b => b.id === activeResId ? newBlock : b));
+            const updated = blocks.map(b => b.id === activeResId ? newBlock : b);
+            setBlocks(updated);
+            if (syncBlocks) syncBlocks(updated);
         } else {
-            setBlocks([...blocks, newBlock]);
+            const updated = [...blocks, newBlock];
+            setBlocks(updated);
+            if (syncBlocks) syncBlocks(updated);
             setActiveResId(blockId);
         }
 
@@ -278,7 +282,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                                         value={resPrimal}
                                         onChange={e => setResPrimal(e.target.value)}
                                         placeholder="Escribe aquí con total honestidad sobre el ruido o loop mental..."
-                                        className="w-full h-[40vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}
@@ -296,7 +300,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                                         value={resImpact}
                                         onChange={e => setResImpact(e.target.value)}
                                         placeholder="Qué nuevo pensamiento o emoción residual quedó flotando..."
-                                        className="w-full h-[40vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}
@@ -314,7 +318,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, accent, classNam
                                         value={resAnomaly}
                                         onChange={e => setResAnomaly(e.target.value)}
                                         placeholder="Identifica el origen del bucle existencial, el nudo o conflicto central..."
-                                        className="w-full h-[40vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
+                                        className="w-full flex-1 min-h-[30vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2"
                                     />
                                 </div>
                             )}

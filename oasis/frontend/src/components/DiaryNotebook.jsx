@@ -16,7 +16,7 @@ const getBlockTime = (b) => {
     return 0;
 };
 
-export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent, className = "fixed inset-x-0 bottom-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
+export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[96px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-[#050506]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none" }) => {
     const defaultDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedDefaultDate = defaultDate.charAt(0).toUpperCase() + defaultDate.slice(1);
 
@@ -135,9 +135,13 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
         };
 
         if (activeEntryId) {
-            setBlocks(blocks.map(b => b.id === activeEntryId ? newBlock : b));
+            const updated = blocks.map(b => b.id === activeEntryId ? newBlock : b);
+            setBlocks(updated);
+            if (syncBlocks) syncBlocks(updated);
         } else {
-            setBlocks([...blocks, newBlock]);
+            const updated = [...blocks, newBlock];
+            setBlocks(updated);
+            if (syncBlocks) syncBlocks(updated);
             setActiveEntryId(entryId);
         }
 
@@ -176,11 +180,11 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
 
             setBlocks(prev => {
                 const exists = prev.some(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
-                if (exists) {
-                    return prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b);
-                } else {
-                    return [...prev, newBlock];
-                }
+                const updated = exists 
+                    ? prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b)
+                    : [...prev, newBlock];
+                if (syncBlocks) syncBlocks(updated);
+                return updated;
             });
 
             if (!activeEntryId) {
@@ -216,11 +220,11 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
 
                 setBlocks(prev => {
                     const exists = prev.some(b => b.id === entryId || (activeEntryId && b.id === activeEntryId));
-                    if (exists) {
-                        return prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b);
-                    } else {
-                        return [...prev, newBlock];
-                    }
+                    const updated = exists 
+                        ? prev.map(b => (b.id === entryId || (activeEntryId && b.id === activeEntryId)) ? newBlock : b)
+                        : [...prev, newBlock];
+                    if (syncBlocks) syncBlocks(updated);
+                    return updated;
                 });
 
                 if (!activeEntryId) {
@@ -364,12 +368,12 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, accent,
                         />
 
                         {/* Large, beautiful borderless editor area */}
-                        <div className="min-h-[40vh] font-sans text-sm sm:text-base leading-relaxed tracking-normal text-white/80">
+                        <div className="flex-1 font-sans text-sm sm:text-base leading-relaxed tracking-normal text-white/80 flex flex-col min-h-[40vh]">
                             <textarea 
                                 value={diaryContent}
                                 onChange={e => setDiaryContent(e.target.value)}
                                 placeholder="Escribe aquí con total libertad sobre tu día, tus pensamientos o cualquier cosa que sientas..."
-                                className="w-full h-[50vh] bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0"
+                                className="w-full flex-1 bg-transparent resize-none border-none text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0"
                             />
                         </div>
                     </div>

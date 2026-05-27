@@ -9,7 +9,7 @@ import {
     FolderPlus, ChevronDown, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
     Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
-    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List
+    User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -304,7 +304,7 @@ const smartMergeBlocks = (serverBlocks, username) => {
             const serverTs = getBlockTime(serverBlock);
             const localTs = getBlockTime(localBlock);
 
-            if (localTs > serverTs) {
+            if (localTs >= serverTs) {
                 return localBlock;
             }
 
@@ -11141,6 +11141,56 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                             <span className="text-[7px] font-black uppercase tracking-[1em] text-zinc-800">Versión 1.3.0_Stable</span>
                             <div className="space-y-4 pt-10 border-t border-white/5 mt-auto">
                                 <button
+                                    onClick={() => {
+                                        try {
+                                            const data = {};
+                                            for (let i = 0; i < localStorage.length; i++) {
+                                                const key = localStorage.key(i);
+                                                if (key.startsWith('oasis_')) {
+                                                    data[key] = localStorage.getItem(key);
+                                                }
+                                            }
+                                            const jsonStr = JSON.stringify(data, null, 2);
+                                            navigator.clipboard.writeText(jsonStr).then(() => {
+                                                alert("¡Datos exportados y copiados al portapapeles! Pégalo en el chat para sincronizar.");
+                                            }).catch(err => {
+                                                alert("Error copiando al portapapeles. Muestra esto al desarrollador:\n\n" + jsonStr.substring(0, 100) + "...");
+                                            });
+                                        } catch (e) {
+                                            alert("Error exportando datos: " + e.message);
+                                        }
+                                    }}
+                                    className="w-full py-5 bg-blue-500/10 border border-blue-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-blue-500 hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
+                                >
+                                    <Save size={16} />
+                                    Exportar Datos (Backup)
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const jsonStr = prompt("Pega aquí el texto que copiaste al exportar los datos:");
+                                        if (jsonStr) {
+                                            try {
+                                                const data = JSON.parse(jsonStr);
+                                                let count = 0;
+                                                for (const key in data) {
+                                                    if (key.startsWith('oasis_')) {
+                                                        localStorage.setItem(key, data[key]);
+                                                        count++;
+                                                    }
+                                                }
+                                                alert(`¡Éxito! Se han restaurado ${count} registros. La aplicación se recargará ahora para aplicar los cambios.`);
+                                                window.location.reload();
+                                            } catch (e) {
+                                                alert("Error: El texto pegado no es válido. Asegúrate de copiarlo completo.");
+                                            }
+                                        }
+                                    }}
+                                    className="w-full py-5 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-emerald-500 hover:bg-emerald-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
+                                >
+                                    <Download size={16} />
+                                    Importar Datos (Restaurar)
+                                </button>
+                                <button
                                     onClick={logout}
                                     className="w-full py-5 bg-red-500/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-red-500 hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
                                 >
@@ -11301,7 +11351,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     onClose={() => setActiveNotebook(null)}
                     onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={syncBlocks}
+                    setBlocks={setBlocks}
+                    syncBlocks={syncBlocks}
                     accent={accent}
                 />
             )}
@@ -11311,7 +11362,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     onClose={() => setActiveNotebook(null)}
                     onFocusNode={(x, y) => { setCam({ x: -x * 0.8, y: -y * 0.8, scale: 0.8 }); setActiveNotebook(null); }}
                     blocks={blocks}
-                    setBlocks={syncBlocks}
+                    setBlocks={setBlocks}
+                    syncBlocks={syncBlocks}
                     accent={accent}
                 />
             )}
