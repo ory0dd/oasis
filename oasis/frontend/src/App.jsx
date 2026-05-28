@@ -9716,12 +9716,12 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                 <div
                                                     ref={testsContainerRef}
                                                     onScroll={handleTestsScroll}
-                                                    className="w-full h-[calc(100vh-200px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar relative"
+                                                    className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar relative"
                                                 >
                                                     {testCards.map((card, idx) => (
                                                         <div
                                                             key={card.id}
-                                                            className="w-full h-[calc(100vh-200px)] px-3 py-6 md:px-14 md:py-16 flex flex-col justify-between snap-start snap-always shrink-0 relative overflow-hidden"
+                                                            className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] px-3 py-6 md:px-14 md:py-16 flex flex-col justify-between snap-start snap-always shrink-0 relative overflow-hidden"
                                                         >
                                                             {/* Huge background ambient glow (Fixed Safari bug with native radial gradient) */}
                                                             <div 
@@ -9765,7 +9765,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="mt-auto pt-6 pb-[max(80px,calc(env(safe-area-inset-bottom)+50px))] md:pb-0">
+                                                                    <div className="mt-auto pt-6 pb-4 md:pb-0">
                                                                         <button
                                                                             onClick={card.action}
                                                                             className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
