@@ -89,8 +89,8 @@ namespace Oasis.Backend.Controllers
                     .AddEnvironmentVariables()
                     .Build();
 
-                var supabaseUrl = config["Supabase:Url"];
-                var supabaseKey = config["Supabase:Key"];
+                var supabaseUrl = config["Supabase:Url"] ?? config["Supabase__Url"] ?? config["Supabase_Url"] ?? config["SUPABASE_URL"];
+                var supabaseKey = config["Supabase:Key"] ?? config["Supabase__Key"] ?? config["Supabase_Key"] ?? config["SUPABASE_KEY"];
                 bool loadedFromSupabase = false;
 
                 if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
@@ -262,8 +262,8 @@ namespace Oasis.Backend.Controllers
                             .AddEnvironmentVariables()
                             .Build();
 
-                        var supabaseUrl = config["Supabase:Url"];
-                        var supabaseKey = config["Supabase:Key"];
+                        var supabaseUrl = config["Supabase:Url"] ?? config["Supabase__Url"] ?? config["Supabase_Url"] ?? config["SUPABASE_URL"];
+                        var supabaseKey = config["Supabase:Key"] ?? config["Supabase__Key"] ?? config["Supabase_Key"] ?? config["SUPABASE_KEY"];
 
                         if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                         {
@@ -294,6 +294,60 @@ namespace Oasis.Backend.Controllers
             } catch (Exception ex) {
                 Console.WriteLine($"Error guardando oasis: {ex.Message}");
             }
+        }
+
+        [HttpGet("debug")]
+        public async Task<IActionResult> GetDebugInfo()
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            var url = config["Supabase:Url"] ?? config["Supabase__Url"] ?? config["Supabase_Url"] ?? config["SUPABASE_URL"];
+            var key = config["Supabase:Key"] ?? config["Supabase__Key"] ?? config["Supabase_Key"] ?? config["SUPABASE_KEY"];
+
+            var status = "No intentado";
+            var error = "";
+            var testFetchOk = false;
+
+            if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(key))
+            {
+                try
+                {
+                    var queryUrl = $"{url.TrimEnd('/')}/rest/v1/oasis_global_state?id=eq.1";
+                    using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
+                    request.Headers.Add("Authorization", $"Bearer {key}");
+                    request.Headers.Add("apikey", key);
+                    var response = await _httpClient.SendAsync(request);
+                    testFetchOk = response.IsSuccessStatusCode;
+                    status = $"HTTP {response.StatusCode}";
+                    if (!testFetchOk)
+                    {
+                        error = await response.Content.ReadAsStringAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    status = "Excepción";
+                    error = ex.Message;
+                }
+            }
+            else
+            {
+                status = "Variables Faltantes";
+            }
+
+            return Ok(new {
+                supabaseUrlConfigured = !string.IsNullOrEmpty(url),
+                supabaseKeyConfigured = !string.IsNullOrEmpty(key),
+                supabaseTestStatus = status,
+                supabaseTestError = error,
+                supabaseTestOk = testFetchOk,
+                usersCount = _state.Users?.Count ?? 0,
+                storagePathExists = System.IO.File.Exists(StoragePath)
+            });
         }
 
         [HttpPost("login")]
