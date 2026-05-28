@@ -1,4 +1,4 @@
-c: \Users\Administrador\AppData\Local\Packages\MicrosoftWindows.Client.Core_cw5n1h2txyewy\TempState\ScreenClip\{ 38680383 - BF31 - 42FA - 9F3A - 272A0CC566A2 }.pngconst fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 

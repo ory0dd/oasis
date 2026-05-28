@@ -64,7 +64,10 @@ localStorage.setItem = function (key, value) {
         const currentUser = localStorage.getItem('oasis_user');
         const targetUser = getTargetUserFromKey(key, currentUser);
         if (targetUser) {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+            const API_URL = import.meta.env.VITE_API_URL || 
+                ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+                    ? 'http://localhost:5046'
+                    : 'https://oasis-production-6303.up.railway.app');
             fetch(`${API_URL}/api/oasis/clinical-data?user=${targetUser}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -251,7 +254,10 @@ const AURAS = {
 
 const PALETTES = Object.values(AURAS).map(a => ({ name: a.name, color: a.primary, id: Object.keys(AURAS).find(k => AURAS[k] === a) }));
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+const API_URL = import.meta.env.VITE_API_URL || 
+    ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+        ? 'http://localhost:5046'
+        : 'https://oasis-production-6303.up.railway.app');
 const SUPABASE_MEDIA_URL = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media';
 
 const formatUrl = (url) => {
@@ -7529,7 +7535,10 @@ export default function App() {
         if (searchQuery) {
             try {
                 console.log(`Kio - Buscando en la red: "${searchQuery}"...`);
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+                const API_URL = import.meta.env.VITE_API_URL || 
+                    ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+                        ? 'http://localhost:5046'
+                        : 'https://oasis-production-6303.up.railway.app');
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3500);
