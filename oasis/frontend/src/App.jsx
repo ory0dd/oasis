@@ -7,7 +7,7 @@ import {
     Heart, MessageCircle, Eye, EyeOff, Globe,
     Aperture, Infinity as InfinityIcon, Share2, Search, Play, Pause, SkipForward, SkipBack,
     FolderPlus, ChevronDown, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
-    Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save,
+    Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar
 } from 'lucide-react';
@@ -1239,6 +1239,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
         if (!url) return '';
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
         if (url.startsWith('/uploads/')) return `${SUPABASE_MEDIA_URL}${url.replace('/uploads', '')}`;
+        if (url.startsWith('uploads/')) return `${SUPABASE_MEDIA_URL}/${url.replace('uploads/', '')}`;
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
@@ -2305,6 +2306,7 @@ const ProfileView = ({
         if (!url) return '';
         if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
         if (url.startsWith('/uploads/')) return `${SUPABASE_MEDIA_URL}${url.replace('/uploads', '')}`;
+        if (url.startsWith('uploads/')) return `${SUPABASE_MEDIA_URL}/${url.replace('uploads/', '')}`;
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
@@ -8484,6 +8486,39 @@ ${searchContext}
             <div className="absolute top-20 right-4 md:top-24 md:right-8 flex flex-col gap-2 md:gap-4">
                 <button onClick={() => setCam(c => ({ ...c, scale: Math.min(c.scale + 0.2, 3) }))} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom In"><Plus size={14} className="md:size-[18px]" /></button>
                 <button onClick={() => setCam(c => ({ ...c, scale: Math.max(c.scale - 0.2, 0.1) }))} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl" title="Zoom Out"><Minus size={14} className="md:size-[18px]" /></button>
+                <button
+                    onClick={() => {
+                        const organizeCanvas = () => {
+                            // Clonar profundamente la matriz para que React detecte los cambios
+                            const newBlocks = blocks.map(b => ({ ...b }));
+                            const sortableTypes = ['note', 'media', 'conversation', 'audio'];
+                            const userBlocks = newBlocks.filter(b => 
+                                sortableTypes.includes(b.type) && !b.isPublic && !b.isVirtual
+                            );
+                            
+                            userBlocks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                            
+                            const cols = Math.max(3, Math.ceil(Math.sqrt(userBlocks.length)));
+                            const spacingX = 400; // Ajustado para que las notas queden juntas como imán
+                            const spacingY = 400;
+                            
+                            userBlocks.forEach((b, i) => {
+                                const col = i % cols;
+                                const row = Math.floor(i / cols);
+                                b.x = col * spacingX - ((cols - 1) * spacingX) / 2;
+                                b.y = row * spacingY;
+                            });
+                            
+                            setBlocks(newBlocks);
+                            if (typeof syncBlocks === 'function') syncBlocks(newBlocks);
+                        };
+                        organizeCanvas();
+                    }}
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all shadow-xl group"
+                    title="Organizar Elementos Automáticamente"
+                >
+                    <LayoutGrid size={14} className="md:size-[18px] group-hover:scale-110 transition-transform" />
+                </button>
                 <button
                     onClick={() => {
                         const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
