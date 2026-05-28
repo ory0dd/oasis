@@ -8491,7 +8491,7 @@ ${searchContext}
                         const organizeCanvas = () => {
                             // Clonar profundamente la matriz para que React detecte los cambios
                             const newBlocks = blocks.map(b => ({ ...b }));
-                            const sortableTypes = ['note', 'media', 'conversation', 'audio'];
+                            const sortableTypes = ['note', 'image', 'video', 'audio', 'conversation', 'relic'];
                             const userBlocks = newBlocks.filter(b => 
                                 sortableTypes.includes(b.type) && !b.isPublic && !b.isVirtual
                             );
@@ -10856,42 +10856,6 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                 </button>
                                 <button onClick={() => setProfileCam({ x: 0, y: 0, scale: 0.7 })} className="w-full py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:bg-white/10 transition-all border border-white/5">Resetear Mapa Santuario</button>
                                 <button onClick={() => { setPasswordInput(''); setPasswordError(false); setIsPasswordModalOpen(true); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>
-                            </div>
-                        </div>
-
-                        {/* MOTOR DE INTELIGENCIA (IA) */}
-                        <div className="space-y-6 pt-6 border-t border-white/10">
-                            <div className="flex justify-between items-center px-2">
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Asistente de IA</span>
-                                    <span className="text-[6px] font-black uppercase tracking-widest text-cyan-400">Motor de Inteligencia DeepSeek</span>
-                                </div>
-                                <div className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
-                                    <span className="text-[6px] font-black uppercase tracking-widest text-cyan-400">{deepseekKey ? 'Conectado' : 'Aislado'}</span>
-                                </div>
-                            </div>
-
-                            <div className="bg-black/40 border border-white/5 rounded-2xl p-6 space-y-4">
-                                <div className="space-y-1">
-                                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-600">DeepSeek API Key</span>
-                                    <input
-                                        type="password"
-                                        value={deepseekKey}
-                                        onChange={(e) => { setDeepseekKey(e.target.value); localStorage.setItem('oasis_deepseek_key', e.target.value); }}
-                                        placeholder="sk-..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-[10px] font-black tracking-widest text-white focus:border-cyan-500/50 outline-none transition-all placeholder:text-zinc-800"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <a
-                                        href="https://platform.deepseek.com/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[8px] font-black uppercase tracking-widest text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-2"
-                                    >
-                                        <Aperture size={10} /> Obtener Llave en DeepSeek Platform
-                                    </a>
-                                </div>
                             </div>
                         </div>
 
