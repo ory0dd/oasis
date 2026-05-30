@@ -2648,9 +2648,9 @@ const ProfileView = ({
                         {/* BITÁCORA HUB FILTERS & UTILITIES (NOW A FLOATING MODAL CARD) */}
                         {createPortal(
                         <div 
-                            className={`transition-all duration-700 ease-in-out z-[2000] flex flex-col gap-2.5 ${isBitacoraOpen 
-                                ? 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] bottom-0 md:bottom-auto md:top-[100px] h-[80vh] md:h-auto max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-[#050506]/95 backdrop-blur-3xl border-t md:border border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] p-4 sm:p-6 opacity-100 translate-y-0' 
-                                : 'fixed inset-x-0 bottom-0 translate-y-[100%] opacity-0 pointer-events-none p-4 sm:p-6'}`}
+                            className={`transition-all duration-700 ease-in-out z-[2000] flex flex-col gap-2.5 overflow-hidden ${isBitacoraOpen 
+                                ? 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] bg-[#050506]/95 backdrop-blur-3xl border-t border-x border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] p-4 sm:p-6 opacity-100 translate-y-0 pb-safe' 
+                                : 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] translate-y-[100%] opacity-0 pointer-events-none p-4 sm:p-6 pb-safe'}`}
                             onTouchStart={(e) => {
                                 e.stopPropagation();
                                 const touch = e.touches[0];
@@ -2766,8 +2766,7 @@ const ProfileView = ({
                                 ))}
                             </div>
 
-                            {/* COMPACT NOTES HUB (RECUADRO DE NOTAS DEBAJO DE FILTROS) */}
-                            <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
+                            <div className="w-full flex-1 min-h-0 flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
                                 <div className="flex justify-between items-center px-1">
                                     <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
                                         {releaseTab === 'all' ? 'Todos los Registros' :
@@ -2794,7 +2793,7 @@ const ProfileView = ({
                                     </button>
                                 </div>
 
-                                <div className="w-full max-h-[160px] md:max-h-[25vh] overflow-y-auto no-scrollbar pr-1">
+                                <div className="w-full flex-1 overflow-y-auto no-scrollbar pr-1 pb-10">
                                     {filteredReleases.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
                                             <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
