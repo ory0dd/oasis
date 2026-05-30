@@ -2607,9 +2607,34 @@ const ProfileView = ({
                             className={`transition-all duration-700 ease-in-out z-[1400] flex flex-col gap-2.5 ${isBitacoraOpen 
                                 ? 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] bottom-0 md:bottom-auto md:top-[100px] h-[80vh] md:h-auto max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-[#050506]/95 backdrop-blur-3xl border-t md:border border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] p-4 sm:p-6 opacity-100 translate-y-0' 
                                 : 'fixed inset-x-0 bottom-0 translate-y-[100%] opacity-0 pointer-events-none p-4 sm:p-6'}`}
-                            onTouchStart={e => e.stopPropagation()}
+                            onTouchStart={(e) => {
+                                e.stopPropagation();
+                                const touch = e.touches[0];
+                                e.currentTarget.dataset.startY = touch.clientY;
+                            }}
+                            onTouchMove={(e) => {
+                                e.stopPropagation();
+                                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                                const currentY = e.touches[0].clientY;
+                                const deltaY = currentY - startY;
+
+                                const scrollable = e.target.closest('.overflow-y-auto');
+                                if (scrollable && scrollable.scrollTop > 0) return;
+
+                                if (deltaY > 80) {
+                                    setIsBitacoraOpen(false);
+                                }
+                            }}
                             onPointerDown={e => e.stopPropagation()}
-                            onWheel={e => e.stopPropagation()}
+                            onWheel={(e) => {
+                                e.stopPropagation();
+                                const scrollable = e.target.closest('.overflow-y-auto');
+                                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
+
+                                if (e.deltaY < -50) {
+                                    setIsBitacoraOpen(false);
+                                }
+                            }}
                         >
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2 shrink-0">
                                 <div className="flex items-center gap-2">
