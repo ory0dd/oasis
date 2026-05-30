@@ -203,22 +203,22 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
                 )}
             </div>
 
-            {/* BOTTOM FAB */}
-            <div
-                className="shrink-0 px-4 pt-6 flex items-center justify-between border-t-0 bg-gradient-to-t from-black via-black/95 to-transparent relative z-20"
-                style={{ paddingBottom: `max(64px, calc(env(safe-area-inset-bottom) + 40px))` }}
-            >
-                <span className="text-[12px] text-zinc-700 font-medium">
-                    {notes.length} {notes.length === 1 ? 'nota' : 'notas'}
+            {/* BOTTOM SAFE AREA & COUNT */}
+            <div className="shrink-0 pt-6 pb-8 md:pb-10 flex justify-center bg-gradient-to-t from-[#050506] via-[#050506]/80 to-transparent">
+                <span className="text-[11px] font-medium text-zinc-600 uppercase tracking-widest">
+                    {notes.length} {notes.length === 1 ? 'nota' : 'notas'} en total
                 </span>
-                <button
-                    onClick={createNewNote}
-                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-xl text-black font-bold transition-transform active:scale-95 hover:scale-105"
-                    style={{ backgroundColor: accentColor }}
-                >
-                    <Plus size={22} strokeWidth={2.5} />
-                </button>
             </div>
+
+            {/* FLOATING ACTION BUTTON */}
+            <button
+                onClick={createNewNote}
+                className="absolute bottom-6 md:bottom-8 right-6 md:right-8 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-black font-bold transition-transform hover:scale-105 active:scale-95 z-50 border border-white/20"
+                style={{ backgroundColor: accentColor }}
+                title="Nueva Nota"
+            >
+                <Plus size={26} strokeWidth={2.5} />
+            </button>
         </div>
     );
 });

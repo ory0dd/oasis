@@ -3226,7 +3226,7 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(true);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
     const isComposerLongPressRef = useRef(false);
