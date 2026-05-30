@@ -226,7 +226,7 @@ export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, acce
                                 value={resName}
                                 onChange={e => setResName(e.target.value)}
                                 placeholder="Nombre del Ruido..."
-                                className="flex-1 min-w-0 mr-4 bg-transparent border-none text-xl sm:text-4xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
+                                className="flex-1 min-w-0 mr-4 bg-transparent border-none text-xl sm:text-4xl font-bold tracking-tight text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans"
                             />
                             
                             {/* Step Indicators */}

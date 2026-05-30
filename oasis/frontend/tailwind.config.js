@@ -10,7 +10,7 @@ export default {
         accent: 'var(--accent, #bef264)',
       },
       fontFamily: {
-        sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {

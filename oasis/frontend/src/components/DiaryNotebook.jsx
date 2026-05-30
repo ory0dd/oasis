@@ -319,7 +319,7 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlo
                             }}
                             rows={1}
                             placeholder="Título del día..."
-                            className="w-full bg-transparent border-none text-3xl sm:text-5xl font-black italic tracking-tighter text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans resize-none overflow-hidden"
+                            className="w-full bg-transparent border-none text-3xl sm:text-5xl font-bold tracking-tight text-white/90 placeholder:text-zinc-800 focus:outline-none focus:ring-0 px-0 font-sans resize-none overflow-hidden"
                         />
 
                         {/* Large, beautiful borderless editor area */}

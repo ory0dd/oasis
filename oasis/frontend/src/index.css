@@ -26,21 +26,18 @@ body {
     radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 100% 100%, 40px 40px;
   background-attachment: fixed;
-  font-family: 'Inter', 'Outfit', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
 }
 
 @layer base {
-  .italic {
-    font-style: normal !important;
-  }
   .font-serif {
-    font-family: 'Inter', 'Outfit', system-ui, sans-serif !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', 'Outfit', system-ui, sans-serif !important;
-    font-weight: 500;
-    letter-spacing: -0.02em;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 }
 
