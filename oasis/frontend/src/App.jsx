@@ -2847,7 +2847,9 @@ const ProfileView = ({
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
+                </div>
 
                 {/* Animated Scroll Down Indicator to open Canvas */}
                 <div
@@ -2860,7 +2862,6 @@ const ProfileView = ({
                     <ChevronDown size={12} className="text-zinc-500" />
                 </div>
             </div>
-        </div>
     );
 };
 
