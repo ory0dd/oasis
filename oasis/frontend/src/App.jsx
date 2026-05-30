@@ -2107,6 +2107,7 @@ const PHENOM_QUESTIONS = [
 const ProfileView = ({
     user, soulPieces, blocks, setBlocks, syncBlocks, accent, isEditingProfile, setIsEditingProfile,
     deleteBlock, deleteBlocks,
+    isBitacoraOpen, setIsBitacoraOpen,
     isLinking, setIsLinking, links, linkSource, setLinkSource,
     completeConnection, removeConnection, synthesizeLinks, mouseCanvasPos,
     editBlock, handleSelectNote, togglePublic, activeNoteId,
@@ -6154,6 +6155,7 @@ export default function App() {
 
     const [composerStep, setComposerStep] = useState('menu');
     const [noteText, setNoteText] = useState('');
+    const [isComposerPreviewMode, setIsComposerPreviewMode] = useState(false);
     const [isRecordingNote, setIsRecordingNote] = useState(false);
     const recognitionNoteRef = useRef(null);
     const recordingBaseTextRef = useRef('');
@@ -10195,6 +10197,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     blocks={blocks}
                                     setBlocks={setBlocks}
                                     syncBlocks={syncBlocks}
+                                    isBitacoraOpen={isBitacoraOpen}
+                                    setIsBitacoraOpen={setIsBitacoraOpen}
                                     accent={accent}
                                     isEditingProfile={isEditingProfile}
                                     setIsEditingProfile={setIsEditingProfile}
