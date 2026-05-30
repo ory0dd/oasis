@@ -2680,22 +2680,22 @@ const ProfileView = ({
                                 }
                             }}
                         >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2 shrink-0">
-                                <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-white/5 pb-2 gap-2 shrink-0 relative pr-12">
+                                <div className="flex items-center gap-2 sm:w-1/3 justify-start">
                                     <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">Bitácora del Camino Existencial</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.15em] truncate">Bitácora Existencial</span>
                                 </div>
                                 
                                 {/* Modal Card Close Button */}
                                 <button 
                                     onClick={() => setIsBitacoraOpen(false)}
-                                    className="absolute top-4 sm:top-6 right-4 sm:right-6 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-zinc-400 hover:text-white"
+                                    className="absolute top-0 right-0 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-zinc-400 hover:text-white z-50"
                                 >
                                     <X size={14} />
                                 </button>
 
                                 {/* Utility Buttons */}
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 sm:w-1/3 justify-center">
                                     <button
                                         onClick={() => {
                                             setIsSelectionMode(!isSelectionMode);
@@ -2740,6 +2740,7 @@ const ProfileView = ({
                                         <Edit3 size={14} />
                                     </button>
                                 </div>
+                                <div className="hidden sm:block sm:w-1/3"></div>
                             </div>
 
                             {/* Horizontal scrolling chips list */}
@@ -2914,7 +2915,7 @@ const ProfileView = ({
 
 export default function App() {
     const [view, setView] = useState('profile');
-    const [isBitacoraOpen, setIsBitacoraOpen] = useState(false);
+    const [isBitacoraOpen, setIsBitacoraOpen] = useState(true);
     const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
