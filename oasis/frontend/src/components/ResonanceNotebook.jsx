@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Plus, Save, Mic, PanelLeft, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] bg-black shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none pb-safe" }) => {
+export const ResonanceNotebook = ({ onClose, blocks, setBlocks, syncBlocks, accent, className = "fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] bg-black/95 backdrop-blur-2xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500" }) => {
     const [activeResId, setActiveResId] = useState(null);
     const [resName, setResName] = useState('');
     const [resPrimal, setResPrimal] = useState('');

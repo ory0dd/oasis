@@ -116,7 +116,7 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
     // ── LIST VIEW ──────────────────────────────────────────────────────────
     return (
         <div
-            className="fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-3xl text-white animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none"
+            className="fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-3xl text-white animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500"
             style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
             onTouchStart={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
