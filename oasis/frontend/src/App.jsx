@@ -6,7 +6,7 @@ import {
     Edit3, Trash2, Maximize2, Settings, X,
     Heart, MessageCircle, Eye, EyeOff, Globe,
     Aperture, Infinity as InfinityIcon, Share2, Search, Play, Pause, SkipForward, SkipBack,
-    FolderPlus, ChevronDown, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
+    FolderPlus, ChevronDown, ChevronUp, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
     Paperclip, Send, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar
@@ -2603,6 +2603,48 @@ const ProfileView = ({
                             </div>
                         )}
 
+                        {/* INTEGRATED BITACORA PREVIEW (SHOWN WHEN MODAL IS CLOSED) */}
+                        <div 
+                            className={`w-full mt-2 p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/5 hover:border-white/10 shadow-xl flex flex-col gap-3 cursor-pointer transition-all hover:bg-black/60 group animate-in fade-in zoom-in-95 duration-500 ${isBitacoraOpen ? 'hidden' : 'flex'}`}
+                            onClick={() => setIsBitacoraOpen(true)}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                                        <Compass size={14} className="text-accent group-hover:rotate-180 transition-transform duration-700 ease-out" style={{ color: accent }} />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white">Bitácora Existencial</span>
+                                        <span className="text-[9px] font-mono text-zinc-500">{filteredReleases.length} registros • Toca para abrir</span>
+                                    </div>
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-accent/20 flex items-center justify-center transition-colors">
+                                    <ChevronUp size={14} className="text-zinc-400 group-hover:text-accent transition-colors" style={{ color: accent }} />
+                                </div>
+                            </div>
+                            
+                            {/* Preview of latest notes */}
+                            {filteredReleases.length > 0 && (
+                                <div className="flex flex-col gap-1 border-t border-white/5 pt-2">
+                                    {filteredReleases.slice(0, 2).map(b => {
+                                        const isDia = b.entries && b.entries.length > 0;
+                                        const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                        let textSnippet = b.caption;
+                                        if (!textSnippet) {
+                                            if (isDia) textSnippet = 'Entrada de Diario';
+                                            else if (isRes) textSnippet = 'Resonancia Magnética';
+                                            else textSnippet = 'Nota Desconocida';
+                                        }
+                                        return (
+                                            <div key={b.id} className="text-[9px] text-zinc-400 truncate italic">
+                                                • {textSnippet}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
                         {/* BITÁCORA HUB FILTERS & UTILITIES (NOW A FLOATING MODAL CARD) */}
                         {createPortal(
                         <div 
@@ -2873,7 +2915,7 @@ const ProfileView = ({
 
 export default function App() {
     const [view, setView] = useState('profile');
-    const [isBitacoraOpen, setIsBitacoraOpen] = useState(true);
+    const [isBitacoraOpen, setIsBitacoraOpen] = useState(false);
     const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
