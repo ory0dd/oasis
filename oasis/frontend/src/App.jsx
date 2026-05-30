@@ -2604,8 +2604,9 @@ const ProfileView = ({
                         )}
 
                         {/* BITÁCORA HUB FILTERS & UTILITIES (NOW A FLOATING MODAL CARD) */}
+                        {createPortal(
                         <div 
-                            className={`transition-all duration-700 ease-in-out z-[1400] flex flex-col gap-2.5 ${isBitacoraOpen 
+                            className={`transition-all duration-700 ease-in-out z-[2000] flex flex-col gap-2.5 ${isBitacoraOpen 
                                 ? 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] bottom-0 md:bottom-auto md:top-[100px] h-[80vh] md:h-auto max-h-[85vh] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-[#050506]/95 backdrop-blur-3xl border-t md:border border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] p-4 sm:p-6 opacity-100 translate-y-0' 
                                 : 'fixed inset-x-0 bottom-0 translate-y-[100%] opacity-0 pointer-events-none p-4 sm:p-6'}`}
                             onTouchStart={(e) => {
@@ -2847,7 +2848,9 @@ const ProfileView = ({
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
+                        )}
                         </div>
                     </div>
                 </div>
