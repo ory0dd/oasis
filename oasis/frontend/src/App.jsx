@@ -64,7 +64,7 @@ localStorage.setItem = function (key, value) {
         const currentUser = localStorage.getItem('oasis_user');
         const targetUser = getTargetUserFromKey(key, currentUser);
         if (targetUser) {
-            const API_URL = import.meta.env.VITE_API_URL || 
+            const API_URL = import.meta.env.VITE_API_URL ||
                 ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
                     ? 'http://localhost:5046'
                     : 'https://oasis-production-6303.up.railway.app');
@@ -254,7 +254,7 @@ const AURAS = {
 
 const PALETTES = Object.values(AURAS).map(a => ({ name: a.name, color: a.primary, id: Object.keys(AURAS).find(k => AURAS[k] === a) }));
 
-const API_URL = import.meta.env.VITE_API_URL || 
+const API_URL = import.meta.env.VITE_API_URL ||
     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
         ? 'http://localhost:5046'
         : 'https://oasis-production-6303.up.railway.app');
@@ -1709,7 +1709,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                         try {
                                             patientNodes = JSON.parse(localStorage.getItem('oasis_canvas_nodes_' + user)) || [];
                                             patientEdges = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user)) || [];
-                                        } catch (e) {}
+                                        } catch (e) { }
 
                                         const hasLocalMap = patientNodes.length > 0;
 
@@ -1757,7 +1757,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                     const ty = target.y;
 
                                                                     const pathString = drawGravityLine(sx, sy, tx, ty);
-                                                                    
+
                                                                     return (
                                                                         <g key={i}>
                                                                             <path d={pathString} fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="4" />
@@ -1807,9 +1807,9 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                     return (
                                                                         <g key={node.id}>
                                                                             <ellipse cx={cx} cy={cy} rx={rx + 8} ry={ry + 8} fill={strokeColor} className="opacity-[0.02]" />
-                                                                            
+
                                                                             {isContext && (
-                                                                                <polygon 
+                                                                                <polygon
                                                                                     points={`${cx},${node.y} ${node.x + (node.width || 120)},${cy} ${cx},${node.y + (node.height || 120)} ${node.x},${cy}`}
                                                                                     fill={bgColor}
                                                                                     stroke={strokeColor}
@@ -1817,7 +1817,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                                 />
                                                                             )}
                                                                             {isState && (
-                                                                                <ellipse 
+                                                                                <ellipse
                                                                                     cx={cx} cy={cy} rx={rx} ry={ry}
                                                                                     fill={bgColor}
                                                                                     stroke={strokeColor}
@@ -1825,7 +1825,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                                 />
                                                                             )}
                                                                             {(isSymptom || isChain) && (
-                                                                                <rect 
+                                                                                <rect
                                                                                     x={node.x} y={node.y} width={node.width || 120} height={node.height || 120} rx="12" ry="12"
                                                                                     fill={bgColor}
                                                                                     stroke={strokeColor}
@@ -1833,20 +1833,20 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                                 />
                                                                             )}
 
-                                                                            <text 
-                                                                                x={cx} y={node.y - 8} 
-                                                                                textAnchor="middle" 
+                                                                            <text
+                                                                                x={cx} y={node.y - 8}
+                                                                                textAnchor="middle"
                                                                                 className="text-[6px] font-bold font-mono tracking-widest fill-zinc-500 uppercase select-none"
                                                                             >
                                                                                 {title}
                                                                             </text>
 
-                                                                            <foreignObject 
-                                                                                x={node.x + 6} y={node.y + 6} 
+                                                                            <foreignObject
+                                                                                x={node.x + 6} y={node.y + 6}
                                                                                 width={(node.width || 120) - 12} height={(node.height || 120) - 12}
                                                                             >
                                                                                 <div className="w-full h-full flex items-center justify-center text-center p-1 overflow-hidden select-none">
-                                                                                    <span 
+                                                                                    <span
                                                                                         className="text-[7px] font-black uppercase tracking-wider leading-relaxed font-mono"
                                                                                         style={{ color: textColor }}
                                                                                     >
@@ -2498,8 +2498,8 @@ const ProfileView = ({
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
 
-            <div 
-                id="profile-scroll-container" 
+            <div
+                id="profile-scroll-container"
                 ref={containerRef}
                 className="w-full h-full text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll"
             >
@@ -2518,682 +2518,677 @@ const ProfileView = ({
                 </div>
 
                 {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
-                <div 
+                <div
                     data-index={0}
                     className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-20 md:pt-32 pb-4 px-6 md:px-10 z-10 overflow-hidden"
                 >
 
-                {/* HERO MAIN CARD (CONSOLIDATED) */}
-                <div className={`w-full max-w-3xl mx-auto flex flex-col justify-center my-auto gap-4 md:gap-5 pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
-                    activeSlideIndex === 0 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
-                }`}>
-                    {/* Avatar & Name & Primary Actions Row */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-2 border-b border-white/5">
-                        {/* Circular Avatar */}
-                        <div className={`relative group/avatar shrink-0 w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
-                            {avatar ? (
-                                <img src={formatUrl(avatar)} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
-                            ) : (
-                                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user || 'anon'}`} className="w-full h-full object-cover opacity-80" />
-                            )}
-                            {isEditingProfile && (
-                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm">
-                                    <Camera size={18} className="text-white mb-1" />
-                                    <span className="text-[7px] font-black uppercase tracking-widest text-white">Subir Foto</span>
-                                </div>
-                            )}
-                            <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                        </div>
-
-                        {/* Name & Primary Buttons */}
-                        <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
-                            <div className="flex flex-col items-center sm:items-start mb-2">
-                                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
-                                    {user}
-                                </h1>
-                            </div>
-
-                            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                                <button
-                                    onClick={() => {
-                                        if (isEditingProfile && onSaveProfile) {
-                                            onSaveProfile({ fullName, bio });
-                                        }
-                                        setIsEditingProfile(!isEditingProfile);
-                                    }}
-                                    className="px-4 py-1.5 md:py-2 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all"
-                                    style={{
-                                        backgroundColor: isEditingProfile ? 'rgba(255,255,255,0.1)' : accent,
-                                        color: isEditingProfile ? 'white' : 'black',
-                                        border: isEditingProfile ? '1px solid rgba(255,255,255,0.2)' : 'none',
-                                        boxShadow: isEditingProfile ? 'none' : `0 0 15px ${accent}40`
-                                    }}
-                                >
-                                    {isEditingProfile ? (
-                                        <>Terminar</>
-                                    ) : (
-                                        <><span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" /> Modificar Perfil</>
-                                    )}
-                                </button>
-
-                                <button
-                                    onClick={() => setIsSettingsOpen(true)}
-                                    className="p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-white transition-all backdrop-blur-md flex items-center justify-center hover:scale-105 active:scale-95"
-                                    title="Configuración"
-                                >
-                                    <Settings size={12} className="hover:rotate-45 transition-transform duration-300" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* BIO DESCRIPTION (COMPACT) */}
-                    <div className="w-full p-3 rounded-xl bg-black/40 backdrop-blur-md border border-white/5 shadow-xl">
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1.5 block text-left">Descripción</span>
-                        {isEditingProfile ? (
-                            <textarea
-                                value={bio}
-                                onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                className="w-full bg-black/30 border border-white/10 rounded-xl p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[50px]"
-                                placeholder="Escribe la descripción de tu alma o biografía..."
-                            />
-                        ) : (
-                            <p className="text-xs text-zinc-300 leading-relaxed font-sans text-left">
-                                {bio}
-                            </p>
-                        )}
-                    </div>
-
-                    {!isEditingProfile && (
-                        <div className="w-full mt-1.5 mb-1 animate-fade-in">
-                            <button
-                                onClick={() => setView('soul')}
-                                className="w-full p-3.5 rounded-xl bg-gradient-to-r from-accent/10 to-purple-500/10 hover:from-accent/20 hover:to-purple-500/20 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all backdrop-blur-md flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.98] group"
-                            >
-                                <Aperture size={16} className="text-accent group-hover:rotate-180 transition-transform duration-700 ease-out" />
-                                <span>Entrar a Pruebas Clínicas</span>
-                            </button>
-                        </div>
-                    )}
-
-                    {/* BITÁCORA HUB FILTERS & UTILITIES (MERGED FROM SLIDE 2) */}
-                    <div className="w-full p-3 rounded-xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-2.5">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2">
-                            <div className="flex items-center gap-2">
-                                <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.15em]">Bitácora del Camino Existencial</span>
-                            </div>
-                            
-                            {/* Utility Buttons */}
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        setIsSelectionMode(!isSelectionMode);
-                                        setSelectedIds([]);
-                                    }}
-                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 ${isSelectionMode
-                                        ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
-                                        }`}
-                                    title={isSelectionMode ? 'Cancelar Selección' : 'Seleccionar Registros'}
-                                >
-                                    <CheckSquare size={14} />
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm("¿Estás seguro de eliminar todos los datos seleccionados o todos los datos de prueba?")) {
-                                            if (isSelectionMode && selectedIds.length > 0) {
-                                                deleteBlocks(selectedIds);
-                                                setSelectedIds([]);
-                                                setIsSelectionMode(false);
-                                            } else {
-                                                deleteBlocks(blocks.map(b => b.id));
-                                            }
-                                        }
-                                    }}
-                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 text-red-500 hover:bg-red-600 hover:text-black shadow-[0_0_15px_rgba(239,68,68,0.1)] ${isSelectionMode && selectedIds.length > 0 ? 'bg-red-500/30 border-red-500' : 'bg-red-950/20 border-red-900/30'}`}
-                                    title="Borrar Registros"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-
-                                {/* BOTON PARA ABRIR SIMPLE NOTES (NOTAS DEL PIZARRON) */}
-                                <button
-                                    onClick={() => {
-                                        onOpenSimpleNotes();
-                                    }}
-                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-white/5 transition-all flex items-center justify-center text-accent hover:bg-accent hover:text-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] shrink-0"
-                                    style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
-                                    title="Abrir Lista de Notas Rápidas"
-                                >
-                                    <Edit3 size={14} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Horizontal scrolling chips list */}
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 whitespace-nowrap">
-                            {[
-                                { id: 'all', label: 'Todos' },
-                                { id: 'notes', label: 'Notas' },
-                                { id: 'diary', label: 'Diario' },
-                                { id: 'resonance', label: 'Resonancias' },
-                                { id: 'chats', label: 'Diálogos AI' },
-                                { id: 'images', label: 'Multimedia' }
-                            ].map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setReleaseTab(tab.id)}
-                                    className={`px-4 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
-                                        ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
-                                        : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
-                                        }`}
-                                    style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* COMPACT NOTES HUB (RECUADRO DE NOTAS DEBAJO DE FILTROS) */}
-                        <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
-                            <div className="flex justify-between items-center px-1">
-                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                                    {releaseTab === 'all' ? 'Todos los Registros' : 
-                                     releaseTab === 'notes' ? 'Tus Notas' : 
-                                     releaseTab === 'diary' ? 'Entradas del Diario' : 
-                                     releaseTab === 'resonance' ? 'Tus Resonancias' : 
-                                     releaseTab === 'chats' ? 'Diálogos de Inteligencia' : 'Archivos Multimedia'}
-                                </span>
-                                
-                                <button
-                                    onClick={() => {
-                                        if (releaseTab === 'diary') openNewComposer?.(true, false);
-                                        else if (releaseTab === 'resonance') openNewComposer?.(false, true);
-                                        else if (releaseTab === 'chats') onNewChat?.();
-                                        else openNewComposer?.(false, false);
-                                    }}
-                                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-accent transition-all text-[8px] font-black uppercase tracking-widest active:scale-95 shrink-0"
-                                    style={{ color: accent }}
-                                >
-                                    <Plus size={10} />
-                                    {releaseTab === 'diary' ? 'Nuevo Diario' : 
-                                     releaseTab === 'resonance' ? 'Nueva Resonancia' : 
-                                     releaseTab === 'chats' ? 'Nuevo Diálogo' : 'Nueva Nota'}
-                                </button>
-                            </div>
-
-                            <div className="w-full max-h-[160px] md:max-h-[25vh] overflow-y-auto no-scrollbar pr-1">
-                                {filteredReleases.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
-                                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                                            No se encontraron registros
-                                        </p>
-                                        <p className="text-[8px] text-zinc-600 mt-1">
-                                            Usa el botón superior para crear tu primer elemento en esta sección.
-                                        </p>
-                                    </div>
+                    {/* HERO MAIN CARD (CONSOLIDATED) */}
+                    <div className={`w-full max-w-3xl mx-auto flex flex-col justify-center my-auto gap-4 md:gap-5 pointer-events-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${activeSlideIndex === 0 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                        }`}>
+                        {/* Avatar & Name & Primary Actions Row */}
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pb-2 border-b border-white/5">
+                            {/* Circular Avatar */}
+                            <div className={`relative group/avatar shrink-0 w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-[#060607] shadow-2xl overflow-hidden bg-zinc-900 ${isEditingProfile ? 'cursor-pointer' : ''}`} onClick={handleAvatarClick}>
+                                {avatar ? (
+                                    <img src={formatUrl(avatar)} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
                                 ) : (
-                                    <div className="flex flex-col gap-1 pb-1 animate-fade-in">
-                                        {filteredReleases.map(b => {
-                                            const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                            const isDia = b.entries && b.entries.length > 0;
-                                            const isInsight = b.type === 'insight';
-                                            const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-                                            const isImg = b.type === 'image' || b.type === 'relic';
-                                            const isChat = b.type === 'conversation' || b.isVirtual;
+                                    <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user || 'anon'}`} className="w-full h-full object-cover opacity-80" />
+                                )}
+                                {isEditingProfile && (
+                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm">
+                                        <Camera size={18} className="text-white mb-1" />
+                                        <span className="text-[7px] font-black uppercase tracking-widest text-white">Subir Foto</span>
+                                    </div>
+                                )}
+                                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
+                            </div>
 
-                                            const noteColor = b.color || accent;
-                                            const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
-                                            const typeLabel = isChat ? 'AI' : (isRes ? 'Resonancia' : (isDia ? 'Diario' : (isImg ? 'Imagen' : (isInsight ? 'Revelación' : 'Nota'))));
+                            {/* Name & Primary Buttons */}
+                            <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left gap-2">
+                                <div className="flex flex-col items-center sm:items-start mb-2">
+                                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-2xl font-sans uppercase">
+                                        {user}
+                                    </h1>
+                                </div>
 
-                                            let textSnippet = '';
-                                            if (isDia) {
-                                                textSnippet = b.entries[0]?.text || '';
-                                            } else if (isRes) {
-                                                const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
-                                                textSnippet = resMatch ? resMatch[1].trim() : b.content.replace(/\[resonancia\]|\[impacto\]|\[extrano\]/g, '').trim();
-                                            } else if (isChat) {
-                                                let msgs = [];
-                                                try { msgs = JSON.parse(b.content) || []; } catch(e){}
-                                                textSnippet = msgs[msgs.length - 1]?.content || '';
-                                            } else {
-                                                textSnippet = b.content || '';
+                                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                                    <button
+                                        onClick={() => {
+                                            if (isEditingProfile && onSaveProfile) {
+                                                onSaveProfile({ fullName, bio });
                                             }
+                                            setIsEditingProfile(!isEditingProfile);
+                                        }}
+                                        className="px-4 py-1.5 md:py-2 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all"
+                                        style={{
+                                            backgroundColor: isEditingProfile ? 'rgba(255,255,255,0.1)' : accent,
+                                            color: isEditingProfile ? 'white' : 'black',
+                                            border: isEditingProfile ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                                            boxShadow: isEditingProfile ? 'none' : `0 0 15px ${accent}40`
+                                        }}
+                                    >
+                                        {isEditingProfile ? (
+                                            <>Terminar</>
+                                        ) : (
+                                            <><span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" /> Modificar Perfil</>
+                                        )}
+                                    </button>
 
-                                            const timeString = b.metadata?.timestamp
-                                                ? new Date(b.metadata.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-                                                : '';
+                                    <button
+                                        onClick={() => setIsSettingsOpen(true)}
+                                        className="p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/5 text-white transition-all backdrop-blur-md flex items-center justify-center hover:scale-105 active:scale-95"
+                                        title="Configuración"
+                                    >
+                                        <Settings size={12} className="hover:rotate-45 transition-transform duration-300" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                            const isSelected = selectedIds.includes(b.id);
+                        {/* BIO DESCRIPTION (COMPACT) */}
+                        <div className="w-full p-3 rounded-xl bg-black/40 backdrop-blur-md border border-white/5 shadow-xl">
+                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1.5 block text-left">Descripción</span>
+                            {isEditingProfile ? (
+                                <textarea
+                                    value={bio}
+                                    onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
+                                    className="w-full bg-black/30 border border-white/10 rounded-xl p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[50px]"
+                                    placeholder="Escribe la descripción de tu alma o biografía..."
+                                />
+                            ) : (
+                                <p className="text-xs text-zinc-300 leading-relaxed font-sans text-left">
+                                    {bio}
+                                </p>
+                            )}
+                        </div>
 
-                                            return (
-                                                <div
-                                                    key={b.id}
-                                                    onClick={() => handleCardClick(b.id)}
-                                                    className={`group/note border rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${
-                                                        isSelected
+                        {!isEditingProfile && (
+                            <div className="w-full mt-1.5 mb-1 animate-fade-in">
+                                <button
+                                    onClick={() => setView('soul')}
+                                    className="w-full p-3.5 rounded-xl bg-gradient-to-r from-accent/10 to-purple-500/10 hover:from-accent/20 hover:to-purple-500/20 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all backdrop-blur-md flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.98] group"
+                                >
+                                    <Aperture size={16} className="text-accent group-hover:rotate-180 transition-transform duration-700 ease-out" />
+                                    <span>Entrar a Pruebas Clínicas</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* BITÁCORA HUB FILTERS & UTILITIES (MERGED FROM SLIDE 2) */}
+                        <div className="w-full p-3 rounded-xl bg-black/45 backdrop-blur-md border border-white/5 shadow-xl flex flex-col gap-2.5">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-white/5 pb-2 gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
+                                    <span className="text-[9px] font-black uppercase tracking-[0.15em]">Bitácora del Camino Existencial</span>
+                                </div>
+
+                                {/* Utility Buttons */}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setIsSelectionMode(!isSelectionMode);
+                                            setSelectedIds([]);
+                                        }}
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 ${isSelectionMode
+                                            ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                                            : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+                                            }`}
+                                        title={isSelectionMode ? 'Cancelar Selección' : 'Seleccionar Registros'}
+                                    >
+                                        <CheckSquare size={14} />
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm("¿Estás seguro de eliminar todos los datos seleccionados o todos los datos de prueba?")) {
+                                                if (isSelectionMode && selectedIds.length > 0) {
+                                                    deleteBlocks(selectedIds);
+                                                    setSelectedIds([]);
+                                                    setIsSelectionMode(false);
+                                                } else {
+                                                    deleteBlocks(blocks.map(b => b.id));
+                                                }
+                                            }
+                                        }}
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 text-red-500 hover:bg-red-600 hover:text-black shadow-[0_0_15px_rgba(239,68,68,0.1)] ${isSelectionMode && selectedIds.length > 0 ? 'bg-red-500/30 border-red-500' : 'bg-red-950/20 border-red-900/30'}`}
+                                        title="Borrar Registros"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+
+                                    {/* BOTON PARA ABRIR SIMPLE NOTES (NOTAS DEL PIZARRON) */}
+                                    <button
+                                        onClick={() => {
+                                            onOpenSimpleNotes();
+                                        }}
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-white/5 transition-all flex items-center justify-center text-accent hover:bg-accent hover:text-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] shrink-0"
+                                        style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
+                                        title="Abrir Lista de Notas Rápidas"
+                                    >
+                                        <Edit3 size={14} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Horizontal scrolling chips list */}
+                            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 whitespace-nowrap">
+                                {[
+                                    { id: 'all', label: 'Todos' },
+                                    { id: 'notes', label: 'Notas' },
+                                    { id: 'diary', label: 'Diario' },
+                                    { id: 'resonance', label: 'Resonancias' },
+                                    { id: 'chats', label: 'Diálogos AI' },
+                                    { id: 'images', label: 'Multimedia' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setReleaseTab(tab.id)}
+                                        className={`px-4 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
+                                            ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
+                                            : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
+                                            }`}
+                                        style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* COMPACT NOTES HUB (RECUADRO DE NOTAS DEBAJO DE FILTROS) */}
+                            <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
+                                <div className="flex justify-between items-center px-1">
+                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                                        {releaseTab === 'all' ? 'Todos los Registros' :
+                                            releaseTab === 'notes' ? 'Tus Notas' :
+                                                releaseTab === 'diary' ? 'Entradas del Diario' :
+                                                    releaseTab === 'resonance' ? 'Tus Resonancias' :
+                                                        releaseTab === 'chats' ? 'Diálogos de Inteligencia' : 'Archivos Multimedia'}
+                                    </span>
+
+                                    <button
+                                        onClick={() => {
+                                            if (releaseTab === 'diary') openNewComposer?.(true, false);
+                                            else if (releaseTab === 'resonance') openNewComposer?.(false, true);
+                                            else if (releaseTab === 'chats') onNewChat?.();
+                                            else openNewComposer?.(false, false);
+                                        }}
+                                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-accent transition-all text-[8px] font-black uppercase tracking-widest active:scale-95 shrink-0"
+                                        style={{ color: accent }}
+                                    >
+                                        <Plus size={10} />
+                                        {releaseTab === 'diary' ? 'Nuevo Diario' :
+                                            releaseTab === 'resonance' ? 'Nueva Resonancia' :
+                                                releaseTab === 'chats' ? 'Nuevo Diálogo' : 'Nueva Nota'}
+                                    </button>
+                                </div>
+
+                                <div className="w-full max-h-[160px] md:max-h-[25vh] overflow-y-auto no-scrollbar pr-1">
+                                    {filteredReleases.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
+                                            <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                                No se encontraron registros
+                                            </p>
+                                            <p className="text-[8px] text-zinc-600 mt-1">
+                                                Usa el botón superior para crear tu primer elemento en esta sección.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-1 pb-1 animate-fade-in">
+                                            {filteredReleases.map(b => {
+                                                const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                                const isDia = b.entries && b.entries.length > 0;
+                                                const isInsight = b.type === 'insight';
+                                                const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                                                const isImg = b.type === 'image' || b.type === 'relic';
+                                                const isChat = b.type === 'conversation' || b.isVirtual;
+
+                                                const noteColor = b.color || accent;
+                                                const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                                                const typeLabel = isChat ? 'AI' : (isRes ? 'Resonancia' : (isDia ? 'Diario' : (isImg ? 'Imagen' : (isInsight ? 'Revelación' : 'Nota'))));
+
+                                                let textSnippet = '';
+                                                if (isDia) {
+                                                    textSnippet = b.entries[0]?.text || '';
+                                                } else if (isRes) {
+                                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                                    textSnippet = resMatch ? resMatch[1].trim() : b.content.replace(/\[resonancia\]|\[impacto\]|\[extrano\]/g, '').trim();
+                                                } else if (isChat) {
+                                                    let msgs = [];
+                                                    try { msgs = JSON.parse(b.content) || []; } catch (e) { }
+                                                    textSnippet = msgs[msgs.length - 1]?.content || '';
+                                                } else {
+                                                    textSnippet = b.content || '';
+                                                }
+
+                                                const timeString = b.metadata?.timestamp
+                                                    ? new Date(b.metadata.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+                                                    : '';
+
+                                                const isSelected = selectedIds.includes(b.id);
+
+                                                return (
+                                                    <div
+                                                        key={b.id}
+                                                        onClick={() => handleCardClick(b.id)}
+                                                        className={`group/note border rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${isSelected
                                                             ? 'bg-accent/10 border-accent/60 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]'
                                                             : 'bg-white/[0.01] hover:bg-white/[0.04] border-white/5 hover:border-white/10'
-                                                    }`}
-                                                    style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
-                                                >
-                                                    <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: cardBorderColor }} />
+                                                            }`}
+                                                        style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
+                                                    >
+                                                        <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: cardBorderColor }} />
 
-                                                    {/* Selection indicator checkbox if in selection mode */}
-                                                    {isSelectionMode && (
-                                                        <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
-                                                            {isSelected && <Check size={10} strokeWidth={4} />}
+                                                        {/* Selection indicator checkbox if in selection mode */}
+                                                        {isSelectionMode && (
+                                                            <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
+                                                                {isSelected && <Check size={10} strokeWidth={4} />}
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
+                                                            <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
+                                                                {typeLabel}
+                                                            </span>
+
+                                                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                                <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
+                                                                    {b.caption || 'Sin título'}
+                                                                </h4>
+                                                                <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
+                                                                    {textSnippet || 'Sin contenido'}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    )}
 
-                                                    <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
-                                                        <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
-                                                            {typeLabel}
-                                                        </span>
-                                                        
-                                                        <div className="flex-1 min-w-0 flex items-center gap-2">
-                                                            <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
-                                                                {b.caption || 'Sin título'}
-                                                            </h4>
-                                                            <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
-                                                                {textSnippet || 'Sin contenido'}
-                                                            </p>
+                                                        <div className="flex items-center gap-4 shrink-0">
+                                                            <span className="text-[8px] font-mono text-zinc-600 sm:block hidden">
+                                                                {b.isPublic ? 'Público' : 'Privado'}
+                                                            </span>
+                                                            <span className="text-[8px] font-mono text-zinc-500">
+                                                                {timeString}
+                                                            </span>
+                                                            <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
+                                                                →
+                                                            </span>
                                                         </div>
                                                     </div>
-
-                                                    <div className="flex items-center gap-4 shrink-0">
-                                                        <span className="text-[8px] font-mono text-zinc-600 sm:block hidden">
-                                                            {b.isPublic ? 'Público' : 'Privado'}
-                                                        </span>
-                                                        <span className="text-[8px] font-mono text-zinc-500">
-                                                            {timeString}
-                                                        </span>
-                                                        <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
-                                                            →
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Animated Scroll Down Indicator */}
-                <div 
-                    className="flex flex-col items-center gap-1 animate-bounce cursor-pointer pb-2 pointer-events-auto"
-                    onClick={() => {
-                        const scrollContainer = document.getElementById('profile-scroll-container');
-                        if (scrollContainer) {
-                            scrollContainer.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-                        }
-                    }}
-                >
-                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para ver publicaciones</span>
-                    <ChevronDown size={12} className="text-zinc-500" />
-                </div>
-            </div>
-
-            {/* SLIDES 3+: PUBLICACIONES / TARJETAS (TIKTOK STYLE INDIVIDUAL SCROLL SNAP) */}
-            {filteredReleases.length > 0 ? (
-                filteredReleases.map((b, index) => {
-                    const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                    const isDia = b.entries && b.entries.length > 0;
-                    const isInsight = b.type === 'insight';
-                    const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-                    const isImg = b.type === 'image' || b.type === 'relic';
-                    const isChat = b.type === 'conversation';
-                    const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
-
-                    const noteColor = b.color || accent;
-                    const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
-                    const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
-                    const isSelected = selectedIds.includes(b.id);
-
-                    const isActive = activeSlideIndex === (index + 1);
-                    return (
-                        <div 
-                            key={b.id || index} 
-                            data-index={index + 1}
-                            className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
-                        >
-                            <div
-                                onClick={() => handleCardClick(b.id)}
-                                draggable={!isSelectionMode}
-                                onDragStart={(e) => {
-                                    e.dataTransfer.setData("text/plain", b.id);
-                                    e.dataTransfer.effectAllowed = "move";
-                                }}
-                                onDragOver={(e) => {
-                                    e.preventDefault();
-                                    if (dragOverId !== b.id) setDragOverId(b.id);
-                                }}
-                                onDragLeave={() => {
-                                    if (dragOverId === b.id) setDragOverId(null);
-                                }}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    setDragOverId(null);
-                                    const draggedId = e.dataTransfer.getData("text/plain");
-                                    handleReorderBlocks(draggedId, b.id);
-                                }}
-                                className={`w-full max-w-3xl h-[65vh] md:h-[70vh] bg-black/40 border rounded-[2.5rem] p-6 md:p-8 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${
-                                    isActive
-                                        ? 'scale-100 opacity-100 blur-0'
-                                        : 'scale-90 opacity-20 blur-[1px]'
-                                } ${isSelectionMode
-                                    ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
-                                    : 'border-white/10 hover:border-white/20'
-                                }`}
-                                style={{
-                                    borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
-                                    borderColor: dragOverId === b.id ? accent : '',
-                                    boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
-                                    opacity: dragOverId === b.id ? 0.7 : ''
-                                }}
-                            >
-                                {/* Header Info */}
-                                <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity pb-2 border-b border-white/5">
-                                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
-                                        {typeLabel}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        {isSelectionMode ? (
-                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
-                                                ? 'bg-red-500 border-red-500 text-white'
-                                                : 'border-white/30 bg-black/40'
-                                                }`}>
-                                                {isSelected && <Check size={8} />}
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span className="text-[7px] font-mono text-zinc-600">
-                                                    {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
-                                                </span>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (b.isVirtual) {
-                                                            if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
-                                                                const updated = conversations.filter(c => c.id !== b.id);
-                                                                setConversations(updated);
-                                                                fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
-                                                                    method: 'POST',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify(updated)
-                                                                });
-                                                            }
-                                                        } else {
-                                                            deleteBlock(b.id);
-                                                        }
-                                                    }}
-                                                    className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
-                                                    title="Eliminar registro"
-                                                >
-                                                    <Trash2 size={10} />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Body Content */}
-                                {isImg && (
-                                    <div className="flex-1 min-h-0 space-y-3 pt-4 flex flex-col">
-                                        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
-                                            <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
-                                        </div>
-                                        {b.caption && (
-                                            <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
-                                                {b.caption}
-                                            </h4>
-                                        )}
-                                    </div>
-                                )}
-
-                                {isChat && (() => {
-                                    let msgs = [];
-                                    try { msgs = JSON.parse(b.content) || []; } catch (e) { }
-                                    return (
-                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
-                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                {b.caption || 'Diálogo AI'}
-                                            </h4>
-                                            <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
-                                                {msgs.map((msg, idx) => (
-                                                    <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
-                                                            {msg.role === 'user' ? 'Tú' : 'Kio'}
-                                                        </span>
-                                                        <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
-                                                            ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
-                                                            : 'bg-white/5 border border-white/5 text-white/80'
-                                                            } max-w-[90%] whitespace-pre-wrap`}>
-                                                            {msg.content}
-                                                        </p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-
-                                {isRes && (() => {
-                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
-                                    const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
-                                    const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
-
-                                    const resonanceText = resMatch ? resMatch[1].trim() : '';
-                                    const impactText = impMatch ? impMatch[1].trim() : '';
-                                    const strangeText = extMatch ? extMatch[1].trim() : '';
-
-                                    return (
-                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
-                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
-                                                {b.caption || 'Resonancia Psíquica'}
-                                            </h4>
-                                            <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
-                                                {resonanceText && (
-                                                    <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
-                                                        <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
-                                                        <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
-                                                    </div>
-                                                )}
-                                                {impactText && (
-                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
-                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
-                                                        <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
-                                                    </div>
-                                                )}
-                                                {strangeText && (
-                                                    <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
-                                                        <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
-                                                        <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-
-                                {isDia && (
-                                    <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
-                                        <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
-                                            {b.caption || 'Bitácora / Diario'}
-                                        </h4>
-                                        <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
-                                            {b.entries.map((entry, idx) => (
-                                                <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
-                                                    <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                                                        <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
-                                                        <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </div>
-                                                    <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
-                                                        "{entry.text}"
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isNote && (
-                                    <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
-                                        <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
-                                            {b.caption || 'Nota Personal'}
-                                        </h4>
-
-                                        {(() => {
-                                            const lines = (b.content || '').split('\n');
-                                            const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
-                                            const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
-
-                                            return (
-                                                <>
-                                                    <div className="flex-1 overflow-y-auto no-scrollbar relative">
-                                                        <p className="text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap">
-                                                            {textLines}
-                                                        </p>
-                                                    </div>
-                                                    {inlineImage && (
-                                                        <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
-                                                            <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            );
-                                        })()}
-
-                                        {b.muralBlocks && b.muralBlocks.length > 0 && (
-                                            <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
-                                                {b.muralBlocks.map((mb, i) => (
-                                                    <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
-                                                        {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
-                                                        {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
-                                                        <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Footer Controls */}
-                                <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center shrink-0">
-                                    <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
-                                    {!isSelectionMode && (
-                                        <div className="flex gap-2">
-                                            {isChat && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleSelectConversation(b.id);
-                                                        setView('canvas');
-                                                    }}
-                                                    className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                >
-                                                    <MessageSquare size={8} /> Abrir Diálogo
-                                                </button>
-                                            )}
-                                            {!b.isVirtual && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
-                                                    className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
-                                                    style={{ '--accent-color': noteColor }}
-                                                >
-                                                    <Focus size={8} /> Enfocar
-                                                </button>
-                                            )}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
-                    );
-                })
-            ) : (
-                <div 
-                    data-index={1}
-                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
-                >
-                    <div className={`w-full max-w-3xl h-[40vh] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${
-                        activeSlideIndex === 1 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
-                    }`}>
-                        <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
-                        <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
                     </div>
-                </div>
-            )}
 
-            {/* SLIDE LAST: REORDER DROP ZONE */}
-            {!isSelectionMode && filteredReleases.length > 0 && (
-                <div 
-                    data-index={filteredReleases.length + 1}
-                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
-                >
+                    {/* Animated Scroll Down Indicator */}
                     <div
-                        onDragOver={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
+                        className="flex flex-col items-center gap-1 animate-bounce cursor-pointer pb-2 pointer-events-auto"
+                        onClick={() => {
+                            const scrollContainer = document.getElementById('profile-scroll-container');
+                            if (scrollContainer) {
+                                scrollContainer.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+                            }
                         }}
-                        onDragLeave={(e) => {
-                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                        }}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
-                            const draggedId = e.dataTransfer.getData("text/plain");
-                            handleReorderBlocks(draggedId, 'FEED_END');
-                        }}
-                        className={`w-full max-w-3xl h-[25vh] border border-dashed border-white/10 rounded-[2.5rem] flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu cursor-pointer backdrop-blur-md shadow-2xl ${
-                            activeSlideIndex === (filteredReleases.length + 1) ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
-                        }`}
                     >
-                        Arrastrar aquí para mover al final del feed
+                        <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para ver publicaciones</span>
+                        <ChevronDown size={12} className="text-zinc-500" />
                     </div>
                 </div>
-            )}
 
-            {/* FLOATING ACTION BAR FOR SELECTION DELETE */}
-            {isSelectionMode && selectedIds.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-red-500/30 px-6 py-4 rounded-3xl shadow-[0_10px_50px_rgba(239,68,68,0.25)] flex items-center gap-6 animate-in slide-in-from-bottom-10 backdrop-blur-xl z-50">
-                    <div className="flex flex-col">
-                        <span className="text-[7px] font-black uppercase tracking-[0.2em] text-red-500">Operación de Limpieza</span>
-                        <span className="text-xs font-mono font-bold text-white">
-                            {selectedIds.length} {selectedIds.length === 1 ? 'bloque seleccionado' : 'bloques seleccionados'}
-                        </span>
+                {/* SLIDES 3+: PUBLICACIONES / TARJETAS (TIKTOK STYLE INDIVIDUAL SCROLL SNAP) */}
+                {filteredReleases.length > 0 ? (
+                    filteredReleases.map((b, index) => {
+                        const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                        const isDia = b.entries && b.entries.length > 0;
+                        const isInsight = b.type === 'insight';
+                        const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                        const isImg = b.type === 'image' || b.type === 'relic';
+                        const isChat = b.type === 'conversation';
+                        const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
+
+                        const noteColor = b.color || accent;
+                        const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                        const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
+                        const isSelected = selectedIds.includes(b.id);
+
+                        const isActive = activeSlideIndex === (index + 1);
+                        return (
+                            <div
+                                key={b.id || index}
+                                data-index={index + 1}
+                                className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                            >
+                                <div
+                                    onClick={() => handleCardClick(b.id)}
+                                    draggable={!isSelectionMode}
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData("text/plain", b.id);
+                                        e.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        if (dragOverId !== b.id) setDragOverId(b.id);
+                                    }}
+                                    onDragLeave={() => {
+                                        if (dragOverId === b.id) setDragOverId(null);
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setDragOverId(null);
+                                        const draggedId = e.dataTransfer.getData("text/plain");
+                                        handleReorderBlocks(draggedId, b.id);
+                                    }}
+                                    className={`w-full max-w-3xl h-[65vh] md:h-[70vh] bg-black/40 border rounded-[2.5rem] p-6 md:p-8 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer ${isActive
+                                        ? 'scale-100 opacity-100 blur-0'
+                                        : 'scale-90 opacity-20 blur-[1px]'
+                                        } ${isSelectionMode
+                                            ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
+                                            : 'border-white/10 hover:border-white/20'
+                                        }`}
+                                    style={{
+                                        borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : (dragOverId === b.id ? accent : cardBorderColor)}`,
+                                        borderColor: dragOverId === b.id ? accent : '',
+                                        boxShadow: dragOverId === b.id ? `0 0 25px ${accent}80` : '',
+                                        opacity: dragOverId === b.id ? 0.7 : ''
+                                    }}
+                                >
+                                    {/* Header Info */}
+                                    <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity pb-2 border-b border-white/5">
+                                        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
+                                            {typeLabel}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {isSelectionMode ? (
+                                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
+                                                    ? 'bg-red-500 border-red-500 text-white'
+                                                    : 'border-white/30 bg-black/40'
+                                                    }`}>
+                                                    {isSelected && <Check size={8} />}
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span className="text-[7px] font-mono text-zinc-600">
+                                                        {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (b.isVirtual) {
+                                                                if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
+                                                                    const updated = conversations.filter(c => c.id !== b.id);
+                                                                    setConversations(updated);
+                                                                    fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify(updated)
+                                                                    });
+                                                                }
+                                                            } else {
+                                                                deleteBlock(b.id);
+                                                            }
+                                                        }}
+                                                        className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
+                                                        title="Eliminar registro"
+                                                    >
+                                                        <Trash2 size={10} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Body Content */}
+                                    {isImg && (
+                                        <div className="flex-1 min-h-0 space-y-3 pt-4 flex flex-col">
+                                            <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
+                                                <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
+                                            </div>
+                                            {b.caption && (
+                                                <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
+                                                    {b.caption}
+                                                </h4>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {isChat && (() => {
+                                        let msgs = [];
+                                        try { msgs = JSON.parse(b.content) || []; } catch (e) { }
+                                        return (
+                                            <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
+                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                    {b.caption || 'Diálogo AI'}
+                                                </h4>
+                                                <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
+                                                    {msgs.map((msg, idx) => (
+                                                        <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                                            <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
+                                                                {msg.role === 'user' ? 'Tú' : 'Kio'}
+                                                            </span>
+                                                            <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
+                                                                ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
+                                                                : 'bg-white/5 border border-white/5 text-white/80'
+                                                                } max-w-[90%] whitespace-pre-wrap`}>
+                                                                {msg.content}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {isRes && (() => {
+                                        const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                        const impMatch = b.content.match(/\[impacto\]([\s\S]*?)(?=\[extrano\]|$)/);
+                                        const extMatch = b.content.match(/\[extrano\]([\s\S]*?)$/);
+
+                                        const resonanceText = resMatch ? resMatch[1].trim() : '';
+                                        const impactText = impMatch ? impMatch[1].trim() : '';
+                                        const strangeText = extMatch ? extMatch[1].trim() : '';
+
+                                        return (
+                                            <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
+                                                <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                    {b.caption || 'Resonancia Psíquica'}
+                                                </h4>
+                                                <div className="flex-1 space-y-3 font-sans overflow-y-auto no-scrollbar">
+                                                    {resonanceText && (
+                                                        <div className="p-3.5 rounded-2xl bg-purple-950/15 border border-purple-500/10 space-y-1">
+                                                            <span className="text-[7px] font-mono font-black uppercase text-purple-400 tracking-widest block">Resonancia Primal</span>
+                                                            <p className="text-[11px] text-zinc-300 font-sans italic">"{resonanceText}"</p>
+                                                        </div>
+                                                    )}
+                                                    {impactText && (
+                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/30 border border-white/5 space-y-1">
+                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-500 tracking-widest block">Impacto Somático</span>
+                                                            <p className="text-[11px] text-zinc-400 font-sans italic">"{impactText}"</p>
+                                                        </div>
+                                                    )}
+                                                    {strangeText && (
+                                                        <div className="p-3.5 rounded-2xl bg-zinc-950/45 border border-white/5 space-y-1">
+                                                            <span className="text-[7px] font-mono font-black uppercase text-zinc-600 tracking-widest block">Lo Extraño / Glitch</span>
+                                                            <p className="text-[11px] text-zinc-500 font-sans italic">"{strangeText}"</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {isDia && (
+                                        <div className="flex-1 min-h-0 space-y-4 flex flex-col pt-4">
+                                            <h4 className="text-base font-black italic uppercase text-amber-500 leading-none shrink-0">
+                                                {b.caption || 'Bitácora / Diario'}
+                                            </h4>
+                                            <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
+                                                {b.entries.map((entry, idx) => (
+                                                    <div key={idx} className="bg-black/30 p-3 rounded-2xl border border-white/5 shrink-0">
+                                                        <div className="flex justify-between items-center mb-1 text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
+                                                            <span>{new Date(entry.timestamp).toLocaleDateString()}</span>
+                                                            <span>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        </div>
+                                                        <p className="text-[10px] leading-relaxed text-zinc-300 font-sans italic">
+                                                            "{entry.text}"
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {isNote && (
+                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
+                                            <h4 className="text-lg font-black italic uppercase text-white truncate leading-none shrink-0">
+                                                {b.caption || 'Nota Personal'}
+                                            </h4>
+
+                                            {(() => {
+                                                const lines = (b.content || '').split('\n');
+                                                const textLines = lines.filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
+                                                const inlineImage = lines.find(l => l.startsWith('[img]'))?.replace('[img]', '').trim();
+
+                                                return (
+                                                    <>
+                                                        <div className="flex-1 overflow-y-auto no-scrollbar relative">
+                                                            <p className="text-[11px] leading-relaxed text-zinc-300 font-sans italic selection:bg-accent/40 whitespace-pre-wrap">
+                                                                {textLines}
+                                                            </p>
+                                                        </div>
+                                                        {inlineImage && (
+                                                            <div className="mt-2 w-full h-24 shrink-0 rounded-xl overflow-hidden border border-white/10">
+                                                                <img src={formatUrl(inlineImage)} className="w-full h-full object-cover" alt="Adjunto" />
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
+
+                                            {b.muralBlocks && b.muralBlocks.length > 0 && (
+                                                <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pt-3 pb-1 shrink-0 border-t border-white/5 mt-auto">
+                                                    {b.muralBlocks.map((mb, i) => (
+                                                        <div key={mb.id || i} className="shrink-0 snap-center w-28 h-20 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center relative overflow-hidden group">
+                                                            {mb.type === 'image' && <img src={formatUrl(mb.content)} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
+                                                            {mb.type === 'text' && <p className="text-[7px] text-zinc-300 font-sans italic line-clamp-4 relative z-10">{mb.content}</p>}
+                                                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-black/80 border border-white/10 text-[5px] uppercase tracking-widest text-zinc-400 z-10">Sub</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Footer Controls */}
+                                    <div className="pt-4 border-t border-white/5 mt-auto flex justify-between items-center shrink-0">
+                                        <span className="text-[6px] font-bold text-zinc-500 uppercase font-mono tracking-widest">Oasis Digital Map</span>
+                                        {!isSelectionMode && (
+                                            <div className="flex gap-2">
+                                                {isChat && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelectConversation(b.id);
+                                                            setView('canvas');
+                                                        }}
+                                                        className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/30 rounded-xl text-[7px] font-black uppercase tracking-widest text-purple-400 hover:text-white hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                    >
+                                                        <MessageSquare size={8} /> Abrir Diálogo
+                                                    </button>
+                                                )}
+                                                {!b.isVirtual && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setView('canvas'); editBlock(b); }}
+                                                        className="px-3 py-1.5 bg-white/5 hover:bg-accent hover:text-black border border-white/10 rounded-xl text-[7px] font-black uppercase tracking-widest text-zinc-400 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+                                                        style={{ '--accent-color': noteColor }}
+                                                    >
+                                                        <Focus size={8} /> Enfocar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div
+                        data-index={1}
+                        className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                    >
+                        <div className={`w-full max-w-3xl h-[40vh] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[3rem] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu ${activeSlideIndex === 1 ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                            }`}>
+                            <Aperture size={32} className="mb-4 text-white/5 animate-spin-slow" />
+                            <p className="text-[9px] font-black uppercase tracking-[0.6em] text-white/10 italic">Sin registros en esta categoría</p>
+                        </div>
                     </div>
+                )}
 
-                    <div className="w-px h-6 bg-white/10" />
-
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => {
-                                if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente estos ${selectedIds.length} bloques?`)) {
-                                    deleteBlocks(selectedIds);
-                                    setSelectedIds([]);
-                                    setIsSelectionMode(false);
-                                }
+                {/* SLIDE LAST: REORDER DROP ZONE */}
+                {!isSelectionMode && filteredReleases.length > 0 && (
+                    <div
+                        data-index={filteredReleases.length + 1}
+                        className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-center items-center px-6 md:px-10 z-10 overflow-hidden"
+                    >
+                        <div
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('bg-white/5', 'border-white/30', 'text-white');
                             }}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white hover:scale-105 active:scale-95 transition-all text-[9px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-2"
+                            onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('bg-white/5', 'border-white/30', 'text-white');
+                                const draggedId = e.dataTransfer.getData("text/plain");
+                                handleReorderBlocks(draggedId, 'FEED_END');
+                            }}
+                            className={`w-full max-w-3xl h-[25vh] border border-dashed border-white/10 rounded-[2.5rem] flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white hover:border-white/30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu cursor-pointer backdrop-blur-md shadow-2xl ${activeSlideIndex === (filteredReleases.length + 1) ? 'scale-100 opacity-100 blur-0' : 'scale-95 opacity-20 blur-[1px]'
+                                }`}
                         >
-                            <Trash2 size={12} />
-                            Eliminar Selección
-                        </button>
-                        <button
-                            onClick={() => setSelectedIds([])}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-zinc-400 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest rounded-2xl"
-                        >
-                            Deseleccionar todo
-                        </button>
+                            Arrastrar aquí para mover al final del feed
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* FLOATING ACTION BAR FOR SELECTION DELETE */}
+                {isSelectionMode && selectedIds.length > 0 && (
+                    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-zinc-950/90 border border-red-500/30 px-6 py-4 rounded-3xl shadow-[0_10px_50px_rgba(239,68,68,0.25)] flex items-center gap-6 animate-in slide-in-from-bottom-10 backdrop-blur-xl z-50">
+                        <div className="flex flex-col">
+                            <span className="text-[7px] font-black uppercase tracking-[0.2em] text-red-500">Operación de Limpieza</span>
+                            <span className="text-xs font-mono font-bold text-white">
+                                {selectedIds.length} {selectedIds.length === 1 ? 'bloque seleccionado' : 'bloques seleccionados'}
+                            </span>
+                        </div>
+
+                        <div className="w-px h-6 bg-white/10" />
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente estos ${selectedIds.length} bloques?`)) {
+                                        deleteBlocks(selectedIds);
+                                        setSelectedIds([]);
+                                        setIsSelectionMode(false);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white hover:scale-105 active:scale-95 transition-all text-[9px] font-black uppercase tracking-widest rounded-2xl flex items-center gap-2"
+                            >
+                                <Trash2 size={12} />
+                                Eliminar Selección
+                            </button>
+                            <button
+                                onClick={() => setSelectedIds([])}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-zinc-400 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest rounded-2xl"
+                            >
+                                Deseleccionar todo
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -5883,7 +5878,7 @@ export default function App() {
                                 activeBlocks = localBlocks;
                                 console.log(`[Oasis] Red caída. Cargando ${localBlocks.length} bloques desde localStorage.`);
                             }
-                        } catch (_) {}
+                        } catch (_) { }
                     }
 
                     // Vínculos
@@ -7535,7 +7530,7 @@ export default function App() {
         if (searchQuery) {
             try {
                 console.log(`Kio - Buscando en la red: "${searchQuery}"...`);
-                const API_URL = import.meta.env.VITE_API_URL || 
+                const API_URL = import.meta.env.VITE_API_URL ||
                     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
                         ? 'http://localhost:5046'
                         : 'https://oasis-production-6303.up.railway.app');
@@ -8033,23 +8028,23 @@ ${searchContext}
             const touch2 = e.touches[1];
             const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
             const newScale = Math.min(Math.max(initialPinchScale.current * (dist / initialPinchDist.current), 0.15), 3);
-            
+
             // Midpoint relative to window center
             const mx = (touch1.clientX + touch2.clientX) / 2 - window.innerWidth / 2;
             const my = (touch1.clientY + touch2.clientY) / 2 - window.innerHeight / 2;
-            
+
             // Center of initial touches relative to window center
             const imx = initialTouchMidpoint.current.x - window.innerWidth / 2;
             const imy = initialTouchMidpoint.current.y - window.innerHeight / 2;
-            
+
             // Canvas coordinates under the initial midpoint
             const cx = (imx - initialPinchCam.current.x) / initialPinchScale.current;
             const cy = (imy - initialPinchCam.current.y) / initialPinchScale.current;
-            
+
             // Adjust camera position so cx, cy aligns with mx, my under the newScale
             const newX = mx - cx * newScale;
             const newY = my - cy * newScale;
-            
+
             setCam({ x: newX, y: newY, scale: newScale });
             return;
         }
@@ -8501,23 +8496,23 @@ ${searchContext}
                             // Clonar profundamente la matriz para que React detecte los cambios
                             const newBlocks = blocks.map(b => ({ ...b }));
                             const sortableTypes = ['note', 'image', 'video', 'audio', 'conversation', 'relic'];
-                            const userBlocks = newBlocks.filter(b => 
+                            const userBlocks = newBlocks.filter(b =>
                                 sortableTypes.includes(b.type) && !b.isPublic && !b.isVirtual
                             );
-                            
+
                             userBlocks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                            
+
                             const cols = Math.max(3, Math.ceil(Math.sqrt(userBlocks.length)));
                             const spacingX = 400; // Ajustado para que las notas queden juntas como imán
                             const spacingY = 400;
-                            
+
                             userBlocks.forEach((b, i) => {
                                 const col = i % cols;
                                 const row = Math.floor(i / cols);
                                 b.x = col * spacingX - ((cols - 1) * spacingX) / 2;
                                 b.y = row * spacingY;
                             });
-                            
+
                             setBlocks(newBlocks);
                             if (typeof syncBlocks === 'function') syncBlocks(newBlocks);
                         };
@@ -8552,10 +8547,10 @@ ${searchContext}
                                 const by = b.y !== undefined ? b.y : 0;
                                 const bw = getBWidth(b, false);
                                 const bh = getBHeight(b, false);
-                                if (bx - bw/2 < minX) minX = bx - bw/2;
-                                if (bx + bw/2 > maxX) maxX = bx + bw/2;
-                                if (by - bh/2 < minY) minY = by - bh/2;
-                                if (by + bh/2 > maxY) maxY = by + bh/2;
+                                if (bx - bw / 2 < minX) minX = bx - bw / 2;
+                                if (bx + bw / 2 > maxX) maxX = bx + bw / 2;
+                                if (by - bh / 2 < minY) minY = by - bh / 2;
+                                if (by + bh / 2 > maxY) maxY = by + bh / 2;
                             });
 
                             const centerX = (minX + maxX) / 2;
@@ -8718,7 +8713,7 @@ ${searchContext}
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {/* Mobile transcription & controls overlay */}
                                 <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-col gap-2 lg:hidden pointer-events-auto">
                                     {/* Glassmorphic Live Transcription Card */}
@@ -8753,11 +8748,10 @@ ${searchContext}
                                             <>
                                                 <button
                                                     onClick={togglePhenomPause}
-                                                    className={`py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
-                                                        phenomPaused
-                                                            ? 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/20'
-                                                            : 'bg-black/60 backdrop-blur-md border-white/20 text-white'
-                                                    }`}
+                                                    className={`py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${phenomPaused
+                                                        ? 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/20'
+                                                        : 'bg-black/60 backdrop-blur-md border-white/20 text-white'
+                                                        }`}
                                                 >
                                                     {phenomPaused ? <Play size={12} /> : <Pause size={12} />}
                                                     <span>{phenomPaused ? 'Reanudar' : 'Pausar'}</span>
@@ -8782,11 +8776,10 @@ ${searchContext}
                                                 <button
                                                     onClick={() => handleSavePhenomQualitative(phenomTextValue)}
                                                     disabled={!phenomHasRecorded[safeIndex]}
-                                                    className={`py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${
-                                                        phenomHasRecorded[safeIndex]
-                                                            ? 'bg-purple-600 border-purple-500 text-black shadow-lg shadow-purple-600/20'
-                                                            : 'bg-black/40 border-white/5 text-zinc-600 opacity-50 pointer-events-none'
-                                                    }`}
+                                                    className={`py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all border text-[9px] font-black uppercase tracking-wider ${phenomHasRecorded[safeIndex]
+                                                        ? 'bg-purple-600 border-purple-500 text-black shadow-lg shadow-purple-600/20'
+                                                        : 'bg-black/40 border-white/5 text-zinc-600 opacity-50 pointer-events-none'
+                                                        }`}
                                                 >
                                                     <span>{safeIndex === 3 ? 'Finalizar' : 'Siguiente'}</span>
                                                     {safeIndex === 3 ? <Check size={12} /> : <ArrowRight size={12} />}
@@ -9263,18 +9256,18 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
         return (
             <div className="fixed inset-x-0 top-[140px] md:top-0 md:relative w-full h-[calc(100vh-140px)] md:h-full z-[1500] md:z-10 bg-[#050506]/95 backdrop-blur-3xl rounded-t-[2.5rem] md:rounded-none border-t border-white/5 md:border-t-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] md:shadow-none flex flex-col transition-transform duration-500 animate-in slide-in-from-bottom-full md:slide-in-from-bottom-0">
                 <div className="flex-1 w-full relative overflow-y-auto no-scrollbar pt-8 md:pt-24 pb-36 px-4 md:px-8">
-                {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
-                <button
-                    onClick={() => setView('canvas')}
-                    className="hidden md:flex fixed top-6 left-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-3xl border border-white/10 items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl group"
-                    title="Volver al Lienzo"
-                >
-                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                </button>
-                <div className="fixed inset-0 pointer-events-none opacity-20 mix-blend-soft-light"
-                    style={{ background: `radial-gradient(circle at 10% 10%, ${accent}15 0%, transparent 40%), radial-gradient(circle at 90% 90%, #8b5cf608 0%, transparent 40%)` }} />
+                    {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
+                    <button
+                        onClick={() => setView('canvas')}
+                        className="hidden md:flex fixed top-6 left-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-3xl border border-white/10 items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl group"
+                        title="Volver al Lienzo"
+                    >
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                    <div className="fixed inset-0 pointer-events-none opacity-20 mix-blend-soft-light"
+                        style={{ background: `radial-gradient(circle at 10% 10%, ${accent}15 0%, transparent 40%), radial-gradient(circle at 90% 90%, #8b5cf608 0%, transparent 40%)` }} />
 
-                <style>{`
+                    <style>{`
                     @keyframes dash {
                         to {
                             stroke-dashoffset: -40;
@@ -9282,325 +9275,323 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     }
                 `}</style>
 
-                {/* Contemplation Modal Overlay */}
-                {selectedContemplationFact && (
-                    <div className="fixed inset-0 z-[100] bg-zinc-950/95 backdrop-blur-2xl flex flex-col justify-between p-8 md:p-16 select-none text-zinc-100 animate-in fade-in duration-500">
-                        {/* Top bar */}
-                        <div className="flex justify-between items-center w-full border-b border-white/5 pb-6">
-                            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent font-mono">
-                                    Contemplación y Reinterpretación del Eco
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setSelectedContemplationFact(null)}
-                                className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5"
-                            >
-                                [ Descartar Cambios ]
-                            </button>
-                        </div>
-
-                        {/* Modal core content */}
-                        <div className="w-full max-w-6xl mx-auto my-auto grid grid-cols-1 lg:grid-cols-2 gap-16 py-12">
-                            {/* Original section */}
-                            <div className="space-y-8 self-center">
-                                <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-[8px] font-black uppercase tracking-[0.2em] text-accent font-mono">
-                                    Registro de la Memoria Original
-                                </span>
-                                <h3 className="text-3xl md:text-5xl font-serif font-light italic text-white/90 leading-relaxed pr-6 select-text">
-                                    "{selectedContemplationFact.text}"
-                                </h3>
-                                <div className="space-y-2 border-t border-white/5 pt-6 text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
-                                    <div className="flex justify-between">
-                                        <span>Categoría de Conciencia:</span>
-                                        <span className="text-zinc-300 font-bold">{selectedContemplationFact.category || 'General'}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Capturado el:</span>
-                                        <span className="text-zinc-300 font-bold">{new Date(selectedContemplationFact.timestamp).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Reinterpretation section */}
-                            <div className="p-8 rounded-[3rem] bg-zinc-900/40 border border-white/5 shadow-2xl flex flex-col justify-between gap-8 backdrop-blur-md">
-                                <div className="space-y-4">
-                                    <h4 className="text-sm font-black uppercase text-accent tracking-widest font-mono">Transmutación Cognitiva</h4>
-                                    <p className="text-xs leading-relaxed text-zinc-400 font-sans">
-                                        Los ecos no son dogmas inmutables de tu historia. Al contemplar este recuerdo en el presente, tienes la facultad de reformularlo e integrarlo bajo un entendimiento más maduro y libre de juicios.
-                                    </p>
-                                </div>
-                                <div className="space-y-2 flex-1">
-                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 block font-mono">Escribe tu Reinterpretación actual:</span>
-                                    <textarea
-                                        value={reinterpretationText}
-                                        onChange={(e) => setReinterpretationText(e.target.value)}
-                                        rows={6}
-                                        className="w-full p-6 bg-zinc-950/80 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/40 transition-all font-sans text-base leading-relaxed resize-none"
-                                    />
+                    {/* Contemplation Modal Overlay */}
+                    {selectedContemplationFact && (
+                        <div className="fixed inset-0 z-[100] bg-zinc-950/95 backdrop-blur-2xl flex flex-col justify-between p-8 md:p-16 select-none text-zinc-100 animate-in fade-in duration-500">
+                            {/* Top bar */}
+                            <div className="flex justify-between items-center w-full border-b border-white/5 pb-6">
+                                <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent font-mono">
+                                        Contemplación y Reinterpretación del Eco
+                                    </span>
                                 </div>
                                 <button
-                                    onClick={handleSaveReinterpretation}
-                                    className="w-full py-4 bg-accent text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl hover:bg-lime-400 active:scale-[0.98] transition-all shadow-lg shadow-accent/10"
+                                    onClick={() => setSelectedContemplationFact(null)}
+                                    className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5"
                                 >
-                                    Sincronizar Reinterpretación
+                                    [ Descartar Cambios ]
                                 </button>
+                            </div>
+
+                            {/* Modal core content */}
+                            <div className="w-full max-w-6xl mx-auto my-auto grid grid-cols-1 lg:grid-cols-2 gap-16 py-12">
+                                {/* Original section */}
+                                <div className="space-y-8 self-center">
+                                    <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-[8px] font-black uppercase tracking-[0.2em] text-accent font-mono">
+                                        Registro de la Memoria Original
+                                    </span>
+                                    <h3 className="text-3xl md:text-5xl font-serif font-light italic text-white/90 leading-relaxed pr-6 select-text">
+                                        "{selectedContemplationFact.text}"
+                                    </h3>
+                                    <div className="space-y-2 border-t border-white/5 pt-6 text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+                                        <div className="flex justify-between">
+                                            <span>Categoría de Conciencia:</span>
+                                            <span className="text-zinc-300 font-bold">{selectedContemplationFact.category || 'General'}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Capturado el:</span>
+                                            <span className="text-zinc-300 font-bold">{new Date(selectedContemplationFact.timestamp).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Reinterpretation section */}
+                                <div className="p-8 rounded-[3rem] bg-zinc-900/40 border border-white/5 shadow-2xl flex flex-col justify-between gap-8 backdrop-blur-md">
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-black uppercase text-accent tracking-widest font-mono">Transmutación Cognitiva</h4>
+                                        <p className="text-xs leading-relaxed text-zinc-400 font-sans">
+                                            Los ecos no son dogmas inmutables de tu historia. Al contemplar este recuerdo en el presente, tienes la facultad de reformularlo e integrarlo bajo un entendimiento más maduro y libre de juicios.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2 flex-1">
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 block font-mono">Escribe tu Reinterpretación actual:</span>
+                                        <textarea
+                                            value={reinterpretationText}
+                                            onChange={(e) => setReinterpretationText(e.target.value)}
+                                            rows={6}
+                                            className="w-full p-6 bg-zinc-950/80 border border-white/10 rounded-2xl text-white focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/40 transition-all font-sans text-base leading-relaxed resize-none"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSaveReinterpretation}
+                                        className="w-full py-4 bg-accent text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl hover:bg-lime-400 active:scale-[0.98] transition-all shadow-lg shadow-accent/10"
+                                    >
+                                        Sincronizar Reinterpretación
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Bottom bar */}
+                            <div className="text-[7px] font-mono text-zinc-600 uppercase tracking-widest text-center border-t border-white/5 pt-6">
+                                EL ACTO DE REINTERPRETAR MODIFICA EL REGISTRO MENTAL PERMANENTE DE LA CONCIENCIA.
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="max-w-7xl mx-auto px-6 relative z-10">
+                        {/* MINIMALIST HEADER WITH TAB NAVIGATION ONLY */}
+                        <div className="flex items-center justify-between pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
+                            <div className="flex items-center gap-2">
+                                <Aperture size={16} className="text-accent animate-spin-slow" style={{ color: accent }} />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Pruebas Clínicas</span>
+                            </div>
+
+                            {/* Mini Session History Button & Dropdown */}
+                            <div className="absolute right-0">
+                                <button
+                                    onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                    className={`h-9 px-3.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 backdrop-blur-md shadow-2xl ${isSessionDropdownOpen
+                                        ? 'bg-emerald-500 text-black border border-emerald-400 font-bold'
+                                        : 'bg-white/5 text-zinc-400 hover:text-white border border-white/10 hover:bg-white/10'
+                                        }`}
+                                    title="Historial de Sesiones"
+                                >
+                                    <Database size={13} />
+                                    <span>S{activeVersion}</span>
+                                </button>
+
+                                {isSessionDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-[0_15px_50px_rgba(0,0,0,0.8)] z-[600] flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-black border-b border-white/5 pb-1 mb-1">
+                                            Sesiones
+                                        </div>
+                                        <div className="max-h-36 overflow-y-auto no-scrollbar flex flex-col gap-1">
+                                            {Array.from({ length: totalVersions }).map((_, idx) => {
+                                                const v = idx + 1;
+                                                const isSelected = activeVersion === v;
+                                                return (
+                                                    <button
+                                                        key={v}
+                                                        onClick={() => {
+                                                            handleSwitchVersion(v);
+                                                            setIsSessionDropdownOpen(false);
+                                                        }}
+                                                        className={`w-full px-2.5 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-wider font-mono text-left transition-all ${isSelected
+                                                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                                                            : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        Sesión {v}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="border-t border-white/5 pt-2 flex flex-col gap-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    handleCreateNewVersion();
+                                                    setIsSessionDropdownOpen(false);
+                                                }}
+                                                className="w-full py-1.5 rounded-xl border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 text-[8px] font-black uppercase tracking-wider font-mono transition-all flex items-center justify-center gap-1"
+                                            >
+                                                <Plus size={10} /> Nueva Sesión
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    resetActiveVersionTests();
+                                                    setIsSessionDropdownOpen(false);
+                                                }}
+                                                className="w-full py-1.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/20 hover:text-white text-[8px] font-black uppercase tracking-widest font-mono transition-all flex items-center justify-center gap-1"
+                                            >
+                                                <Trash2 size={10} /> Borrar Sesión {activeVersion}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Bottom bar */}
-                        <div className="text-[7px] font-mono text-zinc-600 uppercase tracking-widest text-center border-t border-white/5 pt-6">
-                            EL ACTO DE REINTERPRETAR MODIFICA EL REGISTRO MENTAL PERMANENTE DE LA CONCIENCIA.
-                        </div>
-                    </div>
-                )}
+                        {activeTabName === 'memory' && (
+                            <div className="space-y-10 animate-in fade-in duration-500">
 
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    {/* MINIMALIST HEADER WITH TAB NAVIGATION ONLY */}
-                    <div className="flex items-center justify-between pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
-                        <div className="flex items-center gap-2">
-                            <Aperture size={16} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Pruebas Clínicas</span>
-                        </div>
-
-                        {/* Mini Session History Button & Dropdown */}
-                        <div className="absolute right-0">
-                            <button
-                                onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
-                                className={`h-9 px-3.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 backdrop-blur-md shadow-2xl ${
-                                    isSessionDropdownOpen
-                                        ? 'bg-emerald-500 text-black border border-emerald-400 font-bold'
-                                        : 'bg-white/5 text-zinc-400 hover:text-white border border-white/10 hover:bg-white/10'
-                                }`}
-                                title="Historial de Sesiones"
-                            >
-                                <Database size={13} />
-                                <span>S{activeVersion}</span>
-                            </button>
-
-                            {isSessionDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-zinc-950/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-[0_15px_50px_rgba(0,0,0,0.8)] z-[600] flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <div className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-black border-b border-white/5 pb-1 mb-1">
-                                        Sesiones
-                                    </div>
-                                    <div className="max-h-36 overflow-y-auto no-scrollbar flex flex-col gap-1">
-                                        {Array.from({ length: totalVersions }).map((_, idx) => {
-                                            const v = idx + 1;
-                                            const isSelected = activeVersion === v;
+                                {/* Category Filter pills */}
+                                {sortedMemory.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center border-b border-white/5 pb-6">
+                                        {['Todos', 'Conciencia', 'Afecto', 'Racional', 'Existencia', 'General'].map(cat => {
+                                            const count = cat === 'Todos'
+                                                ? sortedMemory.length
+                                                : sortedMemory.filter(f => (f.category || 'General') === (cat === 'Todos' ? 'Todos' : cat === 'Conciencia' ? 'Conciencia' : cat === 'Afecto' ? 'Afecto' : cat === 'Racional' ? 'Racional' : cat === 'Existencia' ? 'Existencia' : 'General')).length;
+                                            if (count === 0 && cat !== 'Todos') return null;
                                             return (
                                                 <button
-                                                    key={v}
-                                                    onClick={() => {
-                                                        handleSwitchVersion(v);
-                                                        setIsSessionDropdownOpen(false);
-                                                    }}
-                                                    className={`w-full px-2.5 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-wider font-mono text-left transition-all ${
-                                                        isSelected
-                                                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                                                            : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-white'
-                                                    }`}
+                                                    key={cat}
+                                                    onClick={() => { setSelectedCategoryFilter(cat); setActiveMemoryIndex(0); }}
+                                                    className={`px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-[8px] sm:text-[8.5px] font-black uppercase tracking-widest border transition-all ${(selectedCategoryFilter === 'All' && cat === 'Todos') || selectedCategoryFilter === cat || (selectedCategoryFilter === 'General' && cat === 'General')
+                                                        ? 'bg-accent/10 border-accent/40 text-accent font-bold shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)]'
+                                                        : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:border-white/10'
+                                                        }`}
                                                 >
-                                                    Sesión {v}
+                                                    {cat} <span className="opacity-40 ml-1">({count})</span>
                                                 </button>
                                             );
                                         })}
                                     </div>
-                                    <div className="border-t border-white/5 pt-2 flex flex-col gap-1.5">
-                                        <button
-                                            onClick={() => {
-                                                handleCreateNewVersion();
-                                                setIsSessionDropdownOpen(false);
-                                            }}
-                                            className="w-full py-1.5 rounded-xl border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 text-[8px] font-black uppercase tracking-wider font-mono transition-all flex items-center justify-center gap-1"
-                                        >
-                                            <Plus size={10} /> Nueva Sesión
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                resetActiveVersionTests();
-                                                setIsSessionDropdownOpen(false);
-                                            }}
-                                            className="w-full py-1.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/20 hover:text-white text-[8px] font-black uppercase tracking-widest font-mono transition-all flex items-center justify-center gap-1"
-                                        >
-                                            <Trash2 size={10} /> Borrar Sesión {activeVersion}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                )}
 
-                    {activeTabName === 'memory' && (
-                        <div className="space-y-10 animate-in fade-in duration-500">
+                                {/* Card Carousel Slider */}
+                                <div>
+                                    {(() => {
+                                        const filteredMemory = sortedMemory.filter(f => {
+                                            if (selectedCategoryFilter === 'Todos' || selectedCategoryFilter === 'All') return true;
+                                            return (f.category || 'General') === selectedCategoryFilter;
+                                        });
 
-                            {/* Category Filter pills */}
-                            {sortedMemory.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center border-b border-white/5 pb-6">
-                                    {['Todos', 'Conciencia', 'Afecto', 'Racional', 'Existencia', 'General'].map(cat => {
-                                        const count = cat === 'Todos'
-                                            ? sortedMemory.length
-                                            : sortedMemory.filter(f => (f.category || 'General') === (cat === 'Todos' ? 'Todos' : cat === 'Conciencia' ? 'Conciencia' : cat === 'Afecto' ? 'Afecto' : cat === 'Racional' ? 'Racional' : cat === 'Existencia' ? 'Existencia' : 'General')).length;
-                                        if (count === 0 && cat !== 'Todos') return null;
+                                        if (filteredMemory.length === 0) {
+                                            return (
+                                                <div className="h-[320px] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[2.5rem]">
+                                                    <Aperture size={36} className="mb-6 text-white/5 animate-spin-slow" />
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.8em] text-white/20 italic">Sin ecos en esta frecuencia</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        const activeIdx = Math.min(activeMemoryIndex, Math.max(0, filteredMemory.length - 1));
+                                        const activeFact = filteredMemory[activeIdx];
+                                        const originalIdx = userMemory.findIndex(f => f.timestamp === activeFact.timestamp && f.text === activeFact.text);
+
                                         return (
-                                            <button
-                                                key={cat}
-                                                onClick={() => { setSelectedCategoryFilter(cat); setActiveMemoryIndex(0); }}
-                                                className={`px-3.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full text-[8px] sm:text-[8.5px] font-black uppercase tracking-widest border transition-all ${(selectedCategoryFilter === 'All' && cat === 'Todos') || selectedCategoryFilter === cat || (selectedCategoryFilter === 'General' && cat === 'General')
-                                                    ? 'bg-accent/10 border-accent/40 text-accent font-bold shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)]'
-                                                    : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white hover:border-white/10'
-                                                    }`}
-                                            >
-                                                {cat} <span className="opacity-40 ml-1">({count})</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                            <div className="relative w-full max-w-6xl mx-auto py-6 flex flex-col items-center">
+                                                {/* Ambient Background Glow */}
+                                                <div className="absolute inset-0 w-[800px] h-[400px] bg-accent/5 blur-[140px] pointer-events-none rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
-                            {/* Card Carousel Slider */}
-                            <div>
-                                {(() => {
-                                    const filteredMemory = sortedMemory.filter(f => {
-                                        if (selectedCategoryFilter === 'Todos' || selectedCategoryFilter === 'All') return true;
-                                        return (f.category || 'General') === selectedCategoryFilter;
-                                    });
+                                                {/* Card Container & Nav Buttons */}
+                                                <div className="w-full max-w-4xl flex items-center justify-center relative z-10">
 
-                                    if (filteredMemory.length === 0) {
-                                        return (
-                                            <div className="h-[320px] flex flex-col items-center justify-center border border-white/5 bg-white/[0.01] rounded-[2.5rem]">
-                                                <Aperture size={36} className="mb-6 text-white/5 animate-spin-slow" />
-                                                <p className="text-[9px] font-black uppercase tracking-[0.8em] text-white/20 italic">Sin ecos en esta frecuencia</p>
-                                            </div>
-                                        );
-                                    }
+                                                    {/* Main Card View Stack */}
+                                                    <div className="flex-1 min-w-0 relative h-[480px] md:h-[500px]">
+                                                        {(() => {
+                                                            const dx = swipeOffset.x;
+                                                            const dy = swipeOffset.y;
+                                                            // Calculate progress (0 to 1) based on dx distance
+                                                            const progress = Math.min(Math.abs(dx) / 150, 1);
 
-                                    const activeIdx = Math.min(activeMemoryIndex, Math.max(0, filteredMemory.length - 1));
-                                    const activeFact = filteredMemory[activeIdx];
-                                    const originalIdx = userMemory.findIndex(f => f.timestamp === activeFact.timestamp && f.text === activeFact.text);
+                                                            // Card 1 (Top/Active Card) Style
+                                                            const card1Style = {
+                                                                transform: swipeTriggered
+                                                                    ? `translate(${swipeDirection === 'left' ? -1000 : 1000}px, ${dy}px) rotate(${swipeDirection === 'left' ? -30 : 30}deg)`
+                                                                    : `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`,
+                                                                transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)',
+                                                                zIndex: 30,
+                                                                cursor: isSwiping ? 'grabbing' : 'grab',
+                                                                touchAction: 'none',
+                                                                userSelect: 'none'
+                                                            };
 
-                                    return (
-                                        <div className="relative w-full max-w-6xl mx-auto py-6 flex flex-col items-center">
-                                            {/* Ambient Background Glow */}
-                                            <div className="absolute inset-0 w-[800px] h-[400px] bg-accent/5 blur-[140px] pointer-events-none rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                                            // Card 2 (Middle Stack Card) Style
+                                                            const card2Scale = 0.96 + progress * 0.04;
+                                                            const card2TranslateY = 14 - progress * 14;
+                                                            const card2Opacity = 0.5 + progress * 0.5;
+                                                            const card2Style = {
+                                                                transform: `scale(${card2Scale}) translateY(${card2TranslateY}px)`,
+                                                                opacity: card2Opacity,
+                                                                zIndex: 20,
+                                                                transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.4s ease',
+                                                                pointerEvents: 'none'
+                                                            };
 
-                                            {/* Card Container & Nav Buttons */}
-                                            <div className="w-full max-w-4xl flex items-center justify-center relative z-10">
+                                                            // Card 3 (Bottom Stack Card) Style
+                                                            const card3Scale = 0.92 + progress * 0.04;
+                                                            const card3TranslateY = 28 - progress * 14;
+                                                            const card3Opacity = 0.2 + progress * 0.3;
+                                                            const card3Style = {
+                                                                transform: `scale(${card3Scale}) translateY(${card3TranslateY}px)`,
+                                                                opacity: card3Opacity,
+                                                                zIndex: 10,
+                                                                transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.4s ease',
+                                                                pointerEvents: 'none'
+                                                            };
 
-                                                {/* Main Card View Stack */}
-                                                <div className="flex-1 min-w-0 relative h-[480px] md:h-[500px]">
-                                                    {(() => {
-                                                        const dx = swipeOffset.x;
-                                                        const dy = swipeOffset.y;
-                                                        // Calculate progress (0 to 1) based on dx distance
-                                                        const progress = Math.min(Math.abs(dx) / 150, 1);
+                                                            const renderCard = (fact, style, type, orgIdx) => {
+                                                                const isTop = type === 'top';
+                                                                return (
+                                                                    <div
+                                                                        key={fact.timestamp + fact.text}
+                                                                        style={style}
+                                                                        onPointerDown={isTop ? handleCardPointerDown : undefined}
+                                                                        onPointerMove={isTop ? handleCardPointerMove : undefined}
+                                                                        onPointerUp={isTop ? (e) => handleCardPointerUp(e, filteredMemory.length) : undefined}
+                                                                        className={`absolute inset-0 p-6 md:p-14 pb-8 md:pb-16 rounded-[2rem] md:rounded-[3.5rem] border backdrop-blur-3xl bg-zinc-950 transition-all duration-300 shadow-2xl overflow-y-auto custom-scroll flex flex-col justify-between select-none ${fact.isPinned
+                                                                            ? 'border-accent/30 shadow-[0_0_30px_rgba(var(--accent-rgb),0.03)]'
+                                                                            : 'border-white/5 hover:border-white/10'
+                                                                            }`}
+                                                                    >
+                                                                        {/* Glowing corner background decoration */}
+                                                                        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl opacity-15 pointer-events-none"
+                                                                            style={{
+                                                                                backgroundColor: fact.category === 'Afecto' ? '#ef4444' :
+                                                                                    fact.category === 'Cognición' ? '#06b6d4' :
+                                                                                        fact.category === 'Racional' ? '#bef264' : '#a855f7'
+                                                                            }}
+                                                                        />
 
-                                                        // Card 1 (Top/Active Card) Style
-                                                        const card1Style = {
-                                                            transform: swipeTriggered
-                                                                ? `translate(${swipeDirection === 'left' ? -1000 : 1000}px, ${dy}px) rotate(${swipeDirection === 'left' ? -30 : 30}deg)`
-                                                                : `translate(${dx}px, ${dy}px) rotate(${dx * 0.05}deg)`,
-                                                            transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2)',
-                                                            zIndex: 30,
-                                                            cursor: isSwiping ? 'grabbing' : 'grab',
-                                                            touchAction: 'none',
-                                                            userSelect: 'none'
-                                                        };
-
-                                                        // Card 2 (Middle Stack Card) Style
-                                                        const card2Scale = 0.96 + progress * 0.04;
-                                                        const card2TranslateY = 14 - progress * 14;
-                                                        const card2Opacity = 0.5 + progress * 0.5;
-                                                        const card2Style = {
-                                                            transform: `scale(${card2Scale}) translateY(${card2TranslateY}px)`,
-                                                            opacity: card2Opacity,
-                                                            zIndex: 20,
-                                                            transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.4s ease',
-                                                            pointerEvents: 'none'
-                                                        };
-
-                                                        // Card 3 (Bottom Stack Card) Style
-                                                        const card3Scale = 0.92 + progress * 0.04;
-                                                        const card3TranslateY = 28 - progress * 14;
-                                                        const card3Opacity = 0.2 + progress * 0.3;
-                                                        const card3Style = {
-                                                            transform: `scale(${card3Scale}) translateY(${card3TranslateY}px)`,
-                                                            opacity: card3Opacity,
-                                                            zIndex: 10,
-                                                            transition: isSwiping ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.4s ease',
-                                                            pointerEvents: 'none'
-                                                        };
-
-                                                        const renderCard = (fact, style, type, orgIdx) => {
-                                                            const isTop = type === 'top';
-                                                            return (
-                                                                <div
-                                                                    key={fact.timestamp + fact.text}
-                                                                    style={style}
-                                                                    onPointerDown={isTop ? handleCardPointerDown : undefined}
-                                                                    onPointerMove={isTop ? handleCardPointerMove : undefined}
-                                                                    onPointerUp={isTop ? (e) => handleCardPointerUp(e, filteredMemory.length) : undefined}
-                                                                    className={`absolute inset-0 p-6 md:p-14 pb-8 md:pb-16 rounded-[2rem] md:rounded-[3.5rem] border backdrop-blur-3xl bg-zinc-950 transition-all duration-300 shadow-2xl overflow-y-auto custom-scroll flex flex-col justify-between select-none ${fact.isPinned
-                                                                        ? 'border-accent/30 shadow-[0_0_30px_rgba(var(--accent-rgb),0.03)]'
-                                                                        : 'border-white/5 hover:border-white/10'
-                                                                        }`}
-                                                                >
-                                                                    {/* Glowing corner background decoration */}
-                                                                    <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl opacity-15 pointer-events-none"
-                                                                        style={{
-                                                                            backgroundColor: fact.category === 'Afecto' ? '#ef4444' :
-                                                                                fact.category === 'Cognición' ? '#06b6d4' :
-                                                                                    fact.category === 'Racional' ? '#bef264' : '#a855f7'
-                                                                        }}
-                                                                    />
-
-                                                                    <div className="space-y-6">
-                                                                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                                            <div className="flex items-center gap-2">
-                                                                                {fact.category === 'Afecto' && <Heart size={16} className="text-red-400" />}
-                                                                                {fact.category === 'Cognición' && <Zap size={16} className="text-cyan-400" />}
-                                                                                {fact.category === 'Racional' && <Sparkles size={16} className="text-lime-400" />}
-                                                                                {(!fact.category || fact.category === 'Conciencia') && <Aperture size={16} className="text-purple-400 animate-spin-slow" />}
-                                                                                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 font-mono">
-                                                                                    {fact.category || 'Conciencia'}
+                                                                        <div className="space-y-6">
+                                                                            <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    {fact.category === 'Afecto' && <Heart size={16} className="text-red-400" />}
+                                                                                    {fact.category === 'Cognición' && <Zap size={16} className="text-cyan-400" />}
+                                                                                    {fact.category === 'Racional' && <Sparkles size={16} className="text-lime-400" />}
+                                                                                    {(!fact.category || fact.category === 'Conciencia') && <Aperture size={16} className="text-purple-400 animate-spin-slow" />}
+                                                                                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 font-mono">
+                                                                                        {fact.category || 'Conciencia'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+                                                                                    {new Date(fact.timestamp).toLocaleDateString()}
                                                                                 </span>
                                                                             </div>
-                                                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
-                                                                                {new Date(fact.timestamp).toLocaleDateString()}
-                                                                            </span>
+
+                                                                            <p
+                                                                                onClick={isTop ? () => { setSelectedContemplationFact(fact); setReinterpretationText(fact.text); } : undefined}
+                                                                                className="text-xl md:text-4xl font-light italic text-white/95 leading-relaxed tracking-tight hover:text-accent transition-colors cursor-pointer select-text font-serif py-4"
+                                                                            >
+                                                                                "{fact.text}"
+                                                                            </p>
                                                                         </div>
 
-                                                                        <p
-                                                                            onClick={isTop ? () => { setSelectedContemplationFact(fact); setReinterpretationText(fact.text); } : undefined}
-                                                                            className="text-xl md:text-4xl font-light italic text-white/95 leading-relaxed tracking-tight hover:text-accent transition-colors cursor-pointer select-text font-serif py-4"
-                                                                        >
-                                                                            "{fact.text}"
-                                                                        </p>
-                                                                    </div>
-
-                                                                    {/* Card Controls */}
-                                                                    <div className="flex flex-wrap items-center justify-between pt-6 border-t border-white/5 gap-4 relative z-10">
-                                                                        <button
-                                                                            onClick={isTop ? () => { setSelectedContemplationFact(fact); setReinterpretationText(fact.text); } : undefined}
-                                                                            className="px-3.5 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
-                                                                        >
-                                                                            [ Contemplar / Reinterpretar ]
-                                                                        </button>
-
-                                                                        <div className="flex items-center gap-1.5 md:gap-3">
+                                                                        {/* Card Controls */}
+                                                                        <div className="flex flex-wrap items-center justify-between pt-6 border-t border-white/5 gap-4 relative z-10">
                                                                             <button
-                                                                                onClick={isTop ? () => handleTogglePinFact(orgIdx) : undefined}
-                                                                                className={`px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl border text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 md:gap-2 hover:scale-[1.02] active:scale-[0.98] ${fact.isPinned
-                                                                                    ? 'bg-accent/15 border-accent/30 text-accent font-bold shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)]'
-                                                                                    : 'bg-transparent border-white/5 text-zinc-500 hover:text-white hover:border-white/10'
-                                                                                    }`}
+                                                                                onClick={isTop ? () => { setSelectedContemplationFact(fact); setReinterpretationText(fact.text); } : undefined}
+                                                                                className="px-3.5 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
                                                                             >
-                                                                                <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${fact.isPinned ? 'bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.6)]' : 'bg-white/20'}`} />
-                                                                                <span>{fact.isPinned ? 'Conservado' : 'Conservar'}</span>
-                                                                                <span className="hidden sm:inline">{fact.isPinned ? ' en Núcleo' : ' / Pin'}</span>
+                                                                                [ Contemplar / Reinterpretar ]
                                                                             </button>
 
-                                                                            {/* BOTON PUBLICAR DESHABILITADO
+                                                                            <div className="flex items-center gap-1.5 md:gap-3">
+                                                                                <button
+                                                                                    onClick={isTop ? () => handleTogglePinFact(orgIdx) : undefined}
+                                                                                    className={`px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl border text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 md:gap-2 hover:scale-[1.02] active:scale-[0.98] ${fact.isPinned
+                                                                                        ? 'bg-accent/15 border-accent/30 text-accent font-bold shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)]'
+                                                                                        : 'bg-transparent border-white/5 text-zinc-500 hover:text-white hover:border-white/10'
+                                                                                        }`}
+                                                                                >
+                                                                                    <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${fact.isPinned ? 'bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.6)]' : 'bg-white/20'}`} />
+                                                                                    <span>{fact.isPinned ? 'Conservado' : 'Conservar'}</span>
+                                                                                    <span className="hidden sm:inline">{fact.isPinned ? ' en Núcleo' : ' / Pin'}</span>
+                                                                                </button>
+
+                                                                                {/* BOTON PUBLICAR DESHABILITADO
                                                                             <button
                                                                                 onClick={isTop ? () => handlePublishFact(fact) : undefined}
                                                                                 className="px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl bg-purple-950/20 border border-purple-800/30 text-purple-300 hover:bg-purple-500 hover:text-black text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -9610,725 +9601,725 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                                             </button>
                                                                             */}
 
-                                                                            <button
-                                                                                onClick={isTop ? () => handleDeleteFact(orgIdx) : undefined}
-                                                                                className="px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/30 text-red-500/50 hover:text-red-400 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
-                                                                            >
-                                                                                <span>Eliminar</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        };
-
-                                                        const stack = [];
-                                                        if (filteredMemory.length >= 3) {
-                                                            const idx3 = (activeIdx + 2) % filteredMemory.length;
-                                                            const f3 = filteredMemory[idx3];
-                                                            const orgIdx3 = userMemory.findIndex(f => f.timestamp === f3.timestamp && f.text === f3.text);
-                                                            stack.push(renderCard(f3, card3Style, 'bottom', orgIdx3));
-                                                        }
-                                                        if (filteredMemory.length >= 2) {
-                                                            const idx2 = (activeIdx + 1) % filteredMemory.length;
-                                                            const f2 = filteredMemory[idx2];
-                                                            const orgIdx2 = userMemory.findIndex(f => f.timestamp === f2.timestamp && f.text === f2.text);
-                                                            stack.push(renderCard(f2, card2Style, 'middle', orgIdx2));
-                                                        }
-                                                        stack.push(renderCard(activeFact, card1Style, 'top', originalIdx));
-
-                                                        return stack;
-                                                    })()}
-                                                </div>
-
-                                            </div>
-
-                                            {/* Slider Navigation Indicators */}
-                                            <div className="flex items-center gap-4 mt-8 relative z-10">
-                                                <span className="text-[9px] font-mono text-zinc-500 font-bold">
-                                                    {String(activeIdx + 1).padStart(2, '0')}
-                                                </span>
-                                                <div className="flex items-center gap-1 max-w-[200px] overflow-x-auto no-scrollbar py-1 px-2 border border-white/5 rounded-full bg-black/40">
-                                                    {filteredMemory.map((_, i) => (
-                                                        <button
-                                                            key={i}
-                                                            onClick={() => setActiveMemoryIndex(i)}
-                                                            className={`h-1.5 rounded-full transition-all duration-300 shrink-0 ${i === activeIdx ? 'w-6 bg-accent' : 'w-2 bg-white/10 hover:bg-white/30'
-                                                                }`}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <span className="text-[9px] font-mono text-zinc-500 font-bold">
-                                                    {String(filteredMemory.length).padStart(2, '0')}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTabName === 'tests' && (
-                        <div className="space-y-6 animate-in fade-in duration-500">
-                            {!activeTest ? (
-                                <div className="space-y-6">
-                                    {(() => {
-                                        const testCards = [
-                                            {
-                                                id: 'biographic',
-                                                num: '01',
-                                                type: 'Contextual',
-                                                icon: <Camera size={22} className="text-emerald-400" />,
-                                                title: 'Entrevista Biográfica',
-                                                description: 'Grabación de video/audio y transcripción en vivo para explorar tu mundo, tu historia de vida y tu día a día.',
-                                                focus: 'Narrativa',
-                                                duration: '10-15m',
-                                                color: 'emerald',
-                                                glowColor: 'shadow-[0_0_20px_rgba(16,185,129,0.3)] border-emerald-500/40 text-emerald-400',
-                                                bgGlow: 'bg-emerald-500',
-                                                btnBg: 'bg-emerald-500/20 hover:bg-emerald-500 hover:text-black border-emerald-500/40 text-emerald-300',
-                                                isComplete: false,
-                                                action: () => { setActiveTest('biographic'); }
-                                            },
-                                            {
-                                                id: 'icar16',
-                                                num: '02',
-                                                type: 'Cognitiva',
-                                                icon: <Zap size={22} className="text-accent" />,
-                                                title: 'Cartografía ICAR16',
-                                                description: 'Evaluación cognitiva estructurada de 16 ítems lógico-verbales, espaciales de cubos 3D y matrices.',
-                                                focus: 'Lógica/3D',
-                                                duration: '15-20m',
-                                                color: 'accent',
-                                                glowColor: 'shadow-[0_0_20px_rgba(251,191,36,0.3)] border-accent/40 text-accent',
-                                                bgGlow: 'bg-accent',
-                                                btnBg: 'bg-accent/10 hover:bg-accent hover:text-black border-accent/30 text-accent',
-                                                isComplete: calculatedResults.isIcarComplete,
-                                                action: () => { setActiveTest('icar16'); setCurrentIcarIndex(0); startWebcamRecording(); }
-                                            },
-                                            {
-                                                id: 'phenom',
-                                                num: '03',
-                                                type: 'Existencial',
-                                                icon: <Heart size={22} className="text-purple-400" />,
-                                                title: 'Diagnóstico Existencial',
-                                                description: 'Mapea tu forma de existir, tus mecanismos de autoprotección y tu relación con el tiempo.',
-                                                focus: 'Existencial',
-                                                duration: '5-10m',
-                                                color: 'purple',
-                                                glowColor: 'shadow-[0_0_20px_rgba(168,85,247,0.3)] border-purple-500/40 text-purple-400',
-                                                bgGlow: 'bg-purple-500',
-                                                btnBg: 'bg-purple-500/20 hover:bg-purple-500 hover:text-black border-purple-500/40 text-purple-300',
-                                                isComplete: calculatedResults.isPhenomComplete,
-                                                action: () => { setActiveTest('phenom'); setCurrentPhenomIndex(0); }
-                                            },
-                                            {
-                                                id: 'pid5',
-                                                num: '04',
-                                                type: 'Personalidad',
-                                                icon: <Sparkles size={22} className="text-pink-400" />,
-                                                title: 'Inventario PID-5-BF',
-                                                description: '25 reactivos de autoinforme clínico estructurados para mapear tus rasgos dominantes de personalidad.',
-                                                focus: 'Rasgos',
-                                                duration: '5-8m',
-                                                color: 'pink',
-                                                glowColor: 'shadow-[0_0_20px_rgba(236,72,153,0.3)] border-pink-500/40 text-pink-400',
-                                                bgGlow: 'bg-pink-500',
-                                                btnBg: 'bg-pink-500/20 hover:bg-pink-500 hover:text-black border-pink-500/40 text-pink-300',
-                                                isComplete: calculatedResults.isPid5Complete,
-                                                action: () => { setActiveTest('pid5'); setCurrentPidIndex(0); }
-                                            }
-                                        ];
-
-                                        const activeCard = testCards[activeTestCardIndex];
-
-                                        const handleTestsScroll = (e) => {
-                                            const scrollTop = e.target.scrollTop;
-                                            const height = e.target.clientHeight;
-                                            if (height > 0) {
-                                                const index = Math.round(scrollTop / height);
-                                                if (index >= 0 && index < testCards.length && index !== activeTestCardIndex) {
-                                                    setActiveTestCardIndex(index);
-                                                }
-                                            }
-                                        };
-
-                                        return (
-                                            <div className="flex flex-col items-center justify-center w-full py-2">
-                                                {/* Full screen borderless TikTok-style Viewport Container with Scroll Snap */}
-                                                <div
-                                                    ref={testsContainerRef}
-                                                    onScroll={handleTestsScroll}
-                                                    className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar relative"
-                                                >
-                                                    {testCards.map((card, idx) => (
-                                                        <div
-                                                            key={card.id}
-                                                            className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] px-3 py-6 md:px-14 md:py-16 flex flex-col justify-between snap-start snap-always shrink-0 relative overflow-hidden"
-                                                        >
-                                                            {/* Huge background ambient glow (Fixed Safari bug with native radial gradient) */}
-                                                            <div 
-                                                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw] md:w-[900px] md:h-[900px] pointer-events-none opacity-20 transition-all duration-700" 
-                                                                style={{ background: `radial-gradient(circle, ${card.id === 'biographic' ? '#10b981' : card.id === 'icar16' ? '#fbbf24' : card.id === 'phenom' ? '#a855f7' : '#ec4899'} 0%, transparent 60%)` }} 
-                                                            />
-
-                                                            {/* Flex Row layout: Main left, TikTok controls right */}
-                                                            <div className="flex gap-4 md:gap-14 h-full items-stretch relative z-10 max-w-5xl mx-auto w-full">
-
-                                                                {/* Main content (Left) */}
-                                                                <div className="flex-1 flex flex-col justify-between h-full pr-2 md:pr-4">
-                                                                    <div className="space-y-3 md:space-y-6 my-auto">
-                                                                        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                                                                            <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] bg-white/5 border border-white/10 text-zinc-300">
-                                                                                Módulo {card.num} // {card.type}
-                                                                            </span>
-                                                                            {card.isComplete && (
-                                                                                <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:px-3 md:py-1 rounded-full">
-                                                                                    Completado
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        <h3 className="text-2xl md:text-6xl font-black italic tracking-tighter uppercase text-white leading-tight">
-                                                                            {card.title}
-                                                                        </h3>
-                                                                        <p className="text-[11px] md:text-lg text-zinc-300 font-sans font-medium leading-relaxed max-w-2xl">
-                                                                            {card.description}
-                                                                        </p>
-
-                                                                        {/* Immersive Focus & Duration Badges */}
-                                                                        <div className="hidden md:flex flex-wrap gap-8 border-t border-white/10 pt-6 mt-6 max-w-xl">
-                                                                            <div className="space-y-1">
-                                                                                <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Enfoque Analítico</span>
-                                                                                <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.focus}</span>
-                                                                            </div>
-                                                                            <div className="space-y-1">
-                                                                                <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Duración Estimada</span>
-                                                                                <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.duration}</span>
+                                                                                <button
+                                                                                    onClick={isTop ? () => handleDeleteFact(orgIdx) : undefined}
+                                                                                    className="px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 hover:border-red-500/30 text-red-500/50 hover:text-red-400 text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                                                                >
+                                                                                    <span>Eliminar</span>
+                                                                                </button>
                                                                             </div>
                                                                         </div>
                                                                     </div>
+                                                                );
+                                                            };
 
-                                                                    <div className="mt-auto pt-6 pb-4 md:pb-0">
-                                                                        <button
-                                                                            onClick={card.action}
-                                                                            className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
-                                                                        >
-                                                                            {card.isComplete ? 'Reiniciar Prueba' : 'Iniciar Diagnóstico'}
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                            const stack = [];
+                                                            if (filteredMemory.length >= 3) {
+                                                                const idx3 = (activeIdx + 2) % filteredMemory.length;
+                                                                const f3 = filteredMemory[idx3];
+                                                                const orgIdx3 = userMemory.findIndex(f => f.timestamp === f3.timestamp && f.text === f3.text);
+                                                                stack.push(renderCard(f3, card3Style, 'bottom', orgIdx3));
+                                                            }
+                                                            if (filteredMemory.length >= 2) {
+                                                                const idx2 = (activeIdx + 1) % filteredMemory.length;
+                                                                const f2 = filteredMemory[idx2];
+                                                                const orgIdx2 = userMemory.findIndex(f => f.timestamp === f2.timestamp && f.text === f2.text);
+                                                                stack.push(renderCard(f2, card2Style, 'middle', orgIdx2));
+                                                            }
+                                                            stack.push(renderCard(activeFact, card1Style, 'top', originalIdx));
 
-                                                                {/* TikTok-style Vertical Controls (Right) */}
-                                                                <div className="flex flex-col items-center justify-between w-10 md:w-20 shrink-0 border-l border-white/5 pl-2 md:pl-8 py-2 md:py-4 select-none">
-                                                                    {/* Big index ring */}
-                                                                    <div className="flex flex-col items-center gap-1">
-                                                                        <div className={`w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xs md:text-sm transition-all duration-300 ${card.glowColor}`}>
-                                                                            {card.num}
-                                                                        </div>
-                                                                        <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">Prueba</span>
-                                                                    </div>
+                                                            return stack;
+                                                        })()}
+                                                    </div>
 
-                                                                    {/* Theme Icon badge */}
-                                                                    <div className="flex flex-col items-center gap-1">
-                                                                        <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-white shadow-md">
-                                                                            {card.icon}
-                                                                        </div>
-                                                                        <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">Módulo</span>
-                                                                    </div>
-
-                                                                    {/* Duration badge */}
-                                                                    <div className="flex flex-col items-center gap-1">
-                                                                        <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-zinc-400">
-                                                                            <Clock size={14} className="md:w-[18px] md:h-[18px]" />
-                                                                        </div>
-                                                                        <span className="text-[6px] md:text-[8.5px] font-black uppercase tracking-wider text-zinc-500">Tiempo</span>
-                                                                    </div>
-
-                                                                    {/* Focus badge */}
-                                                                    <div className="flex flex-col items-center gap-1">
-                                                                        <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-zinc-400">
-                                                                            <Focus size={14} className="md:w-[18px] md:h-[18px]" />
-                                                                        </div>
-                                                                        <span className="text-[6px] md:text-[8.5px] font-black uppercase tracking-wider text-zinc-500">Enfoque</span>
-                                                                    </div>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    ))}
                                                 </div>
 
-                                                {/* Dots and swipe tip at the bottom */}
-                                                <div className="flex items-center gap-6 mt-6 w-full justify-between px-2 max-w-5xl">
-                                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 font-mono">
-                                                        Desliza verticalmente para navegar
+                                                {/* Slider Navigation Indicators */}
+                                                <div className="flex items-center gap-4 mt-8 relative z-10">
+                                                    <span className="text-[9px] font-mono text-zinc-500 font-bold">
+                                                        {String(activeIdx + 1).padStart(2, '0')}
                                                     </span>
-
-                                                    <div className="flex items-center gap-2">
-                                                        {testCards.map((_, i) => (
+                                                    <div className="flex items-center gap-1 max-w-[200px] overflow-x-auto no-scrollbar py-1 px-2 border border-white/5 rounded-full bg-black/40">
+                                                        {filteredMemory.map((_, i) => (
                                                             <button
                                                                 key={i}
-                                                                onClick={() => {
-                                                                    if (testsContainerRef.current) {
-                                                                        const cardElement = testsContainerRef.current.children[i];
-                                                                        if (cardElement) {
-                                                                            cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                                                        }
-                                                                    }
-                                                                }}
-                                                                className={`h-2 rounded-full transition-all duration-300 ${i === activeTestCardIndex
-                                                                    ? 'w-8 ' + (
-                                                                        i === 0 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.4)]' :
-                                                                            i === 1 ? 'bg-accent shadow-[0_0_8px_rgba(251,191,36,0.4)]' :
-                                                                                i === 2 ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]' :
-                                                                                    'bg-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.4)]'
-                                                                    )
-                                                                    : 'w-2 bg-white/20 hover:bg-white/40'
+                                                                onClick={() => setActiveMemoryIndex(i)}
+                                                                className={`h-1.5 rounded-full transition-all duration-300 shrink-0 ${i === activeIdx ? 'w-6 bg-accent' : 'w-2 bg-white/10 hover:bg-white/30'
                                                                     }`}
-                                                                title={`Prueba ${i + 1}`}
                                                             />
                                                         ))}
                                                     </div>
+                                                    <span className="text-[9px] font-mono text-zinc-500 font-bold">
+                                                        {String(filteredMemory.length).padStart(2, '0')}
+                                                    </span>
                                                 </div>
                                             </div>
                                         );
                                     })()}
-
-
                                 </div>
-                            ) : activeTest === 'phenom' ? (
-                                <div className={`mx-auto animate-in slide-in-from-right duration-300 ${currentPhenomIndex < 4 ? 'max-w-5xl w-full' : 'max-w-2xl'}`}>
-                                    {currentPhenomIndex < 4 ? (
-                                        // PARTE A: LAS 4 DIMENSIONES ONTOLÓGICAS WITH VIDEO + STT
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center mb-1 px-1">
-                                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400">
-                                                    Pregunta {currentPhenomIndex + 1} de 4
-                                                </span>
-                                                <button onClick={() => setActiveTest(null)} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-3 py-1 rounded-full">Salir</button>
-                                            </div>
+                            </div>
+                        )}
 
-                                            {/* Layout: Video Left, Text/Controls Right */}
-                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-4 bg-[#0b0b0d] border border-white/5 rounded-2xl md:rounded-[2.5rem] p-2 md:p-4 shadow-2xl relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
+                        {activeTabName === 'tests' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                {!activeTest ? (
+                                    <div className="space-y-6">
+                                        {(() => {
+                                            const testCards = [
+                                                {
+                                                    id: 'biographic',
+                                                    num: '01',
+                                                    type: 'Contextual',
+                                                    icon: <Camera size={22} className="text-emerald-400" />,
+                                                    title: 'Entrevista Biográfica',
+                                                    description: 'Grabación de video/audio y transcripción en vivo para explorar tu mundo, tu historia de vida y tu día a día.',
+                                                    focus: 'Narrativa',
+                                                    duration: '10-15m',
+                                                    color: 'emerald',
+                                                    glowColor: 'shadow-[0_0_20px_rgba(16,185,129,0.3)] border-emerald-500/40 text-emerald-400',
+                                                    bgGlow: 'bg-emerald-500',
+                                                    btnBg: 'bg-emerald-500/20 hover:bg-emerald-500 hover:text-black border-emerald-500/40 text-emerald-300',
+                                                    isComplete: false,
+                                                    action: () => { setActiveTest('biographic'); }
+                                                },
+                                                {
+                                                    id: 'icar16',
+                                                    num: '02',
+                                                    type: 'Cognitiva',
+                                                    icon: <Zap size={22} className="text-accent" />,
+                                                    title: 'Cartografía ICAR16',
+                                                    description: 'Evaluación cognitiva estructurada de 16 ítems lógico-verbales, espaciales de cubos 3D y matrices.',
+                                                    focus: 'Lógica/3D',
+                                                    duration: '15-20m',
+                                                    color: 'accent',
+                                                    glowColor: 'shadow-[0_0_20px_rgba(251,191,36,0.3)] border-accent/40 text-accent',
+                                                    bgGlow: 'bg-accent',
+                                                    btnBg: 'bg-accent/10 hover:bg-accent hover:text-black border-accent/30 text-accent',
+                                                    isComplete: calculatedResults.isIcarComplete,
+                                                    action: () => { setActiveTest('icar16'); setCurrentIcarIndex(0); startWebcamRecording(); }
+                                                },
+                                                {
+                                                    id: 'phenom',
+                                                    num: '03',
+                                                    type: 'Existencial',
+                                                    icon: <Heart size={22} className="text-purple-400" />,
+                                                    title: 'Diagnóstico Existencial',
+                                                    description: 'Mapea tu forma de existir, tus mecanismos de autoprotección y tu relación con el tiempo.',
+                                                    focus: 'Existencial',
+                                                    duration: '5-10m',
+                                                    color: 'purple',
+                                                    glowColor: 'shadow-[0_0_20px_rgba(168,85,247,0.3)] border-purple-500/40 text-purple-400',
+                                                    bgGlow: 'bg-purple-500',
+                                                    btnBg: 'bg-purple-500/20 hover:bg-purple-500 hover:text-black border-purple-500/40 text-purple-300',
+                                                    isComplete: calculatedResults.isPhenomComplete,
+                                                    action: () => { setActiveTest('phenom'); setCurrentPhenomIndex(0); }
+                                                },
+                                                {
+                                                    id: 'pid5',
+                                                    num: '04',
+                                                    type: 'Personalidad',
+                                                    icon: <Sparkles size={22} className="text-pink-400" />,
+                                                    title: 'Inventario PID-5-BF',
+                                                    description: '25 reactivos de autoinforme clínico estructurados para mapear tus rasgos dominantes de personalidad.',
+                                                    focus: 'Rasgos',
+                                                    duration: '5-8m',
+                                                    color: 'pink',
+                                                    glowColor: 'shadow-[0_0_20px_rgba(236,72,153,0.3)] border-pink-500/40 text-pink-400',
+                                                    bgGlow: 'bg-pink-500',
+                                                    btnBg: 'bg-pink-500/20 hover:bg-pink-500 hover:text-black border-pink-500/40 text-pink-300',
+                                                    isComplete: calculatedResults.isPid5Complete,
+                                                    action: () => { setActiveTest('pid5'); setCurrentPidIndex(0); }
+                                                }
+                                            ];
 
-                                                {/* Left: Question Card & Video Player */}
-                                                <div className="lg:col-span-6 flex flex-col gap-2 md:gap-4">
-                                                    {/* Question Card */}
-                                                    <div className="bg-purple-950/20 border border-purple-800/30 rounded-2xl md:rounded-3xl p-3 md:p-4 relative overflow-hidden shadow-inner">
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px] pointer-events-none" />
-                                                        <h4 className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400 mb-1.5">{PHENOM_PART_A[currentPhenomIndex].title}</h4>
-                                                        <p className="text-base md:text-xl font-serif italic text-white/90 leading-tight">"{PHENOM_PART_A[currentPhenomIndex].question}"</p>
-                                                    </div>
+                                            const activeCard = testCards[activeTestCardIndex];
 
-                                                    {/* Video Player */}
-                                                    <div className="relative w-full h-[240px] xs:h-[280px] lg:h-auto lg:aspect-video bg-black rounded-xl lg:rounded-3xl overflow-hidden border border-white/10 group shadow-2xl flex flex-col justify-between">
-                                                        <video ref={phenomWebcamRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+                                            const handleTestsScroll = (e) => {
+                                                const scrollTop = e.target.scrollTop;
+                                                const height = e.target.clientHeight;
+                                                if (height > 0) {
+                                                    const index = Math.round(scrollTop / height);
+                                                    if (index >= 0 && index < testCards.length && index !== activeTestCardIndex) {
+                                                        setActiveTestCardIndex(index);
+                                                    }
+                                                }
+                                            };
 
-                                                        {/* Recording HUD */}
-                                                        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex gap-2">
-                                                                    <div className="px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md border border-white/10 flex items-center gap-1">
-                                                                        <Mic size={10} className={phenomVolume > 10 ? "text-purple-400" : "text-white/50"} />
-                                                                        <div className="flex gap-0.5 h-2.5 items-end">
-                                                                            {Array.from({ length: 5 }).map((_, i) => {
-                                                                                const maxVol = 100;
-                                                                                const normalizedVol = Math.min(phenomVolume / maxVol, 1);
-                                                                                const multiplier = i === 2 ? 1 : (i === 1 || i === 3 ? 0.7 : 0.4);
-                                                                                const height = Math.max(2, normalizedVol * 10 * multiplier);
-                                                                                const isActive = phenomVolume > (i * 10);
+                                            return (
+                                                <div className="flex flex-col items-center justify-center w-full py-2">
+                                                    {/* Full screen borderless TikTok-style Viewport Container with Scroll Snap */}
+                                                    <div
+                                                        ref={testsContainerRef}
+                                                        onScroll={handleTestsScroll}
+                                                        className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar relative"
+                                                    >
+                                                        {testCards.map((card, idx) => (
+                                                            <div
+                                                                key={card.id}
+                                                                className="w-full h-[calc(100vh-380px)] min-h-[400px] md:min-h-0 md:h-[calc(100vh-280px)] px-3 py-6 md:px-14 md:py-16 flex flex-col justify-between snap-start snap-always shrink-0 relative overflow-hidden"
+                                                            >
+                                                                {/* Huge background ambient glow (Fixed Safari bug with native radial gradient) */}
+                                                                <div
+                                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw] md:w-[900px] md:h-[900px] pointer-events-none opacity-20 transition-all duration-700"
+                                                                    style={{ background: `radial-gradient(circle, ${card.id === 'biographic' ? '#10b981' : card.id === 'icar16' ? '#fbbf24' : card.id === 'phenom' ? '#a855f7' : '#ec4899'} 0%, transparent 60%)` }}
+                                                                />
 
-                                                                                return (
-                                                                                    <div
-                                                                                        key={i}
-                                                                                        className={`w-0.5 rounded-t-sm transition-all duration-75 ${isActive ? 'bg-purple-400' : 'bg-white/20'}`}
-                                                                                        style={{ height: `${height}px` }}
-                                                                                    />
-                                                                                );
-                                                                            })}
+                                                                {/* Flex Row layout: Main left, TikTok controls right */}
+                                                                <div className="flex gap-4 md:gap-14 h-full items-stretch relative z-10 max-w-5xl mx-auto w-full">
+
+                                                                    {/* Main content (Left) */}
+                                                                    <div className="flex-1 flex flex-col justify-between h-full pr-2 md:pr-4">
+                                                                        <div className="space-y-3 md:space-y-6 my-auto">
+                                                                            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                                                                                <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] bg-white/5 border border-white/10 text-zinc-300">
+                                                                                    Módulo {card.num} // {card.type}
+                                                                                </span>
+                                                                                {card.isComplete && (
+                                                                                    <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:px-3 md:py-1 rounded-full">
+                                                                                        Completado
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <h3 className="text-2xl md:text-6xl font-black italic tracking-tighter uppercase text-white leading-tight">
+                                                                                {card.title}
+                                                                            </h3>
+                                                                            <p className="text-[11px] md:text-lg text-zinc-300 font-sans font-medium leading-relaxed max-w-2xl">
+                                                                                {card.description}
+                                                                            </p>
+
+                                                                            {/* Immersive Focus & Duration Badges */}
+                                                                            <div className="hidden md:flex flex-wrap gap-8 border-t border-white/10 pt-6 mt-6 max-w-xl">
+                                                                                <div className="space-y-1">
+                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Enfoque Analítico</span>
+                                                                                    <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.focus}</span>
+                                                                                </div>
+                                                                                <div className="space-y-1">
+                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Duración Estimada</span>
+                                                                                    <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.duration}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="mt-auto pt-6 pb-4 md:pb-0">
+                                                                            <button
+                                                                                onClick={card.action}
+                                                                                className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
+                                                                            >
+                                                                                {card.isComplete ? 'Reiniciar Prueba' : 'Iniciar Diagnóstico'}
+                                                                            </button>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md border border-white/10 flex items-center gap-1">
-                                                                        <Camera size={10} className="text-white" />
-                                                                        <span className="text-[7px] font-black uppercase text-white font-mono tracking-wider">Cam OK</span>
+
+                                                                    {/* TikTok-style Vertical Controls (Right) */}
+                                                                    <div className="flex flex-col items-center justify-between w-10 md:w-20 shrink-0 border-l border-white/5 pl-2 md:pl-8 py-2 md:py-4 select-none">
+                                                                        {/* Big index ring */}
+                                                                        <div className="flex flex-col items-center gap-1">
+                                                                            <div className={`w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center border-2 font-mono font-black text-xs md:text-sm transition-all duration-300 ${card.glowColor}`}>
+                                                                                {card.num}
+                                                                            </div>
+                                                                            <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">Prueba</span>
+                                                                        </div>
+
+                                                                        {/* Theme Icon badge */}
+                                                                        <div className="flex flex-col items-center gap-1">
+                                                                            <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-white shadow-md">
+                                                                                {card.icon}
+                                                                            </div>
+                                                                            <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">Módulo</span>
+                                                                        </div>
+
+                                                                        {/* Duration badge */}
+                                                                        <div className="flex flex-col items-center gap-1">
+                                                                            <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-zinc-400">
+                                                                                <Clock size={14} className="md:w-[18px] md:h-[18px]" />
+                                                                            </div>
+                                                                            <span className="text-[6px] md:text-[8.5px] font-black uppercase tracking-wider text-zinc-500">Tiempo</span>
+                                                                        </div>
+
+                                                                        {/* Focus badge */}
+                                                                        <div className="flex flex-col items-center gap-1">
+                                                                            <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-zinc-400">
+                                                                                <Focus size={14} className="md:w-[18px] md:h-[18px]" />
+                                                                            </div>
+                                                                            <span className="text-[6px] md:text-[8.5px] font-black uppercase tracking-wider text-zinc-500">Enfoque</span>
+                                                                        </div>
                                                                     </div>
+
                                                                 </div>
-                                                                {phenomRecording && (
-                                                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-lg ${phenomPaused ? 'bg-amber-500/20 border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-red-500/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'}`}>
-                                                                        <div className={`w-2 h-2 rounded-full ${phenomPaused ? 'bg-amber-500' : 'bg-red-500'}`} />
-                                                                        <span className={`text-[8px] font-black uppercase tracking-widest ${phenomPaused ? 'text-amber-500' : 'text-red-500'}`}>{phenomPaused ? 'PAUSADO' : 'GRABANDO'}</span>
-                                                                    </div>
-                                                                )}
                                                             </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Dots and swipe tip at the bottom */}
+                                                    <div className="flex items-center gap-6 mt-6 w-full justify-between px-2 max-w-5xl">
+                                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 font-mono">
+                                                            Desliza verticalmente para navegar
+                                                        </span>
+
+                                                        <div className="flex items-center gap-2">
+                                                            {testCards.map((_, i) => (
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => {
+                                                                        if (testsContainerRef.current) {
+                                                                            const cardElement = testsContainerRef.current.children[i];
+                                                                            if (cardElement) {
+                                                                                cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className={`h-2 rounded-full transition-all duration-300 ${i === activeTestCardIndex
+                                                                        ? 'w-8 ' + (
+                                                                            i === 0 ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.4)]' :
+                                                                                i === 1 ? 'bg-accent shadow-[0_0_8px_rgba(251,191,36,0.4)]' :
+                                                                                    i === 2 ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]' :
+                                                                                        'bg-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.4)]'
+                                                                        )
+                                                                        : 'w-2 bg-white/20 hover:bg-white/40'
+                                                                        }`}
+                                                                    title={`Prueba ${i + 1}`}
+                                                                />
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 </div>
+                                            );
+                                        })()}
 
-                                                {/* Right: Controls & Transcription */}
-                                                <div className="lg:col-span-6 flex flex-col gap-6">
-                                                    <div className="flex-1 bg-[#0f0f12] border border-white/5 rounded-2xl md:rounded-3xl flex flex-col overflow-hidden shadow-inner min-h-[160px] md:min-h-[220px]">
-                                                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                                                            <div className="flex items-center gap-1">
-                                                                <Activity size={12} className={phenomRecording && !phenomPaused ? "text-purple-400 animate-pulse" : "text-zinc-600"} />
-                                                                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Traductor Existencial de Voz</span>
-                                                            </div>
-                                                            <span className="text-[7px] font-mono text-zinc-600 uppercase tracking-widest">
-                                                                {phenomRecording && !phenomPaused ? 'Grabando...' : (phenomHasRecorded[currentPhenomIndex] ? 'Sincronizados los subtítulos' : 'Modo Editor')}
-                                                            </span>
+
+                                    </div>
+                                ) : activeTest === 'phenom' ? (
+                                    <div className={`mx-auto animate-in slide-in-from-right duration-300 ${currentPhenomIndex < 4 ? 'max-w-5xl w-full' : 'max-w-2xl'}`}>
+                                        {currentPhenomIndex < 4 ? (
+                                            // PARTE A: LAS 4 DIMENSIONES ONTOLÓGICAS WITH VIDEO + STT
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center mb-1 px-1">
+                                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400">
+                                                        Pregunta {currentPhenomIndex + 1} de 4
+                                                    </span>
+                                                    <button onClick={() => setActiveTest(null)} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-3 py-1 rounded-full">Salir</button>
+                                                </div>
+
+                                                {/* Layout: Video Left, Text/Controls Right */}
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 md:gap-4 bg-[#0b0b0d] border border-white/5 rounded-2xl md:rounded-[2.5rem] p-2 md:p-4 shadow-2xl relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
+
+                                                    {/* Left: Question Card & Video Player */}
+                                                    <div className="lg:col-span-6 flex flex-col gap-2 md:gap-4">
+                                                        {/* Question Card */}
+                                                        <div className="bg-purple-950/20 border border-purple-800/30 rounded-2xl md:rounded-3xl p-3 md:p-4 relative overflow-hidden shadow-inner">
+                                                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px] pointer-events-none" />
+                                                            <h4 className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-400 mb-1.5">{PHENOM_PART_A[currentPhenomIndex].title}</h4>
+                                                            <p className="text-base md:text-xl font-serif italic text-white/90 leading-tight">"{PHENOM_PART_A[currentPhenomIndex].question}"</p>
                                                         </div>
-                                                        <div className="flex-1 relative">
-                                                            <textarea
-                                                                value={phenomTextValue}
-                                                                onChange={(e) => setPhenomTextValue(e.target.value)}
-                                                                placeholder={PHENOM_PART_A[currentPhenomIndex].placeholder}
-                                                                disabled={phenomRecording && !phenomPaused}
-                                                                className="absolute inset-0 w-full h-full bg-transparent p-4 md:p-5 text-sm text-zinc-300 font-sans leading-relaxed resize-none focus:outline-none disabled:opacity-50"
-                                                            />
+
+                                                        {/* Video Player */}
+                                                        <div className="relative w-full h-[240px] xs:h-[280px] lg:h-auto lg:aspect-video bg-black rounded-xl lg:rounded-3xl overflow-hidden border border-white/10 group shadow-2xl flex flex-col justify-between">
+                                                            <video ref={phenomWebcamRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+
+                                                            {/* Recording HUD */}
+                                                            <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between bg-gradient-to-t from-black/60 via-transparent to-black/30">
+                                                                <div className="flex justify-between items-start">
+                                                                    <div className="flex gap-2">
+                                                                        <div className="px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md border border-white/10 flex items-center gap-1">
+                                                                            <Mic size={10} className={phenomVolume > 10 ? "text-purple-400" : "text-white/50"} />
+                                                                            <div className="flex gap-0.5 h-2.5 items-end">
+                                                                                {Array.from({ length: 5 }).map((_, i) => {
+                                                                                    const maxVol = 100;
+                                                                                    const normalizedVol = Math.min(phenomVolume / maxVol, 1);
+                                                                                    const multiplier = i === 2 ? 1 : (i === 1 || i === 3 ? 0.7 : 0.4);
+                                                                                    const height = Math.max(2, normalizedVol * 10 * multiplier);
+                                                                                    const isActive = phenomVolume > (i * 10);
+
+                                                                                    return (
+                                                                                        <div
+                                                                                            key={i}
+                                                                                            className={`w-0.5 rounded-t-sm transition-all duration-75 ${isActive ? 'bg-purple-400' : 'bg-white/20'}`}
+                                                                                            style={{ height: `${height}px` }}
+                                                                                        />
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-md border border-white/10 flex items-center gap-1">
+                                                                            <Camera size={10} className="text-white" />
+                                                                            <span className="text-[7px] font-black uppercase text-white font-mono tracking-wider">Cam OK</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    {phenomRecording && (
+                                                                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-lg ${phenomPaused ? 'bg-amber-500/20 border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-red-500/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse'}`}>
+                                                                            <div className={`w-2 h-2 rounded-full ${phenomPaused ? 'bg-amber-500' : 'bg-red-500'}`} />
+                                                                            <span className={`text-[8px] font-black uppercase tracking-widest ${phenomPaused ? 'text-amber-500' : 'text-red-500'}`}>{phenomPaused ? 'PAUSADO' : 'GRABANDO'}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {phenomRecording ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={togglePhenomPause}
-                                                                    className={`py-3 md:py-4 rounded-xl md:rounded-2xl flex flex-col items-center justify-center gap-1 md:gap-1.5 transition-all border ${phenomPaused
-                                                                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
-                                                                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                                                                        }`}
-                                                                >
-                                                                    {phenomPaused ? (
-                                                                        <>
-                                                                            <Play size={16} className="text-amber-400" />
-                                                                            <span className="text-[8px] font-black uppercase tracking-widest">Reanudar</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <Pause size={16} />
-                                                                            <span className="text-[8px] font-black uppercase tracking-widest">Pausar</span>
-                                                                        </>
-                                                                    )}
-                                                                </button>
+                                                    {/* Right: Controls & Transcription */}
+                                                    <div className="lg:col-span-6 flex flex-col gap-6">
+                                                        <div className="flex-1 bg-[#0f0f12] border border-white/5 rounded-2xl md:rounded-3xl flex flex-col overflow-hidden shadow-inner min-h-[160px] md:min-h-[220px]">
+                                                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Activity size={12} className={phenomRecording && !phenomPaused ? "text-purple-400 animate-pulse" : "text-zinc-600"} />
+                                                                    <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Traductor Existencial de Voz</span>
+                                                                </div>
+                                                                <span className="text-[7px] font-mono text-zinc-600 uppercase tracking-widest">
+                                                                    {phenomRecording && !phenomPaused ? 'Grabando...' : (phenomHasRecorded[currentPhenomIndex] ? 'Sincronizados los subtítulos' : 'Modo Editor')}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex-1 relative">
+                                                                <textarea
+                                                                    value={phenomTextValue}
+                                                                    onChange={(e) => setPhenomTextValue(e.target.value)}
+                                                                    placeholder={PHENOM_PART_A[currentPhenomIndex].placeholder}
+                                                                    disabled={phenomRecording && !phenomPaused}
+                                                                    className="absolute inset-0 w-full h-full bg-transparent p-4 md:p-5 text-sm text-zinc-300 font-sans leading-relaxed resize-none focus:outline-none disabled:opacity-50"
+                                                                />
+                                                            </div>
+                                                        </div>
 
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            {phenomRecording ? (
+                                                                <>
+                                                                    <button
+                                                                        onClick={togglePhenomPause}
+                                                                        className={`py-3 md:py-4 rounded-xl md:rounded-2xl flex flex-col items-center justify-center gap-1 md:gap-1.5 transition-all border ${phenomPaused
+                                                                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]'
+                                                                            : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+                                                                            }`}
+                                                                    >
+                                                                        {phenomPaused ? (
+                                                                            <>
+                                                                                <Play size={16} className="text-amber-400" />
+                                                                                <span className="text-[8px] font-black uppercase tracking-widest">Reanudar</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Pause size={16} />
+                                                                                <span className="text-[8px] font-black uppercase tracking-widest">Pausar</span>
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+
+                                                                    <button
+                                                                        onClick={togglePhenomRecording}
+                                                                        className="bg-red-500/20 border border-red-500/30 hover:bg-red-500 hover:text-black py-4 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.15)]"
+                                                                    >
+                                                                        <Square size={16} />
+                                                                        <span className="text-[8px] font-black uppercase tracking-widest">Finalizar y Guardar</span>
+                                                                    </button>
+                                                                </>
+                                                            ) : (
                                                                 <button
                                                                     onClick={togglePhenomRecording}
-                                                                    className="bg-red-500/20 border border-red-500/30 hover:bg-red-500 hover:text-black py-4 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.15)]"
+                                                                    className="col-span-2 bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500 hover:text-black py-4 md:py-5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 transition-all text-purple-400 hover:scale-[1.01] shadow-[0_0_40px_rgba(168,85,247,0.15)] font-black uppercase tracking-[0.2em] text-[10px] md:text-xs"
                                                                 >
-                                                                    <Square size={16} />
-                                                                    <span className="text-[8px] font-black uppercase tracking-widest">Finalizar y Guardar</span>
+                                                                    <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
+                                                                    Iniciar Grabación de Respuesta
                                                                 </button>
-                                                            </>
-                                                        ) : (
-                                                            <button
-                                                                onClick={togglePhenomRecording}
-                                                                className="col-span-2 bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500 hover:text-black py-4 md:py-5 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 md:gap-3 transition-all text-purple-400 hover:scale-[1.01] shadow-[0_0_40px_rgba(168,85,247,0.15)] font-black uppercase tracking-[0.2em] text-[10px] md:text-xs"
-                                                            >
-                                                                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
-                                                                Iniciar Grabación de Respuesta
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                            )}
+                                                        </div>
 
-                                                    <div className="flex justify-between items-center pt-2">
-                                                        <button
-                                                            onClick={() => currentPhenomIndex > 0 && setCurrentPhenomIndex(prev => prev - 1)}
-                                                            disabled={currentPhenomIndex === 0}
-                                                            className="px-4 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl border border-white/5 text-[8px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:pointer-events-none"
-                                                        >
-                                                            Atrás
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleSavePhenomQualitative(phenomTextValue)}
-                                                            disabled={!phenomTextValue.trim() && !phenomHasRecorded[currentPhenomIndex]}
-                                                            className="px-5 py-2 md:px-7 md:py-2.5 rounded-lg md:rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-300 hover:bg-purple-500 hover:text-black transition-all font-black uppercase text-[8px] tracking-widest disabled:opacity-30 disabled:pointer-events-none"
-                                                        >
-                                                            Siguiente Pregunta
-                                                        </button>
+                                                        <div className="flex justify-between items-center pt-2">
+                                                            <button
+                                                                onClick={() => currentPhenomIndex > 0 && setCurrentPhenomIndex(prev => prev - 1)}
+                                                                disabled={currentPhenomIndex === 0}
+                                                                className="px-4 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl border border-white/5 text-[8px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                                                            >
+                                                                Atrás
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleSavePhenomQualitative(phenomTextValue)}
+                                                                disabled={!phenomTextValue.trim() && !phenomHasRecorded[currentPhenomIndex]}
+                                                                className="px-5 py-2 md:px-7 md:py-2.5 rounded-lg md:rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-300 hover:bg-purple-500 hover:text-black transition-all font-black uppercase text-[8px] tracking-widest disabled:opacity-30 disabled:pointer-events-none"
+                                                            >
+                                                                Siguiente Pregunta
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        // PARTE B: PID-5 BREVE
-                                        <div className="space-y-8 p-8 md:p-12 rounded-[2.5rem] bg-[#121214] border border-white/5 shadow-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
-                                            <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                                <span className="text-[8px] font-black uppercase tracking-widest text-purple-400">
-                                                    PID-5 Breve // Parte B: Reactivo {currentPhenomIndex - 3} de 25
-                                                </span>
-                                                <button onClick={() => setActiveTest(null)} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Salir</button>
-                                            </div>
+                                        ) : (
+                                            // PARTE B: PID-5 BREVE
+                                            <div className="space-y-8 p-8 md:p-12 rounded-[2.5rem] bg-[#121214] border border-white/5 shadow-2xl relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] pointer-events-none rounded-full" />
+                                                <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-purple-400">
+                                                        PID-5 Breve // Parte B: Reactivo {currentPhenomIndex - 3} de 25
+                                                    </span>
+                                                    <button onClick={() => setActiveTest(null)} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Salir</button>
+                                                </div>
 
-                                            <div className="space-y-6">
-                                                <span className="px-3 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-[7px] font-black uppercase tracking-widest text-purple-400 font-mono">
-                                                    Dominio: {PHENOM_PART_B[currentPhenomIndex - 4].domain}
-                                                </span>
-                                                <p className="text-2xl md:text-3xl font-sans font-light italic text-white leading-snug">
-                                                    "{PHENOM_PART_B[currentPhenomIndex - 4].text}"
-                                                </p>
-                                            </div>
+                                                <div className="space-y-6">
+                                                    <span className="px-3 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-[7px] font-black uppercase tracking-widest text-purple-400 font-mono">
+                                                        Dominio: {PHENOM_PART_B[currentPhenomIndex - 4].domain}
+                                                    </span>
+                                                    <p className="text-2xl md:text-3xl font-sans font-light italic text-white leading-snug">
+                                                        "{PHENOM_PART_B[currentPhenomIndex - 4].text}"
+                                                    </p>
+                                                </div>
 
-                                            <div className="space-y-3 pt-6">
-                                                {[
-                                                    { value: 0, text: "Completamente Falso" },
-                                                    { value: 1, text: "A veces Falso" },
-                                                    { value: 2, text: "A veces Verdadero" },
-                                                    { value: 3, text: "Completamente Verdadero" }
-                                                ].map(opt => (
+                                                <div className="space-y-3 pt-6">
+                                                    {[
+                                                        { value: 0, text: "Completamente Falso" },
+                                                        { value: 1, text: "A veces Falso" },
+                                                        { value: 2, text: "A veces Verdadero" },
+                                                        { value: 3, text: "Completamente Verdadero" }
+                                                    ].map(opt => (
+                                                        <button
+                                                            key={opt.value}
+                                                            onClick={() => handleSelectPidAnswer(opt.value)}
+                                                            className="w-full text-left p-5 rounded-2xl border border-white/5 bg-white/[0.01] hover:border-purple-500/35 hover:bg-purple-950/5 transition-all text-xs font-semibold tracking-wider font-sans text-zinc-300 hover:text-white group flex gap-4 items-center"
+                                                        >
+                                                            <span className="w-8 h-8 rounded-full bg-purple-950/20 border border-purple-800/30 flex items-center justify-center text-[10px] font-black text-purple-400 group-hover:bg-purple-500 group-hover:text-black shrink-0">
+                                                                {opt.value}
+                                                            </span>
+                                                            <span>{opt.text}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex justify-between items-center pt-4">
                                                     <button
-                                                        key={opt.value}
-                                                        onClick={() => handleSelectPidAnswer(opt.value)}
-                                                        className="w-full text-left p-5 rounded-2xl border border-white/5 bg-white/[0.01] hover:border-purple-500/35 hover:bg-purple-950/5 transition-all text-xs font-semibold tracking-wider font-sans text-zinc-300 hover:text-white group flex gap-4 items-center"
+                                                        onClick={() => setCurrentPhenomIndex(prev => prev - 1)}
+                                                        className="px-6 py-3 rounded-xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all"
                                                     >
-                                                        <span className="w-8 h-8 rounded-full bg-purple-950/20 border border-purple-800/30 flex items-center justify-center text-[10px] font-black text-purple-400 group-hover:bg-purple-500 group-hover:text-black shrink-0">
-                                                            {opt.value}
-                                                        </span>
-                                                        <span>{opt.text}</span>
+                                                        Atrás
+                                                    </button>
+                                                    <div className="text-[8px] font-black uppercase tracking-widest text-zinc-600">
+                                                        Likert Scale 0-3
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-8">
+                                            <div className="bg-purple-500 h-full transition-all duration-500" style={{ width: `${((currentPhenomIndex + 1) / 29) * 100}%` }} />
+                                        </div>
+                                    </div>
+                                ) : activeTest === 'icar16' ? (
+                                    <div className="max-w-3xl mx-auto space-y-4 animate-in slide-in-from-right duration-300">
+                                        <div className="flex justify-between items-center mb-2 px-1">
+                                            <span className="text-[8px] font-black uppercase tracking-widest text-accent">Pregunta {currentIcarIndex + 1} de 16</span>
+                                            <button onClick={exitIcarTest} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white bg-white/5 px-3 py-1 rounded-full transition-colors">Salir</button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-start">
+                                            <div className="lg:col-span-6 space-y-4">
+                                                <span className="px-2 py-1 rounded-md bg-accent/10 border border-accent/20 text-[7px] font-black uppercase tracking-widest text-accent font-mono">{icarQuestions[currentIcarIndex].category}</span>
+                                                <p className="text-base font-black italic uppercase text-white leading-tight">{icarQuestions[currentIcarIndex].instruction_text}</p>
+
+                                                {renderTestStimulusDiagram(icarQuestions[currentIcarIndex])}
+                                            </div>
+
+                                            <div className="lg:col-span-6 space-y-3">
+                                                {icarQuestions[currentIcarIndex].options.map(opt => (
+                                                    <button
+                                                        key={opt.label}
+                                                        onClick={() => handleSelectIcarAnswer(opt.label)}
+                                                        className="w-full text-left p-4 rounded-2xl border border-white/5 bg-white/[0.01] hover:border-accent/40 hover:bg-accent/5 transition-all text-xs font-semibold leading-relaxed font-sans text-zinc-300 hover:text-white group flex gap-3 items-center"
+                                                    >
+                                                        <span className="w-6 h-6 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-[9px] font-mono font-black text-zinc-400 group-hover:bg-accent group-hover:text-black shrink-0">{opt.label}</span>
+                                                        <span className="truncate">{opt.value}</span>
                                                     </button>
                                                 ))}
                                             </div>
-
-                                            <div className="flex justify-between items-center pt-4">
-                                                <button
-                                                    onClick={() => setCurrentPhenomIndex(prev => prev - 1)}
-                                                    className="px-6 py-3 rounded-xl border border-white/5 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all"
-                                                >
-                                                    Atrás
-                                                </button>
-                                                <div className="text-[8px] font-black uppercase tracking-widest text-zinc-600">
-                                                    Likert Scale 0-3
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-8">
-                                        <div className="bg-purple-500 h-full transition-all duration-500" style={{ width: `${((currentPhenomIndex + 1) / 29) * 100}%` }} />
-                                    </div>
-                                </div>
-                            ) : activeTest === 'icar16' ? (
-                                <div className="max-w-3xl mx-auto space-y-4 animate-in slide-in-from-right duration-300">
-                                    <div className="flex justify-between items-center mb-2 px-1">
-                                        <span className="text-[8px] font-black uppercase tracking-widest text-accent">Pregunta {currentIcarIndex + 1} de 16</span>
-                                        <button onClick={exitIcarTest} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white bg-white/5 px-3 py-1 rounded-full transition-colors">Salir</button>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-start">
-                                        <div className="lg:col-span-6 space-y-4">
-                                            <span className="px-2 py-1 rounded-md bg-accent/10 border border-accent/20 text-[7px] font-black uppercase tracking-widest text-accent font-mono">{icarQuestions[currentIcarIndex].category}</span>
-                                            <p className="text-base font-black italic uppercase text-white leading-tight">{icarQuestions[currentIcarIndex].instruction_text}</p>
-
-                                            {renderTestStimulusDiagram(icarQuestions[currentIcarIndex])}
                                         </div>
 
-                                        <div className="lg:col-span-6 space-y-3">
-                                            {icarQuestions[currentIcarIndex].options.map(opt => (
-                                                <button
-                                                    key={opt.label}
-                                                    onClick={() => handleSelectIcarAnswer(opt.label)}
-                                                    className="w-full text-left p-4 rounded-2xl border border-white/5 bg-white/[0.01] hover:border-accent/40 hover:bg-accent/5 transition-all text-xs font-semibold leading-relaxed font-sans text-zinc-300 hover:text-white group flex gap-3 items-center"
-                                                >
-                                                    <span className="w-6 h-6 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center text-[9px] font-mono font-black text-zinc-400 group-hover:bg-accent group-hover:text-black shrink-0">{opt.label}</span>
-                                                    <span className="truncate">{opt.value}</span>
-                                                </button>
-                                            ))}
+                                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-8">
+                                            <div className="bg-accent h-full transition-all duration-500" style={{ width: `${((currentIcarIndex + 1) / 16) * 100}%` }} />
                                         </div>
                                     </div>
+                                ) : activeTest === 'biographic' ? (
+                                    <BiographicInterview username={user} activeVersion={activeVersion}
+                                        onClose={() => setActiveTest(null)}
+                                        onComplete={(data) => {
+                                            console.log("Biographic Test Complete", data);
+                                            const suffix = activeVersion > 1 ? '_v' + activeVersion : '';
+                                            localStorage.setItem('oasis_bio_transcriptions_' + user + suffix, JSON.stringify(data));
+                                            setActiveTest(null);
+                                        }}
+                                    />
+                                ) : null}
+                            </div>
+                        )}
 
-                                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-8">
-                                        <div className="bg-accent h-full transition-all duration-500" style={{ width: `${((currentIcarIndex + 1) / 16) * 100}%` }} />
-                                    </div>
-                                </div>
-                            ) : activeTest === 'biographic' ? (
-                                <BiographicInterview username={user} activeVersion={activeVersion}
-                                    onClose={() => setActiveTest(null)}
-                                    onComplete={(data) => {
-                                        console.log("Biographic Test Complete", data);
-                                        const suffix = activeVersion > 1 ? '_v' + activeVersion : '';
-                                        localStorage.setItem('oasis_bio_transcriptions_' + user + suffix, JSON.stringify(data));
-                                        setActiveTest(null);
-                                    }}
-                                />
-                            ) : null}
-                        </div>
-                    )}
+                        {activeTabName === 'loop_map' && (
+                            <div className="w-full min-h-[60vh] flex flex-col items-center justify-center animate-in fade-in duration-500 relative px-2 sm:px-6">
+                                {hasMap ? (() => {
+                                    // Load patient nodes and edges
+                                    let patientNodes = [];
+                                    let patientEdges = [];
+                                    try {
+                                        patientNodes = JSON.parse(localStorage.getItem('oasis_canvas_nodes_' + user)) || [];
+                                        patientEdges = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user)) || [];
+                                    } catch (e) { }
 
-                    {activeTabName === 'loop_map' && (
-                        <div className="w-full min-h-[60vh] flex flex-col items-center justify-center animate-in fade-in duration-500 relative px-2 sm:px-6">
-                            {hasMap ? (() => {
-                                // Load patient nodes and edges
-                                let patientNodes = [];
-                                let patientEdges = [];
-                                try {
-                                    patientNodes = JSON.parse(localStorage.getItem('oasis_canvas_nodes_' + user)) || [];
-                                    patientEdges = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + user)) || [];
-                                } catch (e) {}
+                                    // Bounding box calculation to center SVG
+                                    let minX = 0, minY = 0, width = 800, height = 600;
+                                    if (patientNodes.length > 0) {
+                                        let minNodeX = Infinity, minNodeY = Infinity, maxNodeX = -Infinity, maxNodeY = -Infinity;
+                                        patientNodes.forEach(n => {
+                                            const w = n.width || 120;
+                                            const h = n.height || 120;
+                                            if (n.x < minNodeX) minNodeX = n.x;
+                                            if (n.y < minNodeY) minNodeY = n.y;
+                                            if (n.x + w > maxNodeX) maxNodeX = n.x + w;
+                                            if (n.y + h > maxNodeY) maxNodeY = n.y + h;
+                                        });
+                                        const padding = 120;
+                                        minX = minNodeX - padding;
+                                        minY = minNodeY - padding;
+                                        width = (maxNodeX - minNodeX) + padding * 2;
+                                        height = (maxNodeY - minNodeY) + padding * 2;
+                                    }
 
-                                // Bounding box calculation to center SVG
-                                let minX = 0, minY = 0, width = 800, height = 600;
-                                if (patientNodes.length > 0) {
-                                    let minNodeX = Infinity, minNodeY = Infinity, maxNodeX = -Infinity, maxNodeY = -Infinity;
-                                    patientNodes.forEach(n => {
-                                        const w = n.width || 120;
-                                        const h = n.height || 120;
-                                        if (n.x < minNodeX) minNodeX = n.x;
-                                        if (n.y < minNodeY) minNodeY = n.y;
-                                        if (n.x + w > maxNodeX) maxNodeX = n.x + w;
-                                        if (n.y + h > maxNodeY) maxNodeY = n.y + h;
-                                    });
-                                    const padding = 120;
-                                    minX = minNodeX - padding;
-                                    minY = minNodeY - padding;
-                                    width = (maxNodeX - minNodeX) + padding * 2;
-                                    height = (maxNodeY - minNodeY) + padding * 2;
-                                }
+                                    const drawGravityLine = (x1, y1, x2, y2) => {
+                                        const dx = x2 - x1;
+                                        const dy = y2 - y1;
+                                        const cp1x = x1 + dx * 0.1;
+                                        const cp1y = y1 + dy * 0.7;
+                                        const cp2x = x2 - dx * 0.1;
+                                        const cp2y = y2 - dy * 0.3;
+                                        return `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
+                                    };
 
-                                const drawGravityLine = (x1, y1, x2, y2) => {
-                                    const dx = x2 - x1;
-                                    const dy = y2 - y1;
-                                    const cp1x = x1 + dx * 0.1;
-                                    const cp1y = y1 + dy * 0.7;
-                                    const cp2x = x2 - dx * 0.1;
-                                    const cp2y = y2 - dy * 0.3;
-                                    return `M ${x1} ${y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
-                                };
+                                    return (
+                                        <div className="w-full max-w-5xl aspect-video rounded-3xl bg-[#09090b]/80 border border-white/5 p-4 relative overflow-hidden shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
+                                            <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
-                                return (
-                                    <div className="w-full max-w-5xl aspect-video rounded-3xl bg-[#09090b]/80 border border-white/5 p-4 relative overflow-hidden shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
-                                        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                                        
-                                        <svg viewBox={`${minX} ${minY} ${width} ${height}`} className="w-full h-full z-10 relative">
-                                            {/* Connections */}
-                                            {patientEdges.map((edge, i) => {
-                                                const source = patientNodes.find(n => n.id === edge.source);
-                                                const target = patientNodes.find(n => n.id === edge.target);
-                                                if (!source || !target) return null;
+                                            <svg viewBox={`${minX} ${minY} ${width} ${height}`} className="w-full h-full z-10 relative">
+                                                {/* Connections */}
+                                                {patientEdges.map((edge, i) => {
+                                                    const source = patientNodes.find(n => n.id === edge.source);
+                                                    const target = patientNodes.find(n => n.id === edge.target);
+                                                    if (!source || !target) return null;
 
-                                                const sx = source.x + (source.width || 120) / 2;
-                                                const sy = source.y + (source.height || 120);
-                                                const tx = target.x + (target.width || 120) / 2;
-                                                const ty = target.y;
+                                                    const sx = source.x + (source.width || 120) / 2;
+                                                    const sy = source.y + (source.height || 120);
+                                                    const tx = target.x + (target.width || 120) / 2;
+                                                    const ty = target.y;
 
-                                                const pathString = drawGravityLine(sx, sy, tx, ty);
-                                                
-                                                return (
-                                                    <g key={i}>
-                                                        <path d={pathString} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6" />
-                                                        <path d={pathString} fill="none" stroke={edge.color || 'rgba(255, 255, 255, 0.4)'} strokeWidth="1.5" />
-                                                    </g>
-                                                );
-                                            })}
+                                                    const pathString = drawGravityLine(sx, sy, tx, ty);
 
-                                            {/* Nodes */}
-                                            {patientNodes.map(node => {
-                                                const isContext = node.type === 'CONTEXT';
-                                                const isState = node.type === 'INTERNAL_STATE' || node.type === 'MACRO_MECHANISM';
-                                                const isSymptom = node.type === 'CRITICAL_SYMPTOM';
-                                                const isChain = node.type === 'IMPACT_CHAIN';
+                                                    return (
+                                                        <g key={i}>
+                                                            <path d={pathString} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6" />
+                                                            <path d={pathString} fill="none" stroke={edge.color || 'rgba(255, 255, 255, 0.4)'} strokeWidth="1.5" />
+                                                        </g>
+                                                    );
+                                                })}
 
-                                                let strokeColor = 'rgba(255,255,255,0.2)';
-                                                let bgColor = 'rgba(24, 24, 27, 0.4)';
-                                                let textColor = 'white';
-                                                let title = 'NODO';
+                                                {/* Nodes */}
+                                                {patientNodes.map(node => {
+                                                    const isContext = node.type === 'CONTEXT';
+                                                    const isState = node.type === 'INTERNAL_STATE' || node.type === 'MACRO_MECHANISM';
+                                                    const isSymptom = node.type === 'CRITICAL_SYMPTOM';
+                                                    const isChain = node.type === 'IMPACT_CHAIN';
 
-                                                if (isContext) {
-                                                    strokeColor = '#0ea5e9';
-                                                    bgColor = 'rgba(3, 105, 161, 0.2)';
-                                                    textColor = '#bae6fd';
-                                                    title = 'CONTEXTO INICIAL';
-                                                } else if (isState) {
-                                                    strokeColor = '#10b981';
-                                                    bgColor = 'rgba(4, 120, 87, 0.2)';
-                                                    textColor = '#a7f3d0';
-                                                    title = node.type === 'MACRO_MECHANISM' ? 'MACRO MECANISMO' : 'ESTADO INTERNO';
-                                                } else if (isSymptom) {
-                                                    strokeColor = '#ef4444';
-                                                    bgColor = 'rgba(185, 28, 28, 0.2)';
-                                                    textColor = '#fecaca';
-                                                    title = 'SÍNTOMA CRÍTICO';
-                                                } else if (isChain) {
-                                                    strokeColor = '#71717a';
-                                                    bgColor = 'rgba(63, 63, 70, 0.2)';
-                                                    textColor = '#e4e4e7';
-                                                    title = 'CADENA DE IMPACTO';
-                                                }
+                                                    let strokeColor = 'rgba(255,255,255,0.2)';
+                                                    let bgColor = 'rgba(24, 24, 27, 0.4)';
+                                                    let textColor = 'white';
+                                                    let title = 'NODO';
 
-                                                const cx = node.x + (node.width || 120) / 2;
-                                                const cy = node.y + (node.height || 120) / 2;
-                                                const rx = (node.width || 120) / 2;
-                                                const ry = (node.height || 120) / 2;
+                                                    if (isContext) {
+                                                        strokeColor = '#0ea5e9';
+                                                        bgColor = 'rgba(3, 105, 161, 0.2)';
+                                                        textColor = '#bae6fd';
+                                                        title = 'CONTEXTO INICIAL';
+                                                    } else if (isState) {
+                                                        strokeColor = '#10b981';
+                                                        bgColor = 'rgba(4, 120, 87, 0.2)';
+                                                        textColor = '#a7f3d0';
+                                                        title = node.type === 'MACRO_MECHANISM' ? 'MACRO MECANISMO' : 'ESTADO INTERNO';
+                                                    } else if (isSymptom) {
+                                                        strokeColor = '#ef4444';
+                                                        bgColor = 'rgba(185, 28, 28, 0.2)';
+                                                        textColor = '#fecaca';
+                                                        title = 'SÍNTOMA CRÍTICO';
+                                                    } else if (isChain) {
+                                                        strokeColor = '#71717a';
+                                                        bgColor = 'rgba(63, 63, 70, 0.2)';
+                                                        textColor = '#e4e4e7';
+                                                        title = 'CADENA DE IMPACTO';
+                                                    }
 
-                                                return (
-                                                    <g key={node.id} className="group/node">
-                                                        <ellipse cx={cx} cy={cy} rx={rx + 10} ry={ry + 10} fill={strokeColor} className="opacity-[0.03] blur-md" />
-                                                        
-                                                        {isContext && (
-                                                            <polygon 
-                                                                points={`${cx},${node.y} ${node.x + (node.width || 120)},${cy} ${cx},${node.y + (node.height || 120)} ${node.x},${cy}`}
-                                                                fill={bgColor}
-                                                                stroke={strokeColor}
-                                                                strokeWidth="1.5"
-                                                            />
-                                                        )}
-                                                        {isState && (
-                                                            <ellipse 
-                                                                cx={cx} cy={cy} rx={rx} ry={ry}
-                                                                fill={bgColor}
-                                                                stroke={strokeColor}
-                                                                strokeWidth="1.5"
-                                                            />
-                                                        )}
-                                                        {(isSymptom || isChain) && (
-                                                            <rect 
-                                                                x={node.x} y={node.y} width={node.width || 120} height={node.height || 120} rx="16" ry="16"
-                                                                fill={bgColor}
-                                                                stroke={strokeColor}
-                                                                strokeWidth="1.5"
-                                                            />
-                                                        )}
+                                                    const cx = node.x + (node.width || 120) / 2;
+                                                    const cy = node.y + (node.height || 120) / 2;
+                                                    const rx = (node.width || 120) / 2;
+                                                    const ry = (node.height || 120) / 2;
 
-                                                        <text 
-                                                            x={cx} y={node.y - 12} 
-                                                            textAnchor="middle" 
-                                                            className="text-[8px] font-bold font-mono tracking-widest fill-zinc-500 uppercase select-none"
-                                                        >
-                                                            {title}
-                                                        </text>
+                                                    return (
+                                                        <g key={node.id} className="group/node">
+                                                            <ellipse cx={cx} cy={cy} rx={rx + 10} ry={ry + 10} fill={strokeColor} className="opacity-[0.03] blur-md" />
 
-                                                        <foreignObject 
-                                                            x={node.x + 8} y={node.y + 8} 
-                                                            width={(node.width || 120) - 16} height={(node.height || 120) - 16}
-                                                        >
-                                                            <div className="w-full h-full flex items-center justify-center text-center p-2 overflow-hidden select-none">
-                                                                <span 
-                                                                    className="text-[9px] font-black uppercase tracking-wider leading-relaxed font-mono"
-                                                                    style={{ color: textColor }}
-                                                                >
-                                                                    {node.label}
-                                                                </span>
-                                                            </div>
-                                                        </foreignObject>
-                                                    </g>
-                                                );
-                                            })}
-                                        </svg>
-                                    </div>
-                                );
-                            })() : (
-                                <>
-                                    <Compass size={48} className="text-zinc-800 mb-6 animate-pulse" />
-                                    <h3 className="text-2xl md:text-4xl font-black italic uppercase text-white/40 tracking-widest text-center">
-                                        Sin Cartografía Asignada
-                                    </h3>
-                                    <p className="text-[10px] md:text-xs font-mono text-zinc-500 mt-6 max-w-lg text-center leading-relaxed">
-                                        AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                    )}
+                                                            {isContext && (
+                                                                <polygon
+                                                                    points={`${cx},${node.y} ${node.x + (node.width || 120)},${cy} ${cx},${node.y + (node.height || 120)} ${node.x},${cy}`}
+                                                                    fill={bgColor}
+                                                                    stroke={strokeColor}
+                                                                    strokeWidth="1.5"
+                                                                />
+                                                            )}
+                                                            {isState && (
+                                                                <ellipse
+                                                                    cx={cx} cy={cy} rx={rx} ry={ry}
+                                                                    fill={bgColor}
+                                                                    stroke={strokeColor}
+                                                                    strokeWidth="1.5"
+                                                                />
+                                                            )}
+                                                            {(isSymptom || isChain) && (
+                                                                <rect
+                                                                    x={node.x} y={node.y} width={node.width || 120} height={node.height || 120} rx="16" ry="16"
+                                                                    fill={bgColor}
+                                                                    stroke={strokeColor}
+                                                                    strokeWidth="1.5"
+                                                                />
+                                                            )}
+
+                                                            <text
+                                                                x={cx} y={node.y - 12}
+                                                                textAnchor="middle"
+                                                                className="text-[8px] font-bold font-mono tracking-widest fill-zinc-500 uppercase select-none"
+                                                            >
+                                                                {title}
+                                                            </text>
+
+                                                            <foreignObject
+                                                                x={node.x + 8} y={node.y + 8}
+                                                                width={(node.width || 120) - 16} height={(node.height || 120) - 16}
+                                                            >
+                                                                <div className="w-full h-full flex items-center justify-center text-center p-2 overflow-hidden select-none">
+                                                                    <span
+                                                                        className="text-[9px] font-black uppercase tracking-wider leading-relaxed font-mono"
+                                                                        style={{ color: textColor }}
+                                                                    >
+                                                                        {node.label}
+                                                                    </span>
+                                                                </div>
+                                                            </foreignObject>
+                                                        </g>
+                                                    );
+                                                })}
+                                            </svg>
+                                        </div>
+                                    );
+                                })() : (
+                                    <>
+                                        <Compass size={48} className="text-zinc-800 mb-6 animate-pulse" />
+                                        <h3 className="text-2xl md:text-4xl font-black italic uppercase text-white/40 tracking-widest text-center">
+                                            Sin Cartografía Asignada
+                                        </h3>
+                                        <p className="text-[10px] md:text-xs font-mono text-zinc-500 mt-6 max-w-lg text-center leading-relaxed">
+                                            AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                        )}
 
 
                     </div>
@@ -10721,9 +10712,9 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                     <span className="text-[6px] font-mono text-zinc-400">@{template.creator}</span>
                                                 </div>
                                                 {template.creator === user && (
-                                                    <button 
-                                                        onClick={async (e) => { 
-                                                            e.stopPropagation(); 
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
                                                             try {
                                                                 const res = await fetch(`${API_URL}/api/oasis/backgrounds/templates/${template.id}`, { method: 'DELETE' });
                                                                 if (res.ok) setBgTemplates(prev => prev.filter(t => t.id !== template.id));
@@ -10827,7 +10818,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <div className="space-y-8">
                             <div className="space-y-4">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Utilidades de Red</span>
-                                <button 
+                                <button
                                     onClick={() => {
                                         const renderedBlocks = blocks.filter(b => b.type !== 'insight' && !b.isPublic);
                                         const targetScale = 0.8;
@@ -10847,10 +10838,10 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                                 const by = b.y !== undefined ? b.y : 0;
                                                 const bw = getBWidth(b, false);
                                                 const bh = getBHeight(b, false);
-                                                if (bx - bw/2 < minX) minX = bx - bw/2;
-                                                if (bx + bw/2 > maxX) maxX = bx + bw/2;
-                                                if (by - bh/2 < minY) minY = by - bh/2;
-                                                if (by + bh/2 > maxY) maxY = by + bh/2;
+                                                if (bx - bw / 2 < minX) minX = bx - bw / 2;
+                                                if (bx + bw / 2 > maxX) maxX = bx + bw / 2;
+                                                if (by - bh / 2 < minY) minY = by - bh / 2;
+                                                if (by + bh / 2 > maxY) maxY = by + bh / 2;
                                             });
                                             const centerX = (minX + maxX) / 2;
                                             const centerY = (minY + maxY) / 2;
@@ -10858,7 +10849,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                             targetY = -centerY * targetScale;
                                         }
                                         setCam({ x: targetX, y: targetY, scale: targetScale });
-                                    }} 
+                                    }}
                                     className="w-full py-4 bg-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-zinc-300 hover:bg-white/10 hover:text-white transition-all border border-white/5"
                                 >
                                     Recentrar Lienzo Maestro
@@ -10940,7 +10931,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
             {(view === 'canvas' || view === 'profile' || view === 'soul' || isSimpleNotesOpen) && view !== 'clinical' && (
-                <div 
+                <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
                     className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506]/60 backdrop-blur-xl border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in slide-in-from-top-5 duration-700"
@@ -10948,14 +10939,14 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 >
                     {/* 1. Perfil */}
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook(null); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                            setView('profile'); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setIsComposerOpen(false);
+                            setActiveNotebook(null);
+                            setIsChatOpen(false);
+                            setActiveTest(null);
+                            setView('profile');
                         }}
                         className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
@@ -10993,13 +10984,13 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* 4. Diario */}
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('diary'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setIsComposerOpen(false);
+                            setActiveNotebook('diary');
+                            setIsChatOpen(false);
+                            setActiveTest(null);
                         }}
                         className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'diary' ? 'bg-[#f59e0b] text-black border-[#fbbf24] shadow-[0_0_20px_rgba(245,158,11,0.4)]' : 'bg-[#18181b] border-white/5 text-[#f59e0b] hover:bg-[#f59e0b]/10 hover:border-[#f59e0b]/50'}`}
                         title="Libreta de Diario"
@@ -11009,13 +11000,13 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* 5. Resonancia */}
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook('resonance'); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setIsComposerOpen(false);
+                            setActiveNotebook('resonance');
+                            setIsChatOpen(false);
+                            setActiveTest(null);
                         }}
                         className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${activeNotebook === 'resonance' ? 'bg-[#a855f7] text-black border-[#c084fc] shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'bg-[#18181b] border-white/5 text-[#a855f7] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/50'}`}
                         title="Análisis de Ruido"
@@ -11025,14 +11016,14 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* 6. Lienzo Principal (Movido al final) */}
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIsSimpleNotesOpen(false); 
-                            setIsComposerOpen(false); 
-                            setActiveNotebook(null); 
-                            setIsChatOpen(false); 
-                            setActiveTest(null); 
-                            setView('canvas'); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setIsComposerOpen(false);
+                            setActiveNotebook(null);
+                            setIsChatOpen(false);
+                            setActiveTest(null);
+                            setView('canvas');
                         }}
                         className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
@@ -11235,8 +11226,8 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
             {/* COMPOSER */}
             {isComposerOpen && (
-                <div 
-                    className={`fixed inset-x-0 top-[140px] md:top-0 md:inset-0 rounded-t-[2.5rem] md:rounded-none border-t border-x border-white/10 md:border-none z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-none ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
+                <div
+                    className={`fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500 ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
                     style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
                     onTouchStart={e => e.stopPropagation()}
                     onPointerDown={e => e.stopPropagation()}
@@ -11245,7 +11236,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* BOTTOM FLOATING TOOLBAR */}
                     {composerStep === 'note' && (
-                        <div 
+                        <div
                             className="absolute left-1/2 -translate-x-1/2 z-[100] flex items-center justify-between gap-1.5 md:gap-4 p-1 md:p-2 bg-[#121214]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,1)] animate-in slide-in-from-bottom-5 duration-700 w-max max-w-[95%]"
                             style={{ bottom: 'max(64px, calc(env(safe-area-inset-bottom) + 40px))' }}
                         >
@@ -12444,9 +12435,9 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             const touch1 = e.touches[0];
             const touch2 = e.touches[1];
             const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-            
+
             const factor = dist / touchStartDistRef.current;
-            
+
             let newZoom;
             if (factor < 1) {
                 // Zooming out: apply a dampening curve to make zoom out slower, smoother, and more controlled
@@ -12835,6 +12826,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                             </div>
 
                             {/* TRANSFORM CONTROLS (ONLY IF SELECTED - ANCHORED STABLY TO OUTER POSITION) */}
+
                             {isSelected && (
                                 <>
                                     {/* ROTATE HANDLE */}
@@ -12908,13 +12900,13 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             {/* CANVA-STYLE BOTTOM BAR SETTINGS */}
             {selectedBlock && (
                 <div className="fixed bottom-0 left-0 right-0 z-[2200] bg-[#121214]/95 backdrop-blur-3xl border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] px-4 py-3 pb-safe animate-in slide-in-from-bottom-10 duration-300">
-                    
+
                     {/* SUB-MENU DRAWER */}
                     {activeTool && (
                         <div className="w-full border-b border-white/5 pb-3 mb-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
                             <div className="flex items-center justify-between mb-2">
-                                <button 
-                                    onClick={() => setActiveTool(null)} 
+                                <button
+                                    onClick={() => setActiveTool(null)}
                                     className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white flex items-center gap-1"
                                 >
                                     ← Volver
@@ -12931,8 +12923,8 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     {activeTool === 'text' && 'Formato de Letra'}
                                     {activeTool === 'size' && 'Tamaño de Letra'}
                                 </span>
-                                <button 
-                                    onClick={() => setSelectedId(null)} 
+                                <button
+                                    onClick={() => setSelectedId(null)}
                                     className="text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300"
                                 >
                                     Listo ✓
