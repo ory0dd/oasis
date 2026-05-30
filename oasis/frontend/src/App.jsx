@@ -2455,6 +2455,13 @@ const ProfileView = ({
                     setView('canvas');
                     setTimeout(() => isScrollingRef.current = false, 800);
                 }
+            } else if (deltaY < -50) {
+                // Scroll up / Swipe down -> open bitacora
+                if (!isScrollingRef.current) {
+                    isScrollingRef.current = true;
+                    setIsBitacoraOpen(true);
+                    setTimeout(() => isScrollingRef.current = false, 800);
+                }
             }
         };
 
@@ -2623,26 +2630,82 @@ const ProfileView = ({
                                 </div>
                             </div>
                             
-                            {/* Preview of latest notes */}
-                            {filteredReleases.length > 0 && (
-                                <div className="flex flex-col gap-1 border-t border-white/5 pt-2">
-                                    {filteredReleases.slice(0, 2).map(b => {
+                            {/* Full Scrollable List of Notes in Profile */}
+                            <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-3 max-h-[45vh] overflow-y-auto no-scrollbar pb-6 pr-1">
+                                {filteredReleases.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center">
+                                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                                            No hay registros
+                                        </p>
+                                    </div>
+                                ) : (
+                                    filteredReleases.map(b => {
                                         const isDia = b.entries && b.entries.length > 0;
                                         const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                        let textSnippet = b.caption;
-                                        if (!textSnippet) {
-                                            if (isDia) textSnippet = 'Entrada de Diario';
-                                            else if (isRes) textSnippet = 'Resonancia Magnética';
-                                            else textSnippet = 'Nota Desconocida';
-                                        }
+                                        
+                                        let typeLabel = 'Nota';
+                                        if (isDia) typeLabel = 'Diario';
+                                        if (isRes) typeLabel = 'Resonancia';
+                                        if (b.type === 'chat') typeLabel = 'AI';
+                                        if (b.type === 'image' || b.type === 'video') typeLabel = 'Media';
+
+                                        let textSnippet = b.text || b.content || '';
+                                        if (typeof textSnippet !== 'string') textSnippet = '';
+                                        textSnippet = textSnippet.replace(/<[^>]*>?/gm, '').substring(0, 50) + (textSnippet.length > 50 ? '...' : '');
+                                        
+                                        const noteColor = b.color || '#a1a1aa';
+                                        const isSelected = selectedIds.includes(b.id);
+                                        const timeString = new Date(b.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+
                                         return (
-                                            <div key={b.id} className="text-[9px] text-zinc-400 truncate italic">
-                                                • {textSnippet}
+                                            <div
+                                                key={`profile-list-${b.id}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCardClick(b.id);
+                                                }}
+                                                className={`group/note border rounded-lg px-2 py-1.5 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${isSelected
+                                                    ? 'bg-accent/10 border-accent/60 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]'
+                                                    : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/5 hover:border-white/10'
+                                                    }`}
+                                                style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
+                                            >
+                                                <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: noteColor !== '#a1a1aa' ? noteColor : 'transparent' }} />
+
+                                                {isSelectionMode && (
+                                                    <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
+                                                        {isSelected && <Check size={10} strokeWidth={4} />}
+                                                    </div>
+                                                )}
+
+                                                <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
+                                                    <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
+                                                        {typeLabel}
+                                                    </span>
+
+                                                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                                                        <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
+                                                            {b.caption || 'Sin título'}
+                                                        </h4>
+                                                        <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
+                                                            {textSnippet || 'Sin contenido'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4 shrink-0">
+                                                    <span className="text-[8px] font-mono text-zinc-500">
+                                                        {timeString}
+                                                    </span>
+                                                    <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
+                                                        →
+                                                    </span>
+                                                </div>
                                             </div>
                                         );
-                                    })}
-                                </div>
-                            )}
+                                    })
+                                )}
+                            </div>
                         </div>
 
                         {/* BITÁCORA HUB FILTERS & UTILITIES (NOW A FLOATING MODAL CARD) */}
