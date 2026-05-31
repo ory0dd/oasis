@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import BitacoraExistencial from './components/BitacoraExistencial';
 import { createPortal } from 'react-dom';
 import {
     Plus, Minus, Edit2, Check, Radio, Focus, Compass, CheckSquare,
@@ -2862,7 +2863,7 @@ const ProfileView = ({
 
 export default function App() {
     const [view, setView] = useState('canvas');
-    const [isBitacoraOpen, setIsBitacoraOpen] = useState(false);
+    const [isBitacoraOpen, setIsBitacoraOpen] = useState(true);
     const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
@@ -2886,7 +2887,7 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(true);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
     const isComposerLongPressRef = useRef(false);
@@ -10183,7 +10184,10 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     view === 'canvas' ? renderCanvasView() :
                         view === 'soul' ? renderSoulView() :
                             (view === 'feed' ? renderFeedView() :
-                                <ProfileView
+                                <>
+                                    {renderCanvasView()}
+                                    <div className="fixed inset-0 z-[1399] bg-[#050506]/60 backdrop-blur-md transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
+                                    <ProfileView
                                     user={user}
                                     soulPieces={soulPieces}
                                     blocks={blocks}
@@ -10237,6 +10241,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                                     onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
                                     openNewComposer={openNewComposer}
                                 />
+                                </>
                             )}
             </div>
 
@@ -10598,7 +10603,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             )}
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
-            {(view === 'canvas' || view === 'profile' || view === 'soul' || isSimpleNotesOpen) && view !== 'clinical' && (
+            {(view === 'canvas' || view === 'profile' || view === 'soul' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && (
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
@@ -10609,6 +10614,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            setIsBitacoraOpen(false);
                             setIsSimpleNotesOpen(false);
                             setIsComposerOpen(false);
                             setActiveNotebook(null);
@@ -10623,10 +10629,29 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <User size={18} className="hover-float-icon" />
                     </button>
 
+                    {/* Bitácora Existencial */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsSimpleNotesOpen(false);
+                            setIsComposerOpen(false);
+                            setActiveNotebook(null);
+                            setIsChatOpen(false);
+                            setActiveTest(null);
+                            setView('canvas');
+                            setIsBitacoraOpen(true);
+                        }}
+                        className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isBitacoraOpen ? 'bg-red-500 text-black border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'bg-[#18181b] border-white/5 text-red-500 hover:bg-red-500/10 hover:border-red-500/50'}`}
+                        title="Bitácora Existencial"
+                    >
+                        <Eye size={18} className="hover-float-icon" />
+                    </button>
+
                     {/* 2. Lápiz / Notas */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            setIsBitacoraOpen(false);
                             setIsSimpleNotesOpen(false);
                             setActiveNotebook(null);
                             setIsChatOpen(false);
@@ -10642,7 +10667,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
 
                     {/* 3. Chat IA */}
                     <button
-                        onClick={(e) => { e.stopPropagation(); setIsChatOpen(prev => !prev); }}
+                        onClick={(e) => { e.stopPropagation(); setIsBitacoraOpen(false); setIsChatOpen(prev => !prev); }}
                         className={`w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${isChatOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={isChatOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Nueva Conversación IA"
@@ -10654,6 +10679,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            setIsBitacoraOpen(false);
                             setIsSimpleNotesOpen(false);
                             setIsComposerOpen(false);
                             setActiveNotebook('diary');
@@ -10670,6 +10696,7 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            setIsBitacoraOpen(false);
                             setIsSimpleNotesOpen(false);
                             setIsComposerOpen(false);
                             setActiveNotebook('resonance');
@@ -10682,10 +10709,11 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                         <Sparkles size={18} className="hover-float-icon" />
                     </button>
 
-                    {/* 6. Lienzo Principal (Movido al final) */}
+                    {/* 6. Lienzo Principal */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            setIsBitacoraOpen(false);
                             setIsSimpleNotesOpen(false);
                             setIsComposerOpen(false);
                             setActiveNotebook(null);
@@ -10703,9 +10731,43 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
                 </div>
             )}
 
-            {/* UNIFIED MODAL BACKDROP FOR MOBILE */}
-            {(isComposerOpen || isSimpleNotesOpen || activeNotebook || isChatOpen || activeTest) && (
-                <div className="fixed inset-0 z-[1399] bg-black/40 backdrop-blur-xl md:hidden transition-all duration-700 animate-in fade-in pointer-events-none" />
+            
+            {isBitacoraOpen && (
+                <BitacoraExistencial
+                    blocks={blocks}
+                    setBlocks={setBlocks}
+                    accent={accent}
+                    onClose={() => setIsBitacoraOpen(false)}
+                    user={user}
+                    editBlock={(b) => {
+                        setIsBitacoraOpen(false);
+                        editBlock(b);
+                    }}
+                    openNewComposer={() => {
+                        setIsBitacoraOpen(false);
+                        openNewComposer(false, false);
+                    }}
+                    deleteBlocks={(ids) => syncBlocks(blocks.filter(b => !ids.includes(b.id)))}
+                    onNewChat={() => {
+                        setIsBitacoraOpen(false);
+                        setIsChatOpen(true);
+                    }}
+                    onOpenSimpleNotes={() => {
+                        setIsBitacoraOpen(false);
+                        setIsSimpleNotesOpenRaw(true);
+                    }}
+                />
+            )}
+
+            {/* UNIFIED MODAL BACKDROP */}
+            {(isComposerOpen || isSimpleNotesOpen || activeNotebook || isChatOpen || activeTest || isBitacoraOpen) && (
+                <div 
+                    className="fixed inset-0 z-[1399] bg-[#050506]/60 backdrop-blur-md transition-all duration-700 animate-in fade-in"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                />
             )}
 
             {isSimpleNotesOpen && (
