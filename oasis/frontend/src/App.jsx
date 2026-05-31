@@ -2477,7 +2477,56 @@ const ProfileView = ({
     }, []);
 
     return (
-        <div className="w-full h-screen relative overflow-hidden bg-[#0a0a0b]/85 backdrop-blur-xl">
+        <div 
+            className="fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] bg-[#0a0a0b]/95 backdrop-blur-3xl shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500 overflow-hidden"
+            style={{ height: window.innerWidth < 768 ? (window.visualViewport?.height || window.innerHeight) - 140 + 'px' : (window.visualViewport?.height || window.innerHeight) - 100 + 'px' }}
+            onTouchStart={(e) => {
+                e.stopPropagation();
+                const touch = e.touches[0];
+                e.currentTarget.dataset.startY = touch.clientY;
+                e.currentTarget.style.transition = 'none';
+            }}
+            onTouchMove={(e) => {
+                e.stopPropagation();
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && scrollable.scrollTop > 0) return;
+
+                if (deltaY > 0) {
+                    e.currentTarget.style.transform = `translateY(${deltaY}px)`;
+                }
+
+                if (deltaY > 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = 'translateY(100%)';
+                    setTimeout(() => setView('canvas'), 200);
+                }
+            }}
+            onTouchEnd={(e) => {
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY <= 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = 'translateY(0px)';
+                }
+            }}
+            onPointerDown={e => e.stopPropagation()}
+            onWheel={(e) => {
+                e.stopPropagation();
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
+
+                if (e.deltaY < -50) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = 'translateY(100%)';
+                    setTimeout(() => setView('canvas'), 200);
+                }
+            }}
+        >
             {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
             <div className="absolute top-20 left-6 right-6 md:left-10 md:right-10 flex justify-between items-start pointer-events-none z-50">
                 <div className="flex gap-2 pointer-events-auto">
@@ -2493,11 +2542,7 @@ const ProfileView = ({
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
 
-            <div
-                id="profile-scroll-container"
-                ref={containerRef}
-                className="w-full h-full text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll"
-            >
+            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll pb-32">
                 {/* 1. TOP COVER BANNER (BACKGROUND OF FIRST SLIDE) */}
                 <div className="absolute top-0 left-0 w-full h-[100vh] z-0 pointer-events-none overflow-hidden">
                     <div
@@ -2506,7 +2551,7 @@ const ProfileView = ({
                             backgroundImage: `url(${formatUrl(coverImage)})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center center',
-                            opacity: activeSlideIndex === 0 ? 0.35 : 0.05
+                            opacity: 0.25
                         }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0b]/60 to-[#0a0a0b]" />
@@ -2515,7 +2560,7 @@ const ProfileView = ({
                 {/* SLIDE 1: HERO, BIO, FILTERS & ACTIONS (CONSOLIDATED) */}
                 <div
                     data-index={0}
-                    className="profile-slide w-full h-screen snap-start shrink-0 relative flex flex-col justify-between pt-20 md:pt-32 pb-4 px-6 md:px-10 z-10 overflow-hidden"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-20 md:pt-32 pb-4 px-6 md:px-10 z-10 no-swipe snap-start"
                 >
 
                     {/* HERO MAIN CARD (CONSOLIDATED) */}
@@ -2610,357 +2655,195 @@ const ProfileView = ({
                             </div>
                         )}
 
-                        {/* INTEGRATED BITACORA PREVIEW (SHOWN WHEN MODAL IS CLOSED) */}
-                        <div 
-                            className={`w-full mt-2 p-4 rounded-2xl bg-black/40 backdrop-blur-md border border-white/5 hover:border-white/10 shadow-xl flex flex-col gap-3 cursor-pointer transition-all hover:bg-black/60 group animate-in fade-in zoom-in-95 duration-500 ${isBitacoraOpen ? 'hidden' : 'flex'}`}
-                            onClick={() => setIsBitacoraOpen(true)}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
-                                        <Compass size={14} className="text-accent group-hover:rotate-180 transition-transform duration-700 ease-out" style={{ color: accent }} />
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white">Bitácora Existencial</span>
-                                        <span className="text-[9px] font-mono text-zinc-500">{filteredReleases.length} registros • Toca para abrir</span>
-                                    </div>
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-accent/20 flex items-center justify-center transition-colors">
-                                    <ChevronUp size={14} className="text-zinc-400 group-hover:text-accent transition-colors" style={{ color: accent }} />
-                                </div>
-                            </div>
-                            
-                            {/* Full Scrollable List of Notes in Profile */}
-                            <div className="w-full flex flex-col gap-2 mt-1 border-t border-white/5 pt-3 max-h-[45vh] overflow-y-auto no-scrollbar pb-6 pr-1">
-                                {filteredReleases.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center">
-                                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                                            No hay registros
-                                        </p>
-                                    </div>
-                                ) : (
-                                    filteredReleases.map(b => {
-                                        const isDia = b.entries && b.entries.length > 0;
-                                        const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                        
-                                        let typeLabel = 'Nota';
-                                        if (isDia) typeLabel = 'Diario';
-                                        if (isRes) typeLabel = 'Resonancia';
-                                        if (b.type === 'chat') typeLabel = 'AI';
-                                        if (b.type === 'image' || b.type === 'video') typeLabel = 'Media';
+                        
+                        <div className="w-full max-w-3xl mx-auto px-6 md:px-10 mb-2 flex items-center gap-3 opacity-60">
+                             <div className="flex-1 h-[1px] bg-white/10" />
+                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">Feed de Notas</span>
+                             <div className="flex-1 h-[1px] bg-white/10" />
+                        </div>
 
-                                        let textSnippet = b.text || b.content || '';
-                                        if (typeof textSnippet !== 'string') textSnippet = '';
-                                        textSnippet = textSnippet.replace(/<[^>]*>?/gm, '').substring(0, 50) + (textSnippet.length > 50 ? '...' : '');
-                                        
-                                        const noteColor = b.color || '#a1a1aa';
-                                        const isSelected = selectedIds.includes(b.id);
-                                        const timeString = new Date(b.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                        <div className="w-full flex flex-col gap-8 px-6 md:px-10 pb-20 no-swipe relative z-20">
+                            {filteredReleases.length === 0 ? (
+                                <div className="w-full h-40 flex items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest">
+                                    No hay registros
+                                </div>
+                            ) : (
+                                filteredReleases.map((b, index) => {
+                                    const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                    const isDia = b.entries && b.entries.length > 0;
+                                    const isInsight = b.type === 'insight';
+                                    const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
+                                    const isImg = b.type === 'image' || b.type === 'relic';
+                                    const isChat = b.type === 'conversation';
+                                    const hasSubNotes = b.muralBlocks && b.muralBlocks.length > 0;
 
-                                        return (
+                                    const noteColor = b.color || accent;
+                                    const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
+                                    const typeLabel = isChat ? 'DIÁLOGO AI' : (isRes ? 'RESONANCIA' : (isDia ? 'DIARIO' : (isImg ? 'MULTIMEDIA' : (isInsight ? 'REVELACIÓN' : 'NOTA'))));
+                                    const isSelected = selectedIds && selectedIds.includes(b.id);
+
+                                    return (
+                                        <div
+                                            key={b.id || index}
+                                            className="profile-feed-item w-full h-screen shrink-0 max-w-3xl mx-auto relative flex flex-col justify-center items-center z-10 snap-center px-4"
+                                        >
                                             <div
-                                                key={`profile-list-${b.id}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCardClick(b.id);
+                                                onClick={() => handleCardClick(b.id)}
+                                                className={`w-full max-w-3xl min-h-[250px] max-h-[70vh] bg-black/40 border rounded-[2.5rem] p-6 md:p-8 flex flex-col transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] transform-gpu relative overflow-hidden group/board-item shadow-2xl backdrop-blur-md cursor-pointer scale-100 opacity-100 blur-0 ${isSelectionMode
+                                                    ? (isSelected ? 'border-red-500 bg-red-950/10 shadow-[0_0_25px_rgba(239,68,68,0.25)]' : 'border-white/5 opacity-55 hover:opacity-100 hover:border-white/20')
+                                                    : 'border-white/10 hover:border-white/20'
+                                                }`}
+                                                style={{
+                                                    borderTop: `4px solid ${isSelectionMode && isSelected ? '#ef4444' : cardBorderColor}`,
                                                 }}
-                                                className={`group/note border rounded-lg px-2 py-1.5 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${isSelected
-                                                    ? 'bg-accent/10 border-accent/60 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]'
-                                                    : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/5 hover:border-white/10'
-                                                    }`}
-                                                style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
                                             >
-                                                <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: noteColor !== '#a1a1aa' ? noteColor : 'transparent' }} />
+                                                {/* Header Info */}
+                                                <div className="flex justify-between items-center opacity-60 group-hover/board-item:opacity-100 transition-opacity pb-2 border-b border-white/5 shrink-0">
+                                                    <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">
+                                                        {typeLabel}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isSelectionMode ? (
+                                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${isSelected
+                                                                ? 'bg-red-500 border-red-500 text-white'
+                                                                : 'border-white/30 bg-black/40'
+                                                                }`}>
+                                                                {isSelected && <Check size={8} />}
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <span className="text-[7px] font-mono text-zinc-600">
+                                                                    {b.isPublic ? 'PÚBLICO' : 'PRIVADO'}
+                                                                </span>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (b.isVirtual) {
+                                                                            if (window.confirm("¿Estás seguro de eliminar este diálogo permanentemente?")) {
+                                                                                const updated = conversations.filter(c => c.id !== b.id);
+                                                                                setConversations(updated);
+                                                                                fetch(`${API_URL}/api/oasis/conversations?user=${user || localStorage.getItem('oasis_user')}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                                    body: JSON.stringify(updated)
+                                                                                });
+                                                                            }
+                                                                        } else {
+                                                                            deleteBlock(b.id);
+                                                                        }
+                                                                    }}
+                                                                    className="w-5 h-5 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-colors flex items-center justify-center"
+                                                                    title="Eliminar registro"
+                                                                >
+                                                                    <Trash2 size={10} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
 
-                                                {isSelectionMode && (
-                                                    <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
-                                                        {isSelected && <Check size={10} strokeWidth={4} />}
+                                                {/* Body Content */}
+                                                {isImg && (
+                                                    <div className="flex-1 min-h-0 space-y-3 pt-4 flex flex-col">
+                                                        <div className="flex-1 w-full rounded-2xl overflow-hidden border border-white/5 relative bg-zinc-950/45">
+                                                            <img src={formatUrl(b.content)} className="absolute inset-0 w-full h-full object-cover group-hover/board-item:scale-105 transition-transform duration-700" />
+                                                        </div>
+                                                        {b.caption && (
+                                                            <h4 className="text-sm font-black italic uppercase text-zinc-300 shrink-0">
+                                                                {b.caption}
+                                                            </h4>
+                                                        )}
                                                     </div>
                                                 )}
 
-                                                <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
-                                                    <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
-                                                        {typeLabel}
-                                                    </span>
-
-                                                    <div className="flex-1 min-w-0 flex items-center gap-2">
-                                                        <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
-                                                            {b.caption || 'Sin título'}
-                                                        </h4>
-                                                        <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
-                                                            {textSnippet || 'Sin contenido'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-4 shrink-0">
-                                                    <span className="text-[8px] font-mono text-zinc-500">
-                                                        {timeString}
-                                                    </span>
-                                                    <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
-                                                        →
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </div>
-
-                        {/* BITÁCORA HUB FILTERS & UTILITIES (NOW A FLOATING MODAL CARD) */}
-                        {createPortal(
-                        <div 
-                            className={`transition-all duration-700 ease-in-out z-[2000] flex flex-col gap-2.5 overflow-hidden ${isBitacoraOpen 
-                                ? 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] bg-[#050506]/95 backdrop-blur-3xl border-t border-x border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] p-4 sm:p-6 opacity-100 translate-y-0 pb-safe' 
-                                : 'fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] translate-y-[100%] opacity-0 pointer-events-none p-4 sm:p-6 pb-safe'}`}
-                            onTouchStart={(e) => {
-                                e.stopPropagation();
-                                const touch = e.touches[0];
-                                e.currentTarget.dataset.startY = touch.clientY;
-                            }}
-                            onTouchMove={(e) => {
-                                e.stopPropagation();
-                                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
-                                const currentY = e.touches[0].clientY;
-                                const deltaY = currentY - startY;
-
-                                const scrollable = e.target.closest('.overflow-y-auto');
-                                if (scrollable && scrollable.scrollTop > 0) return;
-
-                                if (deltaY > 80) {
-                                    setIsBitacoraOpen(false);
-                                }
-                            }}
-                            onPointerDown={e => e.stopPropagation()}
-                            onWheel={(e) => {
-                                e.stopPropagation();
-                                const scrollable = e.target.closest('.overflow-y-auto');
-                                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
-
-                                if (e.deltaY < -50) {
-                                    setIsBitacoraOpen(false);
-                                }
-                            }}
-                        >
-                            <div className="flex flex-col sm:flex-row sm:items-center border-b border-white/5 pb-2 gap-2 shrink-0 relative pr-12">
-                                <div className="flex items-center gap-2 sm:w-1/3 justify-start">
-                                    <Compass size={14} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                                    <span className="text-[9px] font-black uppercase tracking-[0.15em] truncate">Bitácora Existencial</span>
-                                </div>
-                                
-                                {/* Modal Card Close Button */}
-                                <button 
-                                    onClick={() => setIsBitacoraOpen(false)}
-                                    className="absolute top-0 right-0 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors text-zinc-400 hover:text-white z-50"
-                                >
-                                    <X size={14} />
-                                </button>
-
-                                {/* Utility Buttons */}
-                                <div className="flex gap-2 sm:w-1/3 justify-center">
-                                    <button
-                                        onClick={() => {
-                                            setIsSelectionMode(!isSelectionMode);
-                                            setSelectedIds([]);
-                                        }}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 ${isSelectionMode
-                                            ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-                                            : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
-                                            }`}
-                                        title={isSelectionMode ? 'Cancelar Selección' : 'Seleccionar Registros'}
-                                    >
-                                        <CheckSquare size={14} />
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm("¿Estás seguro de eliminar todos los datos seleccionados o todos los datos de prueba?")) {
-                                                if (isSelectionMode && selectedIds.length > 0) {
-                                                    deleteBlocks(selectedIds);
-                                                    setSelectedIds([]);
-                                                    setIsSelectionMode(false);
-                                                } else {
-                                                    deleteBlocks(blocks.map(b => b.id));
-                                                }
-                                            }
-                                        }}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border transition-all flex items-center justify-center shrink-0 text-red-500 hover:bg-red-600 hover:text-black shadow-[0_0_15px_rgba(239,68,68,0.1)] ${isSelectionMode && selectedIds.length > 0 ? 'bg-red-500/30 border-red-500' : 'bg-red-950/20 border-red-900/30'}`}
-                                        title="Borrar Registros"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-
-                                    {/* BOTON PARA ABRIR SIMPLE NOTES (NOTAS DEL PIZARRON) */}
-                                    <button
-                                        onClick={() => {
-                                            onOpenSimpleNotes();
-                                        }}
-                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-white/5 transition-all flex items-center justify-center text-accent hover:bg-accent hover:text-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] shrink-0"
-                                        style={{ '--accent-rgb': accent.startsWith('#') ? hexToRgb(accent) : '190,242,100' }}
-                                        title="Abrir Lista de Notas Rápidas"
-                                    >
-                                        <Edit3 size={14} />
-                                    </button>
-                                </div>
-                                <div className="hidden sm:block sm:w-1/3"></div>
-                            </div>
-
-                            {/* Horizontal scrolling chips list */}
-                            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2 whitespace-nowrap">
-                                {[
-                                    { id: 'all', label: 'Todos' },
-                                    { id: 'notes', label: 'Notas' },
-                                    { id: 'diary', label: 'Diario' },
-                                    { id: 'resonance', label: 'Resonancias' },
-                                    { id: 'chats', label: 'Diálogos AI' },
-                                    { id: 'images', label: 'Multimedia' }
-                                ].map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setReleaseTab(tab.id)}
-                                        className={`px-4 py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all ${releaseTab === tab.id
-                                            ? 'bg-accent text-black font-black shadow-lg hover:scale-105'
-                                            : 'bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10'
-                                            }`}
-                                        style={releaseTab === tab.id ? { backgroundColor: accent } : undefined}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="w-full flex-1 min-h-0 flex flex-col gap-2 mt-1 border-t border-white/5 pt-2">
-                                <div className="flex justify-between items-center px-1">
-                                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                                        {releaseTab === 'all' ? 'Todos los Registros' :
-                                            releaseTab === 'notes' ? 'Tus Notas' :
-                                                releaseTab === 'diary' ? 'Entradas del Diario' :
-                                                    releaseTab === 'resonance' ? 'Tus Resonancias' :
-                                                        releaseTab === 'chats' ? 'Diálogos de Inteligencia' : 'Archivos Multimedia'}
-                                    </span>
-
-                                    <button
-                                        onClick={() => {
-                                            if (releaseTab === 'diary') openNewComposer?.(true, false);
-                                            else if (releaseTab === 'resonance') openNewComposer?.(false, true);
-                                            else if (releaseTab === 'chats') onNewChat?.();
-                                            else openNewComposer?.(false, false);
-                                        }}
-                                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-accent transition-all text-[8px] font-black uppercase tracking-widest active:scale-95 shrink-0"
-                                        style={{ color: accent }}
-                                    >
-                                        <Plus size={10} />
-                                        {releaseTab === 'diary' ? 'Nuevo Diario' :
-                                            releaseTab === 'resonance' ? 'Nueva Resonancia' :
-                                                releaseTab === 'chats' ? 'Nuevo Diálogo' : 'Nueva Nota'}
-                                    </button>
-                                </div>
-
-                                <div className="w-full flex-1 overflow-y-auto no-scrollbar pr-1 pb-10">
-                                    {filteredReleases.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-6 px-4 bg-white/[0.01] border border-dashed border-white/5 rounded-xl text-center animate-fade-in">
-                                            <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                                                No se encontraron registros
-                                            </p>
-                                            <p className="text-[8px] text-zinc-600 mt-1">
-                                                Usa el botón superior para crear tu primer elemento en esta sección.
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-1 pb-1 animate-fade-in">
-                                            {filteredReleases.map(b => {
-                                                const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                                const isDia = b.entries && b.entries.length > 0;
-                                                const isInsight = b.type === 'insight';
-                                                const isNote = (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-                                                const isImg = b.type === 'image' || b.type === 'relic';
-                                                const isChat = b.type === 'conversation' || b.isVirtual;
-
-                                                const noteColor = b.color || accent;
-                                                const cardBorderColor = isChat ? '#d946ef' : (isRes ? '#a855f7' : (isDia ? '#f59e0b' : (isInsight ? '#a855f7' : noteColor)));
-                                                const typeLabel = isChat ? 'AI' : (isRes ? 'Resonancia' : (isDia ? 'Diario' : (isImg ? 'Imagen' : (isInsight ? 'Revelación' : 'Nota'))));
-
-                                                let textSnippet = '';
-                                                if (isDia) {
-                                                    textSnippet = b.entries[0]?.text || '';
-                                                } else if (isRes) {
-                                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
-                                                    textSnippet = resMatch ? resMatch[1].trim() : b.content.replace(/\[resonancia\]|\[impacto\]|\[extrano\]/g, '').trim();
-                                                } else if (isChat) {
+                                                {isChat && (() => {
                                                     let msgs = [];
                                                     try { msgs = JSON.parse(b.content) || []; } catch (e) { }
-                                                    textSnippet = msgs[msgs.length - 1]?.content || '';
-                                                } else {
-                                                    textSnippet = b.content || '';
-                                                }
-
-                                                const timeString = b.metadata?.timestamp
-                                                    ? new Date(b.metadata.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-                                                    : '';
-
-                                                const isSelected = selectedIds.includes(b.id);
-
-                                                return (
-                                                    <div
-                                                        key={b.id}
-                                                        onClick={() => handleCardClick(b.id)}
-                                                        className={`group/note border rounded-lg px-2 py-1 transition-all duration-200 flex items-center justify-between gap-2 text-left cursor-pointer active:scale-[0.99] relative overflow-hidden ${isSelected
-                                                            ? 'bg-accent/10 border-accent/60 shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)]'
-                                                            : 'bg-white/[0.01] hover:bg-white/[0.04] border-white/5 hover:border-white/10'
-                                                            }`}
-                                                        style={isSelected ? { '--accent-rgb': hexToRgb(noteColor), borderColor: noteColor, backgroundColor: `${noteColor}20` } : undefined}
-                                                    >
-                                                        <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: cardBorderColor }} />
-
-                                                        {/* Selection indicator checkbox if in selection mode */}
-                                                        {isSelectionMode && (
-                                                            <div className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border flex items-center justify-center shrink-0 ml-1 transition-all ${isSelected ? 'bg-accent border-accent text-black' : 'border-zinc-600'}`} style={isSelected ? { backgroundColor: noteColor, borderColor: noteColor } : undefined}>
-                                                                {isSelected && <Check size={10} strokeWidth={4} />}
+                                                    return (
+                                                        <div className="flex-1 min-h-0 space-y-3 flex flex-col pt-4">
+                                                            <h4 className="text-base font-black italic uppercase text-purple-400 truncate leading-none shrink-0">
+                                                                {b.caption || 'Diálogo AI'}
+                                                            </h4>
+                                                            <div className="flex-1 space-y-3 pr-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-3">
+                                                                {msgs.map((msg, idx) => (
+                                                                    <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
+                                                                            {msg.role === 'user' ? 'Tú' : 'Kio'}
+                                                                        </span>
+                                                                        <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
+                                                                            ? 'bg-purple-900/20 border border-purple-800/30 text-purple-300 text-right'
+                                                                            : 'bg-white/5 border border-white/5 text-white/80'
+                                                                            } max-w-[90%] whitespace-pre-wrap`}>
+                                                                            {msg.content}
+                                                                        </p>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        )}
+                                                        </div>
+                                                    );
+                                                })()}
 
-                                                        <div className="flex-1 min-w-0 flex flex-row items-center gap-2 pl-1">
-                                                            <span className="text-[6px] sm:text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/note:text-white transition-colors shrink-0 w-12 sm:w-16 truncate">
-                                                                {typeLabel}
-                                                            </span>
+                                                {isRes && (() => {
+                                                    const resMatch = b.content.match(/\[resonancia\]([\s\S]*?)(?=\[impacto\]|$)/);
+                                                    const resonanceText = resMatch ? resMatch[1].trim() : '';
 
-                                                            <div className="flex-1 min-w-0 flex items-center gap-2">
-                                                                <h4 className="text-[10px] sm:text-xs font-bold text-white/90 truncate shrink-0 max-w-[120px] sm:max-w-[200px]">
-                                                                    {b.caption || 'Sin título'}
-                                                                </h4>
-                                                                <p className="text-[9px] sm:text-[10px] text-zinc-500 font-sans truncate flex-1 leading-normal italic hidden sm:block">
-                                                                    {textSnippet || 'Sin contenido'}
+                                                    return (
+                                                        <div className="flex-1 min-h-0 space-y-4 pt-4 flex flex-col">
+                                                            <h4 className="text-xl md:text-2xl font-black italic uppercase text-purple-400 leading-tight shrink-0">
+                                                                {b.caption || 'Resonancia'}
+                                                            </h4>
+                                                            <div className="flex-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-4">
+                                                                <p className="text-xs text-white/80 whitespace-pre-wrap italic">
+                                                                    "{resonanceText}"
                                                                 </p>
                                                             </div>
                                                         </div>
+                                                    );
+                                                })()}
 
-                                                        <div className="flex items-center gap-4 shrink-0">
-                                                            <span className="text-[8px] font-mono text-zinc-600 sm:block hidden">
-                                                                {b.isPublic ? 'Público' : 'Privado'}
-                                                            </span>
-                                                            <span className="text-[8px] font-mono text-zinc-500">
-                                                                {timeString}
-                                                            </span>
-                                                            <span className="text-xs text-accent opacity-30 group-hover/note:opacity-100 group-hover/note:translate-x-0.5 transition-all" style={{ color: accent }}>
-                                                                →
-                                                            </span>
+                                                {isDia && (
+                                                    <div className="flex-1 min-h-0 space-y-4 pt-4 flex flex-col">
+                                                        <h4 className="text-xl md:text-2xl font-black uppercase text-amber-500 leading-tight shrink-0">
+                                                            {b.caption || 'Entrada de Diario'}
+                                                        </h4>
+                                                        <div className="flex-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-4">
+                                                            <p className="text-xs text-white/90 whitespace-pre-wrap leading-relaxed">
+                                                                {b.entries[0]?.text}
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                );
-                                            })}
+                                                )}
+
+                                                {isNote && (
+                                                    <div className="flex-1 min-h-0 space-y-4 pt-4 flex flex-col">
+                                                        <h4 className="text-xl md:text-2xl font-black uppercase text-white leading-tight shrink-0">
+                                                            {b.caption || 'Nota Desconocida'}
+                                                        </h4>
+                                                        <div className="flex-1 overflow-y-auto no-scrollbar font-sans border-t border-white/5 pt-4">
+                                                            <div className="text-xs text-white/80 whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: b.content }} />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between opacity-60 shrink-0">
+                                                    <span className="text-[8px] font-mono text-zinc-500">
+                                                        {new Date(b.timestamp || Date.now()).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                    </span>
+                                                    <div className="flex gap-1">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>,
-                        document.body
-                        )}
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Animated Scroll Down Indicator to open Canvas */}
+    {/* Animated Scroll Down Indicator to open Canvas */}
                 <div
                     className="flex flex-col items-center gap-1 animate-bounce cursor-pointer pb-2 pointer-events-auto mt-auto shrink-0"
                     onClick={() => {
@@ -2969,16 +2852,17 @@ const ProfileView = ({
                 >
                     <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para abrir el pizarrón</span>
                     <ChevronDown size={12} className="text-zinc-500" />
-                </div>
+                                </div>
             </div>
+        </div>
     );
 };
 
 // --- COMPONENTE PRINCIPAL ---
 
 export default function App() {
-    const [view, setView] = useState('profile');
-    const [isBitacoraOpen, setIsBitacoraOpen] = useState(true);
+    const [view, setView] = useState('canvas');
+    const [isBitacoraOpen, setIsBitacoraOpen] = useState(false);
     const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
@@ -3002,7 +2886,7 @@ export default function App() {
     const [feed, setFeed] = useState([]);
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
-    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
+    const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(true);
     const simpleNotesRef = useRef(null);
     const composerLongPressTimerRef = useRef(null);
     const isComposerLongPressRef = useRef(false);
@@ -11012,10 +10896,12 @@ Al detener o pausar la grabación, puedes hacer clic aquí para corregir cualqui
             {isComposerOpen && (
                 <div
                     className={`fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500 ${composerStep === 'note' ? 'bg-[#050506]/95 backdrop-blur-3xl' : 'bg-black/90 backdrop-blur-3xl'}`}
-                    style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
-                    onTouchStart={e => e.stopPropagation()}
+                    style={{ height: window.innerWidth < 768 ? (window.visualViewport?.height || window.innerHeight) - 140 + 'px' : (window.visualViewport?.height || window.innerHeight) - 100 + 'px' }}
+                    onTouchStart={(e) => { e.stopPropagation(); const touch = e.touches[0]; e.currentTarget.dataset.startY = touch.clientY; e.currentTarget.style.transition = 'none'; }}
+                    onTouchMove={(e) => { e.stopPropagation(); const startY = parseFloat(e.currentTarget.dataset.startY || 0); const currentY = e.touches[0].clientY; const deltaY = currentY - startY; const scrollable = e.target.closest('.overflow-y-auto, textarea, input'); if (scrollable && scrollable.scrollTop > 0) return; if (deltaY > 0) { e.currentTarget.style.transform = `translateY(${deltaY}px)`; } if (deltaY > 120) { e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; e.currentTarget.style.transform = 'translateY(100%)'; setTimeout(() => { setIsComposerOpen(false); setView('canvas'); }, 200); } }}
+                    onTouchEnd={(e) => { const startY = parseFloat(e.currentTarget.dataset.startY || 0); const currentY = e.changedTouches[0].clientY; const deltaY = currentY - startY; if (deltaY <= 120) { e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; e.currentTarget.style.transform = 'translateY(0px)'; } }}
                     onPointerDown={e => e.stopPropagation()}
-                    onWheel={e => e.stopPropagation()}
+                    onWheel={(e) => { e.stopPropagation(); const scrollable = e.target.closest('.overflow-y-auto, textarea, input'); if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return; if (e.deltaY < -50) { e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'; e.currentTarget.style.transform = 'translateY(100%)'; setTimeout(() => { setIsComposerOpen(false); setView('canvas'); }, 200); } }}
                 >
 
                     {/* BOTTOM FLOATING TOOLBAR */}

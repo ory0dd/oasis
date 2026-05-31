@@ -246,6 +246,52 @@ export const DiaryNotebook = ({ onClose, onFocusNode, blocks, setBlocks, syncBlo
             className={`${className} text-white flex animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden`} 
             style={{ height: window.innerWidth < 768 && viewportHeight > 96 ? (viewportHeight - 96) + 'px' : viewportHeight + 'px' }} 
             onClick={e => e.stopPropagation()}
+            onTouchStart={(e) => {
+                e.stopPropagation();
+                const touch = e.touches[0];
+                e.currentTarget.dataset.startY = touch.clientY;
+                e.currentTarget.style.transition = 'none';
+            }}
+            onTouchMove={(e) => {
+                e.stopPropagation();
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && scrollable.scrollTop > 0) return;
+
+                if (deltaY > 0) {
+                    e.currentTarget.style.transform = `translateY(${deltaY}px)`;
+                }
+
+                if (deltaY > 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
+            onTouchEnd={(e) => {
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY <= 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(0px)`;
+                }
+            }}
+            onPointerDown={e => e.stopPropagation()}
+            onWheel={(e) => {
+                e.stopPropagation();
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
+
+                if (e.deltaY < -50) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
         >
             {/* Sidebar / Menu */}
             {isSidebarOpen && (

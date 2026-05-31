@@ -118,9 +118,52 @@ const SimpleNotesView = React.forwardRef(({ blocks, setBlocks, accent, onClose, 
         <div
             className="fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-3xl text-white animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe transition-all duration-500"
             style={{ height: window.innerWidth < 768 && window.visualViewport?.height > 96 ? (window.visualViewport.height - 96) + 'px' : (window.visualViewport?.height || window.innerHeight) + 'px' }}
-            onTouchStart={e => e.stopPropagation()}
+            onTouchStart={(e) => {
+                e.stopPropagation();
+                const touch = e.touches[0];
+                e.currentTarget.dataset.startY = touch.clientY;
+                e.currentTarget.style.transition = 'none';
+            }}
+            onTouchMove={(e) => {
+                e.stopPropagation();
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && scrollable.scrollTop > 0) return;
+
+                if (deltaY > 0) {
+                    e.currentTarget.style.transform = `translateY(${deltaY}px)`;
+                }
+
+                if (deltaY > 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
+            onTouchEnd={(e) => {
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY <= 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(0px)`;
+                }
+            }}
             onPointerDown={e => e.stopPropagation()}
-            onWheel={e => e.stopPropagation()}
+            onWheel={(e) => {
+                e.stopPropagation();
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
+
+                if (e.deltaY < -50) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
         >
             {/* TOP BAR */}
             <div className="shrink-0 px-4 pt-5 pb-3 border-b border-white/5">

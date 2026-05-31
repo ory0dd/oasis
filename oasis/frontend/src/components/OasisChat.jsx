@@ -267,6 +267,52 @@ const OasisChat = ({
         <div
             className="fixed inset-x-0 md:inset-x-[10vw] lg:inset-x-[20vw] xl:inset-x-[25vw] top-[140px] md:top-[100px] rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex bg-[#050506]/95 backdrop-blur-3xl animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden transition-all duration-500 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)] pb-safe"
             style={{ height: window.innerWidth < 768 && viewportHeight > 96 ? (viewportHeight - 96) + 'px' : viewportHeight + 'px' }}
+            onTouchStart={(e) => {
+                e.stopPropagation();
+                const touch = e.touches[0];
+                e.currentTarget.dataset.startY = touch.clientY;
+                e.currentTarget.style.transition = 'none';
+            }}
+            onTouchMove={(e) => {
+                e.stopPropagation();
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && scrollable.scrollTop > 0) return;
+
+                if (deltaY > 0) {
+                    e.currentTarget.style.transform = `translateY(${deltaY}px)`;
+                }
+
+                if (deltaY > 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
+            onTouchEnd={(e) => {
+                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
+                const currentY = e.changedTouches[0].clientY;
+                const deltaY = currentY - startY;
+                if (deltaY <= 120) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(0px)`;
+                }
+            }}
+            onPointerDown={e => e.stopPropagation()}
+            onWheel={(e) => {
+                e.stopPropagation();
+                const scrollable = e.target.closest('.overflow-y-auto');
+                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
+
+                if (e.deltaY < -50) {
+                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                    e.currentTarget.style.transform = `translateY(100%)`;
+                    setTimeout(() => onClose(), 200);
+                }
+            }}
         >
             {isSidebarVisible && (
                 <>
@@ -448,13 +494,12 @@ const OasisChat = ({
                                     </>
                                 )}
                                 {m.role === 'assistant' && m.content && (
-                                    <div className="flex gap-4 mt-4 opacity-0 hover:opacity-100 transition-opacity pl-1">
+                                    <div className="flex gap-4 mt-4 opacity-60 hover:opacity-100 transition-opacity pl-1">
                                         <button onClick={() => {
-                                            const newBlock = { id: `sync-${Date.now()}`, type: 'text', content: m.content, x: (Math.random() - 0.5) * 400, y: (Math.random() - 0.5) * 400, rotation: (Math.random() - 0.5) * 10, color: '#bef264', caption: 'Eco del Espíritu', username: user, metadata: { origin: 'spirit_chat', timestamp: new Date().toISOString() } };
+                                            const newBlock = { id: `sync-${Date.now()}`, type: 'text', content: m.content, x: (Math.random() - 0.5) * 400, y: (Math.random() - 0.5) * 400, rotation: (Math.random() - 0.5) * 10, color: '#bef264', caption: 'Nota de IA', username: user, metadata: { origin: 'spirit_chat', timestamp: new Date().toISOString() } };
                                             setBlocks(prev => { const updated = [newBlock, ...prev]; syncBlocks(updated); return updated; });
-                                        }} className="text-[8px] font-black uppercase tracking-widest text-zinc-600 hover:text-accent flex items-center gap-1.5"><Compass size={10} /> Guardar en Lienzo</button>
-                                        <button className="text-zinc-700 hover:text-white transition-colors"><Heart size={10} /></button>
-                                        <button className="text-zinc-700 hover:text-white transition-colors"><Share2 size={10} /></button>
+                                        }} className="text-[8px] font-black uppercase tracking-widest text-zinc-400 hover:text-accent flex items-center gap-1.5"><Save size={10} /> Guardar como Nota</button>
+                                        <button className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"><Share2 size={10} /> Compartir</button>
                                     </div>
                                 )}
                             </div>
