@@ -1,0 +1,290 @@
+[
+  {
+    "question_number": 1,
+    "category": "Lógico-Verbal",
+    "construct": "Inferencia Transitiva",
+    "instruction_text": "Zach es más alto que Matt y Richard es más bajo que Zach. ¿Cuál de las siguientes afirmaciones sería la más precisa?",
+    "stimulus_visual_description": "Esquema de relaciones de altura entre Zach, Matt y Richard.",
+    "options": [
+      {"label": "A", "value": "Richard es más alto que Matt"},
+      {"label": "B", "value": "Richard es más bajo que Matt"},
+      {"label": "C", "value": "Richard es igual de alto que Matt"},
+      {"label": "D", "value": "Es imposible saberlo"},
+      {"label": "E", "value": "Richard es más alto que Zach"},
+      {"label": "F", "value": "Zach es más bajo que Matt"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 2,
+    "category": "Razonamiento Espacial",
+    "construct": "Rotación Visoespacial",
+    "instruction_text": "Todos los cubos de abajo tienen una imagen diferente en cada lado. Selecciona la opción que representa una rotación del cubo etiquetado con la letra X.",
+    "stimulus_visual_description": "Cubo tridimensional con símbolos asimétricos para rotación mental.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "Ninguno de los cubos podría ser una rotación"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "G"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "C"
+  },
+  {
+    "question_number": 3,
+    "category": "Progresión Secuencial",
+    "construct": "Planificación Secuencial",
+    "instruction_text": "En la siguiente serie alfanumérica, ¿qué letra sigue?\nI, J, L, O, S, ...",
+    "stimulus_visual_description": "Intervalos de avance incremental (+1, +2, +3, +4, +5) sobre una regla numérica.",
+    "options": [
+      {"label": "A", "value": "T"},
+      {"label": "B", "value": "U"},
+      {"label": "C", "value": "V"},
+      {"label": "D", "value": "X"},
+      {"label": "E", "value": "Y"},
+      {"label": "F", "value": "Z"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 4,
+    "category": "Razonamiento Espacial",
+    "construct": "Rotación Visoespacial",
+    "instruction_text": "Todos los cubos de abajo tienen una imagen diferente en cada lado. Selecciona la opción que representa una rotación del cubo etiquetado con la letra X.",
+    "stimulus_visual_description": "Cubo tridimensional con símbolos asimétricos para rotación mental.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "Ninguno de los cubos podría ser una rotación"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "G"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "G"
+  },
+  {
+    "question_number": 5,
+    "category": "Razonamiento Matricial",
+    "construct": "Razonamiento Inductivo",
+    "instruction_text": "¿Cuál es la respuesta correcta en la secuencia?",
+    "stimulus_visual_description": "Matriz abstracta de figuras geométricas romboidales en color cian/púrpura con satélites rotativos.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "D"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 6,
+    "category": "Lógico-Verbal",
+    "construct": "Cálculo Operativo",
+    "instruction_text": "¿Qué número es un quinto de un cuarto de un noveno de 900?",
+    "stimulus_visual_description": "Cronómetro estático con divisiones concéntricas fraccionarias (1/5, 1/4, 1/9) sobre un valor total de 900.",
+    "options": [
+      {"label": "A", "value": "2"},
+      {"label": "B", "value": "3"},
+      {"label": "C", "value": "4"},
+      {"label": "D", "value": "5"},
+      {"label": "E", "value": "6"},
+      {"label": "F", "value": "7"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 7,
+    "category": "Razonamiento Espacial",
+    "construct": "Rotación Visoespacial",
+    "instruction_text": "Todos los cubos de abajo tienen una imagen diferente en cada lado. Selecciona la opción que representa una rotación del cubo etiquetado con la letra X.",
+    "stimulus_visual_description": "Cubo tridimensional translúcido mostrando Estrella, Doble Gancho y Mancuerna en sus caras visibles.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "Ninguno de los cubos podría ser una rotación"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "G"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 8,
+    "category": "Razonamiento Matricial",
+    "construct": "Razonamiento Inductivo",
+    "instruction_text": "¿Cuál es la respuesta correcta en la secuencia?",
+    "stimulus_visual_description": "Matriz 3x3 de composición de formas compuestas (cuadrados, cruces e intersecciones) con fondos superpuestos en degrade.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "D"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 9,
+    "category": "Progresión Secuencial",
+    "construct": "Planificación Secuencial",
+    "instruction_text": "En la siguiente serie alfanumérica, ¿qué letra sigue? V, Q, M, J, H, ...",
+    "stimulus_visual_description": "Serie alfanumérica regresiva con decremento decreciente (-5, -4, -3, -2, -1) representada sobre arcos orbitales.",
+    "options": [
+      {"label": "A", "value": "E"},
+      {"label": "B", "value": "F"},
+      {"label": "C", "value": "G"},
+      {"label": "D", "value": "H"},
+      {"label": "E", "value": "I"},
+      {"label": "F", "value": "J"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "C"
+  },
+  {
+    "question_number": 10,
+    "category": "Progresión Secuencial",
+    "construct": "Planificación Secuencial",
+    "instruction_text": "En la siguiente serie alfanumérica, ¿qué letra sigue? K, N, P, S, U, ...",
+    "stimulus_visual_description": "Serie alfanumérica con oscilación incremental alterna (+3, +2, +3, +2) representada en picos de onda.",
+    "options": [
+      {"label": "A", "value": "S"},
+      {"label": "B", "value": "T"},
+      {"label": "C", "value": "U"},
+      {"label": "D", "value": "V"},
+      {"label": "E", "value": "W"},
+      {"label": "F", "value": "X"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "F"
+  },
+  {
+    "question_number": 11,
+    "category": "Razonamiento Matricial",
+    "construct": "Razonamiento Inductivo",
+    "instruction_text": "¿Cuál es la respuesta correcta en la secuencia?",
+    "stimulus_visual_description": "Matriz minimalista con formas romboidales en las que la inversión cromática sigue un patrón de simetría en espejo.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "D"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "E"
+  },
+  {
+    "question_number": 12,
+    "category": "Razonamiento Espacial",
+    "construct": "Rotación Visoespacial",
+    "instruction_text": "Todos los cubos de abajo tienen una imagen diferente en cada lado. Selecciona la opción que representa una rotación del cubo etiquetado con la letra X.",
+    "stimulus_visual_description": "Cubo en proyección isométrica transparente con trazo fino donde se ilustran Llave, Trébol y Flecha doble.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "Ninguno de los cubos podría ser una rotación"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "G"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "B"
+  },
+  {
+    "question_number": 13,
+    "category": "Progresión Secuencial",
+    "construct": "Planificación Secuencial",
+    "instruction_text": "En la siguiente serie alfanumérica, ¿qué letra sigue? Q, S, N, P, L, ...",
+    "stimulus_visual_description": "Serie entrelazada de dos progresiones paralelas que decrementan de forma independiente.",
+    "options": [
+      {"label": "A", "value": "J"},
+      {"label": "B", "value": "H"},
+      {"label": "C", "value": "I"},
+      {"label": "D", "value": "N"},
+      {"label": "E", "value": "M"},
+      {"label": "F", "value": "L"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  },
+  {
+    "question_number": 14,
+    "category": "Lógico-Verbal",
+    "construct": "Reversibilidad Temporal",
+    "instruction_text": "Si el día después de mañana es dos días antes del jueves, ¿qué día es hoy?",
+    "stimulus_visual_description": "Línea temporal relativa con saltos bidireccionales centrada en el eje del tiempo presente.",
+    "options": [
+      {"label": "A", "value": "Viernes"},
+      {"label": "B", "value": "Lunes"},
+      {"label": "C", "value": "Miércoles"},
+      {"label": "D", "value": "Sábado"},
+      {"label": "E", "value": "Martes"},
+      {"label": "F", "value": "Domingo"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "F"
+  },
+  {
+    "question_number": 15,
+    "category": "Razonamiento Matricial",
+    "construct": "Razonamiento Inductivo",
+    "instruction_text": "¿Cuál es la respuesta correcta en la secuencia?",
+    "stimulus_visual_description": "Matriz espacial compleja con rotaciones vectoriales simultáneas de flechas y círculos concéntricos.",
+    "options": [
+      {"label": "A", "value": "A"},
+      {"label": "B", "value": "B"},
+      {"label": "C", "value": "C"},
+      {"label": "D", "value": "D"},
+      {"label": "E", "value": "E"},
+      {"label": "F", "value": "F"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "C"
+  },
+  {
+    "question_number": 16,
+    "category": "Lógico-Verbal",
+    "construct": "Inhibición Cognitiva",
+    "instruction_text": "Joshua tiene 12 años y su hermana tiene tres veces su edad. Cuando Joshua tenga 23 años, ¿qué edad tendrá su hermana?",
+    "stimulus_visual_description": "Dos círculos concéntricos cuya diferencia de diámetro se calcula mediante una ecuación algebraica simple.",
+    "options": [
+      {"label": "A", "value": "35"},
+      {"label": "B", "value": "39"},
+      {"label": "C", "value": "44"},
+      {"label": "D", "value": "47"},
+      {"label": "E", "value": "53"},
+      {"label": "F", "value": "57"},
+      {"label": "G", "value": "Ninguna de estas"},
+      {"label": "H", "value": "No sé la respuesta"}
+    ],
+    "correct_answer": "D"
+  }
+]

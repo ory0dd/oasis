@@ -1,0 +1,4362 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Aperture,  
+    Search, Filter, Activity, Brain, Clock, AlertTriangle, 
+    ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
+    Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
+    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu
+} from 'lucide-react';
+import icarQuestions from '../data/icar16_questions.json';
+import icarRationale from '../data/icar16_rationale.json';
+import { saveObservation, getObservations } from '../utils/db';
+import MyResponsesDashboard from './MyResponsesDashboard';
+import FloatingNotebook from './FloatingNotebook';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+
+// ErrorBoundary for embedded clinical views
+class ViewErrorBoundary extends React.Component {
+    constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+    static getDerivedStateFromError(error) { return { hasError: true, error }; }
+    componentDidCatch(error, info) { console.error('🔴 ViewErrorBoundary:', error, info); }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
+                    <AlertTriangle size={40} className="text-red-500 opacity-50" />
+                    <h3 className="text-zinc-200 text-sm font-bold m-0">Error al cargar el módulo</h3>
+                    <code className="text-red-500 text-[10px] font-mono bg-red-500/10 p-2 rounded-lg max-w-md break-all">
+                        {this.state.error?.message || 'Error desconocido'}
+                    </code>
+                    <button
+                        onClick={() => this.setState({ hasError: false, error: null })}
+                        className="px-5 py-2 bg-white/5 border border-white/10 text-zinc-200 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const PHENOM_PART_B = [
+    { id: 1, domain: "Reactividad Emocional", text: "Me preocupo por casi todo." },
+    { id: 2, domain: "Reactividad Emocional", text: "Me asusto o me alarmo con mucha facilidad." },
+    { id: 3, domain: "Reactividad Emocional", text: "Me pongo muy ansioso/a cuando las cosas son inciertas o impredecibles." },
+    { id: 4, domain: "Reactividad Emocional", text: "Me irrito fácilmente por todo tipo de cosas." },
+    { id: 5, domain: "Reactividad Emocional", text: "Mis emociones a veces cambian de un momento a otro sin motivo aparente." },
+    { id: 6, domain: "Estilo de Conexión", text: "Prefiero estar solo/a que acompañado/a." },
+    { id: 7, domain: "Estilo de Conexión", text: "Mantengo mi distancia emocional de la gente." },
+    { id: 8, domain: "Estilo de Conexión", text: "Me cuesta mucho disfrutar de las cosas de la vida." },
+    { id: 9, domain: "Estilo de Conexión", text: "Rara vez me involucro emocionalmente con los demás." },
+    { id: 10, domain: "Estilo de Conexión", text: "Evito hacer nuevos amigos o conocer gente nueva." },
+    { id: 11, domain: "Gestión de la Asertividad", text: "A menudo tengo que manipular a la gente para conseguir lo que quiero." },
+    { id: 12, domain: "Gestión de la Asertividad", text: "Siento que soy mejor o más importante que casi todo el mundo." },
+    { id: 13, domain: "Gestión de la Asertividad", text: "Disfruto aprovechándome de los demás si se presenta la oportunidad." },
+    { id: 14, domain: "Gestión de la Asertividad", text: "No me importa herir los sentimientos de otros si eso me beneficia." },
+    { id: 15, domain: "Gestión de la Asertividad", text: "Creo que para salir adelante, a veces tienes que engañar a la gente." },
+    { id: 16, domain: "Impulso y Planificación", text: "A menudo actúo de inmediato sin pensar en las consecuencias." },
+    { id: 17, domain: "Impulso y Planificación", text: "Hago las cosas en el momento sin planearlas en absoluto." },
+    { id: 18, domain: "Impulso y Planificación", text: "A menudo rompo mis promesas o no cumplo con mis acuerdos." },
+    { id: 19, domain: "Impulso y Planificación", text: "Me aburro rápidamente de las tareas y pierdo el interés." },
+    { id: 20, domain: "Impulso y Planificación", text: "Tomo decisiones precipitadas en el calor del momento." },
+    { id: 21, domain: "Singularidad Cognitiva", text: "A menudo tengo pensamientos que no tienen sentido para los demás." },
+    { id: 22, domain: "Singularidad Cognitiva", text: "He tenido experiencias extrañas que son muy difíciles de explicar." },
+    { id: 23, domain: "Singularidad Cognitiva", text: "A veces siento que las cosas a mi alrededor no son reales." },
+    { id: 24, domain: "Singularidad Cognitiva", text: "La gente suele pensar que mi forma de ser o hablar es excéntrica o rara." },
+    { id: 25, domain: "Singularidad Cognitiva", text: "A veces escuchar o ver cosas que los demás no pueden percibir." }
+];
+
+// Helper to calculate PID-5 Domain scores
+const getPid5Domains = (pidAnswers) => {
+    if (!pidAnswers || Object.keys(pidAnswers).length === 0) return null;
+    const pidScores = {
+        afectividadNegativa: 0,
+        desapego: 0,
+        antagonismo: 0,
+        desinhibicion: 0,
+        psicoticismo: 0
+    };
+    
+    for (let i = 1; i <= 25; i++) {
+        const val = parseInt(pidAnswers[i] || 0, 10);
+        if (i <= 5) pidScores.afectividadNegativa += val;
+        else if (i <= 10) pidScores.desapego += val;
+        else if (i <= 15) pidScores.antagonismo += val;
+        else if (i <= 20) pidScores.desinhibicion += val;
+        else pidScores.psicoticismo += val;
+    }
+
+    const getLevel = (score) => {
+        if (score <= 5) return 'Baja';
+        if (score <= 10) return 'Moderada';
+        return 'Alta';
+    };
+
+    return {
+        afectividadNegativa: { level: getLevel(pidScores.afectividadNegativa), score: pidScores.afectividadNegativa, max: 15 },
+        desapego: { level: getLevel(pidScores.desapego), score: pidScores.desapego, max: 15 },
+        antagonismo: { level: getLevel(pidScores.antagonismo), score: pidScores.antagonismo, max: 15 },
+        desinhibicion: { level: getLevel(pidScores.desinhibicion), score: pidScores.desinhibicion, max: 15 },
+        psicoticismo: { level: getLevel(pidScores.psicoticismo), score: pidScores.psicoticismo, max: 15 }
+    };
+};
+
+const highlightClinicalText = (text) => {
+    if (!text) return "";
+    
+    const rules = [
+        {
+            pattern: /\b(cuando|siempre que|deton\w*|desencaden\w*|antes de|situaci\w*|lugar\w*|momento\w*|persona\w*|entorno\w*|ambiente\w*|evento\w*|escenari\w*|provoc\w*|empiez\w*)\b/gi,
+            bg: "border-b border-sky-500/70 text-sky-400 bg-sky-500/10 font-bold",
+            label: "Antecedente/Detonante"
+        },
+        {
+            pattern: /\b(creenci\w*|esquema\w*|histori\w*|personalidad\w*|h\u00e1bit\w*|temperament\w*|biol\u00f3gic\w*|infanci\w*|pasad\w*|rasg\w*|vulnerab\w*|mied\w*)\b/gi,
+            bg: "border-b border-violet-500/70 text-violet-400 bg-violet-500/10 font-bold",
+            label: "Variable del Organismo"
+        },
+        {
+            pattern: /\b(piens\w*|rumi\w*|sient\w*|ansiedad\w*|cuerp\w*|taquicardi\w*|muscular\w*|tensi\u00f3n\w*|evit\w*|huy\w*|hag\w*|silenci\w*|grit\w*|llor\w*|bloque\w*|reacci\u00f3n\w*|sudor\w*)\b/gi,
+            bg: "border-b border-amber-500/70 text-amber-400 bg-amber-500/10 font-bold",
+            label: "Respuesta Triple"
+        },
+        {
+            pattern: /\b(alivi\w*|escap\w*|evit\w*|consecuenci\w*|resultad\w*|efect\w*|largo plazo\w*|corto plazo\w*|empeor\w*|bucl\w*|p\u00e9rdid\w*|deterior\w*|culp\w*)\b/gi,
+            bg: "border-b border-rose-500/70 text-rose-400 bg-rose-500/10 font-bold",
+            label: "Consecuencia"
+        }
+    ];
+
+    const combinedRegex = /\b(cuando|siempre que|deton\w*|desencaden\w*|antes de|situaci\w*|lugar\w*|momento\w*|persona\w*|entorno\w*|ambiente\w*|evento\w*|escenari\w*|provoc\w*|empiez\w*)\b|\b(creenci\w*|esquema\w*|histori\w*|personalidad\w*|h\u00e1bit\w*|temperament\w*|biol\u00f3gic\w*|infanci\w*|pasad\w*|rasg\w*|vulnerab\w*|mied\w*)\b|\b(piens\w*|rumi\w*|sient\w*|ansiedad\w*|cuerp\w*|taquicardi\w*|muscular\w*|tensi\u00f3n\w*|evit\w*|huy\w*|hag\w*|silenci\w*|grit\w*|llor\w*|bloque\w*|reacci\u00f3n\w*|sudor\w*)\b|\b(alivi\w*|escap\w*|evit\w*|consecuenci\w*|resultad\w*|efect\w*|largo plazo\w*|corto plazo\w*|empeor\w*|bucl\w*|p\u00e9rdid\w*|deterior\w*|culp\w*)\b/gi;
+
+    const parts = text.split(combinedRegex);
+    
+    return parts.map((part, idx) => {
+        if (!part) return null;
+        
+        for (let rule of rules) {
+            if (part.match(rule.pattern)) {
+                return (
+                    <span 
+                        key={idx} 
+                        className={`inline-block px-1 py-0.5 rounded relative group/tooltip ${rule.bg}`}
+                        title={rule.label}
+                    >
+                        {part}
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover/tooltip:block bg-zinc-950 text-[7px] text-white px-1.5 py-0.5 rounded border border-white/10 whitespace-nowrap z-50 uppercase tracking-widest font-mono">
+                            {rule.label}
+                        </span>
+                    </span>
+                );
+            }
+        }
+        
+        return <span key={idx}>{part}</span>;
+    });
+};
+
+// Helper to calculate ICAR Dimensions
+const getIcarDimensions = (icarAnswers) => {
+    if (!icarAnswers || Object.keys(icarAnswers).length === 0) {
+        return { visuospatial: 0, inductive: 0, sequential: 0, verbal: 0 };
+    }
+    
+    const dimensions = {
+        verbal: { qs: [1, 6, 14, 16], correct: 0 },
+        visuospatial: { qs: [2, 4, 7, 12], correct: 0 },
+        sequential: { qs: [3, 9, 10, 13], correct: 0 },
+        inductive: { qs: [5, 8, 11, 15], correct: 0 }
+    };
+
+    Object.keys(dimensions).forEach(k => {
+        dimensions[k].qs.forEach(qNum => {
+            const qObj = icarQuestions.find(q => q.question_number === qNum);
+            if (qObj && icarAnswers[qNum] === qObj.correct_answer) {
+                dimensions[k].correct++;
+            }
+        });
+    });
+
+    return {
+        visuospatial: Math.round((dimensions.visuospatial.correct / 4) * 100),
+        inductive: Math.round((dimensions.inductive.correct / 4) * 100),
+        sequential: Math.round((dimensions.sequential.correct / 4) * 100),
+        verbal: Math.round((dimensions.verbal.correct / 4) * 100)
+    };
+};
+
+// Helper to calculate ICAR Proctoring/Behavioral Alerts
+const getIcarAlerts = (icarDwellTimes, icarChanges) => {
+    const alerts = [];
+    if (!icarDwellTimes) return alerts;
+    
+    Object.entries(icarDwellTimes).forEach(([qNum, time]) => {
+        if (time > 95) {
+            alerts.push({
+                name: `Alta Inversión Cognitiva (Q${qNum})`,
+                tooltip: `El paciente dedicó ${Math.round(time)}s a la resolución del reactivo, sugiriendo procesamiento detallado de variables.`
+            });
+        }
+    });
+    
+    if (icarChanges) {
+        Object.entries(icarChanges).forEach(([qNum, count]) => {
+            if (count >= 3) {
+                alerts.push({
+                    name: `Reevaluación Decisional (Q${qNum})`,
+                    tooltip: `Se registraron ${count} cambios de opción, sugiriendo revisión y reformulación de la hipótesis.`
+                });
+            }
+        });
+    }
+    
+    return alerts;
+};
+
+// Helper to compute ICAR Z-Scores and clínical interpretations on the fly
+const computeIcarReferenceIndices = (icarAnswers, icarDwellTimes, icarChanges) => {
+    const dimensions = {
+        verbal: { qs: [1, 6, 14, 16], correct: 0, mean: 3.2, sd: 0.8, name: "Verbal" },
+        visuospatial: { qs: [2, 4, 7, 12], correct: 0, mean: 2.8, sd: 1.0, name: "Visoespacial" },
+        sequential: { qs: [3, 9, 10, 13], correct: 0, mean: 2.9, sd: 0.9, name: "Secuencial" },
+        inductive: { qs: [5, 8, 11, 15], correct: 0, mean: 2.7, sd: 1.1, name: "Inductiva" }
+    };
+
+    Object.keys(dimensions).forEach(k => {
+        dimensions[k].qs.forEach(qNum => {
+            const qObj = icarQuestions.find(q => q.question_number === qNum);
+            if (qObj && icarAnswers && icarAnswers[qNum] === qObj.correct_answer) {
+                dimensions[k].correct++;
+            }
+        });
+    });
+
+    const dimensionDwells = { verbal: 0, visuospatial: 0, sequential: 0, inductive: 0 };
+    const dimensionDwellCounts = { verbal: 0, visuospatial: 0, sequential: 0, inductive: 0 };
+    const dimensionChanges = { verbal: 0, visuospatial: 0, sequential: 0, inductive: 0 };
+
+    let totalDwellSum = 0;
+    let answeredCount = 0;
+    
+    for (let i = 1; i <= 16; i++) {
+        const dTime = (icarDwellTimes && icarDwellTimes[i]) || 0;
+        const changes = (icarChanges && icarChanges[i]) || 0;
+        if (dTime > 0) {
+            totalDwellSum += dTime;
+            answeredCount++;
+            if (dimensions.verbal.qs.includes(i)) {
+                dimensionDwells.verbal += dTime;
+                dimensionDwellCounts.verbal++;
+                dimensionChanges.verbal += changes;
+            } else if (dimensions.visuospatial.qs.includes(i)) {
+                dimensionDwells.visuospatial += dTime;
+                dimensionDwellCounts.visuospatial++;
+                dimensionChanges.visuospatial += changes;
+            } else if (dimensions.sequential.qs.includes(i)) {
+                dimensionDwells.sequential += dTime;
+                dimensionDwellCounts.sequential++;
+                dimensionChanges.sequential += changes;
+            } else if (dimensions.inductive.qs.includes(i)) {
+                dimensionDwells.inductive += dTime;
+                dimensionDwellCounts.inductive++;
+                dimensionChanges.inductive += changes;
+            }
+        }
+    }
+
+    const totalDwellAvg = answeredCount > 0 ? parseFloat((totalDwellSum / answeredCount).toFixed(1)) : 0;
+
+    const getClinicalInterpretation = (z, avgDwell) => {
+        if (avgDwell === 0) return "Sin datos suficientes";
+        if (z >= 0 && avgDwell > 45) {
+            return "Capacidad Compensatoria: El rendimiento está conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabólica secundaria.";
+        }
+        if (z < 0 && avgDwell < 15) {
+            return "Baja Inversión en la Tarea: Desconexión atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analítico.";
+        }
+        if (z < 0 && avgDwell > 90) {
+            return "Saturación Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resolución exitosa.";
+        }
+        if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisión.";
+        if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio específico.";
+        return "Rendimiento Estándar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
+    };
+
+    const getEfficiencyStatus = (z, avgDwell) => {
+        if (avgDwell === 0) return "sin_datos";
+        if (z >= 0 && avgDwell > 45) return "capacidad_compensatoria";
+        if (z < 0 && avgDwell < 15) return "baja_inversion";
+        if (z < 0 && avgDwell > 90) return "saturacion_cognitiva";
+        return "normal";
+    };
+
+    const indices_referencia = {
+        total_dwell_avg: totalDwellAvg,
+        saturacion_detectada: Object.keys(dimensions).some(k => {
+            const z = parseFloat(((dimensions[k].correct - dimensions[k].mean) / dimensions[k].sd).toFixed(3));
+            const avgD = dimensionDwellCounts[k] > 0 ? dimensionDwells[k] / dimensionDwellCounts[k] : 0;
+            return getEfficiencyStatus(z, avgD) === "saturacion_cognitiva";
+        }),
+        dimensions: {}
+    };
+
+    Object.keys(dimensions).forEach(k => {
+        const correct = dimensions[k].correct;
+        const mean = dimensions[k].mean;
+        const sd = dimensions[k].sd;
+        const z = parseFloat(((correct - mean) / sd).toFixed(3));
+        const avgD = dimensionDwellCounts[k] > 0 ? parseFloat((dimensionDwells[k] / dimensionDwellCounts[k]).toFixed(1)) : 0;
+        const totalChanges = dimensionChanges[k];
+        
+        indices_referencia.dimensions[k] = {
+            correct,
+            z_score: z,
+            average_dwell: avgD,
+            total_changes: totalChanges,
+            status: z >= 1 ? "superior" : z <= -1 ? "inferior" : "normal",
+            efficiency_status: getEfficiencyStatus(z, avgD),
+            interpretation: getClinicalInterpretation(z, avgD)
+        };
+    });
+
+    return indices_referencia;
+};
+
+// Helper to compute ICAR Estado Cognitivo JSON on the fly
+const computeIcarEstadoCognitivo = (icarAnswers, icarDwellTimes, icarChanges, score, username) => {
+    const refIndices = computeIcarReferenceIndices(icarAnswers, icarDwellTimes, icarChanges);
+    if (!refIndices || !refIndices.dimensions) return null;
+
+    const totalDwellTime = Object.values(icarDwellTimes || {}).reduce((a, b) => a + b, 0);
+    let validez = "ok";
+    if (totalDwellTime < 350) {
+        validez = "INVALIDA_DESATENCION";
+    } else if ((score / 16) < 0.30) {
+        validez = "INVALIDA_AZAR";
+    }
+
+    const getEficienciaLabel = (z, eff) => {
+        if (eff === "capacidad_compensatoria") return "alta_demanda";
+        if (eff === "saturacion_cognitiva") return "saturacion";
+        if (z >= 1) return "optima";
+        if (z <= -1) return "deficiente";
+        return "normal";
+    };
+
+    const perfil_cognitivo = {
+        verbal: {
+            z_score: refIndices.dimensions.verbal.z_score,
+            eficiencia: getEficienciaLabel(refIndices.dimensions.verbal.z_score, refIndices.dimensions.verbal.efficiency_status)
+        },
+        spatial: {
+            z_score: refIndices.dimensions.visuospatial.z_score,
+            eficiencia: getEficienciaLabel(refIndices.dimensions.visuospatial.z_score, refIndices.dimensions.visuospatial.efficiency_status)
+        },
+        secuencial: {
+            z_score: refIndices.dimensions.sequential.z_score,
+            eficiencia: getEficienciaLabel(refIndices.dimensions.sequential.z_score, refIndices.dimensions.sequential.efficiency_status)
+        },
+        inductiva: {
+            z_score: refIndices.dimensions.inductive.z_score,
+            eficiencia: getEficienciaLabel(refIndices.dimensions.inductive.z_score, refIndices.dimensions.inductive.efficiency_status)
+        }
+    };
+
+    let estilo_ejecucion = "normal";
+    const totalDwellAvg = refIndices.total_dwell_avg;
+    if (totalDwellAvg < 45 && score >= 11) {
+        estilo_ejecucion = "eficiente";
+    } else if (totalDwellAvg < 45 && score < 11) {
+        estilo_ejecucion = "impulsivo";
+    } else if (totalDwellAvg >= 45 && score >= 11) {
+        estilo_ejecucion = "analítico_sostenido";
+    } else {
+        estilo_ejecucion = "sobrecargado";
+    }
+
+    const banderas_conductuales = [];
+    if (refIndices.dimensions.visuospatial.efficiency_status === "capacidad_compensatoria") {
+        banderas_conductuales.push("alta_inversion_spatial");
+    }
+    if (refIndices.dimensions.verbal.efficiency_status === "capacidad_compensatoria") {
+        banderas_conductuales.push("alta_inversion_verbal");
+    }
+    if (refIndices.dimensions.sequential.efficiency_status === "capacidad_compensatoria") {
+        banderas_conductuales.push("alta_inversion_secuencial");
+    }
+    if (refIndices.dimensions.inductive.efficiency_status === "capacidad_compensatoria") {
+        banderas_conductuales.push("alta_inversion_inductiva");
+    }
+
+    if (refIndices.dimensions.visuospatial.efficiency_status === "saturacion_cognitiva") {
+        banderas_conductuales.push("saturacion_spatial");
+    }
+    if (refIndices.dimensions.verbal.efficiency_status === "saturacion_cognitiva") {
+        banderas_conductuales.push("saturacion_verbal");
+    }
+    if (refIndices.dimensions.sequential.efficiency_status === "saturacion_cognitiva") {
+        banderas_conductuales.push("saturacion_secuencial");
+    }
+    if (refIndices.dimensions.inductive.efficiency_status === "saturacion_cognitiva") {
+        banderas_conductuales.push("saturacion_inductiva");
+    }
+
+    const totalChanges = Object.values(icarChanges || {}).reduce((a, b) => a + b, 0);
+    if (totalChanges === 0) {
+        banderas_conductuales.push("estabilidad_decisional_alta");
+    } else if (totalChanges >= 5) {
+        banderas_conductuales.push("reevaluacion_decisional_alta");
+    }
+
+    return {
+        metadatos: {
+            fecha: new Date().toISOString().split('T')[0],
+            validez: validez,
+            tiempo_total: Math.round(totalDwellTime)
+        },
+        perfil_cognitivo: perfil_cognitivo,
+        estilo_ejecucion: estilo_ejecucion,
+        banderas_conductuales: banderas_conductuales
+    };
+};
+
+// Helper to compute PID-5 Clinical State on the fly
+const computePid5ClinicalState = (pidAnswers) => {
+    if (!pidAnswers || Object.keys(pidAnswers).length === 0) return null;
+    
+    // Group answers
+    const answersGroup = {
+        reactividadEmocional: [],
+        estiloConexion: [],
+        gestionAsertividad: [],
+        ritmoEjecucion: [],
+        singularidadCognitiva: []
+    };
+    
+    for (let i = 1; i <= 25; i++) {
+        const val = parseInt(pidAnswers[i] || 0, 10);
+        if (i <= 5) answersGroup.reactividadEmocional.push(val);
+        else if (i <= 10) answersGroup.estiloConexion.push(val);
+        else if (i <= 15) answersGroup.gestionAsertividad.push(val);
+        else if (i <= 20) answersGroup.ritmoEjecucion.push(val);
+        else answersGroup.singularidadCognitiva.push(val);
+    }
+    
+    const sums = {
+        reactividadEmocional: answersGroup.reactividadEmocional.reduce((a, b) => a + b, 0),
+        estiloConexion: answersGroup.estiloConexion.reduce((a, b) => a + b, 0),
+        gestionAsertividad: answersGroup.gestionAsertividad.reduce((a, b) => a + b, 0),
+        ritmoEjecucion: answersGroup.ritmoEjecucion.reduce((a, b) => a + b, 0),
+        singularidadCognitiva: answersGroup.singularidadCognitiva.reduce((a, b) => a + b, 0)
+    };
+    
+    const indices = {
+        reactividadEmocional: parseFloat((sums.reactividadEmocional / 15).toFixed(3)),
+        estiloConexion: parseFloat((sums.estiloConexion / 15).toFixed(3)),
+        gestionAsertividad: parseFloat((sums.gestionAsertividad / 15).toFixed(3)),
+        ritmoEjecucion: parseFloat((sums.ritmoEjecucion / 15).toFixed(3)),
+        singularidadCognitiva: parseFloat((sums.singularidadCognitiva / 15).toFixed(3))
+    };
+    
+    // Calculate internal variance for each block
+    const variances = {};
+    Object.keys(answersGroup).forEach(key => {
+        const list = answersGroup[key];
+        const mean = list.reduce((a, b) => a + b, 0) / list.length;
+        const squareDiffs = list.map(val => Math.pow(val - mean, 2));
+        const variance = squareDiffs.reduce((a, b) => a + b, 0) / list.length;
+        variances[key] = parseFloat(variance.toFixed(3));
+    });
+    
+    const globalVariance = parseFloat((Object.values(variances).reduce((a, b) => a + b, 0) / 5).toFixed(3));
+    
+    const getClasificacion = (idx) => {
+        if (idx < 0.35) return { label: "Enfoque Atenuado", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+        if (idx < 0.65) return { label: "Enfoque Moderado", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" };
+        return { label: "Enfoque Destacado", color: "text-violet-400 bg-violet-500/10 border-violet-500/20 font-bold" };
+    };
+
+    // Calculate system dynamics and discrepancies (Dinámicas de Afrontamiento)
+    const dynamicInsights = [];
+    
+    // Dynamic 1: Reactividad vs Conexión
+    const dist1 = parseFloat(Math.abs(indices.reactividadEmocional - indices.estiloConexion).toFixed(3));
+    if (dist1 >= 0.5) {
+        if (indices.reactividadEmocional >= indices.estiloConexion) {
+            dynamicInsights.push({
+                type: "Reactividad vs Conexión",
+                discrepancy: dist1,
+                title: "Búsqueda de Regulación Externa",
+                consequence: "Cuando las emociones se intensifican, buscas activamente el apoyo de otros para encontrar equilibrio. Es tu forma de no cargar todo solo.",
+                reflection: "¿Qué personas o entornos de confianza son los que mejor te ayudan a recuperar la calma en esos momentos?"
+            });
+        } else {
+            dynamicInsights.push({
+                type: "Reactividad vs Conexión",
+                discrepancy: dist1,
+                title: "Aislamiento Defensivo",
+                consequence: "Ante la sobrecarga del entorno, prefieres retirarte a tu propio espacio. Es tu método para recuperar energía y procesar tus ideas sin ruido externo.",
+                reflection: "¿Cómo logras que tus seres queridos entiendan que tu retiro temporal es solo tu manera de restaurar tu equilibrio?"
+            });
+        }
+    }
+    
+    // Dynamic 2: Singularidad vs Ritmo
+    const dist2 = parseFloat(Math.abs(indices.singularidadCognitiva - indices.ritmoEjecucion).toFixed(3));
+    if (dist2 >= 0.5) {
+        if (indices.singularidadCognitiva >= indices.ritmoEjecucion) {
+            dynamicInsights.push({
+                type: "Singularidad vs Ritmo",
+                discrepancy: dist2,
+                title: "Elaboración Compleja sobre Acción",
+                consequence: "Tienes una forma muy particular de ver el mundo, lo cual normalmente tomaría mucho tiempo procesar. Sin embargo, logras tomar decisiones con mucha agilidad. Esto sugiere que no necesitas detenerte para ser creativo; tu mente ha aprendido a integrar tus ideas abstractas directamente en la acción.",
+                reflection: "¿Cómo logras que esa fluidez pase del pensamiento a la acción sin sentir que pierdes la profundidad de tus ideas originales?"
+            });
+        } else {
+            dynamicInsights.push({
+                type: "Singularidad vs Ritmo",
+                discrepancy: dist2,
+                title: "Acción Ejecutiva sobre Abstracción",
+                consequence: "Prefieres resolver y actuar de manera rápida y directa. Valoras la aplicación práctica y la toma de decisiones inmediata sobre las teorizaciones.",
+                reflection: "¿Cómo logras equilibrar tu agilidad para tomar decisiones con la necesidad de detenerte a reflexionar sobre alternativas menos convencionales cuando el reto lo exige?"
+            });
+        }
+    }
+    
+    // Dynamic 3: Asertividad vs Conexión
+    const dist3 = parseFloat(Math.abs(indices.gestionAsertividad - indices.estiloConexion).toFixed(3));
+    if (dist3 >= 0.5) {
+        if (indices.gestionAsertividad >= indices.estiloConexion) {
+            dynamicInsights.push({
+                type: "Asertividad vs Conexión",
+                discrepancy: dist3,
+                title: "Asertividad Relacional Activa",
+                consequence: "Defiendes con firmeza tus límites y decisiones personales, pero buscando mantener un diálogo y conexión fluida con tu entorno.",
+                reflection: "¿Cómo logras equilibrar tu asertividad firme con la empatía hacia las necesidades de los demás en una conversación?"
+            });
+        } else {
+            dynamicInsights.push({
+                type: "Asertividad vs Conexión",
+                discrepancy: dist3,
+                title: "Distanciamiento Independiente",
+                consequence: "Mantienes tu independencia y control personal marcando una distancia clara en tus relaciones. Es tu manera de proteger tu libertad.",
+                reflection: "¿De qué manera te aseguras de que esa distancia protectora no se convierta en una barrera que dificulte una cercanía más profunda cuando la deseas?"
+            });
+        }
+    }
+
+    // Dynamic 4: Reactividad vs Ritmo de Ejecución
+    const dist4 = parseFloat(Math.abs(indices.reactividadEmocional - indices.ritmoEjecucion).toFixed(3));
+    if (dist4 >= 0.5) {
+        if (indices.reactividadEmocional >= indices.ritmoEjecucion) {
+            dynamicInsights.push({
+                type: "Reactividad vs Ritmo",
+                discrepancy: dist4,
+                title: "Búsqueda de Gratificación Impulsiva",
+                consequence: "Cuando necesitas aliviar tensiones, tiendes a actuar de forma espontánea, priorizando la acción rápida sobre la estrategia a largo plazo.",
+                reflection: "¿De qué manera te ha ayudado esta espontaneidad a aliviar tensiones de forma inmediata, y cómo podrías equilibrarla con una perspectiva a largo plazo?"
+            });
+        } else {
+            dynamicInsights.push({
+                type: "Reactividad vs Ritmo",
+                discrepancy: dist4,
+                title: "Estructura y Autorregulación Deliberada",
+                consequence: "Ante la tensión o los retos, mantienes la disciplina y el enfoque metódico por encima de cualquier reacción impulsiva inmediata.",
+                reflection: "¿Cómo manejas tus emociones internas cuando la necesidad de estructura choca con situaciones que requieren improvisación absoluta?"
+            });
+        }
+    }
+
+    // Dynamic Reframing Notes for ALL 5 dimensions simultaneously (no thresholds)
+    const analysisNotes = [];
+
+    // 1. Reactividad Emocional
+    if (indices.reactividadEmocional >= 0.65) {
+        analysisNotes.push({
+            label: "Reactividad Emocional",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Vives y sientes los cambios a tu alrededor con gran empatía y sensibilidad. Esto te permite conectar profundamente con las emociones de los demás y responder de forma auténtica.",
+            reflection: "¿De qué manera canalizas esta intensidad para que sea tu guía al relacionarte con otros, protegiendo al mismo tiempo tu paz mental?"
+        });
+    } else if (indices.reactividadEmocional >= 0.35) {
+        analysisNotes.push({
+            label: "Reactividad Emocional",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Mantienes una relación armoniosa con tu mundo emocional, respondiendo con empatía cuando la situación lo amerita sin abrumarte fácilmente.",
+            reflection: "¿Sientes que este equilibrio te ayuda a conservar la claridad mental ante los retos cotidianos?"
+        });
+    } else {
+        analysisNotes.push({
+            label: "Reactividad Emocional",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Frente a las presiones del entorno, prefieres actuar con serenidad y cabeza fría. Esto te ayuda a tomar decisiones objetivas sin el ruido de reacciones apresuradas.",
+            reflection: "¿En qué momentos sientes que esta calma te permite ser el cable a tierra de las personas que te rodean?"
+        });
+    }
+
+    // 2. Estilo de Conexión
+    if (indices.estiloConexion >= 0.65) {
+        analysisNotes.push({
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Valoras profundamente tu espacio y tiempo personal para recargar tus energías. Disfrutas de momentos a solas para reflexionar sin la sobrecarga del entorno social.",
+            reflection: "¿Cómo logras mantener el equilibrio entre tus momentos de retiro voluntario y las relaciones que te importan?"
+        });
+    } else if (indices.estiloConexion >= 0.35) {
+        analysisNotes.push({
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Alternas de forma natural entre la interacción social y tus periodos de introspección, sintiéndote cómodo en ambos mundos.",
+            reflection: "¿Sientes que logras nutrir tus relaciones sin perder tu propio espacio de reflexión?"
+        });
+    } else {
+        analysisNotes.push({
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Te resulta muy natural y de fácil disposición interactuar continuamente con otras personas. Sientes disponibilidad interpersonal sin requerir periodos de aislamiento voluntario.",
+            reflection: "¿Sientes que participar de forma continua en interacciones sociales te resulta natural y no te drena la energía?"
+        });
+    }
+
+    // 3. Gestión de la Asertividad
+    if (indices.gestionAsertividad >= 0.65) {
+        analysisNotes.push({
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Estableces límites sumamente claros y defiendes tus convicciones con firmeza, priorizando tu soberanía e independencia frente a la opinión del grupo.",
+            reflection: "¿Cómo decides cuándo ser firme para resguardar tus metas y cuándo ser flexible para colaborar con otros?"
+        });
+    } else if (indices.gestionAsertividad >= 0.35) {
+        analysisNotes.push({
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Defiendes tus posturas con naturalidad pero con tacto, buscando acuerdos y prefiriendo la colaboración sin ceder en tus valores fundamentales.",
+            reflection: "¿Te resulta fácil encontrar un punto medio donde tus necesidades y las de los demás se respeten?"
+        });
+    } else {
+        analysisNotes.push({
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres el consenso y la armonía sobre el conflicto. Buscas que todos se sientan cómodos y evitas generar tensiones innecesarias con los demás.",
+            reflection: "¿Cómo logras equilibrar tu deseo de mantener la paz con la expresión honesta de tus propias necesidades?"
+        });
+    }
+
+    // 4. Ritmo de Ejecución
+    if (indices.ritmoEjecucion >= 0.65) {
+        analysisNotes.push({
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Te adaptas muy bien a los imprevistos y prefieres actuar de manera flexible sobre la marcha, encontrando soluciones rápidas e intuitivas.",
+            reflection: "¿Qué rutinas sencillas te ayudan a mantener el rumbo en tus metas largas cuando la novedad te invita a cambiar?"
+        });
+    } else if (indices.ritmoEjecucion >= 0.35) {
+        analysisNotes.push({
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Planificas tus pasos principales pero mantienes la flexibilidad suficiente para improvisar o cambiar el rumbo cuando es necesario.",
+            reflection: "¿Cómo decides cuándo seguir el plan original y cuándo es mejor dejarte llevar por las circunstancias?"
+        });
+    } else {
+        analysisNotes.push({
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres la organización, el análisis minucioso y dar pasos seguros. Esto te ayuda a evitar decisiones impulsivas y a garantizar resultados ordenados.",
+            reflection: "¿Cómo manejas la frustración cuando situaciones externas o personas imprevistas cambian tu planificación?"
+        });
+    }
+
+    // 5. Singularidad Cognitiva
+    if (indices.singularidadCognitiva >= 0.65) {
+        analysisNotes.push({
+            label: "Singularidad Cognitiva",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Tu mente conecta ideas de formas inusuales, originales y abstractas. Tienes una forma muy particular de ver el mundo, priorizando la imaginación y la creatividad.",
+            reflection: "¿Cómo logras que esta forma tan rica de ver el mundo te ayude a resolver problemas prácticos del día a día?"
+        });
+    } else if (indices.singularidadCognitiva >= 0.35) {
+        analysisNotes.push({
+            label: "Singularidad Cognitiva",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Logras combinar un sentido práctico y convencional con visiones creativas y originales ante los desafíos.",
+            reflection: "¿Cómo equilibras tu lado realista con tus destellos de originalidad para resolver problemas?"
+        });
+    } else {
+        analysisNotes.push({
+            label: "Singularidad Cognitiva",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres centrarte en hechos reales, datos tangibles y soluciones directas. Tu comunicación y decisiones se caracterizan por ser claras y funcionales.",
+            reflection: "¿Cómo te ayuda este enfoque práctico a resolver situaciones complejas con rapidez y sencillez?"
+        });
+    }
+
+    return {
+        sums,
+        indices,
+        variances,
+        globalVariance,
+        clasificaciones: {
+            reactividadEmocional: getClasificacion(indices.reactividadEmocional),
+            estiloConexion: getClasificacion(indices.estiloConexion),
+            gestionAsertividad: getClasificacion(indices.gestionAsertividad),
+            ritmoEjecucion: getClasificacion(indices.ritmoEjecucion),
+            singularidadCognitiva: getClasificacion(indices.singularidadCognitiva)
+        },
+        dynamicInsights,
+        analysisNotes
+    };
+};
+
+
+// SVG Cognitive Radar Chart Component
+const CognitiveRadar = ({ dimensions }) => {
+    const cx = 150;
+    const cy = 150;
+    const r = 85;
+    
+    const axes = [
+        { name: 'Visuoespacial', key: 'visuospatial', angle: -Math.PI / 2, align: 'middle', dy: -12, dx: 0 },
+        { name: 'Inductiva', key: 'inductive', angle: 0, align: 'start', dy: 4, dx: 12 },
+        { name: 'Secuencial', key: 'sequential', angle: Math.PI / 2, align: 'middle', dy: 18, dx: 0 },
+        { name: 'Verbal', key: 'verbal', angle: Math.PI, align: 'end', dy: 4, dx: -12 }
+    ];
+    
+    const levels = [0.25, 0.5, 0.75, 1.0];
+    
+    const pointsStr = axes.map(axis => {
+        const value = (dimensions[axis.key] || 0) / 100;
+        const x = cx + r * value * Math.cos(axis.angle);
+        const y = cy + r * value * Math.sin(axis.angle);
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <div className="flex flex-col items-center justify-center p-4">
+            <svg width="340" height="320" className="overflow-visible">
+                <defs>
+                    <radialGradient id="radarGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="rgba(16, 185, 129, 0.15)" />
+                        <stop offset="100%" stopColor="rgba(16, 185, 129, 0)" />
+                    </radialGradient>
+                </defs>
+                
+                <circle cx={cx} cy={cy} r={r} fill="url(#radarGlow)" />
+                
+                {levels.map((level, idx) => {
+                    const polyPoints = axes.map(axis => {
+                        const x = cx + r * level * Math.cos(axis.angle);
+                        const y = cy + r * level * Math.sin(axis.angle);
+                        return `${x},${y}`;
+                    }).join(' ');
+                    
+                    return (
+                        <polygon 
+                            key={idx} 
+                            points={polyPoints} 
+                            fill="none" 
+                            stroke="rgba(255,255,255,0.06)" 
+                            strokeWidth="1" 
+                            strokeDasharray={idx === 3 ? "none" : "3,3"}
+                        />
+                    );
+                })}
+                
+                {levels.map((level, idx) => {
+                    const x = cx;
+                    const y = cy - r * level;
+                    return (
+                        <text 
+                            key={idx} 
+                            x={x + 6} 
+                            y={y + 3} 
+                            fill="rgba(255,255,255,0.2)" 
+                            className="text-[8px] font-mono font-bold"
+                        >
+                            {level * 100}%
+                        </text>
+                    );
+                })}
+                
+                {axes.map((axis, idx) => {
+                    const x2 = cx + r * Math.cos(axis.angle);
+                    const y2 = cy + r * Math.sin(axis.angle);
+                    return (
+                        <line 
+                            key={idx} 
+                            x1={cx} 
+                            y1={cy} 
+                            x2={x2} 
+                            y2={y2} 
+                            stroke="rgba(255,255,255,0.12)" 
+                            strokeWidth="1.5"
+                        />
+                    );
+                })}
+                
+                <polygon 
+                    points={pointsStr} 
+                    fill="rgba(16, 185, 129, 0.22)" 
+                    stroke="rgba(16, 185, 129, 0.85)" 
+                    strokeWidth="2.5" 
+                    className="drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                />
+                
+                {axes.map((axis, idx) => {
+                    const value = (dimensions[axis.key] || 0) / 100;
+                    const x = cx + r * value * Math.cos(axis.angle);
+                    const y = cy + r * value * Math.sin(axis.angle);
+                    return (
+                        <circle 
+                            key={idx} 
+                            cx={x} 
+                            cy={y} 
+                            r="4.5" 
+                            fill="#10b981" 
+                            stroke="#ffffff" 
+                            strokeWidth="1.5"
+                        />
+                    );
+                })}
+                
+                {axes.map((axis, idx) => {
+                    const x = cx + (r + 14) * Math.cos(axis.angle);
+                    const y = cy + (r + 14) * Math.sin(axis.angle);
+                    return (
+                        <text 
+                            key={idx} 
+                            x={x + axis.dx} 
+                            y={y + axis.dy} 
+                            textAnchor={axis.align}
+                            fill="#94a3b8" 
+                            className="text-[10px] font-bold uppercase tracking-wider font-sans"
+                        >
+                            {axis.name}
+                        </text>
+                    );
+                })}
+            </svg>
+        </div>
+    );
+};
+
+const PsychologistDashboard = ({ onClose }) => {
+    const [patients, setPatients] = useState([]);
+    const [currentModule, setCurrentModule] = useState('DASHBOARD'); // DASHBOARD, PROFILE
+    const [selectedPatient, setSelectedPatient] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('CLINICAL_REPORT'); // CLINICAL_REPORT, ICAR16, EXISTENTIAL_ANALYSIS, TREATMENT_PLAN
+    const [isReprocessing, setIsReprocessing] = useState(false);
+    const [privateNotes, setPrivateNotes] = useState('');
+    const [conversations, setConversations] = useState([]);
+    const [selectedKioChatId, setSelectedKioChatId] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [kioSidebarWidth, setKioSidebarWidth] = useState(320);
+    const [isResizingKio, setIsResizingKio] = useState(false);
+    // === CANVAS ENGINE STATE ===
+    const [nodes, setNodes] = useState([]);
+    const [edges, setEdges] = useState([]);
+    const [draggingNode, setDraggingNode] = useState(null);
+    const [connectingFrom, setConnectingFrom] = useState(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [selectedNode, setSelectedNode] = useState(null);
+    const [time, setTime] = useState(0);
+    const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+    const isDraggingPanel = useRef(false);
+    const panelDragStart = useRef({ x: 0, y: 0 });
+
+    // === CLINICAL TRACKING STATE ===
+    const [clinicianNotes, setClinicianNotes] = useState({});
+    const [patientVideos, setPatientVideos] = useState({});
+    const [bioMetadata, setBioMetadata] = useState({});
+    const [phenomVideos, setPhenomVideos] = useState({});
+    const [phenomMetadata, setPhenomMetadata] = useState({});
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (e) => {
+            if (!isDraggingPanel.current) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            requestAnimationFrame(() => {
+                setPanelOffset({
+                    x: clientX - panelDragStart.current.x,
+                    y: clientY - panelDragStart.current.y
+                });
+            });
+        };
+
+        const handleGlobalMouseUp = () => {
+            isDraggingPanel.current = false;
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove, { passive: false });
+        window.addEventListener('touchmove', handleGlobalMouseMove, { passive: false });
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        window.addEventListener('touchend', handleGlobalMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleGlobalMouseMove);
+            window.removeEventListener('touchmove', handleGlobalMouseMove);
+            window.removeEventListener('mouseup', handleGlobalMouseUp);
+            window.removeEventListener('touchend', handleGlobalMouseUp);
+        };
+    }, []);
+
+    // === ICAR TRACKING STATE ===
+    const [expandedIcarQuestion, setExpandedIcarQuestion] = useState(null);
+    const [zoomImage, setZoomedImage] = useState(null);
+    const [icarAnswers, setIcarAnswers] = useState({});
+    const [icarDwellTimes, setIcarDwellTimes] = useState({});
+    const [icarChanges, setIcarChanges] = useState({});
+    const [icarVideos, setIcarVideos] = useState({});
+    const [selectedVersion, setSelectedVersion] = useState(1);
+    const [totalVersions, setTotalVersions] = useState(1);
+
+    // === TREATMENT PLAN STATE ===
+    // Removed Sessions and Treatment plan state, moved to MyResponsesDashboard.
+
+    useEffect(() => {
+        // Kept for backward compatibility if needed, but logic moved
+    }, [selectedPatient]);
+
+    // === EXISTENTIAL ANALYSIS STATE ===
+    const [patientBlocks, setPatientBlocks] = useState([]);
+    const [loadingBlocks, setLoadingBlocks] = useState(false);
+    const [blocksError, setBlocksError] = useState(null);
+    const [deepseekKeyStatus, setDeepseekKeyStatus] = useState('Verificando...');
+    const [apiConnStatus, setApiConnStatus] = useState('Verificando...');
+    const [reloadTrigger, setReloadTrigger] = useState(0);
+    const [logSearch, setLogSearch] = useState('');
+    const [logSphere, setLogSphere] = useState('ALL');
+    const [logLens, setLogLens] = useState('ALL');
+    const [logVisibility, setLogVisibility] = useState('ALL');
+
+    const [treatmentPlan, setTreatmentPlan] = useState({});
+    const [isGeneratingTreatmentPlan, setIsGeneratingTreatmentPlan] = useState(false);
+    const [isGeneratingConceptualization, setIsGeneratingConceptualization] = useState(false);
+
+    useEffect(() => {
+        if (selectedPatient) {
+            try {
+                const saved = localStorage.getItem(`oasis_treatment_plan_${selectedPatient.name}`);
+                setTreatmentPlan(saved ? JSON.parse(saved) : {});
+            } catch (e) {
+                setTreatmentPlan({});
+            }
+        }
+    }, [selectedPatient]);
+
+    // Pre-populate mock PID-5 answers if a patient exists but doesn't have PID-5 answers
+    useEffect(() => {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('oasis_icar_answers_')) {
+                const username = key.replace('oasis_icar_answers_', '');
+                const pidKey = `oasis_pid_answers_${username}`;
+                if (!localStorage.getItem(pidKey)) {
+                    const mockPidAnswers = {
+                        1: 3, 2: 3, 3: 2, 4: 2, 5: 3,
+                        6: 2, 7: 3, 8: 2, 9: 2, 10: 2,
+                        11: 0, 12: 1, 13: 0, 14: 1, 15: 0,
+                        16: 0, 17: 0, 18: 1, 19: 1, 20: 0,
+                        21: 0, 22: 0, 23: 1, 24: 0, 25: 0
+                    };
+                    localStorage.setItem(pidKey, JSON.stringify(mockPidAnswers));
+                }
+            }
+        }
+    }, []);
+
+    // Load Patient Profiles dynamically based on real localStorage data and backend users
+    const loadPatients = async () => {
+        const patientsMap = {};
+        const cleanUsername = (keyName, prefix) => {
+            let name = keyName.replace(prefix, '');
+            name = name.replace(/_v\d+$/, '');
+            return name;
+        };
+        
+        // 1. Initial list from local storage keys
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('oasis_bio_transcriptions_')) {
+                const username = cleanUsername(key, 'oasis_bio_transcriptions_');
+                patientsMap[username] = { name: username };
+            } else if (key.startsWith('oasis_phenom_qualitative_')) {
+                const username = cleanUsername(key, 'oasis_phenom_qualitative_');
+                patientsMap[username] = { name: username };
+            } else if (key.startsWith('oasis_pid_answers_')) {
+                const username = cleanUsername(key, 'oasis_pid_answers_');
+                patientsMap[username] = { name: username };
+            } else if (key.startsWith('oasis_icar_answers_')) {
+                const username = cleanUsername(key, 'oasis_icar_answers_');
+                patientsMap[username] = { name: username };
+            }
+        }
+        
+        const currentUser = localStorage.getItem('oasis_user');
+        if (currentUser) {
+            patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser };
+        }
+
+        // 2. Load all registered users from the backend
+        try {
+            const res = await fetch(`${API_URL}/api/oasis/users`);
+            if (res.ok) {
+                const backendUsers = await res.json();
+                backendUsers.forEach(u => {
+                    if (u.username) {
+                        patientsMap[u.username] = {
+                            name: u.username,
+                            fullName: u.fullName || '',
+                            age: u.age || null,
+                            password: u.password
+                        };
+                        
+                        // Dynamically sync backend clínical data into local storage so it is available locally!
+                        if (u.clínicalData) {
+                            window.isDownloadingClinicalData = true;
+                            try {
+                                Object.keys(u.clínicalData).forEach(key => {
+                                    localStorage.setItem(key, u.clínicalData[key]);
+                                });
+                            } finally {
+                                window.isDownloadingClinicalData = false;
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Error loading users from backend database:", err);
+        }
+        
+        const list = Object.keys(patientsMap).map(username => {
+            let bioTranscripts = null;
+            try {
+                bioTranscripts = JSON.parse(localStorage.getItem('oasis_bio_transcriptions_' + username));
+            } catch(e) {}
+            
+            let phenomQual = null;
+            try {
+                phenomQual = JSON.parse(localStorage.getItem('oasis_phenom_qualitative_' + username));
+            } catch(e) {}
+            
+            let pidAnswers = null;
+            try {
+                pidAnswers = JSON.parse(localStorage.getItem('oasis_pid_answers_' + username));
+            } catch(e) {}
+            
+            let icarAnswers = null;
+            try {
+                icarAnswers = JSON.parse(localStorage.getItem('oasis_icar_answers_' + username));
+            } catch(e) {}
+            
+            let icarDwell = null;
+            try {
+                icarDwell = JSON.parse(localStorage.getItem('oasis_icar_dwell_' + username));
+            } catch(e) {}
+            
+            let icarChanges = null;
+            try {
+                icarChanges = JSON.parse(localStorage.getItem('oasis_icar_changes_' + username));
+            } catch(e) {}
+            
+            let icarScore = 0;
+            let icarTotal = 0;
+            if (icarAnswers && Object.keys(icarAnswers).length > 0) {
+                icarTotal = icarQuestions.length;
+                icarQuestions.forEach(q => {
+                    if (icarAnswers[q.question_number] === q.correct_answer) {
+                        icarScore++;
+                    }
+                });
+            }
+            
+            const pid5Data = getPid5Domains(pidAnswers);
+            const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisión';
+            
+            return {
+                id: 'PT-' + username.toUpperCase(),
+                name: username,
+                password: patientsMap[username]?.password,
+                date: new Date().toISOString().split('T')[0],
+                status: savedStatus,
+                phenomenology: phenomQual ? {
+                    transcripts: {
+                        "Antecedentes de Origen": phenomQual.antecedentes_origen || "",
+                        "La Sombra de la Autoexigencia": phenomQual.experiencia_insuficiencia || "",
+                        "Temporalidad Vivida": phenomQual.temporalidad_vivida || "",
+                        "Premisa de Realidad": phenomQual.premisa_realidad || ""
+                    }
+                } : null,
+                clínicalInterview: bioTranscripts ? {
+                    transcripts: bioTranscripts
+                } : null,
+                pid5: pid5Data,
+                icar16: icarAnswers && Object.keys(icarAnswers).length > 0 ? {
+                    score: icarScore,
+                    total: icarTotal,
+                    dimensions: getIcarDimensions(icarAnswers),
+                    alerts: getIcarAlerts(icarDwell, icarChanges),
+                    duration: 'Completo',
+                    details: icarAnswers
+                } : null
+            };
+        });
+        
+        setPatients(list);
+    };
+
+    useEffect(() => {
+        loadPatients();
+    }, [currentModule]);
+
+    // Compute activePatientData dynamically based on selectedPatient and selectedVersion
+    const activePatientData = useMemo(() => {
+        if (!selectedPatient) return null;
+        
+        const username = selectedPatient.name;
+        const suffix = selectedVersion > 1 ? `_v${selectedVersion}` : '';
+        
+        let bioTranscripts = null;
+        try {
+            bioTranscripts = JSON.parse(localStorage.getItem('oasis_bio_transcriptions_' + username + suffix));
+        } catch(e) {}
+        
+        let phenomQual = null;
+        try {
+            phenomQual = JSON.parse(localStorage.getItem('oasis_phenom_qualitative_' + username + suffix));
+        } catch(e) {}
+        
+        let pidAnswers = null;
+        try {
+            pidAnswers = JSON.parse(localStorage.getItem('oasis_pid_answers_' + username + suffix));
+        } catch(e) {}
+        
+        let icarAnswersLocal = null;
+        try {
+            icarAnswersLocal = JSON.parse(localStorage.getItem('oasis_icar_answers_' + username + suffix));
+        } catch(e) {}
+        
+        let icarDwell = null;
+        try {
+            icarDwell = JSON.parse(localStorage.getItem('oasis_icar_dwell_' + username + suffix));
+        } catch(e) {}
+        
+        let icarChangesLocal = null;
+        try {
+            icarChangesLocal = JSON.parse(localStorage.getItem('oasis_icar_changes_' + username + suffix));
+        } catch(e) {}
+
+        let icarScore = 0;
+        let icarTotal = 16;
+        if (icarAnswersLocal) {
+            icarQuestions.forEach(q => {
+                if (icarAnswersLocal[q.question_number] === q.correct_answer) {
+                    icarScore++;
+                }
+            });
+        }
+        
+        const pid5Data = getPid5Domains(pidAnswers);
+        const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisión';
+        
+        return {
+            id: 'PT-' + username.toUpperCase(),
+            name: username,
+            date: new Date().toISOString().split('T')[0],
+            status: savedStatus,
+            phenomenology: phenomQual ? {
+                transcripts: {
+                    "Antecedentes de Origen": phenomQual.antecedentes_origen || "",
+                    "La Sombra de la Autoexigencia": phenomQual.experiencia_insuficiencia || "",
+                    "Temporalidad Vivida": phenomQual.temporalidad_vivida || "",
+                    "Premisa de Realidad": phenomQual.premisa_realidad || ""
+                }
+            } : null,
+            clínicalInterview: bioTranscripts ? {
+                transcripts: bioTranscripts
+            } : null,
+            pid5: pid5Data,
+            icar16: icarAnswersLocal && Object.keys(icarAnswersLocal).length > 0 ? {
+                score: icarScore,
+                total: icarTotal,
+                dimensions: getIcarDimensions(icarAnswersLocal),
+                alerts: getIcarAlerts(icarDwell, icarChangesLocal),
+                duration: 'Completo',
+                details: icarAnswersLocal
+            } : null
+        };
+    }, [selectedPatient, selectedVersion]);
+
+    useEffect(() => {
+        if (selectedPatient) {
+            const tot = parseInt(localStorage.getItem('oasis_total_versions_' + selectedPatient.name)) || 1;
+            setTotalVersions(tot);
+            setSelectedVersion(tot);
+            setLogSearch('');
+            setLogSphere('ALL');
+            setLogLens('ALL');
+            setLogVisibility('ALL');
+        }
+    }, [selectedPatient]);
+
+    useEffect(() => {
+        let active = true;
+        let activeUrls = [];
+        if (selectedPatient) {
+            const suffix = selectedVersion > 1 ? `_v${selectedVersion}` : '';
+            
+            const loadPatientDetails = async () => {
+                if (active) {
+                    setLoadingBlocks(true);
+                    setBlocksError(null);
+                    setApiConnStatus('Verificando...');
+                    setDeepseekKeyStatus('Verificando...');
+                }
+
+                try {
+                    const keyRes = await fetch(`${API_URL}/api/oasis/config/deepseek-key`);
+                    if (active) {
+                        setApiConnStatus('Conectado');
+                        if (keyRes.ok) {
+                            const data = await keyRes.json();
+                            if (data.key && data.key.length > 5) {
+                                setDeepseekKeyStatus('Activa');
+                            } else {
+                                setDeepseekKeyStatus('Faltante / Inválida');
+                            }
+                        } else {
+                            setDeepseekKeyStatus(`Error ${keyRes.status}`);
+                        }
+                    }
+                } catch (e) {
+                    if (active) {
+                        setApiConnStatus('Desconectado');
+                        setDeepseekKeyStatus('Error de Red');
+                    }
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${selectedPatient.name}`);
+                    if (res.ok && active) {
+                        const clinicalData = await res.json();
+                        window.isDownloadingClinicalData = true;
+                        try {
+                            Object.keys(clinicalData).forEach(key => {
+                                localStorage.setItem(key, clinicalData[key]);
+                            });
+                        } finally {
+                            window.isDownloadingClinicalData = false;
+                            setReloadTrigger(prev => prev + 1);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching latest patient clínical data from backend:", e);
+                }
+
+                try {
+                    
+                  try {
+                      const convRes = await fetch(`${API_URL}/api/oasis/conversations?user=${selectedPatient.name}`);
+                      if (convRes.ok && active) {
+                          const convData = await convRes.json();
+                          setConversations(convData || []);
+                      }
+                  } catch (e) {
+                      console.error("Error fetching conversations:", e);
+                  }
+                  
+                  const blocksRes = await fetch(`${API_URL}/api/oasis/blocks?user=${selectedPatient.name}`);
+                    if (active) {
+                        if (blocksRes.ok) {
+                            const blocksData = await blocksRes.json();
+                            setPatientBlocks(blocksData || []);
+                        } else {
+                            setBlocksError(`Error HTTP ${blocksRes.status}: ${blocksRes.statusText}`);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching patient blocks:", e);
+                    if (active) setBlocksError(e.message || "Error de red al consultar escritos.");
+                } finally {
+                    if (active) setLoadingBlocks(false);
+                }
+
+                if (!active) return;
+
+                try {
+                    setIcarAnswers(JSON.parse(localStorage.getItem('oasis_icar_answers_' + selectedPatient.name + suffix)) || {});
+                    setIcarDwellTimes(JSON.parse(localStorage.getItem('oasis_icar_dwell_' + selectedPatient.name + suffix)) || {});
+                    setIcarChanges(JSON.parse(localStorage.getItem('oasis_icar_changes_' + selectedPatient.name + suffix)) || {});
+                    setClinicianNotes(JSON.parse(localStorage.getItem(`oasis_clinician_notes_${selectedPatient.name}`)) || {});
+                    setPrivateNotes(localStorage.getItem(`oasis_private_notes_${selectedPatient.name}`) || '');
+                    setBioMetadata(JSON.parse(localStorage.getItem('oasis_bio_metadata_' + selectedPatient.name + suffix)) || {});
+                    setPhenomMetadata(JSON.parse(localStorage.getItem('oasis_phenom_metadata_' + selectedPatient.name + suffix)) || {});
+
+                    // Load all observation videos in a single IndexedDB transaction to prevent collision/stale race conditions
+                getObservations().then(obs => {
+                    if (!active) return;
+
+                    // Helper to safely convert and create Object URL for a blob/file
+                    const mapVideos = (videosObj) => {
+                        const urls = {};
+                        if (!videosObj) return urls;
+                        
+                        Object.entries(videosObj).forEach(([key, blob]) => {
+                            if (blob) {
+                                try {
+                                    if (typeof blob === 'string') {
+                                        let finalUrl = blob;
+                                        if (blob.startsWith('/uploads/')) {
+                                            finalUrl = `${API_URL}${blob}`;
+                                        } else if (blob.startsWith('/')) {
+                                            finalUrl = `${API_URL}${blob}`;
+                                        }
+                                        urls[key] = finalUrl; // Use server URL string directly
+                                        return;
+                                    }
+                                    let finalBlob = blob;
+                                    // Handle serialized representation if it got stored as standard object or buffer
+                                    if (!(blob instanceof Blob) && typeof blob === 'object') {
+                                        if (blob.buffer) {
+                                            finalBlob = new Blob([blob.buffer], { type: blob.type || 'video/webm' });
+                                        } else if (blob.data) {
+                                            finalBlob = new Blob([blob.data], { type: blob.type || 'video/webm' });
+                                        }
+                                    }
+                                    
+                                    const url = URL.createObjectURL(finalBlob);
+                                    urls[key] = url;
+                                    activeUrls.push(url);
+                                } catch (e) {
+                                    console.error(`Error generating video Object URL for key ${key}:`, e);
+                                }
+                            }
+                        });
+                        return urls;
+                    };
+
+                    // 1. Biographic Interview
+                    let foundBio = obs.find(o => o.id === `bio_videos_${selectedPatient.name}${suffix}`);
+                    if (!foundBio) {
+                        try {
+                            const cached = localStorage.getItem(`oasis_session_videos_bio_videos_${selectedPatient.name}${suffix}`);
+                            if (cached) foundBio = JSON.parse(cached);
+                        } catch (e) {}
+                    }
+                    setPatientVideos(mapVideos(foundBio?.videos));
+
+                    // 2. Phenomenology
+                    let foundPhenom = obs.find(o => o.id === `phenom_videos_${selectedPatient.name}${suffix}`);
+                    if (!foundPhenom) {
+                        try {
+                            const cached = localStorage.getItem(`oasis_session_videos_phenom_videos_${selectedPatient.name}${suffix}`);
+                            if (cached) foundPhenom = JSON.parse(cached);
+                        } catch (e) {}
+                    }
+                    setPhenomVideos(mapVideos(foundPhenom?.videos));
+
+                    // 3. ICAR-16
+                    let foundIcar = obs.find(o => o.id === `icar_videos_${selectedPatient.name}${suffix}`);
+                    if (!foundIcar) {
+                        try {
+                            const cached = localStorage.getItem(`oasis_session_videos_icar_videos_${selectedPatient.name}${suffix}`);
+                            if (cached) foundIcar = JSON.parse(cached);
+                        } catch (e) {}
+                    }
+                    setIcarVideos(mapVideos(foundIcar?.videos));
+
+                }).catch(err => {
+                    console.error("Error loading patient observation videos:", err);
+                    if (active) {
+                        setPatientVideos({});
+                        setPhenomVideos({});
+                        setIcarVideos({});
+                    }
+                });
+                
+                const savedNodes = localStorage.getItem(`oasis_canvas_nodes_${selectedPatient.name}`);
+                const savedEdges = localStorage.getItem(`oasis_canvas_edges_${selectedPatient.name}`);
+                
+                if (savedNodes) {
+                    setNodes(JSON.parse(savedNodes));
+                } else {
+                    setNodes([{
+                        id: 'root-1',
+                        type: 'CONTEXT',
+                        x: 150,
+                        y: 150,
+                        label: 'Contexto del Paciente',
+                        observations: '',
+                        width: 128, height: 128
+                    }]);
+                }
+                if (savedEdges) {
+                    setEdges(JSON.parse(savedEdges));
+                } else {
+                    setEdges([]);
+                }
+            } catch(e) {
+                console.error("Error loading patient configuration: ", e);
+            }
+            };
+            loadPatientDetails();
+        } else {
+            setPatientVideos({});
+            setPhenomVideos({});
+            setIcarVideos({});
+            setBioMetadata({});
+            setPhenomMetadata({});
+        }
+
+        return () => {
+            active = false;
+            activeUrls.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [selectedPatient, selectedVersion]);
+
+    const handleSaveClinicianNote = (clipId, value) => {
+        const updated = { ...clinicianNotes, [clipId]: value };
+        setClinicianNotes(updated);
+        if (selectedPatient) {
+            localStorage.setItem(`oasis_clinician_notes_${selectedPatient.name}`, JSON.stringify(updated));
+        }
+    };
+
+    // Save canvas nodes and edges to localStorage in real-time if they have actually changed
+    useEffect(() => {
+        if (selectedPatient && nodes.length > 0) {
+            const keyNodes = `oasis_canvas_nodes_${selectedPatient.name}`;
+            const keyEdges = `oasis_canvas_edges_${selectedPatient.name}`;
+            const strNodes = JSON.stringify(nodes);
+            const strEdges = JSON.stringify(edges);
+            if (localStorage.getItem(keyNodes) !== strNodes) {
+                localStorage.setItem(keyNodes, strNodes);
+            }
+            if (localStorage.getItem(keyEdges) !== strEdges) {
+                localStorage.setItem(keyEdges, strEdges);
+            }
+        }
+    }, [nodes, edges, selectedPatient]);
+
+    const hasAutoSelectedCanvas = useRef(false);
+    useEffect(() => {
+        if (!hasAutoSelectedCanvas.current && nodes.length > 0) {
+            hasAutoSelectedCanvas.current = true;
+            setSelectedNode(nodes[0].id);
+        }
+    }, [nodes]);
+
+    // Canvas animation loop
+    useEffect(() => {
+        let frame;
+        if (activeTab === 'CANVAS') {
+            const loop = () => {
+                setTime(Date.now() * 0.0025);
+                frame = requestAnimationFrame(loop);
+            };
+            frame = requestAnimationFrame(loop);
+        }
+        return () => cancelAnimationFrame(frame);
+    }, [activeTab]);
+
+    const handleCanvasMouseMove = (e) => {
+        if (isPanning) {
+            setPan({ x: pan.x + e.movementX, y: pan.y + e.movementY });
+        } else if (draggingNode) {
+            setNodes(nodes.map(n => 
+                n.id === draggingNode ? { ...n, x: n.x + e.movementX, y: n.y + e.movementY } : n
+            ));
+        }
+        if (connectingFrom) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        }
+    };
+
+    const handleCanvasMouseUp = () => {
+        setDraggingNode(null);
+        setIsPanning(false);
+        setConnectingFrom(null);
+    };
+
+    const handleNodeMouseDown = (e, id) => {
+        e.stopPropagation();
+        setDraggingNode(id);
+        setSelectedNode(id);
+    };
+
+    const handleConnectorMouseDown = (e, id) => {
+        e.stopPropagation();
+        setConnectingFrom(id);
+        const node = nodes.find(n => n.id === id);
+        setMousePos({ x: node.x + pan.x + node.width / 2, y: node.y + pan.y + node.height / 2 });
+    };
+
+    const handleNodeMouseUp = (e, id) => {
+        e.stopPropagation();
+        if (connectingFrom && connectingFrom !== id) {
+            if (!edges.some(edge => edge.source === connectingFrom && edge.target === id)) {
+                setEdges([...edges, { source: connectingFrom, target: id }]);
+            }
+        }
+        setConnectingFrom(null);
+        setDraggingNode(null);
+        setSelectedNode(id);
+    };
+
+    const spawnNode = (parentId, type) => {
+        const parent = nodes.find(n => n.id === parentId);
+        const newId = `node-${Date.now()}`;
+        let width = 128, height = 128;
+        if (type === 'CRITICAL_SYMPTOM') { width = 192; height = 96; }
+        else if (type === 'IMPACT_CHAIN') { width = 192; height = 80; }
+        else if (type === 'MACRO_MECHANISM') { width = 160; height = 160; }
+        else if (type === 'INTERNAL_STATE') { width = 112; height = 112; }
+        
+        setNodes([...nodes, {
+            id: newId,
+            type,
+            x: parent.x + parent.width + 80,
+            y: parent.y + (Math.random() - 0.5) * 80,
+            label: 'NUEVO NODO',
+            observations: '',
+            width, height
+        }]);
+        setEdges([...edges, { source: parentId, target: newId }]);
+        setSelectedNode(newId);
+    };
+
+    const deleteNode = (id) => {
+        setNodes(nodes.filter(n => n.id !== id));
+        setEdges(edges.filter(e => e.source !== id && e.target !== id));
+        if (selectedNode === id) setSelectedNode(null);
+    };
+
+    const renderNodeShape = (node) => {
+        const isSelected = selectedNode === node.id;
+        const ringClass = isSelected ? 'ring-2 ring-emerald-500/80 ring-offset-2 ring-offset-[#09090b]' : '';
+        
+        const typeLabels = {
+            'CONTEXT': 'CONTEXTO INICIAL',
+            'INTERNAL_STATE': 'ESTADO INTERNO',
+            'MACRO_MECHANISM': 'MACRO MECANISMO',
+            'CRITICAL_SYMPTOM': 'SÍNTOMA CRÍTICO',
+            'IMPACT_CHAIN': 'CADENA DE IMPACTO'
+        };
+
+        const labelBadge = <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase tracking-widest text-zinc-500 whitespace-nowrap">{typeLabels[node.type]}</span>;
+
+        if (node.type === 'CONTEXT') {
+            return (
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {labelBadge}
+                    <div className={`w-32 h-32 flex items-center justify-center rotate-45 bg-sky-950/30 border border-sky-500/40 hover:bg-sky-900/40 shadow-lg ${ringClass} transition-colors rounded-[1rem]`}>
+                        <div className="-rotate-45 text-center p-2 flex items-center justify-center w-full h-full">
+                            <textarea 
+                                value={node.label} 
+                                onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
+                                className="bg-transparent border-none text-sky-200 text-[10px] font-bold uppercase tracking-wider text-center w-24 h-24 resize-none outline-none overflow-hidden pt-6 font-mono" 
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        if (node.type === 'INTERNAL_STATE' || node.type === 'MACRO_MECHANISM') {
+            const size = node.type === 'MACRO_MECHANISM' ? 'w-36 h-36' : 'w-28 h-28';
+            return (
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {labelBadge}
+                    <div className={`${size} flex items-center justify-center rounded-full bg-emerald-950/30 border border-emerald-500/40 hover:bg-emerald-900/40 shadow-lg ${ringClass} transition-colors`}>
+                        <textarea 
+                            value={node.label} 
+                            onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
+                            className="bg-transparent border-none text-emerald-200 text-[10px] font-bold uppercase tracking-wider text-center w-3/4 h-3/4 resize-none outline-none overflow-hidden pt-8 font-mono" 
+                        />
+                    </div>
+                </div>
+            );
+        }
+        if (node.type === 'CRITICAL_SYMPTOM') {
+            return (
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {labelBadge}
+                    <div className={`w-44 h-20 flex items-center justify-center rounded-2xl bg-red-950/30 border border-red-500/40 hover:bg-red-900/40 shadow-lg ${ringClass} transition-colors`}>
+                        <textarea 
+                            value={node.label} 
+                            onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
+                            className="bg-transparent border-none text-red-200 text-[10px] font-bold uppercase tracking-wider text-center w-[90%] h-3/4 resize-none outline-none overflow-hidden pt-4 font-mono" 
+                        />
+                    </div>
+                </div>
+            );
+        }
+        if (node.type === 'IMPACT_CHAIN') {
+            return (
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {labelBadge}
+                    <div className={`w-44 h-16 flex items-center justify-center rounded-full bg-zinc-900/80 border border-zinc-500 hover:bg-zinc-800 shadow-lg ${ringClass} transition-colors`}>
+                        <textarea 
+                            value={node.label} 
+                            onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
+                            className="bg-transparent border-none text-zinc-300 text-[10px] font-bold uppercase tracking-wider text-center w-3/4 h-full resize-none outline-none overflow-hidden pt-4 font-mono" 
+                        />
+                    </div>
+                </div>
+            );
+        }
+    };
+
+    const renderTestStimulusDiagram = (q) => {
+        const qNum = q.question_number;
+        if (qNum === 1) return null;
+        
+        if (qNum === 2 || qNum === 4 || qNum === 5 || qNum === 7 || qNum === 8 || qNum === 11 || qNum === 12 || qNum === 15) {
+            const imageUrl = `/icar16/q${qNum}.png`;
+            return (
+                <div 
+                    onClick={() => setZoomedImage(imageUrl)}
+                    className="w-full h-36 bg-zinc-950/80 border border-white/5 rounded-2xl p-2 flex items-center justify-center shadow-inner overflow-hidden cursor-zoom-in group hover:border-white/20 transition-all duration-300 relative"
+                >
+                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} 
+                        src={imageUrl}
+                        alt={`Reactivo ${qNum}`}
+                        className="max-h-full max-w-full object-contain opacity-90 group-hover:scale-[1.03] transition-all duration-300"
+                        style={{ filter: 'invert(1)' }}
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md border border-white/10 text-white/50 text-[9px] px-2 py-0.5 rounded font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none uppercase">
+                        Ampliar
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    // Save observation to IndexedDB and update patient status
+    const handlePublishFormulation = async () => {
+        if (!selectedPatient) return;
+        
+        const formulationSession = {
+            id: `formulation_${selectedPatient.name}_${Date.now()}`,
+            patientId: selectedPatient.id,
+            patientName: selectedPatient.name,
+            date: new Date().toLocaleString(),
+            nodes: nodes,
+            edges: edges,
+            clinicianNotes: clinicianNotes,
+            privateNotes: privateNotes,
+            status: 'Publicado'
+        };
+        
+        try {
+            await saveObservation(formulationSession);
+            localStorage.setItem(`oasis_patient_status_${selectedPatient.name}`, 'Publicado');
+            alert("Formulación clínica guardada y firmada en el registro del paciente.");
+            setCurrentModule('DASHBOARD');
+            setSelectedPatient(null);
+        } catch(err) {
+            console.error("Error saving clínical formulation:", err);
+            alert("Fallo al guardar formulación: " + err.message);
+        }
+    };
+
+    // --- Módulo 1: Centro de Mando ---
+    const renderDashboard = () => {
+        const filtered = patients.filter(p => 
+            p.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        return (
+            <div className="w-full h-full p-8 overflow-y-auto animate-in fade-in zoom-in-95 duration-500 relative bg-[#060607]">
+                <div className="mb-10 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                            <Hexagon className="text-emerald-500 w-8 h-8" />
+                            Centro de Mando Clínico
+                        </h1>
+                        <p className="text-zinc-500 mt-2 font-mono text-xs uppercase tracking-widest">Observación Científica de la Consciencia</p>
+                    </div>
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('oasis_user');
+                            window.location.reload();
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-mono text-xs uppercase tracking-widest font-bold"
+                    >
+                        <LogOut size={14} />
+                        Cerrar Sesión
+                    </button>
+                </div>
+
+                <div className="flex items-center justify-between mb-6 gap-4">
+                    <div className="relative w-1/3 min-w-[300px]">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar identidad evaluada..."
+                            className="w-full bg-zinc-900/40 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all font-mono text-xs"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <button 
+                        onClick={() => {
+                            const newUser = prompt("Ingrese el nombre de usuario del paciente:");
+                            if (newUser) {
+                                const newPatient = {
+                                    id: 'PT-' + newUser.toUpperCase(),
+                                    name: newUser,
+                                    date: new Date().toISOString().split('T')[0],
+                                    status: 'Pendiente de revisión',
+                                    phenomenology: null,
+                                    clínicalInterview: null,
+                                    pid5: null,
+                                    icar16: null
+                                };
+                                localStorage.setItem(`oasis_patient_status_${newUser}`, 'Pendiente de revisión');
+                                setSelectedPatient(newPatient);
+                                setCurrentModule('PROFILE');
+                                setActiveTab('CLINICAL_REPORT');
+                            }
+                        }}
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Crear Análisis
+                    </button>
+                </div>
+
+                {filtered.length === 0 ? (
+                    <div className="bg-zinc-900/20 border border-dashed border-white/10 p-16 rounded-[2.5rem] text-center flex flex-col items-center justify-center gap-4 min-h-[300px] backdrop-blur-sm">
+                        <Activity className="w-12 h-12 text-zinc-600 animate-pulse" />
+                        <div>
+                            <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Sin Evaluaciones</h4>
+                            <p className="text-xs text-zinc-600 mt-1 max-w-sm">No se encontraron identidades con datos psicométricos registrados en este sistema.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-zinc-900/10 border border-white/5 rounded-[2rem] overflow-hidden backdrop-blur-sm">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-white/5 bg-zinc-950/40">
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Identidad / Aura</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Fecha Registro</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Estado Clínico</th>
+                                    <th className="px-6 py-4 text-right"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.map(patient => (
+                                    <tr 
+                                        key={patient.id} 
+                                        onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
+                                        className="border-b border-white/5 hover:bg-white/[0.01] cursor-pointer transition-colors group"
+                                    >
+                                        <td className="px-6 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400">
+                                                    <User className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-black text-white italic">@{patient.name}</div>
+                                                    <div className="text-zinc-600 text-[10px] font-mono">{patient.id}</div>
+                                                    {patient.password && (
+                                                        <div className="text-emerald-500/80 text-[10px] font-mono mt-1 font-bold">
+                                                            🔑 {patient.password}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5 text-xs text-zinc-400 font-mono">{patient.date}</td>
+                                        <td className="px-6 py-5">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
+                                                ${patient.status === 'Pendiente de revisión' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : ''}
+                                                ${patient.status === 'Publicado' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : ''}
+                                                ${patient.status === 'Editando' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : ''}
+                                            `}>
+                                                {patient.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-5 text-right">
+                                            <ChevronRight className="inline-block w-5 h-5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // --- Tab Renderers ---
+    const renderBiographicTab = () => {
+        const transcripts = activePatientData?.clínicalInterview?.transcripts || {};
+        const qKeys = Object.keys(transcripts);
+        
+        const bioQuestionsList = [
+            { id: "0", title: "Motivo de Consulta (El Presente)", question: "Para empezar, vamos a situarnos: ¿Qué es eso que hoy sientes que merece ser observado? Cuéntame sobre esa situación o estado que, al pensar en él, sientes que es el eje central de tu consulta en este momento." },
+            { id: "1", title: "Impacto Fenomenológico (El Cuerpo)", question: "Cuando este problema aparece, ¿cómo se siente en tu cuerpo? ¿Qué pensamientos suelen acompañarlo?" },
+            { id: "2", title: "Evitación Experiencial (El Costo)", question: "¿Qué has intentado hacer hasta ahora para evitar o dejar de sentir esto? ¿Sientes que esta lucha te está quitando tiempo o energía?" },
+            { id: "3", title: "Contexto Vital (Relaciones)", question: "¿Con quién vives? ¿Cómo describirías la relación con las personas más significativas en tu vida actualmente?" },
+            { id: "4", title: "Contexto Vital (Esfera Productiva)", question: "¿A qué te dedicas y cómo te sientes en tu entorno académico o laboral?" },
+            { id: "5", title: "Direcciones Vitales (El Futuro)", question: "Si este problema desapareciera mañana por arte de magia... ¿qué harías diferente? ¿Qué áreas de tu vida has dejado en pausa?" },
+            { id: "6", title: "Identidad de Afrontamiento (El Ser)", question: "¿Qué tipo de persona te gustaría ser frente a las dificultades que estás atravesando?" }
+        ];
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Narrativa Biográfica (Parte I)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Historial discursivo estructurado extraído de la entrevista verbal</p>
+                </div>
+                
+                {qKeys.length === 0 ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
+                        Sin transcripción disponible. El usuario no ha completado la entrevista.
+                    </div>
+                ) : (
+                    <div className="space-y-8">
+                        {bioQuestionsList.map((q) => {
+                            const answer = transcripts[q.id] || transcripts[q.title];
+                            if (!answer) return null;
+                            const videoUrl = patientVideos[q.id];
+                            const meta = bioMetadata[q.id];
+                            
+                            return (
+                                <div key={q.id} className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6 space-y-4">
+                                    <div className="flex flex-col border-b border-white/5 pb-3">
+                                        <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider font-mono mb-1">{q.title}</span>
+                                        <p className="text-zinc-400 text-xs font-sans leading-relaxed">
+                                            <strong className="text-zinc-500 font-bold uppercase text-[9px] font-mono block">Pregunta:</strong>
+                                            "{q.question}"
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-zinc-950/45 border border-white/5 rounded-2xl text-xs text-zinc-300 italic leading-relaxed font-sans">
+                                        <strong className="text-zinc-500 font-bold uppercase text-[9px] font-mono block not-italic mb-1">Respuesta del Paciente:</strong>
+                                        "{answer}"
+                                    </div>
+
+                                    {/* Video & Telemetry Grid */}
+                                    {videoUrl ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={videoUrl} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
+                                            </div>
+                                            <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center space-y-2">
+                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">Parámetros de Captura</h4>
+                                                {meta ? (
+                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Tiempo Dwell:</span>
+                                                            <span className="text-white font-mono font-black">{meta.dwellTime}s</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Pausas:</span>
+                                                            <span className="text-white font-mono font-black">{meta.pauses}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Palabras:</span>
+                                                            <span className="text-white font-mono font-black">{meta.words}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Velocidad:</span>
+                                                            <span className="text-white font-mono font-black">
+                                                                {meta.dwellTime > 0 
+                                                                    ? `${Math.round((meta.words / meta.dwellTime) * 60)} ppm` 
+                                                                    : '—'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin datos de telemetría disponibles.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : meta ? (
+                                        <div className="flex gap-6 bg-zinc-950/20 border border-white/5 rounded-2xl p-4 text-xs font-mono mt-4">
+                                            <div>
+                                                <span className="text-zinc-500 uppercase text-[9px]">Tiempo Dwell: </span>
+                                                <strong className="text-white font-bold">{meta.dwellTime}s</strong>
+                                            </div>
+                                            <div>
+                                                <span className="text-zinc-500 uppercase text-[9px]">Pausas: </span>
+                                                <strong className="text-white font-bold">{meta.pauses}</strong>
+                                            </div>
+                                            <div>
+                                                <span className="text-zinc-500 uppercase text-[9px]">Palabras: </span>
+                                                <strong className="text-white font-bold">{meta.words}</strong>
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    <div className="space-y-2 pt-2">
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Perspectiva Clínica / Observación</label>
+                                        <textarea
+                                            value={clinicianNotes[`bio_${q.id}`] || ''}
+                                            onChange={(e) => handleSaveClinicianNote(`bio_${q.id}`, e.target.value)}
+                                            placeholder="Escribe el análisis clínico sobre marcadores de lenguaje, pausas u otros síntomas vitales..."
+                                            className="w-full h-20 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderPhenomenologicalTab = () => {
+        const transcripts = activePatientData?.phenomenology?.transcripts || {};
+        const hasData = Object.values(transcripts).some(x => x && x.trim().length > 0);
+
+        const phenomQuestions = [
+            { key: "Antecedentes de Origen", title: "Antecedentes de Origen", desc: "¿Qué estaba pasando en tu vida cuando apareció este problema por primera vez?", id: "0" },
+            { key: "La Sombra de la Autoexigencia", title: "La Sombra de la Autoexigencia", desc: "¿En qué momentos sientes que corres tras una meta que siempre se aleja? ¿Cuándo y dónde te susurra la mente que no eres o no haces suficiente?", id: "1" },
+            { key: "Temporalidad Vivida", title: "Temporalidad Vivida", desc: "¿Cómo se siente el paso del tiempo cuando te encuentras abrumado?", id: "2" },
+            { key: "Premisa de Realidad", title: "Premisa de Realidad", desc: "¿Qué ideas o certezas cambian en ti cuando estás en crisis?", id: "3" }
+        ];
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Diagnóstico Fenomenológico (Parte II)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Estructuración existencial cualitativa del self</p>
+                </div>
+                
+                {!hasData ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
+                        Sin diagnóstico fenomenológico disponible.
+                    </div>
+                ) : (
+                    <div className="space-y-8">
+                        {phenomQuestions.map((q) => {
+                            const answer = transcripts[q.key];
+                            if (!answer) return null;
+                            const videoUrl = phenomVideos[q.id];
+                            const meta = phenomMetadata[q.id];
+
+                            return (
+                                <div key={q.key} className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6 space-y-4">
+                                    <div className="space-y-0.5">
+                                        <div className="text-[10px] font-black uppercase text-purple-400 tracking-wider font-mono">{q.title}</div>
+                                        <div className="text-[10px] text-zinc-500 italic">"{q.desc}"</div>
+                                    </div>
+                                    <div className="p-4 bg-zinc-950/45 border border-white/5 rounded-2xl text-xs text-zinc-300 italic leading-relaxed font-sans">
+                                        "{answer}"
+                                    </div>
+
+                                    {/* Video & Telemetry Grid */}
+                                    {videoUrl ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                            <div>
+                                                <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={videoUrl} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
+                                            </div>
+                                            <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center space-y-2">
+                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">Parámetros de Captura</h4>
+                                                {meta ? (
+                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Tiempo Dwell:</span>
+                                                            <span className="text-white font-mono font-black">{meta.dwellTime}s</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Pausas:</span>
+                                                            <span className="text-white font-mono font-black">{meta.pauses}</span>
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <span className="text-zinc-500 block text-[9px] uppercase font-mono">Total Palabras:</span>
+                                                            <span className="text-white font-mono font-black">{meta.words} palabras</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] font-mono text-zinc-600">Cargando telemetría...</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    <div className="space-y-2 pt-2">
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Notas Ontológico-Subjetivas</label>
+                                        <textarea
+                                            value={clinicianNotes[`phenom_${q.key}`] || ''}
+                                            onChange={(e) => handleSaveClinicianNote(`phenom_${q.key}`, e.target.value)}
+                                            placeholder="Observaciones sobre la construcción del tiempo, espacio existencial y realidad del paciente..."
+                                            className="w-full h-20 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderPid5Tab = () => {
+        const hasPid5 = !!activePatientData?.pid5;
+        const suffix = selectedVersion > 1 ? `_v${selectedVersion}` : '';
+        const rawAnswers = JSON.parse(localStorage.getItem('oasis_pid_answers_' + selectedPatient.name + suffix)) || {};
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Inventario PID-5 Breve (Parte III)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cribado de dominios y rasgos patológicos de personalidad (DSM-5)</p>
+                </div>
+                
+                {!hasPid5 ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
+                        Inventario PID-5 pendiente de responder.
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Mapeo de Dominios y Tensiones del PID-5 */}
+                        {(() => {
+                            const pidState = computePid5ClinicalState(rawAnswers);
+                            if (!pidState) return null;
+
+                            const nameMap = {
+                                reactividadEmocional: "Reactividad Emocional",
+                                estiloConexion: "Estilo de Conexión",
+                                gestionAsertividad: "Gestión de la Asertividad",
+                                ritmoEjecucion: "Ritmo de Ejecución",
+                                singularidadCognitiva: "Singularidad Cognitiva"
+                            };
+
+                            // Generate the clínical JSON object structure requested
+                            const clinJson = {
+                                metadatos: {
+                                    fecha: new Date().toISOString().split('T')[0],
+                                    estabilidad_flujo: pidState.globalVariance > 0.85 ? "alta_variabilidad" : "ok",
+                                    variabilidad_interna: pidState.globalVariance
+                                },
+                                vectores_de_estado: {
+                                    V1_reactividad_emocional: pidState.indices.reactividadEmocional,
+                                    V2_estilo_conexion: pidState.indices.estiloConexion,
+                                    V3_gestion_asertividad: pidState.indices.gestionAsertividad,
+                                    V4_ritmo_ejecucion: pidState.indices.ritmoEjecucion,
+                                    V5_singularidad_cognitiva: pidState.indices.singularidadCognitiva
+                                },
+                                varianzas_locales: pidState.variances,
+                                clasificaciones: {
+                                    reactividad_emocional: pidState.clasificaciones.reactividadEmocional.label,
+                                    estilo_conexion: pidState.clasificaciones.estiloConexion.label,
+                                    gestion_asertividad: pidState.clasificaciones.gestionAsertividad.label,
+                                    ritmo_ejecucion: pidState.clasificaciones.ritmoEjecucion.label,
+                                    singularidad_cognitiva: pidState.clasificaciones.singularidadCognitiva.label
+                                },
+                                dinámicas_activas: pidState.dynamicInsights.map(d => ({
+                                    nombre: d.title,
+                                    discrepancia: d.discrepancy,
+                                    consecuencia: d.consequence
+                                }))
+                            };
+
+                            const promptMaestroText = `Actúa como un psicólogo clínico observador. Tu tarea es describir el estilo de vida y de toma de decisiones del individuo basándote en estos 5 vectores.
+
+Valores de los vectores:
+V1 (Reactividad Emocional): ${pidState.indices.reactividadEmocional}
+V2 (Estilo de Conexión): ${pidState.indices.estiloConexion}
+V3 (Gestión de la Asertividad): ${pidState.indices.gestionAsertividad}
+V4 (Ritmo de Ejecución): ${pidState.indices.ritmoEjecucion}
+V5 (Singularidad Cognitiva): ${pidState.indices.singularidadCognitiva}
+
+Varianza Interna Global: ${pidState.globalVariance}
+
+**Reglas para el análisis:**
+1. **Lenguaje Humano:** Prohibido usar palabras como 'sistema', 'procesamiento', 'consumo', 'vector' o 'errático'. Usa palabras como 'persona', 'decisiones', 'estilo', 'forma de ser'.
+2. **Análisis de mezcla:** No analices los elementos por separado. Describe cómo la mezcla de los 5 elementos crea una persona única.
+3. **Humildad técnica:** Si detectas discrepancias en las respuestas, no las llames 'errores' o 'baja fiabilidad'. Llámalo 'complejidad' o 'flexibilidad'.
+4. **Preguntas reales:** Las preguntas de reflexión deben ser preguntas que le harías a un amigo en una conversación profunda, no preguntas de test psicométrico. Ej: '¿Cómo manejas X situación?' en lugar de '¿Tu sistema prioriza X?'.
+5. **Sin juicios:** No clasifiques; describe cómo la persona navega su mundo.
+
+**Reglas para la sección de Dinámicas de Afrontamiento:**
+- Identifica las 4 dinámicas: Evalúa qué tanto se inclina la persona hacia cada una.
+- Tono clínico-humano: Explica la dinámica como una elección de vida, no como un fallo.
+- Conexión profunda: No solo digas 'es así'. Explica el porqué basado en la mezcla de todos sus vectores (ej: 'Como tienes una alta Singularidad y una baja Reactividad, tu aislamiento no es por miedo, sino por el deseo de no interrumpir tu propio proceso mental').
+- Pregunta de reflexión: Termina con una pregunta que invite a pensar profundamente, no a responder un formulario.`;
+
+                            return (
+                                <div className="space-y-6">
+                                    {/* Capa 1 y Capa 2 */}
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                        {/* Capa 1: Estado de las Variables (Nivel Base) */}
+                                        <div className="md:col-span-6 bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 1: Estado de las Variables (Vectores)</h4>
+                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Intensidad de vectores normalizados (0.0 - 1.0) y variabilidad local</p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {Object.entries(pidState.indices).map(([key, value]) => {
+                                                    const label = nameMap[key] || key;
+                                                    const clas = pidState.clasificaciones[key];
+                                                    const localVariance = pidState.variances[key];
+                                                    
+                                                    let barColor = "bg-emerald-500";
+                                                    if (value >= 0.65) barColor = "bg-violet-500";
+                                                    else if (value >= 0.35) barColor = "bg-amber-500";
+
+                                                    return (
+                                                        <div key={key} className="space-y-1.5 bg-zinc-950/35 p-3 rounded-2xl border border-white/[0.02]">
+                                                            <div className="flex justify-between items-center text-[10px] font-mono">
+                                                                <span className="text-zinc-300 font-bold">{label}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`px-1.5 py-0.5 rounded text-[7px] uppercase border ${clas.color}`}>
+                                                                        {clas.label}
+                                                                    </span>
+                                                                    <span className="text-white font-black">{value.toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden border border-white/5">
+                                                                <div 
+                                                                    className={`h-full ${barColor} transition-all duration-500`}
+                                                                    style={{ width: `${value * 100}%` }}
+                                                                />
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[8px] text-zinc-600 font-mono">
+                                                                <span>VARIANZA DE BLOQUE: {localVariance.toFixed(3)}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Capa 2: Dinámicas de Afrontamiento */}
+                                        <div className="md:col-span-6 bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4 flex flex-col justify-between">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 2: Dinámicas de Afrontamiento</h4>
+                                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estrategias y recursos relacionales basados en la mezcla de perfiles (Δ ≥ 0.5)</p>
+                                                </div>
+
+                                                {/* Tensiones Estructurales del Sistema */}
+                                                <div className="space-y-3 pb-4 border-b border-white/5">
+                                                    <span className="text-[8px] font-mono font-black uppercase text-purple-400 tracking-[0.25em] block mb-2">Tensiones Estructurales (Fuerzas del Sistema)</span>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        {[
+                                                            { name: "Tensión de Regulación (Reactividad vs Conexión)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.estiloConexion).toFixed(3)), label: "Regulación vs Conexión" },
+                                                            { name: "Tensión de Procesamiento (Singularidad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.singularidadCognitiva - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Singularidad vs Ritmo" },
+                                                            { name: "Tensión de Límites (Asertividad vs Conexión)", val: parseFloat(Math.abs(pidState.indices.gestionAsertividad - pidState.indices.estiloConexion).toFixed(3)), label: "Asertividad vs Conexión" },
+                                                            { name: "Tensión de Estructuración (Reactividad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Reactividad vs Ritmo" }
+                                                        ].map((t, idx) => {
+                                                            let status = "Leve";
+                                                            let color = "text-emerald-400 border-emerald-500/20 bg-emerald-500/5";
+                                                            let barColor = "bg-emerald-500";
+                                                            if (t.val >= 0.5) {
+                                                                status = "Alta";
+                                                                color = "text-violet-400 border-violet-500/20 bg-violet-500/5";
+                                                                barColor = "bg-violet-500";
+                                                            } else if (t.val >= 0.2) {
+                                                                status = "Moderada";
+                                                                color = "text-amber-400 border-amber-500/20 bg-amber-500/5";
+                                                                barColor = "bg-amber-500";
+                                                            }
+                                                            return (
+                                                                <div key={idx} className="bg-zinc-950/45 p-3 rounded-2xl border border-white/[0.02] flex flex-col justify-between space-y-1">
+                                                                    <div className="flex justify-between items-start gap-1">
+                                                                        <span className="text-[8px] font-mono text-zinc-400 font-bold leading-tight truncate block max-w-[120px]" title={t.name}>{t.label}</span>
+                                                                        <span className={`px-1.5 py-0.5 rounded-[0.25rem] text-[6px] font-black uppercase border shrink-0 ${color}`}>
+                                                                            {status}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                        <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                                                            <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${t.val * 100}%` }} />
+                                                                        </div>
+                                                                        <span className="text-[8px] font-mono font-black text-white shrink-0">Δ {t.val.toFixed(2)}</span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1 no-scrollbar">
+                                                    {pidState.dynamicInsights.length === 0 ? (
+                                                        <div className="p-8 text-center border border-white/5 rounded-2xl bg-zinc-950/20 text-zinc-500 text-[9px] font-mono uppercase">
+                                                            No se registran dinámicas divergentes significativas en este perfil.
+                                                        </div>
+                                                    ) : (
+                                                        pidState.dynamicInsights.map((insight, idx) => (
+                                                            <div key={idx} className="p-4 rounded-2xl border border-purple-500/25 bg-purple-500/5 text-purple-200 space-y-2">
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[10px] font-black uppercase text-purple-400 font-mono">{insight.title}</span>
+                                                                    <span className="text-[8px] font-mono bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 font-black">DISCREPANCIA Δ {insight.discrepancy.toFixed(2)}</span>
+                                                                </div>
+                                                                <p className="text-[9px] text-zinc-300 leading-relaxed font-sans">{insight.consequence}</p>
+                                                                <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-white/5 text-[9px] text-purple-300 font-mono italic">
+                                                                    <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">Reflexión sugerida:</span>
+                                                                    "{insight.reflection}"
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* JSON Output */}
+                                            <div className="space-y-2 pt-4 border-t border-white/5 flex flex-col">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">JSON del Estado Multidimensional (PID-5)</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(JSON.stringify(clinJson, null, 2));
+                                                            alert("¡JSON multidimensional copiado!");
+                                                        }}
+                                                        className="text-[8px] font-mono font-black uppercase bg-purple-500/15 border border-purple-500/25 text-purple-400 px-2 py-0.5 rounded hover:bg-purple-500 hover:text-black transition-all font-bold"
+                                                    >
+                                                        Copiar JSON
+                                                    </button>
+                                                </div>
+                                                <pre className="bg-zinc-950/90 border border-white/5 p-3 rounded-2xl text-[9px] font-mono text-purple-400/90 max-h-[90px] overflow-y-auto no-scrollbar shadow-inner leading-relaxed">
+                                                    {JSON.stringify(clinJson, null, 2)}
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Capa 3: Fluidez Adaptativa (Variabilidad del Perfil) */}
+                                    <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-3">
+                                        <div>
+                                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 3: Fluidez Adaptativa (Variabilidad del Perfil)</h4>
+                                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Comprensión de la flexibilidad y matices en las respuestas del perfil</p>
+                                        </div>
+
+                                        <div className={`p-4 rounded-2xl border transition-all ${
+                                            pidState.globalVariance > 0.85
+                                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                                : 'bg-emerald-500/5 border-emerald-500/15 text-emerald-300'
+                                        }`}>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${pidState.globalVariance > 0.85 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                                    <span className="text-[10px] font-mono font-bold uppercase">
+                                                        {pidState.globalVariance > 0.85 ? 'Perfil con Alta Flexibilidad' : 'Consistencia Armónica'}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[9px] font-mono">VARIANZA GLOBAL DE SISTEMA: {pidState.globalVariance.toFixed(3)}</span>
+                                            </div>
+                                            <p className="text-[9px] mt-1.5 leading-relaxed text-zinc-400 font-sans">
+                                                {pidState.globalVariance > 0.85
+                                                    ? 'Tus respuestas reflejan una gran flexibilidad, lo que hace que tu perfil sea dinámico y difícil de encasillar en una sola categoría rígida.'
+                                                    : 'Tus respuestas siguen una línea constante y homogénea en cada uno de tus estilos de gestión personal.'
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Capa 4: Tu Enfoque de Gestión Personal */}
+                                    {pidState.analysisNotes.length > 0 && (
+                                        <div className="bg-violet-950/10 border border-violet-500/15 p-6 rounded-3xl space-y-4">
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest font-mono">Capa 4: Tu Enfoque de Gestión Personal</h4>
+                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Análisis integrado de tus 5 estilos (sin umbrales de exclusión)</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {pidState.analysisNotes.map((note, idx) => (
+                                                    <div key={idx} className="bg-zinc-950/40 border border-white/[0.02] p-4 rounded-2xl space-y-2">
+                                                        <div className="flex flex-col gap-0.5 border-b border-white/5 pb-2">
+                                                            <span className="text-[10px] font-bold text-violet-300 font-mono uppercase">{note.label}</span>
+                                                            <span className="text-[8px] text-zinc-500 font-mono uppercase">{note.styleType}</span>
+                                                        </div>
+                                                        <p className="text-[9px] text-zinc-300 leading-relaxed font-sans">{note.consequence}</p>
+                                                        <div className="bg-violet-500/[0.02] p-3 rounded-xl border border-violet-500/10 text-[9px] text-violet-300 font-mono italic">
+                                                            <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">Reflexión sugerida:</span>
+                                                            "{note.reflection}"
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Capa 5: Prompt Maestro Copiable */}
+                                    <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Prompt Maestro para Análisis de Procesos (IA)</h4>
+                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Copia esta configuración matemática directa para alimentar y guiar la interpretación de la IA</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(promptMaestroText);
+                                                    alert("¡Prompt Maestro copiado al portapapeles!");
+                                                }}
+                                                className="text-[8px] font-mono font-black uppercase bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 px-3 py-1 rounded hover:bg-emerald-500 hover:text-black transition-all"
+                                            >
+                                                Copiar Prompt
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <pre className="bg-zinc-950 border border-white/5 p-4 rounded-2xl text-[9px] font-mono text-zinc-400 overflow-x-auto leading-relaxed max-h-[160px] overflow-y-auto no-scrollbar">
+                                                {promptMaestroText}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest font-mono">Reactivos Detallados</h4>
+                            <div className="bg-zinc-900/10 border border-white/5 rounded-3xl p-6 max-h-[600px] overflow-y-auto space-y-3 no-scrollbar">
+                                {PHENOM_PART_B.map((q) => {
+                                    const rating = rawAnswers[q.id];
+                                    const ratingLabels = ["Muy en desacuerdo", "A veces en desacuerdo", "A veces de acuerdo", "Muy de acuerdo"];
+                                    return (
+                                        <div key={q.id} className="bg-zinc-950/20 border border-white/5 rounded-2xl p-4 flex justify-between items-center gap-4 hover:border-white/10 transition-colors">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[8px] font-mono text-zinc-500 font-black uppercase">Reactivo {q.id}</span>
+                                                    <span className="text-[7px] font-mono text-purple-400 uppercase tracking-widest bg-purple-500/10 border border-purple-500/20 px-1 rounded">{q.domain}</span>
+                                                </div>
+                                                <p className="text-xs text-zinc-300 font-sans">"{q.text}"</p>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                                <div className="text-xs font-mono font-black text-emerald-400">{rating !== undefined ? rating : '—'}</div>
+                                                <div className="text-[8px] text-zinc-500 font-semibold uppercase">{rating !== undefined ? ratingLabels[rating] : 'Sin Respuesta'}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Implicaciones Clínicas Generales</label>
+                            <textarea
+                                value={clinicianNotes['pid5_general'] || ''}
+                                onChange={(e) => handleSaveClinicianNote('pid5_general', e.target.value)}
+                                placeholder="Añade tus conclusiones sobre la estructura de personalidad, defensas y rasgos desadaptativos..."
+                                className="w-full h-28 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderIcarTab = () => {
+        const hasIcar = !!activePatientData?.icar16;
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Motor Cognitivo ICAR-16 (Parte IV)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Mapeo del rendimiento prefrontal e inferencial viso-espacial</p>
+                </div>
+                
+                {!hasIcar ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
+                        Prueba ICAR-16 pendiente de responder.
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Metrics & Proctoring Header */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex justify-between items-center">
+                                <div>
+                                    <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest font-mono">Aciertos Totales</div>
+                                    <div className="text-4xl font-black text-white italic mt-1">{activePatientData.icar16.score}<span className="text-xl text-zinc-500">/16</span></div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest font-mono">Proctoring</div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase mt-1 font-mono ${
+                                        activePatientData.icar16.alerts && activePatientData.icar16.alerts.length > 0
+                                            ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                                            : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                                    }`}>
+                                        {activePatientData.icar16.alerts && activePatientData.icar16.alerts.length > 0 ? 'Vigilado' : 'Aprobado'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Proctoring Alerts list */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex flex-col justify-center space-y-2">
+                                <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest font-mono">Alertas Conductuales</h4>
+                                {activePatientData.icar16.alerts && activePatientData.icar16.alerts.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {activePatientData.icar16.alerts.map((alert, idx) => (
+                                            <span key={idx} className="px-2 py-1 rounded bg-amber-500/5 border border-amber-500/10 text-[9px] font-mono text-amber-400/90" title={alert.tooltip}>
+                                                ⚠️ {alert.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin anomalías ni alertas de proctoring detectadas.</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Reporte de Estado Cognitivo (Norma Poblacional) */}
+                        {(() => {
+                            const refIndices = activePatientData.icar16.indices_referencia || computeIcarReferenceIndices(icarAnswers, icarDwellTimes, icarChanges);
+                            if (!refIndices || !refIndices.dimensions) return null;
+                            return (
+                                <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                    <div>
+                                        <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Reporte de Ejecución Cognitiva (ICAR-16)</h4>
+                                        <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Comparativa estándarizada contra norma poblacional de referencia (18-30 años, nivel universitario)</p>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        {Object.entries(refIndices.dimensions).map(([key, data]) => {
+                                            const nameMap = {
+                                                verbal: "Lógico-Verbal",
+                                                visuospatial: "Visoespacial",
+                                                sequential: "Secuencial",
+                                                inductive: "Inductiva"
+                                            };
+                                            
+                                            // Colors based on z_score / status
+                                            let zColor = "text-zinc-400";
+                                            if (data.z_score > 0.5) zColor = "text-emerald-400";
+                                            else if (data.z_score < -0.5) zColor = "text-rose-400 font-bold";
+                                            
+                                            let statusBg = "bg-white/5 border-white/5 text-zinc-400";
+                                            if (data.efficiency_status === "capacidad_compensatoria") {
+                                                statusBg = "bg-amber-500/10 border-amber-500/20 text-amber-400";
+                                            } else if (data.efficiency_status === "saturacion_cognitiva") {
+                                                statusBg = "bg-red-500/10 border-red-500/20 text-red-400 font-black animate-pulse";
+                                            } else if (data.efficiency_status === "baja_inversion") {
+                                                statusBg = "bg-blue-500/10 border-blue-500/20 text-blue-400";
+                                            } else if (data.z_score >= 1) {
+                                                statusBg = "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+                                            }
+
+                                            const statusLabelMap = {
+                                                capacidad_compensatoria: "Capacidad Compensatoria",
+                                                saturacion_cognitiva: "Saturación Cognitiva",
+                                                baja_inversion: "Baja Inversión",
+                                                normal: "Rendimiento Normal",
+                                                sin_datos: "Sin Datos"
+                                            };
+
+                                            return (
+                                                <div key={key} className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl flex flex-col justify-between space-y-3">
+                                                    <div>
+                                                        <div className="flex justify-between items-start gap-1">
+                                                            <span className="text-[10px] font-bold text-white uppercase truncate">{nameMap[key] || key}</span>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[7px] font-mono uppercase border shrink-0 ${statusBg}`}>
+                                                                {statusLabelMap[data.efficiency_status] || data.efficiency_status}
+                                                            </span>
+                                                        </div>
+                                                        <div className="mt-3 flex items-baseline gap-2">
+                                                            <span className="text-[9px] text-zinc-500 font-mono">Z-Score:</span>
+                                                            <span className={`text-xl font-mono font-bold ${zColor}`}>
+                                                                {data.z_score > 0 ? `+${data.z_score}` : data.z_score}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-1 text-[8px] font-mono text-zinc-500 border-t border-white/5 pt-2">
+                                                        <div className="flex justify-between"><span>Aciertos:</span> <span className="text-zinc-300 font-bold">{data.correct}/4</span></div>
+                                                        <div className="flex justify-between"><span>Latencia Promedio:</span> <span className="text-zinc-300 font-bold">{data.average_dwell}s</span></div>
+                                                        <div className="flex justify-between"><span>Cambios de Opción:</span> <span className="text-zinc-300 font-bold">{data.total_changes}</span></div>
+                                                    </div>
+                                                    
+                                                    <div className="text-[9px] text-zinc-400 bg-white/[0.01] border border-white/5 rounded-lg p-2 font-sans leading-relaxed">
+                                                        {data.interpretation}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Validador de Calidad & JSON Output */}
+                                    {(() => {
+                                        const estadoCognitivo = activePatientData.icar16.estado_cognitivo || computeIcarEstadoCognitivo(icarAnswers, icarDwellTimes, icarChanges, activePatientData.icar16.score, selectedPatient.name);
+                                        if (!estadoCognitivo) return null;
+                                        
+                                        const isOk = estadoCognitivo.metadatos.validez === "ok";
+                                        const validezText = estadoCognitivo.metadatos.validez === "INVALIDA_DESATENCION"
+                                            ? "INVALIDA (Tiempo total menor a 350 segundos - Sesgo de desatención)"
+                                            : estadoCognitivo.metadatos.validez === "INVALIDA_AZAR"
+                                            ? "INVALIDA (Tasa de aciertos menor al 30% - Respuestas al azar / impulsivas)"
+                                            : "Aprobada (Óptima persistencia y consistencia lógica)";
+
+                                        const validezBg = isOk
+                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                            : "bg-red-500/10 border-red-500/20 text-red-400";
+
+                                        return (
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-4 border-t border-white/5">
+                                                <div className="md:col-span-6 space-y-4">
+                                                    <div>
+                                                        <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Control de Calidad del Test</span>
+                                                        <div className={`mt-2 p-3 rounded-xl border text-[10px] font-mono leading-relaxed ${validezBg}`}>
+                                                            <strong>Validez de la Muestra:</strong> {validezText}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                                                        <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
+                                                            <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Estilo de Ejecución</span>
+                                                            <span className="text-white font-black text-xs mt-1 block uppercase tracking-widest">{estadoCognitivo.estilo_ejecucion.replace('_', ' ')}</span>
+                                                        </div>
+                                                        <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
+                                                            <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Banderas Conductuales</span>
+                                                            <div className="mt-1.5 flex flex-wrap gap-1">
+                                                                {estadoCognitivo.banderas_conductuales && estadoCognitivo.banderas_conductuales.length > 0 ? (
+                                                                    estadoCognitivo.banderas_conductuales.map((flag, idx) => (
+                                                                        <span key={idx} className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-[7px] font-mono text-amber-400 uppercase">
+                                                                            {flag.replace(/_/g, ' ')}
+                                                                        </span>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-zinc-600 text-[8px] italic">Ninguna</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="md:col-span-6 space-y-2 flex flex-col">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Objeto de Estado Cognitivo (JSON de Nivel Clínico)</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(JSON.stringify(estadoCognitivo, null, 2));
+                                                                alert("¡JSON copiado al portapapeles!");
+                                                            }}
+                                                            className="text-[8px] font-mono font-black uppercase bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 px-2 py-0.5 rounded hover:bg-emerald-500 hover:text-black transition-all font-bold"
+                                                        >
+                                                            Copiar JSON
+                                                        </button>
+                                                    </div>
+                                                    <pre className="bg-zinc-950/90 border border-white/5 p-4 rounded-2xl text-[9px] font-mono text-emerald-400/90 max-h-[160px] overflow-y-auto no-scrollbar shadow-inner leading-relaxed select-all">
+                                                        {JSON.stringify(estadoCognitivo, null, 2)}
+                                                    </pre>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            );
+                        })()}
+
+                        {/* Question Breakdown */}
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest font-mono">Detalle de Reactivos</h4>
+                            <div className="space-y-3 pr-2">
+                                {icarQuestions.map((q) => {
+                                    const userAns = icarAnswers[q.question_number];
+                                    const isCorrect = userAns === q.correct_answer;
+                                    const isExpanded = expandedIcarQuestion === q.question_number;
+                                    const latency = icarDwellTimes[q.question_number] || 0;
+                                    const changes = icarChanges[q.question_number] || 0;
+
+                                    return (
+                                        <div key={q.question_number} className={`rounded-3xl border transition-all duration-300 ${isExpanded ? 'border-emerald-500/20 bg-emerald-500/[0.01]' : 'border-white/5 bg-zinc-950/20 hover:border-white/10'}`}>
+                                            <div
+                                                onClick={() => setExpandedIcarQuestion(isExpanded ? null : q.question_number)}
+                                                className="p-5 flex justify-between items-center gap-4 cursor-pointer select-none"
+                                            >
+                                                <div className="flex gap-3 items-center">
+                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-mono font-black text-xs ${isCorrect ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                        {isCorrect ? <Check size={14} /> : <X size={14} />}
+                                                    </span>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-white uppercase font-sans">Reactivo {q.question_number}</span>
+                                                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[7px] font-mono text-zinc-500 uppercase tracking-wider">{q.category}</span>
+                                                        </div>
+                                                        <span className="text-[8px] font-mono text-zinc-500 uppercase mt-0.5 block">{q.construct}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex gap-3">
+                                                        <span className="text-[8px] font-mono text-zinc-600 uppercase">T: <strong className="text-zinc-400 font-bold">{latency.toFixed(1)}s</strong></span>
+                                                        <span className="text-[8px] font-mono text-zinc-600 uppercase">CAMBIOS: <strong className="text-zinc-400 font-bold">{changes}</strong></span>
+                                                    </div>
+                                                    <ChevronDown size={14} className={`text-zinc-500 transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                                </div>
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div className="border-t border-white/5 p-6 space-y-6 animate-in slide-in-from-top duration-300">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                                        <div className="lg:col-span-7 space-y-4">
+                                                            <p className="text-xs font-bold text-white leading-relaxed italic">"{q.instruction_text}"</p>
+                                                            {renderTestStimulusDiagram(q)}
+                                                        </div>
+
+                                                        <div className="lg:col-span-5 space-y-3">
+                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-600 tracking-widest block mb-1">Alternativas</span>
+                                                            {q.options.map(opt => {
+                                                                const isUserChoice = userAns === opt.label;
+                                                                const isCorrectAnswer = q.correct_answer === opt.label;
+                                                                return (
+                                                                    <div
+                                                                        key={opt.label}
+                                                                        className={`p-3 rounded-xl border flex items-center gap-3 transition-all ${isCorrectAnswer ? 'bg-emerald-500/10 border-emerald-500/20 text-white' :
+                                                                            isUserChoice ? 'bg-red-500/10 border-red-500/20 text-white' :
+                                                                            'bg-zinc-950/20 border-white/5 text-zinc-400'
+                                                                        }`}
+                                                                    >
+                                                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-mono font-black border shrink-0 ${isCorrectAnswer ? 'bg-emerald-500 text-black border-emerald-500' :
+                                                                            isUserChoice ? 'bg-red-500 text-white border-red-500' :
+                                                                            'bg-zinc-900 border-white/10 text-zinc-500'
+                                                                        }`}>{opt.label}</span>
+                                                                        <span className="text-xs truncate font-medium">{opt.value}</span>
+                                                                        {isCorrectAnswer && <span className="ml-auto text-[7px] font-mono font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">Correcto</span>}
+                                                                        {!isCorrectAnswer && isUserChoice && <span className="ml-auto text-[7px] font-mono font-black uppercase text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/10">Tu Selección</span>}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Telemetry & Video Proctoring Section for this specific question */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6 border-t border-white/5">
+                                                        <div className="md:col-span-6 space-y-4">
+                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Telemetría de la Respuesta</span>
+                                                            <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                                                                <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
+                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Duración de Atención (Dwell)</span>
+                                                                    <span className="text-white font-black text-sm mt-1 block">{latency.toFixed(1)}s</span>
+                                                                </div>
+                                                                <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
+                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Cambios de Opción</span>
+                                                                    <span className="text-white font-black text-sm mt-1 block">{changes} veces</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Behavioral Alerts */}
+                                                            <div className="space-y-2">
+                                                                <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Análisis de Alertas Conductuales</span>
+                                                                {latency > 95 ? (
+                                                                     <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ⚠️ <strong>Alta Inversión Cognitiva:</strong> El paciente dedicó {latency.toFixed(1)}s (mayor a la media). Sugiere un procesamiento detallado de variables complejas.
+                                                                     </div>
+                                                                 ) : latency > 45 ? (
+                                                                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ✓ <strong>Procesamiento Analítico:</strong> El usuario dedicó {latency.toFixed(1)}s a analizar profundamente el reactivo. Tiempo normal para tareas de alta demanda.
+                                                                     </div>
+                                                                 ) : (
+                                                                     <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-400/90 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ✓ <strong>Procesamiento Eficiente:</strong> Tiempo de dwell dentro del rango esperado para este nivel de complejidad.
+                                                                     </div>
+                                                                 )}
+
+                                                                 {changes >= 3 ? (
+                                                                     <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ⚠️ <strong>Reevaluación Decisional:</strong> Se registraron {changes} cambios de opción. Sugiere que el hilo lógico requirió revisión continua.
+                                                                     </div>
+                                                                 ) : changes > 0 ? (
+                                                                     <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ✓ <strong>Reevaluación Cauta:</strong> El paciente revisó su hipótesis inicial ({changes} cambio(s)), mostrando una decisión deliberada.
+                                                                     </div>
+                                                                 ) : (
+                                                                     <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-400/90 rounded-xl text-[10px] font-mono leading-relaxed">
+                                                                         ✓ <strong>Firmeza Decisional:</strong> Selección directa de la respuesta sin alternar opciones.
+                                                                     </div>
+                                                                 )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="md:col-span-6 space-y-2">
+                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Micro-grabación de Comportamiento</span>
+                                                            {icarVideos[q.question_number] ? (
+                                                                <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={icarVideos[q.question_number]} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
+                                                            ) : (
+                                                                <div className="h-44 rounded-2xl border border-dashed border-white/5 flex items-center justify-center text-zinc-600 text-xs font-mono uppercase bg-zinc-950/20">
+                                                                    Sin grabación de video en esta versión
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {(() => {
+                                                        const rationaleData = icarRationale.find(r => r.question_number === q.question_number);
+                                                        if (!rationaleData) return null;
+                                                        return (
+                                                            <div className="lg:col-span-12 mt-6 pt-6 border-t border-white/5 space-y-4">
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[8px] font-mono font-black uppercase text-emerald-400 tracking-[0.2em] block">Base Lógica de Resolución</span>
+                                                                    <p className="text-[11px] text-zinc-300 font-sans italic leading-relaxed">{rationaleData.rationale}</p>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">Observación del Rendimiento Ejecutivo</label>
+                            <textarea
+                                value={clinicianNotes['icar_general'] || ''}
+                                onChange={(e) => handleSaveClinicianNote('icar_general', e.target.value)}
+                                placeholder="Registra anomalías en tiempos de respuesta, titubeo lógico o patrones específicos de error visoespacial..."
+                                className="w-full h-28 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderCanvasTab = () => {
+        const drawGravityLine = (sx, sy, tx, ty) => {
+            const dy = Math.abs(ty - sy);
+            const tension = Math.max(dy * 0.4, 40); 
+            const breath = Math.sin(time) * 1.5;
+            const cpx1 = sx;
+            const cpy1 = sy + tension;
+            const cpx2 = tx;
+            const cpy2 = ty - tension;
+            return `M ${sx} ${sy} C ${cpx1 + breath} ${cpy1}, ${cpx2 - breath} ${cpy2}, ${tx} ${ty}`;
+        };
+
+        const activeNode = selectedNode ? nodes.find(n => n.id === selectedNode) : null;
+        const typeLabels = {
+            'CONTEXT': 'CONTEXTO INICIAL',
+            'INTERNAL_STATE': 'ESTADO INTERNO',
+            'MACRO_MECHANISM': 'MACRO MECANISMO',
+            'CRITICAL_SYMPTOM': 'SÍNTOMA CRÍTICO',
+            'IMPACT_CHAIN': 'CADENA DE IMPACTO'
+        };
+
+        return (
+            <div className="w-full h-[650px] bg-[#09090b] rounded-[2rem] border border-white/5 relative overflow-hidden flex">
+                <div 
+                    className="flex-1 h-full relative overflow-hidden cursor-grab active:cursor-grabbing"
+                    onMouseDown={() => { setIsPanning(true); setSelectedNode(null); }}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseUp={handleCanvasMouseUp}
+                    onMouseLeave={handleCanvasMouseUp}
+                >
+                    <div className="absolute inset-0 pointer-events-none animate-pulse" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '24px 24px', backgroundPosition: `${pan.x}px ${pan.y}px` }}></div>
+
+                    {/* SVG Layer for Connections */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                        <defs>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.4)" />
+                            </marker>
+                            
+                            <radialGradient id="glowLine" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+                                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                            </radialGradient>
+                        </defs>
+                        
+                        {edges.map((edge, i) => {
+                            const source = nodes.find(n => n.id === edge.source);
+                            const target = nodes.find(n => n.id === edge.target);
+                            if (!source || !target) return null;
+                            
+                            const sx = source.x + pan.x + source.width / 2;
+                            const sy = source.y + pan.y + source.height;
+                            const tx = target.x + pan.x + target.width / 2;
+                            const ty = target.y + pan.y;
+                            
+                            const pathString = drawGravityLine(sx, sy, tx, ty);
+                            
+                            return (
+                                <g key={i}>
+                                    <path d={pathString} fill="none" stroke="url(#glowLine)" strokeWidth="8" className="opacity-20" />
+                                    <path d={pathString} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" markerEnd="url(#arrow)" />
+                                </g>
+                            );
+                        })}
+                        {connectingFrom && (
+                            <path 
+                                d={drawGravityLine(nodes.find(n => n.id === connectingFrom).x + pan.x + nodes.find(n => n.id === connectingFrom).width / 2, nodes.find(n => n.id === connectingFrom).y + pan.y + nodes.find(n => n.id === connectingFrom).height, mousePos.x, mousePos.y)}
+                                fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeDasharray="6,6" className="animate-pulse"
+                            />
+                        )}
+                    </svg>
+
+                    {/* Nodes Layer */}
+                    <div className="absolute inset-0 pointer-events-none z-20">
+                        {nodes.map(node => (
+                            <div 
+                                key={node.id}
+                                className="absolute pointer-events-auto"
+                                style={{ 
+                                    left: node.x + pan.x, 
+                                    top: node.y + pan.y,
+                                    width: node.width,
+                                    height: node.height
+                                }}
+                                onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                                onMouseUp={(e) => handleNodeMouseUp(e, node.id)}
+                            >
+                                {renderNodeShape(node)}
+                                
+                                {selectedNode === node.id && (
+                                    <div className="absolute -top-16 -right-16 bg-zinc-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex flex-col gap-2 shadow-2xl animate-in zoom-in-50 duration-200">
+                                        <div className="flex gap-2">
+                                            <button onClick={() => spawnNode(node.id, 'CONTEXT')} className="w-6 h-6 rotate-45 bg-sky-500/20 border border-sky-400 hover:bg-sky-500/40 m-1" title="Contexto" />
+                                            <button onClick={() => spawnNode(node.id, 'INTERNAL_STATE')} className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400 hover:bg-emerald-500/40" title="Estado" />
+                                            <button onClick={() => spawnNode(node.id, 'MACRO_MECHANISM')} className="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-500 hover:bg-emerald-600/40 -mt-1" title="Mecanismo" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => spawnNode(node.id, 'CRITICAL_SYMPTOM')} className="w-10 h-6 rounded bg-red-500/20 border border-red-500 hover:bg-red-500/40" title="Síntoma" />
+                                            <button onClick={() => spawnNode(node.id, 'IMPACT_CHAIN')} className="w-10 h-6 rounded-[100%] bg-zinc-800 border border-zinc-500 hover:bg-zinc-700" title="Impacto" />
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1 pt-1 border-t border-white/10">
+                                            <button onMouseDown={(e) => handleConnectorMouseDown(e, node.id)} className="text-[9px] font-bold uppercase text-white/50 hover:text-white flex items-center gap-1 cursor-crosshair"><Activity size={10} /> Enlazar</button>
+                                            <button onClick={() => deleteNode(node.id)} className="text-red-500/50 hover:text-red-500"><Trash2 size={12} /></button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Draggable Node Inspector (Replaced static Right Node Inspector) */}
+                {activeNode && (
+                    <div 
+                        className="absolute bottom-6 md:bottom-10 left-1/2 w-[400px] max-w-[95vw] z-[250] animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto shadow-2xl cursor-grab active:cursor-grabbing"
+                        style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}
+                        onClick={e => e.stopPropagation()}
+                        onMouseDown={e => {
+                            e.stopPropagation();
+                            if (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('button')) return;
+                            isDraggingPanel.current = true;
+                            panelDragStart.current = { x: e.clientX - panelOffset.x, y: e.clientY - panelOffset.y };
+                        }}
+                        onTouchStart={e => {
+                            e.stopPropagation();
+                            if (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('button')) return;
+                            isDraggingPanel.current = true;
+                            panelDragStart.current = { x: e.touches[0].clientX - panelOffset.x, y: e.touches[0].clientY - panelOffset.y };
+                        }}
+                    >
+                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-4 sm:backdrop-blur-md flex flex-col gap-3 overflow-hidden">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                                <span className="text-[8px] font-mono font-black text-zinc-500 tracking-widest block uppercase">{typeLabels[activeNode.type]}</span>
+                                <button
+                                    onClick={() => setSelectedNode(null)}
+                                    className="p-1 text-zinc-500 hover:text-white transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <input 
+                                    value={activeNode.label}
+                                    onChange={e => setNodes(nodes.map(n => n.id === selectedNode ? {...n, label: e.target.value} : n))}
+                                    className="w-full bg-transparent border-b border-white/10 text-white font-black uppercase py-1 focus:outline-none focus:border-emerald-500 text-xs mt-1"
+                                />
+                            </div>
+
+                            <div className="space-y-2 mt-2">
+                                <span className="text-[8px] font-mono font-black text-zinc-400 tracking-widest block uppercase">Observaciones del Nodo</span>
+                                <textarea
+                                    value={activeNode.observations || ''}
+                                    onChange={e => setNodes(nodes.map(n => n.id === selectedNode ? {...n, observations: e.target.value} : n))}
+                                    placeholder="Escribe la justificación clínica para este elemento..."
+                                    className="w-full h-32 bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-zinc-300 resize-none focus:outline-none focus:border-emerald-500/40 transition-colors leading-relaxed font-sans"
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderFunctionalAnalysisTab = () => {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Análisis Funcional del Caso (Parte VI)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Identificación y delimitación de contextos, detonantes, respuestas y consecuencias para explicar los bucles de mantenimiento</p>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                    {/* Left Form: Col-span 7 */}
+                    <div className="xl:col-span-7 space-y-6">
+                        <div className="grid grid-cols-1 gap-6">
+                            {/* Sección 1: Estímulos Antecedentes */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-sky-400 tracking-widest font-mono">1. Estímulos Antecedentes (Contextos / Detonantes)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Qué ocurre inmediatamente antes de la conducta problema</p>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Externos (Situaciones / Ambientes)</label>
+                                        <textarea
+                                            value={clinicianNotes['func_antecedents_external'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_antecedents_external', e.target.value)}
+                                            placeholder="¿En qué situaciones, lugares, momentos del día o frente a qué personas o eventos se inicia el bucle?..."
+                                            className="w-full h-24 bg-zinc-950 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-900/40"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Internos (Sensaciones / Cognición)</label>
+                                        <textarea
+                                            value={clinicianNotes['func_antecedents_internal'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_antecedents_internal', e.target.value)}
+                                            placeholder="¿Qué pensamientos automáticos, emociones previas, recuerdos o sensaciones corporales actúan como detonante interno?..."
+                                            className="w-full h-24 bg-zinc-950 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-900/40"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sección 2: Variables del Organismo */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest font-mono">2. Variables del Organismo (El Individuo)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Factores biológicos y cognitivos previos del paciente</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Esquemas Nucleares e Historia de Aprendizaje</label>
+                                        <textarea
+                                            value={clinicianNotes['func_organism_history'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_organism_history', e.target.value)}
+                                            placeholder="Esquemas de pensamiento arraigados, rasgos de personalidad (como se evidencian en el PID-5) o condiciones biológicas y fisiológicas que modulan la respuesta..."
+                                            className="w-full h-36 bg-zinc-950 border border-violet-500/20 rounded-xl p-3 text-xs text-violet-100/90 resize-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-all font-sans outline-none placeholder:text-violet-900/40"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sección 3: Respuesta Triple */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-widest font-mono">3. Sistema de Respuesta Triple (El Bucle de Reacción)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Cómo procesa y reacciona el individuo ante el detonante</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Cognitiva</label>
+                                        <textarea
+                                            value={clinicianNotes['func_response_cognitive'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_response_cognitive', e.target.value)}
+                                            placeholder="Ideas recurrentes, rumiaciones, auto-verbalizaciones negativas..."
+                                            className="w-full h-28 bg-zinc-950 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-900/40"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Fisiológica</label>
+                                        <textarea
+                                            value={clinicianNotes['func_response_physiological'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_response_physiological', e.target.value)}
+                                            placeholder="Respuestas somáticas, taquicardia, tensión muscular..."
+                                            className="w-full h-28 bg-zinc-950 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-900/40"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Motora</label>
+                                        <textarea
+                                            value={clinicianNotes['func_response_motor'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_response_motor', e.target.value)}
+                                            placeholder="Acciones, conductas de evitación, escape, ritos obsesivos..."
+                                            className="w-full h-28 bg-zinc-950 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-900/40"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sección 4: Consecuencias */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-rose-400 tracking-widest font-mono">4. Consecuencias del Comportamiento</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Efectos inmediatos y a largo plazo de la conducta</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Corto Plazo (Refuerzo / Alivio)</label>
+                                        <textarea
+                                            value={clinicianNotes['func_consequences_short'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_consequences_short', e.target.value)}
+                                            placeholder="Alivio momentáneo o ganancia secundaria..."
+                                            className="w-full h-24 bg-zinc-950 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-900/40"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Largo Plazo (Pérdidas / Perpetuación)</label>
+                                        <textarea
+                                            value={clinicianNotes['func_consequences_long'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_consequences_long', e.target.value)}
+                                            placeholder="Costo existencial y cómo perpetúa el bucle original..."
+                                            className="w-full h-24 bg-zinc-950 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-900/40"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sección 5: Hipótesis de Mantenimiento */}
+                            <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">5. Hipótesis Integradora y Ciclo de Mantenimiento</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Integración clínica final del bucle recurrente</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Descripción del Bucle del Caso</label>
+                                        <textarea
+                                            value={clinicianNotes['func_maintenance_hypothesis'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_maintenance_hypothesis', e.target.value)}
+                                            placeholder="Redacta cómo interactúan los detonantes, esquemas organísmicos y respuestas en un bucle cerrado..."
+                                            className="w-full h-36 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
+                                        />
+                                    </div>
+                                    <div className="mt-4">
+                                        <label className="text-[9px] font-black uppercase text-emerald-400 tracking-widest block font-mono mb-1.5">Claves para salir de aquí (Ruta de Escape)</label>
+                                        <textarea
+                                            value={clinicianNotes['func_exit_keys'] || ''}
+                                            onChange={(e) => handleSaveClinicianNote('func_exit_keys', e.target.value)}
+                                            placeholder="Define las claves específicas de salida o micro-desafíos. Sepáralas por saltos de línea..."
+                                            className="w-full h-36 bg-zinc-950 border border-emerald-500/50 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all font-sans outline-none placeholder:text-emerald-900/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Panel: Evidence and Gathered Info Panel (Col-span 5) */}
+                    <div className="xl:col-span-5 bg-zinc-950/40 border border-white/5 rounded-3xl p-6 space-y-6 max-h-[85vh] overflow-y-auto no-scrollbar sticky top-4">
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Panel de Evidencia y Datos Clínicos</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase leading-relaxed">
+                                Palabras clave sugeridas y coloreadas para facilitar el mapeo al formulario de análisis funcional
+                            </p>
+                            
+                            {/* Legend */}
+                            <div className="grid grid-cols-2 gap-2 pt-2 text-[8px] font-mono uppercase">
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-sky-500/10 border border-sky-500/20 text-sky-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> Antecedente / Detonante
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-violet-500/10 border border-violet-500/20 text-violet-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400" /> Var. Organismo
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Respuesta Triple
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Consecuencia
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 1. Entrevista Biográfica */}
+                        <div className="space-y-3">
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">I. Entrevista Biográfica</span>
+                            {(() => {
+                                const transcripts = activePatientData?.clínicalInterview?.transcripts || {};
+                                const keys = Object.keys(transcripts);
+                                if (keys.length === 0) {
+                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin respuestas de entrevista biográfica</div>;
+                                }
+                                const bioQuestionsList = [
+                                    { id: "0", title: "Motivo de Consulta" },
+                                    { id: "1", title: "Impacto Fenomenológico" },
+                                    { id: "2", title: "Evitación Experiencial" },
+                                    { id: "3", title: "Relaciones Significativas" },
+                                    { id: "4", title: "Esfera Laboral/Académica" },
+                                    { id: "5", title: "Direcciones Futuras" },
+                                    { id: "6", title: "Identidad frente a dificultad" }
+                                ];
+                                return (
+                                    <div className="space-y-3">
+                                        {bioQuestionsList.map(q => {
+                                            const ans = transcripts[q.id] || transcripts[q.title];
+                                            if (!ans) return null;
+                                            return (
+                                                <div key={q.id} className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl space-y-1.5">
+                                                    <span className="text-[8px] font-bold text-zinc-500 font-mono uppercase">{q.title}</span>
+                                                    <p className="text-[10px] text-zinc-300 leading-relaxed font-sans font-light select-text">
+                                                        {highlightClinicalText(ans)}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* 2. Dimensión Ontológica */}
+                        <div className="space-y-3 border-t border-white/5 pt-4">
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">II. Dimensión Ontológica (Rasgos Existenciales)</span>
+                            {(() => {
+                                const rawAnswers = activePatientData?.phenomAnswers || {};
+                                const keys = Object.keys(rawAnswers);
+                                if (keys.length === 0) {
+                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin datos de dimensión ontológica</div>;
+                                }
+                                return (
+                                    <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-2xl space-y-2">
+                                        <div className="grid grid-cols-2 gap-2 text-[9px] font-mono">
+                                            {Object.entries(rawAnswers).map(([key, val]) => (
+                                                <div key={key} className="bg-black/30 p-2 rounded-xl border border-white/[0.02]">
+                                                    <span className="text-zinc-500 block truncate">{key.replace(/_/g, ' ').toUpperCase()}</span>
+                                                    <span className="text-white font-bold block mt-0.5">{val}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* 3. PID-5 */}
+                        <div className="space-y-3 border-t border-white/5 pt-4">
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">III. Rasgos PID-5</span>
+                            {(() => {
+                                const pidAnswers = activePatientData?.pidAnswers || {};
+                                const domains = getPid5Domains(pidAnswers);
+                                if (!domains) {
+                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin datos de PID-5</div>;
+                                }
+                                return (
+                                    <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-2xl space-y-3">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(domains).map(([key, data]) => {
+                                                const labelMap = {
+                                                    afectividadNegativa: "Afectividad Negativa",
+                                                    desapego: "Desapego",
+                                                    antagonismo: "Antagonismo",
+                                                    desinhibicion: "Desinhibición",
+                                                    psicoticismo: "Psicoticismo"
+                                                };
+                                                return (
+                                                    <div key={key} className="bg-black/30 p-2 rounded-xl border border-white/[0.02] flex justify-between items-center">
+                                                        <span className="text-[8px] text-zinc-500 font-mono uppercase truncate">{labelMap[key] || key}</span>
+                                                        <span className="text-xs font-mono font-bold text-white">{data.score.toFixed(1)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        
+                        {/* CONCEPTUALIZACIÓN DINÁMICA (Auto-generada) */}
+                        <div className="space-y-3 border-t border-white/5 pt-4 mb-8 mt-6">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider block font-mono">Conceptualización Dinámica y Análisis Funcional Integrado</span>
+                                <button
+                                    onClick={generateConceptualization}
+                                    disabled={isGeneratingConceptualization}
+                                    className="px-3 py-1.5 bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase tracking-widest rounded border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-2"
+                                >
+                                    {isGeneratingConceptualization ? (
+                                        <><Aperture className="w-3 h-3 animate-spin" /> Analizando...</>
+                                    ) : (
+                                        <><Sparkles className="w-3 h-3" /> Auto-Generar PID-5 / Malestares</>
+                                    )}
+                                </button>
+                            </div>
+                            
+                            <textarea
+                                value={treatmentPlan?.dynamicConceptualization || ''}
+                                onChange={(e) => handleTreatmentPlanChange('dynamicConceptualization', e.target.value)}
+                                placeholder="Haz clic en 'Auto-Generar' para redactar el análisis funcional basado en la triple modalidad y los rasgos PID-5 del paciente..."
+                                className="w-full h-[400px] bg-zinc-950 border border-indigo-500/20 rounded-xl p-4 text-xs md:text-sm text-zinc-300 leading-relaxed resize-y focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-sans outline-none placeholder:text-zinc-700 custom-sidebar-scroll"
+                            />
+                        </div>
+
+                        {/* 4. ICAR-16 */}
+                        <div className="space-y-3 border-t border-white/5 pt-4">
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">IV. Desempeño Cognitivo (ICAR-16)</span>
+                            {activePatientData?.icar16 ? (
+                                <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-2xl flex justify-between items-center">
+                                    <div>
+                                        <span className="text-[8px] text-zinc-500 font-mono uppercase block">Aciertos</span>
+                                        <span className="text-lg font-black text-white font-mono">{activePatientData.icar16.score}/16</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[8px] text-zinc-500 font-mono uppercase block">Estilo Cognitivo</span>
+                                        <span className="text-[10px] font-bold text-emerald-400 font-mono uppercase">
+                                            {activePatientData.icar16.estado_cognitivo?.estilo_ejecucion?.replace(/_/g, ' ') || 'Normal'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin datos de ICAR-16</div>
+                            )}
+                        </div>
+
+                        {/* 5. Nodos Canvas */}
+                        <div className="space-y-3 border-t border-white/5 pt-4">
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">V. Elementos del Canvas de Formulación</span>
+                            {nodes.length === 0 ? (
+                                <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin nodos creados en el Canvas</div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {nodes.map(node => {
+                                        const typeLabels = {
+                                            'CONTEXT': 'Contexto',
+                                            'INTERNAL_STATE': 'Estado Interno',
+                                            'MACRO_MECHANISM': 'Macro Mecanismo',
+                                            'CRITICAL_SYMPTOM': 'Síntoma Crítico',
+                                            'IMPACT_CHAIN': 'Cadena de Impacto'
+                                        };
+                                        return (
+                                            <div key={node.id} className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl space-y-1">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[9px] font-black text-white">{node.label}</span>
+                                                    <span className="text-[7px] font-mono uppercase bg-white/5 px-1.5 py-0.5 rounded text-zinc-400">{typeLabels[node.type] || node.type}</span>
+                                                </div>
+                                                {node.observations && (
+                                                    <p className="text-[9px] text-zinc-400 leading-relaxed font-sans">
+                                                        {highlightClinicalText(node.observations)}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderSummaryTab = () => {
+        return (
+            <div className="space-y-8">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">Formulación y Firma de Caso (Parte VII)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cierre y publicación oficial del registro clínico</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
+                        <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Resumen de Evidencia Enlazada</h4>
+                        <div className="space-y-3 text-xs">
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-zinc-500">Nodos de Formulación (Canvas):</span>
+                                <span className="text-white font-mono font-black">{nodes.length}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-zinc-500">Enlaces Clínicos (Bucle):</span>
+                                <span className="text-white font-mono font-black">{edges.length}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                <span className="text-zinc-500">Aciertos ICAR-16:</span>
+                                <span className="text-emerald-400 font-mono font-black">{activePatientData?.icar16 ? `${activePatientData.icar16.score}/${activePatientData.icar16.total}` : 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">Conclusiones del Diagnóstico General</label>
+                        <textarea
+                            value={privateNotes}
+                            onChange={(e) => {
+                                setPrivateNotes(e.target.value);
+                                if (selectedPatient) {
+                                    localStorage.setItem(`oasis_private_notes_${selectedPatient.name}`, e.target.value);
+                                }
+                            }}
+                            placeholder="Redacta la formulación existencial definitiva y notas generales..."
+                            className="w-full h-40 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                        />
+                    </div>
+                </div>
+
+                <div className="p-6 bg-zinc-950/40 border border-white/5 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="space-y-1">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-white">Publicación Oficial e Integridad de Registro</h4>
+                        <p className="text-[10px] text-zinc-500 font-mono uppercase">Esta firma bloqueará la edición y actualizará el estado de la formulación.</p>
+                    </div>
+                    <button 
+                        onClick={handlePublishFormulation}
+                        className="flex items-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950"
+                    >
+                        <Save className="w-4 h-4" /> Firmar y Publicar
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const handleProcessPending = async (pendingBlocksToProcess) => {
+        if (!selectedPatient) return;
+        setIsReprocessing(true);
+        try {
+            // By pushing the blocks back to the backend exactly as they are, 
+            // the backend controller detects that they are missing the psychologicalAnalysis metadata 
+            // and queues them for AI processing (ProcessBlocksPsychologyAndFeedAsync).
+            const res = await fetch(`${API_URL}/api/oasis/blocks?user=${selectedPatient.name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(patientBlocks)
+            });
+            if (res.ok) {
+                alert("Procesamiento encolado en el backend exitosamente. El servidor analizará los bloques en segundo plano. Recarga la página en un par de minutos.");
+            } else {
+                throw new Error("Respuesta de error del servidor.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error al intentar encolar el procesamiento: " + e.message);
+        } finally {
+            setIsReprocessing(false);
+        }
+    };
+
+    const renderExistentialAnalysisTab = () => {
+        const blocksWithAnalysis = patientBlocks.filter(b => b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis);
+        
+        const totalBlocksCount = patientBlocks.length;
+        const analyzedBlocksCount = blocksWithAnalysis.length;
+        const pendingBlocksCount = totalBlocksCount - analyzedBlocksCount;
+        const pendingBlocks = patientBlocks.filter(b => !(b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis));
+
+        // Count Spheres
+        const sphereCounts = { Umwelt: 0, Mitwelt: 0, Eigenwelt: 0, Überwelt: 0 };
+        // Count Lentes
+        const lensCounts = { Sensorial: 0, Analítico: 0, Simbólico: 0 };
+        
+        blocksWithAnalysis.forEach(b => {
+            const analysis = b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis;
+            const sphere = analysis.esfera_existencial || analysis.EsferaExistencial;
+            const lens = analysis.lente_percepcion || analysis.LentePercepcion;
+            
+            if (sphere && sphereCounts[sphere] !== undefined) sphereCounts[sphere]++;
+            if (lens && lensCounts[lens] !== undefined) lensCounts[lens]++;
+        });
+
+        // Filtered blocks list
+        const filteredBlocks = blocksWithAnalysis.filter(b => {
+            const analysis = b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis;
+            const sphere = analysis.esfera_existencial || analysis.EsferaExistencial || '';
+            const lens = analysis.lente_percepcion || analysis.LentePercepcion || '';
+            const isPublic = b.isPublic || b.IsPublic;
+            const content = b.content || b.Content || '';
+            
+            const matchSearch = content.toLowerCase().includes(logSearch.toLowerCase());
+            const matchSphere = logSphere === 'ALL' || sphere === logSphere;
+            const matchLens = logLens === 'ALL' || lens === logLens;
+            const matchVis = logVisibility === 'ALL' || 
+                             (logVisibility === 'PUBLIC' && isPublic) || 
+                             (logVisibility === 'PRIVATE' && !isPublic);
+            
+            return matchSearch && matchSphere && matchLens && matchVis;
+        });
+
+        // Get average / collective embedding vector coordinate visualization
+        let avgEmbedding = [];
+        if (blocksWithAnalysis.length > 0) {
+            const embDim = 24; // Visual representation count
+            const embs = blocksWithAnalysis.map(b => {
+                const analysis = b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis;
+                return analysis?.embedding;
+            }).filter(Array.isArray);
+            
+            if (embs.length > 0) {
+                for (let i = 0; i < embDim; i++) {
+                    let sum = 0;
+                    let count = 0;
+                    embs.forEach(emb => {
+                        if (emb[i] !== undefined) {
+                            sum += emb[i];
+                            count++;
+                        }
+                    });
+                    avgEmbedding.push(count > 0 ? sum / count : 0);
+                }
+            }
+        }
+
+        const getVectorCellColor = (val) => {
+            if (val === undefined || val === null) return 'rgba(255,255,255,0.05)';
+            const absVal = Math.min(Math.abs(val) * 6, 1);
+            if (val > 0) {
+                return `rgba(52, 211, 153, ${absVal})`; // Emerald green
+            } else {
+                return `rgba(167, 139, 250, ${absVal})`; // Purple/violet
+            }
+        };
+
+        const sphereStyles = {
+            Umwelt: { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.15)]', name: 'Umwelt (Físico / Entorno)' },
+            Mitwelt: { color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20', glow: 'shadow-[0_0_15px_rgba(56,189,248,0.15)]', name: 'Mitwelt (Social / Relaciones)' },
+            Eigenwelt: { color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', glow: 'shadow-[0_0_15px_rgba(167,139,250,0.15)]', name: 'Eigenwelt (Diálogo Interno / Identidad)' },
+            Überwelt: { color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', glow: 'shadow-[0_0_15px_rgba(251,191,36,0.15)]', name: 'Überwelt (Espiritual / Sentido)' }
+        };
+
+        const lensStyles = {
+            Sensorial: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+            Analítico: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+            Simbólico: 'bg-violet-500/10 border-violet-500/20 text-violet-400'
+        };
+
+        return (
+            <div className="space-y-8">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">VIII. Esencia y Feed AI (Deepseek & Hugging Face)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
+                        Monitoreo de esferas ontológicas, lentes fenomenológicos y embeddings de vectores latentes del paciente
+                    </p>
+                </div>
+
+                {/* 🩺 Panel de Diagnóstico y Conectividad */}
+                <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
+                        <div>
+                            <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Consola de Diagnóstico e Integración IA</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estado de conectividad y logs de sincronización de datos existenciales</p>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                        {/* Estado API */}
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-3 flex flex-col justify-between">
+                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Servidor Backend</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${apiConnStatus === 'Conectado' ? 'bg-emerald-500' : 'bg-rose-500 animate-pulse'}`} />
+                                <span className="text-[10px] font-mono font-black text-white">{apiConnStatus}</span>
+                            </div>
+                            <span className="text-[8px] font-mono text-zinc-600 truncate mt-1">{API_URL}</span>
+                        </div>
+
+                        {/* Estado Deepseek */}
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-3 flex flex-col justify-between">
+                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Deepseek LLM Service</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${deepseekKeyStatus === 'Activa' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                                <span className="text-[10px] font-mono font-black text-white">{deepseekKeyStatus}</span>
+                            </div>
+                            <span className="text-[8px] font-mono text-zinc-600 mt-1">Análisis de Esfera/Lente</span>
+                        </div>
+
+                        {/* Ingesta de Escritos */}
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-3 flex flex-col justify-between">
+                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Tasa de Ingesta AI</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${pendingBlocksCount === 0 && totalBlocksCount > 0 ? 'bg-emerald-500' : totalBlocksCount > 0 ? 'bg-amber-500' : 'bg-zinc-600'}`} />
+                                <span className="text-[10px] font-mono font-black text-white">
+                                    {analyzedBlocksCount}/{totalBlocksCount} Analizados
+                                </span>
+                            </div>
+                            <span className="text-[8px] font-mono text-zinc-600 mt-1 font-bold">
+                                {totalBlocksCount > 0 ? Math.round((analyzedBlocksCount / totalBlocksCount) * 100) : 0}% Procesado
+                            </span>
+                        </div>
+
+                        {/* pgvector Status */}
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-3 flex flex-col justify-between">
+                            <span className="text-[8px] font-mono text-zinc-500 uppercase">Base de Datos Vectorial</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${apiConnStatus === 'Conectado' ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
+                                <span className="text-[10px] font-mono font-black text-white">Supabase pgvector</span>
+                            </div>
+                            <span className="text-[8px] font-mono text-zinc-600 mt-1">Embeddings (384d) Sincronizados</span>
+                        </div>
+                    </div>
+
+                    {/* Display Fetch/Network Errors */}
+                    {blocksError && (
+                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-2xl text-[10px] font-mono uppercase tracking-wide flex items-start gap-3">
+                            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                            <div className="space-y-1">
+                                <span className="font-black text-rose-500">Error de Conexión o Consulta de Ingesta:</span>
+                                <p className="text-zinc-400 font-sans normal-case select-text">{blocksError}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Display Unanalyzed/Pending Logs */}
+                    {pendingBlocksCount > 0 && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-2xl text-[10px] font-mono space-y-2">
+                            <div className="flex items-center gap-2.5 justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                    <span className="font-black uppercase tracking-wider">Log de Procesamiento AI Pendiente ({pendingBlocksCount})</span>
+                                </div>
+                                <button
+                                    onClick={() => handleProcessPending(pendingBlocks)}
+                                    disabled={isReprocessing}
+                                    className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded border border-amber-500/30 text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                >
+                                    {isReprocessing ? 'Encolando...' : 'Procesar Pendientes'}
+                                </button>
+                            </div>
+                            <p className="text-zinc-400 text-[9px] font-sans normal-case">
+                                Los siguientes escritos se guardaron en la base de datos pero aún no cuentan con análisis cualitativo o embeddings (ej. retraso en API de Deepseek o fallo temporal de Hugging Face):
+                            </p>
+                            <div className="max-h-24 overflow-y-auto space-y-1.5 pr-2 no-scrollbar">
+                                {pendingBlocks.map((b, idx) => (
+                                    <div key={b.id || idx} className="bg-zinc-950/40 p-2 rounded-lg border border-white/[0.03] text-[9px] text-zinc-400 font-sans italic">
+                                        "{b.content || b.Content}"
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {loadingBlocks ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-12 rounded-3xl text-center space-y-4">
+                        <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin mx-auto" />
+                        <p className="text-zinc-500 text-xs font-mono uppercase tracking-widest">
+                            Procesando y resolviendo datos existenciales del paciente...
+                        </p>
+                    </div>
+                ) : blocksError ? (
+                    <div className="bg-rose-950/20 border border-rose-500/15 p-12 rounded-3xl text-center space-y-3">
+                        <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto animate-pulse" />
+                        <p className="text-rose-400 text-xs font-mono uppercase tracking-widest">
+                            No se pudieron resolver los datos del paciente debido a un fallo del servidor
+                        </p>
+                        <button 
+                            onClick={() => {
+                                setReloadTrigger(prev => prev + 1);
+                            }}
+                            className="px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-[10px] font-mono uppercase font-black tracking-wider hover:bg-rose-500/20 transition-all"
+                        >
+                            Intentar de Nuevo
+                        </button>
+                    </div>
+                ) : patientBlocks.length === 0 ? (
+                    <div className="bg-zinc-900/20 border border-white/5 p-12 rounded-3xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
+                        El paciente aún no ha redactado ni publicado fragmentos en Ruido Interior.
+                    </div>
+                ) : (
+                    <div className="space-y-8">
+                        {/* Upper Section: Core Analytics Dashboard */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            {/* Card 1: Esferas Dasein */}
+                            <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Distribución Existencial (Dasein)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Dimensión donde habita el discurso cualitativo</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {Object.entries(sphereCounts).map(([sphere, count]) => {
+                                        const total = blocksWithAnalysis.length || 1;
+                                        const pct = Math.round((count / total) * 100);
+                                        const style = sphereStyles[sphere] || { color: 'text-zinc-400', bg: 'bg-zinc-500/10 border-zinc-500/20' };
+                                        
+                                        return (
+                                            <div key={sphere} className="space-y-1">
+                                                <div className="flex justify-between items-center text-[10px] font-mono">
+                                                    <span className={`${style.color} font-bold`}>{sphere}</span>
+                                                    <span className="text-white font-black">{count} ({pct}%)</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden border border-white/5">
+                                                    <div 
+                                                        className={`h-full ${style.color.replace('text-', 'bg-')} transition-all duration-500`}
+                                                        style={{ width: `${pct}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Card 2: Lentes de Percepción */}
+                            <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Lentes de Percepción</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Cómo se estructuran cognitivamente las vivencias</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {Object.entries(lensCounts).map(([lens, count]) => {
+                                        const total = blocksWithAnalysis.length || 1;
+                                        const pct = Math.round((count / total) * 100);
+                                        let colorClass = 'bg-zinc-500';
+                                        let textClass = 'text-zinc-400';
+                                        if (lens === 'Sensorial') { colorClass = 'bg-rose-500'; textClass = 'text-rose-400'; }
+                                        else if (lens === 'Analítico') { colorClass = 'bg-indigo-500'; textClass = 'text-indigo-400'; }
+                                        else if (lens === 'Simbólico') { colorClass = 'bg-violet-500'; textClass = 'text-violet-400'; }
+
+                                        return (
+                                            <div key={lens} className="space-y-1">
+                                                <div className="flex justify-between items-center text-[10px] font-mono">
+                                                    <span className={`${textClass} font-bold`}>{lens}</span>
+                                                    <span className="text-white font-black">{count} ({pct}%)</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden border border-white/5">
+                                                    <div 
+                                                        className={`h-full ${colorClass} transition-all duration-500`}
+                                                        style={{ width: `${pct}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Card 3: Signatura Vectorial (Hugging Face) */}
+                            <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-purple-400 tracking-widest font-mono">Vector de Conciencia Latente</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Firma de autodesarrollo promedio en espacio N-dimensional</p>
+                                </div>
+                                
+                                {avgEmbedding.length > 0 ? (
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-6 gap-2.5 p-3 bg-zinc-950/60 border border-white/5 rounded-2xl">
+                                            {avgEmbedding.map((val, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    style={{ backgroundColor: getVectorCellColor(val) }} 
+                                                    className="aspect-square w-full rounded border border-white/5 cursor-help transition-all hover:scale-110"
+                                                    title={`Dimensión ${idx + 1}: ${val.toFixed(4)}`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between text-[8px] text-zinc-500 font-mono">
+                                            <span>DIMENSIONES MOSTRADAS: 1-24</span>
+                                            <span className="text-purple-400 font-bold">384 DIMENSIONES TOTALES</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-[9px] text-zinc-600 font-mono uppercase italic text-center py-6">
+                                        Sin datos vectoriales generados.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Interactive Log Filters & Search */}
+                        <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6 space-y-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Registro de Conciencia Histórico</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Exploración de fragmentos biográficos, notas e insights filtrables</p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                    {/* Search Bar */}
+                                    <div className="relative flex-1 md:flex-none">
+                                        <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-500" />
+                                        <input
+                                            value={logSearch}
+                                            onChange={e => setLogSearch(e.target.value)}
+                                            placeholder="Buscar en escritos del paciente..."
+                                            className="w-full md:w-60 h-9 pl-9 pr-4 bg-zinc-950/70 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-colors font-sans placeholder:text-zinc-600"
+                                        />
+                                    </div>
+
+                                    {/* Visibility Filter */}
+                                    <select
+                                        value={logVisibility}
+                                        onChange={e => setLogVisibility(e.target.value)}
+                                        className="h-9 px-3 bg-zinc-950/70 border border-white/5 rounded-xl text-xs text-zinc-400 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
+                                    >
+                                        <option value="ALL">TODAS LAS NOTAS</option>
+                                        <option value="PUBLIC">SÓLO FEED PÚBLICO</option>
+                                        <option value="PRIVATE">SÓLO NOTAS PRIVADAS</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Dropdown Filters for Spheres and Lentes */}
+                            <div className="flex flex-wrap gap-3 pt-2 border-t border-white/5">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-mono text-zinc-500 uppercase">Esfera:</span>
+                                    <div className="flex gap-1.5">
+                                        {['ALL', 'Umwelt', 'Mitwelt', 'Eigenwelt', 'Überwelt'].map(sph => (
+                                            <button
+                                                key={sph}
+                                                onClick={() => setLogSphere(sph)}
+                                                className={`px-2.5 py-1 rounded-lg text-[9px] font-mono font-bold uppercase transition-all ${
+                                                    logSphere === sph 
+                                                    ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-400'
+                                                    : 'bg-zinc-950/40 border border-white/5 text-zinc-500 hover:text-zinc-300'
+                                                }`}
+                                            >
+                                                {sph === 'ALL' ? 'Todas' : sph}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <span className="text-[9px] font-mono text-zinc-500 uppercase">Lente:</span>
+                                    <div className="flex gap-1.5">
+                                        {['ALL', 'Sensorial', 'Analítico', 'Simbólico'].map(lens => (
+                                            <button
+                                                key={lens}
+                                                onClick={() => setLogLens(lens)}
+                                                className={`px-2.5 py-1 rounded-lg text-[9px] font-mono font-bold uppercase transition-all ${
+                                                    logLens === lens 
+                                                    ? 'bg-purple-500/15 border border-purple-500/40 text-purple-400'
+                                                    : 'bg-zinc-950/40 border border-white/5 text-zinc-500 hover:text-zinc-300'
+                                                }`}
+                                            >
+                                                {lens === 'ALL' ? 'Todos' : lens}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* List of blocks */}
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 no-scrollbar">
+                            {filteredBlocks.length === 0 ? (
+                                <div className="p-8 text-center border border-dashed border-white/5 rounded-3xl bg-zinc-950/10 text-zinc-500 text-[10px] font-mono uppercase">
+                                    Ningún fragmento coincide con los criterios de filtro seleccionados.
+                                </div>
+                            ) : (
+                                filteredBlocks.map(block => {
+                                    const analysis = block.metadata?.psychologicalAnalysis || block.Metadata?.psychologicalAnalysis;
+                                    const sphere = analysis.esfera_existencial || analysis.EsferaExistencial;
+                                    const lens = analysis.lente_percepcion || analysis.LentePercepcion;
+                                    const vector = analysis.embedding || [];
+                                    const style = sphereStyles[sphere] || { color: 'text-zinc-400', bg: 'bg-zinc-500/10 border-zinc-500/20', glow: '' };
+                                    const blockContent = block.content || block.Content || '';
+                                    const blockTimestamp = block.timestamp || block.Timestamp;
+                                    
+                                    return (
+                                        <div 
+                                            key={block.id} 
+                                            className={`p-6 rounded-3xl border bg-zinc-900/35 transition-all duration-300 ${style.bg} ${style.glow} hover:bg-zinc-900/45`}
+                                        >
+                                            <div className="flex justify-between items-center gap-4 pb-3 border-b border-white/5 mb-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-mono font-black uppercase border ${style.bg} ${style.color}`}>
+                                                        {sphere}
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 rounded text-[8px] font-mono font-black uppercase border ${lensStyles[lens] || 'bg-zinc-500/10 text-zinc-400'}`}>
+                                                        {lens}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2.5 text-[9px] font-mono">
+                                                    {(block.isPublic || block.IsPublic) ? (
+                                                        <span className="px-2 py-0.5 rounded-[0.25rem] text-[7px] font-black uppercase border border-emerald-500/20 text-emerald-400 bg-emerald-500/5 shadow-[0_0_8px_rgba(52,211,153,0.2)] animate-pulse">
+                                                            Público
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2 py-0.5 rounded-[0.25rem] text-[7px] font-black uppercase border border-zinc-500/20 text-zinc-500 bg-zinc-950/40">
+                                                            Privado
+                                                        </span>
+                                                    )}
+                                                    <span className="text-zinc-500">{new Date(blockTimestamp).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Text Content */}
+                                            <p className="text-zinc-300 text-xs font-sans leading-relaxed select-text italic">
+                                                "{blockContent}"
+                                            </p>
+
+                                            {/* Vector Embedding Section */}
+                                            {vector.length > 0 && (
+                                                <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[8px] font-mono font-black text-zinc-500 uppercase tracking-widest">Embedding Vectorial (Primeras 16 Dimensiones)</span>
+                                                        <span className="text-[8px] font-mono text-zinc-600">384d Vector HF</span>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1 items-center bg-zinc-950/60 p-2 rounded-xl border border-white/[0.03]">
+                                                        {vector.slice(0, 16).map((val, idx) => (
+                                                            <span 
+                                                                key={idx}
+                                                                style={{ borderBottom: `2px solid ${val > 0 ? 'rgb(52, 211, 153)' : 'rgb(167, 139, 250)'}` }} 
+                                                                className="text-[9px] font-mono text-zinc-400 bg-zinc-900/50 px-1.5 py-0.5 rounded border border-white/5 shrink-0"
+                                                                title={`Dimensión ${idx + 1}`}
+                                                            >
+                                                                {val > 0 ? '+' : ''}{val.toFixed(3)}
+                                                            </span>
+                                                        ))}
+                                                        <span className="text-[9px] font-mono text-zinc-600 pl-1">...</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const handleTreatmentPlanChange = (field, value) => {
+        setTreatmentPlan(prev => {
+            const next = { ...prev, [field]: value };
+            if (selectedPatient) {
+                localStorage.setItem(`oasis_treatment_plan_${selectedPatient.name}`, JSON.stringify(next));
+            }
+            return next;
+        });
+    };
+
+    
+    const generateConceptualization = async () => {
+        if (!selectedPatient) return;
+        setIsGeneratingConceptualization(true);
+        try {
+            let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
+            if (!activeKey) {
+                activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+                if (activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || activeKey.includes("VAR>")) activeKey = '';
+            }
+
+            const rawPID = activePatientData?.pid5?.scores || {};
+            const rawM = (rawPID['m1'] || 0) + (rawPID['m2'] || 0) + (rawPID['m3'] || 0);
+            const rawC = (rawPID['c1'] || 0) + (rawPID['c2'] || 0) + (rawPID['c3'] || 0);
+            const rawS = (rawPID['s1'] || 0) + (rawPID['s2'] || 0) + (rawPID['s3'] || 0);
+
+            let userResponsesText = "Respuestas del usuario no encontradas.";
+            if (activePatientData?.responses) {
+                userResponsesText = Object.entries(activePatientData.responses)
+                    .map(([qId, r]) => {
+                        const questionText = config?.cuestionario?.preguntas?.find(p => p.id === qId)?.texto || qId;
+                        return `Pregunta: ${questionText}\nRespuesta: ${r}`;
+                    })
+                    .join('\n\n');
+            }
+
+            const prompt = `
+Eres un analista clínico conductual experto de nivel mundial.
+Tu tarea es escribir una **Conceptualización Dinámica y Análisis Conductual Integrado** para el paciente basada en su Historia de Vida y sus resultados psicométricos.
+
+MÉTODOLOGIA DE REFERENCIA (DEBES REDACTAR CON ESTA CALIDAD, ESTRUCTURA, PROFUNDIDAD Y TONO):
+\"\"\"
+II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO
+1. Mapeo Psicométrico de la Triple Modalidad Conductual
+El análisis transdiagnóstico del caso arroja una severa desconexión entre la activación fisiológica y el procesamiento cognitivo, manifestado en los siguientes niveles de afectación:
+Malestar Cognitivo (85% de Predominio): Representa el núcleo del estancamiento. Se manifiesta a través de dudas obsesivas, rumiación rígida sobre el pasado, autocrítica destructiva y una tendencia constante a la metacognición patológica.
+Malestar Motor (65% de Frecuencia): Expresado en respuestas motoras de evitación, aislamiento social defensivo, procrastinación de proyectos y dependencia.
+Malestar Fisiológico (40% de Activación): Expresado de forma somática mediante opresión en el pecho, cierre involuntario de puños, insomnio y una inquietud física generalizada.
+
+2. Análisis del Rasgo PID-5 Central: El Ritmo (53% - Nivel Moderado)
+La mente neurodivergente del paciente opera a través de procesos secuenciales encadenados de forma rígida...
+En Disfunción: El ritmo genera bucles de memoria cerrados...
+En Estabilidad (El Hackeo Clínico): Debido a su necesidad interna de orden y secuencia, el paciente encuentra un estabilizador natural cuando interactúa con estructuras externas predecibles.
+
+3. El Núcleo de la Vulnerabilidad Existencial: La Identidad Privatizada por el "Otro"
+El análisis funcional profundo revela que el paciente padece de una ausencia de anclaje interno...
+\"\"\"
+
+DATOS DEL PACIENTE:
+- Malestar Motor Bruto: ${rawM}
+- Malestar Cognitivo Bruto: ${rawC}
+- Malestar Fisiológico/Somático Bruto: ${rawS}
+- Rasgos PID-5 en bruto: ${JSON.stringify(rawPID)}
+
+RESPUESTAS EXISTENCIALES:
+${userResponsesText}
+
+Instrucciones Estrictas:
+1. Adapta los porcentajes y el orden de la 'Triple Modalidad' según los valores brutos provistos.
+2. Identifica su rasgo dominante en el PID-5 a partir de los datos y analiza cómo funciona 'En Disfunción' y 'En Estabilidad'.
+3. Redacta 'El Núcleo de la Vulnerabilidad Existencial' descubriendo el porqué de sus heridas principales basándote en la historia que relata en sus respuestas existenciales.
+4. Devuelve ÚNICAMENTE el texto markdown del análisis (sin título de presentación, solo a partir de 'II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO' o el título principal equivalente).
+`;
+
+            const payload = {
+                model: 'deepseek-chat',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.6,
+                max_tokens: 3000
+            };
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: 'https://api.deepseek.com/chat/completions', key: activeKey, payload })
+            });
+
+            if (!res.ok) throw new Error("Network response was not ok");
+            
+            const data = await res.json();
+            const aiContent = data.choices[0].message.content;
+            
+            handleTreatmentPlanChange('dynamicConceptualization', aiContent.trim());
+        } catch (e) {
+            console.error(e);
+            alert("Error al generar conceptualización dinámica: " + e.message);
+        } finally {
+            setIsGeneratingConceptualization(false);
+        }
+    };
+
+    const generateTreatmentPlan = async () => {
+        if (!selectedPatient) return;
+        setIsGeneratingTreatmentPlan(true);
+
+        try {
+            let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+
+            const phenomData = JSON.parse(localStorage.getItem(`oasis_phenom_data_${selectedPatient.name}`) || '{}');
+            const bioData = JSON.parse(localStorage.getItem(`oasis_answers_${selectedPatient.name}`) || '[]');
+            const patientDataStr = patientBlocks.map(b => b.content || b.Content).join('. ');
+
+            const prompt = `
+Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Clínico.
+Con base en TODO EL INFORME PSICOLÓGICO del paciente, genera una visión clínica completa.
+
+Información extraída:
+- Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
+- Entrevista Biográfica: ${JSON.stringify(bioData)}
+- Notas Recientes: ${patientDataStr || "Sin notas recientes."}
+
+Genera un JSON con los siguientes campos:
+1. "sessionAnalysis": Interpretación clínica general y de evidencias observadas.
+2. "strategicQuestions": Preguntas estratégicas para corroboración y redirección de significado.
+3. "specificObjectives": Objetivos estructurados en un formato gamificado basado en "Árboles de Habilidades" y "Misiones Diarias (Daily Quests)" para fomentar el progreso visual de la autoeficacia y sustituir la gratificación dopaminérgica.
+4. "backwardChaining": Encadenamiento hacia atrás (pasos incrementales desde la meta).
+5. "exposureDesign": Diseño de jerarquía de exposición y procesos de adaptación.
+6. "psychoeducation": Conceptos y analogías psicoeducativas para explicar al paciente y estructurar su autoconocimiento.
+7. "fourSessionRoute": Ruta guiada y detallada de 4 sesiones de terapia, marcando los procesos clínicos, metas y exploraciones recomendadas para cada sesión.
+
+Devuelve estrictamente el JSON sin formato extra.
+            `;
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    endpoint: endpoint,
+                    key: activeKey,
+                    payload: {
+                        model: model,
+                        messages: [
+                            { role: 'system', content: "Genera el plan de tratamiento en JSON." },
+                            { role: 'user', content: prompt }
+                        ],
+                        response_format: { type: "json_object" },
+                        temperature: 0.4
+                    }
+                })
+            });
+
+            if (!res.ok) throw new Error("Error generando el plan de tratamiento.");
+            const data = await res.json();
+            let cleanContent = data.choices[0].message.content.trim();
+            if (cleanContent.startsWith("\`\`\`")) {
+                cleanContent = cleanContent.replace(/^\`\`\`[a-zA-Z]*\s*/, "").replace(/\s*\`\`\`$/, "");
+            }
+            
+            const parsed = JSON.parse(cleanContent);
+            setTreatmentPlan(parsed);
+            localStorage.setItem(`oasis_treatment_plan_${selectedPatient.name}`, JSON.stringify(parsed));
+            
+        } catch (err) {
+            console.error(err);
+            alert("Ocurrió un error al generar el plan de tratamiento con IA.");
+        } finally {
+            setIsGeneratingTreatmentPlan(false);
+        }
+    };
+
+    const renderTreatmentPlanTab = () => {
+        return (
+            <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                    <h3 className="text-lg font-black text-white italic">IV. Visión Clínica y Plan de Tratamiento</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
+                        Estructuración de objetivos, retroalimentación y encadenamiento hacia atrás
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Visión Clínica y Análisis de Sesión */}
+                    <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                            <Activity className="w-5 h-5 text-emerald-400" />
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Visión Clínica y Sesiones</h4>
+                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Interpretación, corroboración y preguntas profundas</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Análisis de la Sesión Actual</label>
+                                <textarea
+                                    value={treatmentPlan.sessionAnalysis || ''}
+                                    onChange={e => handleTreatmentPlanChange('sessionAnalysis', e.target.value)}
+                                    placeholder="Interpretación de las evidencias observadas en esta sesión..."
+                                    className="w-full h-24 bg-zinc-950/70 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
+                                />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Preguntas Estratégicas (Corroboración)</label>
+                                <textarea
+                                    value={treatmentPlan.strategicQuestions || ''}
+                                    onChange={e => handleTreatmentPlanChange('strategicQuestions', e.target.value)}
+                                    placeholder="Ej: ¿Qué significa esta evidencia para el paciente? Preguntas para redireccionar el significado..."
+                                    className="w-full h-24 bg-zinc-950/70 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-950"
+                                />
+                            </div>
+                            
+                            <button 
+                                onClick={generateTreatmentPlan}
+                                disabled={isGeneratingTreatmentPlan}
+                                className={`w-full py-3 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded-xl font-bold uppercase text-[9px] tracking-widest transition-all border border-white/5 flex items-center justify-center gap-2 ${isGeneratingTreatmentPlan ? 'opacity-50' : ''}`}
+                            >
+                                {isGeneratingTreatmentPlan ? (
+                                    <><div className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" /> Procesando con IA...</>
+                                ) : (
+                                    <><Sparkles className="w-3 h-3 text-emerald-400" /> Generar Plan con Deepseek AI</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Plan de Tratamiento y Objetivos */}
+                    <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                            <Target className="w-5 h-5 text-purple-400" />
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Plan de Tratamiento</h4>
+                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Objetivos medibles, realistas y encadenamiento</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Objetivos Específicos y Medibles</label>
+                                <textarea
+                                    value={treatmentPlan.specificObjectives || ''}
+                                    onChange={e => handleTreatmentPlanChange('specificObjectives', e.target.value)}
+                                    placeholder="Definición objetiva para reducir frecuencia e intensidad de conductas meta..."
+                                    className="w-full h-20 bg-zinc-950/70 border border-purple-500/20 rounded-xl p-3 text-xs text-purple-100/90 resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all font-sans outline-none placeholder:text-purple-950"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Encadenamiento Hacia Atrás</label>
+                                <textarea
+                                    value={treatmentPlan.backwardChaining || ''}
+                                    onChange={e => handleTreatmentPlanChange('backwardChaining', e.target.value)}
+                                    placeholder="Pasos incrementales adaptados al individuo, de la meta final al paso inicial..."
+                                    className="w-full h-20 bg-zinc-950/70 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-950"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Diseño de Procesos de Exposición</label>
+                                <textarea
+                                    value={treatmentPlan.exposureDesign || ''}
+                                    onChange={e => handleTreatmentPlanChange('exposureDesign', e.target.value)}
+                                    placeholder="Jerarquía de exposición, procesos de adaptación..."
+                                    className="w-full h-20 bg-zinc-950/70 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-950"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    // --- Profile Workspace (Split layout with Sidebar navigation) ---
+    const renderProfileWorkspace = () => {
+        if (!selectedPatient) return null;
+
+        const tabsConfig = [
+            { id: 'CLINICAL_REPORT', label: 'I. Informe Clínico y Mapa', desc: 'Entrevista, Bucles y Plan', icon: FileText },
+            { id: 'ICAR16', label: 'II. Desempeño ICAR-16', desc: 'Eficiencia Cognitiva', icon: Brain },
+            { id: 'EXISTENTIAL_ANALYSIS', label: 'III. Esencia y Feed AI', desc: 'Esferas, Lentes y Embeddings', icon: Zap },
+            { id: 'KIO_CHATS', label: 'IV. Historial Kio AI', desc: 'Registro de interacciones con Kio', icon: MessageSquare }
+        ];
+
+        return (
+            <div className="w-full h-full flex flex-col md:flex-row animate-in fade-in duration-300 bg-[#030304]">
+                {/* Left Clinical Sidebar */}
+                <div className={`w-full ${isSidebarOpen ? 'md:w-80' : 'md:w-[84px]'} md:h-full bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-x-hidden`}>
+                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative h-full flex flex-col">
+                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`absolute top-6 z-10 w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all ${isSidebarOpen ? 'right-6' : 'left-1/2 -translate-x-1/2'}`}><Menu size={16} /></button>
+                        {/* Patient Badge */}
+                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'opacity-0 h-0 pointer-events-none p-0 overflow-hidden' : ''}`}>
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                        <User className="w-5 h-5" />
+                                    </div>
+                                    <div className="min-w-0 pr-2">
+                                        <div className="text-xs font-black text-white italic truncate">@{selectedPatient.name}</div>
+                                        <div className="text-[9px] font-mono text-zinc-500 mt-0.5">{selectedPatient.id}</div>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        setSelectedPatient(null);
+                                        setCurrentModule('DASHBOARD');
+                                    }}
+                                    className="md:hidden p-2 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0 hover:bg-rose-500/20 transition-colors"
+                                >
+                                    <LogOut size={14} />
+                                </button>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                                <span className="text-[8px] font-mono text-zinc-500 uppercase font-black">Estado:</span>
+                                <span className={`text-[8px] font-mono font-black uppercase px-2 py-0.5 rounded ${
+                                    selectedPatient.status === 'Publicado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
+                                }`}>{selectedPatient.status}</span>
+                            </div>
+                        </div>
+
+                        {/* Session Switcher HUD */}
+                        <div className={`hidden md:block bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-3 transition-all ${!isSidebarOpen ? 'opacity-0 h-0 pointer-events-none p-0 overflow-hidden border-0' : ''}`}>
+                            <span className="text-[8px] font-mono text-zinc-500 uppercase font-black block">Historial de Sesiones:</span>
+                            <div className="flex flex-wrap gap-1 bg-black/40 border border-white/5 p-1 rounded-xl">
+                                {Array.from({ length: totalVersions }).map((_, idx) => {
+                                    const v = idx + 1;
+                                    const isSelected = selectedVersion === v;
+                                    return (
+                                        <button
+                                            key={v}
+                                            onClick={() => setSelectedVersion(v)}
+                                            className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider font-mono transition-all ${
+                                                isSelected
+                                                    ? 'bg-emerald-500 text-black shadow-md'
+                                                    : 'bg-transparent text-zinc-500 hover:text-zinc-300'
+                                            }`}
+                                        >
+                                            S{v}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Navigation Tabs */}
+                        <nav className="flex overflow-x-auto md:flex-col gap-2 md:gap-0 md:space-y-1 no-scrollbar pb-1 md:pb-0">
+                            {tabsConfig.map((tab) => {
+                                const IconComponent = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            setSelectedNode(null);
+                                        }}
+                                        className={`shrink-0 md:w-full text-left px-3 py-2 md:px-4 md:py-3.5 rounded-xl border flex gap-2 md:gap-3 items-center transition-all ${
+                                            isActive 
+                                            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' 
+                                            : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.01]'
+                                        }`}
+                                    >
+                                        <IconComponent className={`w-4 h-4 md:w-4.5 md:h-4.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                                        {isSidebarOpen && (
+                                            <div className="min-w-0">
+                                                <div className="text-[10px] md:text-[11px] font-black uppercase tracking-wider whitespace-nowrap md:whitespace-normal">{tab.label}</div>
+                                                <div className="hidden md:block text-[9px] text-zinc-600 font-medium truncate mt-0.5">{tab.desc}</div>
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+
+                    {/* Sidebar Footer */}
+                    <div className="hidden md:flex p-6 border-t border-white/5 mt-auto">
+                        <button
+                            onClick={() => {
+                                setSelectedPatient(null);
+                                setCurrentModule('DASHBOARD');
+                            }}
+                            className="w-full px-4 py-3 rounded-xl border border-white/5 bg-zinc-900/10 text-zinc-500 hover:text-white hover:border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest font-mono"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            {isSidebarOpen && "Salir del Caso"}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right Clinical Area */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-10 bg-[#060607]">
+                    <div className="max-w-[100%] md:max-w-[95%] w-full mx-auto h-full">
+                        {activeTab === 'CLINICAL_REPORT' && (
+                            <ViewErrorBoundary key={`eb-${reloadTrigger}`}>
+                                <MyResponsesDashboard 
+                                    key={reloadTrigger}
+                                    user={selectedPatient?.name || 'unknown'} 
+                                    isEmbedded={true} 
+                                    accent="#10b981" 
+                                    conversations={conversations}
+                                    onOpenNodeChat={() => {}}
+                                />
+                            </ViewErrorBoundary>
+                        )}
+                        {activeTab === 'ICAR16' && renderIcarTab()}
+                        {activeTab === 'EXISTENTIAL_ANALYSIS' && renderExistentialAnalysisTab()}
+                          {activeTab === 'KIO_CHATS' && renderKioChatsTab()}
+                    </div>
+                </main>
+            </div>
+        );
+    };
+
+    const renderKioChatsTab = () => {
+        if (!conversations || conversations.length === 0) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-4">
+                    <MessageSquare size={48} className="opacity-20" />
+                    <p className="font-mono text-xs uppercase tracking-widest">No hay historial de charlas con Kio para este paciente.</p>
+                </div>
+            );
+        }
+
+        const selectedConversation = conversations.find(c => c.id === selectedKioChatId);
+
+        return (
+            <>
+                {isResizingKio && (
+                    <div 
+                        className="fixed inset-0 z-[9999] cursor-col-resize"
+                        onMouseMove={(e) => {
+                            setKioSidebarWidth(prev => Math.max(60, Math.min(800, prev + e.movementX)));
+                        }}
+                        onMouseUp={() => setIsResizingKio(false)}
+                        onMouseLeave={() => setIsResizingKio(false)}
+                    />
+                )}
+                <div className="flex h-full gap-2 animate-in fade-in duration-500">
+                    {/* Master list */}
+                    <div 
+                        className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scroll flex-shrink-0 transition-all duration-75"
+                        style={{ width: kioSidebarWidth }}
+                    >
+                        {kioSidebarWidth >= 150 ? (
+                            <h3 className="text-xs font-mono font-black uppercase tracking-widest text-emerald-500 mb-2 border-b border-white/5 pb-2 truncate">Sesiones Registradas</h3>
+                        ) : (
+                            <div className="flex justify-center mb-2 border-b border-white/5 pb-2">
+                                <MessageSquare size={16} className="text-emerald-500" />
+                            </div>
+                        )}
+                        {conversations.map(conv => (
+                            <button
+                                key={conv.id}
+                                onClick={() => setSelectedKioChatId(conv.id)}
+                                title={conv.title || 'Conversación'}
+                                className={`text-left p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-2 overflow-hidden ${selectedKioChatId === conv.id ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-950/40 border-white/5 hover:border-white/10'} ${kioSidebarWidth < 150 ? 'items-center justify-center p-3' : ''}`}
+                            >
+                                <div className={`flex items-center w-full ${kioSidebarWidth < 150 ? 'justify-center' : 'justify-between'}`}>
+                                    {kioSidebarWidth >= 150 && (
+                                        <span className={`text-xs font-bold truncate pr-2 ${selectedKioChatId === conv.id ? 'text-emerald-400' : 'text-white'}`}>{conv.title || 'Conversación'}</span>
+                                    )}
+                                    <MessageSquare size={14} className={`shrink-0 ${selectedKioChatId === conv.id ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                </div>
+                                {kioSidebarWidth >= 150 && (
+                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wide truncate">
+                                        {new Date(conv.updatedAt || conv.createdAt || Date.now()).toLocaleDateString()} • {conv.messages?.length || 0} msgs
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Resizer */}
+                    <div 
+                        className="w-2 hover:bg-emerald-500/20 active:bg-emerald-500/40 cursor-col-resize rounded-full transition-colors flex items-center justify-center group mx-2 shrink-0"
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            setIsResizingKio(true);
+                        }}
+                    >
+                        <div className="w-0.5 h-8 bg-zinc-700 group-hover:bg-emerald-500/50 rounded-full transition-colors" />
+                    </div>
+
+                    {/* Detail view */}
+                    <div className="flex-1 bg-zinc-950/60 border border-white/5 rounded-3xl flex flex-col overflow-hidden min-w-[300px]">
+                    {selectedConversation ? (
+                        <>
+                            <div className="p-5 border-b border-white/5 bg-zinc-900/20">
+                                <h4 className="text-sm font-bold text-emerald-400">{selectedConversation.title}</h4>
+                                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1 block">ID: {selectedConversation.id}</span>
+                            </div>
+                            <div className="flex-1 p-6 overflow-y-auto space-y-6 custom-scroll">
+                                {(selectedConversation.messages || []).map((msg, idx) => {
+                                    const isUser = msg.role === 'user';
+                                    return (
+                                        <div key={idx} className={`flex gap-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                                            {!isUser && (
+                                                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                                    <span className="text-emerald-400 font-black text-xs font-mono">K</span>
+                                                </div>
+                                            )}
+                                            <div className={`p-4 rounded-2xl max-w-[80%] ${isUser ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-zinc-900/80 border border-white/5 text-zinc-300 rounded-tl-sm'}`}>
+                                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                            </div>
+                                            {isUser && (
+                                                <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0">
+                                                    <User size={14} className="text-zinc-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-3">
+                            <Compass size={40} className="opacity-20" />
+                            <p className="text-[10px] font-mono uppercase tracking-widest">Selecciona una conversación</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </>
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex">
+            {currentModule === 'DASHBOARD' && renderDashboard()}
+            {currentModule === 'PROFILE' && renderProfileWorkspace()}
+
+            {/* Image Zoom Modal */}
+            {zoomImage && (
+                <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-300" onClick={() => setZoomedImage(null)}>
+                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={zoomImage} className="max-w-full max-h-full object-contain filter invert opacity-95 shadow-2xl" />
+                    <button className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-3 transition-all border border-white/5">
+                        <X size={24} />
+                    </button>
+                </div>
+            )}
+            
+            {/* Global Floating Notebook */}
+            <FloatingNotebook user={selectedPatient?.name} />
+        </div>
+    );
+};
+
+export default PsychologistDashboard;

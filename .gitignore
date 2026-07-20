@@ -1,0 +1,73 @@
+# Backend build artifacts
+oasis/backend/wwwroot/cache/
+oasis/backend/bin/
+oasis/backend/obj/
+oasis/backend/oasis_data.json
+
+# Secrets (NEVER commit these)
+oasis/backend/appsettings.json
+oasis/backend/appsettings.Development.json
+.env
+*.env
+
+# Media
+*.mp3
+*.mp4
+
+# Build output
+dist/
+build/
+node_modules/
+
+# Logs and text dumps
+*.txt
+*.log
+
+# Scratch/dev utility scripts (not part of the app)
+scratch/
+oasis/frontend/src/scratch/
+oasis/frontend/src/fix_*.cjs
+oasis/frontend/src/fix_*.py
+oasis/frontend/src/update_*.cjs
+oasis/frontend/src/replace_*.cjs
+oasis/frontend/src/inject_*.cjs
+oasis/frontend/src/apply_*.cjs
+oasis/frontend/src/restore_*.cjs
+oasis/frontend/src/cleanup_*.cjs
+oasis/frontend/src/add_*.cjs
+oasis/frontend/src/scratch_*.cjs
+oasis/frontend/src/scratch_*.py
+oasis/frontend/src/append_*.cjs
+oasis/frontend/src/final_*.cjs
+oasis/frontend/src/saved_patterns.js
+oasis/frontend/src/old_app.jsx
+oasis/frontend/src/older_app.jsx
+oasis/frontend/src/diff.txt
+oasis/frontend/src/BitacoraCode.txt
+oasis/frontend/src/phenom_old.txt
+oasis/frontend/src/log_dump.txt
+oasis/frontend/temp_head.jsx
+oasis/frontend/test*.js
+oasis/frontend/test*.cjs
+oasis/frontend/unify_cards.cjs
+oasis/frontend/update_app.cjs
+oasis/frontend/vite_*.txt
+
+# Root level junk
+temp.txt
+prev_app.jsx
+App.jsx
+crop_*.ps1
+test_*.ps1
+test_*.txt
+supabase_schema.sql
+migrate*.js
+migrate*.sql
+setup_*.sql
+
+# Backend scratch/dev scripts
+oasis/backend/scratch/
+oasis/backend/clean_data.js
+oasis/backend/fix_db*.cjs
+oasis/backend/build_*.txt
+oasis/backend/search_*.json
