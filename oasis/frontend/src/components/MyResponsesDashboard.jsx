@@ -535,6 +535,7 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
+- "publicTraits": Un arreglo de 3 a 5 strings cortos (ej. "Reflexión Profunda", "Buscador de Conexión") que definan su arquetipo para hacer match con otras "Almas Afines" públicamente (debe ser muy general y poético, sin revelar diagnósticos privados).
 
 DATOS DEL PACIENTE:
 - Malestar Motor Bruto: ${rawM}
@@ -564,7 +565,12 @@ ${userResponsesText}
             const data = await res.json();
             const aiContent = data.choices[0].message.content;
             
-            handleTreatmentPlanChange('dynamicTraits', JSON.parse(aiContent));
+            const parsedContent = JSON.parse(aiContent);
+            if (parsedContent.publicTraits) {
+                setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(parsedContent.publicTraits));
+                delete parsedContent.publicTraits;
+            }
+            handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {
             console.error(e);
             alert("Error al generar análisis profundo: " + e.message);

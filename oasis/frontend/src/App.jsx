@@ -12315,12 +12315,37 @@ ${afcMapContext}
         // Use mergedFeed to ensure local optimistic blocks are included even if server cache is stale.
         const activeFeedItems = feed.filter(f => f.type !== 'highlight' && f.type !== 'story');
 
+        let myTraits = [];
+        try {
+            const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
+            if (savedTraits) myTraits = JSON.parse(savedTraits);
+        } catch (e) {}
+
         const similarSouls = publicUsers
             .filter(u => {
                 const username = u.Username || u.username;
                 if (!username || username === user || username === `@${user}`) return false;
                 return feed.some(f => f.username === username || f.metadata?.feedUsername === username || f.username === `@${username}` || f.metadata?.feedUsername === `@${username}`);
             })
+            .map(u => {
+                let theirTraits = [];
+                try {
+                    if (u.publicTraits) theirTraits = typeof u.publicTraits === 'string' ? JSON.parse(u.publicTraits) : u.publicTraits;
+                } catch(e) {}
+                
+                let score = 0;
+                if (myTraits.length > 0 && theirTraits.length > 0) {
+                    myTraits.forEach(mt => {
+                        theirTraits.forEach(tt => {
+                            if (mt.toLowerCase() === tt.toLowerCase()) score += 10;
+                            else if (mt.toLowerCase().includes(tt.toLowerCase().split(' ')[0])) score += 2;
+                        });
+                    });
+                }
+                score += Math.random(); // Fallback randomness
+                return { ...u, score, theirTraits };
+            })
+            .sort((a, b) => b.score - a.score)
             .slice(0, 10).map((u, idx) => {
                 const currentUsername = u.Username || u.username;
                 const currentFullName = u.FullName || u.fullName || currentUsername;
