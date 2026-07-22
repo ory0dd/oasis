@@ -12991,6 +12991,7 @@ ${afcMapContext}
                         })()}
 
                         {/* CONFIGURACIÓN DE INTELIGENCIA (KIO) */}
+                        {false && (
                         <div className="space-y-4 pt-2 border-t border-white/5">
                             <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Configuración de Inteligencia (Kio)</span>
                             <div className="space-y-4 bg-white/5 p-5 rounded-3xl border border-white/5">
@@ -13066,6 +13067,7 @@ ${afcMapContext}
                                 </div>
                             </div>
                         </div>
+                        )}
 
                         {/* UI PREFERENCES */}
                         <div className="space-y-8">
