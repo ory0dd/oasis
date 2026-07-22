@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>4aea9fc7-ce84-4a6d-8ee2-e366b84a9002</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Remove="*.json" />
+    <Watch Remove="*.bak" />
+    <Watch Remove="wwwroot\**\*" />
+  </ItemGroup>
+
+</Project>

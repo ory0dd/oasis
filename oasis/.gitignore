@@ -1,0 +1,15 @@
+# Git ignore for Oasis project root
+oasis_data.json
+backend/oasis_data.json
+backend/oasis_data.json.bak
+backend/bin/
+backend/obj/
+frontend/node_modules/
+frontend/dist/
+*.bak
+*.user
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

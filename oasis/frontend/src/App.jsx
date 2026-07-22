@@ -1200,12 +1200,16 @@ const DrawingModal = ({ isOpen, onClose, onSave, accent }) => {
     );
 };
 
-const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links = [], feed = [], setFeed, setView, editBlock, accent, setPublicProfileUser, user }) => {
+const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links = [], feed = [], setFeed, setView, editBlock, accent, setPublicProfileUser, user, currentUserAvatar, publicUsers = [] }) => {
     const [_unused, setIsInView] = React.useState(false);
     const itemRef = React.useRef(null);
     const [confirmAction, setConfirmAction] = React.useState(null);
     const audioRef = React.useRef(null);
     const [currentSlide, setCurrentSlide] = React.useState(0);
+
+    const postAuthor = f.username || (f.metadata?.feedUsername ? f.metadata.feedUsername.replace('@', '') : null);
+    const authorProfile = publicUsers?.find(u => (u.Username || u.username)?.toLowerCase() === postAuthor?.toLowerCase());
+    const authorAvatar = authorProfile?.Avatar || ((postAuthor?.toLowerCase() === user?.toLowerCase() || f.metadata?.feedUsername?.toLowerCase() === ('@' + user)?.toLowerCase()) && currentUserAvatar ? currentUserAvatar : f.metadata?.userAvatar) || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${postAuthor || 'anon'}`;
 
     const [isBookmarked, setIsBookmarked] = React.useState(() => {
         try {
@@ -1635,7 +1639,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         >
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden shrink-0">
-                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={f.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${f.username || 'anon'}`} className="w-full h-full object-cover rounded-full" />
+                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
                                 </div>
                                 <div>
                                     <span className="text-[9px] font-black uppercase tracking-widest text-white block">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
@@ -1791,7 +1795,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         onClick={(e) => { e.stopPropagation(); if (setPublicProfileUser && f.username) setPublicProfileUser(f.username); }}
                     >
                         <div className="w-8 h-8 rounded-full border border-accent/20 p-0.5 bg-black/40 overflow-hidden shrink-0">
-                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={f.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${f.username || 'anon'}`} className="w-full h-full object-cover rounded-full" />
+                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
                         </div>
                         <div className="flex flex-col text-left">
                             <span className="text-[9px] font-black uppercase tracking-widest text-white">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
@@ -3406,29 +3410,34 @@ const ProfileView = ({
     React.useEffect(() => {
         if (isEditingProfile) return; // No sobreescribir mientras el usuario edita
 
-        const profileBlock = blocks.find(b => b.id === 'profile_settings');
+        const profileBlock = blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings');
         if (profileBlock) {
             try {
-                const data = JSON.parse(profileBlock.content);
-                if (data.bio !== undefined) {
-                    setBio(data.bio || '');
-                    localStorage.setItem('oasis_bio_' + user, data.bio || '');
+                const data = JSON.parse(profileBlock.content || profileBlock.Content || "{}");
+                if (data.bio !== undefined || data.Bio !== undefined) {
+                    const bioVal = data.bio !== undefined ? data.bio : data.Bio;
+                    setBio(bioVal || '');
+                    localStorage.setItem('oasis_bio_' + user, bioVal || '');
                 }
-                if (data.fullName !== undefined) {
-                    setFullName(data.fullName || '');
-                    localStorage.setItem('oasis_fullname_' + user, data.fullName || '');
+                if (data.fullName !== undefined || data.FullName !== undefined) {
+                    const fnVal = data.fullName !== undefined ? data.fullName : data.FullName;
+                    setFullName(fnVal || '');
+                    localStorage.setItem('oasis_fullname_' + user, fnVal || '');
                 }
-                if (data.coverImage !== undefined) {
-                    setCoverImage(data.coverImage || '');
-                    localStorage.setItem('oasis_cover_' + user, data.coverImage || '');
+                if (data.coverImage !== undefined || data.CoverImage !== undefined) {
+                    const coverVal = data.coverImage !== undefined ? data.coverImage : data.CoverImage;
+                    setCoverImage(coverVal || '');
+                    localStorage.setItem('oasis_cover_' + user, coverVal || '');
                 }
-                if (data.avatar !== undefined) {
-                    setAvatar(data.avatar || '');
-                    localStorage.setItem('oasis_avatar_' + user, data.avatar || '');
+                if (data.avatar !== undefined || data.Avatar !== undefined) {
+                    const avatarVal = data.avatar !== undefined ? data.avatar : data.Avatar;
+                    setAvatar(avatarVal || '');
+                    localStorage.setItem('oasis_avatar_' + user, avatarVal || '');
                 }
-                if (data.profileLink !== undefined) {
-                    setProfileLink(data.profileLink || '');
-                    localStorage.setItem('oasis_profilelink_' + user, data.profileLink || '');
+                if (data.profileLink !== undefined || data.ProfileLink !== undefined) {
+                    const linkVal = data.profileLink !== undefined ? data.profileLink : data.ProfileLink;
+                    setProfileLink(linkVal || '');
+                    localStorage.setItem('oasis_profilelink_' + user, linkVal || '');
                 }
                 return;
             } catch (e) {
@@ -3807,7 +3816,7 @@ const ProfileView = ({
                 }
             } else if (deltaY < -50) {
                 // Scroll up / Swipe down -> open bitacora
-                if (!isScrollingRef.current) {
+                if (!isScrollingRef.current && isLoggedIn && !publicProfileUser) {
                     isScrollingRef.current = true;
                     setIsBitacoraOpen(true);
                     setTimeout(() => isScrollingRef.current = false, 800);
@@ -4433,9 +4442,9 @@ export default function App() {
         fetch(`${API_URL}/api/oasis/blocks?user=${cleanUser}`)
             .then(r => r.json())
             .then(blocks => {
-                const profileBlock = Array.isArray(blocks) ? blocks.find(b => b.id === 'profile_settings') : null;
+                const profileBlock = Array.isArray(blocks) ? blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings') : null;
                 if (profileBlock) {
-                    try { setPublicProfileData(JSON.parse(profileBlock.content)); }
+                    try { setPublicProfileData(JSON.parse(profileBlock.content || profileBlock.Content || '{}')); }
                     catch { setPublicProfileData(null); }
                 } else { setPublicProfileData(null); }
             }).catch(() => setPublicProfileData(null));
@@ -12128,7 +12137,13 @@ ${afcMapContext}
 
     const renderPublicProfileView = () => {
         const cleanPublicUser = typeof publicProfileUser === 'string' ? publicProfileUser.replace('@', '') : '';
-        const publicUserPosts = (feed || []).filter(f => f && typeof f.username === 'string' && f.username.replace('@', '') === cleanPublicUser);
+        // Fix: also check metadata.feedUsername to catch all post formats
+        const publicUserPosts = (feed || []).filter(f => {
+            if (!f) return false;
+            const uname = (typeof f.username === 'string' ? f.username : '').replace('@', '');
+            const feedUname = (typeof f.metadata?.feedUsername === 'string' ? f.metadata.feedUsername : '').replace('@', '');
+            return uname === cleanPublicUser || feedUname === cleanPublicUser;
+        });
         const nonStoryPosts = publicUserPosts.filter(p => p && p.type !== 'story' && p.type !== 'highlight');
 
         let avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${cleanPublicUser || 'anon'}`;
@@ -12137,10 +12152,39 @@ ${afcMapContext}
         let cover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
 
         if (publicProfileData && typeof publicProfileData === 'object') {
-            if (typeof publicProfileData.avatar === 'string') avatar = publicProfileData.avatar;
-            if (typeof publicProfileData.fullName === 'string') fullName = publicProfileData.fullName;
-            if (typeof publicProfileData.bio === 'string') bio = publicProfileData.bio;
-            if (typeof publicProfileData.coverImage === 'string') cover = publicProfileData.coverImage;
+            const getProp = (key1, key2) => {
+                if (typeof publicProfileData[key1] === 'string' && publicProfileData[key1].trim() !== '') return publicProfileData[key1];
+                if (typeof publicProfileData[key2] === 'string' && publicProfileData[key2].trim() !== '') return publicProfileData[key2];
+                return null;
+            };
+            
+            const parsedAvatar = getProp('avatar', 'Avatar');
+            if (parsedAvatar) avatar = parsedAvatar;
+
+            const parsedFullName = getProp('fullName', 'FullName');
+            if (parsedFullName && !parsedFullName.includes('@')) fullName = parsedFullName;
+            else fullName = null;
+
+            const parsedBio = getProp('bio', 'Bio');
+            if (parsedBio) bio = parsedBio;
+
+            const parsedCover = getProp('coverImage', 'CoverImage');
+            if (parsedCover) cover = parsedCover;
+        }
+
+        if (cleanPublicUser && user && cleanPublicUser.toLowerCase() === user.toLowerCase()) {
+            const localAvatar = localStorage.getItem('oasis_avatar_' + user) || localStorage.getItem('oasis_avatar_' + cleanPublicUser);
+            if (localAvatar) avatar = localAvatar;
+
+            const localCover = localStorage.getItem('oasis_cover_' + user) || localStorage.getItem('oasis_cover_' + cleanPublicUser);
+            if (localCover) cover = localCover;
+
+            const localFullName = localStorage.getItem('oasis_fullname_' + user) || localStorage.getItem('oasis_fullname_' + cleanPublicUser);
+            if (localFullName && !localFullName.includes('@')) fullName = localFullName;
+            else if (!fullName) fullName = null;
+
+            const localBio = localStorage.getItem('oasis_bio_' + user) || localStorage.getItem('oasis_bio_' + cleanPublicUser);
+            if (localBio) bio = localBio;
         }
 
         const totalPosts = nonStoryPosts.length;
@@ -12149,7 +12193,7 @@ ${afcMapContext}
             <div className="absolute inset-0 z-[1500] pointer-events-none">
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto z-[1500]" onClick={(e) => { e.stopPropagation(); setPublicProfileUser(null); }} />
 
-                <div className="absolute inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 flex flex-col bg-black/40 backdrop-blur-3xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden transition-all pointer-events-auto z-[1501]"
+                <div className="absolute inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[100px] bottom-0 rounded-t-[2rem] border-t border-x border-white/8 flex flex-col bg-black/50 backdrop-blur-3xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden transition-all pointer-events-auto z-[1501]"
                     onTouchStart={(e) => { window._ppTouchStartY = e.touches[0].clientY; }}
                     onTouchEnd={(e) => {
                         const dy = e.changedTouches[0].clientY - (window._ppTouchStartY || 0);
@@ -12158,87 +12202,106 @@ ${afcMapContext}
                         if (dy > 90 && atTop) setPublicProfileUser(null);
                     }}
                 >
-                    {/* TOP COVER BANNER */}
-                    <div className="absolute top-0 left-0 w-full h-[60vh] z-0 pointer-events-none overflow-hidden rounded-t-[2.5rem]" style={{ maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }}>
-                        <div
-                            className="absolute inset-0 transition-all duration-700 ease-in-out"
-                            style={{
-                                backgroundImage: `url(${formatUrl(cover)})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center center',
-                                opacity: 0.15
-                            }}
-                        />
-                    </div>
-
-                    <button onClick={() => setPublicProfileUser(null)} className="absolute top-6 left-6 z-50 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/70 hover:text-white transition-all">
-                        <ArrowLeft size={18} />
+                    <button onClick={() => setPublicProfileUser(null)} className="absolute top-4 left-4 z-50 p-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/60 hover:text-white transition-all">
+                        <ArrowLeft size={14} />
                     </button>
 
-                    <div data-profile-scroll className="w-full h-full overflow-y-auto no-scrollbar pb-32 relative z-10 pt-4">
-                        <div className="w-full max-w-4xl mx-auto px-4 flex flex-col pointer-events-auto pt-10">
-                            <div className="flex items-center gap-6 md:gap-10 mb-6 mt-4">
+                    <div data-profile-scroll className="w-full h-full overflow-y-auto no-scrollbar pb-28 relative z-10">
+                        
+                        {/* TOP COVER BANNER */}
+                        <div className="absolute top-0 left-0 w-full h-[60vh] z-0 pointer-events-none overflow-hidden rounded-t-[2rem]" style={{ maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }}>
+                            <div
+                                className="absolute inset-0 transition-all duration-700 ease-in-out"
+                                style={{
+                                    backgroundImage: `url(${formatUrl(cover)})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center center',
+                                    opacity: 0.35
+                                }}
+                            />
+                        </div>
+
+                        <div className="w-full max-w-3xl mx-auto px-4 flex flex-col pointer-events-auto pt-8 relative z-10">
+
+                            {/* Avatar + Stats row */}
+                            <div className="flex items-center gap-4 mb-4 mt-2">
                                 <div className="relative shrink-0">
-                                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full p-[2px] bg-white/10">
-                                        <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900">
+                                    <div className="w-16 h-16 rounded-full p-[1.5px] bg-white/10">
+                                        <div className="w-full h-full rounded-full border border-black/50 overflow-hidden bg-zinc-900">
                                             <img src={formatUrl(avatar)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-full object-cover" />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex-1 flex justify-around md:justify-start md:gap-12 items-center">
+                                <div className="flex-1 flex justify-around items-center">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm md:text-xl font-bold">{totalPosts}</span>
-                                        <span className="text-[10px] text-zinc-400">publicaciones</span>
+                                        <span className="text-sm font-bold">{totalPosts}</span>
+                                        <span className="text-[9px] text-zinc-500">publicaciones</span>
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm md:text-xl font-bold">0</span>
-                                        <span className="text-[10px] text-zinc-400">resonancias</span>
+                                        <span className="text-sm font-bold">0</span>
+                                        <span className="text-[9px] text-zinc-500">resonancias</span>
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm md:text-xl font-bold">0</span>
-                                        <span className="text-[10px] text-zinc-400">conexiones</span>
+                                        <span className="text-sm font-bold">0</span>
+                                        <span className="text-[9px] text-zinc-500">conexiones</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-1 mb-6 px-1">
-                                <h2 className="text-lg font-bold text-white">{fullName}</h2>
-                                <span className="text-xs text-zinc-500 font-mono">@{cleanPublicUser}</span>
+                            {/* Name + bio */}
+                            <div className="flex flex-col gap-0.5 mb-2 px-0.5">
+                                {fullName && fullName !== cleanPublicUser && (
+                                    <h2 className="text-sm font-bold text-white leading-tight">{fullName}</h2>
+                                )}
+                                <h2 className={fullName && fullName !== cleanPublicUser ? "text-[9px] text-zinc-500 font-mono" : "text-sm font-bold text-white leading-tight"}>
+                                    @{cleanPublicUser}
+                                </h2>
+                                {bio && bio !== 'Sin bio por ahora.' && (
+                                    <p className="text-[11px] leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap mt-1">{bio}</p>
+                                )}
+                                {(!bio || bio === 'Sin bio por ahora.') && (
+                                    <p className="text-[10px] text-zinc-600 italic mt-1">Sin bio por ahora.</p>
+                                )}
                             </div>
 
-                            <div className="px-1 mb-8">
-                                <p className="text-sm leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap">{bio}</p>
-                            </div>
-
-                            <div className="flex w-full border-t border-white/10 mb-2">
-                                <div className="flex-1 flex justify-center py-3 border-t-2 border-white text-white">
-                                    <LayoutGrid size={20} />
+                            {/* Tab bar */}
+                            <div className="flex w-full border-t border-white/8 mt-3 mb-2">
+                                <div className="flex-1 flex justify-center py-2 border-t-2 border-white/70 text-white/70">
+                                    <LayoutGrid size={15} />
                                 </div>
                             </div>
 
-                            <div className="columns-2 md:columns-3 gap-1 md:gap-2 w-full space-y-1 md:space-y-2 px-1 pb-10">
-                                {nonStoryPosts.map((post, index) => {
-                                    const postImg = getBlockPreviewImage(post);
-                                    const postVid = getBlockPreviewVideo(post);
-                                    let cleanText = '';
-                                    if (post.metadata?.feedText && typeof post.metadata.feedText === 'string') cleanText = post.metadata.feedText;
-                                    else if (post.content && typeof post.content === 'string') cleanText = post.content.split('\n')[0];
+                            {/* Posts grid */}
+                            {nonStoryPosts.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-zinc-600">
+                                    <LayoutGrid size={28} className="opacity-30" />
+                                    <span className="text-[9px] font-mono uppercase tracking-widest">Sin publicaciones</span>
+                                </div>
+                            ) : (
+                                <div className="columns-2 md:columns-3 gap-1 w-full space-y-1 pb-10">
+                                    {nonStoryPosts.map((post, index) => {
+                                        const postImg = getBlockPreviewImage(post);
+                                        const postVid = getBlockPreviewVideo(post);
+                                        let cleanText = '';
+                                        if (post.metadata?.feedText && typeof post.metadata.feedText === 'string') cleanText = post.metadata.feedText;
+                                        else if (post.content && typeof post.content === 'string') cleanText = post.content.split('\n')[0];
 
-                                    return (
-                                        <div key={post.id || index} onClick={() => setSelectedPublicPost(post)} className="w-full bg-[#121214] border border-white/5 relative overflow-hidden cursor-pointer group hover:border-white/20 transition-all duration-500 rounded-lg break-inside-avoid shadow-lg">
-                                            {postImg ? (
-                                                <img src={formatUrl(postImg)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                                            ) : postVid ? (
-                                                <video src={formatUrl(postVid)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover transition-transform duration-700 group-hover:scale-[1.03]" muted loop playsInline />
-                                            ) : (
-                                                <div className="w-full min-h-[140px] flex flex-col justify-center p-4 relative bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c]">
-                                                    <p className="text-[10px] font-sans text-white/90 line-clamp-6">{cleanText}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        return (
+                                            <div key={post.id || index} onClick={() => setSelectedPublicPost(post)} className="w-full bg-[#0d0d0f] border border-white/5 relative overflow-hidden cursor-pointer group hover:border-white/15 transition-all duration-300 rounded-md break-inside-avoid shadow-md">
+                                                {postImg ? (
+                                                    <img src={formatUrl(postImg)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+                                                ) : postVid ? (
+                                                    <video src={formatUrl(postVid)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover" muted loop playsInline />
+                                                ) : (
+                                                    <div className="w-full min-h-[100px] flex flex-col justify-center p-3 bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c]">
+                                                        <p className="text-[9px] font-sans text-white/80 line-clamp-5">{cleanText}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -12343,6 +12406,8 @@ ${afcMapContext}
                                     editBlock={editBlock}
                                     setPublicProfileUser={setPublicProfileUser}
                                     user={user}
+                                    currentUserAvatar={avatar}
+                                    publicUsers={publicUsers}
                                 />
                             </div>
                         ))}
@@ -13109,7 +13174,7 @@ ${afcMapContext}
             )}
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
-            {(view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && (
+            {(view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && !publicProfileUser && (
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
@@ -13224,7 +13289,7 @@ ${afcMapContext}
                 />
             )}
 
-            {isBitacoraOpen && (
+            {isBitacoraOpen && !publicProfileUser && (
                 <BitacoraExistencial
                     activeCanvasId={activeCanvasId}
                     setActiveCanvasId={setActiveCanvasId}

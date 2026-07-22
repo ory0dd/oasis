@@ -1045,12 +1045,12 @@ Devuelve estrictamente el JSON sin formato extra.
     const [isProgrammaticTransition, setIsProgrammaticTransition] = useState(false);
     const zoomTimeoutRef = useRef(null);
 
-    const triggerProgrammaticTransition = useCallback((duration = 500) => {
+    const triggerProgrammaticTransition = useCallback(() => {
         setIsProgrammaticTransition(true);
         if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
         zoomTimeoutRef.current = setTimeout(() => {
             setIsProgrammaticTransition(false);
-        }, duration + 50);
+        }, 200);
     }, []);
 
     const updateDOMTransform = useCallback((x, y, scale) => {
@@ -1088,6 +1088,8 @@ Devuelve estrictamente el JSON sin formato extra.
     const [selectedPatternId, setSelectedPatternId] = useState(null);
     const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
     const [isMapExpanded, setIsMapExpanded] = useState(false);
+    // Local state for accordion expand in Bucles list — does NOT navigate to map
+    const [expandedBucleNodeId, setExpandedBucleNodeId] = useState(null);
 
     const getAfcPatterns = useCallback((data) => {
         if (!data?.nodes || data.nodes.length === 0) return [];
@@ -1510,7 +1512,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
         const nodes = afcData?.nodes || [];
         if (nodes.length === 0) {
-            triggerProgrammaticTransition(500);
+            triggerProgrammaticTransition();
             transformRef.current = { x: 0, y: 0, scale: 0.55 };
             setMapTransform({ x: 0, y: 0, scale: 0.55 });
             return;
@@ -1548,7 +1550,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const tx = viewportWidth / 2 - px * fitScale;
         const ty = (viewportHeight * (isMobileDevice ? 0.55 : 0.50)) - py * fitScale;
 
-        triggerProgrammaticTransition(500);
+        triggerProgrammaticTransition();
         transformRef.current = { x: tx, y: ty, scale: fitScale };
         setMapTransform({ x: tx, y: ty, scale: fitScale });
     }, [afcData, triggerProgrammaticTransition]);
@@ -1566,7 +1568,7 @@ Devuelve estrictamente el JSON sin formato extra.
             targetScale = Math.min(Math.max(0.35, targetScale), 2.5);
             const tx = width / 2 - px * targetScale;
             const ty = (height * (isMobile ? 0.22 : 0.35)) - py * targetScale;
-            triggerProgrammaticTransition(450);
+            triggerProgrammaticTransition();
             transformRef.current = { x: tx, y: ty, scale: targetScale };
             setMapTransform({ x: tx, y: ty, scale: targetScale });
         }
@@ -1639,7 +1641,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const tx = width / 2 - px * targetScale;
             const ty = (height * (isMobileDevice ? 0.50 : 0.45)) - py * targetScale;
 
-            triggerProgrammaticTransition(450);
+            triggerProgrammaticTransition();
             transformRef.current = { x: tx, y: ty, scale: targetScale };
             setMapTransform({ x: tx, y: ty, scale: targetScale });
         } else if (typeof resetMapTransform === 'function') {
@@ -2950,6 +2952,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
     };
 
     const handleMapClick = (e) => {
+        // Don't process map clicks when Bucles overlay is active
+        if (mapViewTab === 'bucles') return;
         if (mapDragged.current) {
             mapDragged.current = false;
             return;
@@ -2960,7 +2964,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         setSelectedNode(null);
         setSelectedPatternId(null);
         setTourActiveIndex(null);
-        setTimeout(resetMapTransform, 80);
+        setTimeout(resetMapTransform, 15);
     };
 
     const handleMapTouchStart = (e) => {
@@ -3194,7 +3198,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         if (!mapContainerRef.current) return;
         const rect = mapContainerRef.current.getBoundingClientRect();
         
-        triggerProgrammaticTransition(350);
+        triggerProgrammaticTransition();
         setMapTransform(prev => {
             const prevScale = prev.scale;
             const newScale = Math.min(Math.max(0.35, prevScale + amount), 4);
@@ -3202,16 +3206,11 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             let newX, newY;
             
             if (selectedNode) {
-                // Focus zoom relative to the selected node's virtual canvas position
-                // MUST use virtual canvas coordinates (VIRTUAL_WIDTH/1600), NOT viewport rect dimensions
-                const px = VIRTUAL_WIDTH * ((selectedNode.x ?? 50) / 100);
-                const py = 1600 * ((selectedNode.y ?? 50) / 100);
-                // Point on screen where node appears: prev.x + px * prevScale
-                // Keep that screen point fixed when scaling:
-                const nodeScreenX = prev.x + px * prevScale;
-                const nodeScreenY = prev.y + py * prevScale;
-                newX = nodeScreenX - px * newScale;
-                newY = nodeScreenY - py * newScale;
+                // Focus zoom relative to the selected node's position
+                const px = rect.width * (selectedNode.x / 100);
+                const py = rect.height * (selectedNode.y / 100);
+                newX = prev.x + px * (prevScale - newScale);
+                newY = prev.y + py * (prevScale - newScale);
             } else {
                 // Zoom relative to viewport center
                 const centerX = rect.width / 2;
@@ -4232,7 +4231,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
     <div
                                 ref={mapContainerRef}
-                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none transition-all duration-200 ease-in-out pointer-events-auto ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
+                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none transition-all duration-200 ease-in-out ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
                                 onClick={handleMapClick}
                                 onMouseDown={handleMapMouseDown}
                                 onMouseMove={handleMapMouseMove}
@@ -4277,7 +4276,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Transform Container (Pan/Zoom applies here) */}
                                 <div
                                     ref={transformContainerRef}
-                                    className={`absolute top-0 left-0 h-[1600px] origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
+                                    className={`absolute top-0 left-0 h-[1600px] origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
                                     style={{ width: `${VIRTUAL_WIDTH}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
                                 >
                                     {/* SVG Edges */}
@@ -4549,7 +4548,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                             } else {
                                                 setTourActiveIndex(null);
                                                 setSelectedPatternId(null);
-                                                setTimeout(resetMapTransform, 80);
+                                                setTimeout(resetMapTransform, 15);
                                             }
                                         };
 
@@ -4687,41 +4686,41 @@ Devuelve estrictamente el JSON sin formato extra.
                             {/* MÓDULO 1.5: ISLAS EXISTENCIALES (PATRONES CONDUCTUALES) ABAJO DEL MAPA */}
                             {/* BUCLES PAGE (LIST FORMAT) */}
                             {mapViewTab === 'bucles' && (
-                                <div className="absolute inset-0 z-[100] bg-[#050506] overflow-y-auto custom-scroll p-6 md:p-12 animate-in fade-in duration-300 pointer-events-auto">
-                                    <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-36">
+                                <div className="absolute inset-0 z-[100] bg-[#050506] overflow-y-auto custom-scroll p-3 md:p-6 animate-in fade-in duration-300 pointer-events-auto">
+                                    <div className="max-w-2xl mx-auto flex flex-col gap-3 pb-28">
                                         
                                         {/* Header */}
-                                        <div className="flex flex-col gap-2 pt-24 md:pt-28">
-                                            <div className="flex items-center gap-3">
-                                                <Compass size={28} className="text-purple-500" />
-                                                <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-white">Tus Bucles Clínicos</h2>
+                                        <div className="flex flex-col gap-0.5 pt-20 md:pt-24">
+                                            <div className="flex items-center gap-2">
+                                                <Compass size={16} className="text-purple-500" />
+                                                <h2 className="text-sm font-black uppercase tracking-wider text-white">Tus Bucles Clínicos</h2>
                                             </div>
-                                            <p className="text-xs md:text-sm text-zinc-400 font-mono tracking-widest uppercase">Análisis y Secuencias Conductuales</p>
+                                            <p className="text-[9px] text-zinc-500 font-mono tracking-widest uppercase">Análisis y Secuencias Conductuales</p>
                                         </div>
                                         
                                         {showUnlockNotification && (
-                                            <div className="bg-emerald-950/90 border border-emerald-500/50 p-4 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center gap-4 backdrop-blur-md cursor-pointer hover:bg-emerald-900/90 transition-colors animate-in fade-in" onClick={() => setShowUnlockNotification(false)}>
-                                                <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-400/30">
-                                                    <Sparkles size={20} className="text-emerald-400 animate-pulse" />
+                                            <div className="bg-emerald-950/90 border border-emerald-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center gap-3 backdrop-blur-md cursor-pointer hover:bg-emerald-900/90 transition-colors animate-in fade-in" onClick={() => setShowUnlockNotification(false)}>
+                                                <div className="w-7 h-7 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-400/30 shrink-0">
+                                                    <Sparkles size={14} className="text-emerald-400 animate-pulse" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-emerald-400 font-black uppercase tracking-widest text-sm flex items-center gap-2">¡Nuevo Nivel Alcanzado!</h4>
-                                                    <p className="text-emerald-200 text-xs font-medium mt-0.5">Has desbloqueado {recentlyUnlocked} nuevo(s) bucle(s) gracias a tu progreso.</p>
+                                                    <h4 className="text-emerald-400 font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5">¡Nuevo Nivel Alcanzado!</h4>
+                                                    <p className="text-emerald-200 text-[9px] font-medium mt-0.5">Has desbloqueado {recentlyUnlocked} nuevo(s) bucle(s) gracias a tu progreso.</p>
                                                 </div>
                                             </div>
                                         )}
 
                                         {/* List */}
-                                        <div className="flex flex-col gap-4">
+                                        <div className="flex flex-col gap-2">
                                             {currentPatterns.length === 0 ? (
-                                                <div className="p-8 border border-white/5 border-dashed rounded-3xl flex items-center justify-center text-zinc-500 italic">No hay islas en este mapa clínico.</div>
+                                                <div className="p-5 border border-white/5 border-dashed rounded-2xl flex items-center justify-center text-zinc-500 italic text-[10px]">No hay islas en este mapa clínico.</div>
                                             ) : (
                                                 currentPatterns.map((pat, idx) => {
                                                     const isLocked = idx >= unlockedCount;
                                                     const isSelected = selectedPatternId === pat.id;
                                                     
                                                     return (
-                                                        <div key={pat.id} className={`flex flex-col rounded-3xl border transition-all duration-300 overflow-hidden ${isLocked ? 'opacity-40 grayscale bg-black/30 border-white/5' : isSelected ? 'bg-zinc-950 border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.05)]' : 'bg-black/50 border-white/10 hover:border-white/20 hover:bg-black/80'}`}>
+                                                        <div key={pat.id} className={`flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden ${isLocked ? 'opacity-40 grayscale bg-black/30 border-white/5' : isSelected ? 'bg-zinc-950 border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.04)]' : 'bg-black/50 border-white/10 hover:border-white/20 hover:bg-black/80'}`}>
                                                             
                                                             {/* Card Header (Click to expand) */}
                                                             <button 
@@ -4733,7 +4732,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         setSelectedPatternId(pat.id);
                                                                     }
                                                                 }}
-                                                                className="p-4 md:p-5 flex flex-col gap-3 text-left w-full relative overflow-hidden focus:outline-none"
+                                                                className="p-3 flex flex-col gap-1.5 text-left w-full relative overflow-hidden focus:outline-none"
                                                             >
                                                                 {isSelected && (
                                                                     <>
@@ -4743,31 +4742,31 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 )}
                                                                 
                                                                 <div className="flex items-center justify-between w-full relative z-10">
-                                                                    <div className="flex items-center gap-3">
-                                                                        {isLocked ? <Lock size={18} className="text-zinc-500" /> : <Compass size={18} className={isSelected ? "text-purple-400" : "text-zinc-500"} />}
-                                                                        <span className="text-base md:text-lg font-black uppercase tracking-wider text-zinc-200">{pat.nombre}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        {isLocked ? <Lock size={13} className="text-zinc-500" /> : <Compass size={13} className={isSelected ? "text-purple-400" : "text-zinc-500"} />}
+                                                                        <span className="text-[11px] font-black uppercase tracking-wide text-zinc-200">{pat.nombre}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-4">
+                                                                    <div className="flex items-center gap-2">
                                                                         {pat.node_ids && (
-                                                                            <span className="hidden md:inline-block text-xs px-2 py-1 rounded bg-zinc-900 text-zinc-400 font-mono font-bold border border-white/5">
+                                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 font-mono font-bold border border-white/5">
                                                                                 {pat.node_ids.length} Nodos
                                                                             </span>
                                                                         )}
-                                                                        <ChevronDown size={20} className={`text-zinc-500 transition-transform duration-300 ${isSelected ? 'rotate-180 text-purple-400' : ''}`} />
+                                                                        <ChevronDown size={14} className={`text-zinc-500 transition-transform duration-300 ${isSelected ? 'rotate-180 text-purple-400' : ''}`} />
                                                                     </div>
                                                                 </div>
                                                                 
                                                                 {pat.descripcion && (
-                                                                    <p className="text-xs md:text-sm text-zinc-400 leading-relaxed max-w-3xl relative z-10 mt-1">
+                                                                    <p className="text-[9px] text-zinc-500 leading-relaxed max-w-3xl relative z-10 line-clamp-1">
                                                                         {pat.descripcion}
                                                                     </p>
                                                                 )}
                                                                 
-                                                                <div className="flex gap-2 mt-2 relative z-10">
-                                                                    <span className={`text-[9px] px-2 py-1 rounded-sm font-black uppercase tracking-widest ${pat.computedIntensity >= 15 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : pat.computedIntensity >= 8 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'}`}>
+                                                                <div className="flex gap-1.5 relative z-10">
+                                                                    <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-black uppercase tracking-widest ${pat.computedIntensity >= 15 ? 'bg-red-500/20 text-red-400 border border-red-500/20' : pat.computedIntensity >= 8 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'}`}>
                                                                         {pat.computedIntensity >= 15 ? 'Capa Profunda' : pat.computedIntensity >= 8 ? 'Capa Media' : 'Capa Cercana'}
                                                                     </span>
-                                                                    <span className="text-[9px] px-2 py-1 rounded-sm bg-zinc-800 text-zinc-400 font-bold tracking-widest border border-white/5">
+                                                                    <span className="text-[8px] px-1.5 py-0.5 rounded-sm bg-zinc-800 text-zinc-400 font-bold tracking-widest border border-white/5">
                                                                         {pat.computedDifficulty > 3 ? 'Desafiante' : 'Abordable'}
                                                                     </span>
                                                                 </div>
@@ -4775,12 +4774,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             
                                                             {/* Card Expanded Body */}
                                                             {isSelected && (
-                                                                <div className="border-t border-white/5 bg-black/40 p-4 md:p-5 flex flex-col gap-6 animate-in slide-in-from-top-4 duration-300 relative z-10">
+                                                                <div className="border-t border-white/5 bg-black/40 p-2.5 flex flex-col gap-3 animate-in slide-in-from-top-4 duration-300 relative z-10">
 {/* Content body */}
-                                        <div className="flex flex-col gap-3.5 sm:gap-4  relative z-10">
+                                        <div className="flex flex-col gap-2 relative z-10">
                                             
                                             {/* SECUENCIA Y DESGLOSE (ACCORDION) */}
-                                            <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-3 flex flex-col gap-2">
+                                            <div className="bg-zinc-900/30 border border-white/5 rounded-xl p-2 flex flex-col gap-1.5">
                                                 <h5 className="text-[9px] font-mono font-black uppercase tracking-wider text-zinc-400">Secuencia Temporal y Desglose</h5>
                                                 
                                                 <div className="flex flex-col gap-2 mt-1 relative">
@@ -4805,7 +4804,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             consequence: "Consecuencia"
                                                         };
                                                         
-                                                        const isExpanded = selectedNode?.id === node.id;
+                                                        const isExpanded = expandedBucleNodeId === node.id;
 
                                                         return (
                                                             <div 
@@ -4815,12 +4814,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 <div 
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        if (isExpanded) {
-                                                                            setSelectedNode(null);
-                                                                        } else {
-                                                                            setSelectedNode(node);
-                                                                            setTimeout(() => zoomToNode(node), 15);
-                                                                        }
+                                                                        // Toggle local accordion ONLY — no map navigation
+                                                                        setExpandedBucleNodeId(prev => prev === node.id ? null : node.id);
                                                                     }}
                                                                     className="flex flex-row items-center gap-3 p-3 cursor-pointer group/step"
                                                                 >
@@ -4958,7 +4953,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         </div>
 
                                         {/* Footer Actions */}
-                                        <div className="border-t border-white/5 pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full relative z-10">
+                                        <div className="border-t border-white/5 pt-2 flex flex-row items-center justify-between gap-2 w-full relative z-10">
                                             <button
                                                 onClick={() => {
                                                     const firstNode = nodesToRender.find(n => n.id === pat.primary_node_id) || nodesToRender.find(n => n.id === pat.node_ids[0]);
@@ -4969,10 +4964,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         setTimeout(() => zoomToNode(firstNode), 15);
                                                     }
                                                 }}
-                                                className="w-full sm:w-auto py-2.5 px-3.5 rounded-xl bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-zinc-300 hover:text-white font-black text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 active:scale-[0.98] shadow-md"
+                                                className="flex-1 py-1.5 px-2.5 rounded-lg bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-zinc-300 hover:text-white font-black text-[8px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98]"
                                             >
-                                                <Play size={12} />
-                                                <span>Iniciar Recorrido del Bucle</span>
+                                                <Play size={10} />
+                                                <span>Iniciar Recorrido</span>
                                             </button>
 
                                             <button
@@ -4988,9 +4983,9 @@ Por favor, analicemos:
                                                     
                                                     onOpenNodeChat?.(pat.primary_node_id, pat.nombre, prompt);
                                                 }}
-                                                className="w-full sm:w-auto py-2.5 px-4.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-[10px] tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 hover:scale-[1.01] active:scale-[0.98]"
+                                                className="flex-1 py-1.5 px-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-[8px] tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-purple-900/30 hover:scale-[1.01] active:scale-[0.98]"
                                             >
-                                                <MessageCircle size={12} />
+                                                <MessageCircle size={10} />
                                                 <span>Explorar con Kio IA</span>
                                             </button>
                                         </div>
