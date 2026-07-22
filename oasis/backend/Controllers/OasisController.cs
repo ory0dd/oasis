@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Oasis.Backend.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -130,7 +130,7 @@ namespace Oasis.Backend.Controllers
                     .AddEnvironmentVariables()
                     .Build();
 
-                var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL");
+                var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
                 var enableSyncStr = config["Firebase:EnableSync"] ?? config["Supabase:EnableSync"] ?? "true";
                 bool enableSync = enableSyncStr == "true";
                 bool loadedFromCloud = false;
@@ -208,7 +208,7 @@ namespace Oasis.Backend.Controllers
                 {
                     Username = "observador1",
                     Password = "Animanatural.21",
-                    FullName = "Observador Cl√≠nico",
+                    FullName = "Observador ClÌnico",
                     Age = 40,
                     Background = new BackgroundConfig { Type = "color", Value = "#030304" }
                 });
@@ -345,7 +345,7 @@ namespace Oasis.Backend.Controllers
                                 .AddEnvironmentVariables()
                                 .Build();
 
-                            var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL");
+                            var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
                             var enableSyncStr = config["Firebase:EnableSync"] ?? config["Supabase:EnableSync"] ?? "true";
                             bool enableSync = enableSyncStr == "true";
 
@@ -389,7 +389,7 @@ namespace Oasis.Backend.Controllers
                 .AddEnvironmentVariables()
                 .Build();
 
-            var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL");
+            var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
 
             var status = "No intentado";
             var error = "";
@@ -411,7 +411,7 @@ namespace Oasis.Backend.Controllers
                 }
                 catch (Exception ex)
                 {
-                    status = "Excepci√≥n";
+                    status = "ExcepciÛn";
                     error = ex.Message;
                 }
             }
@@ -436,7 +436,7 @@ namespace Oasis.Backend.Controllers
             var user = _state.Users.FirstOrDefault(u => 
                 u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase) && 
                 u.Password == req.Password);
-            if (user == null) return Unauthorized(new { msg = "Credenciales de Alma inv√°lidas." });
+            if (user == null) return Unauthorized(new { msg = "Credenciales de Alma inv·lidas." });
             return Ok(new { msg = "Oasis Sincronizado", user = UserDto.FromUser(user) });
         }
 
@@ -494,7 +494,7 @@ namespace Oasis.Backend.Controllers
                         Rotation = 0,
                         Color = "#a855f7",
                         IsPublic = false,
-                        Caption = "Resonancias Ps√≠quicas",
+                        Caption = "Resonancias PsÌquicas",
                         Username = req.Username,
                         Timestamp = timestamp,
                         Metadata = new Dictionary<string, object>(),
@@ -526,7 +526,7 @@ namespace Oasis.Backend.Controllers
                         Rotation = 0,
                         Color = "#d946ef",
                         IsPublic = false,
-                        Caption = "Di√°logos Recientes",
+                        Caption = "Di·logos Recientes",
                         Username = req.Username,
                         Timestamp = timestamp,
                         Metadata = new Dictionary<string, object>(),
@@ -692,7 +692,7 @@ namespace Oasis.Backend.Controllers
 
                 var resolvedKey = GetResolvedAIKey(req.Key);
                 if (IsPlaceholderOrLegacyKey(resolvedKey)) {
-                    return BadRequest(new { msg = "Clave de IA no disponible. Config√∫rala con 'dotnet user-secrets set DeepSeek:Key TU_KEY' o con la variable de entorno DEEPSEEK_API_KEY." });
+                    return BadRequest(new { msg = "Clave de IA no disponible. Config˙rala con 'dotnet user-secrets set DeepSeek:Key TU_KEY' o con la variable de entorno DEEPSEEK_API_KEY." });
                 }
 
                 var resolvedEndpoint = string.IsNullOrEmpty(req.Endpoint)
@@ -986,12 +986,12 @@ namespace Oasis.Backend.Controllers
                                 if (block.Metadata != null)
                                 {
                                     var sphere = item.TryGetProperty("esfera_existencial", out var esfProp) ? esfProp.GetString() : "Eigenwelt";
-                                    var lens = item.TryGetProperty("lente_percepcion", out var lenProp) ? lenProp.GetString() : "Anal√≠tico";
+                                    var lens = item.TryGetProperty("lente_percepcion", out var lenProp) ? lenProp.GetString() : "AnalÌtico";
                                     
                                     var psychDict = new Dictionary<string, object>
                                     {
                                         { "esfera_existencial", sphere ?? "Eigenwelt" },
-                                        { "lente_percepcion", lens ?? "Anal√≠tico" }
+                                        { "lente_percepcion", lens ?? "AnalÌtico" }
                                     };
 
                                     if (item.TryGetProperty("embedding", out var embProp) && embProp.ValueKind == JsonValueKind.Array)
@@ -1069,10 +1069,10 @@ namespace Oasis.Backend.Controllers
             double totalWeight = 0;
 
             var sphereWeights = new Dictionary<string, double> {
-                { "Umwelt", 0 }, { "Mitwelt", 0 }, { "Eigenwelt", 0 }, { "√úberwelt", 0 }
+                { "Umwelt", 0 }, { "Mitwelt", 0 }, { "Eigenwelt", 0 }, { "‹berwelt", 0 }
             };
             var lensWeights = new Dictionary<string, double> {
-                { "Sensorial", 0 }, { "Anal√≠tico", 0 }, { "Simb√≥lico", 0 }
+                { "Sensorial", 0 }, { "AnalÌtico", 0 }, { "SimbÛlico", 0 }
             };
 
             foreach (var b in privateBlocks)
@@ -1105,7 +1105,7 @@ namespace Oasis.Backend.Controllers
 
                                 if (doc.RootElement.TryGetProperty("lente_percepcion", out var lenProp))
                                 {
-                                    string len = lenProp.GetString() ?? "Anal√≠tico";
+                                    string len = lenProp.GetString() ?? "AnalÌtico";
                                     if (lensWeights.ContainsKey(len)) lensWeights[len] += weight;
                                 }
                             }
@@ -1142,7 +1142,7 @@ namespace Oasis.Backend.Controllers
             {
                 double similarity = 0;
                 string blockSphere = "Eigenwelt";
-                string blockLens = "Anal√≠tico";
+                string blockLens = "AnalÌtico";
 
                 if (b.Metadata != null && b.Metadata.TryGetValue("psychologicalAnalysis", out var obj))
                 {
@@ -1171,7 +1171,7 @@ namespace Oasis.Backend.Controllers
 
                         if (doc.RootElement.TryGetProperty("lente_percepcion", out var lenProp))
                         {
-                            blockLens = lenProp.GetString() ?? "Anal√≠tico";
+                            blockLens = lenProp.GetString() ?? "AnalÌtico";
                         }
                     } catch {
                         // ignore and use default
@@ -1259,7 +1259,7 @@ namespace Oasis.Backend.Controllers
                 var combinedText = ExtractFeedText(block);
                 
                 string sphere = "Eigenwelt";
-                string lens = "Anal√≠tico";
+                string lens = "AnalÌtico";
                 float[] embedding = Array.Empty<float>();
 
                 if (!string.IsNullOrWhiteSpace(combinedText))
@@ -1328,7 +1328,7 @@ namespace Oasis.Backend.Controllers
         public class LLMPscyhologyAnalysis
         {
             public string EsferaExistencial { get; set; } = "Eigenwelt";
-            public string LentePercepcion { get; set; } = "Anal√≠tico";
+            public string LentePercepcion { get; set; } = "AnalÌtico";
         }
 
         private string ExtractFeedText(Block block)
@@ -1566,28 +1566,28 @@ namespace Oasis.Backend.Controllers
                 using var request = new HttpRequestMessage(HttpMethod.Post, baseUrl);
                 request.Headers.Add("Authorization", $"Bearer {apiKey}");
 
-                var prompt = @"Analiza el siguiente fragmento (que puede ser √≠ntimo, descriptivo, u obra visual/art√≠stica) desde una perspectiva fenomenol√≥gica existencial (Dasein) y est√©tica.
-Clasif√≠calo en una de las siguientes Esferas Existenciales (Dasein):
-- Umwelt: Relacionado con el cuerpo, entorno f√≠sico, naturaleza, sensaciones fisiol√≥gicas.
-- Mitwelt: Relacionado con lo social, relaciones interpersonales, amor, alteridad, comunicaci√≥n.
-- Eigenwelt: Relacionado con la identidad, el di√°logo interno, introspecci√≥n, autoimagen.
-- √úberwelt: Relacionado con lo espiritual, el vac√≠o, sentido de la vida, trascendencia.
-- Kunstwelt: Relacionado con el arte, la creaci√≥n pura, est√©tica visual, moda, dise√±o, objetos creados por el autor, estilo loco o expresi√≥n art√≠stica.
+                var prompt = @"Analiza el siguiente fragmento (que puede ser Ìntimo, descriptivo, u obra visual/artÌstica) desde una perspectiva fenomenolÛgica existencial (Dasein) y estÈtica.
+ClasifÌcalo en una de las siguientes Esferas Existenciales (Dasein):
+- Umwelt: Relacionado con el cuerpo, entorno fÌsico, naturaleza, sensaciones fisiolÛgicas.
+- Mitwelt: Relacionado con lo social, relaciones interpersonales, amor, alteridad, comunicaciÛn.
+- Eigenwelt: Relacionado con la identidad, el di·logo interno, introspecciÛn, autoimagen.
+- ‹berwelt: Relacionado con lo espiritual, el vacÌo, sentido de la vida, trascendencia.
+- Kunstwelt: Relacionado con el arte, la creaciÛn pura, estÈtica visual, moda, diseÒo, objetos creados por el autor, estilo loco o expresiÛn artÌstica.
 
-Clasif√≠calo tambi√©n en uno de los Lentes de Percepci√≥n:
-- Sensorial: Experiencia cruda, texturas, sensaciones f√≠sicas, el presente aqu√≠ y ahora.
-- Anal√≠tico: Intelectualizaci√≥n, l√≥gica, racionalizaci√≥n, an√°lisis de causas, fragmentaci√≥n mental.
-- Simb√≥lico: Met√°foras, poes√≠a, sue√±os, im√°genes arquet√≠picas.
-- Est√©tico: Apreciaci√≥n del arte, estilo, forma visual, dise√±o, vibra, apreciaci√≥n de objetos est√©ticos o moda.
+ClasifÌcalo tambiÈn en uno de los Lentes de PercepciÛn:
+- Sensorial: Experiencia cruda, texturas, sensaciones fÌsicas, el presente aquÌ y ahora.
+- AnalÌtico: IntelectualizaciÛn, lÛgica, racionalizaciÛn, an·lisis de causas, fragmentaciÛn mental.
+- SimbÛlico: Met·foras, poesÌa, sueÒos, im·genes arquetÌpicas.
+- EstÈtico: ApreciaciÛn del arte, estilo, forma visual, diseÒo, vibra, apreciaciÛn de objetos estÈticos o moda.
 
-Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con valor de texto exacto: Umwelt, Mitwelt, Eigenwelt, √úberwelt o Kunstwelt) y 'lente_percepcion' (con valor exacto: Sensorial, Anal√≠tico, Simb√≥lico o Est√©tico). Ning√∫n otro texto fuera del JSON.";
+Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con valor de texto exacto: Umwelt, Mitwelt, Eigenwelt, ‹berwelt o Kunstwelt) y 'lente_percepcion' (con valor exacto: Sensorial, AnalÌtico, SimbÛlico o EstÈtico). Ning˙n otro texto fuera del JSON.";
 
                 var payload = new
                 {
                     model = modelName,
                     messages = new[]
                     {
-                        new { role = "system", content = "Eres un psic√≥logo existencial cl√≠nico experto en fenomenolog√≠a. Responde √∫nicamente con JSON." },
+                        new { role = "system", content = "Eres un psicÛlogo existencial clÌnico experto en fenomenologÌa. Responde ˙nicamente con JSON." },
                         new { role = "user", content = $"{prompt}\n\nTexto:\n\"\"\"\n{text}\n\"\"\"" }
                     },
                     response_format = new { type = "json_object" },
@@ -1637,17 +1637,17 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                     if (esf.Contains("Umwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "Umwelt";
                     else if (esf.Contains("Mitwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "Mitwelt";
                     else if (esf.Contains("Eigenwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "Eigenwelt";
-                    else if (esf.Contains("√úberwelt", StringComparison.OrdinalIgnoreCase) || esf.Contains("Uberwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "√úberwelt";
+                    else if (esf.Contains("‹berwelt", StringComparison.OrdinalIgnoreCase) || esf.Contains("Uberwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "‹berwelt";
                     else if (esf.Contains("Kunstwelt", StringComparison.OrdinalIgnoreCase)) result.EsferaExistencial = "Kunstwelt";
                 }
                 
                 if (root.TryGetProperty("lente_percepcion", out var lenteProp))
                 {
-                    string len = lenteProp.GetString() ?? "Anal√≠tico";
+                    string len = lenteProp.GetString() ?? "AnalÌtico";
                     if (len.Contains("Sensorial", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "Sensorial";
-                    else if (len.Contains("Anal√≠tico", StringComparison.OrdinalIgnoreCase) || len.Contains("Analitico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "Anal√≠tico";
-                    else if (len.Contains("Simb√≥lico", StringComparison.OrdinalIgnoreCase) || len.Contains("Simbolico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "Simb√≥lico";
-                    else if (len.Contains("Est√©tico", StringComparison.OrdinalIgnoreCase) || len.Contains("Estetico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "Est√©tico";
+                    else if (len.Contains("AnalÌtico", StringComparison.OrdinalIgnoreCase) || len.Contains("Analitico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "AnalÌtico";
+                    else if (len.Contains("SimbÛlico", StringComparison.OrdinalIgnoreCase) || len.Contains("Simbolico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "SimbÛlico";
+                    else if (len.Contains("EstÈtico", StringComparison.OrdinalIgnoreCase) || len.Contains("Estetico", StringComparison.OrdinalIgnoreCase)) result.LentePercepcion = "EstÈtico";
                 }
 
                 // Cache the successful result
@@ -1704,7 +1704,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
         private static LLMPscyhologyAnalysis GenerateSemanticFallbackPsychology(string text)
         {
-            var result = new LLMPscyhologyAnalysis { EsferaExistencial = "Eigenwelt", LentePercepcion = "Anal√≠tico" };
+            var result = new LLMPscyhologyAnalysis { EsferaExistencial = "Eigenwelt", LentePercepcion = "AnalÌtico" };
             if (string.IsNullOrEmpty(text)) return result;
 
             var lower = text.ToLowerInvariant();
@@ -1714,16 +1714,16 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
             else if (lower.Contains("cuerpo") || lower.Contains("dolor") || lower.Contains("respirar") || lower.Contains("tacto") || lower.Contains("dormir"))
                 result.EsferaExistencial = "Umwelt";
             else if (lower.Contains("universo") || lower.Contains("dios") || lower.Contains("vacio") || lower.Contains("muerte") || lower.Contains("trascender"))
-                result.EsferaExistencial = "√úberwelt";
-            else if (lower.Contains("arte") || lower.Contains("dise√±o") || lower.Contains("estetica") || lower.Contains("ropa") || lower.Contains("crear"))
+                result.EsferaExistencial = "‹berwelt";
+            else if (lower.Contains("arte") || lower.Contains("diseÒo") || lower.Contains("estetica") || lower.Contains("ropa") || lower.Contains("crear"))
                 result.EsferaExistencial = "Kunstwelt";
 
-            if (lower.Contains("sent√≠") || lower.Contains("textura") || lower.Contains("frio") || lower.Contains("calor") || lower.Contains("ver"))
+            if (lower.Contains("sentÌ") || lower.Contains("textura") || lower.Contains("frio") || lower.Contains("calor") || lower.Contains("ver"))
                 result.LentePercepcion = "Sensorial";
-            else if (lower.Contains("significa") || lower.Contains("metafora") || lower.Contains("sue√±o") || lower.Contains("arquetipo") || lower.Contains("simbolo"))
-                result.LentePercepcion = "Simb√≥lico";
+            else if (lower.Contains("significa") || lower.Contains("metafora") || lower.Contains("sueÒo") || lower.Contains("arquetipo") || lower.Contains("simbolo"))
+                result.LentePercepcion = "SimbÛlico";
             else if (lower.Contains("color") || lower.Contains("forma") || lower.Contains("hermoso") || lower.Contains("estilo") || lower.Contains("visual"))
-                result.LentePercepcion = "Est√©tico";
+                result.LentePercepcion = "EstÈtico";
 
             return result;
         }
@@ -1741,10 +1741,10 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
             var mitweltKeys = new HashSet<string> { "amigo", "mama", "papa", "pareja", "amor", "gente", "persona", "hablar", "mirar", "otro", "nosotros", "conversar", "familia", "reunion", "grupo", "sociedad" };
             // Identity/Internal (Eigenwelt) keywords
             var eigenweltKeys = new HashSet<string> { "yo", "mi", "mente", "pensar", "dudar", "creo", "soy", "miedo", "triste", "feliz", "deseo", "interior", "conciencia", "analizar", "decidir" };
-            // Existential/Spiritual (√úberwelt) keywords
+            // Existential/Spiritual (‹berwelt) keywords
             var uberweltKeys = new HashSet<string> { "vacio", "muerte", "fin", "nada", "dios", "alma", "buscar", "sentido", "universo", "trascender", "infinito", "destino", "tiempo", "eternidad", "existencia" };
             // Art/Aesthetic (Kunstwelt) keywords
-            var kunstweltKeys = new HashSet<string> { "arte", "crear", "dise√±o", "estilo", "color", "dibujo", "pintura", "foto", "ropa", "tenis", "moda", "est√©tico", "visual", "m√∫sica", "obra", "proyecto", "loco", "creativo", "inspiraci√≥n" };
+            var kunstweltKeys = new HashSet<string> { "arte", "crear", "diseÒo", "estilo", "color", "dibujo", "pintura", "foto", "ropa", "tenis", "moda", "estÈtico", "visual", "m˙sica", "obra", "proyecto", "loco", "creativo", "inspiraciÛn" };
 
             foreach (var word in words)
             {
@@ -1799,7 +1799,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey)) return;
 
                 string esfera = analysis.TryGetProperty("esfera_existencial", out var esfProp) ? esfProp.GetString() ?? "Eigenwelt" : "Eigenwelt";
-                string lente = analysis.TryGetProperty("lente_percepcion", out var lenProp) ? lenProp.GetString() ?? "Anal√≠tico" : "Anal√≠tico";
+                string lente = analysis.TryGetProperty("lente_percepcion", out var lenProp) ? lenProp.GetString() ?? "AnalÌtico" : "AnalÌtico";
                 
                 float[] embedding = Array.Empty<float>();
                 if (analysis.TryGetProperty("embedding", out var embProp))
@@ -2162,9 +2162,9 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                     }
                 }
 
-                string arquetipoDominante = "El Observador Anal√≠tico";
-                if (dominantDomain == "AfectividadNegativa") arquetipoDominante = "El Buscador de Fusi√≥n";
-                else if (dominantDomain == "Desapego") arquetipoDominante = "El Observador Anal√≠tico";
+                string arquetipoDominante = "El Observador AnalÌtico";
+                if (dominantDomain == "AfectividadNegativa") arquetipoDominante = "El Buscador de FusiÛn";
+                else if (dominantDomain == "Desapego") arquetipoDominante = "El Observador AnalÌtico";
                 else if (dominantDomain == "Antagonismo" || dominantDomain == "Psicoticismo") arquetipoDominante = "El Arquitecto del Control";
                 else if (dominantDomain == "Desinhibicion") arquetipoDominante = "El Creador Errante";
 
@@ -2341,12 +2341,12 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue, ValueLengthLimit = int.MaxValue)]
         public async Task<IActionResult> UploadAsset(IFormFile file)
         {
-            if (file == null || file.Length == 0) return BadRequest("No se proporcion√≥ ning√∫n archivo.");
+            if (file == null || file.Length == 0) return BadRequest("No se proporcionÛ ning˙n archivo.");
 
             try
             {
-                var firebaseDbUrl = _config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL");
-                var firebaseBucket = _config["Firebase:StorageBucket"] ?? Environment.GetEnvironmentVariable("FIREBASE_STORAGE_BUCKET");
+                var firebaseDbUrl = _config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
+                var firebaseBucket = _config["Firebase:StorageBucket"] ?? Environment.GetEnvironmentVariable("FIREBASE_STORAGE_BUCKET") ?? "oasiis-d43e3.firebasestorage.app";
 
                 if (string.IsNullOrEmpty(firebaseBucket) && !string.IsNullOrEmpty(firebaseDbUrl))
                 {
@@ -2394,7 +2394,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                     using var doc = JsonDocument.Parse(responseJson);
                     var downloadToken = doc.RootElement.GetProperty("downloadTokens").GetString();
                     
-                    // Construir la URL p√∫blica de descarga de Firebase
+                    // Construir la URL p˙blica de descarga de Firebase
                     var publicUrl = $"https://firebasestorage.googleapis.com/v0/b/{firebaseBucket}/o/{fileName}?alt=media&token={downloadToken}";
                     return Ok(new { url = publicUrl });
                 }
@@ -2562,7 +2562,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
                 return Ok(searchResults);
             } catch (Exception ex) {
-                return StatusCode(500, $"Error de Conexi√≥n: {ex.Message}");
+                return StatusCode(500, $"Error de ConexiÛn: {ex.Message}");
             }
         }
 
@@ -2595,7 +2595,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 
                 var newFingerprint = new TrackFingerprint {
                     VideoId = id,
-                    Title = snippet.GetProperty("title").GetString() ?? "Sin T√≠tulo",
+                    Title = snippet.GetProperty("title").GetString() ?? "Sin TÌtulo",
                     Artist = snippet.GetProperty("channelTitle").GetString() ?? "Artista Desconocido",
                     Duration = item.GetProperty("contentDetails").GetProperty("duration").GetString() ?? "0:00",
                     Tags = snippet.TryGetProperty("tags", out var tags) ? tags.EnumerateArray().Select(t => t.GetString()).ToList() : new List<string>(),
@@ -2697,7 +2697,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                         return new TrackItem {
                             VideoId = vId ?? "",
                             Type = "video",
-                            Title = snippet.TryGetProperty("title", out var titleProp) ? titleProp.GetString() : "Sin T√≠tulo",
+                            Title = snippet.TryGetProperty("title", out var titleProp) ? titleProp.GetString() : "Sin TÌtulo",
                             Artist = snippet.TryGetProperty("videoOwnerChannelTitle", out var vot) ? vot.GetString() : (snippet.TryGetProperty("channelTitle", out var ct) ? ct.GetString() : "Artista Desconocido"),
                             Thumbnail = snippet.TryGetProperty("thumbnails", out var thumbnailsProp) && thumbnailsProp.TryGetProperty("default", out var t) ? t.GetProperty("url").GetString() : ""
                         };
