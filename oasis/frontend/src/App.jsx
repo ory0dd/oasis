@@ -7699,7 +7699,36 @@ export default function App() {
         try {
             const res = await fetch(`${API_URL}/api/oasis/feed?t=${Date.now()}`);
             const data = await res.json();
-            if (data) setFeed(data);
+            if (data) {
+                setFeed(data);
+                // Pre-cache avatars and names from feed posts so they load instantly in profiles
+                data.forEach(post => {
+                    if (post.metadata?.userAvatar || post.metadata?.userFullName || post.metadata?.feedUsername) {
+                        const unameRaw = post.metadata?.feedUsername || post.username || '';
+                        const cleanUname = unameRaw.replace('@', '');
+                        if (!cleanUname) return;
+                        
+                        const cachedKey = `oasis_cached_profile_${cleanUname}`;
+                        try {
+                            const existing = JSON.parse(localStorage.getItem(cachedKey) || '{}');
+                            let updated = false;
+                            
+                            if (post.metadata?.userAvatar && existing.avatar !== post.metadata.userAvatar) {
+                                existing.avatar = post.metadata.userAvatar;
+                                updated = true;
+                            }
+                            if (post.metadata?.userFullName && existing.fullName !== post.metadata.userFullName) {
+                                existing.fullName = post.metadata.userFullName;
+                                updated = true;
+                            }
+                            
+                            if (updated) {
+                                localStorage.setItem(cachedKey, JSON.stringify(existing));
+                            }
+                        } catch(e) {}
+                    }
+                });
+            }
         } catch (e) {
             console.error("Fallo al sincronizar feed: ", e);
         }
