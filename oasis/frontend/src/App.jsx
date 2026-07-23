@@ -4475,7 +4475,11 @@ export default function App() {
             .then(blocks => {
                 const profileBlock = Array.isArray(blocks) ? blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings') : null;
                 if (profileBlock) {
-                    try { setPublicProfileData(JSON.parse(profileBlock.content || profileBlock.Content || '{}')); }
+                    try { 
+                        const parsed = JSON.parse(profileBlock.content || profileBlock.Content || '{}');
+                        setPublicProfileData(parsed); 
+                        localStorage.setItem(`oasis_cached_profile_${cleanUser}`, JSON.stringify(parsed));
+                    }
                     catch { setPublicProfileData(null); }
                 } else { setPublicProfileData(null); }
             }).catch(() => setPublicProfileData(null));
@@ -12182,10 +12186,31 @@ ${afcMapContext}
         let bio = 'Sin bio por ahora.';
         let cover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
 
+        // 1. Pre-fill from feed posts immediately to avoid visual "pop-in" while API loads
+        if (publicUserPosts.length > 0) {
+            const postWithAvatar = publicUserPosts.find(p => p.metadata?.userAvatar);
+            if (postWithAvatar) avatar = postWithAvatar.metadata.userAvatar;
+            
+            const postWithFullName = publicUserPosts.find(p => p.metadata?.userFullName);
+            if (postWithFullName) fullName = postWithFullName.metadata.userFullName;
+        }
+
+        // 2. Pre-fill from localStorage cache if available (super fast)
+        let mergedProfileData = null;
+        try {
+            const cached = localStorage.getItem(`oasis_cached_profile_${cleanPublicUser}`);
+            if (cached) mergedProfileData = JSON.parse(cached);
+        } catch(e) {}
+        
+        // 3. Override with live fetched data once it arrives
         if (publicProfileData && typeof publicProfileData === 'object') {
+            mergedProfileData = publicProfileData;
+        }
+
+        if (mergedProfileData) {
             const getProp = (key1, key2) => {
-                if (typeof publicProfileData[key1] === 'string' && publicProfileData[key1].trim() !== '') return publicProfileData[key1];
-                if (typeof publicProfileData[key2] === 'string' && publicProfileData[key2].trim() !== '') return publicProfileData[key2];
+                if (typeof mergedProfileData[key1] === 'string' && mergedProfileData[key1].trim() !== '') return mergedProfileData[key1];
+                if (typeof mergedProfileData[key2] === 'string' && mergedProfileData[key2].trim() !== '') return mergedProfileData[key2];
                 return null;
             };
             
