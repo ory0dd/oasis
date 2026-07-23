@@ -4034,7 +4034,14 @@ const ProfileView = ({
                                                     const saved = localStorage.getItem(`oasis_public_traits_${user}`);
                                                     if (saved) {
                                                         const parsed = JSON.parse(saved);
-                                                        if (parsed && parsed.habitar) resonanceData = parsed;
+                                                        const hab = parsed?.habitar || parsed?.Habitar;
+                                                        if (hab) {
+                                                            resonanceData = {
+                                                                habitar: hab,
+                                                                vinculo: parsed?.vinculo || parsed?.Vinculo || '',
+                                                                busqueda: parsed?.busqueda || parsed?.Busqueda || ''
+                                                            };
+                                                        }
                                                     }
                                                 } catch(e) {}
                                                 if (!resonanceData) return null;

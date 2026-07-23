@@ -578,9 +578,18 @@ ${userResponsesText}
             const aiContent = data.choices[0].message.content;
             
             const parsedContent = JSON.parse(aiContent);
-            if (parsedContent.publicTraits) {
-                setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(parsedContent.publicTraits));
+            const pTraits = parsedContent.publicTraits || parsedContent.PublicTraits;
+            if (pTraits) {
+                // Ensure keys are lowercase before saving
+                const normalizedTraits = {
+                    habitar: pTraits.habitar || pTraits.Habitar || '',
+                    vinculo: pTraits.vinculo || pTraits.Vinculo || '',
+                    busqueda: pTraits.busqueda || pTraits.Busqueda || '',
+                    keywords: pTraits.keywords || pTraits.Keywords || []
+                };
+                setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
                 delete parsedContent.publicTraits;
+                delete parsedContent.PublicTraits;
             }
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {
