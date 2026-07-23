@@ -613,6 +613,8 @@ ${userResponsesText}
                 setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
                 delete parsedContent.publicTraits;
                 delete parsedContent.PublicTraits;
+            } else {
+                alert("Kio generó el análisis, pero no incluyó la 'Firma de Resonancia' en el formato correcto. Por favor, dale al botón de generar de nuevo para que lo intente otra vez.");
             }
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {

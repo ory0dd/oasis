@@ -4124,11 +4124,13 @@ const ProfileView = ({
                                 if (saved) {
                                     const parsed = JSON.parse(saved);
                                     const hab = parsed?.habitar || parsed?.Habitar;
-                                    if (hab) {
+                                    const vin = parsed?.vinculo || parsed?.Vinculo || parsed?.vínculo || parsed?.Vínculo;
+                                    const bus = parsed?.busqueda || parsed?.Busqueda || parsed?.búsqueda || parsed?.Búsqueda;
+                                    if (hab || vin || bus) {
                                         resonanceData = {
-                                            habitar: hab,
-                                            vinculo: parsed?.vinculo || parsed?.Vinculo || parsed?.vínculo || parsed?.Vínculo,
-                                            busqueda: parsed?.busqueda || parsed?.Busqueda || parsed?.búsqueda || parsed?.Búsqueda,
+                                            habitar: hab || "Buscando palabras...",
+                                            vinculo: vin || "Sintiendo el espacio...",
+                                            busqueda: bus || "Explorando la ruta...",
                                             keywords: parsed?.keywords || parsed?.Keywords
                                         };
                                     }
