@@ -2105,14 +2105,14 @@ Reglas estrictas de preservación aditiva:
    - Solo si las 10 preguntas de puntos ciegos han sido respondidas en su totalidad por el paciente, genera un nuevo set de 10 preguntas personalizadas y profundas.
 ` : `
 === MODO GENERACIÓN COMPLETA DESDE CERO ===
-Genera un mapa funcional inicial detallado.
-1. Nodos: Genera entre 10 y 15 nodos distribuidos de izquierda a derecha en columnas por tipo:
+Genera un mapa funcional inicial detallado y EXTENSO.
+1. Nodos: Genera entre 18 y 25 nodos distribuidos de izquierda a derecha en columnas por tipo:
    - historical -> x: entre -25 y -5
    - biological / social -> x: entre 15 y 35
    - motor / cognitive / physiological -> x: entre 65 y 85
    - consequence -> x: entre 105 y 125
-   - Coordenadas Y: distribúyelos desde Y: -120 hasta Y: 220. Si dos nodos están en la misma columna X, dales al menos 30 puntos de distancia Y.
-2. Conexiones (edges): Genera entre 15 y 20 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias.
+   - Coordenadas Y: distribúyelos desde Y: -120 hasta Y: 300. Si dos nodos están en la misma columna X, dales al menos 30 puntos de distancia Y.
+2. Conexiones (edges): Genera entre 25 y 35 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa muy rico y complejo.
 3. Puntos Ciegos: Genera exactamente 5 puntos ciegos clínicos personalizados de confrontación existencial profunda. Cada punto ciego debe proponer un nodo 'dashed' y una conexión.
 `}
 
