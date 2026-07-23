@@ -586,11 +586,17 @@ ${userResponsesText}
             if (!pTraits && parsedContent.FirmaDeResonancia) pTraits = parsedContent.FirmaDeResonancia;
             if (!pTraits && parsedContent["Firma de Resonancia Existencial"]) pTraits = parsedContent["Firma de Resonancia Existencial"];
             
+            // If still not found, check if it's flat on the root object
+            if (!pTraits && (parsedContent.habitar || parsedContent.Habitar)) {
+                pTraits = parsedContent;
+            }
+
             // If still not found, let's search all values in case it nested it deeper
-            if (pTraits && typeof pTraits === 'object' && !pTraits.habitar && !pTraits.Habitar) {
-                for (const key in pTraits) {
-                    if (pTraits[key] && typeof pTraits[key] === 'object' && (pTraits[key].habitar || pTraits[key].Habitar)) {
-                        pTraits = pTraits[key];
+            if (!pTraits || (typeof pTraits === 'object' && !pTraits.habitar && !pTraits.Habitar)) {
+                for (const key in parsedContent) {
+                    const val = parsedContent[key];
+                    if (val && typeof val === 'object' && (val.habitar || val.Habitar)) {
+                        pTraits = val;
                         break;
                     }
                 }
