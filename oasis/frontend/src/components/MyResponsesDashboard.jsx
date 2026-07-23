@@ -2916,8 +2916,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             const deltaY = e.clientY - lastPointerPos.current.y;
             lastPointerPos.current = { x: e.clientX, y: e.clientY };
 
-            const dx = (deltaX / transformRef.current.scale) / rect.width * 100;
-            const dy = (deltaY / transformRef.current.scale) / rect.height * 100;
+            const dx = (deltaX / transformRef.current.scale) / VIRTUAL_WIDTH * 100;
+            const dy = (deltaY / transformRef.current.scale) / 1600 * 100;
 
             if (!window._dragNodeAcc) window._dragNodeAcc = { dx: 0, dy: 0 };
             window._dragNodeAcc.dx += dx;
@@ -3036,8 +3036,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
                 const deltaY = touch.clientY - lastPointerPos.current.y;
                 lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
 
-                const dx = (deltaX / transformRef.current.scale) / rect.width * 100;
-                const dy = (deltaY / transformRef.current.scale) / rect.height * 100;
+                const dx = (deltaX / transformRef.current.scale) / VIRTUAL_WIDTH * 100;
+                const dy = (deltaY / transformRef.current.scale) / 1600 * 100;
 
                 if (!window._dragNodeAcc) window._dragNodeAcc = { dx: 0, dy: 0 };
                 window._dragNodeAcc.dx += dx;
