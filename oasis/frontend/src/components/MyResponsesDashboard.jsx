@@ -391,6 +391,20 @@ const AutoResizeTextarea = ({ value, onChange, className }) => {
 };
 
 const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations = [], activeConversationId = null, onOpenNodeChat, isEmbedded = false }) => {
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsMounted(true), 150);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!isMounted) {
+        return (
+            <div className="w-full h-full bg-[#050506] flex flex-col items-center justify-center pointer-events-none transition-opacity duration-1000">
+                <div className="w-8 h-8 border-2 border-white/5 border-t-accent rounded-full animate-spin opacity-50" />
+            </div>
+        );
+    }
+
     const isMobileDevice = window.innerWidth < 768;
     const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 2400;
     const [phenomData, setPhenomData] = useState(null);
