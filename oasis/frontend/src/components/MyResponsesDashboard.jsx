@@ -577,14 +577,31 @@ ${userResponsesText}
             const data = await res.json();
             const aiContent = data.choices[0].message.content;
             
-            const parsedContent = JSON.parse(aiContent);
-            const pTraits = parsedContent.publicTraits || parsedContent.PublicTraits;
+            // Strip markdown block if present
+            const cleanContent = aiContent.replace(/^[\s\n]*```(?:json)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '');
+            const parsedContent = JSON.parse(cleanContent);
+            
+            // LLMs sometimes nest things unexpectedly, search deeply for habitar
+            let pTraits = parsedContent.publicTraits || parsedContent.PublicTraits;
+            if (!pTraits && parsedContent.FirmaDeResonancia) pTraits = parsedContent.FirmaDeResonancia;
+            if (!pTraits && parsedContent["Firma de Resonancia Existencial"]) pTraits = parsedContent["Firma de Resonancia Existencial"];
+            
+            // If still not found, let's search all values in case it nested it deeper
+            if (pTraits && typeof pTraits === 'object' && !pTraits.habitar && !pTraits.Habitar) {
+                for (const key in pTraits) {
+                    if (pTraits[key] && typeof pTraits[key] === 'object' && (pTraits[key].habitar || pTraits[key].Habitar)) {
+                        pTraits = pTraits[key];
+                        break;
+                    }
+                }
+            }
+
             if (pTraits) {
                 // Ensure keys are lowercase before saving
                 const normalizedTraits = {
                     habitar: pTraits.habitar || pTraits.Habitar || '',
-                    vinculo: pTraits.vinculo || pTraits.Vinculo || '',
-                    busqueda: pTraits.busqueda || pTraits.Busqueda || '',
+                    vinculo: pTraits.vinculo || pTraits.Vinculo || pTraits.vínculo || pTraits.Vínculo || '',
+                    busqueda: pTraits.busqueda || pTraits.Busqueda || pTraits.búsqueda || pTraits.Búsqueda || '',
                     keywords: pTraits.keywords || pTraits.Keywords || []
                 };
                 setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
