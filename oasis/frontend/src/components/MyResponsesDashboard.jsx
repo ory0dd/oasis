@@ -535,7 +535,13 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un arreglo de 3 a 5 strings cortos (ej. "Reflexión Profunda", "Buscador de Conexión") que definan su arquetipo para hacer match con otras "Almas Afines" públicamente (debe ser muy general y poético, sin revelar diagnósticos privados).
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial" (debe usar un lenguaje poético, empático, profundamente humano y vulnerable, sin exponer hechos privados de su vida). Estructura estricta:
+  {
+     "habitar": "Cómo siente/procesa la vida (ej. 'Mente que navega en capas; transforma la nostalgia en creación...')",
+     "vinculo": "Qué necesita su alma para conectar (ej. 'Busca conexiones sin prisa, donde la presencia valga más que las palabras...')",
+     "busqueda": "Su fricción o hambre actual (ej. 'Aprendiendo a soltar el control sin perder la dirección.')",
+     "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave para el algoritmo de match (ej. "Reflexión", "Lealtad", "Silencio")
+  }
 
 DATOS DEL PACIENTE:
 - Malestar Motor Bruto: ${rawM}

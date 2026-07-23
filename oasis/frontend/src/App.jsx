@@ -12187,6 +12187,44 @@ ${afcMapContext}
             if (localBio) bio = localBio;
         }
 
+        let resonanceData = null;
+        let matchScore = null;
+        if (publicUsers) {
+            const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === cleanPublicUser.toLowerCase());
+            if (pUserObj && pUserObj.publicTraits) {
+                try {
+                    const parsed = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
+                    if (parsed && parsed.habitar && parsed.vinculo && parsed.busqueda) {
+                        resonanceData = parsed;
+                    }
+                } catch(e) {}
+            }
+            
+            // Re-run similarity score for display
+            let myTraits = [];
+            try {
+                const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
+                if (savedTraits) {
+                    const parsed = JSON.parse(savedTraits);
+                    if (parsed && parsed.keywords) myTraits = parsed.keywords;
+                    else if (Array.isArray(parsed)) myTraits = parsed;
+                }
+            } catch (e) {}
+            
+            if (resonanceData && myTraits.length > 0 && resonanceData.keywords) {
+                let s = 0;
+                myTraits.forEach(mt => {
+                    resonanceData.keywords.forEach(tt => {
+                        if (mt.toLowerCase() === tt.toLowerCase()) s += 10;
+                        else if (mt.toLowerCase().includes(tt.toLowerCase().split(' ')[0])) s += 2;
+                    });
+                });
+                matchScore = Math.min(99, Math.max(75, Math.floor(s * 10) + 75)); 
+            } else if (resonanceData) {
+                matchScore = 75; // Default unknown baseline
+            }
+        }
+
         const totalPosts = nonStoryPosts.length;
 
         return (
@@ -12249,7 +12287,7 @@ ${afcMapContext}
                             </div>
 
                             {/* Name + bio */}
-                            <div className="flex flex-col gap-0.5 mb-2 px-0.5">
+                            <div className="flex flex-col gap-0.5 mb-4 px-0.5">
                                 {fullName && fullName !== cleanPublicUser && (
                                     <h2 className="text-sm font-bold text-white leading-tight">{fullName}</h2>
                                 )}
@@ -12263,6 +12301,35 @@ ${afcMapContext}
                                     <p className="text-[10px] text-zinc-600 italic mt-1">Sin bio por ahora.</p>
                                 )}
                             </div>
+
+                            {/* FIRMA DE RESONANCIA EXISTENCIAL */}
+                            {resonanceData && (
+                                <div className="mb-6 mx-0.5 rounded-2xl bg-zinc-950/80 border border-white/5 overflow-hidden backdrop-blur-md shadow-xl">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide">Carta de Vibración</span>
+                                        </div>
+                                        {matchScore && (
+                                            <span className="text-[9px] font-mono text-accent">Afinidad: {matchScore}%</span>
+                                        )}
+                                    </div>
+                                    <div className="p-4 space-y-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
+                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
+                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
+                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Tab bar */}
                             <div className="flex w-full border-t border-white/8 mt-3 mb-2">
@@ -12316,9 +12383,17 @@ ${afcMapContext}
         const activeFeedItems = feed.filter(f => f.type !== 'highlight' && f.type !== 'story');
 
         let myTraits = [];
+        let myResonance = null;
         try {
             const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
-            if (savedTraits) myTraits = JSON.parse(savedTraits);
+            if (savedTraits) {
+                const parsed = JSON.parse(savedTraits);
+                if (Array.isArray(parsed)) myTraits = parsed;
+                else if (parsed && parsed.keywords) {
+                    myTraits = parsed.keywords;
+                    myResonance = parsed;
+                }
+            }
         } catch (e) {}
 
         const similarSouls = publicUsers
@@ -12329,8 +12404,16 @@ ${afcMapContext}
             })
             .map(u => {
                 let theirTraits = [];
+                let theirResonance = null;
                 try {
-                    if (u.publicTraits) theirTraits = typeof u.publicTraits === 'string' ? JSON.parse(u.publicTraits) : u.publicTraits;
+                    if (u.publicTraits) {
+                        const parsed = typeof u.publicTraits === 'string' ? JSON.parse(u.publicTraits) : u.publicTraits;
+                        if (Array.isArray(parsed)) theirTraits = parsed;
+                        else if (parsed && parsed.keywords) {
+                            theirTraits = parsed.keywords;
+                            theirResonance = parsed;
+                        }
+                    }
                 } catch(e) {}
                 
                 let score = 0;
@@ -12343,7 +12426,7 @@ ${afcMapContext}
                     });
                 }
                 score += Math.random(); // Fallback randomness
-                return { ...u, score, theirTraits };
+                return { ...u, score, theirResonance };
             })
             .sort((a, b) => b.score - a.score)
             .slice(0, 10).map((u, idx) => {
@@ -12356,7 +12439,9 @@ ${afcMapContext}
                     id: idx,
                     username: currentUsername,
                     name: currentFullName,
-                    img: userAvatar
+                    img: userAvatar,
+                    resonance: u.theirResonance,
+                    matchScore: Math.min(99, Math.max(70, Math.floor(u.score * 10) + 70)) // Pseudo-score for UI
                 };
             });
 
