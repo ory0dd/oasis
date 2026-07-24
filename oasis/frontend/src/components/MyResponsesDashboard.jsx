@@ -2130,14 +2130,14 @@ Reglas estrictas de preservación aditiva:
    - Solo si las 10 preguntas de puntos ciegos han sido respondidas en su totalidad por el paciente, genera un nuevo set de 10 preguntas personalizadas y profundas.
 ` : `
 === MODO GENERACIÓN COMPLETA DESDE CERO ===
-Genera un mapa funcional inicial detallado y EXTENSO.
-1. Nodos: Genera entre 18 y 25 nodos distribuidos de izquierda a derecha en columnas por tipo:
+Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para no truncar el JSON.
+1. Nodos: Genera exactamente entre 14 y 18 nodos distribuidos de izquierda a derecha en columnas por tipo:
    - historical -> x: entre -25 y -5
    - biological / social -> x: entre 15 y 35
    - motor / cognitive / physiological -> x: entre 65 y 85
    - consequence -> x: entre 105 y 125
    - Coordenadas Y: distribúyelos desde Y: -120 hasta Y: 300. Si dos nodos están en la misma columna X, dales al menos 30 puntos de distancia Y.
-2. Conexiones (edges): Genera entre 25 y 35 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa muy rico y complejo.
+2. Conexiones (edges): Genera entre 18 y 25 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa muy rico y complejo.
 3. Puntos Ciegos: Genera exactamente 5 puntos ciegos clínicos personalizados de confrontación existencial profunda. Cada punto ciego debe proponer un nodo 'dashed' y una conexión.
 `}
 
@@ -2148,7 +2148,7 @@ Genera un mapa funcional inicial detallado y EXTENSO.
   
   "nodes": [
     // Lista de nodos
-    // Cada nodo contiene: id, type, label (max 6 palabras), x, y, description, source (cita de las respuestas), challenge (percepción fenomenológica profunda del sentido del síntoma), reflection_question (una pregunta clínica hiper-enfocada en la atención directa del contexto específico del nodo. NO hagas preguntas aleatorias o genéricas. Si el paciente menciona un síntoma o situación, la pregunta debe desglosar y explorar a profundidad esa situación particular para que se vaya desarrollando. Ejemplo: si dice 'difícil lidiar', pregunta '¿Qué cosas difíciles sientes que están ahí? Si pudieras definir difícil lidiar, ¿qué cosas estarían incluidas en eso?'. Guía un descubrimiento profundo, único y anclado al contexto exacto de la respuesta)
+    // Cada nodo contiene: id, type, label (max 6 palabras), x, y, description (max 15 palabras), source (cita corta de las respuestas, max 10 palabras), challenge (percepción fenomenológica profunda del sentido del síntoma, max 15 palabras), reflection_question (una pregunta clínica hiper-enfocada en la atención directa del contexto específico del nodo. Sé muy breve y directo, max 12 palabras. Ejemplo: si dice 'difícil lidiar', pregunta '¿Qué cosas difíciles sientes ahí?'. Guía un descubrimiento anclado al contexto exacto de la respuesta)
   ],
   "edges": [
     // Lista de conexiones
