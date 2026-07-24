@@ -2159,6 +2159,12 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
     "cognitive": 85,
     "physiological": 40
   },
+  "firma_resonancia": {
+    "habitar": "Una frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y el espacio.",
+    "vinculo": "Una frase de máx. 12 palabras sobre cómo se conecta con otros o su barrera principal.",
+    "busqueda": "Una frase de máx. 12 palabras sobre su anhelo existencial no resuelto o su motor oculto.",
+    "keywords": ["Palabra1", "Palabra2", "Palabra3"]
+  },
   "hypotheses": {
     "mantenimiento": "Escribe un análisis profundo pero conciso (alrededor de 120 a 130 palabras, dividido en 2 párrafos). Explica clínica y fenomenológicamente cómo el paciente perpetúa su sufrimiento y mantiene el bucle activo.",
     "solucion": "Escribe una propuesta estructurada (alrededor de 120 a 130 palabras, dividida en 2 párrafos). Debe ser COMPLETAMENTE DISTINTA al mantenimiento. Enfócate radicalmente en la acción clínica para romper la evitación."
@@ -3394,6 +3400,44 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
                         </div>
                     </div>
                 </div>
+
+
+
+                {/* 2.5 FIRMA DE RESONANCIA */}
+                {(() => {
+                    const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
+                    if (!savedTraits) return null;
+                    let resonance = null;
+                    try {
+                        resonance = JSON.parse(savedTraits);
+                    } catch(e){}
+                    if (!resonance || (!resonance.habitar && !resonance.vinculo && !resonance.busqueda)) return null;
+
+                    return (
+                        <div className="mb-6 rounded-2xl bg-zinc-950/40 border border-white/5 overflow-hidden shadow-xl">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-zinc-900/40">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                    <span className="text-[10px] font-black text-zinc-300 tracking-widest uppercase">Firma de Resonancia Existencial</span>
+                                </div>
+                            </div>
+                            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🌍</span> Habitar</span>
+                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.habitar}"</p>
+                                </div>
+                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🔗</span> Vínculo</span>
+                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.vinculo}"</p>
+                                </div>
+                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🧭</span> Búsqueda</span>
+                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.busqueda}"</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* 3. MAIN DASHBOARD CONTENT */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
