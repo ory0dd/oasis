@@ -509,6 +509,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     
     const generateDynamicTraits = async () => {
         setIsGeneratingDynamicTraits(true);
+        let aiContent = "";
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             if (!activeKey) {
@@ -575,7 +576,7 @@ ${userResponsesText}
             if (!res.ok) throw new Error("Network response was not ok");
             
             const data = await res.json();
-            const aiContent = data.choices[0].message.content;
+            aiContent = data.choices[0].message.content;
             
             // Strip markdown block if present
             const cleanContent = aiContent.replace(/^[\s\n]*```(?:json)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '');
@@ -611,15 +612,31 @@ ${userResponsesText}
                     keywords: pTraits.keywords || pTraits.Keywords || []
                 };
                 setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
+                
+                // Add to clinical report view
+                parsedContent["Firma de Resonancia"] = 
+                    `Habitar: ${normalizedTraits.habitar}\n` +
+                    `Vínculo: ${normalizedTraits.vinculo}\n` +
+                    `Búsqueda: ${normalizedTraits.busqueda}\n` +
+                    `Palabras clave: ${(normalizedTraits.keywords || []).join(', ')}`;
+                
                 delete parsedContent.publicTraits;
                 delete parsedContent.PublicTraits;
             } else {
                 alert("Kio generó el análisis, pero no incluyó la 'Firma de Resonancia' en el formato correcto. Por favor, dale al botón de generar de nuevo para que lo intente otra vez.");
+                parsedContent["Firma de Resonancia (Aviso)"] = "La IA no pudo estructurar la firma correctamente. Intenta generar el análisis de nuevo.";
             }
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {
             console.error(e);
-            alert("Error al generar análisis profundo: " + e.message);
+            alert("Kio tuvo un problema estructurando el formato JSON del análisis profundo. Revisa el apartado 'Respuesta Cruda' en el informe clínico.");
+            
+            // Salvage the raw text and show it in the dashboard so it's not lost
+            const fallbackContent = {
+                "Error de Estructura": "La IA no devolvió el formato JSON válido que se le pidió. A continuación se muestra lo que respondió:",
+                "Respuesta Cruda": aiContent ? aiContent : "Datos no disponibles."
+            };
+            handleTreatmentPlanChange('dynamicTraits', fallbackContent);
         } finally {
             setIsGeneratingDynamicTraits(false);
         }
