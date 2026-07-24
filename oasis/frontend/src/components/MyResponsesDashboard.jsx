@@ -5331,7 +5331,7 @@ Por favor, analicemos:
                         </div>
 
                         {/* MÓDULO 2: RASGOS PID-5 E INTEGRACIÓN CLÍNICA (Abajo del mapa) */}
-                        {pidIndices && isEmbedded && (
+                        {false && (
                             <div className="absolute top-[140px] bottom-[80px] md:bottom-6 right-4 md:right-6 w-[450px] max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)] z-[200] bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-6 overflow-y-auto animate-in slide-in-from-right-8 shadow-2xl pointer-events-auto custom-scroll flex flex-col gap-6"><div className="flex items-center justify-between shrink-0"><h3 className="text-lg font-black text-white">Diagnóstico Clínico</h3><button onClick={() => setMapViewTab('map')} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition-colors"><X size={16} /></button></div>
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
                                     <div>
