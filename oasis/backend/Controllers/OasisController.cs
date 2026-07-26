@@ -448,19 +448,19 @@ namespace Oasis.Backend.Controllers
                 if (_state.Users.Any(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase)))
                     return BadRequest(new { msg = "Esta Identidad ya existe en el Oasis." });
 
-                var angelCoreTemplate = _state.BackgroundTemplates?.FirstOrDefault(t => t.Name.Equals("AngelCore", StringComparison.OrdinalIgnoreCase));
                 var defaultBackground = new BackgroundConfig();
-                if (angelCoreTemplate != null)
+                var ory11 = _state.Users.FirstOrDefault(u => u.Username.Equals("ory11", StringComparison.OrdinalIgnoreCase));
+                if (ory11 != null && ory11.Background != null && !string.IsNullOrEmpty(ory11.Background.Value))
                 {
-                    defaultBackground.Type = angelCoreTemplate.Type;
-                    defaultBackground.Value = angelCoreTemplate.Value;
-                    defaultBackground.IsTiled = angelCoreTemplate.IsTiled;
-                    defaultBackground.Opacity = 0.8;
+                    defaultBackground.Type = ory11.Background.Type;
+                    defaultBackground.Value = ory11.Background.Value;
+                    defaultBackground.IsTiled = ory11.Background.IsTiled;
+                    defaultBackground.Opacity = ory11.Background.Opacity;
                 }
                 else
                 {
-                    defaultBackground.Type = "image";
-                    defaultBackground.Value = "/uploads/36d7f8bb-3bf4-4be3-9521-a08aa2bfebc7.jpg";
+                    defaultBackground.Type = "video";
+                    defaultBackground.Value = "https://firebasestorage.googleapis.com/v0/b/oasiis-d43e3.firebasestorage.app/o/90ce2cce-00c0-4ce6-81c1-e724202dbea0.mp4?alt=media&token=8d9abfe8-7d11-46ec-b139-67ecb873defc";
                     defaultBackground.IsTiled = false;
                     defaultBackground.Opacity = 0.8;
                 }
