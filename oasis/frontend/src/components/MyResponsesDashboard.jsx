@@ -657,48 +657,64 @@ ${userResponsesText}
             const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
             
             const prompt = `
-Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y creador del Modelo Multimodal Experiencial.
-Tu tarea es redactar un "Informe y Formulación de Caso Clínico y Plan de Intervención" completo, profundo y bellamente redactado en formato HTML.
+Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
+Tu tarea es redactar un "Informe Psicológico Clínico y Plan de Intervención" completo, profundo, riguroso y bellamente redactado en formato HTML.
 
-CRÍTICO - REGLAS DEL MODELO MULTIMODAL EXPERIENCIAL:
-NO utilices técnicas de terapia tradicional intelectualizada. Si el paciente tiene un perfil de sobre-rumiación o defensa analítica, pedirle diarios, registros de pensamientos o metáforas pasivas ("hojas en el arroyo") solo alimentará su bucle mental.
-DEBES aplicar estrictamente lo siguiente:
-1. Bypass Cortical: Elimina la terapia puramente hablada. Sustituye los diarios por descargas frecuenciales/somáticas (sub-bajos, Witch House, proyección vocal).
-2. Deconstrucción Plástica: Transforma la reestructuración cognitiva en intervenciones físicas/artísticas (ej. romper o rasgar la "Jaula del Deber Ser", arte terapia visuostáctil).
-3. Postura Autónoma: Trata al paciente como un creador/autor adulto. No lo infantilices. Integra sus polaridades (ej. Niña Complaciente vs. Niña Explosiva mediante un Beat Dual).
-4. Cierre Ejecutivo: Aterriza la intervención en andamiaje real (Micro-límites, Manifiesto, Plan Operativo de Negocio, Vision Board). Propón un Módulo Intensivo de Choque (ej. 4 Sesiones) y NO tratamientos largos de consultorio.
-5. Reencuadre Somático: Los síntomas físicos (gastritis, insomnio) no son médicos/pasivos, son registros somáticos de límites silenciados. Si la boca habla, el estómago deja de sangrar.
+CRÍTICO - FILOSOFÍA DEL MODELO MULTIMODAL EXPERIENCIAL:
+No uses un lenguaje pasivo ni propongas terapias intelectualizadas (cero diarios de emociones o metáforas pasivas de consultorio). 
+DEBES diseñar una intervención activa, somática y expresiva ÚNICA para este paciente. 
+Usa el arte, el sonido, el cuerpo y el andamiaje ejecutivo (acciones en el mundo real, límites, planes de negocio/vida). Reinterpreta sus malestares físicos (ej. insomnio, gastritis) como respuestas funcionales o registros somáticos de límites silenciados.
+ADAPTA las técnicas al paciente: no uses siempre la misma música o técnica, inventa descargas frecuenciales, deconstrucciones plásticas o integraciones sonoras que resuenen con su caso particular. Mantén un alto nivel de rigor clínico institucional.
 
 Datos del paciente:
+- Nombre: ${user}
 - Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
 - Entrevista Biográfica: ${JSON.stringify(bioData)}
 - Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
 - Perfil PID-5: ${JSON.stringify(pidIndices)}
 
-El documento HTML DEBE incluir estrictamente esta estructura exacta (usa etiquetas HTML semánticas como <h1>, <h2>, <h3>, <ul>, <p>, <table>, etc.):
+ESTRUCTURA HTML REQUERIDA (Debes incluir estrictamente estos 9 apartados usando etiquetas semánticas <h1>, <h2>, <h3>, <p>, <ul>, <table>, <pre> para diagramas, etc.):
 
 <h1>INFORME PSICOLÓGICO CLÍNICO Y PLAN DE INTERVENCIÓN</h1>
+<p><strong>Ecosistema de Intervención Integrado:</strong> Terapia Presencial & Plataforma <em>Ruido Interior</em></p>
 
-<h2>I. Datos de Filiación y Encuadre</h2>
-Incluye el nombre del paciente (${user}), el modelo de intervención (Módulo Intensivo Multimodal) y el marco teórico.
+<h2>I. DATOS DE FILIACIÓN</h2>
+(Lista con Nombre, Edad estimada, Ocupación, Evaluador, etc.)
 
-<h2>II. Motivo de Consulta y Demanda Existencial</h2>
-Redacta el malestar principal del paciente, reencuadrando sus síntomas somáticos como respuestas a la sobreadaptación o represión.
+<h2>II. MOTIVO DE CONSULTA Y DEMANDA</h2>
+(Redacta el malestar principal y reencuadra sus síntomas somáticos como represión o sobreadaptación).
 
-<h2>III. Análisis Funcional de la Conducta (Matriz A -> B -> C)</h2>
-Explica la cadena funcional. Usa la información del mapa de bucles. Desglosa Antecedentes, Respuestas (Encubiertas, Observables, Somáticas) y Consecuencias (Reforzamiento y Costo a largo plazo).
+<h2>III. OBSERVACIÓN CONDUCTUAL Y RECURSOS</h2>
+(Describe su presentación y haz un "Reencuadre de Recursos" donde sus defectos se lean como fortalezas mal canalizadas).
 
-<h2>IV. Conceptualización Clínica (Inflexibilidad vs. Agencia)</h2>
-Analiza la Fusión Cognitiva, Evitación Experiencial, Desconexión de Valores o Saturación Ejecutiva aplicables al caso.
+<h2>IV. TÉCNICAS E INSTRUMENTOS APLICADOS</h2>
+(Lista: Entrevista Fenomenológica, Análisis Funcional A-B-C, Hexaflex ACT, Registro Multimodal).
 
-<h2>V. Plan de Intervención Contextual y Multimodal</h2>
-Propón el Módulo Intensivo (Ruta Cronológica de Trabajo sesión por sesión).
-Incluye una tabla HTML (<table>, <thead>, <tr>, <th>, <td>) con las Sesiones, el Objetivo Operativo, y las Estrategias Multimodales exactas (descarga sonora, intervención plástica, etc). APLICA ESTILOS CSS EN LÍNEA A LA TABLA PARA QUE SEA HERMOSA (bordes sutiles, padding, fondo en thead).
+<h2>V. ANÁLISIS FUNCIONAL Y FORMULACIÓN DE CASO (CONTEXTUAL)</h2>
+<h3>1. Matriz de Contingencias</h3>
+(Usa un bloque <pre><code> para dibujar el diagrama A -> B -> C).
+<h3>2. Conceptualización de Inflexibilidad Psicológica (Hexaflex)</h3>
+(Analiza Evitación Experiencial, Fusión Cognitiva, Desconexión de Valores, etc.).
 
-<h2>VI. Matriz de Exposición y Reencuadre</h2>
-Muestra cómo el paciente se expondrá a la incomodidad mediante acciones ejecutivas concretas (plan de negocio, límites).
+<h2>VI. IMPRESIÓN DIAGNÓSTICA</h2>
+(Diagnóstico existencial y funcional, sin patologizar rígidamente).
 
-Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni al final, solo el código HTML que pueda ser insertado directamente en el DOM.
+<h2>VII. PLAN DE INTERVENCIÓN CONTEXTUAL Y MULTIMODAL</h2>
+<h3>Objetivo General</h3>
+<h3>Ruta Cronológica de Trabajo</h3>
+(Diseña 4 sesiones intensivas con pasos específicos: liberación somática/sonora, deconstrucción plástica/introyectos, integración de polaridades, y consolidación/plan operativo).
+
+<h2>VIII. MATRIZ DE EXPOSICIÓN GRADUAL Y REENCUADRE EXISTENCIAL</h2>
+(Crea una <table> HTML hermosa con thead, tr, th, td detallando: Situación Temida, Ansiedad Prevista, Reencuadre Existencial/Somático, y Conducta de Adaptación). Aplica CSS inline sutil.
+
+<h2>IX. INDICADORES DE PROGRESO Y EVALUACIÓN CLINICA</h2>
+(Usa un bloque <pre> para un diagrama de texto mostrando los ejes, seguido de una lista de 4 puntos: Eje Cognitivo, Somático, Conductual y Ejecutivo).
+
+<br><br>
+<p><strong>Firma de Conformidad y Validación:</strong></p>
+<p>Evaluador / Práctica Clínica Supervisada</p>
+
+Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni al final, solo el HTML que pueda ser insertado directamente.
             `;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
