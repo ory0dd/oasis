@@ -37,6 +37,41 @@ const FloatingNotebook = ({ user }) => {
         }
     };
 
+    // Auto-guardado
+    useEffect(() => {
+        if (!newSessionNote.trim()) return;
+
+        const timeoutId = setTimeout(() => {
+            if (activeNoteId) {
+                setSessions(prev => {
+                    const currentNote = prev.find(s => s.id === activeNoteId);
+                    if (currentNote && currentNote.content === newSessionNote) return prev; // Avoid redundant saves
+
+                    const updated = prev.map(s => 
+                        s.id === activeNoteId ? { ...s, content: newSessionNote, updated: new Date().toISOString() } : s
+                    );
+                    if (user) localStorage.setItem(`oasis_sessions_${user}`, JSON.stringify(updated));
+                    return updated;
+                });
+            } else {
+                const newId = Date.now();
+                setSessions(prev => {
+                    const newSession = {
+                        id: newId,
+                        date: new Date().toISOString(),
+                        content: newSessionNote
+                    };
+                    const updated = [newSession, ...prev];
+                    if (user) localStorage.setItem(`oasis_sessions_${user}`, JSON.stringify(updated));
+                    return updated;
+                });
+                setActiveNoteId(newId);
+            }
+        }, 800); // 800ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [newSessionNote, activeNoteId, user]);
+
     const handleSaveSession = () => {
         if (!newSessionNote.trim()) return;
         
