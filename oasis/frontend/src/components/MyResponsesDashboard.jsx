@@ -398,7 +398,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     }, []);
 
     const isMobileDevice = window.innerWidth < 768;
-    const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 2400;
+    const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 1400;
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -949,6 +949,8 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
         // Dynamically inject progression (historical timeline) and feedback loop edges
+        // (Disabled: AI is now fully responsible for edges, and these auto-injected edges caused confusing vertical lines)
+        /*
         if (nodes.length > 0) {
             const historicalNodes = nodes.filter(n => n.type === 'historical');
             const consequenceNodes = nodes.filter(n => n.type === 'consequence');
@@ -981,6 +983,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 });
             }
         }
+        */
 
         // Graph Auto-Repair: Resolve ID mismatches and connect isolated nodes
         if (nodes.length > 0) {
@@ -1599,7 +1602,7 @@ Devuelve estrictamente el JSON sin formato extra.
             if (ny > maxY) maxY = ny;
         });
 
-        const paddingPercent = isMobileDevice ? 0.05 : 0.32;
+        const paddingPercent = isMobileDevice ? 0.05 : 0.12;
         const graphWidthRange = (maxX - minX) || 100;
         const graphHeightRange = (maxY - minY) || 100;
 
@@ -1633,7 +1636,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
             const py = 1600 * ((targetNode.y ?? 50) / 100);
             const isMobile = window.innerWidth < 768;
-            let targetScale = isMobile ? 0.85 : (width / VIRTUAL_WIDTH) * 1.8;
+            let targetScale = isMobile ? 0.85 : (width / VIRTUAL_WIDTH) * 1.3;
             targetScale = Math.min(Math.max(0.35, targetScale), 2.5);
             const tx = width / 2 - px * targetScale;
             const ty = (height * (isMobile ? 0.22 : 0.35)) - py * targetScale;
@@ -1701,7 +1704,7 @@ Devuelve estrictamente el JSON sin formato extra.
             // Dynamic wide zoom out calculation so all nodes of the pattern are fully framed
             const graphWidthRange = (maxX - minX) || 60;
             const graphHeightRange = (maxY - minY) || 60;
-            const paddingPercent = isMobileDevice ? 0.15 : 0.40;
+            const paddingPercent = isMobileDevice ? 0.15 : 0.15;
             const scaleX = width / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercent));
             const scaleY = height / (1600 * (graphHeightRange / 100 + paddingPercent));
             let targetScale = Math.min(scaleX, scaleY);
@@ -2455,9 +2458,10 @@ Conexiones actuales: ${currentEdgesText}
             const currentEdgesText = afcData?.edges ? JSON.stringify(afcData.edges, null, 2) : "[]";
 
             const systemPrompt = `
-Eres un Psicólogo Clínico y Analista Existencial. El paciente te está compartiendo una actualización importante sobre su vida (avances, cambios, recaídas o logros, como dejar una adicción).
-Tu tarea es actualizar su Mapa Conductual actual (Análisis Funcional) AÑADIENDO de 1 a 4 NUEVOS nodos que representen esta actualización y conectándolos al mapa existente.
-NO debes reescribir, modificar ni eliminar NINGÚN nodo o conexión actual. Solo generar los NUEVOS.
+Eres un Psicólogo Clínico y Analista Existencial. El paciente te está compartiendo una actualización importante sobre su vida (avances, cambios, recaídas o logros).
+Tu tarea es actualizar su Mapa Conductual actual (Análisis Funcional). Puedes hacer dos cosas:
+1. AÑADIR de 1 a 4 NUEVOS nodos que representen esta actualización y conectarlos al mapa existente.
+2. OPCIONALMENTE MODIFICAR los nodos existentes si la actualización implica que han cambiado (por ejemplo, si un mecanismo de defensa ya no se usa, o una creencia cognitiva cambió). No elimines nodos, solo modifícalos si es absolutamente necesario para reflejar el avance.
 
 Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
 {
@@ -2470,6 +2474,14 @@ Devuelve ÚNICAMENTE un objeto JSON con este formato exacto:
       "challenge": "El reto existencial superado o a futuro",
       "x": 80, // coordenada X sugerida (0 a 100)
       "y": 80  // coordenada Y sugerida (-100 a 200)
+    }
+  ],
+  "modified_nodes": [
+    {
+      "id": "id_del_nodo_existente", // Debe coincidir exactamente con el ID de un nodo existente en el mapa
+      "label": "Nuevo título (si cambió)",
+      "description": "Nueva descripción reflejando el cambio o avance",
+      "challenge": "Nuevo reto existencial (si aplica)"
     }
   ],
   "new_edges": [
@@ -2517,12 +2529,25 @@ ACTUALIZACIÓN DEL PACIENTE:
             }
             const parsed = JSON.parse(cleanContent);
             
-            if (parsed.new_nodes || parsed.new_edges) {
+            if (parsed.new_nodes || parsed.new_edges || parsed.modified_nodes) {
                 const updatedAfc = { ...afcData };
-                if (parsed.new_nodes) updatedAfc.nodes = [...(updatedAfc.nodes || []), ...parsed.new_nodes];
-                if (parsed.new_edges) updatedAfc.edges = [...(updatedAfc.edges || []), ...parsed.new_edges];
+                let currentNodes = [...(updatedAfc.nodes || [])];
                 
-                updatedAfc.nodes = resolveCollisions(updatedAfc.nodes);
+                if (parsed.modified_nodes) {
+                    parsed.modified_nodes.forEach(modNode => {
+                        const index = currentNodes.findIndex(n => n.id === modNode.id);
+                        if (index !== -1) {
+                            currentNodes[index] = { ...currentNodes[index], ...modNode };
+                        }
+                    });
+                }
+                
+                if (parsed.new_nodes) {
+                    currentNodes = [...currentNodes, ...parsed.new_nodes];
+                }
+                
+                updatedAfc.nodes = resolveCollisions(currentNodes);
+                if (parsed.new_edges) updatedAfc.edges = [...(updatedAfc.edges || []), ...parsed.new_edges];
 
                 setAfcData(updatedAfc);
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updatedAfc));
@@ -4776,10 +4801,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                             <MessageSquare size={14} /> Registro de Avances y Cambios
                                         </h3>
                                         <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col gap-4 pb-36">
-                                            <p className="text-xs text-zinc-400 mb-2">Escribe con total libertad sobre los cambios recientes en tu vida (ej. si dejaste una adicción, lograste un avance o tuviste una recaída). La IA actualizará tu mapa de bucles de manera discreta con esta nueva información.</p>
+                                            <p className="text-xs text-zinc-400 mb-2">Escribe con total libertad sobre los cambios recientes en tu vida (ej. si lograste un avance, cambiaste un hábito o notaste algo distinto). La IA actualizará tu mapa de bucles de manera discreta con esta nueva información.</p>
                                             <textarea
                                                 className="w-full flex-1 bg-zinc-950 border border-white/10 rounded-xl p-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 resize-none transition-colors"
-                                                placeholder="Ej. He dejado de tomar tramadol desde hace un par de semanas y me siento diferente..."
+                                                placeholder="Ej. He logrado mantener un nuevo hábito desde hace un par de semanas y me siento diferente..."
                                                 value={lifeUpdateText}
                                                 onChange={(e) => setLifeUpdateText(e.target.value)}
                                             />
@@ -5160,7 +5185,7 @@ Por favor, analicemos:
                                 return (
                                     <div
                                         className={`absolute bottom-[150px] md:bottom-[100px] md:top-auto left-1/2 z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-bottom-4' : ''}`}
-                                        style={{ transform: `translate(calc(-50% + ${tourModalPos.x}px), ${tourModalPos.y}px) scale(${typeof window !== 'undefined' && window.innerWidth < 768 ? 0.85 : 1})`, transformOrigin: 'bottom center', width: '280px', maxWidth: '88vw' }}
+                                        style={{ transform: `translate(calc(-50% + ${tourModalPos.x}px), ${tourModalPos.y}px) scale(${typeof window !== 'undefined' && window.innerWidth < 768 ? 0.85 : 1})`, transformOrigin: 'bottom center' }}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                         onMouseMove={e => e.stopPropagation()}
@@ -5169,7 +5194,7 @@ Por favor, analicemos:
                                         onTouchMove={e => e.stopPropagation()}
                                         onTouchEnd={e => e.stopPropagation()}
                                     >
-                                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-2.5 shadow-2xl sm:backdrop-blur-md flex flex-col gap-2 max-h-[48vh] md:max-h-[85vh]">
+                                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-4 shadow-2xl sm:backdrop-blur-md flex flex-col gap-3 min-w-[300px] md:min-w-[450px] w-auto max-w-[90vw] md:resize md:overflow-hidden max-h-[60vh] md:max-h-[85vh]">
                                             {/* Minimalist Header */}
                                             <div 
                                                 className="flex items-center justify-between border-b border-white/5 pb-2 cursor-grab active:cursor-grabbing select-none"
@@ -5186,11 +5211,11 @@ Por favor, analicemos:
                                                 }}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[9px] font-mono font-bold">
+                                                    <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs md:text-sm font-mono font-bold">
                                                         {tourActiveIndex + 1}/{sortedTourNodes.length}
                                                     </span>
-                                                    <span className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                                                        {React.createElement(typeIcons[currentNode.type] || Activity, { size: 12, className: typeColors[currentNode.type] })}
+                                                    <span className="flex items-center gap-1.5 text-xs md:text-sm font-mono font-bold uppercase tracking-wider text-zinc-400">
+                                                        {React.createElement(typeIcons[currentNode.type] || Activity, { size: 14, className: typeColors[currentNode.type] })}
                                                         <span>{typeCompactLabels[currentNode.type]}</span>
                                                     </span>
                                                 </div>
@@ -5228,10 +5253,10 @@ Por favor, analicemos:
                                                 <>
                                             <div className="flex flex-col gap-1.5 overflow-y-auto custom-scroll pr-1 pb-1 flex-1 min-h-0">
                                                 {/* Node Label */}
-                                            <h4 className="text-[10px] font-black text-white leading-snug tracking-wide uppercase">{currentNode.label}</h4>
+                                            <h4 className="text-sm md:text-base font-black text-white leading-snug tracking-wide uppercase">{currentNode.label}</h4>
 
                                             {/* Description (Minimal Info) */}
-                                            <div className="text-[9px] text-zinc-300 leading-relaxed bg-zinc-900/40 border border-white/5 rounded-xl p-2.5">
+                                            <div className="text-xs md:text-sm text-zinc-300 leading-relaxed bg-zinc-900/40 border border-white/5 rounded-xl p-3 md:p-4">
                                                 <p className="text-zinc-200 whitespace-pre-line break-words leading-relaxed">{getFallbackDescription(currentNode, user)}</p>
                                             </div>
 
@@ -5258,7 +5283,7 @@ Por favor, analicemos:
                                                     <div className="flex flex-col gap-2.5">
                                                         <div className="flex flex-col gap-1.5 bg-zinc-900/40 border border-white/5 rounded-xl px-2.5 py-2.5 mt-0.5">
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                                                                <span className="text-xs md:text-sm font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-2">
                                                                     Pregunta {currentIdx + 1} de {currentExplorations.length}
                                                                     {!hasExplorations && (
                                                                         <button
@@ -5269,24 +5294,24 @@ Por favor, analicemos:
                                                                             title="Mejorar preguntas con IA"
                                                                             className="text-sky-400 hover:text-sky-300 transition-colors"
                                                                         >
-                                                                            <Sparkles size={10} className={isGeneratingExplorations ? "animate-spin" : ""} />
+                                                                            <Sparkles size={12} className={isGeneratingExplorations ? "animate-spin" : ""} />
                                                                         </button>
                                                                     )}
                                                                 </span>
                                                                 <div className="flex items-center gap-1">
-                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev - 1 + currentExplorations.length) % currentExplorations.length); }} className="p-1 text-zinc-400 hover:text-white transition-colors"><ChevronLeft size={14}/></button>
-                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev + 1) % currentExplorations.length); }} className="p-1 text-zinc-400 hover:text-white transition-colors"><ChevronRight size={14}/></button>
+                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev - 1 + currentExplorations.length) % currentExplorations.length); }} className="p-1.5 text-zinc-400 hover:text-white transition-colors"><ChevronLeft size={16}/></button>
+                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev + 1) % currentExplorations.length); }} className="p-1.5 text-zinc-400 hover:text-white transition-colors"><ChevronRight size={16}/></button>
                                                                 </div>
                                                             </div>
                                                             
-                                                            <label className="text-[8px] font-bold text-sky-400 uppercase tracking-wider leading-relaxed">
+                                                            <label className="text-xs md:text-sm font-bold text-sky-400 uppercase tracking-wider leading-relaxed">
                                                                 {spot.question}
                                                             </label>
                                                             
                                                             <div className="flex flex-col gap-1.5 mt-1">
                                                                 <textarea 
-                                                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] text-white placeholder-zinc-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-none custom-scroll"
-                                                                    rows={2}
+                                                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-xs md:text-sm text-white placeholder-zinc-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-y custom-scroll min-h-[60px]"
+                                                                    rows={3}
                                                                     placeholder="Escribe tu reflexión sobre esta pregunta..."
                                                                     value={nodeNotes[spot.id] ?? savedAnswer}
                                                                     onChange={(e) => {
@@ -5296,7 +5321,7 @@ Por favor, analicemos:
                                                                     onClick={e => e.stopPropagation()}
                                                                     onKeyDown={e => e.stopPropagation()}
                                                                 />
-                                                                <div className="flex justify-end shrink-0 pb-1">
+                                                                <div className="flex justify-end shrink-0 pb-1 mt-1">
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => {
@@ -5307,13 +5332,13 @@ Por favor, analicemos:
                                                                                 setLocalItem(`oasis_blindspot_resolved_${user}__${spot.id}`, 'true');
                                                                                 const btn = e.currentTarget;
                                                                                 const origText = btn.innerHTML;
-                                                                                btn.innerHTML = '<span class="text-[8px] font-bold tracking-widest uppercase">¡GUARDADO!</span>';
+                                                                                btn.innerHTML = '<span class="text-xs font-bold tracking-widest uppercase">¡GUARDADO!</span>';
                                                                                 setTimeout(() => btn.innerHTML = origText, 2000);
                                                                                 // Trigger re-render
                                                                                 setMapTransform(prev => ({...prev}));
                                                                             }
                                                                         }}
-                                                                        className="flex items-center gap-1.5 py-1 px-3 rounded text-[8px] font-bold tracking-widest uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                                                                        className="flex items-center gap-1.5 py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
                                                                     >
                                                                         <span>{isResolved ? 'ACTUALIZAR' : 'GUARDAR'}</span>
                                                                     </button>
@@ -5335,7 +5360,7 @@ Por favor, analicemos:
                                                                     customPrompt += `¿Qué patrones o insights descubres en base a estas reflexiones? ¿Cómo me sugieres reestructurar esto?`;
                                                                     onOpenNodeChat?.(currentNode.id, currentNode.label, customPrompt);
                                                                 }}
-                                                                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30"
+                                                                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs md:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 mt-2"
                                                             >
                                                                 <MessageCircle size={13} />
                                                                 <span>Analizar Respuestas con Kio IA</span>
