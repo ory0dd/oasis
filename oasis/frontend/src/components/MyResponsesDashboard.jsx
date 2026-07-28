@@ -542,11 +542,11 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial" (debe usar un lenguaje poético, empático, profundamente humano y vulnerable, sin exponer hechos privados de su vida). Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje genuino, crudo y directo, basado estrictamente en su historia, sus intenciones reales y sus bucles conductuales/emocionales. Evita el lenguaje excesivamente poético o romántico; debe ser algo real, honesto y aterrizado (sin exponer datos de identidad privada). Estructura estricta:
   {
-     "habitar": "Cómo siente/procesa la vida (ej. 'Mente que navega en capas; transforma la nostalgia en creación...')",
-     "vinculo": "Qué necesita su alma para conectar (ej. 'Busca conexiones sin prisa, donde la presencia valga más que las palabras...')",
-     "busqueda": "Su fricción o hambre actual (ej. 'Aprendiendo a soltar el control sin perder la dirección.')",
+     "habitar": "Cómo procesa la realidad en su día a día, basado en sus bucles, mecanismos o historia real.",
+     "vinculo": "Cómo se relaciona realmente con los demás, sus intenciones genuinas y fricciones al conectar.",
+     "busqueda": "Su conflicto actual y lo que verdaderamente está intentando resolver, sanar o soltar.",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave para el algoritmo de match (ej. "Reflexión", "Lealtad", "Silencio")
   }
 
