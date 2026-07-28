@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Save, Clock, Trash2, X, Maximize2, Minimize2, Move, Plus, Headphones, Loader2 } from 'lucide-react';
+import { MessageSquare, Save, Clock, Trash2, X, Maximize2, Minimize2, Move, Plus } from 'lucide-react';
 
 const FloatingNotebook = ({ user }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -8,12 +8,8 @@ const FloatingNotebook = ({ user }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [sessions, setSessions] = useState([]);
     const [newSessionNote, setNewSessionNote] = useState('');
-    const [sessionAudioUrls, setSessionAudioUrls] = useState([]);
     const [activeNoteId, setActiveNoteId] = useState(null);
-    const [isUploadingAudio, setIsUploadingAudio] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const dragRef = useRef(null);
-    const fileInputRef = useRef(null);
     const dragOffset = useRef({ x: 0, y: 0 });
     const historyRef = useRef(null);
 
@@ -43,17 +39,16 @@ const FloatingNotebook = ({ user }) => {
 
     // Auto-guardado
     useEffect(() => {
-        if (!newSessionNote.trim() && sessionAudioUrls.length === 0) return;
+        if (!newSessionNote.trim()) return;
 
         const timeoutId = setTimeout(() => {
             if (activeNoteId) {
                 setSessions(prev => {
                     const currentNote = prev.find(s => s.id === activeNoteId);
-                    // Avoid redundant saves if content and audio array length/items match
-                    if (currentNote && currentNote.content === newSessionNote && JSON.stringify(currentNote.audioUrls || []) === JSON.stringify(sessionAudioUrls)) return prev;
+                    if (currentNote && currentNote.content === newSessionNote) return prev; // Avoid redundant saves
 
                     const updated = prev.map(s => 
-                        s.id === activeNoteId ? { ...s, content: newSessionNote, audioUrls: sessionAudioUrls, updated: new Date().toISOString() } : s
+                        s.id === activeNoteId ? { ...s, content: newSessionNote, updated: new Date().toISOString() } : s
                     );
                     if (user) localStorage.setItem(`oasis_sessions_${user}`, JSON.stringify(updated));
                     return updated;
@@ -64,8 +59,7 @@ const FloatingNotebook = ({ user }) => {
                     const newSession = {
                         id: newId,
                         date: new Date().toISOString(),
-                        content: newSessionNote,
-                        audioUrls: sessionAudioUrls
+                        content: newSessionNote
                     };
                     const updated = [newSession, ...prev];
                     if (user) localStorage.setItem(`oasis_sessions_${user}`, JSON.stringify(updated));
@@ -76,15 +70,15 @@ const FloatingNotebook = ({ user }) => {
         }, 800); // 800ms debounce
 
         return () => clearTimeout(timeoutId);
-    }, [newSessionNote, sessionAudioUrls, activeNoteId, user]);
+    }, [newSessionNote, activeNoteId, user]);
 
     const handleSaveSession = () => {
-        if (!newSessionNote.trim() && sessionAudioUrls.length === 0) return;
+        if (!newSessionNote.trim()) return;
         
         if (activeNoteId) {
             // Update existing
             const updated = sessions.map(s => 
-                s.id === activeNoteId ? { ...s, content: newSessionNote, audioUrls: sessionAudioUrls, updated: new Date().toISOString() } : s
+                s.id === activeNoteId ? { ...s, content: newSessionNote, updated: new Date().toISOString() } : s
             );
             saveSessions(updated);
         } else {
@@ -92,8 +86,7 @@ const FloatingNotebook = ({ user }) => {
             const newSession = {
                 id: Date.now(),
                 date: new Date().toISOString(),
-                content: newSessionNote,
-                audioUrls: sessionAudioUrls
+                content: newSessionNote
             };
             saveSessions([newSession, ...sessions]);
             setActiveNoteId(newSession.id);
@@ -107,13 +100,11 @@ const FloatingNotebook = ({ user }) => {
     const handleNewNote = () => {
         setActiveNoteId(null);
         setNewSessionNote('');
-        setSessionAudioUrls([]);
     };
 
     const loadNote = (session) => {
         setActiveNoteId(session.id);
-        setNewSessionNote(session.content || '');
-        setSessionAudioUrls(session.audioUrls || []);
+        setNewSessionNote(session.content);
     };
 
     const handleDeleteSession = (e, id) => {
@@ -122,62 +113,6 @@ const FloatingNotebook = ({ user }) => {
         if (activeNoteId === id) {
             handleNewNote();
         }
-    };
-
-    const handleAudioUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploadingAudio(true);
-        setUploadProgress(0);
-
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5253";
-
-        try {
-            const uploadedUrl = await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                const formData = new FormData();
-                formData.append('file', file);
-
-                xhr.open('POST', `${API_URL}/api/oasis/upload`);
-                xhr.upload.onprogress = (ev) => {
-                    if (ev.lengthComputable) {
-                        setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
-                    }
-                };
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(xhr.responseText);
-                    } else {
-                        reject(new Error('Upload failed'));
-                    }
-                };
-                xhr.onerror = () => reject(new Error('Network error during upload'));
-                xhr.send(formData);
-            });
-
-            setSessionAudioUrls(prev => [...prev, uploadedUrl]);
-        } catch (error) {
-            console.error("Audio upload failed:", error);
-            alert("Hubo un error subiendo el audio. Inténtalo de nuevo.");
-        } finally {
-            setIsUploadingAudio(false);
-            setUploadProgress(0);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-    };
-
-    const resolveMediaUrl = (url) => {
-        if (!url) return '';
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5253";
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        
-        if (url.startsWith('http')) return url;
-        if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
-            if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
-            if (url.startsWith('uploads/')) return `${API_URL}/${url.replace('uploads/', '')}`;
-        }
-        return url;
     };
 
     // Dragging Logic
@@ -267,46 +202,13 @@ const FloatingNotebook = ({ user }) => {
                                 {activeNoteId ? 'Editando Nota Guardada' : 'Nueva Nota'}
                             </span>
                         </div>
-                        <div className="flex flex-col flex-1 min-h-0">
-                            <textarea
-                                value={newSessionNote}
-                                onChange={(e) => setNewSessionNote(e.target.value)}
-                                placeholder="Anota reflexiones, avances o dudas..."
-                                className="w-full flex-1 bg-black/40 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none placeholder:text-zinc-700 custom-sidebar-scroll"
-                            />
-                            {sessionAudioUrls.length > 0 && (
-                                <div className="mt-2 flex flex-col gap-2 max-h-[100px] overflow-y-auto custom-sidebar-scroll">
-                                    {sessionAudioUrls.map((url, i) => (
-                                        <div key={i} className="flex items-center gap-2 bg-emerald-950/30 border border-emerald-500/20 p-2 rounded-lg">
-                                            <Headphones size={12} className="text-emerald-400" />
-                                            <audio controls src={resolveMediaUrl(url)} className="h-6 w-full" />
-                                            <button onClick={() => setSessionAudioUrls(prev => prev.filter((_, idx) => idx !== i))} className="text-rose-400 hover:text-rose-300 p-1">
-                                                <X size={12} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <textarea
+                            value={newSessionNote}
+                            onChange={(e) => setNewSessionNote(e.target.value)}
+                            placeholder="Anota reflexiones, avances o dudas..."
+                            className="w-full flex-1 bg-black/40 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none placeholder:text-zinc-700 custom-sidebar-scroll"
+                        />
                         <div className="flex gap-2">
-                            <input 
-                                type="file" 
-                                accept="audio/*" 
-                                className="hidden" 
-                                ref={fileInputRef} 
-                                onChange={handleAudioUpload} 
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploadingAudio}
-                                className={`px-4 py-2 border rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 ${isUploadingAudio ? 'bg-zinc-800/50 border-white/5 text-zinc-500' : 'bg-emerald-900/30 hover:bg-emerald-800/40 border-emerald-500/20 text-emerald-300'}`}
-                            >
-                                {isUploadingAudio ? (
-                                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {uploadProgress}%</>
-                                ) : (
-                                    <><Headphones className="w-3.5 h-3.5" /> Pista</>
-                                )}
-                            </button>
                             <button
                                 onClick={handleSaveSession}
                                 className="flex-1 py-2 bg-emerald-600/20 hover:bg-emerald-500/40 border border-emerald-500/30 text-emerald-400 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
@@ -352,13 +254,6 @@ const FloatingNotebook = ({ user }) => {
                                     <p className="text-zinc-300 text-xs whitespace-pre-wrap font-sans leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all">
                                         {session.content}
                                     </p>
-                                    {session.audioUrls && session.audioUrls.length > 0 && (
-                                        <div className="mt-3 flex flex-col gap-2">
-                                            {session.audioUrls.map((url, i) => (
-                                                <audio key={i} controls src={resolveMediaUrl(url)} className="h-6 w-full opacity-80 hover:opacity-100 transition-opacity" />
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                             ))
                         )}
