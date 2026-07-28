@@ -542,12 +542,10 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje genuino, crudo y directo, basado estrictamente en su historia, sus intenciones reales y sus bucles conductuales/emocionales. Evita el lenguaje excesivamente poético o romántico; debe ser algo real, honesto y aterrizado (sin exponer datos de identidad privada). Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje crudo, minimalista y genial. Debe ser UN SOLO PÁRRAFO (en la clave 'sintesis') que inicie describiendo su crudeza real (mecanismos, insomnio, evitación o fricción) y luego transicione hacia una rareza única y tierna o una esperanza particular que lo distinga. No uses lenguaje poético exagerado, mantenlo honesto, crudo y directo. Estructura estricta:
   {
-     "habitar": "Cómo procesa la realidad en su día a día, basado en sus bucles, mecanismos o historia real.",
-     "vinculo": "Cómo se relaciona realmente con los demás, sus intenciones genuinas y fricciones al conectar.",
-     "busqueda": "Su conflicto actual y lo que verdaderamente está intentando resolver, sanar o soltar.",
-     "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave para el algoritmo de match (ej. "Reflexión", "Lealtad", "Silencio")
+     "sintesis": "El único párrafo crudo, minimalista y genial que describe su bucle real y transiciona a su rareza única.",
+     "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave.
   }
 
 DATOS DEL PACIENTE:

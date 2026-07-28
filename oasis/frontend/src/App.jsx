@@ -4034,10 +4034,11 @@ const ProfileView = ({
                                                     const saved = localStorage.getItem(`oasis_public_traits_${user}`);
                                                     if (saved) {
                                                         const parsed = JSON.parse(saved);
-                                                        const hab = parsed?.habitar || parsed?.Habitar;
-                                                        if (hab) {
+                                                        if (parsed?.sintesis || parsed?.Sintesis) {
+                                                            resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
+                                                        } else if (parsed?.habitar || parsed?.Habitar) {
                                                             resonanceData = {
-                                                                habitar: hab,
+                                                                habitar: parsed?.habitar || parsed?.Habitar,
                                                                 vinculo: parsed?.vinculo || parsed?.Vinculo || '',
                                                                 busqueda: parsed?.busqueda || parsed?.Busqueda || ''
                                                             };
@@ -4051,18 +4052,24 @@ const ProfileView = ({
                                                             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                                                             <span className="text-[10px] font-bold text-zinc-300 tracking-wide uppercase font-mono">Firma de Resonancia Existencial</span>
                                                         </div>
-                                                        <div className="space-y-1">
-                                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
-                                                            <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
-                                                            <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
-                                                            <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
-                                                        </div>
+                                                        {resonanceData.sintesis ? (
+                                                            <p className="text-[11px] sm:text-[12px] text-zinc-300 font-sans leading-relaxed italic pr-2 border-l-2 border-white/10 pl-3 py-1">"{resonanceData.sintesis}"</p>
+                                                        ) : (
+                                                            <>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
+                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
+                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
+                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
+                                                                </div>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 );
                                             })()}
