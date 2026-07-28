@@ -642,82 +642,6 @@ ${userResponsesText}
         }
     };
 
-    const [contextualReportHtml, setContextualReportHtml] = useState(() => {
-        try { return localStorage.getItem(`oasis_contextual_report_${user}`) || ''; } catch { return ''; }
-    });
-    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-
-    const generateContextualReport = async () => {
-        setIsGeneratingReport(true);
-        try {
-            let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
-            
-            const prompt = `
-Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y Análisis Funcional de la Conducta.
-Tu tarea es redactar un "Informe y Formulación de Caso Contextual" completo, profundo y bellamente redactado en formato HTML.
-
-Datos del paciente:
-- Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
-- Entrevista Biográfica: ${JSON.stringify(bioData)}
-- Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
-- Perfil PID-5: ${JSON.stringify(pidIndices)}
-
-El documento HTML DEBE incluir estrictamente esta estructura exacta (usa etiquetas HTML semánticas como <h1>, <h2>, <h3>, <ul>, <p>, <table>, etc.):
-
-<h1>INFORME Y FORMULACIÓN DE CASO ANALÍTICO-FUNCIONAL</h1>
-
-<h2>I. Datos Generales</h2>
-Incluye el nombre del paciente (${user}) y el marco teórico (Terapia de Aceptación y Compromiso / Análisis de la Conducta).
-
-<h2>II. Motivo de Consulta y Demanda</h2>
-Redacta un párrafo clínico profesional integrando el malestar principal del paciente (basado en sus respuestas y bucles).
-
-<h2>III. Análisis Funcional de las Conductas Problema</h2>
-Explica la cadena funcional (Antecedentes -> Respuestas -> Consecuencias a corto y largo plazo). Usa la información del mapa de bucles (nodos y conexiones). Desglosa los estímulos, respuestas y consecuencias.
-
-<h2>IV. Conceptualización del Caso (Ejes de Inflexibilidad Psicológica)</h2>
-Analiza el caso según los procesos de Inflexibilidad Psicológica (Fusión Cognitiva, Evitación Experiencial, Atemporalidad, Apego al Yo-Concepto, Desconexión de Valores). Desarrolla los que apliquen al paciente.
-
-<h2>V. Plan de Intervención Contextual</h2>
-Propón un plan de trabajo basado en la flexibilidad psicológica. Incluye una tabla HTML (<table>, <thead>, <tr>, <th>, <td>) con 3 columnas: Proceso Clínico, Objetivo Operativo, y Estrategias/Ejercicios Contextuales sugeridos. Propón estrategias reales de ACT basadas en los bucles del paciente. APLICA ESTILOS CSS EN LÍNEA A LA TABLA PARA QUE SEA HERMOSA (bordes sutiles, padding, fondo en thead).
-
-Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni al final, solo el código HTML que pueda ser insertado directamente en el DOM.
-            `;
-
-            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    endpoint: endpoint,
-                    key: activeKey,
-                    payload: {
-                        model: model,
-                        messages: [
-                            { role: 'system', content: "Genera el informe estrictamente en HTML válido y bien estilizado, sin bloques markdown de código." },
-                            { role: 'user', content: prompt }
-                        ]
-                    }
-                })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                let contentStr = data.choices[0].message.content;
-                contentStr = contentStr.replace(/^[\s\n]*```(?:html)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '');
-                
-                setContextualReportHtml(contentStr);
-                localStorage.setItem(`oasis_contextual_report_${user}`, contentStr);
-            }
-        } catch (e) {
-            console.error("Error generating Contextual Report:", e);
-            alert("Ocurrió un error al generar el informe contextual.");
-        } finally {
-            setIsGeneratingReport(false);
-        }
-    };
-
     const generateKioDirectives = async () => {
         setIsGeneratingKio(true);
         try {
@@ -857,64 +781,60 @@ Devuelve estrictamente el JSON sin formato extra.
         </style>
         </head><body>`;
         
-        if (contextualReportHtml) {
-            content += contextualReportHtml;
-        } else {
-            content += `<h1>Informe Clínico Completo</h1>`;
-            content += `<p><strong>Paciente:</strong> ${user}<br><strong>Fecha de Exportación:</strong> ${new Date().toLocaleDateString()}</p>`;
-            
-            if (pidIndices && pidIndices.status) {
-                content += `<div class="section"><h2>I. Perfil de Rasgos PID-5</h2><ul>`;
-                Object.entries(pidIndices.status).forEach(([domain, st]) => {
-                    content += `<li><strong>${domain.toUpperCase()}</strong>: Nivel ${st.label}</li>`;
-                });
-                content += `</ul></div>`;
-            }
+        content += `<h1>Informe Clínico Completo</h1>`;
+        content += `<p><strong>Paciente:</strong> ${user}<br><strong>Fecha de Exportación:</strong> ${new Date().toLocaleDateString()}</p>`;
+        
+        if (pidIndices && pidIndices.status) {
+            content += `<div class="section"><h2>I. Perfil de Rasgos PID-5</h2><ul>`;
+            Object.entries(pidIndices.status).forEach(([domain, st]) => {
+                content += `<li><strong>${domain.toUpperCase()}</strong>: Nivel ${st.label}</li>`;
+            });
+            content += `</ul></div>`;
+        }
 
-            if (phenomData && Object.keys(phenomData).length > 0) {
-                content += `<div class="section"><h2>II. Diagnóstico Existencial</h2>`;
-                const phenomLabels = {
-                    antecedentes_origen: "Antecedentes y Origen (Mecanismo y Origen)",
-                    experiencia_insuficiencia: "Experiencia Ontológica de Insuficiencia",
-                    temporalidad_vivida: "Temporalidad Vivida",
-                    premisa_realidad: "Premisa de Realidad"
-                };
-                Object.entries(phenomData).forEach(([k, v]) => {
-                    const label = phenomLabels[k] || k.replace(/_/g, ' ').toUpperCase();
-                    content += `<h3>${label}</h3><p style="white-space: pre-wrap;">${v}</p>`;
-                });
+        if (phenomData && Object.keys(phenomData).length > 0) {
+            content += `<div class="section"><h2>II. Diagnóstico Existencial</h2>`;
+            const phenomLabels = {
+                antecedentes_origen: "Antecedentes y Origen (Mecanismo y Origen)",
+                experiencia_insuficiencia: "Experiencia Ontológica de Insuficiencia",
+                temporalidad_vivida: "Temporalidad Vivida",
+                premisa_realidad: "Premisa de Realidad"
+            };
+            Object.entries(phenomData).forEach(([k, v]) => {
+                const label = phenomLabels[k] || k.replace(/_/g, ' ').toUpperCase();
+                content += `<h3>${label}</h3><p style="white-space: pre-wrap;">${v}</p>`;
+            });
+            content += `</div>`;
+        }
+
+        if (afcData) {
+            const maintenance = afcData.explicacion_sencilla || afcData.hypotheses?.mantenimiento;
+            const solution = afcData.claves_salida || afcData.hypotheses?.solucion;
+            if (maintenance || solution) {
+                content += `<div class="section"><h2>III. Conceptualización Dinámica y Análisis Conductual</h2>`;
+                if (maintenance) content += `<h3>Explicación de Mantenimiento</h3><p style="white-space: pre-wrap;">${maintenance}</p>`;
+                if (solution) content += `<h3>Claves de Salida</h3><p style="white-space: pre-wrap;">${solution}</p>`;
                 content += `</div>`;
             }
+        }
 
-            if (afcData) {
-                const maintenance = afcData.explicacion_sencilla || afcData.hypotheses?.mantenimiento;
-                const solution = afcData.claves_salida || afcData.hypotheses?.solucion;
-                if (maintenance || solution) {
-                    content += `<div class="section"><h2>III. Conceptualización Dinámica y Análisis Conductual</h2>`;
-                    if (maintenance) content += `<h3>Explicación de Mantenimiento</h3><p style="white-space: pre-wrap;">${maintenance}</p>`;
-                    if (solution) content += `<h3>Claves de Salida</h3><p style="white-space: pre-wrap;">${solution}</p>`;
-                    content += `</div>`;
-                }
-            }
+        if (treatmentPlan) {
+            content += `<div class="section"><h2>IV. Plan de Tratamiento</h2>`;
+            if (treatmentPlan.goals) content += `<h3>Objetivos</h3><p style="white-space: pre-wrap;">${treatmentPlan.goals}</p>`;
+            if (treatmentPlan.strategies) content += `<h3>Estrategias</h3><p style="white-space: pre-wrap;">${treatmentPlan.strategies}</p>`;
+            if (treatmentPlan.notes) content += `<h3>Notas Clínicas</h3><p style="white-space: pre-wrap;">${treatmentPlan.notes}</p>`;
+            content += `</div>`;
+        }
 
-            if (treatmentPlan) {
-                content += `<div class="section"><h2>IV. Plan de Tratamiento</h2>`;
-                if (treatmentPlan.goals) content += `<h3>Objetivos</h3><p style="white-space: pre-wrap;">${treatmentPlan.goals}</p>`;
-                if (treatmentPlan.strategies) content += `<h3>Estrategias</h3><p style="white-space: pre-wrap;">${treatmentPlan.strategies}</p>`;
-                if (treatmentPlan.notes) content += `<h3>Notas Clínicas</h3><p style="white-space: pre-wrap;">${treatmentPlan.notes}</p>`;
-                content += `</div>`;
-            }
-
-            if (bioData && Object.keys(bioData).length > 0) {
-                content += `<div class="section"><h2>V. Entrevista Biográfica</h2>`;
-                Object.entries(bioData).forEach(([q, a]) => {
-                    if (['antecedentes_origen', 'experiencia_insuficiencia', 'temporalidad_vivida', 'premisa_realidad'].includes(q)) return;
-                    const questionIndex = parseInt(q, 10);
-                    const questionText = !isNaN(questionIndex) && BIO_QUESTIONS[questionIndex] ? BIO_QUESTIONS[questionIndex].text : `Pregunta ${q}`;
-                    content += `<h3>${questionText}</h3><p style="white-space: pre-wrap;">${a}</p>`;
-                });
-                content += `</div>`;
-            }
+        if (bioData && Object.keys(bioData).length > 0) {
+            content += `<div class="section"><h2>V. Entrevista Biográfica</h2>`;
+            Object.entries(bioData).forEach(([q, a]) => {
+                if (['antecedentes_origen', 'experiencia_insuficiencia', 'temporalidad_vivida', 'premisa_realidad'].includes(q)) return;
+                const questionIndex = parseInt(q, 10);
+                const questionText = !isNaN(questionIndex) && BIO_QUESTIONS[questionIndex] ? BIO_QUESTIONS[questionIndex].text : `Pregunta ${q}`;
+                content += `<h3>${questionText}</h3><p style="white-space: pre-wrap;">${a}</p>`;
+            });
+            content += `</div>`;
         }
         
         const migrationData = {};
@@ -3416,43 +3336,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         return (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
 
-                {/* CONTEXTUAL REPORT GENERATOR */}
-                <div className="bg-[#050507] border border-emerald-500/20 rounded-2xl p-6 shadow-[0_0_30px_rgba(16,185,129,0.05)]">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                        <div>
-                            <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                <FileText className="w-5 h-5" /> Formulación de Caso Contextual
-                            </h3>
-                            <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
-                                Un informe clínico profesional y estructurado (ACT / Análisis Funcional) redactado por Kio con base en todos tus bucles y respuestas.
-                            </p>
-                        </div>
-                        <button
-                            onClick={generateContextualReport}
-                            disabled={isGeneratingReport}
-                            className="shrink-0 px-4 py-2 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition-all flex items-center gap-2 whitespace-nowrap"
-                        >
-                            {isGeneratingReport ? (
-                                <><Aperture className="w-4 h-4 animate-spin" /> Redactando Informe...</>
-                            ) : (
-                                <><Sparkles className="w-4 h-4" /> Redactar Informe Contextual</>
-                            )}
-                        </button>
-                    </div>
 
-                    {contextualReportHtml ? (
-                        <div className="bg-white text-black p-8 rounded-xl shadow-inner prose prose-sm max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:border-b-2 prose-h1:border-zinc-800 prose-h1:pb-2 prose-h2:text-lg prose-h2:text-emerald-700 prose-h2:border-b prose-h2:border-zinc-300 prose-h2:pb-1 prose-h2:mt-6 prose-p:text-justify prose-table:w-full prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-2 prose-th:border prose-th:border-zinc-300 prose-td:p-2 prose-td:border prose-td:border-zinc-300"
-                             dangerouslySetInnerHTML={{ __html: contextualReportHtml }} />
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-10 bg-black/20 rounded-xl border border-white/5 border-dashed">
-                            <FileText className="w-8 h-8 text-zinc-600 mb-2" />
-                            <span className="text-xs text-zinc-500 uppercase tracking-widest font-mono">No hay informe generado</span>
-                        </div>
-                    )}
-                </div>
-
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-8" />
-                
                 {/* AUTO-GENERATE BUTTON (Legacy Data) */}
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Datos Clínicos Desglosados</h3>

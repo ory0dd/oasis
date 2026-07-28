@@ -4219,8 +4219,58 @@ Devuelve estrictamente el JSON sin formato extra.
                         {activeTab === 'ICAR16' && renderIcarTab()}
                         {activeTab === 'EXISTENTIAL_ANALYSIS' && renderExistentialAnalysisTab()}
                           {activeTab === 'KIO_CHATS' && renderKioChatsTab()}
+                          {activeTab === 'CONTEXTUAL_REPORT' && renderContextualReportTab()}
                     </div>
                 </main>
+            </div>
+        );
+    };
+
+    const renderContextualReportTab = () => {
+        return (
+            <div className="space-y-6 animate-in fade-in duration-300 h-full overflow-y-auto custom-scroll pr-2 pb-12">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-zinc-950/60 border border-emerald-500/20 rounded-3xl p-6 shadow-xl">
+                    <div>
+                        <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                            <FileText className="w-5 h-5" /> V. Formulación de Caso Contextual
+                        </h3>
+                        <p className="text-xs text-zinc-400 mt-2 max-w-2xl leading-relaxed">
+                            Genera un informe clínico profesional y estructurado (ACT / Análisis Funcional) utilizando el motor cognitivo de Kio con base en todos los bucles y respuestas del paciente.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-3 shrink-0 w-full sm:w-auto mt-4 sm:mt-0">
+                        <button
+                            onClick={generateContextualReport}
+                            disabled={isGeneratingContextualReport}
+                            className="w-full px-5 py-2.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-widest rounded-xl border border-emerald-500/30 hover:bg-emerald-500/30 transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-emerald-900/20"
+                        >
+                            {isGeneratingContextualReport ? (
+                                <><Aperture className="w-4 h-4 animate-spin" /> Redactando Informe...</>
+                            ) : (
+                                <><Sparkles className="w-4 h-4" /> Generar Informe (AI)</>
+                            )}
+                        </button>
+                        {contextualReportHtml && (
+                            <button
+                                onClick={exportContextualReportDoc}
+                                className="w-full px-5 py-2.5 bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-widest rounded-xl border border-indigo-500/30 hover:bg-indigo-500/30 transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-indigo-900/20"
+                            >
+                                <FileText className="w-4 h-4" /> Exportar a Word (.doc)
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {contextualReportHtml ? (
+                    <div className="bg-[#fcfcfc] text-black p-10 rounded-[2rem] shadow-2xl prose prose-sm max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:border-b-2 prose-h1:border-zinc-800 prose-h1:pb-4 prose-h1:mb-6 prose-h2:text-xl prose-h2:text-emerald-800 prose-h2:border-b prose-h2:border-zinc-300 prose-h2:pb-2 prose-h2:mt-8 prose-h2:mb-4 prose-p:text-justify prose-p:leading-relaxed prose-table:w-full prose-table:border-collapse prose-table:my-6 prose-th:bg-zinc-100 prose-th:p-3 prose-th:border prose-th:border-zinc-300 prose-th:text-emerald-900 prose-td:p-3 prose-td:border prose-td:border-zinc-300 prose-li:my-1"
+                         dangerouslySetInnerHTML={{ __html: contextualReportHtml }} />
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 bg-zinc-950/40 rounded-3xl border border-white/5 border-dashed">
+                        <FileText className="w-12 h-12 text-zinc-700 mb-4" />
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-mono">Sin Formulación Contextual</span>
+                        <p className="text-[10px] text-zinc-600 mt-2 max-w-xs text-center font-sans">Haz clic en "Generar Informe" para que Kio redacte el documento basándose en la información clínica de este paciente.</p>
+                    </div>
+                )}
             </div>
         );
     };
