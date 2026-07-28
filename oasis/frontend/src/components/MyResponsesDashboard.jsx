@@ -646,6 +646,8 @@ ${userResponsesText}
         try { return localStorage.getItem(`oasis_contextual_report_${user}`) || ''; } catch { return ''; }
     });
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+    const [improvementPrompt, setImprovementPrompt] = useState('');
+    const [isImprovingReport, setIsImprovingReport] = useState(false);
 
     const generateContextualReport = async () => {
         setIsGeneratingReport(true);
@@ -3441,8 +3443,45 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
                     </div>
 
                     {contextualReportHtml ? (
-                        <div className="bg-white text-black p-8 rounded-xl shadow-inner prose prose-sm max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:border-b-2 prose-h1:border-zinc-800 prose-h1:pb-2 prose-h2:text-lg prose-h2:text-emerald-700 prose-h2:border-b prose-h2:border-zinc-300 prose-h2:pb-1 prose-h2:mt-6 prose-p:text-justify prose-table:w-full prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-2 prose-th:border prose-th:border-zinc-300 prose-td:p-2 prose-td:border prose-td:border-zinc-300"
-                             dangerouslySetInnerHTML={{ __html: contextualReportHtml }} />
+                        <div className="space-y-4">
+                            <div className="bg-white text-black p-8 rounded-xl shadow-inner prose prose-sm max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:border-b-2 prose-h1:border-zinc-800 prose-h1:pb-2 prose-h2:text-lg prose-h2:text-emerald-700 prose-h2:border-b prose-h2:border-zinc-300 prose-h2:pb-1 prose-h2:mt-6 prose-p:text-justify prose-table:w-full prose-table:border-collapse prose-th:bg-zinc-100 prose-th:p-2 prose-th:border prose-th:border-zinc-300 prose-td:p-2 prose-td:border prose-td:border-zinc-300"
+                                 dangerouslySetInnerHTML={{ __html: contextualReportHtml }} />
+                            
+                            {/* Chat and Export Tools */}
+                            <div className="flex flex-col gap-3 bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="text"
+                                        value={improvementPrompt}
+                                        onChange={(e) => setImprovementPrompt(e.target.value)}
+                                        placeholder="Ej: Cambia las técnicas a modelo experiencial multimodal..."
+                                        className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !isImprovingReport) {
+                                                improveContextualReport();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={improveContextualReport}
+                                        disabled={isImprovingReport || !improvementPrompt.trim()}
+                                        className="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-50 transition-colors flex items-center gap-2"
+                                    >
+                                        {isImprovingReport ? <Aperture className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Mejorar</span>
+                                    </button>
+                                </div>
+                                <div className="flex justify-end mt-2">
+                                    <button 
+                                        onClick={handleExportDoc}
+                                        className="px-4 py-2 bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/30 hover:bg-indigo-500/30 transition-colors flex items-center gap-2"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Exportar a Word (.doc)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-10 bg-black/20 rounded-xl border border-white/5 border-dashed">
                             <FileText className="w-8 h-8 text-zinc-600 mb-2" />
