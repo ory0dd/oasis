@@ -8,7 +8,7 @@ import {
     Heart, MessageCircle, Eye, EyeOff, Globe,
     Aperture, Infinity as InfinityIcon, Share2, Search, Play, Pause, SkipForward, SkipBack,
     FolderPlus, ChevronDown, ChevronUp, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
-    Paperclip, Send, ChevronLeft, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid,
+    Paperclip, Send, ChevronLeft, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid, Headphones,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, ServerCrash, Home
@@ -10721,6 +10721,50 @@ ${afcMapContext}
                         fileInput.click();
                     }} className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
                         <Paperclip size={16} className="sm:scale-110" />
+                    </button>
+                    <button onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'audio/*';
+                        fileInput.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            const xhr = new XMLHttpRequest();
+                            const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
+                            xhr.open('POST', `${apiUrl}/api/oasis/upload`);
+                            xhr.onload = () => {
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    try {
+                                        const data = JSON.parse(xhr.responseText);
+                                        if (data.url) {
+                                            const newBlock = {
+                                                id: `audio-${Date.now()}`,
+                                                type: 'audio',
+                                                content: data.url,
+                                                x: -cam.x / cam.scale,
+                                                y: -cam.y / cam.scale,
+                                                width: 300,
+                                                height: 50,
+                                                isPublic: false,
+                                                createdAt: new Date().toISOString(),
+                                                canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                            };
+                                            setBlocks(prev => {
+                                                const updated = [...prev, newBlock];
+                                                if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                                return updated;
+                                            });
+                                        }
+                                    } catch (err) { }
+                                }
+                            };
+                            xhr.send(formData);
+                        };
+                        fileInput.click();
+                    }} className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
+                        <Headphones size={16} className="sm:scale-110" />
                     </button>
                     <button
                         onClick={toggleCanvasRecording}
