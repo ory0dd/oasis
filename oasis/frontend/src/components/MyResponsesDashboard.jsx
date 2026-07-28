@@ -657,8 +657,17 @@ ${userResponsesText}
             const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
             
             const prompt = `
-Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y Análisis Funcional de la Conducta.
-Tu tarea es redactar un "Informe y Formulación de Caso Contextual" completo, profundo y bellamente redactado en formato HTML.
+Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y creador del Modelo Multimodal Experiencial.
+Tu tarea es redactar un "Informe y Formulación de Caso Clínico y Plan de Intervención" completo, profundo y bellamente redactado en formato HTML.
+
+CRÍTICO - REGLAS DEL MODELO MULTIMODAL EXPERIENCIAL:
+NO utilices técnicas de terapia tradicional intelectualizada. Si el paciente tiene un perfil de sobre-rumiación o defensa analítica, pedirle diarios, registros de pensamientos o metáforas pasivas ("hojas en el arroyo") solo alimentará su bucle mental.
+DEBES aplicar estrictamente lo siguiente:
+1. Bypass Cortical: Elimina la terapia puramente hablada. Sustituye los diarios por descargas frecuenciales/somáticas (sub-bajos, Witch House, proyección vocal).
+2. Deconstrucción Plástica: Transforma la reestructuración cognitiva en intervenciones físicas/artísticas (ej. romper o rasgar la "Jaula del Deber Ser", arte terapia visuostáctil).
+3. Postura Autónoma: Trata al paciente como un creador/autor adulto. No lo infantilices. Integra sus polaridades (ej. Niña Complaciente vs. Niña Explosiva mediante un Beat Dual).
+4. Cierre Ejecutivo: Aterriza la intervención en andamiaje real (Micro-límites, Manifiesto, Plan Operativo de Negocio, Vision Board). Propón un Módulo Intensivo de Choque (ej. 4 Sesiones) y NO tratamientos largos de consultorio.
+5. Reencuadre Somático: Los síntomas físicos (gastritis, insomnio) no son médicos/pasivos, son registros somáticos de límites silenciados. Si la boca habla, el estómago deja de sangrar.
 
 Datos del paciente:
 - Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
@@ -668,22 +677,26 @@ Datos del paciente:
 
 El documento HTML DEBE incluir estrictamente esta estructura exacta (usa etiquetas HTML semánticas como <h1>, <h2>, <h3>, <ul>, <p>, <table>, etc.):
 
-<h1>INFORME Y FORMULACIÓN DE CASO ANALÍTICO-FUNCIONAL</h1>
+<h1>INFORME PSICOLÓGICO CLÍNICO Y PLAN DE INTERVENCIÓN</h1>
 
-<h2>I. Datos Generales</h2>
-Incluye el nombre del paciente (${user}) y el marco teórico (Terapia de Aceptación y Compromiso / Análisis de la Conducta).
+<h2>I. Datos de Filiación y Encuadre</h2>
+Incluye el nombre del paciente (${user}), el modelo de intervención (Módulo Intensivo Multimodal) y el marco teórico.
 
-<h2>II. Motivo de Consulta y Demanda</h2>
-Redacta un párrafo clínico profesional integrando el malestar principal del paciente (basado en sus respuestas y bucles).
+<h2>II. Motivo de Consulta y Demanda Existencial</h2>
+Redacta el malestar principal del paciente, reencuadrando sus síntomas somáticos como respuestas a la sobreadaptación o represión.
 
-<h2>III. Análisis Funcional de las Conductas Problema</h2>
-Explica la cadena funcional (Antecedentes -> Respuestas -> Consecuencias a corto y largo plazo). Usa la información del mapa de bucles (nodos y conexiones). Desglosa los estímulos, respuestas y consecuencias.
+<h2>III. Análisis Funcional de la Conducta (Matriz A -> B -> C)</h2>
+Explica la cadena funcional. Usa la información del mapa de bucles. Desglosa Antecedentes, Respuestas (Encubiertas, Observables, Somáticas) y Consecuencias (Reforzamiento y Costo a largo plazo).
 
-<h2>IV. Conceptualización del Caso (Ejes de Inflexibilidad Psicológica)</h2>
-Analiza el caso según los procesos de Inflexibilidad Psicológica (Fusión Cognitiva, Evitación Experiencial, Atemporalidad, Apego al Yo-Concepto, Desconexión de Valores). Desarrolla los que apliquen al paciente.
+<h2>IV. Conceptualización Clínica (Inflexibilidad vs. Agencia)</h2>
+Analiza la Fusión Cognitiva, Evitación Experiencial, Desconexión de Valores o Saturación Ejecutiva aplicables al caso.
 
-<h2>V. Plan de Intervención Contextual</h2>
-Propón un plan de trabajo basado en la flexibilidad psicológica. Incluye una tabla HTML (<table>, <thead>, <tr>, <th>, <td>) con 3 columnas: Proceso Clínico, Objetivo Operativo, y Estrategias/Ejercicios Contextuales sugeridos. Propón estrategias reales de ACT basadas en los bucles del paciente. APLICA ESTILOS CSS EN LÍNEA A LA TABLA PARA QUE SEA HERMOSA (bordes sutiles, padding, fondo en thead).
+<h2>V. Plan de Intervención Contextual y Multimodal</h2>
+Propón el Módulo Intensivo (Ruta Cronológica de Trabajo sesión por sesión).
+Incluye una tabla HTML (<table>, <thead>, <tr>, <th>, <td>) con las Sesiones, el Objetivo Operativo, y las Estrategias Multimodales exactas (descarga sonora, intervención plástica, etc). APLICA ESTILOS CSS EN LÍNEA A LA TABLA PARA QUE SEA HERMOSA (bordes sutiles, padding, fondo en thead).
+
+<h2>VI. Matriz de Exposición y Reencuadre</h2>
+Muestra cómo el paciente se expondrá a la incomodidad mediante acciones ejecutivas concretas (plan de negocio, límites).
 
 Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni al final, solo el código HTML que pueda ser insertado directamente en el DOM.
             `;
