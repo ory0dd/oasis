@@ -12462,18 +12462,24 @@ ${afcMapContext}
                                         )}
                                     </div>
                                     <div className="p-4 space-y-4">
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
-                                        </div>
+                                        {resonanceData.sintesis ? (
+                                            <p className="text-[12px] sm:text-[13px] text-zinc-300 font-sans leading-relaxed italic border-l-2 border-white/10 pl-4 py-2">"{resonanceData.sintesis}"</p>
+                                        ) : (
+                                            <>
+                                                <div className="space-y-1">
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
+                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
+                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
+                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}
