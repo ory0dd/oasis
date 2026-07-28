@@ -4117,55 +4117,7 @@ const ProfileView = ({
                         </div>
 
                         {/* Carta de Vibracion Existencial (Personal) */}
-                        {(() => {
-                            let resonanceData = null;
-                            try {
-                                const saved = localStorage.getItem(`oasis_public_traits_${user}`);
-                                if (saved) {
-                                    const parsed = JSON.parse(saved);
-                                    const hab = parsed?.habitar || parsed?.Habitar;
-                                    const vin = parsed?.vinculo || parsed?.Vinculo || parsed?.vínculo || parsed?.Vínculo;
-                                    const bus = parsed?.busqueda || parsed?.Busqueda || parsed?.búsqueda || parsed?.Búsqueda;
-                                    if (hab || vin || bus) {
-                                        resonanceData = {
-                                            habitar: hab || "Buscando palabras...",
-                                            vinculo: vin || "Sintiendo el espacio...",
-                                            busqueda: bus || "Explorando la ruta...",
-                                            keywords: parsed?.keywords || parsed?.Keywords
-                                        };
-                                    }
-                                }
-                            } catch (e) {
-                                console.warn('Error reading personal resonance data:', e);
-                            }
 
-                            if (!resonanceData) return null;
-
-                            return (
-                                <div className="mb-6 mx-0.5 rounded-2xl bg-zinc-950/80 border border-white/5 overflow-hidden backdrop-blur-md shadow-xl">
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide">Firma de Resonancia</span>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 space-y-4">
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌍</span> Habitar</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🔗</span> Vínculo</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🧭</span> Búsqueda</span>
-                                            <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
 
                         {/* Products Showcase (New section replacing old Highlights) */}
                         {(() => {
