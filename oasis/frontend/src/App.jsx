@@ -10743,6 +10743,7 @@ ${afcMapContext}
                                                 id: `audio-${Date.now()}`,
                                                 type: 'audio',
                                                 content: data.url,
+                                                caption: file.name,
                                                 x: -cam.x / cam.scale,
                                                 y: -cam.y / cam.scale,
                                                 width: 300,
