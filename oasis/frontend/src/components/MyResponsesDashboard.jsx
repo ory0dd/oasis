@@ -749,6 +749,80 @@ Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni 
         }
     };
 
+    const improveContextualReport = async () => {
+        if (!improvementPrompt.trim() || !contextualReportHtml) return;
+        setIsImprovingReport(true);
+        try {
+            let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            
+            const prompt = `
+Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
+A continuación te proporciono un Informe y Formulación de Caso Clínico actual en formato HTML.
+Tu tarea es modificar y mejorar este documento basándote estrictamente en la siguiente instrucción de mejora proporcionada por el usuario (el terapeuta o el propio paciente).
+
+INSTRUCCIÓN DE MEJORA:
+"${improvementPrompt}"
+
+INFORME ACTUAL:
+${contextualReportHtml}
+
+Instrucciones Críticas:
+1. Aplica la instrucción de mejora a profundidad. Si la instrucción pide cambiar el enfoque terapéutico (ej. de intelectualizado a multimodal experiencial), reestructura completamente las secciones de tratamiento, análisis y conclusiones para reflejar esto.
+2. Mantén estrictamente el formato HTML. No uses Markdown, solo devuelve el código HTML puro (comenzando con <h1> o <div> y terminando con las etiquetas correspondientes).
+3. No añadas introducciones ni conclusiones fuera del código HTML.
+`;
+            let res;
+            if (API_URL) {
+                res = await fetch(`${API_URL}/api/kio/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', content: prompt }],
+                        customKey: activeKey,
+                        customEndpoint: endpoint,
+                        customModel: model
+                    })
+                });
+            } else {
+                if (!activeKey) throw new Error('No API Key');
+                res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${activeKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7,
+                        max_tokens: 4000
+                    })
+                });
+            }
+
+            if (!res.ok) throw new Error('Error en API');
+            const data = await res.json();
+            let newReport = '';
+            if (API_URL) {
+                newReport = data.reply || data.choices?.[0]?.message?.content || '';
+            } else {
+                newReport = data.choices[0].message.content;
+            }
+            newReport = newReport.replace(/```html/g, '').replace(/```/g, '').trim();
+            
+            setContextualReportHtml(newReport);
+            localStorage.setItem(`oasis_contextual_report_${user}`, newReport);
+            setImprovementPrompt('');
+        } catch (e) {
+            console.error("Error mejorando reporte:", e);
+            alert("Ocurrió un error al intentar mejorar el informe.");
+        } finally {
+            setIsImprovingReport(false);
+        }
+    };
+
     const generateKioDirectives = async () => {
         setIsGeneratingKio(true);
         try {
