@@ -697,7 +697,7 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
 
 <h2>V. ANÁLISIS FUNCIONAL Y FORMULACIÓN DE CASO (CONTEXTUAL)</h2>
 <h3>1. Matriz de Contingencias</h3>
-<pre><code>(Usa un bloque pre para dibujar el diagrama A -> B -> C)</code></pre>
+<p>(Diseña un diagrama visual usando contenedores HTML <code>&lt;div&gt;</code> con CSS inline flexbox. Crea 3 tarjetas (Antecedentes, Respuestas, Consecuencias) con colores de fondo sutiles (ej. #f3f4f6, #e0e7ff, #fce7f3) conectadas por flechas ➔. ¡ESTÁ ESTRICTAMENTE PROHIBIDO USAR BLOQUES &lt;pre&gt; O CÓDIGO ASCII PARA ESTO! Haz que parezca una infografía moderna.)</p>
 <h3>2. Conceptualización de Inflexibilidad Psicológica (Hexaflex)</h3>
 <p>(Analiza Evitación Experiencial...)</p>
 
