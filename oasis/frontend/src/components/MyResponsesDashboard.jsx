@@ -673,48 +673,69 @@ Datos del paciente:
 - Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
 - Perfil PID-5: ${JSON.stringify(pidIndices)}
 
-ESTRUCTURA HTML REQUERIDA (Debes incluir estrictamente estos 9 apartados usando etiquetas semánticas <h1>, <h2>, <h3>, <p>, <ul>, <table>, <pre> para diagramas, etc.):
+ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictamente estos 9 apartados usando etiquetas semánticas HTML reales. Todo texto debe estar envuelto en <p>, <li>, <h1>, <h2>, <h3>, <table>. Si usas texto plano se romperá la vista):
 
 <h1>INFORME PSICOLÓGICO CLÍNICO Y PLAN DE INTERVENCIÓN</h1>
 <p><strong>Ecosistema de Intervención Integrado:</strong> Terapia Presencial & Plataforma <em>Ruido Interior</em></p>
 
 <h2>I. DATOS DE FILIACIÓN</h2>
-(Lista con Nombre, Edad estimada, Ocupación, Evaluador, etc.)
+<ul>
+  <li><strong>Nombre de la Paciente:</strong> ${user}</li>
+  <li><strong>Evaluador:</strong> (Tu nombre)</li>
+</ul>
 
 <h2>II. MOTIVO DE CONSULTA Y DEMANDA</h2>
-(Redacta el malestar principal y reencuadra sus síntomas somáticos como represión o sobreadaptación).
+<p>(Redacta el malestar principal...)</p>
 
 <h2>III. OBSERVACIÓN CONDUCTUAL Y RECURSOS</h2>
-(Describe su presentación y haz un "Reencuadre de Recursos" donde sus defectos se lean como fortalezas mal canalizadas).
+<p>(Describe su presentación...)</p>
 
 <h2>IV. TÉCNICAS E INSTRUMENTOS APLICADOS</h2>
-(Lista: Entrevista Fenomenológica, Análisis Funcional A-B-C, Hexaflex ACT, Registro Multimodal).
+<ul>
+  <li>Entrevista Fenomenológica</li>
+</ul>
 
 <h2>V. ANÁLISIS FUNCIONAL Y FORMULACIÓN DE CASO (CONTEXTUAL)</h2>
 <h3>1. Matriz de Contingencias</h3>
-(Usa un bloque <pre><code> para dibujar el diagrama A -> B -> C).
+<pre><code>(Usa un bloque pre para dibujar el diagrama A -> B -> C)</code></pre>
 <h3>2. Conceptualización de Inflexibilidad Psicológica (Hexaflex)</h3>
-(Analiza Evitación Experiencial, Fusión Cognitiva, Desconexión de Valores, etc.).
+<p>(Analiza Evitación Experiencial...)</p>
 
 <h2>VI. IMPRESIÓN DIAGNÓSTICA</h2>
-(Diagnóstico existencial y funcional, sin patologizar rígidamente).
+<p>(Diagnóstico existencial...)</p>
 
 <h2>VII. PLAN DE INTERVENCIÓN CONTEXTUAL Y MULTIMODAL</h2>
 <h3>Objetivo General</h3>
+<p>(Escribe el objetivo...)</p>
 <h3>Ruta Cronológica de Trabajo</h3>
-(Diseña 4 sesiones intensivas con pasos específicos: liberación somática/sonora, deconstrucción plástica/introyectos, integración de polaridades, y consolidación/plan operativo).
+<p>(Diseña 4 sesiones. Usa <strong> para destacar pasos.)</p>
 
 <h2>VIII. MATRIZ DE EXPOSICIÓN GRADUAL Y REENCUADRE EXISTENCIAL</h2>
-(Crea una <table> HTML hermosa con thead, tr, th, td detallando: Situación Temida, Ansiedad Prevista, Reencuadre Existencial/Somático, y Conducta de Adaptación). Aplica CSS inline sutil.
+<table style="width: 100%; border-collapse: collapse;">
+  <thead style="background-color: #f3f4f6;">
+    <tr>
+      <th style="border: 1px solid #d1d5db; padding: 8px;">Situación Temida</th>
+      <th style="border: 1px solid #d1d5db; padding: 8px;">Ansiedad Prevista</th>
+      <th style="border: 1px solid #d1d5db; padding: 8px;">Reencuadre</th>
+      <th style="border: 1px solid #d1d5db; padding: 8px;">Conducta</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #d1d5db; padding: 8px;">...</td>
+    </tr>
+  </tbody>
+</table>
 
 <h2>IX. INDICADORES DE PROGRESO Y EVALUACIÓN CLINICA</h2>
-(Usa un bloque <pre> para un diagrama de texto mostrando los ejes, seguido de una lista de 4 puntos: Eje Cognitivo, Somático, Conductual y Ejecutivo).
+<pre>(Diagrama de ejes)</pre>
+<ul><li><strong>Eje Cognitivo:</strong> ...</li></ul>
 
 <br><br>
 <p><strong>Firma de Conformidad y Validación:</strong></p>
 <p>Evaluador / Práctica Clínica Supervisada</p>
 
-Devuelve ÚNICAMENTE el código HTML crudo. No incluyas \`\`\`html al inicio ni al final, solo el HTML que pueda ser insertado directamente.
+Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
             `;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
