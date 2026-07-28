@@ -2043,6 +2043,11 @@ Devuelve estrictamente el JSON sin formato extra.
     };
 
     const generateAFCAnalysis = async (isAdditive = false) => {
+        // Disparar en paralelo la generación de la Firma de Resonancia (publicTraits) a petición del usuario
+        if (!isAdditive) {
+            generateDynamicTraits();
+        }
+
         let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
