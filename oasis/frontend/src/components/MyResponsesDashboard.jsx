@@ -586,15 +586,15 @@ ${userResponsesText}
             if (!pTraits && parsedContent["Firma de Resonancia Existencial"]) pTraits = parsedContent["Firma de Resonancia Existencial"];
             
             // If still not found, check if it's flat on the root object
-            if (!pTraits && (parsedContent.habitar || parsedContent.Habitar)) {
+            if (!pTraits && (parsedContent.sintesis || parsedContent.Sintesis || parsedContent.habitar || parsedContent.Habitar)) {
                 pTraits = parsedContent;
             }
 
             // If still not found, let's search all values in case it nested it deeper
-            if (!pTraits || (typeof pTraits === 'object' && !pTraits.habitar && !pTraits.Habitar)) {
+            if (!pTraits || (typeof pTraits === 'object' && !pTraits.sintesis && !pTraits.Sintesis && !pTraits.habitar && !pTraits.Habitar)) {
                 for (const key in parsedContent) {
                     const val = parsedContent[key];
-                    if (val && typeof val === 'object' && (val.habitar || val.Habitar)) {
+                    if (val && typeof val === 'object' && (val.sintesis || val.Sintesis || val.habitar || val.Habitar)) {
                         pTraits = val;
                         break;
                     }
@@ -604,6 +604,7 @@ ${userResponsesText}
             if (pTraits) {
                 // Ensure keys are lowercase before saving
                 const normalizedTraits = {
+                    sintesis: pTraits.sintesis || pTraits.Sintesis || '',
                     habitar: pTraits.habitar || pTraits.Habitar || '',
                     vinculo: pTraits.vinculo || pTraits.Vinculo || pTraits.vínculo || pTraits.Vínculo || '',
                     busqueda: pTraits.busqueda || pTraits.Busqueda || pTraits.búsqueda || pTraits.Búsqueda || '',
@@ -612,7 +613,8 @@ ${userResponsesText}
                 setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
                 
                 // Add to clinical report view
-                parsedContent["Firma de Resonancia"] = 
+                parsedContent["Firma de Resonancia"] = normalizedTraits.sintesis ? 
+                    `Síntesis Existencial: ${normalizedTraits.sintesis}` :
                     `Habitar: ${normalizedTraits.habitar}\n` +
                     `Vínculo: ${normalizedTraits.vinculo}\n` +
                     `Búsqueda: ${normalizedTraits.busqueda}\n` +
