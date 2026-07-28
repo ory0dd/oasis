@@ -12341,7 +12341,7 @@ ${afcMapContext}
             if (pUserObj && pUserObj.publicTraits) {
                 try {
                     const parsed = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
-                    if (parsed && parsed.habitar && parsed.vinculo && parsed.busqueda) {
+                    if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
                         resonanceData = parsed;
                     }
                 } catch(e) {}
