@@ -3133,23 +3133,13 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             const prevScale = prev.scale;
             const newScale = Math.min(Math.max(0.35, prevScale + scaleChange), 4);
             
-            let newX, newY;
-            
-            if (selectedNode) {
-                // Focus zoom relative to the selected node's position
-                const px = rect.width * (selectedNode.x / 100);
-                const py = rect.height * (selectedNode.y / 100);
-                newX = prev.x + px * (prevScale - newScale);
-                newY = prev.y + py * (prevScale - newScale);
-            } else {
-                // Zoom relative to mouse pointer coordinates
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                const canvasX = (mouseX - prev.x) / prevScale;
-                const canvasY = (mouseY - prev.y) / prevScale;
-                newX = mouseX - canvasX * newScale;
-                newY = mouseY - canvasY * newScale;
-            }
+            // Zoom relative to mouse pointer coordinates
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const canvasX = (mouseX - prev.x) / prevScale;
+            const canvasY = (mouseY - prev.y) / prevScale;
+            const newX = mouseX - canvasX * newScale;
+            const newY = mouseY - canvasY * newScale;
             
             prev.x = newX;
             prev.y = newY;
@@ -3425,10 +3415,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 12 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 38 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 65 },
-            { filter: n => n.type === 'consequence', baseX: 88 }
+            { filter: n => n.type === 'historical', baseX: 25 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 42 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 58 },
+            { filter: n => n.type === 'consequence', baseX: 75 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
