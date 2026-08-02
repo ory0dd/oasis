@@ -1018,11 +1018,11 @@ const PsychologistDashboard = ({ onClose }) => {
                         };
                         
                         // Dynamically sync backend clínical data into local storage so it is available locally!
-                        if (u.clínicalData) {
+                        if (u.clinicalData) {
                             window.isDownloadingClinicalData = true;
                             try {
-                                Object.keys(u.clínicalData).forEach(key => {
-                                    localStorage.setItem(key, u.clínicalData[key]);
+                                Object.keys(u.clinicalData).forEach(key => {
+                                    localStorage.setItem(key, u.clinicalData[key]);
                                 });
                             } finally {
                                 window.isDownloadingClinicalData = false;
