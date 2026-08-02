@@ -15981,10 +15981,11 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                             setCam({ x: camX, y: camY, scale: targetScale });
                         }
                     }}
-                    className="fixed bottom-[calc(90px+env(safe-area-inset-bottom,20px))] right-4 md:right-8 z-[2500] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_10px_40px_rgba(0,0,0,0.8)] border bg-black/80 backdrop-blur-sm border-white/10 text-white hover:scale-105 active:scale-95 hover:border-white/30 hover:bg-black/90 pointer-events-auto"
+                    className="fixed bottom-32 right-6 md:right-10 z-[5000] w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl hover:scale-110 active:scale-95 pointer-events-auto"
+                    style={{ backgroundColor: accent || '#ef4444', color: '#000' }}
                     title="Centrar en última nota"
                 >
-                    <Focus size={24} className="text-zinc-400 hover:text-white transition-colors" />
+                    <Focus size={28} className="stroke-[2.5]" />
                 </button>
             )}
 
