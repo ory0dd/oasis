@@ -617,7 +617,7 @@ namespace Oasis.Backend.Controllers
         [HttpGet("background")]
         public ActionResult<BackgroundConfig> GetBackground([FromQuery] string user)
         {
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.Background : _state.GlobalBackground;
         }
 
@@ -625,7 +625,7 @@ namespace Oasis.Backend.Controllers
         public IActionResult UpdateBackground([FromQuery] string user, [FromBody] BackgroundConfig config)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             
             config.Value = EnsureFileNotBase64(config.Value);
@@ -803,7 +803,7 @@ namespace Oasis.Backend.Controllers
         [HttpGet("blocks")]
         public ActionResult<List<Block>> GetBlocks([FromQuery] string user)
         {
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return new List<Block>();
             
             if (!IsCallerAuthorized(user)) 
@@ -822,7 +822,7 @@ namespace Oasis.Backend.Controllers
 
             lock (StateLock)
             {
-                var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+                var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
                 if (u == null) return NotFound();
                 
                 if (u.DeletedBlocks == null) u.DeletedBlocks = new HashSet<string>();
@@ -919,7 +919,7 @@ namespace Oasis.Backend.Controllers
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
             lock (StateLock)
             {
-                var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+                var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
                 if (u == null) return NotFound();
 
                 u.Blocks.RemoveAll(b => b.Id == id);
@@ -948,7 +948,7 @@ namespace Oasis.Backend.Controllers
         public ActionResult<List<Link>> GetLinks([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.Links : new List<Link>();
         }
 
@@ -958,7 +958,7 @@ namespace Oasis.Backend.Controllers
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
             lock (StateLock)
             {
-                var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+                var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
                 if (u == null) return NotFound();
                 u.Links = links;
                 SaveState();
@@ -1246,7 +1246,7 @@ namespace Oasis.Backend.Controllers
         [HttpPost("feed/publish")]
         public async Task<IActionResult> PublishToFeed([FromQuery] string user, [FromBody] Block block)
         {
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
 
             block.Username = u.Username;
@@ -1417,7 +1417,7 @@ namespace Oasis.Backend.Controllers
 
             lock (StateLock)
             {
-                var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+                var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, username, StringComparison.OrdinalIgnoreCase));
                 if (u == null) return;
 
                 foreach (var kvp in targetBlocksSnapshot)
@@ -1534,7 +1534,7 @@ namespace Oasis.Backend.Controllers
 
                         lock (StateLock)
                         {
-                            var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+                            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, username, StringComparison.OrdinalIgnoreCase));
                             if (u != null)
                             {
                                 var blockInState = u.Blocks.FirstOrDefault(b => b.Id == item.Id);
@@ -1921,7 +1921,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         [HttpGet("santuario")]
         public ActionResult<List<Block>> GetSantuario([FromQuery] string user)
         {
-             var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+             var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
              if (u == null) return new List<Block>();
              return u.Blocks.Where(b => b.IsPublic).ToList();
         }
@@ -1933,7 +1933,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<Dictionary<string, List<TrackItem>>> GetPlaylists([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.Playlists : new Dictionary<string, List<TrackItem>>();
         }
 
@@ -1941,7 +1941,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdatePlaylists([FromQuery] string user, [FromBody] Dictionary<string, List<TrackItem>> playlists)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             u.Playlists = playlists;
             SaveState();
@@ -1952,7 +1952,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<PlaybackState> GetPlayback([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.LastPlayback : new PlaybackState();
         }
 
@@ -1960,7 +1960,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdatePlayback([FromQuery] string user, [FromBody] PlaybackState state)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             u.LastPlayback = state;
             u.LastPlayback.LastUpdated = DateTime.UtcNow;
@@ -1972,7 +1972,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<List<Conversation>> GetConversations([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.Conversations : new List<Conversation>();
         }
 
@@ -1980,7 +1980,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdateConversations([FromQuery] string user, [FromBody] List<Conversation> conversations)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             
             Console.WriteLine($"Oasis: Recibidas {conversations.Count} conversaciones para {user}.");
@@ -1997,7 +1997,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<List<Folder>> GetFolders([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.Folders : new List<Folder>();
         }
 
@@ -2005,7 +2005,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdateFolders([FromQuery] string user, [FromBody] List<Folder> folders)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             u.Folders = folders;
             SaveState();
@@ -2016,7 +2016,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<string> GetMemory([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             return u != null ? u.ContinuousMemory : string.Empty;
         }
 
@@ -2024,7 +2024,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdateMemory([FromQuery] string user, [FromBody] MemoryUpdate update)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             u.ContinuousMemory = update?.Memory ?? string.Empty;
             SaveState();
@@ -2035,7 +2035,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public ActionResult<Dictionary<string, string>> GetClinicalData([FromQuery] string user)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return new Dictionary<string, string>();
 
             string caller = GetAuthenticatedUser();
@@ -2070,7 +2070,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         public IActionResult UpdateClinicalData([FromQuery] string user, [FromBody] Dictionary<string, string> data)
         {
             if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == user);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return NotFound();
             
             string caller = GetAuthenticatedUser();
@@ -2131,7 +2131,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
         private async Task SyncExistencialTestToSupabase(string username, string suffix)
         {
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, username, StringComparison.OrdinalIgnoreCase));
             if (u == null) return;
 
             string pidKey = $"oasis_pid_answers_{username}{suffix}";
@@ -2263,7 +2263,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
         private async Task SyncIcarTestToSupabase(string username, string suffix)
         {
-            var u = _state.Users.FirstOrDefault(usr => usr.Username == username);
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, username, StringComparison.OrdinalIgnoreCase));
             if (u == null) return;
 
             string answersKey = $"oasis_icar_answers_{username}{suffix}";
