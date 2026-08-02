@@ -7460,7 +7460,10 @@ export default function App() {
                 }
                 if (linksRes.ok) {
                     const data = await linksRes.json();
-                    if (data) setLinks(data);
+                    if (data) {
+                        setLinks(data);
+                        localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(data));
+                    }
                 }
             } catch (_) { /* offline — ignorar */ }
         };
@@ -7887,6 +7890,7 @@ export default function App() {
                     });
                 }
                 setLinks(filteredLinks);
+                localStorage.setItem('oasis_canvas_edges_' + userData.username, JSON.stringify(filteredLinks));
                 setConversations(userData.conversations || []);
                 setActiveConversationId(null);
                 setChatMessages([]);
