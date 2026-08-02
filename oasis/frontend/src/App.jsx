@@ -13545,39 +13545,6 @@ ${afcMapContext}
                         <Home size={18} className="hover-float-icon" />
                     </button>
 
-                    {/* Centrar Cámara / Imán (Only on canvas view) */}
-                    {view === 'canvas' && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const visualBlocks = blocks.filter(b =>
-                                    b.type !== 'settings' && b.id !== 'user_settings' && b.id !== 'profile_settings' &&
-                                    b.type !== 'canvas' && b.type !== 'insight' &&
-                                    b.type !== 'diary_notebook' && b.type !== 'resonance_notebook' && b.type !== 'conversation_notebook' &&
-                                    (b.canvasId === activeCanvasId || (!b.canvasId && activeCanvasId === 'canvas_default'))
-                                ).sort((a, b) => {
-                                    const tA = new Date(a.metadata?.timestamp || a.timestamp || 0).getTime();
-                                    const tB = new Date(b.metadata?.timestamp || b.timestamp || 0).getTime();
-                                    return tB - tA;
-                                });
-
-                                if (visualBlocks.length > 0) {
-                                    const lastBlock = visualBlocks[0];
-                                    const targetScale = window.innerWidth < 768 ? 0.65 : 0.85;
-                                    const cx = (lastBlock.x || 0) + (lastBlock.w || 288) / 2;
-                                    const cy = (lastBlock.y || 0) + (lastBlock.h || 288) / 2;
-                                    const camX = (window.innerWidth / 2) - (cx * targetScale);
-                                    const camY = (window.innerHeight / 2) - (cy * targetScale);
-                                    setCam({ x: camX, y: camY, scale: targetScale });
-                                }
-                            }}
-                            className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30"
-                            title="Centrar en última nota"
-                        >
-                            <Focus size={18} className="hover-float-icon" />
-                        </button>
-                    )}
-
                 </div>
             )}
 
@@ -15986,6 +15953,39 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             {/* iOS Bottom Gradient ONLY for the Mural Canvas */}
             {!activeNotebook && view !== 'profile' && view !== 'soul' && (
                 <div className="fixed bottom-0 left-0 right-0 h-[calc(90px+env(safe-area-inset-bottom,20px))] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-[10]" />
+            )}
+
+            {/* FLOATING MAGNET BUTTON TO CENTER CANVAS */}
+            {view === 'canvas' && !activeNotebook && !isComposerOpen && !isSimpleNotesOpen && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const visualBlocks = blocks.filter(b =>
+                            b.type !== 'settings' && b.id !== 'user_settings' && b.id !== 'profile_settings' &&
+                            b.type !== 'canvas' && b.type !== 'insight' &&
+                            b.type !== 'diary_notebook' && b.type !== 'resonance_notebook' && b.type !== 'conversation_notebook' &&
+                            (b.canvasId === activeCanvasId || (!b.canvasId && activeCanvasId === 'canvas_default'))
+                        ).sort((a, b) => {
+                            const tA = new Date(a.metadata?.timestamp || a.timestamp || 0).getTime();
+                            const tB = new Date(b.metadata?.timestamp || b.timestamp || 0).getTime();
+                            return tB - tA;
+                        });
+
+                        if (visualBlocks.length > 0) {
+                            const lastBlock = visualBlocks[0];
+                            const targetScale = window.innerWidth < 768 ? 0.65 : 0.85;
+                            const cx = (lastBlock.x || 0) + (lastBlock.w || 288) / 2;
+                            const cy = (lastBlock.y || 0) + (lastBlock.h || 288) / 2;
+                            const camX = (window.innerWidth / 2) - (cx * targetScale);
+                            const camY = (window.innerHeight / 2) - (cy * targetScale);
+                            setCam({ x: camX, y: camY, scale: targetScale });
+                        }
+                    }}
+                    className="fixed bottom-[calc(90px+env(safe-area-inset-bottom,20px))] right-4 md:right-8 z-[2500] w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_10px_40px_rgba(0,0,0,0.8)] border bg-black/80 backdrop-blur-sm border-white/10 text-white hover:scale-105 active:scale-95 hover:border-white/30 hover:bg-black/90 pointer-events-auto"
+                    title="Centrar en última nota"
+                >
+                    <Focus size={24} className="text-zinc-400 hover:text-white transition-colors" />
+                </button>
             )}
 
             {/* RETURN TO PROFILE CARD / BUTTON & FEED BUTTON */}
