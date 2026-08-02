@@ -15956,7 +15956,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             )}
 
             {/* FLOATING MAGNET BUTTON TO CENTER CANVAS */}
-            {view === 'canvas' && !activeNotebook && !isComposerOpen && !isSimpleNotesOpen && (
+            {(view === 'canvas' || view === 'feed') && !activeNotebook && !isComposerOpen && !isSimpleNotesOpen && (
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
