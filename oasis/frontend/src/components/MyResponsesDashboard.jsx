@@ -3376,8 +3376,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const startY = 12;
-            const endY = 88;
+            const startY = 30;
+            const endY = 70;
             const step = (endY - startY) / (count - 1);
 
             const slots = [];
@@ -3415,10 +3415,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 25 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 42 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 58 },
-            { filter: n => n.type === 'consequence', baseX: 75 }
+            { filter: n => n.type === 'historical', baseX: 35 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 45 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 55 },
+            { filter: n => n.type === 'consequence', baseX: 65 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
