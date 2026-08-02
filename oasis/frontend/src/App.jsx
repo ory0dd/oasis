@@ -593,7 +593,7 @@ const smartMergeBlocks = (serverBlocks, username) => {
             return serverBlock;
         });
 
-        const pendingLocal = cleanLocal.filter(b => !serverIds.has(b.id));
+        const pendingLocal = cleanLocal.filter(b => !serverIds.has(b.id) && b.type !== 'insight');
         const merged = deduplicateBlocks([...smartMergedServer, ...pendingLocal]);
         const hasChanges = pendingLocal.length > 0 || smartMergedServer.some((b, i) => b !== cleanServer[i]);
 
@@ -4462,7 +4462,8 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 
 export default function App() {
     const [view, setViewRaw] = useState(() => localStorage.getItem('oasis_user') === 'observador1' ? 'clinical' : 'canvas');
-    const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas') || 'canvas_default');
+    const initialUser = localStorage.getItem('oasis_user') || '';
+    const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isStoryUploadModalOpen, setIsStoryUploadModalOpen] = useState(false);
@@ -4470,7 +4471,8 @@ export default function App() {
     const [viewing24hStories, setViewing24hStories] = useState(null);
 
     useEffect(() => {
-        localStorage.setItem('oasis_active_canvas', activeCanvasId);
+        const currentUser = localStorage.getItem('oasis_user') || '';
+        localStorage.setItem('oasis_active_canvas_' + currentUser, activeCanvasId);
     }, [activeCanvasId]);
     const [publicProfileUser, setPublicProfileUser] = useState(null);
     const [publicProfileTab, setPublicProfileTab] = useState('posts');
@@ -4716,6 +4718,14 @@ export default function App() {
     }, [bgType, bgValue]);
 
     const [user, setUser] = useState(localStorage.getItem('oasis_user') || '');
+
+    useEffect(() => {
+        if (user) {
+            setActiveCanvasId(localStorage.getItem('oasis_active_canvas_' + user) || 'canvas_default');
+        } else {
+            setActiveCanvasId('canvas_default');
+        }
+    }, [user]);
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('oasis_user'));
     const [showPass, setShowPass] = useState(false);
     const [isRegisterMode, setIsRegisterMode] = useState(false);

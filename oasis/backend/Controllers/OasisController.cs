@@ -130,34 +130,41 @@ namespace Oasis.Backend.Controllers
                     .AddEnvironmentVariables()
                     .Build();
 
-                var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
-                var enableSyncStr = config["Firebase:EnableSync"] ?? config["Supabase:EnableSync"] ?? "true";
+                var supabaseUrl = config["Supabase:Url"];
+                var supabaseKey = config["Supabase:Key"];
+                var enableSyncStr = config["Supabase:EnableSync"] ?? "true";
                 bool enableSync = enableSyncStr == "true";
                 bool loadedFromCloud = false;
 
-                if (enableSync && !string.IsNullOrEmpty(firebaseDbUrl))
+                if (enableSync && !string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                 {
                     try {
-                        var queryUrl = $"{firebaseDbUrl.TrimEnd('/')}/oasis_global_state.json";
+                        var queryUrl = $"{supabaseUrl.TrimEnd('/')}/rest/v1/oasis_state?id=eq.1&select=data";
                         using var request = new HttpRequestMessage(HttpMethod.Get, queryUrl);
+                        request.Headers.Add("apikey", supabaseKey);
+                        request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
                         
                         var response = _httpClient.SendAsync(request).Result;
                         if (response.IsSuccessStatusCode)
                         {
                             var responseBody = response.Content.ReadAsStringAsync().Result;
-                            if (!string.IsNullOrWhiteSpace(responseBody) && responseBody != "null")
+                            using var doc = JsonDocument.Parse(responseBody);
+                            if (doc.RootElement.GetArrayLength() > 0)
                             {
-                                state = JsonSerializer.Deserialize<OasisState>(responseBody, JsonOptions) ?? new OasisState();
+                                var dataElement = doc.RootElement[0].GetProperty("data");
+                                var remoteStateJson = dataElement.GetRawText();
+                                
+                                state = JsonSerializer.Deserialize<OasisState>(remoteStateJson, JsonOptions) ?? new OasisState();
                                 loadedFromCloud = true;
-                                Console.WriteLine("Oasis: Data loaded directly from Firebase Cloud.");
+                                Console.WriteLine("Oasis: Data loaded directly from Supabase Cloud.");
                             }
                         }
                     } catch (Exception ex) {
-                        Console.WriteLine($"Error fetching from Firebase: {ex.Message}");
+                        Console.WriteLine($"Error fetching from Supabase: {ex.Message}");
                     }
                 }
 
-                // 2. Fallback to Local Disk if Firebase fails or is empty
+                // 2. Fallback to Local Disk if Supabase fails or is empty
                 if (!loadedFromCloud)
                 {
                     // Migration: If root doesn't exist but bin does, copy it
@@ -328,16 +335,13 @@ namespace Oasis.Backend.Controllers
                         writer.Write(json);
                     }
 
-                    // Pre-serialize state for Firebase
-                    string payloadJson = JsonSerializer.Serialize(state, JsonOptions);
-
-                    // 2. Cloud Sync (Firebase) - Fire and Forget with debouncing to avoid blocking UI and race conditions
+                    // 2. Cloud Sync (Supabase) - Fire and Forget
                     int currentSyncId = System.Threading.Interlocked.Increment(ref _firebaseSyncCounter);
                     
                     _ = Task.Run(async () => {
                         try {
-                            await Task.Delay(2000); // 2 second debounce for bursts of rapid saves
-                            if (_firebaseSyncCounter != currentSyncId) return; // A newer save was requested, abort this one
+                            await Task.Delay(2000); // 2 second debounce
+                            if (_firebaseSyncCounter != currentSyncId) return; // Abort if newer save exists
                             
                             var config = new ConfigurationBuilder()
                                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -345,35 +349,38 @@ namespace Oasis.Backend.Controllers
                                 .AddEnvironmentVariables()
                                 .Build();
 
-                            var firebaseDbUrl = config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
-                            var enableSyncStr = config["Firebase:EnableSync"] ?? config["Supabase:EnableSync"] ?? "true";
+                            var supabaseUrl = config["Supabase:Url"];
+                            var supabaseKey = config["Supabase:Key"];
+                            var enableSyncStr = config["Supabase:EnableSync"] ?? "true";
                             bool enableSync = enableSyncStr == "true";
 
-                            if (enableSync && !string.IsNullOrEmpty(firebaseDbUrl))
+                            if (enableSync && !string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                             {
-                                using var request = new HttpRequestMessage(HttpMethod.Put, $"{firebaseDbUrl.TrimEnd('/')}/oasis_global_state.json");
+                                var queryUrl = $"{supabaseUrl.TrimEnd('/')}/rest/v1/oasis_state?id=eq.1";
+                                using var request = new HttpRequestMessage(HttpMethod.Patch, queryUrl);
+                                request.Headers.Add("apikey", supabaseKey);
+                                request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
+                                request.Headers.Add("Prefer", "return=minimal");
+
+                                var payload = new { data = state };
+                                var payloadJson = JsonSerializer.Serialize(payload, JsonOptions);
                                 request.Content = new StringContent(payloadJson, System.Text.Encoding.UTF8, "application/json");
                                 
                                 var response = await _httpClient.SendAsync(request);
                                 if (!response.IsSuccessStatusCode)
                                 {
                                     var err = await response.Content.ReadAsStringAsync();
-                                    Console.WriteLine($"[Oasis Diagnostics] Firebase Global Sync Failed: {response.StatusCode} - {err}");
+                                    Console.WriteLine($"[Oasis Diagnostics] Supabase Sync Failed: {response.StatusCode} - {err}");
                                 }
                                 else
                                 {
-                                    Console.WriteLine("[Oasis Diagnostics] Firebase Global Sync Succeeded!");
+                                    Console.WriteLine("[Oasis Diagnostics] Supabase Sync Succeeded!");
                                 }
                             }
-                            else
-                            {
-                                Console.WriteLine("[Oasis Diagnostics] Firebase Sync skipped: disabled or missing config.");
-                            }
                         } catch (Exception ex) {
-                            Console.WriteLine($"[Oasis Diagnostics] Firebase Sync Exception: {ex.Message}");
+                            Console.WriteLine($"[Oasis Diagnostics] Supabase Sync Exception: {ex.Message}");
                         }
                     });
-
                 } catch (Exception ex) {
                     Console.WriteLine($"Error guardando oasis: {ex.Message}");
                 }
@@ -2348,20 +2355,12 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
             try
             {
-                var firebaseDbUrl = _config["Firebase:DbUrl"] ?? Environment.GetEnvironmentVariable("FIREBASE_DB_URL") ?? "https://oasiis-d43e3-default-rtdb.firebaseio.com/";
-                var firebaseBucket = _config["Firebase:StorageBucket"] ?? Environment.GetEnvironmentVariable("FIREBASE_STORAGE_BUCKET") ?? "oasiis-d43e3.firebasestorage.app";
+                var supabaseUrl = _config["Supabase:Url"];
+                var supabaseKey = _config["Supabase:Key"];
+                var enableSyncStr = _config["Supabase:EnableSync"] ?? "true";
+                bool enableSync = enableSyncStr == "true";
 
-                if (string.IsNullOrEmpty(firebaseBucket) && !string.IsNullOrEmpty(firebaseDbUrl))
-                {
-                    // Intentar deducir el bucket desde la URL de la DB
-                    var host = new Uri(firebaseDbUrl).Host;
-                    if (host.Contains("-default-rtdb"))
-                    {
-                        firebaseBucket = host.Split("-default-rtdb")[0] + ".appspot.com";
-                    }
-                }
-
-                if (string.IsNullOrEmpty(firebaseBucket))
+                if (!enableSync || string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
                 {
                     return await SaveLocalFile(file);
                 }
@@ -2379,11 +2378,14 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 }
 
                 var fileName = $"{Guid.NewGuid()}{ext}";
+                var bucketName = "oasis-media"; // Usar un bucket estándar para media
                 
-                // URL de la REST API de Firebase Storage
-                var uploadUrl = $"https://firebasestorage.googleapis.com/v0/b/{firebaseBucket}/o?name={fileName}";
+                // URL de la REST API de Supabase Storage
+                var uploadUrl = $"{supabaseUrl.TrimEnd('/')}/storage/v1/object/{bucketName}/{fileName}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
+                request.Headers.Add("apikey", supabaseKey);
+                request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
                 
                 using var stream = file.OpenReadStream();
                 using var content = new StreamContent(stream);
@@ -2393,18 +2395,15 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 var response = await _httpClient.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseJson = await response.Content.ReadAsStringAsync();
-                    using var doc = JsonDocument.Parse(responseJson);
-                    var downloadToken = doc.RootElement.GetProperty("downloadTokens").GetString();
-                    
-                    // Construir la URL pública de descarga de Firebase
-                    var publicUrl = $"https://firebasestorage.googleapis.com/v0/b/{firebaseBucket}/o/{fileName}?alt=media&token={downloadToken}";
+                    // Construir la URL pública de descarga de Supabase
+                    var publicUrl = $"{supabaseUrl.TrimEnd('/')}/storage/v1/object/public/{bucketName}/{fileName}";
                     return Ok(new { url = publicUrl });
                 }
                 else
                 {
                     var errorMsg = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Firebase Storage upload error: {response.StatusCode} - {errorMsg}");
+                    Console.WriteLine($"Supabase Storage upload error: {response.StatusCode} - {errorMsg}");
+                    // Si falla por bucket no existente o permisos, fallback a local
                     return await SaveLocalFile(file);
                 }
             }
