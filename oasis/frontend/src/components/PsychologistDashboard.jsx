@@ -3,7 +3,7 @@ import { Aperture,
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
-    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu
+    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -1798,8 +1798,20 @@ const PsychologistDashboard = ({ onClose }) => {
                                                     <div className="text-sm font-black text-white italic">@{patient.name}</div>
                                                     <div className="text-zinc-600 text-[10px] font-mono">{patient.id}</div>
                                                     {patient.password && (
-                                                        <div className="text-emerald-500/80 text-[10px] font-mono mt-1 font-bold">
-                                                            🔑 {patient.password}
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className="text-emerald-500/80 text-[10px] font-mono font-bold">
+                                                                🔑 {patient.password}
+                                                            </div>
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigator.clipboard.writeText(patient.password);
+                                                                }}
+                                                                className="text-zinc-500 hover:text-emerald-400 transition-colors p-1"
+                                                                title="Copiar contraseña"
+                                                            >
+                                                                <Copy className="w-3 h-3" />
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
