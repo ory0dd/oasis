@@ -3467,8 +3467,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         }
 
         // Phase 3: Apply the stretching transformation to all nodes to push them outwards
-        const scaleX = 1.85;
-        const scaleY = 2.8;
+        const scaleX = 1.0;
+        const scaleY = 1.0;
         const centerX = 50;
         const centerY = 50;
 
