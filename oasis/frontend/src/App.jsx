@@ -7686,6 +7686,7 @@ export default function App() {
 
     const syncLinks = (newLinks) => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
+        localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(newLinks));
         console.log(`[Oasis] Sincronizando ${newLinks.length} vínculos para ${user}...`);
         if (window.syncLinksTimeout) clearTimeout(window.syncLinksTimeout);
         window.syncLinksTimeout = setTimeout(() => {
@@ -8217,7 +8218,12 @@ export default function App() {
     const [mouseCanvasPos, setMouseCanvasPos] = useState({ x: 0, y: 0 });
     const [activeMenu, setActiveMenu] = useState(null); // { idx: number, type: 'add' | 'actions' }
     const [activeLinkMenu, setActiveLinkMenu] = useState(null); // { from, to, x, y }
-    const [links, setLinks] = useState([]); // { from: id, to: id }
+    const [links, setLinks] = useState(() => {
+        try {
+            const saved = localStorage.getItem('oasis_canvas_edges_' + (localStorage.getItem('oasis_user') || ''));
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) { return []; }
+    }); // { from: id, to: id }
     const [isLinking, setIsLinking] = useState(false);
     const [linkSource, setLinkSource] = useState(null);
     const [newAttrTitle, setNewAttrTitle] = useState('');
