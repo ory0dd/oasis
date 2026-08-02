@@ -542,9 +542,9 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje crudo, minimalista y genial. Debe ser UN SOLO PÁRRAFO (en la clave 'sintesis') que inicie describiendo su crudeza real (mecanismos, insomnio, evitación o fricción) y luego transicione hacia una rareza única y tierna o una esperanza particular que lo distinga. No uses lenguaje poético exagerado, mantenlo honesto, crudo y directo. Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje reflexivo, sutil y empático, enfocado estrictamente en sus MOTIVACIONES INTERNAS y necesidades emocionales profundas, NO en acciones o hechos explícitos de su vida. (IMPORTANTE: Nunca menciones literalmente las anécdotas que contó el usuario. Si el usuario dijo que "recoge tlacuaches", abstráelo a "siente una profunda necesidad de proteger lo vulnerable"; si dijo que "siente que debe ser mejor que todos", abstráelo a "siente miedo de mostrar una faceta donde no tiene el control"). Debe ser UN SOLO PÁRRAFO (en la clave 'sintesis') que inicie describiendo su tensión interna central y transicione hacia el núcleo genuino y humano detrás de ella. Hazlo sentir comprendido desde adentro, protegiendo su intimidad. Estructura estricta:
   {
-     "sintesis": "El único párrafo crudo, minimalista y genial que describe su bucle real y transiciona a su rareza única.",
+     "sintesis": "El único párrafo empático y reflexivo que describe su tensión interna central y transiciona hacia su motivación más profunda y vulnerable.",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave.
   }
 
