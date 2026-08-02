@@ -578,6 +578,29 @@ namespace Oasis.Backend.Controllers
             return Ok(userList);
         }
 
+        [HttpDelete("users/{username}")]
+        public IActionResult DeleteUser(string username)
+        {
+            string caller = GetAuthenticatedUser();
+            if (string.IsNullOrEmpty(caller) || !caller.Equals("observador1", StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            lock (StateLock)
+            {
+                var userToRemove = _state.Users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                if (userToRemove == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                _state.Users.Remove(userToRemove);
+                SaveState();
+                return Ok(new { message = "User deleted successfully" });
+            }
+        }
+
         [HttpGet("public-users")]
         public IActionResult GetPublicUsers()
         {

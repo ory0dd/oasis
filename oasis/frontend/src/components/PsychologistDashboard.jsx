@@ -1116,6 +1116,36 @@ const PsychologistDashboard = ({ onClose }) => {
         loadPatients();
     }, [currentModule]);
 
+    const handleDeleteUser = async (e, username) => {
+        e.stopPropagation();
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/api/oasis/users/${username}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setPatients(prev => prev.filter(p => p.name !== username));
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.endsWith(`_${username}`)) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+                alert(`Usuario ${username} eliminado correctamente.`);
+            } else {
+                alert(`Error al eliminar usuario ${username}.`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert(`Error al eliminar usuario ${username}.`);
+        }
+    };
+
     // Compute activePatientData dynamically based on selectedPatient and selectedVersion
     const activePatientData = useMemo(() => {
         if (!selectedPatient) return null;
@@ -1786,6 +1816,13 @@ const PsychologistDashboard = ({ onClose }) => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-5 text-right">
+                                            <button 
+                                                onClick={(e) => handleDeleteUser(e, patient.name)}
+                                                className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mr-2"
+                                                title="Eliminar usuario"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
                                             <ChevronRight className="inline-block w-5 h-5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
                                         </td>
                                     </tr>
