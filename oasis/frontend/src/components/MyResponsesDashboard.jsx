@@ -1808,14 +1808,15 @@ Devuelve estrictamente el JSON sin formato extra.
             if (ny > maxY) maxY = ny;
         });
 
-        const paddingPercent = isMobileDevice ? 0.05 : 0.12;
+        const paddingPercentX = isMobileDevice ? 0.10 : 0.15;
+        const paddingPercentY = isMobileDevice ? 0.25 : 0.35;
         const graphWidthRange = (maxX - minX) || 100;
         const graphHeightRange = (maxY - minY) || 100;
 
-        const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercent));
-        const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercent));
+        const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
+        const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * 0.9; // Base scale adapted to virtual canvas
+        let fitScale = Math.min(scaleX, scaleY) * 0.85; // Base scale adapted to virtual canvas
         fitScale = Math.min(Math.max(0.15, fitScale), 2.5); // Wider limits for scaling
 
         const graphCenterX = (minX + maxX) / 2;
