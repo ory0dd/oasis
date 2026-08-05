@@ -127,7 +127,7 @@ const resolveCollisions = (nodes) => {
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
     const paddingX = 28; // Spacing horizontally (aumentado para empujar hacia los lados)
-    const paddingY = 12; // Spacing vertically (aumentado para separarlos)
+    const paddingY = 6; // Spacing vertically (aumentado para separarlos)
 
     let adjusted = true;
     let iterations = 0;
