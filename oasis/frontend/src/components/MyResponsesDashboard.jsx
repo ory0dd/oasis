@@ -3434,10 +3434,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 0 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 50 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 100 },
-            { filter: n => n.type === 'consequence', baseX: 150 }
+            { filter: n => n.type === 'historical', baseX: 35 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 45 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 55 },
+            { filter: n => n.type === 'consequence', baseX: 65 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
