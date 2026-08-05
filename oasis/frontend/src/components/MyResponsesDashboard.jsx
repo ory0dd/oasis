@@ -3392,19 +3392,15 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const yStep = 14; 
-            const rows = Math.ceil(count / 2);
-            const totalHeight = (rows - 1) * yStep;
+            const step = 9; // Distancia vertical reducida
+            const totalHeight = (count - 1) * step;
             const startY = 50 - (totalHeight / 2);
-            const zigZagWidth = 15;
 
             const slots = [];
             for (let i = 0; i < count; i++) {
-                const xOffset = (i % 2 === 0) ? -zigZagWidth : zigZagWidth;
-                const rowIndex = Math.floor(i / 2);
                 slots.push({
-                    x: baseX + xOffset,
-                    y: startY + (rowIndex * yStep)
+                    x: baseX,
+                    y: startY + step * i
                 });
             }
             return slots;
