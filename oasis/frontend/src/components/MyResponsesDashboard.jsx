@@ -2269,7 +2269,8 @@ Devuelve estrictamente el JSON sin formato extra.
         )) {
             activeKey = '';
         }
-        setIsAnalyzing(true);
+        setIsAnalyzing("Construyendo topología masiva de nodos (Etapa 1/2)...");
+        
         // Retrieve resolved blind spot answers dynamically from localStorage keys
         let blindSpotAnswersContext = "";
         for (let i = 0; i < localStorage.length; i++) {
@@ -2309,7 +2310,7 @@ ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('
 === RASGOS PID-5 ===
 ${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No hay datos."}
 
-=== RESPUESTAS A PUNTOS CIEGOS (ESLABONES INTEGRADOS AL MAPA) ===
+=== RESPUESTAS A PUNTOS CIEGOS ===
 ${blindSpotAnswersContext || "Ninguno aún."}
 
 === MAPA CONDUCTUAL ACTUAL A PRESERVAR (SI APLICA) ===
@@ -2323,44 +2324,33 @@ Pool de Puntos Ciegos actual:
 ${currentBlindSpotsText}
         `;
 
-        const systemPrompt = `
-Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto Especializado en Análisis Funcional de la Conducta (AFC) y Fenomenología.
+        const systemPromptTopology = `
+Eres un Psicólogo Clínico y Analista Existencial Especializado en Análisis Funcional de la Conducta (AFC).
+ETAPA 1: TOPOLOGÍA. Tu tarea exclusiva es generar los nodos, conexiones y la distribución de modalidad.
 
 === REGLAS GENERALES ===
-PASO 1: EVALUACIÓN DE CALIDAD DE DATOS
-Analiza si las respuestas del paciente son congruentes y suficientes. Si detectas que el paciente introdujo texto sin sentido, monosílabos repetitivos, o evasivas que impiden un análisis, DEBES rechazar el análisis (is_valid: false).
-
-PASO 2: GENERACIÓN DEL JSON (ANÍLISIS PROFUNDO Y EXTENSO)
-Debes devolver ÚNICAMENTE un objeto JSON válido con la estructura especificada abajo.
+Analiza si las respuestas del paciente son congruentes y suficientes. Si es basura, devuelve "is_valid": false.
 
 ${isAdditive ? `
-=== MODO ACTUALIZACIÓN ADITIVA (ACTUALIZAR EL MAPA PRESERVANDO LA ORGANIZACIÓN) ===
-El usuario ha respondido preguntas de puntos ciegos. Tu tarea es incorporar estos aprendizajes al mapa actual sin alterar ni borrar lo que ya existe.
-Reglas estrictas de preservación aditiva:
-1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus 'id', 'label', 'type', 'x', 'y', 'description', 'source' y 'challenge'. NO cambies sus posiciones (x, y) bajo ninguna circunstancia.
-2. Copia EXACTAMENTE todas las conexiones de 'Conexiones actuales' en tu lista 'edges' de salida.
-3. Analiza las respuestas del paciente a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones que representen estas integraciones existenciales. Coloca los nuevos nodos en coordenadas que no colisionen con los existentes (respetando las columnas X de tipo de nodo).
-4. Para la lista 'blind_spots' de salida:
-   - Filtra y mantén exactamente las preguntas de 'Pool de Puntos Ciegos actual' que aún NO han sido respondidas (cuyas respuestas no aparecen en 'RESPUESTAS A PUNTOS CIEGOS'). NO las borres ni las alteres.
-   - Solo si las 10 preguntas de puntos ciegos han sido respondidas en su totalidad por el paciente, genera un nuevo set de 10 preguntas personalizadas y profundas.
+=== MODO ACTUALIZACIÓN ADITIVA ===
+1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
+2. Copia EXACTAMENTE todas las conexiones de 'Conexiones actuales'.
+3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
-=== MODO GENERACIÓN COMPLETA DESDE CERO ===
-Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para no truncar el JSON.
-1. Nodos: Genera exactamente entre 35 y 40 nodos distribuidos de izquierda a derecha en columnas por tipo para abarcar muchísimo espacio visual:
+=== MODO GENERACIÓN DESDE CERO ===
+1. Nodos: Genera exactamente entre 45 y 55 nodos distribuidos de izquierda a derecha. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
    - historical -> x: entre -120 y -40
    - biological / social -> x: entre -10 y 60
    - motor / cognitive / physiological -> x: entre 100 y 160
    - consequence -> x: entre 200 y 280
    - Coordenadas Y: distribúyelos aleatoriamente desde Y: -300 hasta Y: 600.
-2. Conexiones (edges): Genera entre 40 y 50 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa masivo, muy rico y complejo, pero ultra-conciso en texto.
-3. Puntos Ciegos: Genera exactamente 5 puntos ciegos clínicos personalizados de confrontación existencial profunda. Cada punto ciego debe proponer un nodo 'dashed' y una conexión.
+2. Conexiones (edges): Genera entre 55 y 65 conexiones. Mapa masivo y muy rico.
 `}
 
-=== ESTRUCTURA DEL JSON REQUERIDA ===
+=== ESTRUCTURA JSON REQUERIDA ===
 {
   "is_valid": true,
   "rejection_reason": "...",
-  
   "nodes": [
     // Lista de nodos
     // Cada nodo contiene: id (usa formato ultracorto: n1, n2...), type, label (max 3 palabras), x, y, description (max 5 palabras), source (cita corta, max 4 palabras), challenge (max 5 palabras), reflection_question (max 5 palabras)
@@ -2373,7 +2363,59 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
     "motor": 65,
     "cognitive": 85,
     "physiological": 40
-  },
+  }
+}
+`;
+
+        try {
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+
+            const payload1 = {
+                model: model,
+                messages: [
+                    { role: 'system', content: systemPromptTopology },
+                    { role: 'user', content: "Genera exclusivamente la TOPOLOGÍA (nodos y edges) del AFC. Datos:\n" + context }
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+                max_tokens: 8192
+            };
+
+            const res1 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint, key: activeKey, payload: payload1 })
+            });
+
+            if (!res1.ok) {
+                const errText = await res1.text();
+                throw new Error(`Error HTTP ${res1.status} (Etapa 1): ${errText}`);
+            }
+
+            const data1 = await res1.json();
+            let cleanContent1 = data1.choices[0].message.content.trim().replace(/^\s*```[a-zA-Z]*\s*/, "").replace(/\s*```\s*$/, "");
+            
+            let parsedTopology;
+            try {
+                parsedTopology = JSON.parse(cleanContent1);
+            } catch(e) {
+                console.warn("JSON Parse failed in stage 1, attempting brute force fix.");
+                parsedTopology = JSON.parse(cleanContent1 + ']}'); 
+            }
+
+            if (!parsedTopology.is_valid) {
+                throw new Error("El análisis fue rechazado por la IA: " + parsedTopology.rejection_reason);
+            }
+
+            setIsAnalyzing("Redactando análisis clínico profundo (Etapa 2/2)...");
+
+            const systemPromptInsights = `
+Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
+ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 1. Tu tarea es generar el análisis escrito, hipótesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
+
+=== ESTRUCTURA JSON REQUERIDA ===
+{
   "firma_resonancia": {
     "habitar": "Una frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y el espacio.",
     "vinculo": "Una frase de máx. 12 palabras sobre cómo se conecta con otros o su barrera principal.",
@@ -2385,17 +2427,17 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
     "solucion": "Escribe una propuesta estructurada (alrededor de 120 a 130 palabras, dividida en 2 párrafos). Debe ser COMPLETAMENTE DISTINTA al mantenimiento. Enfócate radicalmente en la acción clínica para romper la evitación."
   },
   "explicacion_sencilla": "Escribe una narración cálida y empática (alrededor de 120 a 130 palabras, dividida en 2 párrafos). Explícale cómo funciona su bucle. Háblale directamente de 'tú'. Profundiza en su dolor, pero sé directo.",
-  "claves_salida": "Escribe una lista de 3 a 4 consejos prácticos, empáticos y muy sencillos de leer (en un tono cercano de 'tú', libres de tecnicismos psicológicos), separados por saltos de línea y comenzando con un guion o viñeta. Cada consejo debe sugerir un cambio de actitud o acción cotidiana concreta y realista para flexibilizar el bucle y sanar en el día a día.",
+  "claves_salida": "Escribe una lista de 3 a 4 consejos prácticos, empáticos y muy sencillos de leer (en un tono cercano de 'tú'), separados por saltos de línea y comenzando con un guion. Cada consejo debe sugerir un cambio de actitud o acción cotidiana realista.",
   "analysis_breakdown": {
-    "historical_evidence": "...",
-    "mediators_evidence": "...",
-    "conducts_evidence": "...",
-    "consequences_evidence": "..."
+    "historical_evidence": "Evidencia histórica.",
+    "mediators_evidence": "Evidencia de mediadores.",
+    "conducts_evidence": "Evidencia de conductas.",
+    "consequences_evidence": "Evidencia de consecuencias."
   },
   "blind_spots": [
     // Pool de puntos ciegos (5 elementos en modo generación desde cero, o los restantes en modo aditivo)
     // Cada punto ciego contiene:
-    // - id: identificador único (ej. "vacio_cronologico").
+    // - id: identificador único.
     // - title: título de la brecha.
     // - question: la pregunta de confrontación.
     // - node: el nodo "incompleto" o "dashed" propuesto: { id: "blind_spot_...", type, label, x, y }
@@ -2403,96 +2445,51 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
   ],
   "patrones_dificultad": [
     // Array de 1 a 2 patrones de dificultad o circuitos clínicos identificados.
-    // Cada patrón debe encadenar de 3 a 6 nodos vinculados secuencialmente que conecten el pasado con las consecuencias y problemas actuales.
-    // Cada patrón contiene:
-    // - id: string único (ej. "patron_1")
-    // - nombre: título cortísimo del ciclo o circuito (ej: "Automedicación y Dependencia", "Ciclo de Agotamiento") (máximo 4 palabras)
-    
-    // - clave_salida: un consejo práctico, único y muy amable (máximo 25 palabras) específico para empezar a flexibilizar ESTE circuito en particular.
-
+    // Cada patrón encadena de 3 a 6 nodos.
+    // - id: string único
+    // - nombre: título cortísimo del ciclo (máximo 4 palabras)
+    // - clave_salida: un consejo práctico, único y amable (máximo 25 palabras) específico para flexibilizar este circuito.
   ]
 }
+`;
 
-ANALIZA LOS DATOS DEL PACIENTE Y RESPONDE ÚNICAMENTE CON EL JSON:
-${context}
-        `;
-
-        try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
-
-            const payload = {
+            const payload2 = {
                 model: model,
                 messages: [
-                    { role: 'system', content: systemPrompt },
-                    {
-                        role: 'user', content: isAdditive
-                            ? "Por favor, analiza mis nuevas respuestas de puntos ciegos y añádelas de forma aditiva a mi mapa conductual actual."
-                            : "Por favor, analiza mis respuestas y genera el JSON del Análisis Funcional de la Conducta (AFC) detallado con mis 10 puntos ciegos clínicos."
-                    }
+                    { role: 'system', content: systemPromptInsights },
+                    { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones):\n${JSON.stringify(parsedTopology.nodes)}` }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.3,
                 max_tokens: 8192
             };
 
-            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+            const res2 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    endpoint: endpoint,
-                    key: activeKey,
-                    payload: payload
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint, key: activeKey, payload: payload2 })
             });
 
-            if (!res.ok) {
-                const errText = await res.text();
-                let msg = `Error HTTP ${res.status}: ${errText}`;
-                try {
-                    const parsedErr = JSON.parse(errText);
-                    if (parsedErr.msg) msg = parsedErr.msg;
-                } catch (e) { }
-                throw new Error(msg);
+            if (!res2.ok) {
+                const errText = await res2.text();
+                throw new Error(`Error HTTP ${res2.status} (Etapa 2): ${errText}`);
             }
 
-            const data = await res.json();
-            const aiContent = data.choices[0].message.content;
-
-            let cleanContent = aiContent.trim();
-            if (cleanContent.startsWith("```")) {
-                cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "");
-                cleanContent = cleanContent.replace(/\s*```$/, "");
-            }
-
+            const data2 = await res2.json();
+            let cleanContent2 = data2.choices[0].message.content.trim().replace(/^\s*```[a-zA-Z]*\s*/, "").replace(/\s*```\s*$/, "");
             
-            let parsedAfc;
+            let parsedInsights;
             try {
-                parsedAfc = JSON.parse(cleanContent.trim());
-            } catch (e) {
-                console.warn("JSON Parse failed, attempting basic repair for truncated JSON...");
-                // Basic repair for truncated JSON output (closes common brackets)
-                let repaired = cleanContent.trim();
-                const openBraces = (repaired.match(/\{/g) || []).length;
-                const closeBraces = (repaired.match(/\}/g) || []).length;
-                const openBrackets = (repaired.match(/\[/g) || []).length;
-                const closeBrackets = (repaired.match(/\]/g) || []).length;
-                
-                if (repaired.endsWith(',')) repaired = repaired.slice(0, -1);
-                
-                for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += ']';
-                for (let i = 0; i < openBraces - closeBraces; i++) repaired += '}';
-                
-                try {
-                    parsedAfc = JSON.parse(repaired);
-                    console.log("JSON successfully repaired!");
-                } catch (e2) {
-                    throw new Error("El JSON recibido está truncado o es inválido y no pudo ser reparado automáticamente.");
-                }
+                parsedInsights = JSON.parse(cleanContent2);
+            } catch(e) {
+                console.warn("JSON Parse failed in stage 2, attempting brute force fix.");
+                parsedInsights = JSON.parse(cleanContent2 + '}'); 
             }
 
+            const parsedAfc = {
+                ...parsedTopology,
+                ...parsedInsights
+            };
 
             if (parsedAfc.is_valid && parsedAfc.nodes) {
                 if (!isAdditive) {
@@ -4553,7 +4550,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 {isAnalyzing ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500 bg-zinc-950/40 border border-white/5 rounded-[2rem] p-12 shadow-2xl">
                         <Activity className="animate-spin mb-6" size={48} style={{ color: accent }} />
-                        <h2 className="text-2xl font-light text-white mb-3">Construyendo tu Mapa Conductual</h2>
+                        <h2 className="text-2xl font-light text-white mb-3">{typeof isAnalyzing === "string" ? isAnalyzing : "Construyendo tu Mapa Conductual"}</h2>
                         <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed mb-6">
                             Nuestra IA está analizando de forma segura tus respuestas en el Diagnóstico Existencial y la Historia de Vida para formular tus hipótesis clínicas y estructurar el mapa de bucles.
                         </p>
