@@ -2403,8 +2403,14 @@ ${isAdditive ? `
             try {
                 parsedTopology = JSON.parse(cleanContent1);
             } catch(e) {
-                console.warn("JSON Parse failed in stage 1, attempting brute force fix.");
-                parsedTopology = JSON.parse(cleanContent1 + ']}'); 
+                console.warn("JSON Parse failed in stage 1.", e);
+                const match = e.message.match(/position (\d+)/);
+                let contextStr = "";
+                if (match && match[1]) {
+                    const pos = parseInt(match[1], 10);
+                    contextStr = "\\nContexto del error: ..." + cleanContent1.substring(Math.max(0, pos - 20), pos + 20) + "...";
+                }
+                throw new Error("El modelo generó un JSON inválido en la Etapa 1. " + e.message + contextStr);
             }
 
             if (!parsedTopology.is_valid) {
@@ -2488,8 +2494,14 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
             try {
                 parsedInsights = JSON.parse(cleanContent2);
             } catch(e) {
-                console.warn("JSON Parse failed in stage 2, attempting brute force fix.", e);
-                parsedInsights = JSON.parse(cleanContent2 + '}'); 
+                console.warn("JSON Parse failed in stage 2.", e);
+                const match = e.message.match(/position (\d+)/);
+                let contextStr = "";
+                if (match && match[1]) {
+                    const pos = parseInt(match[1], 10);
+                    contextStr = "\\nContexto del error: ..." + cleanContent2.substring(Math.max(0, pos - 20), pos + 20) + "...";
+                }
+                throw new Error("El modelo generó un JSON inválido en la Etapa 2. " + e.message + contextStr);
             }
 
             const parsedAfc = {
