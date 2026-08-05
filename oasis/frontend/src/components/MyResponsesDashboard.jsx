@@ -126,8 +126,8 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 5; // Spacing horizontally (aumentado para empujar hacia los lados)
-    const paddingY = 5; // Spacing vertically (aumentado para separarlos)
+    const paddingX = 15; // Spacing horizontally (aumentado para empujar hacia los lados)
+    const paddingY = 8; // Spacing vertically (aumentado para separarlos)
 
     let adjusted = true;
     let iterations = 0;
@@ -3434,10 +3434,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 35 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 45 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 55 },
-            { filter: n => n.type === 'consequence', baseX: 65 }
+            { filter: n => n.type === 'historical', baseX: 15 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61 },
+            { filter: n => n.type === 'consequence', baseX: 85 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
