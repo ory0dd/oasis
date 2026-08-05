@@ -542,10 +542,10 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje reflexivo, sutil y empático, enfocado estrictamente en sus MOTIVACIONES INTERNAS y necesidades emocionales profundas, NO en acciones o hechos explícitos de su vida. (IMPORTANTE: Nunca menciones literalmente las anécdotas que contó el usuario. Si el usuario dijo que "recoge tlacuaches", abstráelo a "siente una profunda necesidad de proteger lo vulnerable"; si dijo que "siente que debe ser mejor que todos", abstráelo a "siente miedo de mostrar una faceta donde no tiene el control"). Debe ser UN SOLO PÁRRAFO de exactamente 5 LÍNEAS (unas 60-70 palabras en la clave 'sintesis') que describa su tensión interna central y su núcleo humano. Sé directo pero profundo. Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario, profundamente poético y empático (estilo psicoanálisis existencial). Háblale directamente de 'tú', como si estuvieras viendo el fondo de su alma. Enfócate en la belleza trágica de su tensión interna, sus anhelos más profundos y su fuerza vital, abstrayendo por completo los hechos concretos de su vida. (IMPORTANTE: Nunca menciones anécdotas literales). Debe ser UN SOLO PÁRRAFO con una longitud visual de aproximadamente 5 renglones, que se lea como una reflexión profunda y conmovedora, no como un diagnóstico médico. Estructura estricta:
   {
-     "sintesis": "Párrafo empático y profundo de unas 60-70 palabras (5 líneas) sobre su tensión y motivación.",
-     "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave.
+     "sintesis": "Párrafo poético, cálido y profundo sobre su alma y su tensión (aprox 5 líneas).",
+     "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   }
 
 DATOS DEL PACIENTE:
