@@ -126,8 +126,8 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 14; // Spacing horizontally (reduced to pack nodes closer)
-    const paddingY = 8; // Spacing vertically (reduced to pack nodes closer)
+    const paddingX = 28; // Spacing horizontally (aumentado para empujar hacia los lados)
+    const paddingY = 12; // Spacing vertically (aumentado para separarlos)
 
     let adjusted = true;
     let iterations = 0;
@@ -542,9 +542,9 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje reflexivo, sutil y empático, enfocado estrictamente en sus MOTIVACIONES INTERNAS y necesidades emocionales profundas, NO en acciones o hechos explícitos de su vida. (IMPORTANTE: Nunca menciones literalmente las anécdotas que contó el usuario. Si el usuario dijo que "recoge tlacuaches", abstráelo a "siente una profunda necesidad de proteger lo vulnerable"; si dijo que "siente que debe ser mejor que todos", abstráelo a "siente miedo de mostrar una faceta donde no tiene el control"). Debe ser UN SOLO PÁRRAFO (en la clave 'sintesis') que inicie describiendo su tensión interna central y transicione hacia el núcleo genuino y humano detrás de ella. Hazlo sentir comprendido desde adentro, protegiendo su intimidad. Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje reflexivo, sutil y empático, enfocado estrictamente en sus MOTIVACIONES INTERNAS y necesidades emocionales profundas, NO en acciones o hechos explícitos de su vida. (IMPORTANTE: Nunca menciones literalmente las anécdotas que contó el usuario. Si el usuario dijo que "recoge tlacuaches", abstráelo a "siente una profunda necesidad de proteger lo vulnerable"; si dijo que "siente que debe ser mejor que todos", abstráelo a "siente miedo de mostrar una faceta donde no tiene el control"). Debe ser UN SOLO PÁRRAFO de exactamente 5 LÍNEAS (unas 60-70 palabras en la clave 'sintesis') que describa su tensión interna central y su núcleo humano. Sé directo pero profundo. Estructura estricta:
   {
-     "sintesis": "El único párrafo empático y reflexivo que describe su tensión interna central y transiciona hacia su motivación más profunda y vulnerable.",
+     "sintesis": "Párrafo empático y profundo de unas 60-70 palabras (5 líneas) sobre su tensión y motivación.",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"] // 3-5 palabras clave.
   }
 
@@ -2346,13 +2346,13 @@ Reglas estrictas de preservación aditiva:
 ` : `
 === MODO GENERACIÓN COMPLETA DESDE CERO ===
 Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para no truncar el JSON.
-1. Nodos: Genera exactamente entre 14 y 18 nodos distribuidos de izquierda a derecha en columnas por tipo:
-   - historical -> x: entre -25 y -5
-   - biological / social -> x: entre 15 y 35
-   - motor / cognitive / physiological -> x: entre 65 y 85
-   - consequence -> x: entre 105 y 125
-   - Coordenadas Y: distribúyelos desde Y: -120 hasta Y: 300. Si dos nodos están en la misma columna X, dales al menos 30 puntos de distancia Y.
-2. Conexiones (edges): Genera entre 18 y 25 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa muy rico y complejo.
+1. Nodos: Genera exactamente entre 45 y 55 nodos distribuidos de izquierda a derecha en columnas por tipo para abarcar muchísimo espacio visual:
+   - historical -> x: entre -120 y -40
+   - biological / social -> x: entre -10 y 60
+   - motor / cognitive / physiological -> x: entre 100 y 160
+   - consequence -> x: entre 200 y 280
+   - Coordenadas Y: distribúyelos aleatoriamente desde Y: -300 hasta Y: 600.
+2. Conexiones (edges): Genera entre 55 y 65 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa masivo, muy rico y complejo, pero ultra-conciso en texto.
 3. Puntos Ciegos: Genera exactamente 5 puntos ciegos clínicos personalizados de confrontación existencial profunda. Cada punto ciego debe proponer un nodo 'dashed' y una conexión.
 `}
 
@@ -2363,7 +2363,7 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
   
   "nodes": [
     // Lista de nodos
-    // Cada nodo contiene: id, type, label (max 6 palabras), x, y, description (max 15 palabras), source (cita corta de las respuestas, max 10 palabras), challenge (percepción fenomenológica profunda del sentido del síntoma, max 15 palabras), reflection_question (una pregunta clínica hiper-enfocada en la atención directa del contexto específico del nodo. Sé muy breve y directo, max 12 palabras. Ejemplo: si dice 'difícil lidiar', pregunta '¿Qué cosas difíciles sientes ahí?'. Guía un descubrimiento anclado al contexto exacto de la respuesta)
+    // Cada nodo contiene: id, type, label (max 3 palabras), x, y, description (max 5 palabras), source (cita corta, max 4 palabras), challenge (percepción profunda, max 5 palabras), reflection_question (pregunta directa, max 5 palabras)
   ],
   "edges": [
     // Lista de conexiones
