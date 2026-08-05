@@ -2339,11 +2339,11 @@ ${isAdditive ? `
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
 1. Nodos: Genera exactamente entre 45 y 55 nodos distribuidos de izquierda a derecha. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
-   - historical -> x: entre -120 y -40
-   - biological / social -> x: entre -10 y 60
-   - motor / cognitive / physiological -> x: entre 100 y 160
-   - consequence -> x: entre 200 y 280
-   - Coordenadas Y: distribúyelos aleatoriamente desde Y: -300 hasta Y: 600.
+   - historical (azules) -> x: entre -120 y -40
+   - motor / cognitive / physiological (rojos) -> x: entre 20 y 100
+   - biological / social (verdes) -> x: entre 140 y 220
+   - consequence (blancos) -> x: entre 260 y 340
+   - Coordenadas Y: distribúyelos desde Y: -400 hasta Y: 700. REGLA ESTRICTA DE ORDEN: Si dos nodos están en la misma columna (rango X), dales al menos 50 puntos de distancia Y para que no se mezclen ni se traslapen.
 2. Conexiones (edges): Genera entre 55 y 65 conexiones. Mapa masivo y muy rico.
 `}
 
