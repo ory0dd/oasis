@@ -3388,11 +3388,11 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         const newNodes = [...currentNodes].map(n => ({ ...n }));
 
-        const getStaggeredSlots = (count, baseX) => {
+        const getStaggeredSlots = (count, baseX, customYStep) => {
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const yStep = 8; // Aumentado ligeramente de 6 a 8 para evitar solapamiento
+            const yStep = customYStep || 8; 
             const rows = Math.ceil(count / 2);
             const totalHeight = (rows - 1) * yStep;
             const startY = 50 - (totalHeight / 2);
@@ -3434,10 +3434,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 15 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61 },
-            { filter: n => n.type === 'consequence', baseX: 85 }
+            { filter: n => n.type === 'historical', baseX: 15, yStep: 14 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38, yStep: 8 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61, yStep: 12 },
+            { filter: n => n.type === 'consequence', baseX: 85, yStep: 8 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -3445,7 +3445,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         // Initialize all nodes to staggered slots in their layers
         layerNodes.forEach((nodes, layerIdx) => {
             const baseX = layers[layerIdx].baseX;
-            const slots = getStaggeredSlots(nodes.length, baseX);
+            const slots = getStaggeredSlots(nodes.length, baseX, layers[layerIdx].yStep);
             nodes.sort((a, b) => a.label.localeCompare(b.label));
             nodes.forEach((n, idx) => {
                 n.x = slots[idx].x;
@@ -3463,7 +3463,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
                     n.barycenter = getBarycenter(n);
                 });
                 nodes.sort((a, b) => a.barycenter - b.barycenter);
-                const slots = getStaggeredSlots(nodes.length, layers[i].baseX);
+                const slots = getStaggeredSlots(nodes.length, layers[i].baseX, layers[i].yStep);
                 nodes.forEach((n, idx) => {
                     n.x = slots[idx].x;
                     n.y = slots[idx].y;
@@ -3477,7 +3477,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
                     n.barycenter = getBarycenter(n);
                 });
                 nodes.sort((a, b) => a.barycenter - b.barycenter);
-                const slots = getStaggeredSlots(nodes.length, layers[i].baseX);
+                const slots = getStaggeredSlots(nodes.length, layers[i].baseX, layers[i].yStep);
                 nodes.forEach((n, idx) => {
                     n.x = slots[idx].x;
                     n.y = slots[idx].y;
