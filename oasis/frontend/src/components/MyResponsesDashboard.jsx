@@ -126,8 +126,8 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 28; // Spacing horizontally (aumentado para empujar hacia los lados)
-    const paddingY = 6; // Spacing vertically (aumentado para separarlos)
+    const paddingX = 12;
+    const paddingY = 6;
 
     let adjusted = true;
     let iterations = 0;
@@ -3392,15 +3392,19 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const step = 9; // Distancia vertical reducida
-            const totalHeight = (count - 1) * step;
+            const yStep = 6; // Distancia vertical entre filas del zigzag (muy compacto)
+            const rows = Math.ceil(count / 2);
+            const totalHeight = (rows - 1) * yStep;
             const startY = 50 - (totalHeight / 2);
+            const zigZagWidth = 4; // Ancho del zigzag (pequeño para que no se mezcle con otras columnas)
 
             const slots = [];
             for (let i = 0; i < count; i++) {
+                const xOffset = (i % 2 === 0) ? -zigZagWidth : zigZagWidth;
+                const rowIndex = Math.floor(i / 2);
                 slots.push({
-                    x: baseX,
-                    y: startY + step * i
+                    x: baseX + xOffset,
+                    y: startY + (rowIndex * yStep)
                 });
             }
             return slots;
@@ -3430,10 +3434,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 0 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 50 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 100 },
-            { filter: n => n.type === 'consequence', baseX: 150 }
+            { filter: n => n.type === 'historical', baseX: 15 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61 },
+            { filter: n => n.type === 'consequence', baseX: 85 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
