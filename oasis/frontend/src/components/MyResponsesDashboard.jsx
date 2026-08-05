@@ -3380,15 +3380,14 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const startY = 29;
-            const endY = 71;
-            const step = (endY - startY) / (count - 1);
+            const step = 20; 
+            const totalHeight = (count - 1) * step;
+            const startY = 50 - (totalHeight / 2);
 
             const slots = [];
             for (let i = 0; i < count; i++) {
-                const xOffset = i % 2 === 0 ? -3 : 3;
                 slots.push({
-                    x: baseX + xOffset,
+                    x: baseX,
                     y: startY + step * i
                 });
             }
@@ -3419,10 +3418,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 34 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 44 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 54 },
-            { filter: n => n.type === 'consequence', baseX: 64 }
+            { filter: n => n.type === 'historical', baseX: 0 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 50 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 100 },
+            { filter: n => n.type === 'consequence', baseX: 150 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -3481,8 +3480,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             n.y = centerY + (n.y - centerY) * scaleY;
 
             // Apply a subtle wavy S-curve offset to the columns to give it an organic, hand-placed look
-            const organicCurve = Math.sin(n.y / 35) * 6 + Math.cos(idx) * 2;
-            n.x += organicCurve;
+            // curve removed
+            // curve removed
         });
 
         const resolvedNodes = resolveCollisions(newNodes);
