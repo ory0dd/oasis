@@ -2394,7 +2394,10 @@ ${isAdditive ? `
             }
 
             const data1 = await res1.json();
-            let cleanContent1 = data1.choices[0].message.content.trim().replace(/^\s*```[a-zA-Z]*\s*/, "").replace(/\s*```\s*$/, "");
+            let raw1 = data1.choices[0].message.content.trim();
+            const start1 = raw1.indexOf('{');
+            const end1 = raw1.lastIndexOf('}');
+            let cleanContent1 = (start1 !== -1 && end1 !== -1) ? raw1.substring(start1, end1 + 1) : raw1;
             
             let parsedTopology;
             try {
@@ -2476,13 +2479,16 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
             }
 
             const data2 = await res2.json();
-            let cleanContent2 = data2.choices[0].message.content.trim().replace(/^\s*```[a-zA-Z]*\s*/, "").replace(/\s*```\s*$/, "");
+            let raw2 = data2.choices[0].message.content.trim();
+            const start2 = raw2.indexOf('{');
+            const end2 = raw2.lastIndexOf('}');
+            let cleanContent2 = (start2 !== -1 && end2 !== -1) ? raw2.substring(start2, end2 + 1) : raw2;
             
             let parsedInsights;
             try {
                 parsedInsights = JSON.parse(cleanContent2);
             } catch(e) {
-                console.warn("JSON Parse failed in stage 2, attempting brute force fix.");
+                console.warn("JSON Parse failed in stage 2, attempting brute force fix.", e);
                 parsedInsights = JSON.parse(cleanContent2 + '}'); 
             }
 
