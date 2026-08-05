@@ -2346,13 +2346,13 @@ Reglas estrictas de preservación aditiva:
 ` : `
 === MODO GENERACIÓN COMPLETA DESDE CERO ===
 Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para no truncar el JSON.
-1. Nodos: Genera exactamente entre 45 y 55 nodos distribuidos de izquierda a derecha en columnas por tipo para abarcar muchísimo espacio visual:
+1. Nodos: Genera exactamente entre 35 y 40 nodos distribuidos de izquierda a derecha en columnas por tipo para abarcar muchísimo espacio visual:
    - historical -> x: entre -120 y -40
    - biological / social -> x: entre -10 y 60
    - motor / cognitive / physiological -> x: entre 100 y 160
    - consequence -> x: entre 200 y 280
    - Coordenadas Y: distribúyelos aleatoriamente desde Y: -300 hasta Y: 600.
-2. Conexiones (edges): Genera entre 55 y 65 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa masivo, muy rico y complejo, pero ultra-conciso en texto.
+2. Conexiones (edges): Genera entre 40 y 50 conexiones que demuestren cómo el pasado afecta los mediadores, cómo estos disparan respuestas, y cómo estas llevan a consecuencias. Intenta crear un mapa masivo, muy rico y complejo, pero ultra-conciso en texto.
 3. Puntos Ciegos: Genera exactamente 5 puntos ciegos clínicos personalizados de confrontación existencial profunda. Cada punto ciego debe proponer un nodo 'dashed' y una conexión.
 `}
 
@@ -2363,7 +2363,7 @@ Genera un mapa funcional inicial detallado y EXTENSO, PERO CONCISO en texto para
   
   "nodes": [
     // Lista de nodos
-    // Cada nodo contiene: id, type, label (max 3 palabras), x, y, description (max 5 palabras), source (cita corta, max 4 palabras), challenge (percepción profunda, max 5 palabras), reflection_question (pregunta directa, max 5 palabras)
+    // Cada nodo contiene: id (usa formato ultracorto: n1, n2...), type, label (max 3 palabras), x, y, description (max 5 palabras), source (cita corta, max 4 palabras), challenge (max 5 palabras), reflection_question (max 5 palabras)
   ],
   "edges": [
     // Lista de conexiones
