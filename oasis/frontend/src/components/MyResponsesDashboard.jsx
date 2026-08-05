@@ -127,7 +127,7 @@ const resolveCollisions = (nodes) => {
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
     const paddingX = 12;
-    const paddingY = 6;
+    const paddingY = 8;
 
     let adjusted = true;
     let iterations = 0;
@@ -3392,7 +3392,7 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const yStep = 6; // Distancia vertical entre filas del zigzag (muy compacto)
+            const yStep = 8; // Aumentado ligeramente de 6 a 8 para evitar solapamiento
             const rows = Math.ceil(count / 2);
             const totalHeight = (rows - 1) * yStep;
             const startY = 50 - (totalHeight / 2);
