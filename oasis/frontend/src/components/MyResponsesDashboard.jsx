@@ -1816,8 +1816,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * 1.20; // Zoom base más grande (1.20x), seguro ahora que no hay picos verticales
-        fitScale = Math.min(Math.max(0.15, fitScale), 2.5); // Wider limits for scaling
+        let fitScale = Math.min(scaleX, scaleY) * 1.0; // Zoom base 1.0x (ajuste perfecto matemático)
 
         const graphCenterX = (minX + maxX) / 2;
         const graphCenterY = (minY + maxY) / 2;
@@ -3453,26 +3452,17 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
             if (count === 1) return [{ x: baseX, y: 50 }];
 
             const yStep = customYStep || 8; 
-            const MAX_ROWS = 5; // Límite estricto de altura para evitar que se salgan del encuadre
-            
+            const rows = Math.ceil(count / 2);
+            const totalHeight = (rows - 1) * yStep;
+            const startY = 50 - (totalHeight / 2);
+            const zigZagWidth = 4; // Ancho del zigzag (pequeño para que no se mezcle con otras columnas)
+
             const slots = [];
             for (let i = 0; i < count; i++) {
-                const overflowIndex = Math.floor(i / (MAX_ROWS * 2)); 
-                const localI = i % (MAX_ROWS * 2);
-                
-                const rowsInThisColumn = Math.ceil(Math.min(count - overflowIndex * (MAX_ROWS * 2), MAX_ROWS * 2) / 2);
-                const totalHeight = (rowsInThisColumn - 1) * yStep;
-                const startY = 50 - (totalHeight / 2);
-                
-                const zigZagWidth = 4;
-                const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
-                
-                // Si la columna superó MAX_ROWS, manda los nodos excedentes a un lado (overflow horizontal)
-                const overflowXOffset = overflowIndex === 0 ? 0 : (overflowIndex % 2 === 1 ? -12 : 12) * Math.ceil(overflowIndex / 2);
-                
-                const rowIndex = Math.floor(localI / 2);
+                const xOffset = (i % 2 === 0) ? -zigZagWidth : zigZagWidth;
+                const rowIndex = Math.floor(i / 2);
                 slots.push({
-                    x: baseX + localXOffset + overflowXOffset,
+                    x: baseX + xOffset,
                     y: startY + (rowIndex * yStep)
                 });
             }
