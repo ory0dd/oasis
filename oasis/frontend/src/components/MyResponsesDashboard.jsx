@@ -1350,10 +1350,17 @@ Devuelve estrictamente el JSON sin formato extra.
     // Removed localStorage sync to always perform fresh mathematical auto-centering on mount and tab load
 
     // Node Exploration States
+    const [nodeExplorations, setNodeExplorations] = useState({});
+    const [isExploringActiveNode, setIsExploringActiveNode] = useState(false);
     const [nodeChats, setNodeChats] = useState({}); // { nodeId: [{ role: 'assistant'|'user', content: string }] }
     const [isGeneratingExplorations, setIsGeneratingExplorations] = useState(false);
+    const [selectedExplorationSpot, setSelectedExplorationSpot] = useState(null);
     const [explorationResponse, setExplorationResponse] = useState('');
     const [isSubmittingExploration, setIsSubmittingExploration] = useState(false);
+    const [solidifyingExplorationId, setSolidifyingExplorationId] = useState(null);
+    const [explorationModalOpen, setExplorationModalOpen] = useState(false);
+    const [explorationQuestions, setExplorationQuestions] = useState([]);
+    const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
     const chatContainerRef = useRef(null);
 
     // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
