@@ -2424,6 +2424,7 @@ Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
 ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 1. Tu tarea es generar el análisis escrito, hipótesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
 
 === ESTRUCTURA JSON REQUERIDA ===
+(CRÍTICO: Devuelve EXCLUSIVAMENTE un objeto JSON válido, verifica no agregar llaves "}" adicionales de cierre donde no van, y cuida las comas finales)
 {
   "firma_resonancia": {
     "habitar": "Una frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y el espacio.",
@@ -2490,6 +2491,10 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
             const end2 = raw2.lastIndexOf('}');
             let cleanContent2 = (start2 !== -1 && end2 !== -1) ? raw2.substring(start2, end2 + 1) : raw2;
             
+            // Auto-heal common JSON syntax hallucinations from Deepseek (extra '}' before claves_salida or similar root keys)
+            cleanContent2 = cleanContent2.replace(/},\s*"claves_salida":/g, ',\n  "claves_salida":');
+            cleanContent2 = cleanContent2.replace(/},\s*"analysis_breakdown":/g, ',\n  "analysis_breakdown":');
+
             let parsedInsights;
             try {
                 parsedInsights = JSON.parse(cleanContent2);
