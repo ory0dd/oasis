@@ -1,0 +1,11 @@
+﻿const fs = require('fs');
+let code = fs.readFileSync('Controllers/OasisController.cs', 'utf8');
+let startLoad = code.indexOf('private static OasisState LoadState()');
+let endLoad = code.indexOf('        private static void SaveState()', startLoad);
+let startSave = code.indexOf('private static void SaveStateInternal(OasisState state)');
+let endSave = code.indexOf('        [HttpGet', startSave);
+let newLoad = fs.readFileSync('newLoad.txt', 'utf8') + '\n\n';
+let newSave = fs.readFileSync('newSave.txt', 'utf8') + '\n\n';
+code = code.substring(0, startLoad) + newLoad + code.substring(endLoad, startSave) + newSave + code.substring(endSave);
+fs.writeFileSync('Controllers/OasisController.cs', code);
+console.log('Successfully rewrote code');
