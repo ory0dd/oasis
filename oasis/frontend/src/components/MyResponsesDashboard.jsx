@@ -2338,7 +2338,7 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Nodos: Genera exactamente entre 45 y 55 nodos distribuidos de izquierda a derecha. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
+1. Nodos: Genera exactamente entre 38 y 46 nodos distribuidos de izquierda a derecha. Reduce intencionalmente la cantidad de nodos rojos (motor/cognitive/physiological) y verdes (biological/social) para que la columna no se sature. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
    - historical (azules) -> x: entre -120 y -40
    - motor / cognitive / physiological (rojos) -> x: entre 20 y 100
    - biological / social (verdes) -> x: entre 140 y 220
