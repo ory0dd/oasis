@@ -1816,7 +1816,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * 1.0; // Zoom base 1.0x (ajuste perfecto matemático)
+        let fitScale = Math.min(scaleX, scaleY) * 1.20; // Zoom base aumentado a 1.20x para que no quede tan lejos
 
         const graphCenterX = (minX + maxX) / 2;
         const graphCenterY = (minY + maxY) / 2;
