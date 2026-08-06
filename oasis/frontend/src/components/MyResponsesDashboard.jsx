@@ -399,6 +399,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
 
     const isMobileDevice = window.innerWidth < 768;
     const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 1400;
+    const VIRTUAL_HEIGHT = isMobileDevice ? 2400 : 1600;
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -1762,7 +1763,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const currentChat = getSafeCurrentChat(selectedNode.id, selectedQuestionIndex !== null ? selectedQuestionIndex : 0);
             if (!currentChat || currentChat.length === 0) {
                 // Prevenir llamadas múltiples
-                if (!isGeneratingExplorations) {
+                console.log("TRIGGERING API", selectedNode.id, selectedQuestionIndex); if (!isGeneratingExplorations) {
                     continueNodeExploration(selectedNode);
                 }
             }
@@ -1837,7 +1838,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const graphHeightRange = (maxY - minY) || 100;
 
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
-        const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercentY));
+        const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
         let fitScale = Math.min(scaleX, scaleY) * 1.20; // Zoom base aumentado a 1.20x para que no quede tan lejos
         fitScale = Math.min(Math.max(0.35, fitScale), 4); // Límite estricto para no romper el zoom manual del usuario
@@ -1846,7 +1847,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const graphCenterY = (minY + maxY) / 2;
 
         const px = VIRTUAL_WIDTH * (graphCenterX / 100);
-        const py = 1600 * (graphCenterY / 100);
+        const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
 
         // Correct top-left origin mathematical centering formula: tx = center - px * fitScale
         const tx = viewportWidth / 2 - px * fitScale;
@@ -1864,7 +1865,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const height = rect.height;
             if (width === 0 || height === 0) return;
             const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
-            const py = 1600 * ((targetNode.y ?? 50) / 100);
+            const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
             const isMobile = window.innerWidth < 768;
             let targetScale = isMobile ? 0.85 : (width / VIRTUAL_WIDTH) * 1.3;
             targetScale = Math.min(Math.max(0.35, targetScale), 2.5);
@@ -1929,14 +1930,14 @@ Devuelve estrictamente el JSON sin formato extra.
             const graphCenterY = (minY + maxY) / 2;
 
             const px = VIRTUAL_WIDTH * (graphCenterX / 100);
-            const py = 1600 * (graphCenterY / 100);
+            const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
             
             // Dynamic wide zoom out calculation so all nodes of the pattern are fully framed
             const graphWidthRange = (maxX - minX) || 60;
             const graphHeightRange = (maxY - minY) || 60;
             const paddingPercent = isMobileDevice ? 0.15 : 0.15;
             const scaleX = width / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercent));
-            const scaleY = height / (1600 * (graphHeightRange / 100 + paddingPercent));
+            const scaleY = height / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercent));
             let targetScale = Math.min(scaleX, scaleY);
             targetScale = Math.min(Math.max(0.1, targetScale), 1.0);
 
@@ -3307,7 +3308,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             lastPointerPos.current = { x: e.clientX, y: e.clientY };
 
             const dx = (deltaX / transformRef.current.scale) / VIRTUAL_WIDTH * 100;
-            const dy = (deltaY / transformRef.current.scale) / 1600 * 100;
+            const dy = (deltaY / transformRef.current.scale) / VIRTUAL_HEIGHT * 100;
 
             if (!window._dragNodeAcc) window._dragNodeAcc = { dx: 0, dy: 0 };
             window._dragNodeAcc.dx += dx;
@@ -3427,7 +3428,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
 
                 const dx = (deltaX / transformRef.current.scale) / VIRTUAL_WIDTH * 100;
-                const dy = (deltaY / transformRef.current.scale) / 1600 * 100;
+                const dy = (deltaY / transformRef.current.scale) / VIRTUAL_HEIGHT * 100;
 
                 if (!window._dragNodeAcc) window._dragNodeAcc = { dx: 0, dy: 0 };
                 window._dragNodeAcc.dx += dx;
@@ -4817,8 +4818,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Transform Container (Pan/Zoom applies here) */}
                                 <div
                                     ref={transformContainerRef}
-                                    className={`absolute top-0 left-0 h-[1600px] origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
-                                    style={{ width: `${VIRTUAL_WIDTH}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
+                                    className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
+                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
                                 >
                                     {/* SVG Edges */}
                                     
