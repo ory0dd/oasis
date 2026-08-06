@@ -2337,7 +2337,7 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Nodos: Genera exactamente entre 42 y 50 nodos. ES VITAL UN BALANCE SIMÉTRICO: Genera aproximadamente la misma cantidad de nodos para las 4 columnas. ¡Asegúrate de generar bastantes nodos 'historical' (azules) y 'consequence' (blancos) para no saturar el centro! ORDEN DE RELEVANCIA: Identifica el motivo principal de consulta del paciente y ORDENA el arreglo de nodos de MAYOR a MENOR relevancia respecto a este motivo (los más directamente relacionados ponlos al principio del arreglo para que aparezcan en la parte superior del mapa). Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
+1. Nodos: Genera exactamente entre 40 y 48 nodos. REGLA ESTRICTA DE BALANCE MATEMÁTICO: Debes generar entre 10 y 12 nodos de tipo 'historical' (azules), MÁXIMO 12 nodos en total sumando 'motor/cognitive/physiological' (rojos), MÁXIMO 12 nodos sumando 'biological/social' (verdes), y entre 10 y 12 nodos 'consequence' (blancos). ¡Si generas más de 12 rojos o 12 verdes, el sistema fallará por saturación visual! ORDEN DE RELEVANCIA: Identifica el motivo principal de consulta del paciente y ORDENA el arreglo de nodos de MAYOR a MENOR relevancia respecto a este motivo (los más directamente relacionados ponlos al principio del arreglo para que aparezcan en la parte superior del mapa). Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
    - historical (azules) -> x: entre -120 y -40
    - motor / cognitive / physiological (rojos) -> x: entre 20 y 100
    - biological / social (verdes) -> x: entre 140 y 220
