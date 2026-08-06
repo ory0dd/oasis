@@ -3448,22 +3448,37 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         const newNodes = [...currentNodes].map(n => ({ ...n }));
 
-        const getStaggeredSlots = (count, baseX, customYStep) => {
+        const getStaggeredSlots = (count, baseX, customYStep, overflowDirection = 0) => {
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
             const yStep = customYStep || 8; 
-            const rows = Math.ceil(count / 2);
-            const totalHeight = (rows - 1) * yStep;
-            const startY = 50 - (totalHeight / 2);
-            const zigZagWidth = 4; // Ancho del zigzag (pequeño para que no se mezcle con otras columnas)
-
+            const MAX_ROWS = 5; // Limite vertical antes de desbordar hacia los lados
+            
             const slots = [];
             for (let i = 0; i < count; i++) {
-                const xOffset = (i % 2 === 0) ? -zigZagWidth : zigZagWidth;
-                const rowIndex = Math.floor(i / 2);
+                let overflowIndex = 0;
+                if (overflowDirection !== 0) {
+                    overflowIndex = Math.floor(i / (MAX_ROWS * 2));
+                }
+                
+                const localI = overflowDirection !== 0 ? i % (MAX_ROWS * 2) : i;
+                const rowsInThisColumn = overflowDirection !== 0 ? 
+                     Math.ceil(Math.min(count - overflowIndex * (MAX_ROWS * 2), MAX_ROWS * 2) / 2) : 
+                     Math.ceil(count / 2);
+                
+                const totalHeight = (rowsInThisColumn - 1) * yStep;
+                const startY = 50 - (totalHeight / 2);
+                
+                const zigZagWidth = 4;
+                const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
+                
+                // overflowDirection: -1 empuja hacia la izquierda, 1 empuja hacia la derecha.
+                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 15 * overflowIndex;
+                
+                const rowIndex = Math.floor(localI / 2);
                 slots.push({
-                    x: baseX + xOffset,
+                    x: baseX + localXOffset + overflowXOffset,
                     y: startY + (rowIndex * yStep)
                 });
             }
@@ -3494,10 +3509,10 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 15, yStep: 14 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38, yStep: 8 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61, yStep: 12 },
-            { filter: n => n.type === 'consequence', baseX: 85, yStep: 8 }
+            { filter: n => n.type === 'historical', baseX: 15, yStep: 14, overflowDir: -1 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38, yStep: 8, overflowDir: 0 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61, yStep: 12, overflowDir: 0 },
+            { filter: n => n.type === 'consequence', baseX: 85, yStep: 8, overflowDir: 1 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -3507,8 +3522,8 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         // This guarantees that the original Array order returned by the AI (which is sorted by relevance)
         // determines the vertical position, placing the most important nodes at the top.
         layerNodes.forEach((nodes, layerIdx) => {
-            const baseX = layers[layerIdx].baseX;
-            const slots = getStaggeredSlots(nodes.length, baseX, layers[layerIdx].yStep);
+            const layer = layers[layerIdx];
+            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.yStep, layer.overflowDir);
             nodes.forEach((n, idx) => {
                 n.x = slots[idx].x;
                 n.y = slots[idx].y;
