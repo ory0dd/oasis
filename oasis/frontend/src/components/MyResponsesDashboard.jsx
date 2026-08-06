@@ -1350,17 +1350,11 @@ Devuelve estrictamente el JSON sin formato extra.
     // Removed localStorage sync to always perform fresh mathematical auto-centering on mount and tab load
 
     // Node Exploration States
-    const [nodeExplorations, setNodeExplorations] = useState({});
-    const [isExploringActiveNode, setIsExploringActiveNode] = useState(false);
+    const [nodeChats, setNodeChats] = useState({}); // { nodeId: [{ role: 'assistant'|'user', content: string }] }
     const [isGeneratingExplorations, setIsGeneratingExplorations] = useState(false);
-    const [selectedExplorationSpot, setSelectedExplorationSpot] = useState(null);
     const [explorationResponse, setExplorationResponse] = useState('');
     const [isSubmittingExploration, setIsSubmittingExploration] = useState(false);
-    const [solidifyingExplorationId, setSolidifyingExplorationId] = useState(null);
-    const [explorationModalOpen, setExplorationModalOpen] = useState(false);
-    const [explorationQuestions, setExplorationQuestions] = useState([]);
-    const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
-
+    const chatContainerRef = useRef(null);
 
     // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
     const [selectedPatternId, setSelectedPatternId] = useState(null);
@@ -1745,6 +1739,19 @@ Devuelve estrictamente el JSON sin formato extra.
             setMapViewTab('map');
         }
     }, [selectedNode, tourActiveIndex]);
+
+    // Auto-start chat when a node is opened and has no chat history
+    useEffect(() => {
+        if (selectedNode) {
+            const currentChat = nodeChats[selectedNode.id];
+            if (!currentChat || currentChat.length === 0) {
+                // Prevenir llamadas múltiples
+                if (!isGeneratingExplorations) {
+                    continueNodeExploration(selectedNode);
+                }
+            }
+        }
+    }, [selectedNode]); // dependemos solo de selectedNode para evitar re-triggers si nodeChats cambia
 
     // Derived sorted list of nodes for narrative tour
     const sortedTourNodes = useMemo(() => {
@@ -2918,7 +2925,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         }
     };
 
-    const generateExplorationForNode = async (currentNode) => {
+    const continueNodeExploration = async (currentNode, userResponseText = null) => {
         let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
@@ -2931,47 +2938,57 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         )) {
             activeKey = '';
         }
+        
         setIsGeneratingExplorations(true);
 
-        const systemPrompt = `
-Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-El paciente está analizando un nodo específico en su mapa conductual (Grafo de Bucles).
-Tu objetivo es generar EXACTAMENTE 3 Puntos Ciegos Clínicos (preguntas de introspección) muy específicos y personalizados sobre este nodo de interés y lo que hace que exista.
+        // Fetch current chat history for this node
+        const currentChat = nodeChats[currentNode.id] || [];
 
-=== INSTRUCCIONES ===
-1. Debes generar exactamente 3 elementos en la lista 'blind_spots' de tu JSON de salida.
-2. Cada pregunta debe invitar al paciente a reflexionar sobre la dinámica del nodo: "${currentNode.label}" (Tipo: ${currentNode.type}).
-3. Para cada pregunta, propón un nodo 'dashed' nuevo y una conexión para integrarlo al mapa conductual. El nuevo nodo debe ubicarse cerca del nodo de origen (coordenadas x, y estimadas relativas a x: ${currentNode.x}, y: ${currentNode.y}).
-4. El objeto 'node' propuesto debe incluir un 'description' (análisis clínico personalizado de este nuevo nodo) y un 'challenge' (comprensión existencial profunda y desafío de crecimiento del paciente al integrar este nodo).
-5. Devuelve únicamente el objeto JSON con la estructura:
-{
-  "blind_spots": [
-     {
-        "id": "identificador_unico",
-        "title": "título corto de la brecha",
-        "question": "pregunta profunda de introspección y confrontación",
-        "node": { 
-           "id": "blind_spot_...", 
-           "type": "cognitive", 
-           "label": "título corto del nuevo nodo", 
-           "description": "Análisis clínico profundo de este nuevo nodo de exploración en relación a la dinámica del paciente",
-           "challenge": "Comprensión existencial profunda y desafío de crecimiento de este nuevo nodo",
-           "x": 50, 
-           "y": 50 
-        },
-        "edge": { "source": "id_del_nodo_origen", "target": "id_del_nodo_destino", "weight": 1.5, "type": "progression" }
-     }
-  ]
-}
+        // Build messages array for LLM context
+        const llmMessages = [];
+        
+        // System prompt
+        const systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
+El paciente está explorando un nodo de su mapa conductual (Grafo de Bucles) en formato de conversación viva contigo.
+Tu objetivo es guiar esta exploración de forma empática, profunda y confrontativa cuando sea necesario.
 
-=== DATOS DE CONTEXTO DEL PACIENTE ===
+=== CONTEXTO DEL PACIENTE ===
 Diagnóstico Existencial: ${phenomData ? JSON.stringify(phenomData) : "No hay datos."}
 Historia de Vida: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos."}
-Nodo Seleccionado: "${currentNode.label}"
-Tipo de Nodo: ${currentNode.type}
-Análisis del Nodo: ${getFallbackDescription(currentNode, user)}
-Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
+
+=== NODO EN EXPLORACIÓN ===
+Nodo: "${currentNode.label}" (Tipo: ${currentNode.type})
+Análisis original: ${getFallbackDescription(currentNode, user)}
+
+=== INSTRUCCIONES ===
+1. Evalúa el historial de la conversación (si existe) y la última respuesta del paciente.
+2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva sobre este nodo.
+3. Si el paciente ya respondió, valida brevemente su respuesta y haz una ÚNICA pregunta de seguimiento que profundice un nivel más abajo (ej. yendo a la raíz histórica, a los efectos sistémicos, a los valores ocultos, etc.).
+4. OPCIONAL: Si descubres que el paciente acaba de revelar un patrón, figura, miedo o concepto NUEVO que es muy importante, puedes sugerir un NUEVO NODO para agregarse al mapa conductual.
+5. Devuelve ÚNICAMENTE un objeto JSON.
+
+ESTRUCTURA DE SALIDA ESPERADA:
+{
+  "next_question": "La respuesta validante breve y tu única pregunta poderosa de seguimiento.",
+  "new_node": null // Si no hay nada nuevo que mapear, devuelve null. Si hay un patrón nuevo MUY fuerte, devuelve un objeto con { "type": "cognitive|historical|social", "label": "Título corto", "description": "Breve análisis", "edge_type": "progression|conflict" }
+}
 `;
+
+        llmMessages.push({ role: 'system', content: systemPrompt });
+
+        // Append past conversation history so LLM knows the context
+        currentChat.forEach(msg => {
+            if (msg.role === 'assistant') {
+                llmMessages.push({ role: 'assistant', content: msg.content });
+            } else if (msg.role === 'user') {
+                llmMessages.push({ role: 'user', content: msg.content });
+            }
+        });
+
+        // Append the new user response if it exists
+        if (userResponseText) {
+            llmMessages.push({ role: 'user', content: userResponseText });
+        }
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
@@ -2979,35 +2996,24 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
             const payload = {
                 model: model,
-                messages: [
+                messages: llmMessages.length > 1 ? llmMessages : [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Por favor, genera exactamente 3 preguntas de exploración clínica profunda para el nodo "${currentNode.label}" y su dinámica existencial.` }
+                    { role: 'user', content: `Iniciemos la exploración del nodo "${currentNode.label}". ¿Qué pregunta me harías para empezar a indagar en la raíz de esto?` }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.3,
-                max_tokens: 8192
+                temperature: 0.4,
+                max_tokens: 4096
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    endpoint: endpoint,
-                    key: activeKey,
-                    payload: payload
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: endpoint, key: activeKey, payload: payload })
             });
 
             if (!res.ok) {
                 const errText = await res.text();
-                let msg = `Error HTTP ${res.status}: ${errText}`;
-                try {
-                    const parsedErr = JSON.parse(errText);
-                    if (parsedErr.msg) msg = parsedErr.msg;
-                } catch (e) { }
-                throw new Error(msg);
+                throw new Error(`Error HTTP ${res.status}: ${errText}`);
             }
 
             const data = await res.json();
@@ -3015,38 +3021,73 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
 
             let cleanContent = aiContent.trim();
             if (cleanContent.startsWith("```")) {
-                cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "");
-                cleanContent = cleanContent.replace(/\s*```$/, "");
+                cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "");
             }
 
             const parsed = JSON.parse(cleanContent.trim());
-            if (parsed.blind_spots) {
-                const spots = parsed.blind_spots.slice(0, 3).map((s, idx) => {
-                    const uniqueId = `node_explore_${currentNode.id}_${Date.now()}_${idx}`;
-                    const targetNodeId = `blind_spot_${uniqueId}`;
-                    return {
-                        ...s,
-                        id: uniqueId,
-                        node: s.node ? { ...s.node, id: targetNodeId } : { id: targetNodeId, type: "cognitive", label: s.title || "Punto ciego" },
-                        edge: s.edge ? { ...s.edge, source: currentNode.id, target: targetNodeId, weight: 1.5, type: "progression" } : { source: currentNode.id, target: targetNodeId, weight: 1.5, type: "progression" }
-                    };
-                });
-                const updated = {
-                    ...(nodeExplorations || {}),
-                    [currentNode.id]: spots
+            if (parsed.next_question) {
+                // Determine new chat array
+                const updatedChat = [...currentChat];
+                if (userResponseText) {
+                    updatedChat.push({ role: 'user', content: userResponseText });
+                }
+                
+                const assistantMessage = { 
+                    role: 'assistant', 
+                    content: parsed.next_question,
+                    newNodeAdded: parsed.new_node || null
                 };
-                saveNodeExplorations(updated);
-                setExplorationQuestions(spots);
-                setSelectedQuestionIndex(0);
-                setExplorationModalOpen(true);
+                updatedChat.push(assistantMessage);
+
+                setNodeChats(prev => ({
+                    ...prev,
+                    [currentNode.id]: updatedChat
+                }));
+
+                // Handle new node dynamic addition to visual map if LLM proposed one
+                if (parsed.new_node) {
+                    const uniqueId = `dynamic_node_${Date.now()}`;
+                    const newNode = {
+                        id: uniqueId,
+                        type: parsed.new_node.type || 'cognitive',
+                        label: parsed.new_node.label || 'Nuevo patrón',
+                        description: parsed.new_node.description || '',
+                        x: currentNode.x + (Math.random() * 20 - 10),
+                        y: currentNode.y + (Math.random() * 20 - 10)
+                    };
+                    const newEdge = {
+                        source: currentNode.id,
+                        target: uniqueId,
+                        weight: 1.5,
+                        type: parsed.new_node.edge_type || 'progression'
+                    };
+                    
+                    if (afcData) {
+                        const updatedAfcData = { ...afcData };
+                        updatedAfcData.nodes = [...updatedAfcData.nodes, newNode];
+                        updatedAfcData.edges = [...updatedAfcData.edges, newEdge];
+                        setAfcData(updatedAfcData);
+                        localStorage.setItem(`oasis_afc_${user}`, JSON.stringify(updatedAfcData));
+                    }
+                }
+
+                // Scroll to bottom of chat if UI is open
+                setTimeout(() => {
+                    const containers = document.querySelectorAll('.node-chat-scroll');
+                    containers.forEach(container => {
+                        container.scrollTop = container.scrollHeight;
+                    });
+                }, 100);
+
             } else {
-                throw new Error("No se devolvió un pool válido de preguntas de exploración.");
+                throw new Error("No se devolvió un next_question válido en el JSON.");
             }
         } catch (err) {
             console.error("Error generando exploración:", err);
-            alert("Ocurrió un error al generar las preguntas de exploración con IA: " + err.message);
+            alert("Ocurrió un error al continuar la conversación: " + err.message);
         } finally {
             setIsGeneratingExplorations(false);
+            setExplorationResponse(''); // Clear input box
         }
     };
 
@@ -5334,86 +5375,74 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         </div>
 
                                                                         {(() => {
-                                                                            const explorations = nodeExplorations && nodeExplorations[node.id];
-                                                                            const hasExplorations = explorations && explorations.length > 0;
-                                                                            
-                                                                            const currentExplorations = hasExplorations ? explorations : (
-                                                                                node.questions && node.questions.length === 3 ? [
-                                                                                    { id: `default_q0_${node.id}`, question: node.questions[0] },
-                                                                                    { id: `default_q1_${node.id}`, question: node.questions[1] },
-                                                                                    { id: `default_q2_${node.id}`, question: node.questions[2] }
-                                                                                ] : [
-                                                                                    { id: `default_q0_${node.id}`, question: node.reflection_question || `¿Qué revela el patrón "${node.label}" sobre ti?` },
-                                                                                    { id: `default_q1_${node.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
-                                                                                    { id: `default_q2_${node.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
-                                                                                ]
-                                                                            );
-                                                                            
-                                                                            const currentIdx = (selectedQuestionIndex || 0) % currentExplorations.length;
-                                                                            const spot = currentExplorations[currentIdx];
-                                                                            const savedAnswer = localStorage.getItem(`oasis_blindspot_answer_${user}__${spot.id}`) || nodeNotes[spot.id] || '';
-                                                                            const isResolved = spot.resolved || localStorage.getItem(`oasis_blindspot_resolved_${user}__${spot.id}`) === 'true';
-
+                                                                            const currentChat = nodeChats[node.id] || [];
                                                                             return (
-                                                                                <div className="flex flex-col gap-3 bg-zinc-900/40 border border-white/5 rounded-xl px-3 py-3 mt-1">
-                                                                                    <div className="flex items-center justify-between">
-                                                                                        <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                                                                            Pregunta {currentIdx + 1} de {currentExplorations.length}
-                                                                                            {!hasExplorations && (
-                                                                                                <button
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        generateExplorationForNode(node);
-                                                                                                    }}
-                                                                                                    title="Mejorar preguntas con IA"
-                                                                                                    className="text-sky-400 hover:text-sky-300 transition-colors"
-                                                                                                >
-                                                                                                    <Sparkles size={10} className={isGeneratingExplorations ? "animate-spin" : ""} />
-                                                                                                </button>
-                                                                                            )}
-                                                                                        </span>
-                                                                                        <div className="flex items-center gap-1">
-                                                                                            <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev - 1 + currentExplorations.length) % currentExplorations.length); }} className="p-1 text-zinc-400 hover:text-white transition-colors"><ChevronLeft size={14}/></button>
-                                                                                            <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev + 1) % currentExplorations.length); }} className="p-1 text-zinc-400 hover:text-white transition-colors"><ChevronRight size={14}/></button>
-                                                                                        </div>
+                                                                                <div className="flex flex-col gap-3 mt-1 h-full max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                                                    {/* Chat messages area */}
+                                                                                    <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3">
+                                                                                        {currentChat.length === 0 && isGeneratingExplorations && (
+                                                                                            <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
+                                                                                                <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                                                <span>El terapeuta está formulando la pregunta inicial...</span>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {currentChat.map((msg, idx) => (
+                                                                                            <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
+                                                                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest ${msg.role === 'assistant' ? 'text-sky-400' : 'text-emerald-400'}`}>
+                                                                                                    {msg.role === 'assistant' ? 'Terapeuta' : 'Tú'}
+                                                                                                </span>
+                                                                                                <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed max-w-[90%] ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
+                                                                                                    {msg.content}
+                                                                                                    {msg.newNodeAdded && (
+                                                                                                        <div className="mt-2 pt-2 border-t border-sky-500/30">
+                                                                                                            <span className="text-[8px] font-mono font-bold text-amber-400 flex items-center gap-1"><Sparkles size={10}/> NUEVO PATRÓN DETECTADO: {msg.newNodeAdded.label}</span>
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                        {currentChat.length > 0 && isGeneratingExplorations && (
+                                                                                            <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
+                                                                                                <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                                                <span>Analizando tu respuesta...</span>
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
                                                                                     
-                                                                                    <label className="text-[9px] font-bold text-sky-400 uppercase tracking-wider leading-relaxed">
-                                                                                        {spot.question}
-                                                                                    </label>
-                                                                                    
-                                                                                    <div className="flex flex-col gap-1.5 mt-1">
+                                                                                    {/* Input area */}
+                                                                                    <div className="flex flex-col gap-1.5 shrink-0 border-t border-white/10 pt-2">
                                                                                         <textarea 
                                                                                             className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] text-white placeholder-zinc-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-none custom-scroll"
                                                                                             rows={2}
-                                                                                            placeholder="Escribe tu reflexión sobre esta pregunta..."
-                                                                                            value={nodeNotes[spot.id] ?? savedAnswer}
-                                                                                            onChange={(e) => {
-                                                                                                setNodeNotes(prev => ({ ...prev, [spot.id]: e.target.value }));
-                                                                                            }}
+                                                                                            placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
+                                                                                            value={explorationResponse}
+                                                                                            disabled={isGeneratingExplorations}
+                                                                                            onChange={(e) => setExplorationResponse(e.target.value)}
                                                                                             onMouseDown={e => e.stopPropagation()}
                                                                                             onClick={e => e.stopPropagation()}
-                                                                                            onKeyDown={e => e.stopPropagation()}
+                                                                                            onKeyDown={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                                                    e.preventDefault();
+                                                                                                    if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                                        continueNodeExploration(node, explorationResponse.trim());
+                                                                                                    }
+                                                                                                }
+                                                                                            }}
                                                                                         />
-                                                                                        <div className="flex justify-end shrink-0 pb-1">
+                                                                                        <div className="flex justify-end">
                                                                                             <button
                                                                                                 type="button"
+                                                                                                disabled={isGeneratingExplorations || !explorationResponse.trim()}
                                                                                                 onClick={(e) => {
                                                                                                     e.stopPropagation();
-                                                                                                    const ans = nodeNotes[spot.id];
-                                                                                                    if (ans && ans.trim() !== "") {
-                                                                                                        setLocalItem(`oasis_blindspot_answer_${user}__${spot.id}`, ans.trim());
-                                                                                                        setLocalItem(`oasis_blindspot_resolved_${user}__${spot.id}`, 'true');
-                                                                                                        const btn = e.currentTarget;
-                                                                                                        const origText = btn.innerHTML;
-                                                                                                        btn.innerHTML = '<span class="text-[8px] font-bold tracking-widest uppercase">¡GUARDADO!</span>';
-                                                                                                        setTimeout(() => btn.innerHTML = origText, 2000);
+                                                                                                    if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                                        continueNodeExploration(node, explorationResponse.trim());
                                                                                                     }
                                                                                                 }}
-                                                                                                className="flex items-center gap-1.5 py-1 px-3 rounded text-[8px] font-bold tracking-widest uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                                                                                                title="Solo guardar la reflexión"
+                                                                                                className="flex items-center gap-1.5 py-1.5 px-3 rounded text-[8px] font-bold tracking-widest uppercase bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 transition-all disabled:opacity-50 disabled:grayscale"
                                                                                             >
-                                                                                                <span>{isResolved ? 'ACTUALIZAR' : 'GUARDAR'}</span>
+                                                                                                {isGeneratingExplorations ? 'ENVIANDO...' : 'ENVIAR RESPUESTA'}
                                                                                             </button>
                                                                                         </div>
                                                                                     </div>
@@ -5606,116 +5635,78 @@ Por favor, analicemos:
 
                                             {/* Wizard for 3 Questions */}
                                             {(() => {
-                                                const explorations = nodeExplorations && nodeExplorations[currentNode.id];
-                                                const hasExplorations = explorations && explorations.length > 0;
-                                                
-                                                const currentExplorations = hasExplorations ? explorations : (
-                                                    currentNode.questions && currentNode.questions.length === 3 ? [
-                                                        { id: `default_q0_${currentNode.id}`, question: currentNode.questions[0] },
-                                                        { id: `default_q1_${currentNode.id}`, question: currentNode.questions[1] },
-                                                        { id: `default_q2_${currentNode.id}`, question: currentNode.questions[2] }
-                                                    ] : [
-                                                        { id: `default_q0_${currentNode.id}`, question: currentNode.reflection_question || `¿Qué revela el patrón "${currentNode.label}" sobre ti?` },
-                                                        { id: `default_q1_${currentNode.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
-                                                        { id: `default_q2_${currentNode.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
-                                                    ]
-                                                );
-                                                
-                                                const currentIdx = (selectedQuestionIndex || 0) % currentExplorations.length;
-                                                const spot = currentExplorations[currentIdx];
-                                                const savedAnswer = localStorage.getItem(`oasis_blindspot_answer_${user}__${spot.id}`) || nodeNotes[spot.id] || '';
-                                                const isResolved = spot.resolved || localStorage.getItem(`oasis_blindspot_resolved_${user}__${spot.id}`) === 'true';
-
-                                                // Check if ALL 3 are resolved to show Kio button
-                                                const allResolved = currentExplorations.every(ex => ex.resolved || localStorage.getItem(`oasis_blindspot_resolved_${user}__${ex.id}`) === 'true');
-
+                                                const currentChat = nodeChats[currentNode.id] || [];
                                                 return (
-                                                    <div className="flex flex-col gap-2.5">
-                                                        <div className="flex flex-col gap-1.5 bg-zinc-900/40 border border-white/5 rounded-xl px-2.5 py-2.5 mt-0.5">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-xs md:text-sm font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                                                    Pregunta {currentIdx + 1} de {currentExplorations.length}
-                                                                    {!hasExplorations && (
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                generateExplorationForNode(currentNode);
-                                                                            }}
-                                                                            title="Mejorar preguntas con IA"
-                                                                            className="text-sky-400 hover:text-sky-300 transition-colors"
-                                                                        >
-                                                                            <Sparkles size={12} className={isGeneratingExplorations ? "animate-spin" : ""} />
-                                                                        </button>
-                                                                    )}
-                                                                </span>
-                                                                <div className="flex items-center gap-1">
-                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev - 1 + currentExplorations.length) % currentExplorations.length); }} className="p-1.5 text-zinc-400 hover:text-white transition-colors"><ChevronLeft size={16}/></button>
-                                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex((prev) => (prev + 1) % currentExplorations.length); }} className="p-1.5 text-zinc-400 hover:text-white transition-colors"><ChevronRight size={16}/></button>
+                                                    <div className="flex flex-col gap-2.5 mt-2 h-full max-h-[40vh] md:max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                        {/* Chat messages area */}
+                                                        <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3 border border-white/5 bg-zinc-900/20 p-2 rounded-xl">
+                                                            {currentChat.length === 0 && isGeneratingExplorations && (
+                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
+                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                    <span>El terapeuta está formulando la pregunta inicial...</span>
                                                                 </div>
-                                                            </div>
-                                                            
-                                                            <label className="text-xs md:text-sm font-bold text-sky-400 uppercase tracking-wider leading-relaxed">
-                                                                {spot.question}
-                                                            </label>
-                                                            
-                                                            <div className="flex flex-col gap-1.5 mt-1">
-                                                                <textarea 
-                                                                    className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-xs md:text-sm text-white placeholder-zinc-600 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-y custom-scroll min-h-[60px]"
-                                                                    rows={3}
-                                                                    placeholder="Escribe tu reflexión sobre esta pregunta..."
-                                                                    value={nodeNotes[spot.id] ?? savedAnswer}
-                                                                    onChange={(e) => {
-                                                                        setNodeNotes(prev => ({ ...prev, [spot.id]: e.target.value }));
+                                                            )}
+                                                            {currentChat.map((msg, idx) => (
+                                                                <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
+                                                                    <span className={`text-[9px] font-mono font-bold uppercase tracking-widest ${msg.role === 'assistant' ? 'text-sky-400' : 'text-emerald-400'}`}>
+                                                                        {msg.role === 'assistant' ? 'Terapeuta' : 'Tú'}
+                                                                    </span>
+                                                                    <div className={`p-3 rounded-xl text-[11px] md:text-[12px] leading-relaxed max-w-[90%] shadow-md ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
+                                                                        {msg.content}
+                                                                        {msg.newNodeAdded && (
+                                                                            <div className="mt-2 pt-2 border-t border-sky-500/30">
+                                                                                <span className="text-[10px] font-mono font-bold text-amber-400 flex items-center gap-1"><Sparkles size={12}/> NUEVO PATRÓN DETECTADO: {msg.newNodeAdded.label}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            {currentChat.length > 0 && isGeneratingExplorations && (
+                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
+                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                    <span>Analizando tu respuesta...</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Input area */}
+                                                        <div className="flex flex-col gap-2 shrink-0 pt-1">
+                                                            <textarea 
+                                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-[11px] md:text-[12px] text-white placeholder-zinc-500 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-none custom-scroll min-h-[60px]"
+                                                                rows={2}
+                                                                placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
+                                                                value={explorationResponse}
+                                                                disabled={isGeneratingExplorations}
+                                                                onChange={(e) => setExplorationResponse(e.target.value)}
+                                                                onMouseDown={e => e.stopPropagation()}
+                                                                onClick={e => e.stopPropagation()}
+                                                                onTouchStart={e => e.stopPropagation()}
+                                                                onKeyDown={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                                        e.preventDefault();
+                                                                        if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                            continueNodeExploration(currentNode, explorationResponse.trim());
+                                                                        }
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <div className="flex justify-end">
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={isGeneratingExplorations || !explorationResponse.trim()}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                            continueNodeExploration(currentNode, explorationResponse.trim());
+                                                                        }
                                                                     }}
-                                                                    onMouseDown={e => e.stopPropagation()}
-                                                                    onClick={e => e.stopPropagation()}
-                                                                    onKeyDown={e => e.stopPropagation()}
-                                                                />
-                                                                <div className="flex justify-end shrink-0 pb-1 mt-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            const ans = nodeNotes[spot.id];
-                                                                            if (ans && ans.trim() !== "") {
-                                                                                setLocalItem(`oasis_blindspot_answer_${user}__${spot.id}`, ans.trim());
-                                                                                setLocalItem(`oasis_blindspot_resolved_${user}__${spot.id}`, 'true');
-                                                                                const btn = e.currentTarget;
-                                                                                const origText = btn.innerHTML;
-                                                                                btn.innerHTML = '<span class="text-xs font-bold tracking-widest uppercase">¡GUARDADO!</span>';
-                                                                                setTimeout(() => btn.innerHTML = origText, 2000);
-                                                                                // Trigger re-render
-                                                                                setMapTransform(prev => ({...prev}));
-                                                                            }
-                                                                        }}
-                                                                        className="flex items-center gap-1.5 py-2 px-4 rounded-lg text-xs font-bold tracking-widest uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                                                                    >
-                                                                        <span>{isResolved ? 'ACTUALIZAR' : 'GUARDAR'}</span>
-                                                                    </button>
-                                                                </div>
+                                                                    className="flex items-center justify-center w-full md:w-auto gap-2 py-2.5 px-5 rounded-xl text-[10px] md:text-[11px] font-black tracking-widest uppercase bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30 hover:border-sky-400 transition-all disabled:opacity-50 disabled:grayscale"
+                                                                >
+                                                                    {isGeneratingExplorations ? 'ENVIANDO...' : 'ENVIAR RESPUESTA'}
+                                                                </button>
                                                             </div>
                                                         </div>
-
-                                                        {/* Kio IA Button at modal level, outside textarea, ONLY if all answered */}
-                                                        {allResolved && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    let customPrompt = `Quiero explorar profundamente mi nodo conductual: "${currentNode.label}".\nAquí están mis respuestas a las 3 preguntas clave:\n\n`;
-                                                                    currentExplorations.forEach((ex, i) => {
-                                                                        const ans = localStorage.getItem(`oasis_blindspot_answer_${user}__${ex.id}`) || nodeNotes[ex.id] || '';
-                                                                        customPrompt += `${i + 1}. ${ex.question}\nMi respuesta: ${ans}\n\n`;
-                                                                    });
-                                                                    customPrompt += `¿Qué patrones o insights descubres en base a estas reflexiones? ¿Cómo me sugieres reestructurar esto?`;
-                                                                    onOpenNodeChat?.(currentNode.id, currentNode.label, customPrompt);
-                                                                }}
-                                                                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs md:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 mt-2"
-                                                            >
-                                                                <MessageCircle size={13} />
-                                                                <span>Analizar Respuestas con Kio IA</span>
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 );
                                             })()}
