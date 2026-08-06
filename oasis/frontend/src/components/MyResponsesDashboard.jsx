@@ -1363,6 +1363,15 @@ Devuelve estrictamente el JSON sin formato extra.
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
     const chatContainerRef = useRef(null);
 
+    const getSafeCurrentChat = useCallback((nodeId, threadIndex = 0) => {
+        const chatData = nodeChats[nodeId];
+        if (!chatData) return [];
+        if (Array.isArray(chatData)) {
+            return threadIndex === 0 ? chatData : [];
+        }
+        return chatData[threadIndex] || [];
+    }, [nodeChats]);
+
     // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
     const [selectedPatternId, setSelectedPatternId] = useState(null);
     const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
@@ -1750,7 +1759,7 @@ Devuelve estrictamente el JSON sin formato extra.
     // Auto-start chat when a node is opened and has no chat history
     useEffect(() => {
         if (selectedNode) {
-            const currentChat = nodeChats[selectedNode.id];
+            const currentChat = getSafeCurrentChat(selectedNode.id, selectedQuestionIndex !== null ? selectedQuestionIndex : 0);
             if (!currentChat || currentChat.length === 0) {
                 // Prevenir llamadas múltiples
                 if (!isGeneratingExplorations) {
@@ -2949,7 +2958,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         setIsGeneratingExplorations(true);
 
         // Fetch current chat history for this node
-        const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[currentNode.id] && nodeChats[currentNode.id][safeThreadIndex]) || [];
+        const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
 
         // Build messages array for LLM context
         const llmMessages = [];
@@ -4821,7 +4830,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         
                                         if (activeChatNode) {
                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-                                            const currentChat = (nodeChats[activeChatNode.id] && nodeChats[activeChatNode.id][safeThreadIndex]) || [];
+                                            const currentChat = getSafeCurrentChat(activeChatNode.id, safeThreadIndex);
                                             currentChat.forEach((msg, idx) => {
                                                 const miniNodeId = `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx}`;
                                                 // Generate angular spread based on index
@@ -5435,7 +5444,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         </div>
 
                                                                         {(() => {
-                                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[node.id] && nodeChats[node.id][safeThreadIndex]) || [];
+                                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[300px]" onClick={e => e.stopPropagation()}>
                                                                                     {/* Header with arrows */}
@@ -5713,7 +5722,7 @@ Por favor, analicemos:
 
                                             {/* Wizard for 3 Questions */}
                                             {(() => {
-                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[currentNode.id] && nodeChats[currentNode.id][safeThreadIndex]) || [];
+                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
                                                 return (
                                                     <div className="flex flex-col gap-2.5 mt-2 h-full max-h-[40vh] md:max-h-[300px]" onClick={e => e.stopPropagation()}>
                                                         {/* Header with arrows */}
