@@ -1816,7 +1816,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (1600 * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * 1.25; // Base scale adapted to virtual canvas (zoomed in by default)
+        let fitScale = Math.min(scaleX, scaleY) * 0.95; // Base scale adapted to virtual canvas (95% para un encuadre perfecto sin cortar bordes)
         fitScale = Math.min(Math.max(0.15, fitScale), 2.5); // Wider limits for scaling
 
         const graphCenterX = (minX + maxX) / 2;
@@ -2338,7 +2338,7 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Nodos: Genera exactamente entre 38 y 46 nodos distribuidos de izquierda a derecha. Reduce intencionalmente la cantidad de nodos rojos (motor/cognitive/physiological) y verdes (biological/social) para que la columna no se sature. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
+1. Nodos: Genera exactamente entre 42 y 50 nodos distribuidos de izquierda a derecha. Mantén un balance donde haya suficientes nodos para que el mapa se vea abundante, pero cuidando que las columnas roja (motor/cognitive/physiological) y verde (biological/social) no se sobresaturen. Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
    - historical (azules) -> x: entre -120 y -40
    - motor / cognitive / physiological (rojos) -> x: entre 20 y 100
    - biological / social (verdes) -> x: entre 140 y 220
