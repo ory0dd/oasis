@@ -2269,7 +2269,7 @@ Devuelve estrictamente el JSON sin formato extra.
         )) {
             activeKey = '';
         }
-        setIsAnalyzing("Construyendo topología masiva de nodos (Etapa 1/2)...");
+        setIsAnalyzing("Construyendo topología masiva de nodos (Etapa 1/3)...");
         
         // Retrieve resolved blind spot answers dynamically from localStorage keys
         let blindSpotAnswersContext = "";
@@ -2417,7 +2417,7 @@ ${isAdditive ? `
                 throw new Error("El análisis fue rechazado por la IA: " + parsedTopology.rejection_reason);
             }
 
-            setIsAnalyzing("Redactando análisis clínico profundo (Etapa 2/2)...");
+            setIsAnalyzing("Redactando análisis clínico profundo (Etapa 2/3)...");
 
             const systemPromptInsights = `
 Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
@@ -2513,6 +2513,61 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
                 ...parsedTopology,
                 ...parsedInsights
             };
+
+            // ETAPA 3: Diseñando preguntas terapéuticas
+            setIsAnalyzing("Diseñando preguntas terapéuticas para cada nodo (Etapa 3/3)...");
+            
+            const systemPromptStage3 = `
+Eres un Terapeuta Clínico. 
+Tu tarea es generar 3 preguntas reflexivas profundas y distintas para cada nodo del mapa conductual del paciente.
+Se te entregará un resumen de los nodos (id, etiqueta, descripción).
+Devuelve ÚNICAMENTE un objeto JSON válido donde cada clave sea el ID del nodo, y el valor sea un arreglo de 3 strings (preguntas terapéuticas de máximo 10 palabras cada una, dirigidas de "tú" al paciente).
+Ejemplo de salida esperada:
+{
+  "n1": ["¿Por qué...", "¿Cuándo...", "¿Qué pasaría..."],
+  "n2": ["¿Qué sientes...", "¿Cómo evitas...", "¿Quién te..."]
+}
+`;
+            const simplifiedNodes = parsedTopology.nodes.map(n => ({ id: n.id, label: n.label, desc: n.description }));
+            
+            const payload3 = {
+                model: model,
+                messages: [
+                    { role: 'system', content: systemPromptStage3 },
+                    { role: 'user', content: JSON.stringify(simplifiedNodes) }
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.5,
+                max_tokens: 8192
+            };
+
+            const res3 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint, key: activeKey, payload: payload3 })
+            });
+
+            if (!res3.ok) {
+                console.warn(`Error HTTP ${res3.status} en Etapa 3, omitiendo preguntas extra.`);
+            } else {
+                try {
+                    const data3 = await res3.json();
+                    let raw3 = data3.choices[0].message.content.trim();
+                    const start3 = raw3.indexOf('{');
+                    const end3 = raw3.lastIndexOf('}');
+                    let cleanContent3 = (start3 !== -1 && end3 !== -1) ? raw3.substring(start3, end3 + 1) : raw3;
+                    const parsedQuestions = JSON.parse(cleanContent3);
+                    
+                    if (parsedAfc.nodes) {
+                        parsedAfc.nodes = parsedAfc.nodes.map(node => ({
+                            ...node,
+                            questions: parsedQuestions[node.id] || []
+                        }));
+                    }
+                } catch(e) {
+                    console.warn("JSON Parse failed in stage 3, omitting extra questions.", e);
+                }
+            }
 
             if (parsedAfc.is_valid && parsedAfc.nodes) {
                 if (!isAdditive) {
@@ -5297,11 +5352,17 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             const explorations = nodeExplorations && nodeExplorations[node.id];
                                                                             const hasExplorations = explorations && explorations.length > 0;
                                                                             
-                                                                            const currentExplorations = hasExplorations ? explorations : [
-                                                                                { id: `default_q0_${node.id}`, question: node.reflection_question || `¿Qué revela el patrón "${node.label}" sobre ti?` },
-                                                                                { id: `default_q1_${node.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
-                                                                                { id: `default_q2_${node.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
-                                                                            ];
+                                                                            const currentExplorations = hasExplorations ? explorations : (
+                                                                                node.questions && node.questions.length === 3 ? [
+                                                                                    { id: `default_q0_${node.id}`, question: node.questions[0] },
+                                                                                    { id: `default_q1_${node.id}`, question: node.questions[1] },
+                                                                                    { id: `default_q2_${node.id}`, question: node.questions[2] }
+                                                                                ] : [
+                                                                                    { id: `default_q0_${node.id}`, question: node.reflection_question || `¿Qué revela el patrón "${node.label}" sobre ti?` },
+                                                                                    { id: `default_q1_${node.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
+                                                                                    { id: `default_q2_${node.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
+                                                                                ]
+                                                                            );
                                                                             
                                                                             const currentIdx = (selectedQuestionIndex || 0) % currentExplorations.length;
                                                                             const spot = currentExplorations[currentIdx];
@@ -5563,11 +5624,17 @@ Por favor, analicemos:
                                                 const explorations = nodeExplorations && nodeExplorations[currentNode.id];
                                                 const hasExplorations = explorations && explorations.length > 0;
                                                 
-                                                const currentExplorations = hasExplorations ? explorations : [
-                                                    { id: `default_q0_${currentNode.id}`, question: currentNode.reflection_question || `¿Qué revela el patrón "${currentNode.label}" sobre ti?` },
-                                                    { id: `default_q1_${currentNode.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
-                                                    { id: `default_q2_${currentNode.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
-                                                ];
+                                                const currentExplorations = hasExplorations ? explorations : (
+                                                    currentNode.questions && currentNode.questions.length === 3 ? [
+                                                        { id: `default_q0_${currentNode.id}`, question: currentNode.questions[0] },
+                                                        { id: `default_q1_${currentNode.id}`, question: currentNode.questions[1] },
+                                                        { id: `default_q2_${currentNode.id}`, question: currentNode.questions[2] }
+                                                    ] : [
+                                                        { id: `default_q0_${currentNode.id}`, question: currentNode.reflection_question || `¿Qué revela el patrón "${currentNode.label}" sobre ti?` },
+                                                        { id: `default_q1_${currentNode.id}`, question: "¿En qué contextos o situaciones específicas suele aparecer más este patrón?" },
+                                                        { id: `default_q2_${currentNode.id}`, question: "¿Qué impacto real tiene esto en tu día a día o relaciones?" }
+                                                    ]
+                                                );
                                                 
                                                 const currentIdx = (selectedQuestionIndex || 0) % currentExplorations.length;
                                                 const spot = currentExplorations[currentIdx];
