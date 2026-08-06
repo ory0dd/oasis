@@ -4817,16 +4817,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                     {(() => {
                                         let finalNodesToRender = [...(nodesToRender || [])];
                                         let finalEdgesToRender = [...(edgesToRender || [])];
-                                        if (isExploringActiveNode && selectedNode) {
+                                        const activeChatNode = (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) ? sortedTourNodes[tourActiveIndex] : null;
+                                        
+                                        if (activeChatNode) {
                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-                                            const currentChat = (nodeChats[selectedNode.id] && nodeChats[selectedNode.id][safeThreadIndex]) || [];
+                                            const currentChat = (nodeChats[activeChatNode.id] && nodeChats[activeChatNode.id][safeThreadIndex]) || [];
                                             currentChat.forEach((msg, idx) => {
-                                                const miniNodeId = `mini_node_${selectedNode.id}_${safeThreadIndex}_${idx}`;
+                                                const miniNodeId = `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx}`;
                                                 // Generate angular spread based on index
                                                 const radius = 10 + (idx * 6);
                                                 const angle = (idx * Math.PI * 2 / 5) + (safeThreadIndex * Math.PI / 3);
-                                                const x = selectedNode.x + Math.cos(angle) * radius;
-                                                const y = selectedNode.y + Math.sin(angle) * radius;
+                                                const x = activeChatNode.x + Math.cos(angle) * radius;
+                                                const y = activeChatNode.y + Math.sin(angle) * radius;
                                                 
                                                 finalNodesToRender.push({
                                                     id: miniNodeId,
@@ -4837,7 +4839,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 });
                                                 
                                                 finalEdgesToRender.push({
-                                                    source: idx === 0 ? selectedNode.id : `mini_node_${selectedNode.id}_${safeThreadIndex}_${idx - 1}`,
+                                                    source: idx === 0 ? activeChatNode.id : `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx - 1}`,
                                                     target: miniNodeId,
                                                     type: 'mini_chat_link',
                                                     weight: 1.0
