@@ -1767,7 +1767,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 }
             }
         }
-    }, [selectedNode]); // dependemos solo de selectedNode para evitar re-triggers si nodeChats cambia
+    }, [selectedNode, selectedQuestionIndex]); // dependemos de selectedNode y selectedQuestionIndex para auto-iniciar al cambiar hilo
 
     // Derived sorted list of nodes for narrative tour
     const sortedTourNodes = useMemo(() => {
