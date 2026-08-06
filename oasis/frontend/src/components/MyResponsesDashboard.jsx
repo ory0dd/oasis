@@ -3502,47 +3502,17 @@ Comprensión Existencial del Nodo: ${getFallbackChallenge(currentNode, user)}
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
 
         // Initialize all nodes to staggered slots in their layers
+        // We DO NOT sort alphabetically or by barycenter anymore.
+        // This guarantees that the original Array order returned by the AI (which is sorted by relevance)
+        // determines the vertical position, placing the most important nodes at the top.
         layerNodes.forEach((nodes, layerIdx) => {
             const baseX = layers[layerIdx].baseX;
             const slots = getStaggeredSlots(nodes.length, baseX, layers[layerIdx].yStep);
-            nodes.sort((a, b) => a.label.localeCompare(b.label));
             nodes.forEach((n, idx) => {
                 n.x = slots[idx].x;
                 n.y = slots[idx].y;
             });
         });
-
-        // Perform 4 iterations of barycenter sorting to minimize crossovers
-        for (let iter = 0; iter < 4; iter++) {
-            // Forward sweep
-            for (let i = 1; i < layers.length; i++) {
-                const nodes = layerNodes[i];
-                if (nodes.length === 0) continue;
-                nodes.forEach(n => {
-                    n.barycenter = getBarycenter(n);
-                });
-                nodes.sort((a, b) => a.barycenter - b.barycenter);
-                const slots = getStaggeredSlots(nodes.length, layers[i].baseX, layers[i].yStep);
-                nodes.forEach((n, idx) => {
-                    n.x = slots[idx].x;
-                    n.y = slots[idx].y;
-                });
-            }
-            // Backward sweep
-            for (let i = layers.length - 2; i >= 0; i--) {
-                const nodes = layerNodes[i];
-                if (nodes.length === 0) continue;
-                nodes.forEach(n => {
-                    n.barycenter = getBarycenter(n);
-                });
-                nodes.sort((a, b) => a.barycenter - b.barycenter);
-                const slots = getStaggeredSlots(nodes.length, layers[i].baseX, layers[i].yStep);
-                nodes.forEach((n, idx) => {
-                    n.x = slots[idx].x;
-                    n.y = slots[idx].y;
-                });
-            }
-        }
 
         // Phase 3: Apply the stretching transformation to all nodes to push them outwards
         const scaleX = 1.0;
