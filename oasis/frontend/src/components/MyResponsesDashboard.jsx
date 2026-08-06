@@ -2932,7 +2932,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         }
     };
 
-    const continueNodeExploration = async (currentNode, userResponseText = null) => {
+    const continueNodeExploration = async (currentNode, userResponseText = null, threadIndex = selectedQuestionIndex || 0) => {
         let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
@@ -2949,7 +2949,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         setIsGeneratingExplorations(true);
 
         // Fetch current chat history for this node
-        const currentChat = nodeChats[currentNode.id] || [];
+        const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[currentNode.id] && nodeChats[currentNode.id][safeThreadIndex]) || [];
 
         // Build messages array for LLM context
         const llmMessages = [];
@@ -2969,7 +2969,7 @@ Análisis original: ${getFallbackDescription(currentNode, user)}
 
 === INSTRUCCIONES ===
 1. Evalúa el historial de la conversación (si existe) y la última respuesta del paciente.
-2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva sobre este nodo.
+2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva. Enfoque: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social' : 'EFECTOS FISIOLÓGICOS o corporales'}.
 3. Si el paciente ya respondió, valida brevemente su respuesta y haz una ÚNICA pregunta de seguimiento que profundice un nivel más abajo (ej. yendo a la raíz histórica, a los efectos sistémicos, a los valores ocultos, etc.).
 4. OPCIONAL: Si descubres que el paciente acaba de revelar un patrón, figura, miedo o concepto NUEVO que es muy importante, puedes sugerir un NUEVO NODO para agregarse al mapa conductual.
 5. Devuelve ÚNICAMENTE un objeto JSON.
@@ -4812,7 +4812,43 @@ Devuelve estrictamente el JSON sin formato extra.
                                     style={{ width: `${VIRTUAL_WIDTH}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
                                 >
                                     {/* SVG Edges */}
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+                                    
+                                    {/* --- INJECTION FOR MINI NODES --- */}
+                                    {(() => {
+                                        let finalNodesToRender = [...(nodesToRender || [])];
+                                        let finalEdgesToRender = [...(edgesToRender || [])];
+                                        if (isExploringActiveNode && selectedNode) {
+                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
+                                            const currentChat = (nodeChats[selectedNode.id] && nodeChats[selectedNode.id][safeThreadIndex]) || [];
+                                            currentChat.forEach((msg, idx) => {
+                                                const miniNodeId = `mini_node_${selectedNode.id}_${safeThreadIndex}_${idx}`;
+                                                // Generate angular spread based on index
+                                                const radius = 10 + (idx * 6);
+                                                const angle = (idx * Math.PI * 2 / 5) + (safeThreadIndex * Math.PI / 3);
+                                                const x = selectedNode.x + Math.cos(angle) * radius;
+                                                const y = selectedNode.y + Math.sin(angle) * radius;
+                                                
+                                                finalNodesToRender.push({
+                                                    id: miniNodeId,
+                                                    type: 'mini_chat',
+                                                    role: msg.role,
+                                                    label: msg.content.length > 50 ? msg.content.substring(0, 50) + '...' : msg.content,
+                                                    x, y
+                                                });
+                                                
+                                                finalEdgesToRender.push({
+                                                    source: idx === 0 ? selectedNode.id : `mini_node_${selectedNode.id}_${safeThreadIndex}_${idx - 1}`,
+                                                    target: miniNodeId,
+                                                    type: 'mini_chat_link',
+                                                    weight: 1.0
+                                                });
+                                            });
+                                        }
+
+                                        return (
+                                            <React.Fragment>
+                                                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+
                                         <style>{`
                                                     .edge-flow-active {
                                                         stroke-dasharray: 0.6, 0.4;
@@ -4838,7 +4874,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <polygon points="0 0, 0.8 0.3, 0 0.6" fill="rgba(168, 85, 247, 0.8)" />
                                             </marker>
                                         </defs>
-                                        {edgesToRender.map((edge, i) => {
+                                        {finalEdgesToRender.map((edge, i) => {
                                             const source = nodesToRender.find(n => n.id === edge.source);
                                             const target = nodesToRender.find(n => n.id === edge.target);
                                             if (!source || !target) return null;
@@ -4928,6 +4964,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 strokeWidth = 0.26;
                                                 className += " edge-flow-active";
                                                 style = {};
+                                            } else if (edge.type === 'mini_chat_link') {
+                                                strokeColor = "rgba(255, 255, 255, 0.4)";
+                                                strokeWidth = 0.15;
+                                                style = { strokeDasharray: "0.5, 0.5" };
+                                                markerEnd = "";
                                             } else if (isProgression) {
                                                 strokeColor = "rgba(59, 130, 246, 0.45)";
                                                 strokeWidth = 0.09;
@@ -4968,7 +5009,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </svg>
 
                                     {/* HTML Nodes */}
-                                    {nodesToRender.map(node => {
+                                    {finalNodesToRender.map(node => {
                                         const isSelected = selectedNode?.id === node.id;
                                         const activeNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
                                         const isNodeInPattern = activePattern && activePattern.node_ids.includes(node.id);
@@ -5136,6 +5177,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.dashed ? 'text-sky-300' : 'text-rose-200'}`}>{node.label}</span>
                                                     </div>
                                                 )}
+                                                
+                                                {node.type === 'mini_chat' && (
+                                                    <div className={`min-w-[40px] max-w-[120px] rounded-2xl bg-black/60 border border-white/20 backdrop-blur-md flex items-center justify-center p-2.5 transition-all duration-700 shadow-[0_0_15px_rgba(255,255,255,0.1)] ${node.role === 'assistant' ? 'border-sky-500/50 shadow-[0_0_20px_rgba(14,165,233,0.2)]' : 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'}`}>
+                                                        <span className={`text-[8px] font-medium text-center leading-tight break-words drop-shadow-md ${node.role === 'assistant' ? 'text-sky-100' : 'text-emerald-100'}`}>{node.label}</span>
+                                                    </div>
+                                                )}
+
                                                 {node.type === 'consequence' && (
                                                     <div className={`min-w-[150px] max-w-[200px] min-h-[80px] rounded-[2rem] bg-[#0a0a0c]/90 border-2 border-dashed flex items-center justify-center p-4 transition-colors ${isSelected ? 'border-zinc-300 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(255,255,255,0.15)]' : 'border-zinc-500/60 hover:border-zinc-400'} ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : ''}`}>
                                                         <span className="text-[11px] font-bold text-zinc-300 text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{node.label}</span>
@@ -5144,6 +5192,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                             </div>
                                         )
                                     })}
+                                </React.Fragment>
+                                )
+                                })()}
                                 </div>
 
                                 {/* Text Overlays for tabs */}
@@ -5382,9 +5433,30 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         </div>
 
                                                                         {(() => {
-                                                                            const currentChat = nodeChats[node.id] || [];
+                                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[node.id] && nodeChats[node.id][safeThreadIndex]) || [];
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                                                    {/* Header with arrows */}
+                                                                                    <div className="flex items-center justify-between bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                                                                                        <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                                                                            <Sparkles size={10} className="text-sky-500" />
+                                                                                            PERSPECTIVA {safeThreadIndex + 1} DE 3
+                                                                                        </span>
+                                                                                        <div className="flex gap-1">
+                                                                                            <button 
+                                                                                                onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex > 0 ? safeThreadIndex - 1 : 2); }}
+                                                                                                className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                                                                            >
+                                                                                                <ChevronLeft size={14} />
+                                                                                            </button>
+                                                                                            <button 
+                                                                                                onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex < 2 ? safeThreadIndex + 1 : 0); }}
+                                                                                                className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                                                                            >
+                                                                                                <ChevronRight size={14} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
                                                                                     {/* Chat messages area */}
                                                                                     <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3">
                                                                                         {currentChat.length === 0 && isGeneratingExplorations && (
@@ -5395,9 +5467,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                         )}
                                                                                         {currentChat.map((msg, idx) => (
                                                                                             <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
-                                                                                                <span className={`text-[8px] font-mono font-bold uppercase tracking-widest ${msg.role === 'assistant' ? 'text-sky-400' : 'text-emerald-400'}`}>
-                                                                                                    {msg.role === 'assistant' ? 'Terapeuta' : 'Tú'}
-                                                                                                </span>
                                                                                                 <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed max-w-[90%] ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
                                                                                                     {msg.content}
                                                                                                     {msg.newNodeAdded && (
@@ -5642,9 +5711,30 @@ Por favor, analicemos:
 
                                             {/* Wizard for 3 Questions */}
                                             {(() => {
-                                                const currentChat = nodeChats[currentNode.id] || [];
+                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = (nodeChats[currentNode.id] && nodeChats[currentNode.id][safeThreadIndex]) || [];
                                                 return (
                                                     <div className="flex flex-col gap-2.5 mt-2 h-full max-h-[40vh] md:max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                        {/* Header with arrows */}
+                                                        <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1">
+                                                            <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                                                <Sparkles size={12} className="text-sky-500" />
+                                                                PERSPECTIVA {safeThreadIndex + 1} DE 3
+                                                            </span>
+                                                            <div className="flex gap-1.5">
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex > 0 ? safeThreadIndex - 1 : 2); }}
+                                                                    className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
+                                                                >
+                                                                    <ChevronLeft size={14} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex < 2 ? safeThreadIndex + 1 : 0); }}
+                                                                    className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
+                                                                >
+                                                                    <ChevronRight size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                         {/* Chat messages area */}
                                                         <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3 border border-white/5 bg-zinc-900/20 p-2 rounded-xl">
                                                             {currentChat.length === 0 && isGeneratingExplorations && (
@@ -5655,9 +5745,6 @@ Por favor, analicemos:
                                                             )}
                                                             {currentChat.map((msg, idx) => (
                                                                 <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
-                                                                    <span className={`text-[9px] font-mono font-bold uppercase tracking-widest ${msg.role === 'assistant' ? 'text-sky-400' : 'text-emerald-400'}`}>
-                                                                        {msg.role === 'assistant' ? 'Terapeuta' : 'Tú'}
-                                                                    </span>
                                                                     <div className={`p-3 rounded-xl text-[11px] md:text-[12px] leading-relaxed max-w-[90%] shadow-md ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
                                                                         {msg.content}
                                                                         {msg.newNodeAdded && (
