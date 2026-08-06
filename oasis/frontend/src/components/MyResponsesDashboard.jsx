@@ -5456,13 +5456,29 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                         </span>
                                                                                         <div className="flex gap-1">
                                                                                             <button 
-                                                                                                onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex > 0 ? safeThreadIndex - 1 : 2); }}
+                                                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 2;
+                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                    const nextChat = getSafeCurrentChat(node.id, nextIdx);
+                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                    }
+                                                                }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                                                                                             >
                                                                                                 <ChevronLeft size={14} />
                                                                                             </button>
                                                                                             <button 
-                                                                                                onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex < 2 ? safeThreadIndex + 1 : 0); }}
+                                                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const nextIdx = safeThreadIndex < 2 ? safeThreadIndex + 1 : 0;
+                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                    const nextChat = getSafeCurrentChat(node.id, nextIdx);
+                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                    }
+                                                                }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                                                                                             >
                                                                                                 <ChevronRight size={14} />
@@ -5734,13 +5750,29 @@ Por favor, analicemos:
                                                             </span>
                                                             <div className="flex gap-1.5">
                                                                 <button 
-                                                                    onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex > 0 ? safeThreadIndex - 1 : 2); }}
+                                                                    onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 2;
+                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                    const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
+                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                        continueNodeExploration(currentNode, null, nextIdx);
+                                                                    }
+                                                                }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
                                                                 >
                                                                     <ChevronLeft size={14} />
                                                                 </button>
                                                                 <button 
-                                                                    onClick={(e) => { e.stopPropagation(); setSelectedQuestionIndex(safeThreadIndex < 2 ? safeThreadIndex + 1 : 0); }}
+                                                                    onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const nextIdx = safeThreadIndex < 2 ? safeThreadIndex + 1 : 0;
+                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                    const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
+                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                        continueNodeExploration(currentNode, null, nextIdx);
+                                                                    }
+                                                                }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
                                                                 >
                                                                     <ChevronRight size={14} />
