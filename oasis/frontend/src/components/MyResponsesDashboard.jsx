@@ -1357,6 +1357,24 @@ Devuelve estrictamente el JSON sin formato extra.
     const [isGeneratingExplorations, setIsGeneratingExplorations] = useState(false);
     const [selectedExplorationSpot, setSelectedExplorationSpot] = useState(null);
     const [explorationResponse, setExplorationResponse] = useState('');
+
+    // Load drafts automatically when navigating nodes/threads
+    useEffect(() => {
+        let activeId = null;
+        let threadIdx = 0;
+        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+            activeId = sortedTourNodes[tourActiveIndex].id;
+            threadIdx = selectedQuestionIndex || 0;
+        } else if (selectedNode) {
+            activeId = selectedNode.id;
+            threadIdx = selectedQuestionIndex || 0;
+        }
+        if (activeId) {
+            const draft = localStorage.getItem('draft_' + activeId + '_' + threadIdx);
+            setExplorationResponse(draft || '');
+        }
+    }, [mapViewTab, tourActiveIndex, sortedTourNodes, selectedNode, selectedQuestionIndex]);
+
     const [isSubmittingExploration, setIsSubmittingExploration] = useState(false);
     const [solidifyingExplorationId, setSolidifyingExplorationId] = useState(null);
     const [explorationModalOpen, setExplorationModalOpen] = useState(false);
@@ -3093,6 +3111,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
         } finally {
             setIsGeneratingExplorations(false);
             setExplorationResponse(''); // Clear input box
+            localStorage.removeItem('draft_' + currentNode.id + '_' + threadIndex);
         }
     };
 
@@ -4820,6 +4839,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         if (activeChatNode) {
                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
                                             const currentChat = getSafeCurrentChat(activeChatNode.id, safeThreadIndex);
+                                            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos'];
                                             currentChat.forEach((msg, idx) => {
                                                 const miniNodeId = `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx}`;
                                                 // Generate angular spread based on index
@@ -4827,12 +4847,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 const angle = (idx * Math.PI * 2 / 5) + (safeThreadIndex * Math.PI / 3);
                                                 const x = activeChatNode.x + Math.cos(angle) * radius;
                                                 const y = activeChatNode.y + Math.sin(angle) * radius;
+                                                const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
                                                 
                                                 finalNodesToRender.push({
                                                     id: miniNodeId,
                                                     type: 'mini_chat',
                                                     role: msg.role,
-                                                    label: msg.content.length > 50 ? msg.content.substring(0, 50) + '...' : msg.content,
+                                                    label: `${threadLabels[safeThreadIndex]}${roleLabel}`,
                                                     x, y
                                                 });
                                                 
@@ -5033,7 +5054,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                             }
                                             setExplorationModalOpen(false);
                                             setSelectedQuestionIndex(null);
-                                            setExplorationResponse('');
                                             const targetNode = isSelected ? null : node;
                                             setSelectedNode(targetNode);
 
@@ -5509,7 +5529,19 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
                                                                                             value={explorationResponse}
                                                                                             disabled={isGeneratingExplorations}
-                                                                                            onChange={(e) => setExplorationResponse(e.target.value)}
+                                                                                            onChange={(e) => {
+        const val = e.target.value;
+        setExplorationResponse(val);
+        let activeId = null;
+        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+            activeId = sortedTourNodes[tourActiveIndex].id;
+        } else if (selectedNode) {
+            activeId = selectedNode.id;
+        }
+        if (activeId) {
+            localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
+        }
+    }}
                                                                                             onMouseDown={e => e.stopPropagation()}
                                                                                             onClick={e => e.stopPropagation()}
                                                                                             onKeyDown={(e) => {
@@ -5803,7 +5835,19 @@ Por favor, analicemos:
                                                                 placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
                                                                 value={explorationResponse}
                                                                 disabled={isGeneratingExplorations}
-                                                                onChange={(e) => setExplorationResponse(e.target.value)}
+                                                                onChange={(e) => {
+        const val = e.target.value;
+        setExplorationResponse(val);
+        let activeId = null;
+        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+            activeId = sortedTourNodes[tourActiveIndex].id;
+        } else if (selectedNode) {
+            activeId = selectedNode.id;
+        }
+        if (activeId) {
+            localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
+        }
+    }}
                                                                 onMouseDown={e => e.stopPropagation()}
                                                                 onClick={e => e.stopPropagation()}
                                                                 onTouchStart={e => e.stopPropagation()}
