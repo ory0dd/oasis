@@ -3056,10 +3056,29 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 };
                 updatedChat.push(assistantMessage);
 
-                setNodeChats(prev => ({
-                    ...prev,
-                    [currentNode.id]: updatedChat
-                }));
+                setNodeChats(prev => {
+                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [] };
+                    const isLegacy = Array.isArray(currentThreads);
+                    
+                    if (isLegacy) {
+                        return {
+                            ...prev,
+                            [currentNode.id]: {
+                                0: threadIndex === 0 ? updatedChat : currentThreads,
+                                1: threadIndex === 1 ? updatedChat : [],
+                                2: threadIndex === 2 ? updatedChat : []
+                            }
+                        };
+                    }
+
+                    return {
+                        ...prev,
+                        [currentNode.id]: {
+                            ...currentThreads,
+                            [threadIndex]: updatedChat
+                        }
+                    };
+                });
 
                 // Handle new node dynamic addition to visual map if LLM proposed one
                 if (parsed.new_node) {
