@@ -3120,7 +3120,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                         updatedAfcData.nodes = [...updatedAfcData.nodes, newNode];
                         updatedAfcData.edges = [...updatedAfcData.edges, newEdge];
                         setAfcData(updatedAfcData);
-                        localStorage.setItem(`oasis_afc_${user}`, JSON.stringify(updatedAfcData));
+                        setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updatedAfcData));
                     }
                 }
 
@@ -5105,7 +5105,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 (e.target === activeNodeId && e.source === node.id)
                                             ))
                                         )) || isNodeInPattern;
-                                        const isDimmed = (activeNodeId || selectedPatternId) && !isConnected;
+                                        const isDimmed = (activeNodeId || selectedPatternId) && !isConnected && node.type !== 'mini_chat';
 
                                         // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click rápido
                                         const handleNodeClick = (e) => {
