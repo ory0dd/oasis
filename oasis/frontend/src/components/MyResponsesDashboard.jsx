@@ -1358,23 +1358,6 @@ Devuelve estrictamente el JSON sin formato extra.
     const [selectedExplorationSpot, setSelectedExplorationSpot] = useState(null);
     const [explorationResponse, setExplorationResponse] = useState('');
 
-    // Load drafts automatically when navigating nodes/threads
-    useEffect(() => {
-        let activeId = null;
-        let threadIdx = 0;
-        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
-            activeId = sortedTourNodes[tourActiveIndex].id;
-            threadIdx = selectedQuestionIndex || 0;
-        } else if (selectedNode) {
-            activeId = selectedNode.id;
-            threadIdx = selectedQuestionIndex || 0;
-        }
-        if (activeId) {
-            const draft = localStorage.getItem('draft_' + activeId + '_' + threadIdx);
-            setExplorationResponse(draft || '');
-        }
-    }, [mapViewTab, tourActiveIndex, sortedTourNodes, selectedNode, selectedQuestionIndex]);
-
     const [isSubmittingExploration, setIsSubmittingExploration] = useState(false);
     const [solidifyingExplorationId, setSolidifyingExplorationId] = useState(null);
     const [explorationModalOpen, setExplorationModalOpen] = useState(false);
