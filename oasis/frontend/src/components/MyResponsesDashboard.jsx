@@ -4921,8 +4921,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
-                                                        // Push them outside the main node with a much larger base radius to clear 200px wide rectangles
-                                                        const radius = 220 + (idx * 35);
+                                                        // Constellation orbit
+                                                        const radius = 120 + (idx * 15);
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
                                                         const x = node.x + Math.cos(angle) * radius;
                                                         const y = node.y + Math.sin(angle) * radius;
@@ -5290,8 +5290,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 )}
                                                 
                                                 {node.type === 'mini_chat' && (
-                                                    <div className={`min-w-[28px] max-w-[90px] rounded-xl bg-black/50 border border-white/20 backdrop-blur-md flex items-center justify-center p-1.5 transition-all duration-700 shadow-[0_0_10px_rgba(255,255,255,0.05)] ${node.role === 'assistant' ? 'border-sky-500/40 shadow-[0_0_15px_rgba(14,165,233,0.15)]' : 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]'}`}>
-                                                        <span className={`text-[6.5px] font-medium text-center leading-[1.1] break-words drop-shadow-md ${node.role === 'assistant' ? 'text-sky-100/90' : 'text-emerald-100/90'}`}>{node.label}</span>
+                                                    <div className="group relative cursor-pointer flex items-center justify-center w-8 h-8">
+                                                        <div className={`w-2 h-2 rounded-full border shadow-sm transition-transform duration-300 group-hover:scale-150 ${node.role === 'assistant' ? 'bg-sky-500/30 border-sky-500/80' : 'bg-emerald-500/30 border-emerald-500/80'}`} />
+                                                        <div className={`absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 rounded-lg bg-black/90 border p-1.5 backdrop-blur-md shadow-lg z-50 ${node.role === 'assistant' ? 'border-sky-500/60 shadow-[0_0_15px_rgba(14,165,233,0.3)]' : 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'}`}>
+                                                            <span className={`block text-[6.5px] font-medium text-center whitespace-nowrap ${node.role === 'assistant' ? 'text-sky-100' : 'text-emerald-100'}`}>{node.label}</span>
+                                                        </div>
                                                     </div>
                                                 )}
 
