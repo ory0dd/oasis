@@ -1735,6 +1735,25 @@ Devuelve estrictamente el JSON sin formato extra.
         setLocalItem(`oasis_node_explorations_${user}`, JSON.stringify(newExplorations));
     };
 
+    // Load nodeChats from localStorage
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_node_chats_${user}`);
+            if (saved) {
+                setNodeChats(JSON.parse(saved));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [user]);
+
+    // Save nodeChats to localStorage when it changes
+    useEffect(() => {
+        if (Object.keys(nodeChats).length > 0) {
+            setLocalItem(`oasis_node_chats_${user}`, JSON.stringify(nodeChats));
+        }
+    }, [nodeChats, user]);
+
     const lastTouchDistance = useRef(null);
     const mapDragged = useRef(false);
     const mapContainerRef = useRef(null);
