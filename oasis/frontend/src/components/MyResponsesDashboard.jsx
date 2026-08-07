@@ -2959,7 +2959,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         setIsGeneratingExplorations(true);
 
         // Fetch current chat history for this node
-        const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+        const currentChat = getSafeCurrentChat(currentNode.id, threadIndex);
 
         // Build messages array for LLM context
         const llmMessages = [];
