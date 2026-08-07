@@ -2949,7 +2949,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         const llmMessages = [];
         
         // System prompt
-        const systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
+        let systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
 El paciente está explorando un nodo de su mapa conductual (Grafo de Bucles) en formato de conversación viva contigo.
 Tu objetivo es guiar esta exploración de forma empática, profunda y confrontativa cuando sea necesario.
 
@@ -2971,11 +2971,48 @@ Análisis original: ${getFallbackDescription(currentNode, user)}
 ESTRUCTURA DE SALIDA ESPERADA:
 {
   "next_question": "La respuesta validante breve y tu única pregunta poderosa de seguimiento.",
-  "new_node": null // Si no hay nada nuevo que mapear, devuelve null. Si hay un patrón nuevo MUY fuerte, devuelve un objeto con { "type": "cognitive|historical|social", "label": "Título corto", "description": "Breve análisis", "edge_type": "progression|conflict" }
-}
-`;
+  "new_node": null
+}`;
 
+        if (threadIndex === 6) {
+            systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
+El paciente está cerrando e integrando la exploración de un nodo de su mapa conductual.
+Ha explorado este nodo desde múltiples perspectivas diferentes (Historia, Relaciones, Cuerpo, Valores, Conductas, Experimentos).
+
+=== NODO EN EXPLORACIÓN ===
+Nodo: "${currentNode.label}" (Tipo: ${currentNode.type})
+
+=== INSTRUCCIONES DE CIERRE E INTEGRACIÓN ===
+1. La última parte del nodo invita a observar qué cambió durante la exploración. NO busques obtener más información. Busca INTEGRAR la experiencia.
+2. Si el paciente NO ha hablado en esta etapa de integración, genera un ÚNICO mensaje de cierre que resuma compasivamente el núcleo de lo que se ha revelado en las perspectivas (usando tu contexto de todo lo que el paciente ha dicho) y termina con una sola pregunta integradora: "¿Qué ha cambiado en tu forma de ver o sentir esto después de esta exploración?".
+3. Si el paciente ya respondió a tu pregunta de integración, evalúa si ha ocurrido una "reorganización de significado" genuina.
+4. Devuelve ÚNICAMENTE un objeto JSON. Si consideras que el paciente ha integrado la experiencia con éxito (insight), establece "node_status": "integrated". De lo contrario, "node_status": "open".
+
+ESTRUCTURA DE SALIDA ESPERADA:
+{
+  "next_question": "Tu mensaje integrador o respuesta final.",
+  "node_status": "open"
+}`;
+        }
+
+        
         llmMessages.push({ role: 'system', content: systemPrompt });
+
+        if (threadIndex === 6) {
+            // Recopilar el contexto de todas las perspectivas previas
+            let contextBuilder = "=== HISTORIAL DE EXPLORACIÓN DEL PACIENTE EN ESTE NODO ===\n";
+            const perspectives = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos'];
+            for (let i = 0; i < 6; i++) {
+                const tChat = getSafeCurrentChat(currentNode.id, i);
+                if (tChat.length > 0) {
+                    contextBuilder += `\n-- Perspectiva: ${perspectives[i]} --\n`;
+                    tChat.forEach(m => {
+                        contextBuilder += `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}\n`;
+                    });
+                }
+            }
+            llmMessages.push({ role: 'system', content: contextBuilder });
+        }
 
         // Append past conversation history so LLM knows the context
         currentChat.forEach(msg => {
@@ -3041,7 +3078,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 updatedChat.push(assistantMessage);
 
                 setNodeChats(prev => {
-                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] };
+                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                     const isLegacy = Array.isArray(currentThreads);
                     
                     if (isLegacy) {
@@ -3053,7 +3090,8 @@ ESTRUCTURA DE SALIDA ESPERADA:
                                 2: threadIndex === 2 ? updatedChat : [],
                                 3: threadIndex === 3 ? updatedChat : [],
                                 4: threadIndex === 4 ? updatedChat : [],
-                                5: threadIndex === 5 ? updatedChat : []
+                                5: threadIndex === 5 ? updatedChat : [],
+                                6: threadIndex === 6 ? updatedChat : []
                             }
                         };
                     }
@@ -3068,7 +3106,16 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 });
 
                 // Handle new node dynamic addition to visual map if LLM proposed one
-                if (parsed.new_node) {
+                if (threadIndex === 6 && parsed.node_status === 'integrated') {
+                        setAfcData(prev => {
+                            if (!prev || !prev.nodes) return prev;
+                            return {
+                                ...prev,
+                                nodes: prev.nodes.map(n => n.id === currentNode.id ? { ...n, status: 'integrated' } : n)
+                            };
+                        });
+                    }
+                    if (parsed.new_node) {
                     const uniqueId = `dynamic_node_${Date.now()}`;
                     const newNode = {
                         id: uniqueId,
@@ -4839,7 +4886,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         if (activeChatNode) {
                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
                                             const currentChat = getSafeCurrentChat(activeChatNode.id, safeThreadIndex);
-                                            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos'];
+                                            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
                                             currentChat.forEach((msg, idx) => {
                                                 const miniNodeId = `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx}`;
                                                 // Generate angular spread based on index
@@ -5183,18 +5230,18 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                                 {node.type === 'historical' && (
                                                     <div className="relative flex items-center justify-center">
-                                                        <div className={`w-28 h-28 absolute bg-[#0a0a0c]/90 border-2 rotate-45 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (isSelected ? 'border-blue-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(59,130,246,0.3)]' : 'border-blue-500/40 hover:border-blue-400')}`} />
-                                                        <span className={`relative z-10 text-[10px] font-bold text-center leading-snug w-[140px] break-words p-3 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.dashed ? 'text-sky-300' : 'text-blue-200'}`}>{node.label}</span>
+                                                        <div className={`w-28 h-28 absolute bg-[#0a0a0c]/90 border-2 rotate-45 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-blue-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(59,130,246,0.3)]' : 'border-blue-500/40 hover:border-blue-400'))}`} />
+                                                        <span className={`relative z-10 text-[10px] font-bold text-center leading-snug w-[140px] break-words p-3 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-blue-200')}`}>{node.label}</span>
                                                     </div>
                                                 )}
                                                 {(node.type === 'biological' || node.type === 'social') && (
-                                                    <div className={`min-w-[130px] max-w-[170px] min-h-[130px] rounded-full bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-5 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (isSelected ? 'border-emerald-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(16,185,129,0.3)]' : 'border-emerald-500/40 hover:border-emerald-400')}`}>
-                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.dashed ? 'text-sky-300' : 'text-emerald-200'}`}>{node.label}</span>
+                                                    <div className={`min-w-[130px] max-w-[170px] min-h-[130px] rounded-full bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-5 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-emerald-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(16,185,129,0.3)]' : 'border-emerald-500/40 hover:border-emerald-400'))}`}>
+                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-emerald-200')}`}>{node.label}</span>
                                                     </div>
                                                 )}
                                                 {(node.type === 'motor' || node.type === 'cognitive' || node.type === 'physiological') && (
-                                                    <div className={`min-w-[150px] max-w-[200px] min-h-[64px] rounded-xl bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-4 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (isSelected ? 'border-rose-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(244,63,94,0.3)]' : 'border-rose-500/40 hover:border-rose-400')}`}>
-                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.dashed ? 'text-sky-300' : 'text-rose-200'}`}>{node.label}</span>
+                                                    <div className={`min-w-[150px] max-w-[200px] min-h-[64px] rounded-xl bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-4 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-rose-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(244,63,94,0.3)]' : 'border-rose-500/40 hover:border-rose-400'))}`}>
+                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-rose-200')}`}>{node.label}</span>
                                                     </div>
                                                 )}
                                                 
@@ -5460,13 +5507,28 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                     <div className="flex items-center justify-between bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
                                                                                         <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                                             <Sparkles size={10} className="text-sky-500" />
-                                                                                            PERSPECTIVA {safeThreadIndex + 1} DE 6
+                                                                                            {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
                                                                                         </span>
                                                                                         <div className="flex gap-1">
+                                                                {safeThreadIndex !== 6 && (
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedQuestionIndex(6);
+                                                                            const nextChat = getSafeCurrentChat(activeChatNode?.id || currentNode?.id || selectedNode?.id, 6);
+                                                                            if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                                continueNodeExploration(activeChatNode || currentNode || selectedNode, null, 6);
+                                                                            }
+                                                                        }}
+                                                                        className="mr-2 px-2 py-1 text-[9px] font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 rounded border border-amber-500/30 transition-colors"
+                                                                    >
+                                                                        INTEGRAR EXPERIENCIA
+                                                                    </button>
+                                                                )}
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 5;
+                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : 5);
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5480,7 +5542,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex < 5 ? safeThreadIndex + 1 : 0;
+                                                                    const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : 0);
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5766,13 +5828,28 @@ Por favor, analicemos:
                                                         <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1">
                                                             <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                 <Sparkles size={12} className="text-sky-500" />
-                                                                PERSPECTIVA {safeThreadIndex + 1} DE 6
+                                                                {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
                                                             </span>
                                                             <div className="flex gap-1.5">
+                                                                {safeThreadIndex !== 6 && (
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedQuestionIndex(6);
+                                                                            const nextChat = getSafeCurrentChat(activeChatNode?.id || currentNode?.id || selectedNode?.id, 6);
+                                                                            if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                                continueNodeExploration(activeChatNode || currentNode || selectedNode, null, 6);
+                                                                            }
+                                                                        }}
+                                                                        className="mr-2 px-2 py-1 text-[9px] font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 rounded border border-amber-500/30 transition-colors"
+                                                                    >
+                                                                        INTEGRAR EXPERIENCIA
+                                                                    </button>
+                                                                )}
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 5;
+                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : 5);
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5786,7 +5863,7 @@ Por favor, analicemos:
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex < 5 ? safeThreadIndex + 1 : 0;
+                                                                    const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : 0);
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
