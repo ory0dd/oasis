@@ -4921,8 +4921,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
-                                                        // Generate angular spread based on index and thread
-                                                        const radius = 10 + (idx * 6);
+                                                        // Push them outside the main node with a larger base radius
+                                                        const radius = 100 + (idx * 20);
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
                                                         const x = node.x + Math.cos(angle) * radius;
                                                         const y = node.y + Math.sin(angle) * radius;
@@ -5290,8 +5290,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 )}
                                                 
                                                 {node.type === 'mini_chat' && (
-                                                    <div className={`min-w-[40px] max-w-[120px] rounded-2xl bg-black/60 border border-white/20 backdrop-blur-md flex items-center justify-center p-2.5 transition-all duration-700 shadow-[0_0_15px_rgba(255,255,255,0.1)] ${node.role === 'assistant' ? 'border-sky-500/50 shadow-[0_0_20px_rgba(14,165,233,0.2)]' : 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'}`}>
-                                                        <span className={`text-[8px] font-medium text-center leading-tight break-words drop-shadow-md ${node.role === 'assistant' ? 'text-sky-100' : 'text-emerald-100'}`}>{node.label}</span>
+                                                    <div className={`min-w-[28px] max-w-[90px] rounded-xl bg-black/50 border border-white/20 backdrop-blur-md flex items-center justify-center p-1.5 transition-all duration-700 shadow-[0_0_10px_rgba(255,255,255,0.05)] ${node.role === 'assistant' ? 'border-sky-500/40 shadow-[0_0_15px_rgba(14,165,233,0.15)]' : 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]'}`}>
+                                                        <span className={`text-[6.5px] font-medium text-center leading-[1.1] break-words drop-shadow-md ${node.role === 'assistant' ? 'text-sky-100/90' : 'text-emerald-100/90'}`}>{node.label}</span>
                                                     </div>
                                                 )}
 
