@@ -2945,7 +2945,7 @@ Análisis original: ${getFallbackDescription(currentNode, user)}
 
 === INSTRUCCIONES ===
 1. Evalúa el historial de la conversación (si existe) y la última respuesta del paciente.
-2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva. Enfoque: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social' : 'EFECTOS FISIOLÓGICOS o corporales'}.
+2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva. Enfoque: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado (experiencias escolares, familia, infancia)' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social (pareja, amistades, trabajo)' : threadIndex === 2 ? 'EFECTOS FISIOLÓGICOS o corporales (tensión, respiración, agotamiento)' : threadIndex === 3 ? 'VALORES y significados (creatividad, libertad, autenticidad)' : threadIndex === 4 ? 'CONDUCTAS y patrones (procrastinación, evitación, sobreesfuerzo)' : 'EXPERIMENTOS y acciones concretas para explorar nuevas posibilidades'}.
 3. Si el paciente ya respondió, valida brevemente su respuesta y haz una ÚNICA pregunta de seguimiento que profundice un nivel más abajo (ej. yendo a la raíz histórica, a los efectos sistémicos, a los valores ocultos, etc.).
 4. OPCIONAL: Si descubres que el paciente acaba de revelar un patrón, figura, miedo o concepto NUEVO que es muy importante, puedes sugerir un NUEVO NODO para agregarse al mapa conductual.
 5. Devuelve ÚNICAMENTE un objeto JSON.
@@ -3023,7 +3023,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 updatedChat.push(assistantMessage);
 
                 setNodeChats(prev => {
-                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [] };
+                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] };
                     const isLegacy = Array.isArray(currentThreads);
                     
                     if (isLegacy) {
@@ -3032,7 +3032,10 @@ ESTRUCTURA DE SALIDA ESPERADA:
                             [currentNode.id]: {
                                 0: threadIndex === 0 ? updatedChat : currentThreads,
                                 1: threadIndex === 1 ? updatedChat : [],
-                                2: threadIndex === 2 ? updatedChat : []
+                                2: threadIndex === 2 ? updatedChat : [],
+                                3: threadIndex === 3 ? updatedChat : [],
+                                4: threadIndex === 4 ? updatedChat : [],
+                                5: threadIndex === 5 ? updatedChat : []
                             }
                         };
                     }
@@ -5437,13 +5440,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                     <div className="flex items-center justify-between bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
                                                                                         <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                                             <Sparkles size={10} className="text-sky-500" />
-                                                                                            PERSPECTIVA {safeThreadIndex + 1} DE 3
+                                                                                            PERSPECTIVA {safeThreadIndex + 1} DE 6
                                                                                         </span>
                                                                                         <div className="flex gap-1">
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 2;
+                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 5;
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5457,7 +5460,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex < 2 ? safeThreadIndex + 1 : 0;
+                                                                    const nextIdx = safeThreadIndex < 5 ? safeThreadIndex + 1 : 0;
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5731,13 +5734,13 @@ Por favor, analicemos:
                                                         <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1">
                                                             <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                 <Sparkles size={12} className="text-sky-500" />
-                                                                PERSPECTIVA {safeThreadIndex + 1} DE 3
+                                                                PERSPECTIVA {safeThreadIndex + 1} DE 6
                                                             </span>
                                                             <div className="flex gap-1.5">
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 2;
+                                                                    const nextIdx = safeThreadIndex > 0 ? safeThreadIndex - 1 : 5;
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5751,7 +5754,7 @@ Por favor, analicemos:
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex < 2 ? safeThreadIndex + 1 : 0;
+                                                                    const nextIdx = safeThreadIndex < 5 ? safeThreadIndex + 1 : 0;
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
