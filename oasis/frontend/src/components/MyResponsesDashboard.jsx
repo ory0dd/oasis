@@ -543,9 +543,9 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario, profundamente poético y empático (estilo psicoanálisis existencial). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su alma de forma poética. Enfócate en la belleza trágica de su tensión interna, sus anhelos más profundos y su fuerza vital, abstrayendo por completo los hechos concretos de su vida. (IMPORTANTE: Nunca menciones anécdotas literales). Debe ser UN SOLO PÁRRAFO con una longitud visual de aproximadamente 5 renglones, que se lea como una introspección profunda y conmovedora, no como un diagnóstico médico. Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario y empático, pero ESTRICTAMENTE ANCLADO EN LA VERDAD DE SU HISTORIA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su dolor en una metáfora literaria sin perder el sentido de quién es (no lo hagas tan abstracto que pierda conexión con su vida real). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su alma. Enfócate en la belleza de su tensión interna y sus anhelos más profundos. Debe ser UN SOLO PÁRRAFO con una longitud visual de aproximadamente 5 renglones. Estructura estricta:
   {
-     "sintesis": "Párrafo poético, cálido y profundo sobre su alma y su tensión (aprox 5 líneas).",
+     "sintesis": "Párrafo poético, cálido y profundo anclado en su historia real (aprox 5 líneas).",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   }
 
@@ -4921,8 +4921,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
-                                                        // Push them outside the main node with a larger base radius
-                                                        const radius = 100 + (idx * 20);
+                                                        // Push them outside the main node with a much larger base radius to clear 200px wide rectangles
+                                                        const radius = 220 + (idx * 35);
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
                                                         const x = node.x + Math.cos(angle) * radius;
                                                         const y = node.y + Math.sin(angle) * radius;
