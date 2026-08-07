@@ -3045,7 +3045,27 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "");
             }
 
-            const parsed = JSON.parse(cleanContent.trim());
+            let parsed;
+            try {
+                parsed = JSON.parse(cleanContent.trim());
+            } catch (err) {
+                if (err.message.includes('Unexpected end of JSON input') || err.message.includes('Unterminated string')) {
+                    // LLM cutoff (max_tokens hit or network timeout). Auto-heal basic cutoffs.
+                    let healed = cleanContent.trim();
+                    if (healed.lastIndexOf('"') > healed.lastIndexOf(':')) {
+                        healed += '"}';
+                    } else {
+                        healed += '}';
+                    }
+                    try {
+                        parsed = JSON.parse(healed);
+                    } catch (e2) {
+                        throw new Error('El modelo de IA agotó su límite de tiempo o tokens al responder. Intenta enviar tu respuesta de nuevo.');
+                    }
+                } else {
+                    throw err;
+                }
+            }
             if (parsed.next_question) {
                 // Determine new chat array
                 const updatedChat = [...currentChat];
@@ -4890,35 +4910,42 @@ Devuelve estrictamente el JSON sin formato extra.
                                         let finalEdgesToRender = [...(edgesToRender || [])];
                                         const activeChatNode = (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) ? sortedTourNodes[tourActiveIndex] : null;
                                         
-                                        if (activeChatNode) {
-                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-                                            const currentChat = getSafeCurrentChat(activeChatNode.id, safeThreadIndex);
-                                            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
-                                            currentChat.forEach((msg, idx) => {
-                                                const miniNodeId = `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx}`;
-                                                // Generate angular spread based on index
-                                                const radius = 10 + (idx * 6);
-                                                const angle = (idx * Math.PI * 2 / 5) + (safeThreadIndex * Math.PI / 3);
-                                                const x = activeChatNode.x + Math.cos(angle) * radius;
-                                                const y = activeChatNode.y + Math.sin(angle) * radius;
-                                                const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
-                                                
-                                                finalNodesToRender.push({
-                                                    id: miniNodeId,
-                                                    type: 'mini_chat',
-                                                    role: msg.role,
-                                                    label: `${threadLabels[safeThreadIndex]}${roleLabel}`,
-                                                    x, y
-                                                });
-                                                
-                                                finalEdgesToRender.push({
-                                                    source: idx === 0 ? activeChatNode.id : `mini_node_${activeChatNode.id}_${safeThreadIndex}_${idx - 1}`,
-                                                    target: miniNodeId,
-                                                    type: 'mini_chat_link',
-                                                    weight: 1.0
-                                                });
-                                            });
-                                        }
+                                        const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
+                                        const initialNodes = [...finalNodesToRender];
+                                        initialNodes.forEach(node => {
+                                            if (node.type === 'mini_chat') return;
+                                            
+                                            // Render all history for all nodes to show a permanent galaxy of context
+                                            for (let t = 0; t < 7; t++) {
+                                                const currentChat = getSafeCurrentChat(node.id, t);
+                                                if (currentChat && currentChat.length > 0) {
+                                                    currentChat.forEach((msg, idx) => {
+                                                        const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
+                                                        // Generate angular spread based on index and thread
+                                                        const radius = 10 + (idx * 6);
+                                                        const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
+                                                        const x = node.x + Math.cos(angle) * radius;
+                                                        const y = node.y + Math.sin(angle) * radius;
+                                                        const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
+                                                        
+                                                        finalNodesToRender.push({
+                                                            id: miniNodeId,
+                                                            type: 'mini_chat',
+                                                            role: msg.role,
+                                                            label: `${threadLabels[t]}${roleLabel}`,
+                                                            x, y
+                                                        });
+                                                        
+                                                        finalEdgesToRender.push({
+                                                            source: idx === 0 ? node.id : `mini_node_${node.id}_${t}_${idx - 1}`,
+                                                            target: miniNodeId,
+                                                            type: 'mini_chat_link',
+                                                            weight: 1.0
+                                                        });
+                                                    });
+                                                }
+                                            }
+                                        });
 
                                         
     const hasAnsweredAllPerspectives = (nodeId) => {
