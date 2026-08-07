@@ -3142,6 +3142,30 @@ ESTRUCTURA DE SALIDA ESPERADA:
             setIsGeneratingExplorations(false);
             setExplorationResponse(''); // Clear input box
             localStorage.removeItem('draft_' + currentNode.id + '_' + threadIndex);
+
+            // Check if we just unlocked the integration thread!
+            if (threadIndex !== 6) {
+                let answeredCount = 0;
+                for (let i = 0; i < 6; i++) {
+                    if (i === threadIndex) answeredCount++; // We just answered this one
+                    else {
+                        const tChat = getSafeCurrentChat(currentNode.id, i);
+                        if (tChat.some(m => m.role === 'user')) answeredCount++;
+                    }
+                }
+                if (answeredCount === 6) {
+                    // Auto-switch to Integration!
+                    setTimeout(() => {
+                        setSelectedQuestionIndex(6);
+                        const nextChat = getSafeCurrentChat(currentNode.id, 6);
+                        if (!nextChat || nextChat.length === 0) {
+                            // Optionally trigger the initial LLM message for integration automatically:
+                            continueNodeExploration(currentNode, null, 6);
+                        }
+                    }, 1500); // Wait a moment so they see their message submitted
+                }
+            }
+
         }
     };
 
@@ -4896,8 +4920,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                             });
                                         }
 
-                                        return (
-                                            <React.Fragment>
+                                        
+    const hasAnsweredAllPerspectives = (nodeId) => {
+        if (!nodeChats || !nodeChats[nodeId]) return false;
+        for (let i = 0; i < 6; i++) {
+            const chat = nodeChats[nodeId][i] || [];
+            if (!chat.some(msg => msg.role === 'user')) return false;
+        }
+        return true;
+    };
+
+    return (
+        <React.Fragment>
                                                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
 
                                         <style>{`
@@ -5493,25 +5527,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
                                                                                         </span>
                                                                                         <div className="flex gap-1">
-                                                                {safeThreadIndex !== 6 && (
-                                                                    <button 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setSelectedQuestionIndex(6);
-                                                                            const nextChat = getSafeCurrentChat(activeChatNode?.id || currentNode?.id || selectedNode?.id, 6);
-                                                                            if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                                continueNodeExploration(activeChatNode || currentNode || selectedNode, null, 6);
-                                                                            }
-                                                                        }}
-                                                                        className="mr-2 px-2 py-1 text-[9px] font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 rounded border border-amber-500/30 transition-colors"
-                                                                    >
-                                                                        INTEGRAR EXPERIENCIA
-                                                                    </button>
-                                                                )}
+                                                                
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : 5);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5525,7 +5546,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : 0);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                      const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5814,25 +5836,12 @@ Por favor, analicemos:
                                                                 {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
                                                             </span>
                                                             <div className="flex gap-1.5">
-                                                                {safeThreadIndex !== 6 && (
-                                                                    <button 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setSelectedQuestionIndex(6);
-                                                                            const nextChat = getSafeCurrentChat(activeChatNode?.id || currentNode?.id || selectedNode?.id, 6);
-                                                                            if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                                continueNodeExploration(activeChatNode || currentNode || selectedNode, null, 6);
-                                                                            }
-                                                                        }}
-                                                                        className="mr-2 px-2 py-1 text-[9px] font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/40 rounded border border-amber-500/30 transition-colors"
-                                                                    >
-                                                                        INTEGRAR EXPERIENCIA
-                                                                    </button>
-                                                                )}
+                                                                
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : 5);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
@@ -5846,7 +5855,8 @@ Por favor, analicemos:
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : 0);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                      const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
