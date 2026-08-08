@@ -688,6 +688,7 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
   <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
   <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
   <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
+  <li><strong>Herramientas de evaluación utilizadas:</strong> Entrevista fenomenológica, entrevista biográfica/clínica, e Inventario de Personalidad (PID-5).</li>
 </ul>
 <h3>Motivo de consulta</h3>
 <p>(Redacta la demanda del paciente integrando sus síntomas y el contexto general...)</p>
