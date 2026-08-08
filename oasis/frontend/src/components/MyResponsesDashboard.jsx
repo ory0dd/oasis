@@ -794,7 +794,8 @@ Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \
                         messages: [
                             { role: 'system', content: "Genera el informe estrictamente en HTML válido y bien estilizado, sin bloques markdown de código." },
                             { role: 'user', content: prompt }
-                        ]
+                        ],
+                        max_tokens: 8000
                     }
                 })
             });
@@ -863,7 +864,7 @@ Instrucciones Críticas:
                         model: model,
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.7,
-                        max_tokens: 4000
+                        max_tokens: 8000
                     })
                 });
             }
