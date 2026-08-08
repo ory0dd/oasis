@@ -732,54 +732,6 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
 <h2>9. Evaluación de riesgo y aspectos a descartar</h2>
 <p>(Esta sección DEBE SER RIGUROSA. Separa y documenta explícitamente: 1) Ideación suicida actual (presencia, plan, intención). 2) Autolesiones (antecedentes, función, urgencia). 3) Factores protectores que justifican tu evaluación de riesgo. Justifica si el riesgo es bajo, moderado o alto. Finalmente, señala áreas médicas a descartar (ej. evaluar orgánicamente síntomas gastrointestinales o de sueño antes de asumirlos psicosomáticos).)</p>
 
-<h2>10. Objetivos terapéuticos operacionalizados</h2>
-<ol>
-  <li>(Genera objetivos terapéuticos dinámicos, inteligentes y específicos para el sistema funcional del paciente...)</li>
-</ol>
-
-<h2>11. Plan experimental de 4 sesiones</h2>
-<p><strong>Consideración previa:</strong> El plan constituye una propuesta inicial de trabajo experimental y colaborativo para recopilar información y testear las hipótesis.</p>
-
-<h3>Sesión 1: Construcción colaborativa del mapa clínico (El Laboratorio)</h3>
-<ul>
-  <li><strong>Objetivo:</strong> Convertir la sesión en un laboratorio colaborativo. En lugar de imponer la hipótesis ("tu problema es este"), se plantea: "Tengo una hipótesis, pero quiero comprobar contigo si describe tu experiencia".</li>
-  <li><strong>Exploración (El cuerpo como entrada):</strong> Utilizar el cuerpo como primera entrada al tratamiento, ya que a menudo anuncia la emoción antes de poder verbalizarla. Explorar la secuencia: Cuando ocurre X... ¿qué notas primero en el cuerpo? ¿qué te dices? ¿qué impulso aparece? ¿qué terminas haciendo? ¿qué obtienes y qué te cuesta?</li>
-</ul>
-
-<h3>Sesión 2: [Título dinámico y experiencial para la sesión 2]</h3>
-<ul>
-  <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
-  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual. JUSTIFICA por qué esta intervención es el experimento adecuado para testear tu hipótesis de la sesión)</li>
-  <li><strong>Tarea:</strong> ...</li>
-</ul>
-
-<h3>Sesión 3: [Título dinámico y experiencial para la sesión 3]</h3>
-<ul>
-  <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
-  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual. JUSTIFICA explícitamente la relación entre la hipótesis clínica y este experimento)</li>
-  <li><strong>Tarea:</strong> ...</li>
-</ul>
-
-<h3>Sesión 4: [Título dinámico para la sesión 4: Revisión]</h3>
-<ul>
-  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y revisar el apoyo a las hipótesis.</li>
-  <li><strong>Revisión:</strong> ...</li>
-</ul>
-
-<h2>12. Indicadores para saber si la hipótesis está funcionando</h2>
-<p><strong>¿Qué tendría que observar en el paciente después de cada intervención para considerar que mi hipótesis recibió apoyo?</strong></p>
-<ul>
-  <li>(Enumera 3-5 indicadores conductuales, fisiológicos o narrativos específicos que probarían que el tratamiento va por buen camino...)</li>
-</ul>
-
-<h2>13. Criterios para modificar el tratamiento</h2>
-<p>(¿Bajo qué señales, respuestas del paciente o falta de avance se debería descartar la hipótesis central y cambiar el enfoque terapéutico?)</p>
-
-<h2>14. Líneas de continuidad</h2>
-<ul>
-  <li>(Estrategias a largo plazo, consolidación de identidad, valores y proyecto vital...)</li>
-</ul>
-
 Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
             `;
 
