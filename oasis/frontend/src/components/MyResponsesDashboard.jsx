@@ -664,11 +664,14 @@ Tu tarea es redactar un "Informe Psicológico Clínico y Plan de Intervención" 
 CRÍTICO - FILOSOFÍA DEL MODELO MULTIMODAL EXPERIENCIAL:
 No uses un lenguaje pasivo ni propongas terapias intelectualizadas (cero diarios de emociones o metáforas pasivas de consultorio). 
 DEBES diseñar una intervención activa, somática y expresiva ÚNICA para este paciente. 
-Usa el arte, el sonido, el cuerpo y el andamiaje ejecutivo (acciones en el mundo real, límites, planes de negocio/vida). Reinterpreta sus malestares físicos (ej. insomnio, gastritis) como respuestas funcionales o registros somáticos de límites silenciados.
-ADAPTA las técnicas al paciente: no uses siempre la misma música o técnica, inventa descargas frecuenciales, deconstrucciones plásticas o integraciones sonoras que resuenen con su caso particular. Mantén un alto nivel de rigor clínico institucional.
+Usa el arte, el sonido, el cuerpo y el andamiaje ejecutivo (acciones en el mundo real, límites, planes de negocio/vida).
+ADAPTA las técnicas al paciente: no uses siempre la misma música o técnica, inventa experiencias que resuenen con su caso particular. Mantén un alto nivel de rigor clínico.
+NUEVA REGLA (EVITACIÓN VS REGULACIÓN): Diferencia cuidadosamente entre conductas de evitación y conductas legítimas de regulación (ej. reducir sobreestimulación, buscar silencio). No etiquetes automáticamente el aislamiento, el descanso o el baño como evitación. Considera la sobrecarga de estímulos.
+NUEVA REGLA (LENGUAJE CONTEXTUAL): Evita palabras hidráulicas como "descarga corporal" o "liberación". Utiliza términos como: contacto, discriminación, expresión, regulación y elección conductual. Enseña que la emoción no es una presión que debe salir físicamente, sino una experiencia que reconocer y elegir qué hacer con ella.
+NUEVA REGLA (CONTINUIDAD Y MOTIVACIÓN): Explora ciclos más profundos más allá del "perfeccionismo". Analiza el patrón de "motivación → exigencia → error → saturación → colapso → reinicio". ¿Qué pasa cuando desaparece la motivación inicial?
 
 CRÍTICO - TONO Y PRUDENCIA CLÍNICA (HIPÓTESIS, NO VERDADES ABSOLUTAS):
-Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas demasiado pronto. Usa un lenguaje hipotético y tentativo en tus análisis (ej. "parece sugerir", "podría estar funcionando como", "se hipotetiza que", "es posible que esta conducta sirva para"). Las conclusiones deben plantearse como áreas a explorar en las sesiones, no como diagnósticos sellados.
+Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas demasiado pronto (Ej. no digas que el reflujo es el único canal de expresión de la rabia; mantén abierta la vía de estrés exacerbando una condición médica). Usa un lenguaje hipotético y tentativo en tus análisis ("parece sugerir", "podría estar funcionando como").
 
 Datos del paciente:
 - Nombre: ${user}
@@ -688,7 +691,7 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
   <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
   <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
   <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
-  <li><strong>Herramientas de evaluación utilizadas:</strong> Entrevista fenomenológica, entrevista biográfica/clínica, e Inventario de Personalidad (PID-5).</li>
+  <li><strong>Herramientas de evaluación utilizadas:</strong> Entrevista fenomenológica, entrevista biográfica/clínica, e Inventario de Personalidad (PID-5). (INSTRUCCIÓN: Si los datos del PID-5 no aportan significativamente al análisis de este caso, omite el PID-5 de esta lista. Si lo dejas, intégralo realmente en la formulación).</li>
 </ul>
 <h3>Motivo de consulta</h3>
 <p>(Redacta la demanda del paciente integrando sus síntomas y el contexto general...)</p>
@@ -727,7 +730,7 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
 <p>(Lista y explica las fortalezas, habilidades, redes de apoyo, pasiones y talentos reales detectados en los datos...)</p>
 
 <h2>9. Evaluación de riesgo y aspectos a descartar</h2>
-<p>(Señala si hay necesidad de evaluación psiquiátrica, médica, riesgo autolesivo, consumo problemático u otras áreas a descartar...)</p>
+<p>(Esta sección DEBE SER RIGUROSA. Separa y documenta explícitamente: 1) Ideación suicida actual (presencia, plan, intención). 2) Autolesiones (antecedentes, función, urgencia). 3) Factores protectores que justifican tu evaluación de riesgo. Justifica si el riesgo es bajo, moderado o alto. Finalmente, señala áreas médicas a descartar (ej. evaluar orgánicamente síntomas gastrointestinales o de sueño antes de asumirlos psicosomáticos).)</p>
 
 <h2>10. Objetivos terapéuticos operacionalizados</h2>
 <ol>
@@ -746,14 +749,14 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
 <h3>Sesión 2: [Título dinámico y experiencial para la sesión 2]</h3>
 <ul>
   <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
-  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual)</li>
+  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual. JUSTIFICA por qué esta intervención es el experimento adecuado para testear tu hipótesis de la sesión)</li>
   <li><strong>Tarea:</strong> ...</li>
 </ul>
 
 <h3>Sesión 3: [Título dinámico y experiencial para la sesión 3]</h3>
 <ul>
   <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
-  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual)</li>
+  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual. JUSTIFICA explícitamente la relación entre la hipótesis clínica y este experimento)</li>
   <li><strong>Tarea:</strong> ...</li>
 </ul>
 
