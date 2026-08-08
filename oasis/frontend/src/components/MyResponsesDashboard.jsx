@@ -674,67 +674,135 @@ Datos del paciente:
 - Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
 - Perfil PID-5: ${JSON.stringify(pidIndices)}
 
-ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictamente estos 9 apartados usando etiquetas semánticas HTML reales. Todo texto debe estar envuelto en <p>, <li>, <h1>, <h2>, <h3>, <table>. Si usas texto plano se romperá la vista):
+ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictamente estos apartados usando etiquetas semánticas HTML reales. Todo texto debe estar envuelto en <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>. Si usas texto plano se romperá la vista):
 
-<h1>INFORME PSICOLÓGICO CLÍNICO Y PLAN DE INTERVENCIÓN</h1>
-<p><strong>Ecosistema de Intervención Integrado:</strong> Terapia Presencial & Plataforma <em>Ruido Interior</em></p>
+<h1>INFORME CLÍNICO INICIAL Y PLAN DE INTERVENCIÓN EXPERIMENTAL</h1>
 
-<h2>I. DATOS DE FILIACIÓN</h2>
+<h2>I. Datos de identificación</h2>
 <ul>
-  <li><strong>Nombre de la Paciente:</strong> ${user}</li>
-  <li><strong>Evaluador:</strong> (Tu nombre)</li>
+  <li><strong>Nombre:</strong> ${user}</li>
+  <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
+  <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
+  <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
+  <li><strong>Tipo de documento:</strong> Informe clínico inicial / formulación provisional</li>
+  <li><strong>Enfoque de intervención:</strong> Integración de Terapia Cognitivo-Conductual y Terapias Contextuales, con elementos de exploración funcional, regulación emocional y entrenamiento en funciones ejecutivas.</li>
 </ul>
 
-<h2>II. MOTIVO DE CONSULTA Y DEMANDA</h2>
-<p>(Redacta el malestar principal...)</p>
+<h2>II. Motivo de consulta</h2>
+<p>(Redacta el motivo de consulta centrándote en concentración, motivación, impulsividad y regulación emocional, basándote en los datos del paciente...)</p>
 
-<h2>III. OBSERVACIÓN CONDUCTUAL Y RECURSOS</h2>
-<p>(Describe su presentación...)</p>
+<h2>III. Antecedentes relevantes</h2>
+<p>(Describe antecedentes clínicos, neurológicos, hábitos de sueño, etc. basados en la biografía...)</p>
 
-<h2>IV. TÉCNICAS E INSTRUMENTOS APLICADOS</h2>
+<h2>IV. Historia significativa y contexto de desarrollo</h2>
+<p>(Describe historia familiar, creencias tempranas, figuras parentales, etc...)</p>
+
+<h2>V. Experiencia subjetiva actual</h2>
+<h3>1. Atención, motivación y funcionamiento ejecutivo</h3>
+<p>(Describe su atención y motivación y funciones ejecutivas...)</p>
+
+<h2>VI. Impulsividad y regulación conductual</h2>
+<p>(Describe impulsos y regulación...)</p>
+
+<h2>VII. Regulación emocional</h2>
+<p>(Describe regulación emocional, ira, etc...)</p>
+
+<h2>VIII. Relaciones interpersonales, confianza y límites</h2>
+<p>(Describe cómo establece confianza y vínculos...)</p>
+
+<h2>IX. Rigidez y establecimiento de límites</h2>
+<p>(Describe cómo establece límites y si son rígidos...)</p>
+
+<h2>X. Identidad, insuficiencia y proyecto vital</h2>
+<p>(Describe su sentido de propósito, reconocimiento, valores...)</p>
+
+<h2>XI. Formulación clínica provisional</h2>
+<h3>A. Regulación atencional y funciones ejecutivas</h3>
+<p>...</p>
+<h3>B. Regulación emocional e impulsividad</h3>
+<p>...</p>
+<h3>C. Seguridad interpersonal y flexibilidad</h3>
+<p>...</p>
+
+<h2>XII. Hipótesis funcional integradora</h2>
+<p><strong>REGULACIÓN:</strong></p>
 <ul>
-  <li>Entrevista Fenomenológica</li>
+  <li><strong>Cuando la activación es demasiado baja:</strong> (ej. bajo interés → dificultad para iniciar/mantener → evitación → procrastinación)</li>
+  <li><strong>Cuando la activación es suficientemente alta:</strong> (ej. interés/urgencia → incremento de activación → mayor capacidad de involucramiento)</li>
+  <li><strong>Cuando la activación emocional es excesiva:</strong> (ej. amenaza emocional → activación intensa → impulso → respuesta rápida → consecuencias posteriores)</li>
+  <li><strong>En el ámbito interpersonal:</strong> (ej. incertidumbre/posible amenaza → interpretación protectora → necesidad de control o límite → decisión rápida)</li>
 </ul>
 
-<h2>V. ANÁLISIS FUNCIONAL Y FORMULACIÓN DE CASO (CONTEXTUAL)</h2>
-<h3>1. Matriz de Contingencias</h3>
-<p>(Diseña un diagrama visual usando contenedores HTML <code>&lt;div&gt;</code> con CSS inline flexbox. Crea 3 tarjetas (Antecedentes, Respuestas, Consecuencias) con colores de fondo sutiles (ej. #f3f4f6, #e0e7ff, #fce7f3) conectadas por flechas ➔. ¡ESTÁ ESTRICTAMENTE PROHIBIDO USAR BLOQUES &lt;pre&gt; O CÓDIGO ASCII PARA ESTO! Haz que parezca una infografía moderna.)</p>
-<h3>2. Conceptualización de Inflexibilidad Psicológica (Hexaflex)</h3>
-<p>(Analiza Evitación Experiencial...)</p>
+<h2>XIII. Objetivos generales de intervención</h2>
+<ol>
+  <li>Comprender el funcionamiento individual de la atención y las funciones ejecutivas.</li>
+  <li>Identificar los factores que facilitan o interfieren con la concentración.</li>
+  <li>Desarrollar estrategias para iniciar y mantener actividades de baja motivación.</li>
+  <li>Aumentar la capacidad de detectar impulsos antes de actuar.</li>
+  <li>Desarrollar regulación de la activación emocional.</li>
+  <li>Diferenciar emociones primarias y respuestas secundarias, particularmente tristeza e ira.</li>
+  <li>Favorecer una aplicación flexible de límites interpersonales.</li>
+  <li>Incrementar tolerancia a la incertidumbre y disminuir la necesidad de confirmación externa.</li>
+  <li>Fortalecer estrategias de autorregulación.</li>
+  <li>Clarificar valores y propósitos personales como fuentes de dirección conductual.</li>
+</ol>
 
-<h2>VI. IMPRESIÓN DIAGNÓSTICA</h2>
-<p>(Diagnóstico existencial...)</p>
+<h2>XIV. Plan de intervención experimental</h2>
+<p><strong>Consideración previa:</strong> El siguiente plan constituye una propuesta inicial de trabajo experimental, no un protocolo rígido ni un tratamiento definitivo. Su propósito es proporcionar una estructura comprensible para las primeras sesiones mientras se continúa recopilando información clínica. Los objetivos y técnicas podrán modificarse conforme aparezcan nuevos datos, patrones o necesidades.</p>
 
-<h2>VII. PLAN DE INTERVENCIÓN CONTEXTUAL Y MULTIMODAL</h2>
-<h3>Objetivo General</h3>
-<p>(Escribe el objetivo...)</p>
-<h3>Ruta Cronológica de Trabajo</h3>
-<p>(Diseña 4 sesiones. Usa <strong> para destacar pasos.)</p>
+<h3>SESIÓN 1: "Observar cómo funciona mi atención"</h3>
+<ul>
+  <li><strong>Objetivo central:</strong> Convertir las dificultades atencionales en un fenómeno observable y medible, evitando asumir inicialmente que existe un déficit general de concentración.</li>
+  <li><strong>Trabajo clínico:</strong> Explorar la diferencia entre interés, motivación, activación, atención, distracción, procrastinación, dificultad para iniciar y dificultad para terminar.</li>
+  <li><strong>Experimento principal: "La tarea odiosa":</strong> Seleccionar una actividad real que la consultante tienda a evitar, registrar niveles antes, observar durante y analizar después de la actividad.</li>
+  <li><strong>Tarea entre sesiones:</strong> Realizar un registro breve de una actividad evitada, observando qué sucede justo antes de abandonar.</li>
+</ul>
 
-<h2>VIII. MATRIZ DE EXPOSICIÓN GRADUAL Y REENCUADRE EXISTENCIAL</h2>
-<table style="width: 100%; border-collapse: collapse;">
-  <thead style="background-color: #f3f4f6;">
-    <tr>
-      <th style="border: 1px solid #d1d5db; padding: 8px;">Situación Temida</th>
-      <th style="border: 1px solid #d1d5db; padding: 8px;">Ansiedad Prevista</th>
-      <th style="border: 1px solid #d1d5db; padding: 8px;">Reencuadre</th>
-      <th style="border: 1px solid #d1d5db; padding: 8px;">Conducta</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border: 1px solid #d1d5db; padding: 8px;">...</td>
-    </tr>
-  </tbody>
-</table>
+<h3>SESIÓN 2: "Del impulso a la elección"</h3>
+<ul>
+  <li><strong>Objetivo central:</strong> Comprender la cadena que conecta emoción, activación, impulso y conducta. Se analizará particularmente la experiencia de ira.</li>
+  <li><strong>Modelo de exploración:</strong> Situación → Interpretación → Emoción → Sensación corporal → Impulso → Conducta → Consecuencia inmediata → Consecuencia posterior.</li>
+  <li><strong>Experimento:</strong> Construcción de una señal de pausa para aprender a reconocer el punto previo a la conducta impulsiva.</li>
+  <li><strong>Tarea:</strong> Registrar al menos una situación de activación emocional utilizando la cadena funcional.</li>
+</ul>
 
-<h2>IX. INDICADORES DE PROGRESO Y EVALUACIÓN CLINICA</h2>
-<pre>(Diagrama de ejes)</pre>
-<ul><li><strong>Eje Cognitivo:</strong> ...</li></ul>
+<h3>SESIÓN 3: "Límites, seguridad y flexibilidad"</h3>
+<ul>
+  <li><strong>Objetivo central:</strong> Explorar la relación entre desconfianza, miedo a la traición, límites y toma de decisiones interpersonales.</li>
+  <li><strong>Exploración:</strong> Reconstruir una situación interpersonal reciente analizando interpretaciones, emociones y necesidades protegidas vs alternativas intermedias (percibir transgresión → pausa → evaluación → comunicación → decisión).</li>
+  <li><strong>Objetivo terapéutico:</strong> Aumentar la flexibilidad y deliberación de los límites, y construir confianza gradualmente.</li>
+  <li><strong>Tarea:</strong> Registrar una situación en la que aparezca desconfianza o necesidad de establecer un límite, evitando tomar una decisión inmediata cuando no haya riesgo inminente.</li>
+</ul>
 
-<br><br>
-<p><strong>Firma de Conformidad y Validación:</strong></p>
-<p>Evaluador / Práctica Clínica Supervisada</p>
+<h3>SESIÓN 4: "Integración: construir mi propio mapa de funcionamiento"</h3>
+<ul>
+  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y determinar qué hipótesis parecen sostenerse y cuáles necesitan modificarse.</li>
+  <li><strong>Revisión:</strong> Atención, motivación, procrastinación, impulsividad, ira, vínculos, límites y regulación, para construir una formulación individualizada.</li>
+</ul>
+
+<h2>XV. Posible continuidad posterior</h2>
+<ul>
+  <li><strong>Línea A. Funciones ejecutivas:</strong> inicio de tareas, planificación, priorización, manejo del tiempo, reducción de procrastinación, finalización, diseño ambiental, estrategias de activación.</li>
+  <li><strong>Línea B. Regulación emocional:</strong> identificación temprana, regulación fisiológica, tolerancia al malestar, diferenciación emocional, prevención de respuestas impulsivas.</li>
+  <li><strong>Línea C. Flexibilidad interpersonal:</strong> límites, confianza gradual, tolerancia a incertidumbre, interpretación de señales, comunicación, toma de decisiones no impulsiva.</li>
+  <li><strong>Línea D. Valores y proyecto vital:</strong> propósito, identidad, autonomía, relación con aprobación externa, construcción de una vida congruente con valores personales.</li>
+</ul>
+
+<h2>XVI. Evaluación diferencial y recomendaciones</h2>
+<p>(Recomendaciones de evaluación de TDAH y factores a seguir explorando como sueño, estrés, ansiedad, etc...)</p>
+
+<h2>XVII. Recursos y factores protectores identificados</h2>
+<ul>
+  <li>(Lista de recursos protectores como capacidad de introspección, motivación por comprenderse y modificar aquello que genera sufrimiento, reconocimiento de patrones, etc.)</li>
+</ul>
+
+<h2>XVIII. Consideraciones clínicas</h2>
+<p>La presente formulación debe entenderse como una hipótesis de trabajo basada en la información disponible hasta el momento. No constituye un diagnóstico definitivo. Las dificultades atencionales descritas no deben atribuirse exclusivamente a TDAH sin una evaluación clínica adecuada. Del mismo modo, la impulsividad, la ira, la rigidez interpersonal y la procrastinación deben analizarse dentro de su contexto individual y no como síntomas aislados.</p>
+<p>El plan propuesto tiene carácter experimental y podrá modificarse conforme avance el proceso terapéutico. El propósito de las primeras sesiones será principalmente observar, experimentar, identificar patrones y construir una formulación individualizada, antes de establecer intervenciones más específicas o conclusiones diagnósticas.</p>
+
+<h2>XIX. Síntesis clínica</h2>
+<p>(Sintetiza de manera clínica y profunda cómo las dificultades de regulación de atención, evitación, respuesta emocional y aprendizaje interpersonal se interrelacionan...)</p>
+<p><strong>Plan inicial propuesto: cuatro sesiones de exploración e intervención, sujeto a revisión clínica al finalizar este primer ciclo.</strong></p>
 
 Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
             `;
