@@ -679,120 +679,102 @@ Datos del paciente:
 
 ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictamente estos apartados usando etiquetas semánticas HTML reales. Todo texto debe estar envuelto en <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>. Si usas texto plano se romperá la vista):
 
-<h1>INFORME CLÍNICO INICIAL Y PLAN DE INTERVENCIÓN EXPERIMENTAL</h1>
+<h1>INFORME CLÍNICO PSICOLÓGICO</h1>
+<p><strong>Formulación de Caso desde un Enfoque Contextual e Integrativo</strong></p>
 
-<h2>I. Datos de identificación</h2>
+<h2>1. Datos y motivo de consulta</h2>
 <ul>
   <li><strong>Nombre:</strong> ${user}</li>
   <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
   <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
   <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
-  <li><strong>Tipo de documento:</strong> Informe clínico inicial / formulación provisional</li>
-  <li><strong>Enfoque de intervención:</strong> Integración de Terapia Cognitivo-Conductual y Terapias Contextuales, con elementos de exploración funcional y experiencial adaptados al caso.</li>
 </ul>
+<h3>Motivo de consulta</h3>
+<p>(Redacta la demanda del paciente integrando sus síntomas y el contexto general...)</p>
 
-<h2>II. Motivo de consulta</h2>
-<p>(Redacta el motivo de consulta identificando el malestar principal y los síntomas predominantes, basándote estrictamente en los datos del paciente...)</p>
+<h2>2. Historia y desarrollo del problema</h2>
+<p>(Describe cómo el problema actual se asienta sobre la historia de aprendizaje, creencias tempranas, mandatos, eventos clave, etc...)</p>
 
-<h2>III. Antecedentes relevantes</h2>
-<p>(Describe antecedentes clínicos, estilo de vida, etc., extraídos de su biografía...)</p>
+<h2>3. Funcionamiento actual por dominios</h2>
+<p>(Analiza el funcionamiento del paciente en los distintos dominios de su vida: interpersonal, laboral, emocional, etc., basados en los datos...)</p>
 
-<h2>IV. Historia significativa y contexto de desarrollo</h2>
-<p>(Describe su historia familiar, esquemas o creencias tempranas, figuras importantes, etc...)</p>
-
-<h2>V. Experiencia subjetiva actual</h2>
-<p>(Analiza la experiencia subjetiva del paciente, sus síntomas cognitivos, fisiológicos o conductuales...)</p>
-
-<h2>VI. [Título dinámico del 1er Eje Clínico del Paciente]</h2>
-<p>(Analiza el primer tema crítico emergente de los datos del paciente. Ej: Ansiedad, Depresión, Perfeccionismo, Evitación, etc...)</p>
-
-<h2>VII. [Título dinámico del 2do Eje Clínico del Paciente]</h2>
-<p>(Analiza el segundo tema crítico...)</p>
-
-<h2>VIII. [Título dinámico del 3er Eje Clínico del Paciente]</h2>
-<p>(Analiza el tercer tema crítico...)</p>
-
-<h2>IX. Relaciones interpersonales y vínculos</h2>
-<p>(Describe sus dinámicas sociales, establecimiento de límites, confianza o aislamiento...)</p>
-
-<h2>X. Identidad, valores y proyecto vital</h2>
-<p>(Describe su sentido de propósito, autoconcepto, valores o sensación de vacío existencial...)</p>
-
-<h2>XI. Formulación clínica provisional</h2>
-<h3>A. [Tema principal de formulación 1]</h3>
-<p>(Formula hipótesis sobre este eje...)</p>
-<h3>B. [Tema principal de formulación 2]</h3>
-<p>(Formula hipótesis sobre este eje...)</p>
-<h3>C. [Tema principal de formulación 3]</h3>
-<p>(Formula hipótesis sobre este eje...)</p>
-
-<h2>XII. Hipótesis funcional integradora</h2>
-<p><strong>Bucle de Mantenimiento Transversal:</strong></p>
+<h2>4. Análisis funcional detallado</h2>
+<p>(Diseña un circuito funcional claro y específico para este paciente siguiendo estrictamente esta cadena:)</p>
 <ul>
-  <li>(Redacta la hipótesis transversal de mantenimiento basada en la evaluación del paciente. Usa el formato de cadenas funcionales: Ej: Situación → Interpretación → Activación → Evitación/Impulso → Consecuencia a largo plazo)</li>
-  <li>(Añade los bucles que consideres relevantes para el caso...)</li>
+  <li><strong>Historia de aprendizaje:</strong> ...</li>
+  <li><strong>Activadores actuales (Situación):</strong> ...</li>
+  <li><strong>Procesos internos (Interpretación / Activación fisiológica / Emoción):</strong> ...</li>
+  <li><strong>Conductas observables (Bloqueo / Evitación / Explosión):</strong> ...</li>
+  <li><strong>Consecuencias inmediatas:</strong> ...</li>
+  <li><strong>Consecuencias a largo plazo (El costo):</strong> ...</li>
 </ul>
 
-<h2>XIII. Objetivos generales de intervención</h2>
+<h2>5. Procesos de flexibilidad/inflexibilidad psicológica</h2>
+<p>(Identifica y describe los procesos presentes: fusión cognitiva, evitación experiencial, apego al autoconcepto, desconexión del presente, falta de claridad en valores, inacción...)</p>
+
+<h2>6. Hipótesis central + hipótesis alternativas</h2>
+<p>(Redacta la hipótesis transversal del caso. Usa un tono de prudencia clínica ("parece que", "se hipotetiza que"). Diferencia el contenido cognitivo -ej. insuficiencia- del proceso organizador subyacente -ej. invalidación interpersonal- si aplica al caso. Añade breves hipótesis alternativas a considerar.)</p>
+
+<h2>7. Factores predisponentes, precipitantes y mantenedores</h2>
+<ul>
+  <li><strong>Predisponentes:</strong> (Qué lo hizo vulnerable históricamente)</li>
+  <li><strong>Precipitantes:</strong> (Qué detonó la crisis actual)</li>
+  <li><strong>Mantenedores:</strong> (Qué hace que el problema no se resuelva hoy)</li>
+</ul>
+
+<h2>8. Recursos y factores protectores</h2>
+<p>(Lista y explica las fortalezas, habilidades, redes de apoyo, pasiones y talentos reales detectados en los datos...)</p>
+
+<h2>9. Evaluación de riesgo y aspectos a descartar</h2>
+<p>(Señala si hay necesidad de evaluación psiquiátrica, médica, riesgo autolesivo, consumo problemático u otras áreas a descartar...)</p>
+
+<h2>10. Objetivos terapéuticos operacionalizados</h2>
 <ol>
-  <li>(Genera 8-10 objetivos terapéuticos dinámicos e inteligentes, adaptados 100% al caso real del paciente, sus síntomas y los recursos detectados. No uses ejemplos prefabricados, créalos para este paciente en particular.)</li>
+  <li>(Genera objetivos terapéuticos dinámicos, inteligentes y específicos para el sistema funcional del paciente...)</li>
 </ol>
 
-<h2>XIV. Plan de intervención experimental</h2>
-<p><strong>Consideración previa:</strong> El siguiente plan constituye una propuesta inicial de trabajo experimental, no un protocolo rígido ni un tratamiento definitivo. Su propósito es proporcionar una estructura comprensible para las primeras sesiones mientras se continúa recopilando información clínica. Los objetivos y técnicas podrán modificarse conforme aparezcan nuevos datos, patrones o necesidades.</p>
+<h2>11. Plan experimental de 4 sesiones</h2>
+<p><strong>Consideración previa:</strong> El plan constituye una propuesta inicial de trabajo experimental y colaborativo para recopilar información y testear las hipótesis.</p>
 
-<h3>SESIÓN 1: "[Título dinámico y experiencial para la sesión 1]"</h3>
+<h3>Sesión 1: Construcción colaborativa del mapa clínico (El Laboratorio)</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> (Genera un objetivo específico para esta sesión inicial, adaptado al paciente)</li>
-  <li><strong>Trabajo clínico:</strong> (Describe la exploración clínica a realizar)</li>
-  <li><strong>Experimento principal:</strong> (Diseña un experimento conductual, somático o experiencial ÚNICO para este paciente)</li>
-  <li><strong>Tarea entre sesiones:</strong> (Diseña una tarea relevante)</li>
+  <li><strong>Objetivo:</strong> Convertir la sesión en un laboratorio colaborativo. En lugar de imponer la hipótesis ("tu problema es este"), se plantea: "Tengo una hipótesis, pero quiero comprobar contigo si describe tu experiencia".</li>
+  <li><strong>Exploración (El cuerpo como entrada):</strong> Utilizar el cuerpo como primera entrada al tratamiento, ya que a menudo anuncia la emoción antes de poder verbalizarla. Explorar la secuencia: Cuando ocurre X... ¿qué notas primero en el cuerpo? ¿qué te dices? ¿qué impulso aparece? ¿qué terminas haciendo? ¿qué obtienes y qué te cuesta?</li>
 </ul>
 
-<h3>SESIÓN 2: "[Título dinámico y experiencial para la sesión 2]"</h3>
+<h3>Sesión 2: [Título dinámico y experiencial para la sesión 2]</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> (Genera objetivo)</li>
-  <li><strong>Modelo de exploración:</strong> (Describe la intervención)</li>
-  <li><strong>Experimento:</strong> (Diseña el ejercicio en sesión)</li>
-  <li><strong>Tarea:</strong> (Diseña la tarea)</li>
+  <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
+  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual)</li>
+  <li><strong>Tarea:</strong> ...</li>
 </ul>
 
-<h3>SESIÓN 3: "[Título dinámico y experiencial para la sesión 3]"</h3>
+<h3>Sesión 3: [Título dinámico y experiencial para la sesión 3]</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> (Genera objetivo)</li>
-  <li><strong>Exploración:</strong> (Describe la intervención)</li>
-  <li><strong>Objetivo terapéutico:</strong> (Describe qué se busca cambiar)</li>
-  <li><strong>Tarea:</strong> (Diseña la tarea)</li>
+  <li><strong>Objetivo central:</strong> (Generado dinámicamente)</li>
+  <li><strong>Intervención experiencial:</strong> (Ejercicio somático, contextual o conductual)</li>
+  <li><strong>Tarea:</strong> ...</li>
 </ul>
 
-<h3>SESIÓN 4: "[Título dinámico para la sesión 4: Integración]"</h3>
+<h3>Sesión 4: [Título dinámico para la sesión 4: Revisión]</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y determinar qué hipótesis parecen sostenerse.</li>
-  <li><strong>Revisión:</strong> (Enumera qué factores específicos del paciente se revisarán en esta sesión de cierre del primer bloque).</li>
+  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y revisar el apoyo a las hipótesis.</li>
+  <li><strong>Revisión:</strong> ...</li>
 </ul>
 
-<h2>XV. Posible continuidad posterior</h2>
+<h2>12. Indicadores para saber si la hipótesis está funcionando</h2>
+<p><strong>¿Qué tendría que observar en el paciente después de cada intervención para considerar que mi hipótesis recibió apoyo?</strong></p>
 <ul>
-  <li><strong>Línea A. [Área de trabajo a futuro 1]:</strong> (Estrategias propuestas para este paciente)</li>
-  <li><strong>Línea B. [Área de trabajo a futuro 2]:</strong> (Estrategias propuestas para este paciente)</li>
-  <li><strong>Línea C. [Área de trabajo a futuro 3]:</strong> (Estrategias propuestas para este paciente)</li>
-  <li><strong>Línea D. Valores y proyecto vital:</strong> (Estrategias propuestas para la reconexión con el sentido)</li>
+  <li>(Enumera 3-5 indicadores conductuales, fisiológicos o narrativos específicos que probarían que el tratamiento va por buen camino...)</li>
 </ul>
 
-<h2>XVI. Evaluación diferencial y recomendaciones</h2>
-<p>(Recomendaciones de evaluación psiquiátrica, médica o factores a seguir explorando como sueño, estrés, contextos, etc., si aplican al caso...)</p>
+<h2>13. Criterios para modificar el tratamiento</h2>
+<p>(¿Bajo qué señales, respuestas del paciente o falta de avance se debería descartar la hipótesis central y cambiar el enfoque terapéutico?)</p>
 
-<h2>XVII. Recursos y factores protectores identificados</h2>
+<h2>14. Líneas de continuidad</h2>
 <ul>
-  <li>(Extrae y lista los recursos protectores reales detectados en los datos del paciente: ej. capacidad de introspección, red de apoyo, talentos, etc.)</li>
+  <li>(Estrategias a largo plazo, consolidación de identidad, valores y proyecto vital...)</li>
 </ul>
-
-<h2>XVIII. Consideraciones clínicas</h2>
-<p>La presente formulación debe entenderse como una hipótesis de trabajo basada en la información disponible hasta el momento. No constituye un diagnóstico definitivo. Los síntomas y conductas de escape detectados deben analizarse dentro de su contexto individual. El plan propuesto tiene carácter experimental y podrá modificarse conforme avance el proceso terapéutico.</p>
-
-<h2>XIX. Síntesis clínica</h2>
-<p>(Sintetiza de manera clínica y profunda cómo las dificultades de regulación, evitación y aprendizaje del paciente se interrelacionan para formar su cuadro actual...)</p>
-<p><strong>Plan inicial propuesto: cuatro sesiones de exploración e intervención, sujeto a revisión clínica al finalizar este primer ciclo.</strong></p>
 
 Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
             `;
