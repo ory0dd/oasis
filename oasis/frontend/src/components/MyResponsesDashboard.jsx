@@ -685,123 +685,110 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
   <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
   <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
   <li><strong>Tipo de documento:</strong> Informe clínico inicial / formulación provisional</li>
-  <li><strong>Enfoque de intervención:</strong> Integración de Terapia Cognitivo-Conductual y Terapias Contextuales, con elementos de exploración funcional, regulación emocional y entrenamiento en funciones ejecutivas.</li>
+  <li><strong>Enfoque de intervención:</strong> Integración de Terapia Cognitivo-Conductual y Terapias Contextuales, con elementos de exploración funcional y experiencial adaptados al caso.</li>
 </ul>
 
 <h2>II. Motivo de consulta</h2>
-<p>(Redacta el motivo de consulta centrándote en concentración, motivación, impulsividad y regulación emocional, basándote en los datos del paciente...)</p>
+<p>(Redacta el motivo de consulta identificando el malestar principal y los síntomas predominantes, basándote estrictamente en los datos del paciente...)</p>
 
 <h2>III. Antecedentes relevantes</h2>
-<p>(Describe antecedentes clínicos, neurológicos, hábitos de sueño, etc. basados en la biografía...)</p>
+<p>(Describe antecedentes clínicos, estilo de vida, etc., extraídos de su biografía...)</p>
 
 <h2>IV. Historia significativa y contexto de desarrollo</h2>
-<p>(Describe historia familiar, creencias tempranas, figuras parentales, etc...)</p>
+<p>(Describe su historia familiar, esquemas o creencias tempranas, figuras importantes, etc...)</p>
 
 <h2>V. Experiencia subjetiva actual</h2>
-<h3>1. Atención, motivación y funcionamiento ejecutivo</h3>
-<p>(Describe su atención y motivación y funciones ejecutivas...)</p>
+<p>(Analiza la experiencia subjetiva del paciente, sus síntomas cognitivos, fisiológicos o conductuales...)</p>
 
-<h2>VI. Impulsividad y regulación conductual</h2>
-<p>(Describe impulsos y regulación...)</p>
+<h2>VI. [Título dinámico del 1er Eje Clínico del Paciente]</h2>
+<p>(Analiza el primer tema crítico emergente de los datos del paciente. Ej: Ansiedad, Depresión, Perfeccionismo, Evitación, etc...)</p>
 
-<h2>VII. Regulación emocional</h2>
-<p>(Describe regulación emocional, ira, etc...)</p>
+<h2>VII. [Título dinámico del 2do Eje Clínico del Paciente]</h2>
+<p>(Analiza el segundo tema crítico...)</p>
 
-<h2>VIII. Relaciones interpersonales, confianza y límites</h2>
-<p>(Describe cómo establece confianza y vínculos...)</p>
+<h2>VIII. [Título dinámico del 3er Eje Clínico del Paciente]</h2>
+<p>(Analiza el tercer tema crítico...)</p>
 
-<h2>IX. Rigidez y establecimiento de límites</h2>
-<p>(Describe cómo establece límites y si son rígidos...)</p>
+<h2>IX. Relaciones interpersonales y vínculos</h2>
+<p>(Describe sus dinámicas sociales, establecimiento de límites, confianza o aislamiento...)</p>
 
-<h2>X. Identidad, insuficiencia y proyecto vital</h2>
-<p>(Describe su sentido de propósito, reconocimiento, valores...)</p>
+<h2>X. Identidad, valores y proyecto vital</h2>
+<p>(Describe su sentido de propósito, autoconcepto, valores o sensación de vacío existencial...)</p>
 
 <h2>XI. Formulación clínica provisional</h2>
-<h3>A. Regulación atencional y funciones ejecutivas</h3>
-<p>...</p>
-<h3>B. Regulación emocional e impulsividad</h3>
-<p>...</p>
-<h3>C. Seguridad interpersonal y flexibilidad</h3>
-<p>...</p>
+<h3>A. [Tema principal de formulación 1]</h3>
+<p>(Formula hipótesis sobre este eje...)</p>
+<h3>B. [Tema principal de formulación 2]</h3>
+<p>(Formula hipótesis sobre este eje...)</p>
+<h3>C. [Tema principal de formulación 3]</h3>
+<p>(Formula hipótesis sobre este eje...)</p>
 
 <h2>XII. Hipótesis funcional integradora</h2>
-<p><strong>REGULACIÓN:</strong></p>
+<p><strong>Bucle de Mantenimiento Transversal:</strong></p>
 <ul>
-  <li><strong>Cuando la activación es demasiado baja:</strong> (ej. bajo interés → dificultad para iniciar/mantener → evitación → procrastinación)</li>
-  <li><strong>Cuando la activación es suficientemente alta:</strong> (ej. interés/urgencia → incremento de activación → mayor capacidad de involucramiento)</li>
-  <li><strong>Cuando la activación emocional es excesiva:</strong> (ej. amenaza emocional → activación intensa → impulso → respuesta rápida → consecuencias posteriores)</li>
-  <li><strong>En el ámbito interpersonal:</strong> (ej. incertidumbre/posible amenaza → interpretación protectora → necesidad de control o límite → decisión rápida)</li>
+  <li>(Redacta la hipótesis transversal de mantenimiento basada en la evaluación del paciente. Usa el formato de cadenas funcionales: Ej: Situación → Interpretación → Activación → Evitación/Impulso → Consecuencia a largo plazo)</li>
+  <li>(Añade los bucles que consideres relevantes para el caso...)</li>
 </ul>
 
 <h2>XIII. Objetivos generales de intervención</h2>
 <ol>
-  <li>Comprender el funcionamiento individual de la atención y las funciones ejecutivas.</li>
-  <li>Identificar los factores que facilitan o interfieren con la concentración.</li>
-  <li>Desarrollar estrategias para iniciar y mantener actividades de baja motivación.</li>
-  <li>Aumentar la capacidad de detectar impulsos antes de actuar.</li>
-  <li>Desarrollar regulación de la activación emocional.</li>
-  <li>Diferenciar emociones primarias y respuestas secundarias, particularmente tristeza e ira.</li>
-  <li>Favorecer una aplicación flexible de límites interpersonales.</li>
-  <li>Incrementar tolerancia a la incertidumbre y disminuir la necesidad de confirmación externa.</li>
-  <li>Fortalecer estrategias de autorregulación.</li>
-  <li>Clarificar valores y propósitos personales como fuentes de dirección conductual.</li>
+  <li>(Genera 8-10 objetivos terapéuticos dinámicos e inteligentes, adaptados 100% al caso real del paciente, sus síntomas y los recursos detectados. No uses ejemplos prefabricados, créalos para este paciente en particular.)</li>
 </ol>
 
 <h2>XIV. Plan de intervención experimental</h2>
 <p><strong>Consideración previa:</strong> El siguiente plan constituye una propuesta inicial de trabajo experimental, no un protocolo rígido ni un tratamiento definitivo. Su propósito es proporcionar una estructura comprensible para las primeras sesiones mientras se continúa recopilando información clínica. Los objetivos y técnicas podrán modificarse conforme aparezcan nuevos datos, patrones o necesidades.</p>
 
-<h3>SESIÓN 1: "Observar cómo funciona mi atención"</h3>
+<h3>SESIÓN 1: "[Título dinámico y experiencial para la sesión 1]"</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> Convertir las dificultades atencionales en un fenómeno observable y medible, evitando asumir inicialmente que existe un déficit general de concentración.</li>
-  <li><strong>Trabajo clínico:</strong> Explorar la diferencia entre interés, motivación, activación, atención, distracción, procrastinación, dificultad para iniciar y dificultad para terminar.</li>
-  <li><strong>Experimento principal: "La tarea odiosa":</strong> Seleccionar una actividad real que la consultante tienda a evitar, registrar niveles antes, observar durante y analizar después de la actividad.</li>
-  <li><strong>Tarea entre sesiones:</strong> Realizar un registro breve de una actividad evitada, observando qué sucede justo antes de abandonar.</li>
+  <li><strong>Objetivo central:</strong> (Genera un objetivo específico para esta sesión inicial, adaptado al paciente)</li>
+  <li><strong>Trabajo clínico:</strong> (Describe la exploración clínica a realizar)</li>
+  <li><strong>Experimento principal:</strong> (Diseña un experimento conductual, somático o experiencial ÚNICO para este paciente)</li>
+  <li><strong>Tarea entre sesiones:</strong> (Diseña una tarea relevante)</li>
 </ul>
 
-<h3>SESIÓN 2: "Del impulso a la elección"</h3>
+<h3>SESIÓN 2: "[Título dinámico y experiencial para la sesión 2]"</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> Comprender la cadena que conecta emoción, activación, impulso y conducta. Se analizará particularmente la experiencia de ira.</li>
-  <li><strong>Modelo de exploración:</strong> Situación → Interpretación → Emoción → Sensación corporal → Impulso → Conducta → Consecuencia inmediata → Consecuencia posterior.</li>
-  <li><strong>Experimento:</strong> Construcción de una señal de pausa para aprender a reconocer el punto previo a la conducta impulsiva.</li>
-  <li><strong>Tarea:</strong> Registrar al menos una situación de activación emocional utilizando la cadena funcional.</li>
+  <li><strong>Objetivo central:</strong> (Genera objetivo)</li>
+  <li><strong>Modelo de exploración:</strong> (Describe la intervención)</li>
+  <li><strong>Experimento:</strong> (Diseña el ejercicio en sesión)</li>
+  <li><strong>Tarea:</strong> (Diseña la tarea)</li>
 </ul>
 
-<h3>SESIÓN 3: "Límites, seguridad y flexibilidad"</h3>
+<h3>SESIÓN 3: "[Título dinámico y experiencial para la sesión 3]"</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> Explorar la relación entre desconfianza, miedo a la traición, límites y toma de decisiones interpersonales.</li>
-  <li><strong>Exploración:</strong> Reconstruir una situación interpersonal reciente analizando interpretaciones, emociones y necesidades protegidas vs alternativas intermedias (percibir transgresión → pausa → evaluación → comunicación → decisión).</li>
-  <li><strong>Objetivo terapéutico:</strong> Aumentar la flexibilidad y deliberación de los límites, y construir confianza gradualmente.</li>
-  <li><strong>Tarea:</strong> Registrar una situación en la que aparezca desconfianza o necesidad de establecer un límite, evitando tomar una decisión inmediata cuando no haya riesgo inminente.</li>
+  <li><strong>Objetivo central:</strong> (Genera objetivo)</li>
+  <li><strong>Exploración:</strong> (Describe la intervención)</li>
+  <li><strong>Objetivo terapéutico:</strong> (Describe qué se busca cambiar)</li>
+  <li><strong>Tarea:</strong> (Diseña la tarea)</li>
 </ul>
 
-<h3>SESIÓN 4: "Integración: construir mi propio mapa de funcionamiento"</h3>
+<h3>SESIÓN 4: "[Título dinámico para la sesión 4: Integración]"</h3>
 <ul>
-  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y determinar qué hipótesis parecen sostenerse y cuáles necesitan modificarse.</li>
-  <li><strong>Revisión:</strong> Atención, motivación, procrastinación, impulsividad, ira, vínculos, límites y regulación, para construir una formulación individualizada.</li>
+  <li><strong>Objetivo central:</strong> Integrar los descubrimientos de las primeras sesiones y determinar qué hipótesis parecen sostenerse.</li>
+  <li><strong>Revisión:</strong> (Enumera qué factores específicos del paciente se revisarán en esta sesión de cierre del primer bloque).</li>
 </ul>
 
 <h2>XV. Posible continuidad posterior</h2>
 <ul>
-  <li><strong>Línea A. Funciones ejecutivas:</strong> inicio de tareas, planificación, priorización, manejo del tiempo, reducción de procrastinación, finalización, diseño ambiental, estrategias de activación.</li>
-  <li><strong>Línea B. Regulación emocional:</strong> identificación temprana, regulación fisiológica, tolerancia al malestar, diferenciación emocional, prevención de respuestas impulsivas.</li>
-  <li><strong>Línea C. Flexibilidad interpersonal:</strong> límites, confianza gradual, tolerancia a incertidumbre, interpretación de señales, comunicación, toma de decisiones no impulsiva.</li>
-  <li><strong>Línea D. Valores y proyecto vital:</strong> propósito, identidad, autonomía, relación con aprobación externa, construcción de una vida congruente con valores personales.</li>
+  <li><strong>Línea A. [Área de trabajo a futuro 1]:</strong> (Estrategias propuestas para este paciente)</li>
+  <li><strong>Línea B. [Área de trabajo a futuro 2]:</strong> (Estrategias propuestas para este paciente)</li>
+  <li><strong>Línea C. [Área de trabajo a futuro 3]:</strong> (Estrategias propuestas para este paciente)</li>
+  <li><strong>Línea D. Valores y proyecto vital:</strong> (Estrategias propuestas para la reconexión con el sentido)</li>
 </ul>
 
 <h2>XVI. Evaluación diferencial y recomendaciones</h2>
-<p>(Recomendaciones de evaluación de TDAH y factores a seguir explorando como sueño, estrés, ansiedad, etc...)</p>
+<p>(Recomendaciones de evaluación psiquiátrica, médica o factores a seguir explorando como sueño, estrés, contextos, etc., si aplican al caso...)</p>
 
 <h2>XVII. Recursos y factores protectores identificados</h2>
 <ul>
-  <li>(Lista de recursos protectores como capacidad de introspección, motivación por comprenderse y modificar aquello que genera sufrimiento, reconocimiento de patrones, etc.)</li>
+  <li>(Extrae y lista los recursos protectores reales detectados en los datos del paciente: ej. capacidad de introspección, red de apoyo, talentos, etc.)</li>
 </ul>
 
 <h2>XVIII. Consideraciones clínicas</h2>
-<p>La presente formulación debe entenderse como una hipótesis de trabajo basada en la información disponible hasta el momento. No constituye un diagnóstico definitivo. Las dificultades atencionales descritas no deben atribuirse exclusivamente a TDAH sin una evaluación clínica adecuada. Del mismo modo, la impulsividad, la ira, la rigidez interpersonal y la procrastinación deben analizarse dentro de su contexto individual y no como síntomas aislados.</p>
-<p>El plan propuesto tiene carácter experimental y podrá modificarse conforme avance el proceso terapéutico. El propósito de las primeras sesiones será principalmente observar, experimentar, identificar patrones y construir una formulación individualizada, antes de establecer intervenciones más específicas o conclusiones diagnósticas.</p>
+<p>La presente formulación debe entenderse como una hipótesis de trabajo basada en la información disponible hasta el momento. No constituye un diagnóstico definitivo. Los síntomas y conductas de escape detectados deben analizarse dentro de su contexto individual. El plan propuesto tiene carácter experimental y podrá modificarse conforme avance el proceso terapéutico.</p>
 
 <h2>XIX. Síntesis clínica</h2>
-<p>(Sintetiza de manera clínica y profunda cómo las dificultades de regulación de atención, evitación, respuesta emocional y aprendizaje interpersonal se interrelacionan...)</p>
+<p>(Sintetiza de manera clínica y profunda cómo las dificultades de regulación, evitación y aprendizaje del paciente se interrelacionan para formar su cuadro actual...)</p>
 <p><strong>Plan inicial propuesto: cuatro sesiones de exploración e intervención, sujeto a revisión clínica al finalizar este primer ciclo.</strong></p>
 
 Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
