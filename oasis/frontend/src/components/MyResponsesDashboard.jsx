@@ -667,6 +667,9 @@ DEBES diseñar una intervención activa, somática y expresiva ÚNICA para este 
 Usa el arte, el sonido, el cuerpo y el andamiaje ejecutivo (acciones en el mundo real, límites, planes de negocio/vida). Reinterpreta sus malestares físicos (ej. insomnio, gastritis) como respuestas funcionales o registros somáticos de límites silenciados.
 ADAPTA las técnicas al paciente: no uses siempre la misma música o técnica, inventa descargas frecuenciales, deconstrucciones plásticas o integraciones sonoras que resuenen con su caso particular. Mantén un alto nivel de rigor clínico institucional.
 
+CRÍTICO - TONO Y PRUDENCIA CLÍNICA (HIPÓTESIS, NO VERDADES ABSOLUTAS):
+Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas demasiado pronto. Usa un lenguaje hipotético y tentativo en tus análisis (ej. "parece sugerir", "podría estar funcionando como", "se hipotetiza que", "es posible que esta conducta sirva para"). Las conclusiones deben plantearse como áreas a explorar en las sesiones, no como diagnósticos sellados.
+
 Datos del paciente:
 - Nombre: ${user}
 - Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
