@@ -408,6 +408,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     const [isGeneratingKio, setIsGeneratingKio] = useState(false);
     const [isGeneratingDynamicTraits, setIsGeneratingDynamicTraits] = useState(false);
     const [kioMemory, setKioMemory] = useState([]);
+    const [chatExchangeIndices, setChatExchangeIndices] = useState({});
     const importFileInputRef = useRef(null);
 
     const handleImportDoc = (e) => {
@@ -5561,11 +5562,33 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         </div>
 
                                                                         {(() => {
-                                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
+                                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
+                                                                            const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
+                                                                            
+                                                                            const exchanges = [];
+                                                                            let currentEx = { question: null, answer: null };
+                                                                            currentChat.forEach(msg => {
+                                                                                if (msg.role === 'assistant') {
+                                                                                    if (currentEx.question) exchanges.push(currentEx);
+                                                                                    currentEx = { question: msg, answer: null };
+                                                                                } else {
+                                                                                    currentEx.answer = msg;
+                                                                                }
+                                                                            });
+                                                                            if (currentEx.question || currentEx.answer) exchanges.push(currentEx);
+                                                                            
+                                                                            const totalExchanges = Math.max(1, exchanges.length);
+                                                                            const stateKey = `${node.id}_${safeThreadIndex}`;
+                                                                            let activeExIdx = chatExchangeIndices[stateKey] !== undefined ? chatExchangeIndices[stateKey] : totalExchanges - 1;
+                                                                            if (activeExIdx >= totalExchanges) activeExIdx = totalExchanges - 1;
+                                                                            if (activeExIdx < 0) activeExIdx = 0;
+                                                                            
+                                                                            const activeExchange = exchanges[activeExIdx] || { question: null, answer: null };
+
                                                                             return (
-                                                                                <div className="flex flex-col gap-3 mt-1 h-full max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                                                <div className="flex flex-col gap-3 mt-1 h-full max-h-[500px]" onClick={e => e.stopPropagation()}>
                                                                                     {/* Header with arrows */}
-                                                                                    <div className="flex items-center justify-between bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
+                                                                                    <div className="flex items-center justify-between bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 shrink-0">
                                                                                         <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                                             <Sparkles size={10} className="text-sky-500" />
                                                                                             {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
@@ -5578,6 +5601,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
                                                                     const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
+                                                                    setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                         continueNodeExploration(node, null, nextIdx);
@@ -5593,6 +5617,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
                                                                       const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
+                                                                    setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                         continueNodeExploration(node, null, nextIdx);
@@ -5605,31 +5630,66 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                         </div>
                                                                                     </div>
                                                                                     {/* Chat messages area */}
-                                                                                    <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3">
-                                                                                        {currentChat.length === 0 && isGeneratingExplorations && (
-                                                                                            <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
-                                                                                                <Sparkles size={12} className="animate-spin text-sky-400" />
-                                                                                                <span>El terapeuta está formulando la pregunta inicial...</span>
+                                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center min-h-[250px]">
+                                                                                        {/* Navigation for exchanges if there are multiple */}
+                                                                                        {totalExchanges > 1 && (
+                                                                                            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                                                                                                <button 
+                                                                                                    onClick={(e) => { e.stopPropagation(); setChatExchangeIndices(prev => ({ ...prev, [stateKey]: Math.max(0, activeExIdx - 1) })); }}
+                                                                                                    disabled={activeExIdx === 0}
+                                                                                                    className="p-1 text-zinc-500 hover:text-white disabled:opacity-30 transition-colors bg-white/5 hover:bg-white/10 rounded"
+                                                                                                >
+                                                                                                    <ChevronLeft size={12} />
+                                                                                                </button>
+                                                                                                <span className="text-[8.5px] font-mono text-zinc-500 tracking-widest uppercase font-bold">
+                                                                                                    Intercambio {activeExIdx + 1} de {totalExchanges}
+                                                                                                </span>
+                                                                                                <button 
+                                                                                                    onClick={(e) => { e.stopPropagation(); setChatExchangeIndices(prev => ({ ...prev, [stateKey]: Math.min(totalExchanges - 1, activeExIdx + 1) })); }}
+                                                                                                    disabled={activeExIdx === totalExchanges - 1}
+                                                                                                    className="p-1 text-zinc-500 hover:text-white disabled:opacity-30 transition-colors bg-white/5 hover:bg-white/10 rounded"
+                                                                                                >
+                                                                                                    <ChevronRight size={12} />
+                                                                                                </button>
                                                                                             </div>
                                                                                         )}
-                                                                                        {currentChat.map((msg, idx) => (
-                                                                                            <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
-                                                                                                <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed max-w-[90%] ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
-                                                                                                    {msg.content}
-                                                                                                    {msg.newNodeAdded && (
-                                                                                                        <div className="mt-2 pt-2 border-t border-sky-500/30">
-                                                                                                            <span className="text-[8px] font-mono font-bold text-amber-400 flex items-center gap-1"><Sparkles size={10}/> NUEVO PATRÓN DETECTADO: {msg.newNodeAdded.label}</span>
-                                                                                                        </div>
-                                                                                                    )}
+
+                                                                                        <div className="flex flex-col gap-4">
+                                                                                            {currentChat.length === 0 && isGeneratingExplorations && (
+                                                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic justify-center my-4">
+                                                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                                                    <span>El terapeuta está formulando la pregunta inicial...</span>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                        {currentChat.length > 0 && isGeneratingExplorations && (
-                                                                                            <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
-                                                                                                <Sparkles size={12} className="animate-spin text-sky-400" />
-                                                                                                <span>Analizando tu respuesta...</span>
-                                                                                            </div>
-                                                                                        )}
+                                                                                            )}
+                                                                                            
+                                                                                            {activeExchange.question && (
+                                                                                                <div className="flex flex-col gap-1.5 items-start">
+                                                                                                    <div className="p-3 rounded-2xl text-[11px] leading-relaxed max-w-[95%] bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm shadow-sm">
+                                                                                                        {activeExchange.question.content}
+                                                                                                        {activeExchange.question.newNodeAdded && (
+                                                                                                            <div className="mt-2 pt-2 border-t border-sky-500/30">
+                                                                                                                <span className="text-[8px] font-mono font-bold text-amber-400 flex items-center gap-1"><Sparkles size={10}/> NUEVO PATRÓN DETECTADO: {activeExchange.question.newNodeAdded.label}</span>
+                                                                                                            </div>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            
+                                                                                            {activeExchange.answer && (
+                                                                                                <div className="flex flex-col gap-1.5 items-end">
+                                                                                                    <div className="p-3 rounded-2xl text-[11px] leading-relaxed max-w-[95%] bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm shadow-sm">
+                                                                                                        {activeExchange.answer.content}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            
+                                                                                            {activeExIdx === totalExchanges - 1 && isGeneratingExplorations && activeExchange.answer && (
+                                                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic justify-center mt-2">
+                                                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                                                    <span>Analizando tu respuesta...</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
                                                                                     
                                                                                     {/* Input area */}
@@ -5870,11 +5930,33 @@ Por favor, analicemos:
 
                                             {/* Wizard for 3 Questions */}
                                             {(() => {
-                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
+                                                const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+                                                
+                                                const exchanges = [];
+                                                let currentEx = { question: null, answer: null };
+                                                currentChat.forEach(msg => {
+                                                    if (msg.role === 'assistant') {
+                                                        if (currentEx.question) exchanges.push(currentEx);
+                                                        currentEx = { question: msg, answer: null };
+                                                    } else {
+                                                        currentEx.answer = msg;
+                                                    }
+                                                });
+                                                if (currentEx.question || currentEx.answer) exchanges.push(currentEx);
+                                                
+                                                const totalExchanges = Math.max(1, exchanges.length);
+                                                const stateKey = `${currentNode.id}_${safeThreadIndex}`;
+                                                let activeExIdx = chatExchangeIndices[stateKey] !== undefined ? chatExchangeIndices[stateKey] : totalExchanges - 1;
+                                                if (activeExIdx >= totalExchanges) activeExIdx = totalExchanges - 1;
+                                                if (activeExIdx < 0) activeExIdx = 0;
+                                                
+                                                const activeExchange = exchanges[activeExIdx] || { question: null, answer: null };
+
                                                 return (
-                                                    <div className="flex flex-col gap-2.5 mt-2 h-full max-h-[40vh] md:max-h-[300px]" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex flex-col gap-2.5 mt-2 h-[50vh] md:min-h-[400px] md:max-h-[600px] flex-1" onClick={e => e.stopPropagation()}>
                                                         {/* Header with arrows */}
-                                                        <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1">
+                                                        <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1 shrink-0">
                                                             <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
                                                                 <Sparkles size={12} className="text-sky-500" />
                                                                 {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
@@ -5887,6 +5969,7 @@ Por favor, analicemos:
                                                                     const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
                                                                     const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
+                                                                    setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                         continueNodeExploration(currentNode, null, nextIdx);
@@ -5902,6 +5985,7 @@ Por favor, analicemos:
                                                                     const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
                                                                       const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
+                                                                    setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                     const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                     if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                         continueNodeExploration(currentNode, null, nextIdx);
@@ -5914,31 +5998,66 @@ Por favor, analicemos:
                                                             </div>
                                                         </div>
                                                         {/* Chat messages area */}
-                                                        <div className="node-chat-scroll flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-3 border border-white/5 bg-zinc-900/20 p-2 rounded-xl">
-                                                            {currentChat.length === 0 && isGeneratingExplorations && (
-                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
-                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
-                                                                    <span>El terapeuta está formulando la pregunta inicial...</span>
+                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center border border-white/5 bg-zinc-900/20 p-4 rounded-xl min-h-[250px]">
+                                                            {/* Navigation for exchanges if there are multiple */}
+                                                            {totalExchanges > 1 && (
+                                                                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); setChatExchangeIndices(prev => ({ ...prev, [stateKey]: Math.max(0, activeExIdx - 1) })); }}
+                                                                        disabled={activeExIdx === 0}
+                                                                        className="p-1.5 text-zinc-500 hover:text-white disabled:opacity-30 transition-colors bg-white/5 hover:bg-white/10 rounded"
+                                                                    >
+                                                                        <ChevronLeft size={14} />
+                                                                    </button>
+                                                                    <span className="text-[10px] font-mono text-zinc-500 tracking-widest uppercase font-bold">
+                                                                        Intercambio {activeExIdx + 1} de {totalExchanges}
+                                                                    </span>
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); setChatExchangeIndices(prev => ({ ...prev, [stateKey]: Math.min(totalExchanges - 1, activeExIdx + 1) })); }}
+                                                                        disabled={activeExIdx === totalExchanges - 1}
+                                                                        className="p-1.5 text-zinc-500 hover:text-white disabled:opacity-30 transition-colors bg-white/5 hover:bg-white/10 rounded"
+                                                                    >
+                                                                        <ChevronRight size={14} />
+                                                                    </button>
                                                                 </div>
                                                             )}
-                                                            {currentChat.map((msg, idx) => (
-                                                                <div key={idx} className={`flex flex-col gap-1.5 ${msg.role === 'assistant' ? 'items-start' : 'items-end'}`}>
-                                                                    <div className={`p-3 rounded-xl text-[11px] md:text-[12px] leading-relaxed max-w-[90%] shadow-md ${msg.role === 'assistant' ? 'bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm'}`}>
-                                                                        {msg.content}
-                                                                        {msg.newNodeAdded && (
-                                                                            <div className="mt-2 pt-2 border-t border-sky-500/30">
-                                                                                <span className="text-[10px] font-mono font-bold text-amber-400 flex items-center gap-1"><Sparkles size={12}/> NUEVO PATRÓN DETECTADO: {msg.newNodeAdded.label}</span>
-                                                                            </div>
-                                                                        )}
+
+                                                            <div className="flex flex-col gap-5">
+                                                                {currentChat.length === 0 && isGeneratingExplorations && (
+                                                                    <div className="flex items-center gap-2 text-[11px] text-zinc-400 italic justify-center my-4">
+                                                                        <Sparkles size={14} className="animate-spin text-sky-400" />
+                                                                        <span>El terapeuta está formulando la pregunta inicial...</span>
                                                                     </div>
-                                                                </div>
-                                                            ))}
-                                                            {currentChat.length > 0 && isGeneratingExplorations && (
-                                                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 italic">
-                                                                    <Sparkles size={12} className="animate-spin text-sky-400" />
-                                                                    <span>Analizando tu respuesta...</span>
-                                                                </div>
-                                                            )}
+                                                                )}
+                                                                
+                                                                {activeExchange.question && (
+                                                                    <div className="flex flex-col gap-1.5 items-start">
+                                                                        <div className="p-4 rounded-2xl text-[12px] md:text-[13px] leading-relaxed max-w-[95%] shadow-md bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm">
+                                                                            {activeExchange.question.content}
+                                                                            {activeExchange.question.newNodeAdded && (
+                                                                                <div className="mt-3 pt-3 border-t border-sky-500/30">
+                                                                                    <span className="text-[10px] font-mono font-bold text-amber-400 flex items-center gap-1.5"><Sparkles size={12}/> NUEVO PATRÓN DETECTADO: {activeExchange.question.newNodeAdded.label}</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {activeExchange.answer && (
+                                                                    <div className="flex flex-col gap-1.5 items-end">
+                                                                        <div className="p-4 rounded-2xl text-[12px] md:text-[13px] leading-relaxed max-w-[95%] shadow-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm">
+                                                                            {activeExchange.answer.content}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {activeExIdx === totalExchanges - 1 && isGeneratingExplorations && activeExchange.answer && (
+                                                                    <div className="flex items-center gap-2 text-[11px] text-zinc-400 italic justify-center mt-3">
+                                                                        <Sparkles size={14} className="animate-spin text-sky-400" />
+                                                                        <span>Analizando tu respuesta...</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         
                                                         {/* Input area */}
