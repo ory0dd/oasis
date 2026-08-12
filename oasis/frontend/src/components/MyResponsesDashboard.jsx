@@ -4937,12 +4937,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                             activeThreads.forEach((item, i) => {
                                                 const {t} = item;
                                                 const miniNodeId = `mini_node_${node.id}_thread_${t}`;
-                                                // Constellation orbit matching the white aura
-                                                let pixelRx = 115, pixelRy = 60;
+                                                // Constellation orbit matching the white aura (tight crown)
+                                                let pixelRx = 110, pixelRy = 65; // Default for rectangular nodes (cognitive, motor, consequences)
                                                 if (node.type === 'historical') {
-                                                    pixelRx = 105; pixelRy = 105;
+                                                    pixelRx = 95; pixelRy = 95; // Diamond shape
                                                 } else if (node.type === 'biological' || node.type === 'social') {
-                                                    pixelRx = 105; pixelRy = 105;
+                                                    pixelRx = 85; pixelRy = 85; // Circular shape
                                                 }
                                                 
                                                 const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
