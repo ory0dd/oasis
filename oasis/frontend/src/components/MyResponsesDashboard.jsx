@@ -4917,19 +4917,17 @@ Devuelve estrictamente el JSON sin formato extra.
                                             if (!activeContextNodeId || node.id !== activeContextNodeId) return;
                                             
                                             // Render history for the selected node to show context
-                                            let allMessages = [];
+                                            let activeThreads = [];
                                             for (let t = 0; t < 7; t++) {
                                                 const currentChat = getSafeCurrentChat(node.id, t);
                                                 if (currentChat && currentChat.length > 0) {
-                                                    currentChat.forEach((msg, idx) => {
-                                                        allMessages.push({t, idx, msg});
-                                                    });
+                                                    activeThreads.push({t});
                                                 }
                                             }
                                             
-                                            allMessages.forEach((item, i) => {
-                                                const {t, idx, msg} = item;
-                                                const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
+                                            activeThreads.forEach((item, i) => {
+                                                const {t} = item;
+                                                const miniNodeId = `mini_node_${node.id}_thread_${t}`;
                                                 // Constellation orbit matching the white aura
                                                 let pixelRx = 115, pixelRy = 60;
                                                 if (node.type === 'historical') {
@@ -4940,21 +4938,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 
                                                 const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
                                                 const ry = (pixelRy / VIRTUAL_HEIGHT) * 100;
-                                                const angle = (i / allMessages.length) * Math.PI * 2;
+                                                const angle = (i / activeThreads.length) * Math.PI * 2 - Math.PI / 2;
                                                 const x = node.x + Math.cos(angle) * rx;
                                                 const y = node.y + Math.sin(angle) * ry;
-                                                const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
                                                 
                                                 finalNodesToRender.push({
                                                     id: miniNodeId,
                                                     type: 'mini_chat',
-                                                    role: msg.role,
-                                                    label: `${threadLabels[t]}${roleLabel}`,
+                                                    label: `${threadLabels[t]}`,
+                                                    parentId: node.id,
+                                                    threadIndex: t,
                                                     x, y
                                                 });
                                                 
                                                 finalEdgesToRender.push({
-                                                    source: idx === 0 ? node.id : `mini_node_${node.id}_${t}_${idx - 1}`,
+                                                    source: node.id,
                                                     target: miniNodeId,
                                                     type: 'mini_chat_link',
                                                     weight: 1.0
@@ -5164,6 +5162,26 @@ Devuelve estrictamente el JSON sin formato extra.
                                             setSelectedNode(targetNode);
 
                                             if (targetNode) {
+                                                // If clicked on a mini chat node, open the parent node's chat at the correct perspective
+                                                if (targetNode.type === 'mini_chat') {
+                                                    const parentNode = sortedTourNodes.find(sn => sn.id === targetNode.parentId) || (nodesToRender || []).find(n => n.id === targetNode.parentId);
+                                                    if (parentNode) {
+                                                        setSelectedNode(parentNode);
+                                                        const idx = sortedTourNodes.findIndex(sn => sn.id === parentNode.id);
+                                                        if (idx !== -1) {
+                                                            setTourActiveIndex(idx);
+                                                            setIsExploringActiveNode(true);
+                                                        } else {
+                                                            setTourActiveIndex(null);
+                                                            setIsExploringActiveNode(false);
+                                                        }
+                                                        setSelectedQuestionIndex(targetNode.threadIndex);
+                                                        setChatExchangeIndices(prev => ({...prev, [`${parentNode.id}_${targetNode.threadIndex}`]: undefined}));
+                                                        setTimeout(() => zoomToNode(parentNode), 15);
+                                                    }
+                                                    return;
+                                                }
+
                                                 // If the clicked node is a blind spot node, mark it as clicked in localStorage
                                                 if (targetNode.id.startsWith("blind_spot_")) {
                                                     const spotId = targetNode.id.substring("blind_spot_".length);
