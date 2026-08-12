@@ -1372,6 +1372,15 @@ Devuelve estrictamente el JSON sin formato extra.
         return chatData[threadIndex] || [];
     }, [nodeChats]);
 
+    const hasAnsweredAllPerspectives = useCallback((nodeId) => {
+        if (!nodeChats || !nodeChats[nodeId]) return false;
+        for (let i = 0; i < 6; i++) {
+            const chat = getSafeCurrentChat(nodeId, i);
+            if (!chat.some(msg => msg.role === 'user')) return false;
+        }
+        return true;
+    }, [nodeChats, getSafeCurrentChat]);
+
     // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
     const [selectedPatternId, setSelectedPatternId] = useState(null);
     const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
@@ -4960,15 +4969,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                             });
                                         });
 
-                                        
-    const hasAnsweredAllPerspectives = (nodeId) => {
-        if (!nodeChats || !nodeChats[nodeId]) return false;
-        for (let i = 0; i < 6; i++) {
-            const chat = getSafeCurrentChat(nodeId, i);
-            if (!chat.some(msg => msg.role === 'user')) return false;
-        }
-        return true;
-    };
 
     return (
         <React.Fragment>
