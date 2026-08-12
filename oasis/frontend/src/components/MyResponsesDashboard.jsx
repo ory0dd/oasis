@@ -5616,7 +5616,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives(node.id);
                                                                     const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
@@ -5632,7 +5632,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                             <button 
                                                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives(node.id);
                                                                       const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
@@ -5984,7 +5984,7 @@ Por favor, analicemos:
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
                                                                     const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
@@ -6000,7 +6000,7 @@ Por favor, analicemos:
                                                                 <button 
                                                                     onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    const isAllAnswered = hasAnsweredAllPerspectives((activeChatNode || currentNode || selectedNode)?.id);
+                                                                    const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
                                                                       const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
                                                                     setSelectedQuestionIndex(nextIdx);
                                                                     setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
