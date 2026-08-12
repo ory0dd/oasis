@@ -4916,43 +4916,49 @@ Devuelve estrictamente el JSON sin formato extra.
                                             if (!activeContextNodeId || node.id !== activeContextNodeId) return;
                                             
                                             // Render history for the selected node to show context
+                                            let allMessages = [];
                                             for (let t = 0; t < 7; t++) {
                                                 const currentChat = getSafeCurrentChat(node.id, t);
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
-                                                        const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
-                                                        // Constellation orbit matching the white aura
-                                                        let pixelRx = 115, pixelRy = 60;
-                                                        if (node.type === 'historical') {
-                                                            pixelRx = 105; pixelRy = 105;
-                                                        } else if (node.type === 'biological' || node.type === 'social') {
-                                                            pixelRx = 105; pixelRy = 105;
-                                                        }
-                                                        
-                                                        const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
-                                                        const ry = (pixelRy / VIRTUAL_HEIGHT) * 100;
-                                                        const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
-                                                        const x = node.x + Math.cos(angle) * rx;
-                                                        const y = node.y + Math.sin(angle) * ry;
-                                                        const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
-                                                        
-                                                        finalNodesToRender.push({
-                                                            id: miniNodeId,
-                                                            type: 'mini_chat',
-                                                            role: msg.role,
-                                                            label: `${threadLabels[t]}${roleLabel}`,
-                                                            x, y
-                                                        });
-                                                        
-                                                        finalEdgesToRender.push({
-                                                            source: idx === 0 ? node.id : `mini_node_${node.id}_${t}_${idx - 1}`,
-                                                            target: miniNodeId,
-                                                            type: 'mini_chat_link',
-                                                            weight: 1.0
-                                                        });
+                                                        allMessages.push({t, idx, msg});
                                                     });
                                                 }
                                             }
+                                            
+                                            allMessages.forEach((item, i) => {
+                                                const {t, idx, msg} = item;
+                                                const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
+                                                // Constellation orbit matching the white aura
+                                                let pixelRx = 115, pixelRy = 60;
+                                                if (node.type === 'historical') {
+                                                    pixelRx = 105; pixelRy = 105;
+                                                } else if (node.type === 'biological' || node.type === 'social') {
+                                                    pixelRx = 105; pixelRy = 105;
+                                                }
+                                                
+                                                const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
+                                                const ry = (pixelRy / VIRTUAL_HEIGHT) * 100;
+                                                const angle = (i / allMessages.length) * Math.PI * 2;
+                                                const x = node.x + Math.cos(angle) * rx;
+                                                const y = node.y + Math.sin(angle) * ry;
+                                                const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
+                                                
+                                                finalNodesToRender.push({
+                                                    id: miniNodeId,
+                                                    type: 'mini_chat',
+                                                    role: msg.role,
+                                                    label: `${threadLabels[t]}${roleLabel}`,
+                                                    x, y
+                                                });
+                                                
+                                                finalEdgesToRender.push({
+                                                    source: idx === 0 ? node.id : `mini_node_${node.id}_${t}_${idx - 1}`,
+                                                    target: miniNodeId,
+                                                    type: 'mini_chat_link',
+                                                    weight: 1.0
+                                                });
+                                            });
                                         });
 
                                         
