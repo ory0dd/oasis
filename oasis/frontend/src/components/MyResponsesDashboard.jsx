@@ -4909,20 +4909,25 @@ Devuelve estrictamente el JSON sin formato extra.
                                         
                                         const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
                                         const initialNodes = [...finalNodesToRender];
+                                        const activeContextNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
+
                                         initialNodes.forEach(node => {
                                             if (node.type === 'mini_chat') return;
+                                            if (!activeContextNodeId || node.id !== activeContextNodeId) return;
                                             
-                                            // Render all history for all nodes to show a permanent galaxy of context
+                                            // Render history for the selected node to show context
                                             for (let t = 0; t < 7; t++) {
                                                 const currentChat = getSafeCurrentChat(node.id, t);
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
                                                         // Constellation orbit
-                                                        const radius = 120 + (idx * 15);
+                                                        const pixelRadius = 120 + (idx * 15);
+                                                        const rx = (pixelRadius / VIRTUAL_WIDTH) * 100;
+                                                        const ry = (pixelRadius / VIRTUAL_HEIGHT) * 100;
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
-                                                        const x = node.x + Math.cos(angle) * radius;
-                                                        const y = node.y + Math.sin(angle) * radius;
+                                                        const x = node.x + Math.cos(angle) * rx;
+                                                        const y = node.y + Math.sin(angle) * ry;
                                                         const roleLabel = msg.role === 'user' ? ' (Tú)' : ' (IA)';
                                                         
                                                         finalNodesToRender.push({
