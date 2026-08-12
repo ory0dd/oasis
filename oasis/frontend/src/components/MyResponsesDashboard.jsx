@@ -4922,9 +4922,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
                                                         // Constellation orbit matching the white aura
-                                                        const pixelRadius = 120;
-                                                        const rx = (pixelRadius / VIRTUAL_WIDTH) * 100;
-                                                        const ry = (pixelRadius / VIRTUAL_HEIGHT) * 100;
+                                                        let pixelRx = 115, pixelRy = 60;
+                                                        if (node.type === 'historical') {
+                                                            pixelRx = 105; pixelRy = 105;
+                                                        } else if (node.type === 'biological' || node.type === 'social') {
+                                                            pixelRx = 105; pixelRy = 105;
+                                                        }
+                                                        
+                                                        const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
+                                                        const ry = (pixelRy / VIRTUAL_HEIGHT) * 100;
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
                                                         const x = node.x + Math.cos(angle) * rx;
                                                         const y = node.y + Math.sin(angle) * ry;
