@@ -4921,8 +4921,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 if (currentChat && currentChat.length > 0) {
                                                     currentChat.forEach((msg, idx) => {
                                                         const miniNodeId = `mini_node_${node.id}_${t}_${idx}`;
-                                                        // Constellation orbit
-                                                        const pixelRadius = 85 + (idx * 10);
+                                                        // Constellation orbit matching the white aura
+                                                        const pixelRadius = 120;
                                                         const rx = (pixelRadius / VIRTUAL_WIDTH) * 100;
                                                         const ry = (pixelRadius / VIRTUAL_HEIGHT) * 100;
                                                         const angle = (idx * Math.PI * 2 / 5) + (t * Math.PI / 3);
