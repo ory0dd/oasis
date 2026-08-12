@@ -4964,7 +4964,7 @@ Devuelve estrictamente el JSON sin formato extra.
     const hasAnsweredAllPerspectives = (nodeId) => {
         if (!nodeChats || !nodeChats[nodeId]) return false;
         for (let i = 0; i < 6; i++) {
-            const chat = nodeChats[nodeId][i] || [];
+            const chat = getSafeCurrentChat(nodeId, i);
             if (!chat.some(msg => msg.role === 'user')) return false;
         }
         return true;
