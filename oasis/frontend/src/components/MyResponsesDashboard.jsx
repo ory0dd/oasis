@@ -5615,42 +5615,32 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 
                                                                                             <button 
                                                                                                 onClick={(e) => {
-                                                                    try {
-                                                                        e.stopPropagation();
-                                                                        const isAllAnswered = hasAnsweredAllPerspectives(node.id);
-                                                                        const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
-                                                                        alert("DEBUG: Clicked prev (Map)! safeThreadIndex: " + safeThreadIndex + " -> nextIdx: " + nextIdx);
-                                                                        setSelectedQuestionIndex(nextIdx);
-                                                                        setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
-                                                                        const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                        if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(node, null, nextIdx);
-                                                                        }
-                                                                    } catch (err) {
-                                                                        alert("ERROR IN NAVIGATION: " + err.message);
-                                                                    }
-                                                                }}
+                                                                                                    e.stopPropagation();
+                                                                                                    const isAllAnswered = hasAnsweredAllPerspectives(node.id);
+                                                                                                    const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
+                                                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                                                    setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
+                                                                                                    const nextChat = getSafeCurrentChat(node.id, nextIdx);
+                                                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                                                    }
+                                                                                                }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                                                                                             >
                                                                                                 <ChevronLeft size={14} />
                                                                                             </button>
                                                                                             <button 
                                                                                                 onClick={(e) => {
-                                                                    try {
-                                                                        e.stopPropagation();
-                                                                        const isAllAnswered = hasAnsweredAllPerspectives(node.id);
-                                                                        const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
-                                                                        alert("DEBUG: Clicked next (Map)! safeThreadIndex: " + safeThreadIndex + " -> nextIdx: " + nextIdx);
-                                                                        setSelectedQuestionIndex(nextIdx);
-                                                                        setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined})); // Reset to latest
-                                                                        const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                        if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(node, null, nextIdx);
-                                                                        }
-                                                                    } catch (err) {
-                                                                        alert("ERROR IN NAVIGATION: " + err.message);
-                                                                    }
-                                                                }}
+                                                                                                    e.stopPropagation();
+                                                                                                    const isAllAnswered = hasAnsweredAllPerspectives(node.id);
+                                                                                                    const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
+                                                                                                    setSelectedQuestionIndex(nextIdx);
+                                                                                                    setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
+                                                                                                    const nextChat = getSafeCurrentChat(node.id, nextIdx);
+                                                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
+                                                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                                                    }
+                                                                                                }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
                                                                                             >
                                                                                                 <ChevronRight size={14} />
@@ -5993,42 +5983,32 @@ Por favor, analicemos:
                                                                 
                                                                 <button 
                                                                     onClick={(e) => {
-                                                                    try {
                                                                         e.stopPropagation();
                                                                         const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
                                                                         const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
-                                                                        alert("DEBUG: Clicked prev! safeThreadIndex: " + safeThreadIndex + " -> nextIdx: " + nextIdx);
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                         if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                             continueNodeExploration(currentNode, null, nextIdx);
                                                                         }
-                                                                    } catch (err) {
-                                                                        alert("ERROR IN NAVIGATION: " + err.message);
-                                                                    }
-                                                                }}
+                                                                    }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
                                                                 >
                                                                     <ChevronLeft size={14} />
                                                                 </button>
                                                                 <button 
                                                                     onClick={(e) => {
-                                                                    try {
                                                                         e.stopPropagation();
                                                                         const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
                                                                         const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
-                                                                        alert("DEBUG: Clicked next! safeThreadIndex: " + safeThreadIndex + " -> nextIdx: " + nextIdx);
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                         if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
                                                                             continueNodeExploration(currentNode, null, nextIdx);
                                                                         }
-                                                                    } catch (err) {
-                                                                        alert("ERROR IN NAVIGATION: " + err.message);
-                                                                    }
-                                                                }}
+                                                                    }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
                                                                 >
                                                                     <ChevronRight size={14} />
