@@ -1381,6 +1381,17 @@ Devuelve estrictamente el JSON sin formato extra.
         return true;
     }, [nodeChats, getSafeCurrentChat]);
 
+    // --- REFORMULACION CLINICA ---
+    const [isGeneratingReformulation, setIsGeneratingReformulation] = useState(false);
+    const [reformulationExpanded, setReformulationExpanded] = useState(true);
+    const [reformulationData, setReformulationData] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem(`oasis_reformulation_${user}`)) || null;
+        } catch (e) {
+            return null;
+        }
+    });
+
     // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
     const [selectedPatternId, setSelectedPatternId] = useState(null);
     const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
@@ -3001,71 +3012,63 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         
         // System prompt
         let systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-El paciente está explorando un nodo de su mapa conductual (Grafo de Bucles) en formato de conversación viva contigo.
-Tu objetivo es guiar esta exploración de forma empática, profunda y confrontativa cuando sea necesario.
+El paciente está explorando su mapa conductual (Grafo de Bucles). Estás formulando la ÚNICA pregunta para la perspectiva actual.
 
 === CONTEXTO DEL PACIENTE ===
 Diagnóstico Existencial: ${phenomData ? JSON.stringify(phenomData) : "No hay datos."}
 Historia de Vida: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos."}
 
-=== NODO EN EXPLORACIÓN ===
+=== NODO ACTUAL EN EXPLORACIÓN ===
 Nodo: "${currentNode.label}" (Tipo: ${currentNode.type})
 Análisis original: ${getFallbackDescription(currentNode, user)}
 
 === INSTRUCCIONES ===
-1. Evalúa el historial de la conversación (si existe) y la última respuesta del paciente.
-2. Si la conversación apenas inicia (el paciente no ha hablado), rompe el hielo con una única pregunta abierta muy poderosa y reflexiva. Enfoque: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado (experiencias escolares, familia, infancia)' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social (pareja, amistades, trabajo)' : threadIndex === 2 ? 'EFECTOS FISIOLÓGICOS o corporales (tensión, respiración, agotamiento)' : threadIndex === 3 ? 'VALORES y significados (creatividad, libertad, autenticidad)' : threadIndex === 4 ? 'CONDUCTAS y patrones (procrastinación, evitación, sobreesfuerzo)' : 'EXPERIMENTOS y acciones concretas para explorar nuevas posibilidades'}.
-3. Si el paciente ya respondió, valida brevemente su respuesta y haz una ÚNICA pregunta de seguimiento que profundice un nivel más abajo (ej. yendo a la raíz histórica, a los efectos sistémicos, a los valores ocultos, etc.).
-4. OPCIONAL: Si descubres que el paciente acaba de revelar un patrón, figura, miedo o concepto NUEVO que es muy importante, puedes sugerir un NUEVO NODO para agregarse al mapa conductual.
+1. Revisa la "MEMORIA GLOBAL DE EXPLORACIÓN" (si existe) para entender qué ha revelado el paciente en otras perspectivas y en otros nodos.
+2. Formula UNA ÚNICA PREGUNTA de transición. NO HAGAS UNA PREGUNTA GENÉRICA. Construye tu pregunta a partir de la "arquitectura" de las respuestas previas del paciente.
+3. Si detectas que una respuesta anterior (ej. "lo odié hasta ya no sentir nada") abre una conexión hacia otra idea (ej. apagamiento emocional), USA ESA CONEXIÓN explícitamente para formular tu pregunta actual.
+4. Enfoque de la perspectiva actual: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social' : threadIndex === 2 ? 'EFECTOS FISIOLÓGICOS o corporales' : threadIndex === 3 ? 'VALORES y significados' : threadIndex === 4 ? 'CONDUCTAS y patrones' : threadIndex === 5 ? 'EXPERIMENTOS y acciones' : 'INTEGRACIÓN y cierre del nodo'}.
 5. Devuelve ÚNICAMENTE un objeto JSON.
 
 ESTRUCTURA DE SALIDA ESPERADA:
 {
-  "next_question": "La respuesta validante breve y tu única pregunta poderosa de seguimiento.",
+  "next_question": "Tu única pregunta profunda y transicional.",
   "new_node": null
 }`;
 
-        if (threadIndex === 6) {
-            systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-El paciente está cerrando e integrando la exploración de un nodo de su mapa conductual.
-Ha explorado este nodo desde múltiples perspectivas diferentes (Historia, Relaciones, Cuerpo, Valores, Conductas, Experimentos).
 
-=== NODO EN EXPLORACIÓN ===
-Nodo: "${currentNode.label}" (Tipo: ${currentNode.type})
 
-=== INSTRUCCIONES DE CIERRE E INTEGRACIÓN ===
-1. La última parte del nodo invita a observar qué cambió durante la exploración. NO busques obtener más información. Busca INTEGRAR la experiencia.
-2. Si el paciente NO ha hablado en esta etapa de integración, genera un ÚNICO mensaje de cierre que resuma compasivamente el núcleo de lo que se ha revelado en las perspectivas (usando tu contexto de todo lo que el paciente ha dicho) y termina con una sola pregunta integradora: "¿Qué ha cambiado en tu forma de ver o sentir esto después de esta exploración?".
-3. Si el paciente ya respondió a tu pregunta de integración, evalúa si ha ocurrido una "reorganización de significado" genuina.
-4. Devuelve ÚNICAMENTE un objeto JSON. Si consideras que el paciente ha integrado la experiencia con éxito (insight), establece "node_status": "integrated". De lo contrario, "node_status": "open".
-
-ESTRUCTURA DE SALIDA ESPERADA:
-{
-  "next_question": "Tu mensaje integrador o respuesta final.",
-  "node_status": "open"
-}`;
-        }
-
-        
         llmMessages.push({ role: 'system', content: systemPrompt });
 
-        if (threadIndex === 6) {
-            // Recopilar el contexto de todas las perspectivas previas
-            let contextBuilder = "=== HISTORIAL DE EXPLORACIÓN DEL PACIENTE EN ESTE NODO ===\n";
-            const perspectives = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos'];
-            for (let i = 0; i < 6; i++) {
-                const tChat = getSafeCurrentChat(currentNode.id, i);
-                if (tChat.length > 0) {
-                    contextBuilder += `\n-- Perspectiva: ${perspectives[i]} --\n`;
-                    tChat.forEach(m => {
-                        contextBuilder += `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}\n`;
-                    });
+        // Recopilar TODAS las perspectivas exploradas en todo el mapa
+        let globalContext = "=== MEMORIA GLOBAL DE EXPLORACIÓN DEL PACIENTE ===\n";
+        let hasGlobalContext = false;
+        if (afcData && afcData.nodes && nodeChats) {
+            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
+            afcData.nodes.forEach(node => {
+                const chats = nodeChats[node.id];
+                if (chats) {
+                    let nodeMemory = "";
+                    for (let i = 0; i < 7; i++) {
+                        const tChat = chats[i];
+                        if (tChat && tChat.length > 0) {
+                            nodeMemory += `\n  - Perspectiva [${threadLabels[i]}]:\n`;
+                            tChat.forEach(m => {
+                                nodeMemory += `    ${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}\n`;
+                            });
+                        }
+                    }
+                    if (nodeMemory) {
+                        globalContext += `\nNODO: "${node.label}" (Tipo: ${node.type})${nodeMemory}`;
+                        hasGlobalContext = true;
+                    }
                 }
-            }
-            llmMessages.push({ role: 'system', content: contextBuilder });
+            });
+        }
+        if (hasGlobalContext) {
+            llmMessages.push({ role: 'system', content: globalContext });
         }
 
-        // Append past conversation history so LLM knows the context
+        // Append past conversation history for current thread (though it should be empty for new questions)
         currentChat.forEach(msg => {
             if (msg.role === 'assistant') {
                 llmMessages.push({ role: 'assistant', content: msg.content });
@@ -3251,6 +3254,100 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 }
             }
 
+        }
+    };
+
+    const generateReformulation = async () => {
+        setIsGeneratingReformulation(true);
+        let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+        
+        let globalContext = "=== RESPUESTAS EXPLORADAS (MAPA DE NODOS) ===\n";
+        if (afcData && afcData.nodes && nodeChats) {
+            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
+            afcData.nodes.forEach(node => {
+                const chats = nodeChats[node.id];
+                if (chats) {
+                    let nodeMemory = "";
+                    for (let i = 0; i < 7; i++) {
+                        const tChat = chats[i];
+                        if (tChat && tChat.length > 0) {
+                            nodeMemory += `\n  - Perspectiva [${threadLabels[i]}]:\n`;
+                            tChat.forEach(m => {
+                                nodeMemory += `    ${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}\n`;
+                            });
+                        }
+                    }
+                    if (nodeMemory) {
+                        globalContext += `\nNODO: "${node.label}" (Tipo: ${node.type})${nodeMemory}`;
+                    }
+                }
+            });
+        }
+
+        const systemPrompt = `Eres un Experto en Conceptualización Clínica y Análisis Existencial.
+Tu objetivo es realizar una "Reformulación Clínica" del caso del paciente basándote en la información original Y en las nuevas exploraciones detalladas de su mapa de nodos.
+
+=== INFORME ORIGINAL DEL PACIENTE ===
+Diagnóstico: ${phenomData ? JSON.stringify(phenomData) : "No hay datos"}
+Biografía: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos"}
+
+=== NUEVAS EXPLORACIONES (MAPA DE NODOS) ===
+${globalContext}
+
+=== INSTRUCCIONES ===
+Analiza cómo las nuevas respuestas del paciente (en la sección NUEVAS EXPLORACIONES) matizan, cambian o profundizan el entendimiento del caso original.
+Genera un documento estructurado de Conceptualización de Caso Actualizada que contenga:
+1. "titulo": Título breve de la reformulación.
+2. "sintesis": Un resumen de cómo ha cambiado la comprensión del caso (2 o 3 párrafos de redacción experta).
+3. "hallazgos": Una lista de 3 a 5 hallazgos clave descubiertos en las respuestas de los nodos.
+4. "citas_clave": 2 o 3 citas textuales del paciente (extraídas de las NUEVAS EXPLORACIONES) que fueron reveladoras, con una breve explicación de su impacto clínico.
+
+Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
+{
+  "titulo": "string",
+  "sintesis": "string",
+  "hallazgos": ["string", "string"],
+  "citas_clave": [
+    { "cita": "string", "impacto": "string" }
+  ]
+}
+`;
+
+        try {
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            
+            const payload = {
+                model: model,
+                messages: [{ role: 'system', content: systemPrompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.5,
+                max_tokens: 4000
+            };
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: endpoint, key: activeKey, payload: payload })
+            });
+
+            if (!res.ok) throw new Error("Error en la petición a DeepSeek");
+            const data = await res.json();
+            const content = data.choices[0].message.content.trim();
+            let cleanContent = content;
+            if (cleanContent.startsWith("\`\`\`")) {
+                cleanContent = cleanContent.replace(/^\`\`\`[a-zA-Z]*\s*/, "").replace(/\s*\`\`\`$/, "");
+            }
+            
+            const parsed = JSON.parse(cleanContent);
+            setReformulationData(parsed);
+            setLocalItem(`oasis_reformulation_${user}`, JSON.stringify(parsed));
+            setReformulationExpanded(true);
+        } catch (err) {
+            console.error(err);
+            alert("Error al generar la reformulación clínica.");
+        } finally {
+            setIsGeneratingReformulation(false);
         }
     };
 
@@ -4468,6 +4565,66 @@ ESTRUCTURA DE SALIDA ESPERADA:
                                                     })}
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Reformulación Clínica Accordion */}
+                                <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
+                                    <div className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-purple-900/10 to-transparent">
+                                        <button
+                                            onClick={() => setReformulationExpanded(!reformulationExpanded)}
+                                            className="flex-1 flex items-center gap-2 text-left hover:text-white transition-colors focus:outline-none"
+                                        >
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full" /> Reformulación Clínica
+                                            </span>
+                                        </button>
+                                        <div className="flex items-center gap-3">
+                                            {exploredNodes.length > 0 && (
+                                                <button
+                                                    onClick={generateReformulation}
+                                                    disabled={isGeneratingReformulation}
+                                                    className="px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded border border-purple-500/30 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                                                >
+                                                    {isGeneratingReformulation ? <Activity className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                                                    {isGeneratingReformulation ? 'Generando...' : 'Generar'}
+                                                </button>
+                                            )}
+                                            <button onClick={() => setReformulationExpanded(!reformulationExpanded)} className="text-zinc-500 hover:text-white transition-colors">
+                                                {reformulationExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {reformulationExpanded && reformulationData && (
+                                        <div className="p-4 border-t border-white/5 bg-black/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="space-y-3">
+                                                <h4 className="text-sm font-bold text-white uppercase tracking-wide">{reformulationData.titulo}</h4>
+                                                <p className="text-xs text-zinc-300 leading-relaxed font-sans whitespace-pre-wrap">{reformulationData.sintesis}</p>
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                <span className="text-[9px] font-bold text-purple-400 uppercase tracking-wider block border-b border-white/5 pb-1">Hallazgos Clave</span>
+                                                <ul className="space-y-2 mt-2">
+                                                    {reformulationData.hallazgos?.map((h, i) => (
+                                                        <li key={i} className="text-[11px] text-zinc-400 leading-relaxed flex items-start gap-2">
+                                                            <span className="text-purple-500/50 mt-0.5">•</span>
+                                                            <span>{h}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <span className="text-[9px] font-bold text-purple-400 uppercase tracking-wider block border-b border-white/5 pb-1">Citas Reveladoras</span>
+                                                {reformulationData.citas_clave?.map((c, i) => (
+                                                    <div key={i} className="bg-black/40 p-3 rounded-xl border border-white/5 space-y-2">
+                                                        <p className="text-[11px] text-zinc-300 italic">"{c.cita}"</p>
+                                                        <p className="text-[10px] text-purple-300/80 font-mono">Impacto: {c.impacto}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
