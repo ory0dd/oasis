@@ -2935,7 +2935,59 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         // Fetch current chat history for this node
         const currentChat = getSafeCurrentChat(currentNode.id, threadIndex);
 
-        // Build messages array for LLM context
+        // If user is submitting an answer, just save it and STOP. No more follow-up questions.
+        if (userResponseText) {
+            const updatedChat = [...currentChat, { role: 'user', content: userResponseText }];
+            
+            setNodeChats(prev => {
+                const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+                const isLegacy = Array.isArray(currentThreads);
+                if (isLegacy) {
+                    return {
+                        ...prev,
+                        [currentNode.id]: {
+                            0: threadIndex === 0 ? updatedChat : currentThreads,
+                            1: threadIndex === 1 ? updatedChat : [],
+                            2: threadIndex === 2 ? updatedChat : [],
+                            3: threadIndex === 3 ? updatedChat : [],
+                            4: threadIndex === 4 ? updatedChat : [],
+                            5: threadIndex === 5 ? updatedChat : [],
+                            6: threadIndex === 6 ? updatedChat : []
+                        }
+                    };
+                }
+                return {
+                    ...prev,
+                    [currentNode.id]: {
+                        ...currentThreads,
+                        [threadIndex]: updatedChat
+                    }
+                };
+            });
+            
+            // If this is the integration perspective, mark the node as integrated automatically
+            if (threadIndex === 6) {
+                setAfcData(prev => {
+                    if (!prev || !prev.nodes) return prev;
+                    return {
+                        ...prev,
+                        nodes: prev.nodes.map(n => n.id === currentNode.id ? { ...n, status: 'integrated' } : n)
+                    };
+                });
+            }
+
+            setIsGeneratingExplorations(false);
+            setExplorationResponse('');
+            
+            // Auto scroll
+            setTimeout(() => {
+                const containers = document.querySelectorAll('.custom-scroll');
+                containers.forEach(container => container.scrollTop = container.scrollHeight);
+            }, 100);
+            return;
+        }
+
+        // Build messages array for LLM context (ONLY RUNS FOR INITIAL QUESTION)
         const llmMessages = [];
         
         // System prompt
@@ -3013,10 +3065,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             }
         });
 
-        // Append the new user response if it exists
-        if (userResponseText) {
-            llmMessages.push({ role: 'user', content: userResponseText });
-        }
+
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
