@@ -2065,30 +2065,39 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
 
-    const resolvedBlindSpots = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("oasis_blindspot_answer_")) {
-            const part = key.substring("oasis_blindspot_answer_".length);
-            const dIndex = part.indexOf('__');
-            if (dIndex > -1) {
-                const keyUser = part.substring(0, dIndex);
-                const spotId = part.substring(dIndex + 2);
-                if (keyUser === user) {
-                    const answer = localStorage.getItem(key);
-                    const question = localStorage.getItem(`oasis_blindspot_question_${user}__${spotId}`) || "Pregunta de punto ciego";
-                    const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || "Punto ciego clínico";
-                    if (answer) {
-                        resolvedBlindSpots.push({
-                            id: spotId,
-                            title,
-                            question,
-                            answer
-                        });
+    const exploredNodes = [];
+    const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
+    
+    if (afcData && afcData.nodes && nodeChats) {
+        afcData.nodes.forEach(node => {
+            const chats = nodeChats[node.id];
+            if (chats) {
+                const perspectives = [];
+                for (let i = 0; i < 7; i++) {
+                    const chat = chats[i];
+                    if (chat && chat.length > 0) {
+                        const userMsgs = chat.filter(m => m.role === 'user');
+                        if (userMsgs.length > 0) {
+                            const lastUserMsg = userMsgs[userMsgs.length - 1];
+                            const lastAssistantMsg = chat.filter(m => m.role === 'assistant').pop();
+                            perspectives.push({
+                                index: i,
+                                label: threadLabels[i],
+                                question: lastAssistantMsg ? lastAssistantMsg.content : '',
+                                answer: lastUserMsg.content
+                            });
+                        }
                     }
                 }
+                if (perspectives.length > 0) {
+                    exploredNodes.push({
+                        nodeId: node.id,
+                        nodeLabel: node.label,
+                        perspectives
+                    });
+                }
             }
-        }
+        });
     }
 
 
@@ -4463,19 +4472,19 @@ ESTRUCTURA DE SALIDA ESPERADA:
                                     )}
                                 </div>
 
-                                {/* Eslabones Integrados (Puntos Ciegos Resueltos) Accordion */}
+                                {/* Perspectivas Exploradas Accordion */}
                                 <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
                                     <button
                                         onClick={() => setBlindSpotsExpanded(!blindSpotsExpanded)}
                                         className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors focus:outline-none"
                                     >
                                         <span className="text-[10px] font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Eslabones Integrados (Puntos Ciegos)
+                                            <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Perspectivas Exploradas
                                         </span>
                                         <span className="text-zinc-500 hover:text-white transition-colors flex items-center gap-2">
-                                            {resolvedBlindSpots.length > 0 && (
+                                            {exploredNodes.length > 0 && (
                                                 <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 text-[8px] font-bold">
-                                                    {resolvedBlindSpots.length}
+                                                    {exploredNodes.reduce((acc, node) => acc + node.perspectives.length, 0)}
                                                 </span>
                                             )}
                                             {blindSpotsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -4484,23 +4493,31 @@ ESTRUCTURA DE SALIDA ESPERADA:
 
                                     {blindSpotsExpanded && (
                                         <div className="p-4 border-t border-white/5 bg-black/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            {resolvedBlindSpots.length === 0 ? (
-                                                <p className="text-xs text-zinc-600 font-mono uppercase tracking-wider text-center py-4">Ningún eslabón integrado aún.</p>
+                                            {exploredNodes.length === 0 ? (
+                                                <p className="text-xs text-zinc-600 font-mono uppercase tracking-wider text-center py-4">Ninguna perspectiva explorada aún.</p>
                                             ) : (
-                                                <div className="space-y-3">
-                                                    {resolvedBlindSpots.map((spot) => (
-                                                        <div key={spot.id} className="bg-zinc-950/40 p-3.5 rounded-xl border border-white/5 space-y-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wider">{spot.title}</span>
-                                                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase tracking-widest">Integrado</span>
+                                                <div className="space-y-4">
+                                                    {exploredNodes.map((nodeData) => (
+                                                        <div key={nodeData.nodeId} className="bg-zinc-950/40 p-3.5 rounded-xl border border-white/5 space-y-3">
+                                                            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">{nodeData.nodeLabel}</span>
                                                             </div>
-                                                            <div className="bg-black/30 p-2.5 rounded-lg border border-white/5">
-                                                                <span className="text-[8px] font-mono text-zinc-500 uppercase block mb-1">Pregunta Clínica</span>
-                                                                <p className="text-xs text-zinc-400 leading-relaxed font-sans italic">"{spot.question}"</p>
-                                                            </div>
-                                                            <div className="bg-sky-950/10 p-2.5 rounded-lg border border-sky-500/10">
-                                                                <span className="text-[8px] font-mono text-sky-500 uppercase block mb-1">Respuesta del Paciente</span>
-                                                                <p className="text-xs text-zinc-200 leading-relaxed font-sans">{spot.answer}</p>
+                                                            <div className="space-y-4">
+                                                                {nodeData.perspectives.map((p) => (
+                                                                    <div key={p.index} className="space-y-2">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-[9px] font-bold text-sky-400 uppercase tracking-wider">{p.label}</span>
+                                                                        </div>
+                                                                        <div className="bg-black/30 p-2.5 rounded-lg border border-white/5">
+                                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase block mb-1">Pregunta del Terapeuta</span>
+                                                                            <p className="text-xs text-zinc-400 leading-relaxed font-sans italic">"{p.question}"</p>
+                                                                        </div>
+                                                                        <div className="bg-sky-950/10 p-2.5 rounded-lg border border-sky-500/10">
+                                                                            <span className="text-[8px] font-mono text-sky-500 uppercase block mb-1">Tu Respuesta</span>
+                                                                            <p className="text-xs text-zinc-200 leading-relaxed font-sans">{p.answer}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -4509,6 +4526,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                                         </div>
                                     )}
                                 </div>
+
 
                                 {/* Observaciones Clínicas del Profesional Accordion */}
                                 <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
