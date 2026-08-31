@@ -3959,10 +3959,10 @@ const ProfileView = ({
                     <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-8 flex flex-col pointer-events-auto">
 
                         {/* Top Stats Section */}
-                        <div className="flex items-center gap-3 sm:gap-6 md:gap-10 mb-3 sm:mb-6 mt-1 sm:mt-4">
+                        <div className="flex items-center gap-2 sm:gap-6 md:gap-10 mb-2 sm:mb-6 mt-1 sm:mt-4">
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className={`w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar`} onClick={(e) => {
+                                <div className={`w-12 h-12 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar`} onClick={(e) => {
                                     if (hasActiveStories && !isEditingProfile) {
                                         setViewing24hStories(user24hStories);
                                     } else {
@@ -3974,30 +3974,30 @@ const ProfileView = ({
                                     </div>
                                     {isEditingProfile && (
                                         <div className="absolute inset-0 m-[2px] rounded-full bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
-                                            <Camera size={18} className="text-white mb-1" />
-                                            <span className="text-[7px] font-black uppercase tracking-widest text-white">Cambiar</span>
+                                            <Camera size={14} className="text-white mb-0.5" />
+                                            <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
                                         </div>
                                     )}
                                 </div>
                                 <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                                <div onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }} className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white transition-colors z-10 shadow-lg">
-                                    <Plus size={11} strokeWidth={3} className="sm:w-3.5 sm:h-3.5" />
+                                <div onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }} className="absolute bottom-0 right-0 w-4 h-4 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white transition-colors z-10 shadow-lg">
+                                    <Plus size={10} strokeWidth={3} className="sm:w-3.5 sm:h-3.5" />
                                 </div>
                             </div>
 
                             {/* Stats */}
                             <div className="flex-1 flex justify-around md:justify-start md:gap-12 items-center">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">{(feed || []).filter(b => b.username === user).length}</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">publicaciones</span>
+                                    <span className="text-[13px] sm:text-base md:text-xl font-bold">{(feed || []).filter(b => b.username === user).length}</span>
+                                    <span className="text-[8px] sm:text-[10px] md:text-xs text-zinc-400">publicaciones</span>
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">resonancias</span>
+                                    <span className="text-[13px] sm:text-base md:text-xl font-bold">0</span>
+                                    <span className="text-[8px] sm:text-[10px] md:text-xs text-zinc-400">resonancias</span>
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">conexiones</span>
+                                    <span className="text-[13px] sm:text-base md:text-xl font-bold">0</span>
+                                    <span className="text-[8px] sm:text-[10px] md:text-xs text-zinc-400">conexiones</span>
                                 </div>
                             </div>
                         </div>
@@ -4005,36 +4005,36 @@ const ProfileView = ({
                         {/* Bio and Highlights Side-by-Side Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-1.5 sm:gap-4 mb-1.5 sm:mb-6 mt-1 sm:mt-2">
                             {/* Biography Card (curved rectangle module) */}
-                            <div className="md:col-span-8 bg-zinc-900/60 border border-white/5 rounded-xl py-2 px-3 sm:p-4 backdrop-blur-sm shadow-lg flex flex-col justify-between">
+                            <div className="md:col-span-8 bg-zinc-900/60 border border-white/5 rounded-xl py-1.5 px-3 sm:p-4 backdrop-blur-sm shadow-lg flex flex-col justify-between">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center justify-between mb-0.5">
                                         <div>
-                                            <h2 className="text-xs sm:text-sm font-bold text-white">{user}</h2>
-                                            <span className="text-[9px] sm:text-[10px] text-zinc-500 font-mono tracking-wider uppercase">Creador / Explorador</span>
+                                            <h2 className="text-[11px] sm:text-sm font-bold text-white">{user}</h2>
+                                            <span className="text-[8px] sm:text-[10px] text-zinc-500 font-mono tracking-wider uppercase">Creador / Explorador</span>
                                         </div>
                                     </div>
                                     {isEditingProfile ? (
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-1.5">
                                             <textarea
                                                 value={bio}
                                                 onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[60px]"
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-2 text-[10px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[50px]"
                                                 placeholder="Descripción o biografía..."
                                             />
                                             <div className="flex items-center bg-black/40 border border-white/10 rounded-xl overflow-hidden focus-within:border-white/30 transition-all">
-                                                <div className="pl-2 pr-1 text-zinc-500"><LinkIcon size={12} /></div>
+                                                <div className="pl-2 pr-1 text-zinc-500"><LinkIcon size={10} /></div>
                                                 <input
                                                     type="url"
                                                     value={profileLink}
                                                     onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
-                                                    className="w-full bg-transparent p-2 pl-1 text-xs text-accent outline-none font-sans"
+                                                    className="w-full bg-transparent p-1.5 pl-1 text-[10px] text-accent outline-none font-sans"
                                                     placeholder="https://tupagina.com"
                                                 />
                                             </div>
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-[10px] sm:text-xs leading-relaxed text-zinc-300 font-sans mb-2 sm:mb-3 whitespace-pre-wrap">
+                                            <p className="text-[9px] sm:text-xs leading-relaxed text-zinc-300 font-sans mb-1.5 sm:mb-3 whitespace-pre-wrap">
                                                 {bio || 'Explorando el ruido interior.'}
                                             </p>
                                             {profileLink && (
@@ -12486,9 +12486,9 @@ ${afcMapContext}
                         <div className="w-full max-w-3xl mx-auto px-4 flex flex-col pointer-events-auto pt-8 relative z-10">
 
                             {/* Avatar + Stats row */}
-                            <div className="flex items-center gap-4 mb-4 mt-2">
+                            <div className="flex items-center gap-3 mb-4 mt-2">
                                 <div className="relative shrink-0">
-                                    <div className="w-16 h-16 rounded-full p-[1.5px] bg-white/10">
+                                    <div className="w-14 h-14 rounded-full p-[1.5px] bg-white/10">
                                         <div className="w-full h-full rounded-full border border-black/50 overflow-hidden bg-zinc-900">
                                             <img src={formatUrl(avatar)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-full object-cover" />
                                         </div>
@@ -12496,16 +12496,16 @@ ${afcMapContext}
                                 </div>
                                 <div className="flex-1 flex justify-around items-center">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold">{totalPosts}</span>
-                                        <span className="text-[9px] text-zinc-500">publicaciones</span>
+                                        <span className="text-xs font-bold">{totalPosts}</span>
+                                        <span className="text-[8px] text-zinc-500">publicaciones</span>
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold">0</span>
-                                        <span className="text-[9px] text-zinc-500">resonancias</span>
+                                        <span className="text-xs font-bold">0</span>
+                                        <span className="text-[8px] text-zinc-500">resonancias</span>
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold">0</span>
-                                        <span className="text-[9px] text-zinc-500">conexiones</span>
+                                        <span className="text-xs font-bold">0</span>
+                                        <span className="text-[8px] text-zinc-500">conexiones</span>
                                     </div>
                                 </div>
                             </div>
@@ -12513,16 +12513,16 @@ ${afcMapContext}
                             {/* Name + bio */}
                             <div className="flex flex-col gap-0.5 mb-4 px-0.5">
                                 {fullName && fullName !== cleanPublicUser && (
-                                    <h2 className="text-sm font-bold text-white leading-tight">{fullName}</h2>
+                                    <h2 className="text-xs font-bold text-white leading-tight">{fullName}</h2>
                                 )}
-                                <h2 className={fullName && fullName !== cleanPublicUser ? "text-[9px] text-zinc-500 font-mono" : "text-sm font-bold text-white leading-tight"}>
+                                <h2 className={fullName && fullName !== cleanPublicUser ? "text-[8px] text-zinc-500 font-mono" : "text-xs font-bold text-white leading-tight"}>
                                     @{cleanPublicUser}
                                 </h2>
                                 {bio && bio !== 'Sin bio por ahora.' && (
-                                    <p className="text-[11px] leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap mt-1">{bio}</p>
+                                    <p className="text-[10px] leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap mt-1">{bio}</p>
                                 )}
                                 {(!bio || bio === 'Sin bio por ahora.') && (
-                                    <p className="text-[10px] text-zinc-600 italic mt-1">Sin bio por ahora.</p>
+                                    <p className="text-[9px] text-zinc-600 italic mt-1">Sin bio por ahora.</p>
                                 )}
                             </div>
 

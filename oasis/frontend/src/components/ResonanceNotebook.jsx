@@ -341,7 +341,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                         <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono text-[8px] font-black uppercase tracking-widest">ECO PSÍQUICO</span>
                                         <span className="text-[10px] text-zinc-500 font-mono uppercase">FASE 1</span>
                                     </div>
-                                    <h3 className="text-xs sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
+                                    <h3 className="text-[11px] sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
                                         Escucha eso que está dando vueltas en tu cabeza y no lo quieres escuchar.
                                     </h3>
                                     <textarea
@@ -352,7 +352,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Escribe aquí con total honestidad sobre el ruido o loop mental..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-[12px] sm:text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}
@@ -363,7 +363,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                         <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono text-[8px] font-black uppercase tracking-widest">SUSURRO INTERNO</span>
                                         <span className="text-[10px] text-zinc-500 font-mono uppercase">FASE 2</span>
                                     </div>
-                                    <h3 className="text-xs sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
+                                    <h3 className="text-[11px] sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
                                         Escribe aquello que terminaste pensando después de escribir el eco, eso que quedó flotando como un nuevo pensamiento.
                                     </h3>
                                     <textarea
@@ -374,7 +374,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Qué nuevo pensamiento o emoción residual quedó flotando..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-[12px] sm:text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}
@@ -385,7 +385,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                         <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-mono text-[8px] font-black uppercase tracking-widest">EL GLITCH</span>
                                         <span className="text-[10px] text-zinc-500 font-mono uppercase">FASE 3</span>
                                     </div>
-                                    <h3 className="text-xs sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
+                                    <h3 className="text-[11px] sm:text-sm md:text-base font-semibold leading-relaxed text-white/90">
                                         ¿Qué es lo que te incomoda de esa situación? Eso que de verdad te tiene en bucle, donde termina el loop y te hace repensar una y otra vez.
                                     </h3>
                                     <textarea
@@ -396,7 +396,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Identifica el origen del bucle existencial, el nudo o conflicto central..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-[12px] sm:text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}
