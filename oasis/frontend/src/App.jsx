@@ -10680,17 +10680,17 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="absolute bottom-[calc(85px+env(safe-area-inset-bottom,0px))] md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-1.5 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-0.5 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar"
+                    className="absolute bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-1.5 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-0.5 sm:gap-2 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar scale-[0.85] sm:scale-100 origin-bottom"
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
                 >
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={18} className="text-accent" style={{ color: accent }} /> : <ChevronUp size={18} />}</button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={16} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={16} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={16} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={15} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={15} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={15} className="sm:scale-110" /></button>
 
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={16} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={15} className="sm:scale-110" /></button>
 
                     <div className="w-[1px] h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
 
@@ -10755,7 +10755,7 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
                         <Paperclip size={16} className="sm:scale-110" />
                     </button>
                     <button onClick={() => {
@@ -10800,12 +10800,12 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
                         <Headphones size={16} className="sm:scale-110" />
                     </button>
                     <button
                         onClick={toggleCanvasRecording}
-                        className={`w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
+                        className={`w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
                         title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
                     >
                         <Mic size={16} className="sm:scale-110" />
@@ -10832,7 +10832,7 @@ ${afcMapContext}
                                 });
                             }
                         });
-                    }} className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
                         <Type size={16} className="sm:scale-110" />
                     </button>
                 </div>
@@ -13520,8 +13520,8 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in slide-in-from-top-5 duration-700"
-                    style={{ top: 'max(24px, calc(env(safe-area-inset-top) + 12px))' }}
+                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in slide-in-from-top-5 duration-700 scale-[0.85] sm:scale-100 origin-top"
+                    style={{ top: 'max(12px, calc(env(safe-area-inset-top) + 8px))' }}
                 >
                     {/* 1. Perfil */}
                     <button
@@ -13538,11 +13538,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('profile');
                         }}
-                        className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Perfil"
                     >
-                        <User size={18} className="hover-float-icon" />
+                        <User size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
 
@@ -13561,11 +13561,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('my_responses');
                         }}
-                        className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Mi Expediente"
                     >
-                        <RefreshCw size={18} className="hover-float-icon" />
+                        <RefreshCw size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                     {/* 6. Lienzo Principal */}
@@ -13583,11 +13583,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('canvas');
                         }}
-                        className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Lienzo Principal"
                     >
-                        <Pencil size={18} className="hover-float-icon" />
+                        <Pencil size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                     {/* 7. Feed Público */}
@@ -13605,11 +13605,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('feed');
                         }}
-                        className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Feed Público"
                     >
-                        <Home size={18} className="hover-float-icon" />
+                        <Home size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                 </div>
@@ -14055,7 +14055,7 @@ ${afcMapContext}
                         }}
                     >
                         <div
-                            className={`pointer-events-auto transition-all duration-200 ${isKeyboardOpen ? 'mb-0 mx-0 w-full' : 'mb-2 mx-3 w-full max-w-4xl'}`}
+                            className={`pointer-events-auto transition-all duration-200 scale-[0.85] sm:scale-100 origin-bottom ${isKeyboardOpen ? 'mb-0 mx-0 w-full' : 'mb-2 mx-3 w-full max-w-4xl'}`}
                             style={{
                                 ...(isChatOpen && isComposerOpen && window.innerWidth >= 768 ? {
                                     maxWidth: 'none',
@@ -14125,11 +14125,11 @@ ${afcMapContext}
                                         {/* LEFT: MODE SWITCHER - auto-collapses when typing */}
                                         {!isKeyboardOpen && (
                                             <div className="group flex items-center gap-0.5 px-1 sm:px-2 py-1.5 shrink-0 border-r border-white/[0.06] transition-all duration-300">
-                                                <button onClick={() => { openNewComposer(false, false); if (window.innerWidth < 768) setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); }} className={`h-11 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isComposerOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-11 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-11 sm:w-8 opacity-100 pointer-events-auto'} ${isComposerOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Nota"><Edit3 size={15} className="shrink-0 scale-90 sm:scale-100" /></button>
-                                                <button onClick={() => { if (window.innerWidth < 768 && isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setActiveNotebook(null); setIsChatOpen(true); setIsPublishSelectorOpen(false); }} className={`h-11 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isChatOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-11 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-11 sm:w-8 opacity-100 pointer-events-auto'} ${isChatOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Chat IA"><MessageCircle size={15} className="shrink-0 scale-90 sm:scale-100" /></button>
+                                                <button onClick={() => { openNewComposer(false, false); if (window.innerWidth < 768) setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); }} className={`h-9 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isComposerOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-9 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-9 sm:w-8 opacity-100 pointer-events-auto'} ${isComposerOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Nota"><Edit3 size={14} className="shrink-0 sm:scale-105" /></button>
+                                                <button onClick={() => { if (window.innerWidth < 768 && isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setActiveNotebook(null); setIsChatOpen(true); setIsPublishSelectorOpen(false); }} className={`h-9 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isChatOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-9 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-9 sm:w-8 opacity-100 pointer-events-auto'} ${isChatOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Chat IA"><MessageCircle size={14} className="shrink-0 sm:scale-105" /></button>
 
-                                                <button onClick={() => { if (isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); }} className={`h-11 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${activeNotebook !== 'resonance' && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-11 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-11 sm:w-8 opacity-100 pointer-events-auto'} ${activeNotebook === 'resonance' ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Ruido"><Sparkles size={15} className="shrink-0 scale-90 sm:scale-100" /></button>
-                                                <button onClick={() => { if (isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); }} className={`h-11 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isPublishSelectorOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-11 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-11 sm:w-8 opacity-100 pointer-events-auto'} ${isPublishSelectorOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Publicar en Feed"><Share2 size={15} className="shrink-0 scale-90 sm:scale-100" /></button>
+                                                <button onClick={() => { if (isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); }} className={`h-9 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${activeNotebook !== 'resonance' && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-9 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-9 sm:w-8 opacity-100 pointer-events-auto'} ${activeNotebook === 'resonance' ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Ruido"><Sparkles size={14} className="shrink-0 sm:scale-105" /></button>
+                                                <button onClick={() => { if (isComposerOpen) { if (noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); } setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); }} className={`h-9 sm:h-8 rounded-full flex items-center justify-center transition-all overflow-hidden ${!isPublishSelectorOpen && isAnyContextOpen ? 'w-0 sm:w-0 opacity-0 px-0 mx-0 pointer-events-none group-hover:w-9 sm:group-hover:w-8 group-hover:opacity-100 group-hover:pointer-events-auto' : 'w-9 sm:w-8 opacity-100 pointer-events-auto'} ${isPublishSelectorOpen ? 'bg-white/15 text-white' : 'text-zinc-600 hover:text-white hover:bg-white/8'}`} title="Publicar en Feed"><Share2 size={14} className="shrink-0 sm:scale-105" /></button>
                                             </div>
                                         )}
 
@@ -14141,12 +14141,12 @@ ${afcMapContext}
                                                 <>
                                                     <div className="flex items-center gap-0.5 shrink-0">
                                                         <input type="file" ref={inlineMediaInputRef} className="hidden" onChange={handleInlineMedia} accept="image/*,video/*,audio/*" />
-                                                        <button onClick={() => inlineMediaInputRef.current?.click()} className="w-11 h-11 sm:w-8 sm:h-8 rounded-full hover:bg-white/8 flex items-center justify-center text-zinc-500 hover:text-white transition-all" title="Adjuntar"><Paperclip size={16} className="sm:scale-75" /></button>
+                                                        <button onClick={() => inlineMediaInputRef.current?.click()} className="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-white/8 flex items-center justify-center text-zinc-500 hover:text-white transition-all" title="Adjuntar"><Paperclip size={15} className="sm:scale-75" /></button>
 
                                                     </div>
                                                     <div className="flex-1" />
                                                     <div className="flex items-center gap-1 shrink-0">
-                                                        <button onClick={() => launchMedia()} disabled={(!caption && !noteText) || isSyncingMedia} className={`h-11 px-5 sm:h-7 sm:px-3 rounded-full flex items-center gap-2 sm:gap-1 text-[11px] sm:text-[9px] font-black uppercase tracking-wider transition-all ${(!caption && !noteText) ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-300 hover:text-white hover:bg-white/10'} ${isSyncingMedia ? 'animate-pulse opacity-50' : ''}`}><Save size={14} className="sm:scale-75" /><span>{isSyncingMedia ? 'Sincronizando...' : 'Guardar'}</span></button>
+                                                        <button onClick={() => launchMedia()} disabled={(!caption && !noteText) || isSyncingMedia} className={`h-9 px-4 sm:h-7 sm:px-3 rounded-full flex items-center gap-2 sm:gap-1 text-[10px] sm:text-[9px] font-black uppercase tracking-wider transition-all ${(!caption && !noteText) ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-300 hover:text-white hover:bg-white/10'} ${isSyncingMedia ? 'animate-pulse opacity-50' : ''}`}><Save size={13} className="sm:scale-75" /><span>{isSyncingMedia ? 'Sincronizando...' : 'Guardar'}</span></button>
                                                     </div>
                                                 </>
                                             )}
@@ -14268,7 +14268,7 @@ ${afcMapContext}
                                     );
                                 })()}
 
-                                <div className={`mx-auto w-full flex flex-col gap-8 pb-[50vh] transition-all duration-500 ${showSecondaryNote ? 'max-w-7xl' : 'max-w-5xl'}`}>
+                                <div className={`mx-auto w-full flex flex-col gap-8 pb-32 md:pb-[50vh] transition-all duration-500 ${showSecondaryNote ? 'max-w-7xl' : 'max-w-5xl'}`}>
                                     <div className="space-y-4 w-full">
 
                                         <div className="flex items-end gap-6 mb-4 md:mb-8">
