@@ -14050,7 +14050,7 @@ ${afcMapContext}
                     <div
                         className={`fixed inset-x-0 z-[2100] flex flex-col items-center justify-end pointer-events-none transition-transform duration-200 ease-out ${isKeyboardOpen && !isChatOpen ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
                         style={{
-                            bottom: window.innerWidth < 768 ? `${keyboardOffset}px` : 0,
+                            bottom: (window.innerWidth < 768 && (!isKeyboardOpen || isChatOpen)) ? `${keyboardOffset}px` : 0,
                             paddingBottom: (window.innerWidth < 768 && isKeyboardOpen) ? '0px' : 'env(safe-area-inset-bottom)'
                         }}
                     >
@@ -16023,7 +16023,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             )}
 
             {/* FLOATING MAGNET BUTTON TO CENTER CANVAS */}
-            {(view === 'canvas' || view === 'feed') && !activeNotebook && !isComposerOpen && !isSimpleNotesOpen && (
+            {(view === 'canvas' || view === 'feed') && !activeNotebook && !isComposerOpen && !isSimpleNotesOpen && !activeNoteId && (
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -16057,7 +16057,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
             )}
 
             {/* RETURN TO PROFILE CARD / BUTTON & FEED BUTTON */}
-            {(view === 'canvas' || view === 'feed') && !isComposerOpen && !isSimpleNotesOpen && !activeNotebook && !activeTest && (
+            {(view === 'canvas' || view === 'feed') && !isComposerOpen && !isSimpleNotesOpen && !activeNotebook && !activeTest && !activeNoteId && (
                 <div className="fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-8 left-1/2 -translate-x-1/2 z-[2500] flex gap-3 pointer-events-auto">
                     <button
                         onClick={() => setView('profile')}

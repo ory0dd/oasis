@@ -5011,7 +5011,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] uppercase font-bold text-zinc-400 border border-zinc-700">Plantilla</span>}
                                     </h2>
                                 </div>
-                                <div className={`absolute bottom-[150px] md:bottom-6 left-3 md:left-6 z-[120] flex-col items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${selectedNode ? 'hidden md:flex' : 'flex'}`}>
+                                <div className={`absolute bottom-[90px] md:bottom-6 left-3 md:left-6 z-[120] flex-col items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${selectedNode ? 'hidden md:flex' : 'flex'}`}>
 
 
                                     {/* Action Buttons */}
@@ -5116,7 +5116,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Zoom Controls Overlay - Compact Glass Toolbar */}
                                 {mapViewTab === 'map' && (
                                     <div 
-                                        className={`zoom-controls absolute bottom-[150px] md:bottom-2.5 right-3 md:right-2.5 z-[60] flex-row items-center gap-0.5 bg-zinc-950/85 border border-white/10 sm:backdrop-blur-md p-0.5 rounded-xl shadow-2xl transition-all duration-300 ${selectedNode ? 'hidden md:flex' : 'flex'}`}
+                                        className={`zoom-controls absolute bottom-[90px] md:bottom-2.5 right-3 md:right-2.5 z-[60] flex-row items-center gap-0.5 bg-zinc-950/85 border border-white/10 sm:backdrop-blur-md p-0.5 rounded-xl shadow-2xl transition-all duration-300 ${selectedNode ? 'hidden md:flex' : 'flex'}`}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                     >
@@ -6050,8 +6050,8 @@ Por favor, analicemos:
 
                                 return (
                                     <div
-                                        className={`absolute bottom-[150px] md:bottom-[100px] md:top-auto left-1/2 z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-bottom-4' : ''}`}
-                                        style={{ transform: `translate(calc(-50% + ${tourModalPos.x}px), ${tourModalPos.y}px) scale(${typeof window !== 'undefined' && window.innerWidth < 768 ? 0.85 : 1})`, transformOrigin: 'bottom center' }}
+                                        className={`absolute top-1/2 md:top-auto md:bottom-[100px] left-1/2 z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-bottom-4' : ''}`}
+                                        style={{ transform: `translate(calc(-50% + ${tourModalPos.x}px), ${typeof window !== 'undefined' && window.innerWidth < 768 ? `calc(-50% + ${tourModalPos.y}px)` : `${tourModalPos.y}px`}) scale(${typeof window !== 'undefined' && window.innerWidth < 768 ? 0.9 : 1})`, transformOrigin: 'center center' }}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                         onMouseMove={e => e.stopPropagation()}
