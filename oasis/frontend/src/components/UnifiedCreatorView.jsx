@@ -65,7 +65,7 @@ const UnifiedCreatorView = ({ onClose, setActiveTab, onComposeNote, onOpenPublis
                     ? (viewportHeight - 140) + 'px'
                     : 'calc(100vh - 100px)'
             }}
-            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
+            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
             onTouchStart={(e) => {
                 e.stopPropagation();
                 const touch = e.touches[0];

@@ -3866,7 +3866,7 @@ const ProfileView = ({
 
     return (
         <div
-            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[125px] sm:top-[110px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
+            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
             onTouchStart={(e) => {
                 e.stopPropagation();
                 const touch = e.touches[0];
@@ -11392,7 +11392,7 @@ ${afcMapContext}
         }
 
         return (
-            <div className="fixed inset-x-0 top-[140px] md:top-0 md:relative w-full h-[calc(100vh-140px)] md:h-full z-[1500] md:z-10 bg-[#050506]/95 backdrop-blur-md rounded-t-[2.5rem] md:rounded-none border-t border-white/5 md:border-t-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] md:shadow-none flex flex-col transition-transform duration-500 animate-in slide-in-from-bottom-full md:slide-in-from-bottom-0">
+            <div className="fixed inset-x-0 top-[72px] md:top-0 md:relative w-full h-[calc(100vh-140px)] md:h-full z-[1500] md:z-10 bg-[#050506]/95 backdrop-blur-md rounded-t-[2.5rem] md:rounded-none border-t border-white/5 md:border-t-0 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] md:shadow-none flex flex-col transition-transform duration-500 animate-in slide-in-from-bottom-full md:slide-in-from-bottom-0">
                 <div className="flex-1 w-full relative overflow-y-auto no-scrollbar pt-8 md:pt-24 pb-36 px-4 md:px-8">
                     {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
                     <button
@@ -12455,7 +12455,7 @@ ${afcMapContext}
             <div className="absolute inset-0 z-[1500] pointer-events-none">
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto z-[1500]" onClick={(e) => { e.stopPropagation(); setPublicProfileUser(null); }} />
 
-                <div className="absolute inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[100px] bottom-0 rounded-t-[2rem] border-t border-x border-white/8 flex flex-col bg-black/50 backdrop-blur-3xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden transition-all pointer-events-auto z-[1501]"
+                <div className="absolute inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/8 flex flex-col bg-black/50 backdrop-blur-3xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden transition-all pointer-events-auto z-[1501]"
                     onTouchStart={(e) => { window._ppTouchStartY = e.touches[0].clientY; }}
                     onTouchEnd={(e) => {
                         const dy = e.changedTouches[0].clientY - (window._ppTouchStartY || 0);
@@ -14213,7 +14213,7 @@ ${afcMapContext}
             {/* COMPOSER */}
             {isComposerOpen && (
                 <div
-                    className={isSplitViewEnabled ? "fixed inset-y-0 right-0 w-full md:w-[50vw] mt-[100px] border-x-0 md:border-l border-white/10 rounded-t-[2.5rem] md:rounded-tr-none md:rounded-tl-[2.5rem] bg-[#050506]/95 backdrop-blur-md text-white shadow-2xl z-[2001] flex flex-col pb-safe overflow-hidden pointer-events-auto animate-in fade-in duration-500" : "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-4 sm:top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[2000] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"}
+                    className={isSplitViewEnabled ? "fixed inset-y-0 right-0 w-full md:w-[50vw] mt-[100px] border-x-0 md:border-l border-white/10 rounded-t-[2.5rem] md:rounded-tr-none md:rounded-tl-[2.5rem] bg-[#050506]/95 backdrop-blur-md text-white shadow-2xl z-[2001] flex flex-col pb-safe overflow-hidden pointer-events-auto animate-in fade-in duration-500" : "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-4 sm:top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[2000] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"}
                     style={{
                         top: window.innerWidth < 640 ? 'max(env(safe-area-inset-top), 16px)' : undefined,
                         ...(isChatOpen && window.innerWidth >= 768 ? {

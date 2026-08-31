@@ -202,7 +202,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
 
     return (
         <div 
-            className={`${className || "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[1500] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)]"} flex flex-col bg-[#0b0b0d] text-white animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden transition-all duration-500`} 
+            className={`${className || "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/5 md:border-white/10 z-[1500] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_0_100px_rgba(0,0,0,0.8)]"} flex flex-col bg-[#0b0b0d] text-white animate-in fade-in slide-in-from-bottom-10 duration-700 overflow-hidden transition-all duration-500`} 
             onClick={e => e.stopPropagation()}
             onTouchStart={(e) => {
                 e.stopPropagation();
@@ -352,7 +352,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Escribe aquí con total honestidad sobre el ruido o loop mental..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}
@@ -374,7 +374,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Qué nuevo pensamiento o emoción residual quedó flotando..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}
@@ -396,7 +396,7 @@ export const ResonanceNotebook = ({ activeCanvasId, onClose, onOpenSimpleNotes, 
                                             e.target.style.height = e.target.scrollHeight + 'px';
                                         }}
                                         placeholder="Identifica el origen del bucle existencial, el nudo o conflicto central..."
-                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 overflow-hidden"
+                                        className="w-full min-h-[40vh] bg-transparent resize-none border-none text-sm md:text-lg text-zinc-200 font-sans leading-relaxed focus:outline-none placeholder:text-zinc-700 p-0 pt-2 pb-32 overflow-hidden"
                                     />
                                 </div>
                             )}

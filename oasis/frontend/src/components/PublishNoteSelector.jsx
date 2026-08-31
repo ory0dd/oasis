@@ -266,7 +266,7 @@ export default function PublishNoteSelector({
     // ── CARD WRAPPER ──
     return (
         <div
-            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 pointer-events-auto"
+            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 pointer-events-auto"
             onTouchStart={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); if (e.touches[0].clientY - rect.top <= 100) { e.currentTarget.dataset.dragAllowed = 'true'; e.currentTarget.dataset.startY = e.touches[0].clientY; e.currentTarget.style.transition = 'none'; } else { e.currentTarget.dataset.dragAllowed = 'false'; } }}
             onTouchMove={(e) => {
                 e.stopPropagation();
