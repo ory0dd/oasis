@@ -2451,7 +2451,12 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 else if (ct.Contains("video/quicktime")) ext = ".mov";
                 else if (ct.Contains("image/jpeg")) ext = ".jpg";
                 else if (ct.Contains("image/png")) ext = ".png";
-                else if (ct.Contains("audio/")) ext = ".webm";
+                else if (ct.Contains("audio/m4a") || ct.Contains("audio/x-m4a") || ct.Contains("audio/aac") || ct.Contains("audio/mp4")) ext = ".m4a";
+                else if (ct.Contains("audio/mp3") || ct.Contains("audio/mpeg")) ext = ".mp3";
+                else if (ct.Contains("audio/wav")) ext = ".wav";
+                else if (ct.Contains("audio/ogg")) ext = ".ogg";
+                else if (ct.Contains("audio/webm")) ext = ".webm";
+                else if (ct.Contains("audio/")) ext = ".m4a";
             }
 
             var fileName = $"{Guid.NewGuid()}{ext}";
@@ -2734,88 +2739,98 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 return StatusCode(500, $"Error obteniendo playlist: {ex.Message}");
             }
         }
-[HttpPost("transcribe-audio")]
-public async Task<IActionResult> TranscribeAudio([FromBody] TranscribeRequest req)
-{
-    if (string.IsNullOrEmpty(req.Url)) return BadRequest("URL no proporcionada");
-    
-    var geminiKey = _config["Gemini:Key"] ?? Environment.GetEnvironmentVariable("GEMINI_KEY");
-    if (string.IsNullOrEmpty(geminiKey) || geminiKey.Contains("AQUI_TU_API_KEY_DE_GEMINI")) {
-        return StatusCode(500, "La API Key de Gemini no est\u00e1 configurada en el servidor.");
-    }
-
-        byte[] audioBytes;
-        if (req.Url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || req.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        [HttpPost("transcribe-audio")]
+        public async Task<IActionResult> TranscribeAudio([FromBody] TranscribeRequest req)
         {
-            using var client = new System.Net.Http.HttpClient();
-            audioBytes = await client.GetByteArrayAsync(req.Url);
-        }
-        else
-        {
-            var cleanRelative = req.Url.TrimStart('/');
-            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanRelative.Replace('/', Path.DirectorySeparatorChar));
-            if (!System.IO.File.Exists(localPath))
-            {
-                return BadRequest($"El archivo de audio no existe en el servidor: {cleanRelative}");
+            if (string.IsNullOrEmpty(req?.Url)) return BadRequest("URL no proporcionada");
+            
+            var geminiKey = _config["Gemini:Key"] ?? Environment.GetEnvironmentVariable("GEMINI_KEY");
+            if (string.IsNullOrEmpty(geminiKey) || geminiKey.Contains("AQUI_TU_API_KEY_DE_GEMINI")) {
+                return StatusCode(500, "La API Key de Gemini no está configurada en el servidor.");
             }
-            audioBytes = await System.IO.File.ReadAllBytesAsync(localPath);
-        }
 
-        var mimeType = "audio/mp3"; 
-        if (req.Url.Contains(".ogg")) mimeType = "audio/ogg";
-        else if (req.Url.Contains(".wav")) mimeType = "audio/wav";
-        else if (req.Url.Contains(".webm")) mimeType = "audio/webm";
-        else if (req.Url.Contains(".mp4") || req.Url.Contains(".m4a")) mimeType = "audio/mp4";
-
-        using var uploadClient = new System.Net.Http.HttpClient();
-        var uploadUrl = $"https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key={geminiKey}";
-        using var uploadReq = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
-        var content = new ByteArrayContent(audioBytes);
-        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
-        uploadReq.Content = content;
-        
-        var uploadRes = await client.SendAsync(uploadReq);
-        var uploadResText = await uploadRes.Content.ReadAsStringAsync();
-        
-        if (!uploadRes.IsSuccessStatusCode) {
-            return StatusCode((int)uploadRes.StatusCode, $"Error subiendo a Gemini: {uploadResText}");
-        }
-        
-        using var jsonDoc = System.Text.Json.JsonDocument.Parse(uploadResText);
-        var fileUri = jsonDoc.RootElement.GetProperty("file").GetProperty("uri").GetString();
-
-        var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={geminiKey}";
-        var prompt = "Transcribe el siguiente audio palabra por palabra. Luego, analiza la conversaci\u00f3n y formatea la transcripci\u00f3n como un guion de di\u00e1logo identificando a los dos hablantes como 'Terapeuta' y 'Consultante' (si aplica).";
-        
-        var generateBody = new {
-            contents = new[] {
-                new {
-                    parts = new object[] {
-                        new { fileData = new { fileUri = fileUri, mimeType = mimeType } },
-                        new { text = prompt }
-                    }
+            try {
+                byte[] audioBytes;
+                if (req.Url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || req.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var http = new System.Net.Http.HttpClient();
+                    audioBytes = await http.GetByteArrayAsync(req.Url);
                 }
+                else
+                {
+                    var cleanRelative = req.Url.TrimStart('/');
+                    var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanRelative.Replace('/', Path.DirectorySeparatorChar));
+                    if (!System.IO.File.Exists(localPath))
+                    {
+                        return BadRequest($"El archivo de audio no existe en el servidor: {cleanRelative}");
+                    }
+                    audioBytes = await System.IO.File.ReadAllBytesAsync(localPath);
+                }
+
+                var mimeType = "audio/mp3"; 
+                var urlLower = req.Url.ToLower();
+                if (urlLower.Contains(".m4a") || urlLower.Contains(".aac")) mimeType = "audio/m4a";
+                else if (urlLower.Contains(".mp4")) mimeType = "audio/mp4";
+                else if (urlLower.Contains(".ogg")) mimeType = "audio/ogg";
+                else if (urlLower.Contains(".wav")) mimeType = "audio/wav";
+                else if (urlLower.Contains(".webm")) mimeType = "audio/webm";
+
+                using var client = new System.Net.Http.HttpClient();
+                client.Timeout = TimeSpan.FromMinutes(5);
+
+                var uploadUrl = $"https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key={geminiKey}";
+                using var uploadReq = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
+                var content = new ByteArrayContent(audioBytes);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+                uploadReq.Content = content;
+                
+                var uploadRes = await client.SendAsync(uploadReq);
+                var uploadResText = await uploadRes.Content.ReadAsStringAsync();
+                
+                if (!uploadRes.IsSuccessStatusCode) {
+                    return StatusCode((int)uploadRes.StatusCode, $"Error subiendo a Gemini: {uploadResText}");
+                }
+                
+                using var jsonDoc = System.Text.Json.JsonDocument.Parse(uploadResText);
+                var fileUri = jsonDoc.RootElement.GetProperty("file").GetProperty("uri").GetString();
+
+                var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={geminiKey}";
+                var prompt = "Transcribe el siguiente audio palabra por palabra. Luego, analiza la conversación y formatea la transcripción como un guion de diálogo identificando a los dos hablantes como 'Terapeuta' y 'Consultante' (si aplica).";
+                
+                var generateBody = new {
+                    contents = new[] {
+                        new {
+                            parts = new object[] {
+                                new { fileData = new { fileUri = fileUri, mimeType = mimeType } },
+                                new { text = prompt }
+                            }
+                        }
+                    }
+                };
+
+                var generateJson = System.Text.Json.JsonSerializer.Serialize(generateBody);
+                var generateContent = new StringContent(generateJson, System.Text.Encoding.UTF8, "application/json");
+                var genRes = await client.PostAsync(generateUrl, generateContent);
+                var genResText = await genRes.Content.ReadAsStringAsync();
+
+                if (!genRes.IsSuccessStatusCode) {
+                    return StatusCode((int)genRes.StatusCode, $"Error procesando transcripción: {genResText}");
+                }
+
+                using var genDoc = System.Text.Json.JsonDocument.Parse(genResText);
+                var textResult = genDoc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
+
+                return Ok(new { transcription = textResult });
+
+            } catch (Exception ex) {
+                return StatusCode(500, $"Error en transcripción: {ex.Message}");
             }
-        };
-
-        var generateJson = System.Text.Json.JsonSerializer.Serialize(generateBody);
-        var generateContent = new StringContent(generateJson, System.Text.Encoding.UTF8, "application/json");
-        var genRes = await client.PostAsync(generateUrl, generateContent);
-        var genResText = await genRes.Content.ReadAsStringAsync();
-
-        if (!genRes.IsSuccessStatusCode) {
-            return StatusCode((int)genRes.StatusCode, $"Error procesando transcripci\u00f3n: {genResText}");
         }
-
-        using var genDoc = System.Text.Json.JsonDocument.Parse(genResText);
-        var textResult = genDoc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
-
-        return Ok(new { transcription = textResult });
-
-    } catch (Exception ex) {
-        return StatusCode(500, $"Error en transcripci\u00f3n: {ex.Message}");
-    }
-}
 
     }
 }
