@@ -4149,11 +4149,26 @@ Devuelve estrictamente el JSON sin formato extra.
         return (
             <div className="w-full h-full flex flex-col md:flex-row animate-in fade-in duration-300 bg-[#030304]">
                 {/* Left Clinical Sidebar */}
-                <div className={`w-full ${isSidebarOpen ? 'md:w-80' : 'md:w-[84px]'} md:h-full bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-x-hidden`}>
-                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative h-full flex flex-col">
-                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`absolute top-6 z-10 w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all ${isSidebarOpen ? 'right-6' : 'left-1/2 -translate-x-1/2'}`}><Menu size={16} /></button>
+                <div className={`w-full ${isSidebarOpen ? 'md:w-80 h-full' : 'md:w-[84px] h-auto md:h-full'} bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-visible md:overflow-x-hidden z-[50]`}>
+                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full">
+                        {/* Mobile Header / Desktop Menu Button */}
+                        <div className="flex items-center justify-between md:block">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all md:absolute md:top-6 md:z-10 ${isSidebarOpen ? 'md:right-6' : 'md:left-1/2 md:-translate-x-1/2'}`}>
+                                <Menu size={16} />
+                            </button>
+                            
+                            {/* Mobile-only current tab indicator (when closed) */}
+                            {!isSidebarOpen && (
+                                <div className="md:hidden flex-1 text-center pr-8">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                                        {tabsConfig.find(t => t.id === activeTab)?.label || 'Dashboard'}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Patient Badge */}
-                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'opacity-0 h-0 pointer-events-none p-0 overflow-hidden' : ''}`}>
+                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'hidden md:block opacity-0 h-0 pointer-events-none p-0 overflow-hidden mt-0' : 'mt-3 md:mt-10'}`}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
@@ -4207,7 +4222,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         </div>
 
                         {/* Navigation Tabs */}
-                        <nav className="flex overflow-x-auto md:flex-col gap-2 md:gap-0 md:space-y-1 no-scrollbar pb-1 md:pb-0">
+                        <nav className={`flex ${isSidebarOpen ? 'flex-col space-y-2' : 'flex-row justify-around overflow-x-visible mt-2'} md:flex-col md:gap-0 md:space-y-1 no-scrollbar pb-1 md:pb-0 w-full`}>
                             {tabsConfig.map((tab) => {
                                 const IconComponent = tab.icon;
                                 const isActive = activeTab === tab.id;
@@ -4218,16 +4233,17 @@ Devuelve estrictamente el JSON sin formato extra.
                                             setActiveTab(tab.id);
                                             setSelectedNode(null);
                                         }}
-                                        className={`shrink-0 md:w-full text-left px-3 py-2 md:px-4 md:py-3.5 rounded-xl border flex gap-2 md:gap-3 items-center transition-all ${
+                                        className={`shrink-0 md:w-full text-left p-2.5 md:px-4 md:py-3.5 rounded-xl border flex gap-2 md:gap-3 items-center justify-center md:justify-start transition-all ${
                                             isActive 
                                             ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' 
                                             : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.01]'
                                         }`}
+                                        title={tab.label}
                                     >
                                         <IconComponent className={`w-4 h-4 md:w-4.5 md:h-4.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`} />
                                         {isSidebarOpen && (
-                                            <div className="min-w-0">
-                                                <div className="text-[10px] md:text-[11px] font-black uppercase tracking-wider whitespace-nowrap md:whitespace-normal">{tab.label}</div>
+                                            <div className="min-w-0 flex-1 ml-1 text-left">
+                                                <div className="text-[10px] md:text-[11px] font-black uppercase tracking-wider whitespace-normal">{tab.label}</div>
                                                 <div className="hidden md:block text-[9px] text-zinc-600 font-medium truncate mt-0.5">{tab.desc}</div>
                                             </div>
                                         )}
