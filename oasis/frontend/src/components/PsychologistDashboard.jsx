@@ -10,6 +10,7 @@ import icarRationale from '../data/icar16_rationale.json';
 import { saveObservation, getObservations } from '../utils/db';
 import MyResponsesDashboard from './MyResponsesDashboard';
 import FloatingNotebook from './FloatingNotebook';
+import { TranscriptionsTab } from './TranscriptionsTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
@@ -4461,3 +4462,4 @@ Devuelve estrictamente el JSON sin formato extra.
 };
 
 export default PsychologistDashboard;
+
