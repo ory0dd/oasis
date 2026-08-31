@@ -1878,7 +1878,7 @@ Devuelve estrictamente el JSON sin formato extra.
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * 1.20; // Zoom base aumentado a 1.20x para que no quede tan lejos
+        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.95 : 1.20); // Zoom base ajustado para que se vea completo en móvil
         fitScale = Math.min(Math.max(0.35, fitScale), 4); // Límite estricto para no romper el zoom manual del usuario
 
         const graphCenterX = (minX + maxX) / 2;
@@ -1905,7 +1905,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
             const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
             const isMobile = window.innerWidth < 768;
-            let targetScale = isMobile ? 0.85 : (width / VIRTUAL_WIDTH) * 1.3;
+            let targetScale = isMobile ? Math.min(0.55, (width / VIRTUAL_WIDTH) * 2.5) : (width / VIRTUAL_WIDTH) * 1.3;
             targetScale = Math.min(Math.max(0.35, targetScale), 2.5);
             const tx = width / 2 - px * targetScale;
             const ty = (height * (isMobile ? 0.22 : 0.35)) - py * targetScale;
@@ -1973,7 +1973,7 @@ Devuelve estrictamente el JSON sin formato extra.
             // Dynamic wide zoom out calculation so all nodes of the pattern are fully framed
             const graphWidthRange = (maxX - minX) || 60;
             const graphHeightRange = (maxY - minY) || 60;
-            const paddingPercent = isMobileDevice ? 0.15 : 0.15;
+            const paddingPercent = isMobileDevice ? 0.25 : 0.15;
             const scaleX = width / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercent));
             const scaleY = height / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercent));
             let targetScale = Math.min(scaleX, scaleY);
