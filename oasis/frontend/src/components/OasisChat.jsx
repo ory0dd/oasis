@@ -433,7 +433,7 @@ const OasisChat = ({ className, isOpen, isComposerOpen, messages, input, setInpu
 
     return (
         <div
-            className={`${className || "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[140px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-row bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all duration-300 pointer-events-auto"}`}
+            className={`${className || "fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-row bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all duration-300 pointer-events-auto"}`}
             style={{
                 ...containerStyle,
                 ...(isComposerOpen && window.innerWidth >= 768 ? {
@@ -535,12 +535,12 @@ const OasisChat = ({ className, isOpen, isComposerOpen, messages, input, setInpu
                 </>
             )}
 
-            <div className="flex-1 flex flex-col relative h-full">
+            <div className="flex-1 flex flex-col relative h-full min-h-0">
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
                     <div className={`w-64 h-64 md:w-96 md:h-96 rounded-full blur-[100px] transition-all duration-1000 ${isLoading ? 'bg-purple-600 scale-125 animate-pulse' : 'bg-accent/20 scale-100'}`} />
                 </div>
 
-                <div className="absolute top-6 left-5 right-5 md:top-10 md:left-10 md:right-10 z-[1600] flex justify-between items-center pointer-events-none">
+                <div className="relative w-full px-5 pt-5 pb-2 md:px-10 md:pt-8 md:pb-4 z-[1600] flex justify-between items-center pointer-events-none shrink-0">
                     <div className="flex items-center gap-1.5 md:gap-3">
                         {!isSidebarVisible && (
                             <button
@@ -602,7 +602,7 @@ const OasisChat = ({ className, isOpen, isComposerOpen, messages, input, setInpu
 
                 {/* Scrollable messages container */}
                 <div 
-                    className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-16 md:pt-24 min-h-0 min-w-0"
+                    className="relative z-10 flex-1 overflow-y-auto no-scrollbar pt-2 md:pt-4 min-h-0 min-w-0"
                     onTouchStart={() => { isUserScrollingRef.current = true; }}
                     onWheel={() => { isUserScrollingRef.current = true; }}
                     onScroll={(e) => {

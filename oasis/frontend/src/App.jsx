@@ -13520,7 +13520,7 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className="fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in slide-in-from-top-5 duration-700 scale-[0.85] sm:scale-100 origin-top"
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
                     style={{ top: 'max(12px, calc(env(safe-area-inset-top) + 8px))' }}
                 >
                     {/* 1. Perfil */}
@@ -13764,7 +13764,7 @@ ${afcMapContext}
                     <OasisChat
                         className={isSplitViewEnabled ? "fixed inset-y-0 left-0 w-full md:w-[50vw] mt-[100px] border-x-0 md:border-r border-white/10 rounded-t-[2.5rem] md:rounded-tl-none md:rounded-tr-[2.5rem] bg-[#050506]/95 backdrop-blur-md shadow-2xl z-[1500] pointer-events-auto" : undefined}
                         containerStyle={window.innerWidth < 768 ? {
-                            top: `calc(140px + ${viewportStats.offsetTop || 0}px)`,
+                            top: `calc(${((maxHeight - viewportStats.visualHeight) > 150) ? 12 : 72}px + ${viewportStats.offsetTop || 0}px)`,
                             bottom: `${keyboardOffset}px`
                         } : undefined}
                         isSplitView={isSplitViewEnabled}
