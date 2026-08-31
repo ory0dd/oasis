@@ -14048,7 +14048,7 @@ ${afcMapContext}
 
                 return (
                     <div
-                        className="fixed inset-x-0 z-[2100] flex flex-col items-center justify-end pointer-events-none transition-transform duration-100 ease-out"
+                        className={`fixed inset-x-0 z-[2100] flex flex-col items-center justify-end pointer-events-none transition-transform duration-200 ease-out ${isKeyboardOpen && !isChatOpen ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}
                         style={{
                             bottom: window.innerWidth < 768 ? `${keyboardOffset}px` : 0,
                             paddingBottom: (window.innerWidth < 768 && isKeyboardOpen) ? '0px' : 'env(safe-area-inset-bottom)'
