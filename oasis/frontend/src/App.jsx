@@ -2141,7 +2141,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
     );
 };
 
-const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit }) => {
+const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit }) => {
     const isImage = block.type === 'image' || block.type === 'relic';
     const isVideo = block.type === 'video';
     const isAudio = block.type === 'audio';
@@ -2408,6 +2408,21 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         >
                             <Download size={16} />
                         </a>
+                        {onTranscribeBlock && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onTranscribeBlock(block.id); }}
+                                disabled={isTranscribingId === block.id}
+                                className="w-11 h-11 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center shrink-0 hover:bg-accent/20 hover:border-accent/50 hover:text-accent transition-all ml-2"
+                                title="Transcribir con IA"
+                            >
+                                {isTranscribingId === block.id ? (
+                                    <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <FileText size={16} />
+                                )}
+                            </button>
+                        )}
+
                     </div>
                 )}
 
@@ -6698,6 +6713,7 @@ export default function App() {
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const [isTranscribingId, setIsTranscribingId] = useState(null);
     const [isChatOpen, setIsChatOpenRaw] = useState(initialStartupScreen === 'chat');
     // Bottom bar chat input state
     const [chatInputBar, setChatInputBar] = useState('');
@@ -9185,6 +9201,45 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         setIsChatLoading(false);
     };
 
+    
+    const handleTranscribeBlock = async (id) => {
+        const block = blocks.find(b => b.id === id);
+        if (!block || !block.content) return;
+        setIsTranscribingId(id);
+        try {
+            const res = await fetch(`${API_URL}/transcribe-audio`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: block.content })
+            });
+            if (!res.ok) throw new Error("Error en la transcripción");
+            const data = await res.json();
+            
+            // Create a new text block with the transcription
+            const newBlock = {
+                id: `text-${Date.now()}`,
+                type: 'text',
+                content: `**Transcripción de Audio**\n\n${data.transcription}`,
+                x: block.x + 350,
+                y: block.y,
+                width: 450,
+                color: '#d946ef'
+            };
+            
+            const newLink = { id: `link-${Date.now()}`, from: block.id, to: newBlock.id };
+            
+            setBlocks(prev => [...prev, newBlock]);
+            setLinks(prev => [...prev, newLink]);
+            
+            triggerSave([...blocks, newBlock], [...links, newLink]);
+        } catch (e) {
+            console.error(e);
+            alert("No se pudo transcribir el audio: " + e.message);
+        } finally {
+            setIsTranscribingId(null);
+        }
+    };
+
     const handleAnalyzeBlock = async (id) => {
         const block = blocks.find(b => b.id === id);
         if (!block) return;
@@ -10556,6 +10611,8 @@ ${afcMapContext}
                             onSelectNote={handleSelectNote}
                             onSelectGroup={handleAnalyzeGroup}
                             onAnalyzeBlock={handleAnalyzeBlock}
+                            onTranscribeBlock={handleTranscribeBlock}
+                            isTranscribingId={isTranscribingId}
                             onAnalyzeGroup={handleAnalyzeGroup}
                             isAnalyzing={isChatLoading}
                             onDelete={deleteBlock}

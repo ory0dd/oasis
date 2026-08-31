@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Aperture,  
+import { Aperture, Mic,  
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
@@ -4141,7 +4141,8 @@ Devuelve estrictamente el JSON sin formato extra.
             { id: 'CLINICAL_REPORT', label: 'I. Informe Clínico y Mapa', desc: 'Entrevista, Bucles y Plan', icon: FileText },
             { id: 'ICAR16', label: 'II. Desempeño ICAR-16', desc: 'Eficiencia Cognitiva', icon: Brain },
             { id: 'EXISTENTIAL_ANALYSIS', label: 'III. Esencia y Feed AI', desc: 'Esferas, Lentes y Embeddings', icon: Zap },
-            { id: 'KIO_CHATS', label: 'IV. Historial Kio AI', desc: 'Registro de interacciones con Kio', icon: MessageSquare }
+            { id: 'KIO_CHATS', label: 'IV. Historial Kio AI', desc: 'Registro de interacciones con Kio', icon: MessageSquare },
+            { id: 'TRANSCRIPTIONS', label: 'V. Transcripciones', desc: 'Audio y Transcripciones', icon: Mic }
         ];
 
         return (
@@ -4269,6 +4270,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         {activeTab === 'EXISTENTIAL_ANALYSIS' && renderExistentialAnalysisTab()}
                           {activeTab === 'KIO_CHATS' && renderKioChatsTab()}
                           {activeTab === 'CONTEXTUAL_REPORT' && renderContextualReportTab()}
+                          {activeTab === 'TRANSCRIPTIONS' && <TranscriptionsTab patientName={selectedPatient?.name} />}
                     </div>
                 </main>
             </div>
