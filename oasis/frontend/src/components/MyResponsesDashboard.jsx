@@ -5076,7 +5076,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             
                             {/* Segmented Control Tabs (Bottom NavBar) */}
-                            <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] md:bottom-6 left-1/2 transform -translate-x-1/2 z-[200] flex bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 w-max max-w-[95vw] gap-1 sm:gap-2 shadow-2xl pointer-events-auto overflow-x-auto no-scrollbar scale-90 md:scale-100 origin-bottom">
+                            <div className={`absolute bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] md:bottom-6 left-1/2 transform -translate-x-1/2 z-[200] bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 w-max max-w-[95vw] gap-1 sm:gap-2 shadow-2xl pointer-events-auto overflow-x-auto no-scrollbar scale-90 md:scale-100 origin-bottom ${((selectedNode || tourActiveIndex !== null) && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden md:flex' : 'flex'}`}>
                                 <button onClick={() => setMapViewTab('map')} title="El Mapa" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('avances')} title="Avances" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'avances' ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-500 hover:text-blue-400'}`}><MessageSquare size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('bucles')} title="Bucles" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'bucles' ? 'bg-purple-600 text-white shadow-md' : 'text-zinc-500 hover:text-purple-400'}`}><Compass size={16} className="sm:scale-110" /></button>
@@ -5854,7 +5854,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                         </div>
                                                                                     </div>
                                                                                     {/* Chat messages area */}
-                                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center min-h-[250px]">
+                                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center min-h-[150px] md:min-h-[250px]">
                                                                                         <div className="flex flex-col gap-4">
                                                                                             {currentChat.map((msg, msgIdx) => {
                                                                                                 if (msg.role === 'assistant') {
@@ -6134,7 +6134,7 @@ Por favor, analicemos:
 
 
                                                 return (
-                                                    <div className="flex flex-col gap-2.5 mt-2 h-[50vh] md:min-h-[400px] md:max-h-[600px] flex-1" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex flex-col gap-2.5 mt-2 h-[45vh] md:h-[50vh] md:min-h-[400px] md:max-h-[600px] flex-1 shrink-0" onClick={e => e.stopPropagation()}>
                                                         {/* Header with arrows */}
                                                         <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1 shrink-0">
                                                             <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
@@ -6178,8 +6178,8 @@ Por favor, analicemos:
                                                             </div>
                                                         </div>
                                                         {/* Chat messages area */}
-                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center border border-white/5 bg-zinc-900/20 p-4 rounded-xl min-h-[250px]">
-                                                        <div className="flex flex-col gap-5 pb-2">
+                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center border border-white/5 bg-zinc-900/20 p-2.5 md:p-4 rounded-xl min-h-[150px] md:min-h-[250px]">
+                                                        <div className="flex flex-col gap-4 md:gap-5 pb-2">
                                                             {currentChat.map((msg, msgIdx) => {
                                                                 if (msg.role === 'assistant') {
                                                                     return (
