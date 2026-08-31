@@ -2744,15 +2744,30 @@ public async Task<IActionResult> TranscribeAudio([FromBody] TranscribeRequest re
         return StatusCode(500, "La API Key de Gemini no est\u00e1 configurada en el servidor.");
     }
 
-    try {
-        using var client = new System.Net.Http.HttpClient();
-        var audioBytes = await client.GetByteArrayAsync(req.Url);
-        var mimeType = "audio/ogg"; 
-        if (req.Url.Contains(".mp3")) mimeType = "audio/mp3";
+        byte[] audioBytes;
+        if (req.Url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || req.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            using var client = new System.Net.Http.HttpClient();
+            audioBytes = await client.GetByteArrayAsync(req.Url);
+        }
+        else
+        {
+            var cleanRelative = req.Url.TrimStart('/');
+            var localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanRelative.Replace('/', Path.DirectorySeparatorChar));
+            if (!System.IO.File.Exists(localPath))
+            {
+                return BadRequest($"El archivo de audio no existe en el servidor: {cleanRelative}");
+            }
+            audioBytes = await System.IO.File.ReadAllBytesAsync(localPath);
+        }
+
+        var mimeType = "audio/mp3"; 
+        if (req.Url.Contains(".ogg")) mimeType = "audio/ogg";
         else if (req.Url.Contains(".wav")) mimeType = "audio/wav";
         else if (req.Url.Contains(".webm")) mimeType = "audio/webm";
         else if (req.Url.Contains(".mp4") || req.Url.Contains(".m4a")) mimeType = "audio/mp4";
 
+        using var uploadClient = new System.Net.Http.HttpClient();
         var uploadUrl = $"https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key={geminiKey}";
         using var uploadReq = new HttpRequestMessage(HttpMethod.Post, uploadUrl);
         var content = new ByteArrayContent(audioBytes);

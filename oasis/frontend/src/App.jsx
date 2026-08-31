@@ -9207,7 +9207,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         if (!block || !block.content) return;
         setIsTranscribingId(id);
         try {
-            const res = await fetch(`${API_URL}/transcribe-audio`, {
+            const res = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: block.content })

@@ -52,7 +52,10 @@ export const TranscriptionsTab = ({ patientName }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: audioUrl })
             });
-            if (!transRes.ok) throw new Error("Error en la transcripción");
+            if (!transRes.ok) {
+                const errText = await transRes.text();
+                throw new Error(errText || "Error en la transcripción");
+            }
             const transData = await transRes.json();
 
             const newItem = {
@@ -108,13 +111,19 @@ export const TranscriptionsTab = ({ patientName }) => {
         }
     };
 
+    const getFullAudioUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     const togglePlay = (url, id) => {
         if (playingId === id) {
             audioRef.current.pause();
             setPlayingId(null);
         } else {
             if (audioRef.current) {
-                audioRef.current.src = url;
+                audioRef.current.src = getFullAudioUrl(url);
                 audioRef.current.play();
                 setPlayingId(id);
             }
