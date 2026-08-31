@@ -7,6 +7,7 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [transcriptions, setTranscriptions] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(null);
     const [playingId, setPlayingId] = useState(null);
     const audioRef = useRef(null);
 
@@ -32,6 +33,7 @@ export const TranscriptionsTab = ({ patientName }) => {
         if (!file) return;
 
         setIsUploading(true);
+        setErrorMessage(null);
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -40,7 +42,10 @@ export const TranscriptionsTab = ({ patientName }) => {
                 method: 'POST',
                 body: formData
             });
-            if (!uploadRes.ok) throw new Error("Error al subir el audio");
+            if (!uploadRes.ok) {
+                const uploadErr = await uploadRes.text();
+                throw new Error(`[Error de Subida ${uploadRes.status}]: ${uploadErr || uploadRes.statusText}`);
+            }
             const uploadData = await uploadRes.json();
             const audioUrl = uploadData.url;
 
@@ -54,7 +59,7 @@ export const TranscriptionsTab = ({ patientName }) => {
             });
             if (!transRes.ok) {
                 const errText = await transRes.text();
-                throw new Error(errText || "Error en la transcripción");
+                throw new Error(`[Error de Transcripción ${transRes.status}]: ${errText || transRes.statusText}`);
             }
             const transData = await transRes.json();
 
@@ -69,8 +74,8 @@ export const TranscriptionsTab = ({ patientName }) => {
             saveToLocal([newItem, ...transcriptions]);
             
         } catch (err) {
-            console.error(err);
-            alert(err.message);
+            console.error("Transcription error details:", err);
+            setErrorMessage(err.message || String(err));
         } finally {
             setIsUploading(false);
             setIsTranscribing(false);
@@ -145,6 +150,17 @@ export const TranscriptionsTab = ({ patientName }) => {
             </div>
 
             <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} />
+
+            {/* ERROR BANNER */}
+            {errorMessage && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-red-400 font-bold text-xs uppercase tracking-widest">❌ Error Detectado</span>
+                        <button onClick={() => setErrorMessage(null)} className="text-zinc-500 hover:text-white text-xs px-2 py-1 rounded bg-white/5">Cerrar</button>
+                    </div>
+                    <pre className="text-red-300 text-xs font-mono whitespace-pre-wrap break-words bg-black/30 rounded-xl p-3 max-h-48 overflow-y-auto leading-relaxed">{errorMessage}</pre>
+                </div>
+            )}
 
             {isTranscribing && (
                 <div className="flex flex-col items-center justify-center p-10 border border-dashed border-emerald-500/30 rounded-3xl bg-emerald-500/5">
