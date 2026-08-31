@@ -1878,8 +1878,9 @@ Devuelve estrictamente el JSON sin formato extra.
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.95 : 1.20); // Zoom base ajustado para que se vea completo en móvil
-        fitScale = Math.min(Math.max(0.35, fitScale), 4); // Límite estricto para no romper el zoom manual del usuario
+        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.70 : 1.20); // Zoom base ajustado para que se vea completo en móvil
+        const minScaleLimit = isMobileDevice ? 0.08 : 0.20;
+        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 4); // Límite estricto para no romper el zoom manual del usuario
 
         const graphCenterX = (minX + maxX) / 2;
         const graphCenterY = (minY + maxY) / 2;
@@ -1906,7 +1907,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
             const isMobile = window.innerWidth < 768;
             let targetScale = isMobile ? Math.min(0.55, (width / VIRTUAL_WIDTH) * 2.5) : (width / VIRTUAL_WIDTH) * 1.3;
-            targetScale = Math.min(Math.max(0.35, targetScale), 2.5);
+            targetScale = Math.min(Math.max(isMobile ? 0.08 : 0.20, targetScale), 2.5);
             const tx = width / 2 - px * targetScale;
             const ty = (height * (isMobile ? 0.22 : 0.35)) - py * targetScale;
             triggerProgrammaticTransition();
@@ -3508,7 +3509,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             const rect = container.getBoundingClientRect();
             
             const prevScale = prev.scale;
-            const newScale = Math.min(Math.max(0.35, prevScale + scaleChange), 4);
+            const newScale = Math.min(Math.max(window.innerWidth < 768 ? 0.08 : 0.20, prevScale + scaleChange), 4);
             
             // Zoom relative to mouse pointer coordinates
             const mouseX = e.clientX - rect.left;
@@ -3717,7 +3718,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 const mouseY = centerY - rect.top;
                 
                 const prevScale = current.scale;
-                const newScale = Math.min(Math.max(0.35, prevScale + zoomFactor), 4);
+            const newScale = Math.min(Math.max(window.innerWidth < 768 ? 0.08 : 0.20, prevScale + zoomFactor), 4);
                 
                 const canvasX = (mouseX - current.x) / prevScale;
                 const canvasY = (mouseY - current.y) / prevScale;
@@ -3867,7 +3868,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         triggerProgrammaticTransition();
         setMapTransform(prev => {
             const prevScale = prev.scale;
-            const newScale = Math.min(Math.max(0.35, prevScale + amount), 4);
+            const newScale = Math.min(Math.max(window.innerWidth < 768 ? 0.08 : 0.20, prevScale + amount), 4);
             
             let newX, newY;
             

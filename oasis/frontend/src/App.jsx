@@ -3954,7 +3954,7 @@ const ProfileView = ({
                 {/* IG STYLE PROFILE (CONSOLIDATED) */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-2 md:pt-4 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-16 sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
                 >
                     <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-8 flex flex-col pointer-events-auto">
 
@@ -4062,26 +4062,26 @@ const ProfileView = ({
                                                 } catch(e) {}
                                                 if (!resonanceData) return null;
                                                 return (
-                                                    <div className="mt-4 pt-4 border-t border-white/5 w-full space-y-3">
-                                                        <div className="flex items-center gap-2 mb-2">
+                                                    <div className="mt-2 pt-2 border-t border-white/5 w-full space-y-2">
+                                                        <div className="flex items-center gap-1.5 mb-1">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide uppercase font-mono">Firma de Resonancia Existencial</span>
+                                                            <span className="text-[8px] sm:text-[9px] font-bold text-zinc-300 tracking-wide uppercase font-mono">Firma de Resonancia Existencial</span>
                                                         </div>
                                                         {resonanceData.sintesis ? (
-                                                            <p className="text-[11px] sm:text-[12px] text-zinc-300 font-sans leading-relaxed italic pr-2 border-l-2 border-white/10 pl-3 py-1">"{resonanceData.sintesis}"</p>
+                                                            <p className="text-[9px] sm:text-[11px] text-zinc-300 font-sans leading-normal italic pr-2 border-l-2 border-white/10 pl-2.5 py-1">"{resonanceData.sintesis}"</p>
                                                         ) : (
                                                             <>
-                                                                <div className="space-y-1">
-                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
-                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
+                                                                <div className="space-y-0.5">
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">⊙</span> Habitar</span>
+                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.habitar}"</p>
                                                                 </div>
-                                                                <div className="space-y-1">
-                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
-                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
+                                                                <div className="space-y-0.5">
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">☍</span> Vínculo</span>
+                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.vinculo}"</p>
                                                                 </div>
-                                                                <div className="space-y-1">
-                                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
-                                                                    <p className="text-[10px] sm:text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
+                                                                <div className="space-y-0.5">
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">⌖</span> Búsqueda</span>
+                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.busqueda}"</p>
                                                                 </div>
                                                             </>
                                                         )}
