@@ -440,6 +440,7 @@ namespace Oasis.Backend.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
+            req.Username = req.Username?.Trim() ?? string.Empty;
             var user = _state.Users.FirstOrDefault(u => 
                 u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase) && 
                 u.Password == req.Password);
@@ -452,6 +453,7 @@ namespace Oasis.Backend.Controllers
         {
             try
             {
+                req.Username = req.Username?.Trim() ?? string.Empty;
                 if (_state.Users.Any(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase)))
                     return BadRequest(new { msg = "Esta Identidad ya existe en el Oasis." });
 
