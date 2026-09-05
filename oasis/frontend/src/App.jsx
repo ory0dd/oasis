@@ -10680,19 +10680,18 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="absolute bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-1.5 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-0.5 sm:gap-2 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar scale-[0.85] sm:scale-100 origin-bottom"
+                    className="absolute bottom-4 md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar"
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
                 >
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={15} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={15} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={15} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={20} className="text-accent" style={{ color: accent }} /> : <ChevronUp size={20} />}</button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={19} /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={19} /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={19} /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={19} /></button>
 
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={15} className="sm:scale-110" /></button>
-
-                    <div className="w-[1px] h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
+                    <div className="w-[1px] h-6 bg-white/10 mx-1 shrink-0"></div>
 
                     <button onClick={() => {
                         const fileInput = document.createElement('input');
@@ -10755,8 +10754,8 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
-                        <Paperclip size={16} className="sm:scale-110" />
+                    }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
+                        <Paperclip size={19} />
                     </button>
                     <button onClick={() => {
                         const fileInput = document.createElement('input');
@@ -10801,14 +10800,14 @@ ${afcMapContext}
                         };
                         fileInput.click();
                     }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
-                        <Headphones size={16} className="sm:scale-110" />
+                        <Headphones size={19} />
                     </button>
                     <button
                         onClick={toggleCanvasRecording}
-                        className={`w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
+                        className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
                         title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
                     >
-                        <Mic size={16} className="sm:scale-110" />
+                        <Mic size={19} />
                     </button>
                     <button onClick={() => {
                         setTitlePrompt({
@@ -10832,8 +10831,8 @@ ${afcMapContext}
                                 });
                             }
                         });
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
-                        <Type size={16} className="sm:scale-110" />
+                    }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
+                        <Type size={19} />
                     </button>
                 </div>
             )}
