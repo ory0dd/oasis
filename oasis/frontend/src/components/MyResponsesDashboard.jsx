@@ -6061,7 +6061,7 @@ Por favor, analicemos:
                                         onTouchMove={e => e.stopPropagation()}
                                         onTouchEnd={e => e.stopPropagation()}
                                     >
-                                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-4 shadow-2xl sm:backdrop-blur-md flex flex-col gap-3 min-w-[300px] md:min-w-[450px] w-auto max-w-[90vw] md:resize md:overflow-hidden max-h-[60vh] md:max-h-[85vh]">
+                                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-4 shadow-2xl sm:backdrop-blur-md flex flex-col gap-3 min-w-[300px] md:min-w-[450px] w-auto max-w-[90vw] md:resize md:overflow-hidden max-h-[85vh] md:max-h-[90vh]">
                                             {/* Minimalist Header */}
                                             <div 
                                                 className="flex items-center justify-between border-b border-white/5 pb-2 cursor-grab active:cursor-grabbing select-none"
@@ -6118,7 +6118,7 @@ Por favor, analicemos:
 
                                             {!isTourMinimized && (
                                                 <>
-                                            <div className="flex flex-col gap-1.5 overflow-y-auto custom-scroll pr-1 pb-1 flex-1 min-h-0">
+                                            <div className="flex flex-col gap-1.5 pr-1 pb-1 flex-1 min-h-0 overflow-hidden">
                                                 {/* Node Label */}
                                             <h4 className="text-sm md:text-base font-black text-white leading-snug tracking-wide uppercase">{currentNode.label}</h4>
 
@@ -6135,7 +6135,7 @@ Por favor, analicemos:
 
 
                                                 return (
-                                                    <div className="flex flex-col gap-2.5 mt-2 h-[45vh] md:h-[50vh] md:min-h-[400px] md:max-h-[600px] flex-1 shrink-0" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex flex-col gap-2.5 mt-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
                                                         {/* Header with arrows */}
                                                         <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1 shrink-0">
                                                             <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
@@ -6179,7 +6179,7 @@ Por favor, analicemos:
                                                             </div>
                                                         </div>
                                                         {/* Chat messages area */}
-                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center border border-white/5 bg-zinc-900/20 p-2.5 md:p-4 rounded-xl min-h-[150px] md:min-h-[250px]">
+                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col border border-white/5 bg-zinc-900/20 p-2.5 md:p-4 rounded-xl min-h-0">
                                                         <div className="flex flex-col gap-4 md:gap-5 pb-2">
                                                             {currentChat.map((msg, msgIdx) => {
                                                                 if (msg.role === 'assistant') {
