@@ -10680,7 +10680,7 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="absolute bottom-4 md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar"
+                    className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar"
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
