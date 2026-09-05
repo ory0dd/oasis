@@ -13521,7 +13521,7 @@ ${afcMapContext}
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
                     className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
-                    style={{ top: 'max(12px, calc(env(safe-area-inset-top) + 8px))' }}
+                    style={{ top: '8px' }}
                 >
                     {/* 1. Perfil */}
                     <button
