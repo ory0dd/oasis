@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Check, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Check, ArrowRight, PenLine, X, ChevronLeft } from 'lucide-react';
 
 export const BIO_QUESTIONS = [
     // ─── I. FICHA DE IDENTIFICACIÓN BÁSICA ───
@@ -113,16 +113,21 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
     const [isStarted, setIsStarted] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState({});
-
-    // Track dwell times
+    const [isWriting, setIsWriting] = useState(false);
     const [dwellTimes, setDwellTimes] = useState({});
     const [startTime, setStartTime] = useState(null);
+    const textareaRef = useRef(null);
 
     useEffect(() => {
-        if (isStarted) {
-            setStartTime(Date.now());
-        }
+        if (isStarted) setStartTime(Date.now());
     }, [isStarted, currentIndex]);
+
+    // Auto-focus textarea when writing modal opens
+    useEffect(() => {
+        if (isWriting && textareaRef.current) {
+            setTimeout(() => textareaRef.current?.focus(), 100);
+        }
+    }, [isWriting]);
 
     const handleNext = () => {
         const elapsed = Date.now() - startTime;
@@ -133,6 +138,7 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
 
         if (currentIndex < BIO_QUESTIONS.length - 1) {
             setCurrentIndex(prev => prev + 1);
+            setIsWriting(false);
         } else {
             const patientName = username || 'Invitado';
             const suffix = activeVersion > 1 ? `_v${activeVersion}` : '';
@@ -141,7 +147,7 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
                 userFullName: localStorage.getItem('oasis_fullname_' + patientName) || '',
                 userAge: localStorage.getItem('oasis_age_' + patientName) ? parseInt(localStorage.getItem('oasis_age_' + patientName), 10) : null
             };
-            
+
             BIO_QUESTIONS.forEach((q, idx) => {
                 const text = answers[idx] || '';
                 const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -157,110 +163,183 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
         }
     };
 
-    const handleTextChange = (e) => {
-        setAnswers(prev => ({ ...prev, [currentIndex]: e.target.value }));
-    };
+    const currentQ = BIO_QUESTIONS[currentIndex];
+    const currentAnswer = answers[currentIndex] || '';
+    const hasAnswer = currentAnswer.trim().length > 0;
+    const progress = ((currentIndex + 1) / BIO_QUESTIONS.length) * 100;
 
+    // ── PANTALLA DE INICIO ──
     if (!isStarted) {
         return (
-            <div className="fixed inset-0 z-[3000] bg-black/40 backdrop-blur-md overflow-y-auto flex flex-col pt-10 md:pt-20 px-4">
-                <div className="w-full max-w-3xl mx-auto space-y-3 md:space-y-8 animate-in slide-in-from-bottom duration-500">
-                    <div className="flex justify-between items-center border-b border-white/5 pb-2 md:pb-4">
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Entrevista Biográfica</span>
-                    <button onClick={onClose} className="text-[8px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Salir</button>
-                </div>
-
-                <div className="bg-zinc-950/40 border border-white/5 rounded-2xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-12 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] pointer-events-none rounded-full" />
-                    
-                    <div className="space-y-4 md:space-y-8 relative z-10">
-                        <div className="space-y-2 md:space-y-4">
-                            <h2 className="text-lg md:text-3xl font-serif italic text-white leading-tight tracking-tight">Antes de comenzar...</h2>
-                            <p className="text-xs md:text-lg text-zinc-300 font-sans leading-relaxed">
-                                "El objetivo de esta entrevista es recopilar datos esenciales sobre tu historia clínica. Puedes escribir tus respuestas de forma clara y directa, tomándote el tiempo necesario para reflexionar sobre cada pregunta. Al finalizar, tus respuestas se guardarán de forma segura."
-                            </p>
-                        </div>
-                        <div className="pt-3 md:pt-6">
-                            <button
-                                onClick={() => setIsStarted(true)}
-                                className="w-full py-4 rounded-xl md:rounded-2xl bg-emerald-900/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-600 hover:text-black font-black uppercase tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] text-[10px] md:text-xs"
-                            >
-                                Iniciar Entrevista
-                            </button>
+            <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-xl flex flex-col items-center justify-center px-6">
+                <div className="w-full max-w-sm space-y-8 animate-in slide-in-from-bottom duration-500">
+                    {/* Icon */}
+                    <div className="flex justify-center">
+                        <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+                            <BookOpen size={28} className="text-emerald-400" />
                         </div>
                     </div>
+
+                    {/* Text */}
+                    <div className="text-center space-y-3">
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Entrevista Biográfica</p>
+                        <h2 className="text-2xl font-serif italic text-white leading-snug">Antes de comenzar...</h2>
+                        <p className="text-sm text-zinc-400 leading-relaxed">
+                            Responde con calma. Tus respuestas se guardan de forma segura al finalizar.
+                        </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => setIsStarted(true)}
+                            className="w-full py-5 rounded-2xl bg-emerald-600 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:bg-emerald-500 transition-all active:scale-95"
+                        >
+                            Iniciar
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-zinc-400 font-black uppercase tracking-widest text-xs hover:text-white transition-all active:scale-95"
+                        >
+                            Salir
+                        </button>
+                    </div>
                 </div>
-            </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 z-[3000] bg-black/40 backdrop-blur-md overflow-y-auto flex flex-col pt-10 md:pt-20 px-4 pb-8">
-            <div className="w-full max-w-3xl mx-auto space-y-4 animate-in slide-in-from-bottom duration-500 h-full flex flex-col">
+        <>
+            {/* ── PANTALLA PRINCIPAL: SOLO LA PREGUNTA ── */}
+            <div className="fixed inset-0 z-[3000] bg-black/70 backdrop-blur-xl flex flex-col">
+                {/* Glow */}
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/8 rounded-full blur-[100px]" />
+                </div>
+
                 {/* Header */}
-                <div className="flex justify-between items-center mb-2 px-2">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-400 shrink-0">
-                        <BookOpen size={14} />
-                    </div>
-                    <span className="text-[10px] font-mono uppercase text-zinc-400 tracking-widest">Tarjeta {currentIndex + 1} de {BIO_QUESTIONS.length}</span>
-                </div>
-                <button onClick={onClose} className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-full shrink-0">Salir</button>
-            </div>
-
-            {/* Main Content Card */}
-            <div className="flex-1 bg-zinc-950/40 border border-white/5 rounded-3xl p-5 md:p-10 shadow-2xl relative overflow-hidden flex flex-col">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[80px] pointer-events-none rounded-full" />
-                
-                {/* Question Area */}
-                <div className="relative z-10 mb-6">
-                    {BIO_QUESTIONS[currentIndex].section && (
-                        <span className="inline-block mb-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black uppercase tracking-[0.2em] text-emerald-400">
-                            {BIO_QUESTIONS[currentIndex].section}
+                <div className="flex items-center justify-between px-5 pt-safe pt-5 pb-3 relative z-10">
+                    <div className="flex items-center gap-3">
+                        {currentIndex > 0 && (
+                            <button
+                                onClick={() => { setCurrentIndex(prev => prev - 1); setIsWriting(false); }}
+                                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-all"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                        )}
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+                            {currentIndex + 1} / {BIO_QUESTIONS.length}
                         </span>
-                    )}
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400/70 mb-2">{BIO_QUESTIONS[currentIndex].title}</h4>
-                    <p className="text-xl md:text-3xl font-serif italic text-white/90 leading-relaxed">{BIO_QUESTIONS[currentIndex].text}</p>
-                </div>
-
-                {/* Input Area */}
-                <div className="relative z-10 flex-1 flex flex-col gap-4">
-                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 transition-all focus-within:border-emerald-500/50 focus-within:bg-emerald-950/20 flex flex-col">
-                        <textarea
-                            value={answers[currentIndex] || ''}
-                            onChange={handleTextChange}
-                            placeholder={BIO_QUESTIONS[currentIndex].placeholder}
-                            className="w-full h-full bg-transparent text-sm md:text-base text-zinc-200 font-sans leading-relaxed resize-none focus:outline-none placeholder:text-zinc-600 min-h-[150px]"
-                        />
                     </div>
-                    
                     <button
-                        onClick={handleNext}
-                        disabled={!(answers[currentIndex]?.trim())}
-                        className={`py-4 rounded-2xl flex items-center justify-center gap-2 transition-all border ${
-                            (answers[currentIndex]?.trim())
-                            ? 'bg-emerald-600 border-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-emerald-500'
-                            : 'bg-white/5 border-white/10 text-zinc-600 opacity-50'
-                        }`}
+                        onClick={onClose}
+                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white active:scale-90 transition-all"
                     >
-                        <span className="text-[11px] font-black uppercase tracking-widest">{currentIndex === BIO_QUESTIONS.length - 1 ? 'Finalizar Entrevista' : 'Siguiente'}</span>
-                        {currentIndex === BIO_QUESTIONS.length - 1 ? <Check size={16} /> : <ArrowRight size={16} />}
+                        <X size={16} />
                     </button>
                 </div>
+
+                {/* Progress bar */}
+                <div className="h-[2px] bg-white/5 mx-5 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+
+                {/* Question — centro de la pantalla */}
+                <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+                    {currentQ.section && (
+                        <span className="mb-4 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black uppercase tracking-[0.25em] text-emerald-400">
+                            {currentQ.section}
+                        </span>
+                    )}
+
+                    <p className="text-2xl sm:text-3xl font-serif italic text-white/90 leading-relaxed text-center max-w-sm">
+                        {currentQ.text}
+                    </p>
+
+                    {/* Preview de lo que escribió si ya hay respuesta */}
+                    {hasAnswer && (
+                        <p className="mt-5 text-sm text-zinc-400 text-center leading-relaxed max-w-xs line-clamp-3">
+                            {currentAnswer}
+                        </p>
+                    )}
+                </div>
+
+                {/* Bottom actions */}
+                <div className="px-5 pb-safe pb-8 space-y-3 relative z-10">
+                    {/* Botón escribir */}
+                    <button
+                        onClick={() => setIsWriting(true)}
+                        className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-sm transition-all active:scale-95 border ${
+                            hasAnswer
+                                ? 'bg-white/5 border-white/10 text-zinc-300 hover:text-white'
+                                : 'bg-emerald-600 border-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:bg-emerald-500'
+                        }`}
+                    >
+                        <PenLine size={18} />
+                        {hasAnswer ? 'Editar respuesta' : 'Escribir respuesta'}
+                    </button>
+
+                    {/* Botón siguiente — solo si tiene respuesta */}
+                    {hasAnswer && (
+                        <button
+                            onClick={handleNext}
+                            className="w-full py-5 rounded-2xl flex items-center justify-center gap-3 bg-emerald-600 border border-emerald-500 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:bg-emerald-500 transition-all active:scale-95"
+                        >
+                            <span>{currentIndex === BIO_QUESTIONS.length - 1 ? 'Finalizar' : 'Siguiente'}</span>
+                            {currentIndex === BIO_QUESTIONS.length - 1 ? <Check size={18} /> : <ArrowRight size={18} />}
+                        </button>
+                    )}
+                </div>
             </div>
-            
-            {/* Bottom Progress bar */}
-            <div className="w-full max-w-xl mx-auto pt-4 border-t border-white/5 flex flex-col gap-2 relative z-10 px-4">
-                <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-zinc-500 font-mono">
-                    <span>Progreso</span>
-                    <span>{Math.round(((currentIndex + 1) / BIO_QUESTIONS.length) * 100)}%</span>
+
+            {/* ── MODAL DE ESCRITURA ── */}
+            {isWriting && (
+                <div className="fixed inset-0 z-[3100] bg-black/80 backdrop-blur-xl flex flex-col animate-in slide-in-from-bottom duration-300">
+                    {/* Header del modal */}
+                    <div className="flex items-center justify-between px-5 pt-safe pt-5 pb-4 border-b border-white/5">
+                        <p className="text-xs text-zinc-400 font-serif italic leading-snug max-w-[220px] line-clamp-2">
+                            {currentQ.text}
+                        </p>
+                        <button
+                            onClick={() => setIsWriting(false)}
+                            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-all shrink-0 ml-3"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+
+                    {/* Textarea */}
+                    <div className="flex-1 p-5">
+                        <textarea
+                            ref={textareaRef}
+                            value={currentAnswer}
+                            onChange={(e) => setAnswers(prev => ({ ...prev, [currentIndex]: e.target.value }))}
+                            placeholder={currentQ.placeholder}
+                            className="w-full h-full bg-transparent text-base text-zinc-100 font-sans leading-relaxed resize-none focus:outline-none placeholder:text-zinc-600"
+                        />
+                    </div>
+
+                    {/* Botón listo */}
+                    <div className="px-5 pb-safe pb-6">
+                        <button
+                            onClick={() => setIsWriting(false)}
+                            disabled={!hasAnswer}
+                            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 border ${
+                                hasAnswer
+                                    ? 'bg-emerald-600 border-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.25)]'
+                                    : 'bg-white/5 border-white/10 text-zinc-600 opacity-50'
+                            }`}
+                        >
+                            Listo
+                        </button>
+                    </div>
                 </div>
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${((currentIndex + 1) / BIO_QUESTIONS.length) * 100}%` }} />
-                </div>
-                </div>
-            </div>
-        </div>
+            )}
+        </>
     );
 }
