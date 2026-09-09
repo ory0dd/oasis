@@ -1739,23 +1739,46 @@ const PsychologistDashboard = ({ onClose }) => {
                         />
                     </div>
                     <button 
-                        onClick={() => {
+                        onClick={async () => {
                             const newUser = prompt("Ingrese el nombre de usuario del paciente:");
                             if (newUser) {
-                                const newPatient = {
-                                    id: 'PT-' + newUser.toUpperCase(),
-                                    name: newUser,
-                                    date: new Date().toISOString().split('T')[0],
-                                    status: 'Pendiente de revisión',
-                                    phenomenology: null,
-                                    clínicalInterview: null,
-                                    pid5: null,
-                                    icar16: null
-                                };
-                                localStorage.setItem(`oasis_patient_status_${newUser}`, 'Pendiente de revisión');
-                                setSelectedPatient(newPatient);
-                                setCurrentModule('PROFILE');
-                                setActiveTab('CLINICAL_REPORT');
+                                try {
+                                    const currentUser = localStorage.getItem('oasis_user') || 'observador';
+                                    const res = await fetch(`${API_URL}/api/oasis/register`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            Username: newUser,
+                                            Password: '123', // Default password
+                                            Role: 'patient',
+                                            ClinicianId: currentUser
+                                        })
+                                    });
+                                    
+                                    if (res.ok || res.status === 400) {
+                                        const newPatient = {
+                                            id: 'PT-' + newUser.toUpperCase(),
+                                            name: newUser,
+                                            date: new Date().toISOString().split('T')[0],
+                                            status: 'Pendiente de revisión',
+                                            phenomenology: null,
+                                            clínicalInterview: null,
+                                            pid5: null,
+                                            icar16: null
+                                        };
+                                        localStorage.setItem(`oasis_patient_status_${newUser}`, 'Pendiente de revisión');
+                                        setSelectedPatient(newPatient);
+                                        setCurrentModule('PROFILE');
+                                        setActiveTab('CLINICAL_REPORT');
+                                        
+                                        // Force reload patients list from backend
+                                        setTimeout(loadPatients, 1000);
+                                    } else {
+                                        alert("Error creando paciente en el servidor.");
+                                    }
+                                } catch (e) {
+                                    alert("Error de conexión al crear paciente.");
+                                }
                             }
                         }}
                         className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center gap-2"

@@ -44,8 +44,19 @@ namespace Oasis.Backend.Controllers
             string caller = GetAuthenticatedUser();
             if (string.IsNullOrEmpty(caller)) return false;
             
+            if (caller.Equals(requestedUser, StringComparison.OrdinalIgnoreCase))
+                return true;
+                
+            var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
+            if (callerUser != null && callerUser.Role == "clinician")
+            {
+                var reqUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, requestedUser, StringComparison.OrdinalIgnoreCase));
+                if (reqUser != null && string.Equals(reqUser.ClinicianId, caller, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            
             return caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
-                   caller.Equals(requestedUser, StringComparison.OrdinalIgnoreCase);
+                   caller.Equals("observador", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool IsKeyForUser(string key, string username)
@@ -96,6 +107,8 @@ namespace Oasis.Backend.Controllers
             public List<Folder> Folders { get; set; } = new();
             public string ContinuousMemory { get; set; } = string.Empty; // Added for memory
             public Dictionary<string, string> ClinicalData { get; set; } = new();
+            public string Role { get; set; } = string.Empty;
+            public string ClinicianId { get; set; } = string.Empty;
  
             public static UserDto FromUser(User user) => new()
             {
@@ -110,7 +123,9 @@ namespace Oasis.Backend.Controllers
                 Conversations = user.Conversations,
                 Folders = user.Folders,
                 ContinuousMemory = user.ContinuousMemory,
-                ClinicalData = user.ClinicalData
+                ClinicalData = user.ClinicalData,
+                Role = user.Role,
+                ClinicianId = user.ClinicianId
             };
         }
 
@@ -548,8 +563,14 @@ namespace Oasis.Backend.Controllers
                     Password = req.Password,
                     FullName = req.FullName ?? string.Empty,
                     Age = req.Age,
+                    Role = string.IsNullOrEmpty(req.Role) ? "patient" : req.Role,
+                    ClinicianId = req.ClinicianId ?? string.Empty,
                     Background = defaultBackground,
-                    Blocks = defaultBlocks
+                    Blocks = defaultBlocks,
+                    Playlists = new Dictionary<string, List<TrackItem>>(),
+                    Folders = new List<Folder>(),
+                    Conversations = new List<Conversation>(),
+                    ClinicalData = new Dictionary<string, string>()
                 };
                 _state.Users.Add(user);
                 SaveState();
@@ -565,12 +586,22 @@ namespace Oasis.Backend.Controllers
         public IActionResult GetUsers()
         {
             string caller = GetAuthenticatedUser();
-            if (string.IsNullOrEmpty(caller) || !caller.Equals("observador1", StringComparison.OrdinalIgnoreCase))
+            var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
+            bool isClinician = (callerUser != null && callerUser.Role == "clinician") || 
+                               (!string.IsNullOrEmpty(caller) && (caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || caller.Equals("observador", StringComparison.OrdinalIgnoreCase)));
+            
+            if (string.IsNullOrEmpty(caller) || !isClinician)
             {
                 return Forbid();
             }
 
-            var userList = _state.Users.Select(u => new {
+            var query = _state.Users.AsEnumerable();
+            if (callerUser != null && callerUser.Role == "clinician") 
+            {
+                query = query.Where(u => u.Role == "patient" && string.Equals(u.ClinicianId, caller, StringComparison.OrdinalIgnoreCase));
+            }
+
+            var userList = query.Select(u => new {
                 Username = u.Username,
                 FullName = u.FullName,
                 Age = u.Age,
@@ -2082,7 +2113,9 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 {
                     if (IsKeyForUser(kvp.Key, user))
                     {
-                        if (!caller.Equals("observador1", StringComparison.OrdinalIgnoreCase))
+                        var callerUser = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, caller, StringComparison.OrdinalIgnoreCase));
+                        bool isClinician = (callerUser != null && callerUser.Role == "clinician") || caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || caller.Equals("observador", StringComparison.OrdinalIgnoreCase);
+                        if (!isClinician)
                         {
                             if (kvp.Key.StartsWith("oasis_clinician_notes_", StringComparison.OrdinalIgnoreCase) ||
                                 kvp.Key.StartsWith("oasis_private_notes_", StringComparison.OrdinalIgnoreCase) ||

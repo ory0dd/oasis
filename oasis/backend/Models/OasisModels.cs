@@ -123,6 +123,8 @@ namespace Oasis.Backend.Models
         public string Password { get; set; } = string.Empty;
         public string? FullName { get; set; } = string.Empty;
         public int? Age { get; set; }
+        public string? Role { get; set; } = string.Empty;
+        public string? ClinicianId { get; set; } = string.Empty;
     }
 
     public class TrackItem
@@ -168,6 +170,8 @@ namespace Oasis.Backend.Models
         public List<Folder> Folders { get; set; } = new();
         public string ContinuousMemory { get; set; } = string.Empty; // Persistent AI context
         public Dictionary<string, string> ClinicalData { get; set; } = new();
+        public string Role { get; set; } = "patient"; // "clinician", "patient", "admin"
+        public string ClinicianId { get; set; } = string.Empty; // username of the clinician that created this patient
     }
 
 

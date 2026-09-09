@@ -4476,8 +4476,10 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 });
 
 export default function App() {
-    const [view, setViewRaw] = useState(() => localStorage.getItem('oasis_user') === 'observador1' ? 'clinical' : 'canvas');
     const initialUser = localStorage.getItem('oasis_user') || '';
+    const initialRole = localStorage.getItem('oasis_role_' + initialUser) || 'patient';
+    const isInitialClinician = initialRole === 'clinician' || initialUser === 'observador1' || initialUser === 'observador';
+    const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
     const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
@@ -4760,7 +4762,9 @@ export default function App() {
 
     // Tab listener was removed as requested
     useEffect(() => {
-        if (user === 'observador1') {
+        const role = localStorage.getItem('oasis_role_' + user) || 'patient';
+        const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
+        if (isClinician) {
             if (view !== 'clinical') {
                 setView('clinical');
             }
@@ -4769,7 +4773,7 @@ export default function App() {
                 setView('canvas');
             }
         }
-    }, [user, view]);
+    }, [user, view, setView]);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [deepseekKey, setDeepseekKey] = useState(() => {
         // Base64 of the key to completely bypass GitHub Guardian
@@ -6822,7 +6826,9 @@ export default function App() {
     }, []);
 
     const isFresh = useMemo(() => {
-        if (!isLoggedIn || !user || user === 'observador1' || !isDataLoaded) return false;
+        const role = localStorage.getItem('oasis_role_' + user) || 'patient';
+        const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
+        if (!isLoggedIn || !user || isClinician || !isDataLoaded) return false;
         if (!Array.isArray(blocks)) return false;
         const noteCount = blocks.filter(b => b && b.type === 'note').length;
         const hasPhenomMeta = !!localStorage.getItem('oasis_phenom_metadata_' + user);
@@ -7832,7 +7838,7 @@ export default function App() {
 
 
 
-    const handleAuth = async (username, password, fullName = "", age = null) => {
+    const handleAuth = async (username, password, fullName = "", age = null, role = "patient") => {
         setAuthError('');
         const endpoint = isRegisterMode ? 'register' : 'login';
         try {
@@ -7840,6 +7846,7 @@ export default function App() {
             if (isRegisterMode) {
                 reqBody.FullName = fullName;
                 reqBody.Age = age ? parseInt(age, 10) : null;
+                reqBody.Role = role;
             }
             const res = await fetch(`${API_URL}/api/oasis/${endpoint}`, {
                 method: 'POST',
@@ -7858,6 +7865,7 @@ export default function App() {
                     localStorage.setItem('oasis_user', userData.username);
                     localStorage.setItem('oasis_fullname_' + userData.username, userData.fullName || '');
                     localStorage.setItem('oasis_age_' + userData.username, userData.age !== undefined && userData.age !== null ? userData.age.toString() : '');
+                    localStorage.setItem('oasis_role_' + userData.username, userData.role || 'patient');
                     if (userData.clinicalData) {
                         Object.keys(userData.clinicalData).forEach(key => {
                             localStorage.setItem(key, userData.clinicalData[key]);
@@ -7942,7 +7950,7 @@ export default function App() {
                     setSoulTab('tests');
                     setActiveTest('phenom');
                     setShowPhenomIntro(true);
-                } else if (userData.username === 'observador1') {
+                } else if ((userData.role === 'clinician') || userData.username === 'observador1' || userData.username === 'observador') {
                     console.log("[Oasis Debug] Redirecting to clinical view");
                     setView('clinical');
                 } else {
@@ -10680,18 +10688,19 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar"
+                    className="absolute bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-sm border border-white/10 p-1.5 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-0.5 sm:gap-2 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar scale-[0.85] sm:scale-100 origin-bottom"
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
                 >
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={20} className="text-accent" style={{ color: accent }} /> : <ChevronUp size={20} />}</button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={19} /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={19} /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={19} /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={19} /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={15} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={15} className="sm:scale-110" /></button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={15} className="sm:scale-110" /></button>
 
-                    <div className="w-[1px] h-6 bg-white/10 mx-1 shrink-0"></div>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={15} className="sm:scale-110" /></button>
+
+                    <div className="w-[1px] h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
 
                     <button onClick={() => {
                         const fileInput = document.createElement('input');
@@ -10754,8 +10763,8 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
-                        <Paperclip size={19} />
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
+                        <Paperclip size={16} className="sm:scale-110" />
                     </button>
                     <button onClick={() => {
                         const fileInput = document.createElement('input');
@@ -10800,14 +10809,14 @@ ${afcMapContext}
                         };
                         fileInput.click();
                     }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
-                        <Headphones size={19} />
+                        <Headphones size={16} className="sm:scale-110" />
                     </button>
                     <button
                         onClick={toggleCanvasRecording}
-                        className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
+                        className={`w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
                         title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
                     >
-                        <Mic size={19} />
+                        <Mic size={16} className="sm:scale-110" />
                     </button>
                     <button onClick={() => {
                         setTitlePrompt({
@@ -10831,8 +10840,8 @@ ${afcMapContext}
                                 });
                             }
                         });
-                    }} className="w-12 h-12 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
-                        <Type size={19} />
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
+                        <Type size={16} className="sm:scale-110" />
                     </button>
                 </div>
             )}
@@ -12303,7 +12312,9 @@ ${afcMapContext}
     };
 
     const renderClinicalView = () => {
-        if (user !== 'observador1') return null;
+        const role = localStorage.getItem('oasis_role_' + user) || 'patient';
+        const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
+        if (!isClinician) return null;
         return <PsychologistDashboard onClose={() => setView('canvas')} />;
     };
 
@@ -12834,18 +12845,26 @@ ${afcMapContext}
                         </div>
 
                         {isRegisterMode && (
-                            <div className="space-y-1 text-left">
-                                <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                    Correo
-                                </label>
-                                <input
-                                    type="email"
-                                    id="oasis_fullname_input"
-                                    placeholder="TU@CORREO.COM"
-                                    onKeyDown={handleKeyPress}
-                                    className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
-                                />
-                            </div>
+                            <>
+                                <div className="space-y-1 text-left">
+                                    <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
+                                        Correo
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="oasis_fullname_input"
+                                        placeholder="TU@CORREO.COM"
+                                        onKeyDown={handleKeyPress}
+                                        className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 mt-4 ml-1">
+                                    <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
+                                    <label htmlFor="oasis_is_clinician" className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                                        Soy Profesional Clínico
+                                    </label>
+                                </div>
+                            </>
                         )}
 
                         <div className="pt-4 space-y-4">
@@ -12855,7 +12874,9 @@ ${afcMapContext}
                                     const p = document.getElementById('oasis_key_input')?.value;
                                     const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
                                     const age = null;
-                                    if (u && p) handleAuth(u, p, fn, age);
+                                    const isClinician = isRegisterMode ? (document.getElementById('oasis_is_clinician')?.checked || false) : false;
+                                    const role = isClinician ? 'clinician' : 'patient';
+                                    if (u && p) handleAuth(u, p, fn, age, role);
                                 }}
                                 className="w-full h-11 border border-zinc-800 hover:border-zinc-500 text-white text-[9px] font-bold uppercase tracking-[0.25em] rounded-none bg-transparent hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-300"
                             >
@@ -13437,9 +13458,14 @@ ${afcMapContext}
 
                             <div className="space-y-4">
 
-                                {user === 'observador1' && (
-                                    <button onClick={() => { setView('clinical'); setIsSettingsOpen(false); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>
-                                )}
+                                {(() => {
+                                    const role = localStorage.getItem('oasis_role_' + user) || 'patient';
+                                    const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
+                                    if (isClinician) {
+                                        return <button onClick={() => { setView('clinical'); setIsSettingsOpen(false); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>;
+                                    }
+                                    return null;
+                                })()}
                                 <button onClick={() => { setView('soul'); setIsSettingsOpen(false); }} className="w-full py-4 bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Entrevista Biográfica</button>
                             </div>
                         </div>
@@ -13519,8 +13545,8 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-2 p-2 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
-                    style={{ top: '8px' }}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    style={{ top: 'max(12px, calc(env(safe-area-inset-top) + 8px))' }}
                 >
                     {/* 1. Perfil */}
                     <button
@@ -13537,11 +13563,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('profile');
                         }}
-                        className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Perfil"
                     >
-                        <User size={20} className="sm:scale-110 hover-float-icon" />
+                        <User size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
 
@@ -13560,11 +13586,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('my_responses');
                         }}
-                        className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Mi Expediente"
                     >
-                        <RefreshCw size={20} className="sm:scale-110 hover-float-icon" />
+                        <RefreshCw size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                     {/* 6. Lienzo Principal */}
@@ -13582,11 +13608,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('canvas');
                         }}
-                        className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Lienzo Principal"
                     >
-                        <Pencil size={20} className="sm:scale-110 hover-float-icon" />
+                        <Pencil size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                     {/* 7. Feed Público */}
@@ -13604,11 +13630,11 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('feed');
                         }}
-                        className={`w-12 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
                         title="Feed Público"
                     >
-                        <Home size={20} className="sm:scale-110 hover-float-icon" />
+                        <Home size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
                 </div>
