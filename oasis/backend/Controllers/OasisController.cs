@@ -640,6 +640,7 @@ namespace Oasis.Backend.Controllers
             var userList = _state.Users.Select(u => new {
                 Username = u.Username,
                 FullName = string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName,
+                Role = u.Role,
                 PublicTraits = u.ClinicalData != null && u.ClinicalData.ContainsKey($"oasis_public_traits_{u.Username}") 
                     ? u.ClinicalData[$"oasis_public_traits_{u.Username}"] 
                     : null

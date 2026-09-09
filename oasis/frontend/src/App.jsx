@@ -7836,7 +7836,18 @@ export default function App() {
         }
     }, [user]);
 
-
+    const [cliniciansList, setCliniciansList] = useState([]);
+    useEffect(() => {
+        if (!user && isRegisterMode) {
+            fetch(`${API_URL}/api/oasis/public-users`)
+                .then(res => res.json())
+                .then(data => {
+                    const clinicians = data.filter(u => u.role === 'clinician' || u.username === 'observador1' || u.username === 'observador');
+                    setCliniciansList(clinicians);
+                })
+                .catch(err => console.error("Failed to fetch clinicians:", err));
+        }
+    }, [user, isRegisterMode]);
 
     const handleAuth = async (username, password, fullName = "", age = null, role = "patient", clinicianId = "") => {
         setAuthError('');
@@ -12861,15 +12872,19 @@ ${afcMapContext}
                                 </div>
                                 <div className="space-y-1 text-left mt-4">
                                     <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                        Código de tu Psicólogo (Opcional)
+                                        Selecciona tu Psicólogo (Opcional)
                                     </label>
-                                    <input
-                                        type="text"
+                                    <select
                                         id="oasis_clinician_code_input"
-                                        placeholder="EJ. 2112"
-                                        onKeyDown={handleKeyPress}
-                                        className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
-                                    />
+                                        className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white outline-none transition-colors px-1 cursor-pointer"
+                                    >
+                                        <option value="" className="bg-zinc-950 text-zinc-500">Ninguno / Soy independiente</option>
+                                        {cliniciansList.map(c => (
+                                            <option key={c.username} value={c.username} className="bg-zinc-900 text-white">
+                                                {c.fullName || c.username} (@{c.username})
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="flex items-center gap-2 mt-4 ml-1">
                                     <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
