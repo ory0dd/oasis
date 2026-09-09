@@ -4232,8 +4232,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         </div>
 
                         {/* Navigation Structure */}
-                        <nav className={`flex flex-col space-y-6 pb-1 md:pb-0 w-full ${!isSidebarOpen ? 'items-center space-y-8' : ''}`}>
-                            
+                        <nav className={`flex-col pb-1 md:pb-0 w-full transition-all ${!isSidebarOpen ? 'hidden md:flex items-center space-y-8' : 'flex space-y-6 mt-6 md:mt-0'}`}>
                             {/* SECCIÓN: INFORME */}
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Informe</span>}
