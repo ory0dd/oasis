@@ -2154,7 +2154,8 @@ Varianza Interna Global: ${pidState.globalVariance}
 2. **Análisis de mezcla:** No analices los elementos por separado. Describe cómo la mezcla de los 5 elementos crea una persona única.
 3. **Humildad técnica:** Si detectas discrepancias en las respuestas, no las llames 'errores' o 'baja fiabilidad'. Llámalo 'complejidad' o 'flexibilidad'.
 4. **Preguntas reales:** Las preguntas de reflexión deben ser preguntas que le harías a un amigo en una conversación profunda, no preguntas de test psicométrico. Ej: '¿Cómo manejas X situación?' en lugar de '¿Tu sistema prioriza X?'.
-5. **Sin juicios:** No clasifiques; describe cómo la persona navega su mundo.
+5. **Sin juicios absolutos (Hipótesis):** No emitas verdades absolutas ni diagnósticos determinantes. Expresa todo como una hipótesis de observación clínica (ej. "parece inclinarse por", "se nota una tendencia a").
+6. **Confidencialidad Total:** Nunca menciones nombres de personas en tus deducciones. Si necesitas un referente, utiliza el seudónimo del usuario o simplemente "el/la paciente".
 
 **Reglas para la sección de Dinámicas de Afrontamiento:**
 - Identifica las 4 dinámicas: Evalúa qué tanto se inclina la persona hacia cada una.
@@ -3954,7 +3955,9 @@ Instrucciones Estrictas:
 1. Adapta los porcentajes y el orden de la 'Triple Modalidad' según los valores brutos provistos.
 2. Identifica su rasgo dominante en el PID-5 a partir de los datos y analiza cómo funciona 'En Disfunción' y 'En Estabilidad'.
 3. Redacta 'El Núcleo de la Vulnerabilidad Existencial' descubriendo el porqué de sus heridas principales basándote en la historia que relata en sus respuestas existenciales.
-4. Devuelve ÚNICAMENTE el texto markdown del análisis (sin título de presentación, solo a partir de 'II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO' o el título principal equivalente).
+4. CRÍTICO - TONO: Emplea un lenguaje de hipótesis, hallazgos o percepciones (ej. "parece sugerir", "podría indicar", "se observa una tendencia"). NO emitas juicios como verdades absolutas, sentencias o diagnósticos psiquiátricos inamovibles.
+5. CRÍTICO - CONFIDENCIALIDAD: Nunca utilices el nombre propio ni los apellidos de la persona. Si aparecen en sus respuestas, ignóralos y refiérete a él/ella exclusivamente como "el paciente", "la paciente" o usa su usuario de sistema: "${selectedPatient.name}".
+6. Devuelve ÚNICAMENTE el texto markdown del análisis (sin título de presentación, solo a partir de 'II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO' o el título principal equivalente).
 `;
 
             const payload = {
@@ -4000,6 +4003,9 @@ Instrucciones Estrictas:
             const prompt = `
 Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Clínico.
 Con base en TODO EL INFORME PSICOLÓGICO del paciente, genera una visión clínica completa.
+
+CRÍTICO - TONO: Redacta tus interpretaciones como hipótesis clínicas (ej. "los datos sugieren", "se observa una tendencia a"). Evita emitir sentencias absolutas o juicios definitivos sobre la realidad del paciente.
+CRÍTICO - CONFIDENCIALIDAD: Nunca incluyas nombres propios en el informe. Si las notas incluyen nombres reales, censúralos y utiliza únicamente el ID del sistema: "${selectedPatient.name}" o el término "el paciente".
 
 Información extraída:
 - Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}

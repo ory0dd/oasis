@@ -672,10 +672,13 @@ NUEVA REGLA (LENGUAJE CONTEXTUAL): Evita palabras hidráulicas como "descarga co
 NUEVA REGLA (CONTINUIDAD Y MOTIVACIÓN): Explora ciclos más profundos más allá del "perfeccionismo". Analiza el patrón de "motivación → exigencia → error → saturación → colapso → reinicio". ¿Qué pasa cuando desaparece la motivación inicial?
 
 CRÍTICO - TONO Y PRUDENCIA CLÍNICA (HIPÓTESIS, NO VERDADES ABSOLUTAS):
-Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas demasiado pronto (Ej. no digas que el reflujo es el único canal de expresión de la rabia; mantén abierta la vía de estrés exacerbando una condición médica). Usa un lenguaje hipotético y tentativo en tus análisis ("parece sugerir", "podría estar funcionando como").
+Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas ni emitas diagnósticos sentenciadores. Usa un lenguaje hipotético y tentativo en tus análisis ("parece sugerir", "podría indicar", "se observa una tendencia").
+
+CRÍTICO - CONFIDENCIALIDAD ESTRICTA:
+NUNCA utilices nombres propios reales o apellidos que puedan aparecer en el historial del paciente. Refiérete a la persona ÚNICAMENTE como "el paciente" o "la paciente" para preservar el secreto profesional y anonimato.
 
 Datos del paciente:
-- Nombre: ${user}
+- Nombre de Usuario del Sistema: ${user}
 - Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
 - Entrevista Biográfica: ${JSON.stringify(bioData)}
 - Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
@@ -688,7 +691,7 @@ ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictament
 
 <h2>1. Datos y motivo de consulta</h2>
 <ul>
-  <li><strong>Nombre:</strong> ${user}</li>
+  <li><strong>ID de Usuario del Sistema:</strong> ${user}</li>
   <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
   <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
   <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
