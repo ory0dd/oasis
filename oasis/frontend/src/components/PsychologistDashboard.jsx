@@ -3,7 +3,7 @@ import { Aperture, Mic,
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
-    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy
+    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -847,7 +847,7 @@ const PsychologistDashboard = ({ onClose }) => {
     const [currentModule, setCurrentModule] = useState('DASHBOARD'); // DASHBOARD, PROFILE
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('CLINICAL_REPORT'); // CLINICAL_REPORT, ICAR16, EXISTENTIAL_ANALYSIS, TREATMENT_PLAN
+    const [activeTab, setActiveTab] = useState('INFORME_INICIAL'); // CLINICAL_REPORT, ICAR16, EXISTENTIAL_ANALYSIS, TREATMENT_PLAN
     const [isReprocessing, setIsReprocessing] = useState(false);
     const [privateNotes, setPrivateNotes] = useState('');
     const [conversations, setConversations] = useState([]);
@@ -4179,19 +4179,11 @@ Devuelve estrictamente el JSON sin formato extra.
     const renderProfileWorkspace = () => {
         if (!selectedPatient) return null;
 
-        const tabsConfig = [
-            { id: 'CLINICAL_REPORT', label: 'I. Informe Clínico y Mapa', desc: 'Entrevista, Bucles y Plan', icon: FileText },
-            { id: 'ICAR16', label: 'II. Desempeño ICAR-16', desc: 'Eficiencia Cognitiva', icon: Brain },
-            { id: 'EXISTENTIAL_ANALYSIS', label: 'III. Esencia y Feed AI', desc: 'Esferas, Lentes y Embeddings', icon: Zap },
-            { id: 'KIO_CHATS', label: 'IV. Historial Kio AI', desc: 'Registro de interacciones con Kio', icon: MessageSquare },
-            { id: 'TRANSCRIPTIONS', label: 'V. Transcripciones', desc: 'Audio y Transcripciones', icon: Mic }
-        ];
-
         return (
             <div className="w-full h-full flex flex-col md:flex-row animate-in fade-in duration-300 bg-[#030304]">
                 {/* Left Clinical Sidebar */}
                 <div className={`w-full ${isSidebarOpen ? 'md:w-80 h-full' : 'md:w-[84px] h-auto md:h-full'} bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-visible md:overflow-x-hidden z-[50]`}>
-                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full">
+                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full overflow-y-auto no-scrollbar">
                         {/* Mobile Header / Desktop Menu Button */}
                         <div className="flex items-center justify-between md:block">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all md:absolute md:top-6 md:z-10 ${isSidebarOpen ? 'md:right-6' : 'md:left-1/2 md:-translate-x-1/2'}`}>
@@ -4202,7 +4194,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             {!isSidebarOpen && (
                                 <div className="md:hidden flex-1 text-center pr-8">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                                        {tabsConfig.find(t => t.id === activeTab)?.label || 'Dashboard'}
+                                        {activeTab}
                                     </span>
                                 </div>
                             )}
@@ -4238,64 +4230,78 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
                         </div>
 
-                        {/* Session Switcher HUD */}
-                        <div className={`hidden md:block bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-3 transition-all ${!isSidebarOpen ? 'opacity-0 h-0 pointer-events-none p-0 overflow-hidden border-0' : ''}`}>
-                            <span className="text-[8px] font-mono text-zinc-500 uppercase font-black block">Historial de Sesiones:</span>
-                            <div className="flex flex-wrap gap-1 bg-black/40 border border-white/5 p-1 rounded-xl">
-                                {Array.from({ length: totalVersions }).map((_, idx) => {
-                                    const v = idx + 1;
-                                    const isSelected = selectedVersion === v;
-                                    return (
-                                        <button
-                                            key={v}
-                                            onClick={() => setSelectedVersion(v)}
-                                            className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider font-mono transition-all ${
-                                                isSelected
-                                                    ? 'bg-emerald-500 text-black shadow-md'
-                                                    : 'bg-transparent text-zinc-500 hover:text-zinc-300'
-                                            }`}
-                                        >
-                                            S{v}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Navigation Tabs */}
-                        <nav className={`flex ${isSidebarOpen ? 'flex-col space-y-2' : 'flex-row justify-around overflow-x-visible mt-2'} md:flex-col md:gap-0 md:space-y-1 no-scrollbar pb-1 md:pb-0 w-full`}>
-                            {tabsConfig.map((tab) => {
-                                const IconComponent = tab.icon;
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => {
-                                            setActiveTab(tab.id);
-                                            setSelectedNode(null);
-                                        }}
-                                        className={`shrink-0 md:w-full text-left p-2.5 md:px-4 md:py-3.5 rounded-xl border flex gap-2 md:gap-3 items-center justify-center md:justify-start transition-all ${
-                                            isActive 
-                                            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' 
-                                            : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.01]'
-                                        }`}
-                                        title={tab.label}
-                                    >
-                                        <IconComponent className={`w-4 h-4 md:w-4.5 md:h-4.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`} />
-                                        {isSidebarOpen && (
-                                            <div className="min-w-0 flex-1 ml-1 text-left">
-                                                <div className="text-[10px] md:text-[11px] font-black uppercase tracking-wider whitespace-normal">{tab.label}</div>
-                                                <div className="hidden md:block text-[9px] text-zinc-600 font-medium truncate mt-0.5">{tab.desc}</div>
-                                            </div>
-                                        )}
+                        {/* Navigation Structure */}
+                        <nav className={`flex flex-col space-y-6 pb-1 md:pb-0 w-full ${!isSidebarOpen ? 'items-center space-y-8' : ''}`}>
+                            
+                            {/* SECCIÓN: INFORME */}
+                            <div className="space-y-2 w-full">
+                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Informe</span>}
+                                <div className="space-y-1">
+                                    <button onClick={() => { setActiveTab('INFORME_INICIAL'); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <FileText className="w-4.5 h-4.5 shrink-0" />
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Informe Inicial</span>}
                                     </button>
-                                );
-                            })}
+                                    <button onClick={() => { setActiveTab('ACTUALIZACIONES'); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'ACTUALIZACIONES' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <Activity className="w-4.5 h-4.5 shrink-0" />
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Actualizaciones</span>}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* SECCIÓN: SESIONES */}
+                            <div className="space-y-2 w-full">
+                                {isSidebarOpen && (
+                                    <div className="flex items-center justify-between pl-2 pr-1">
+                                        <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest">Sesiones</span>
+                                        <button onClick={() => { /* maybe add new session */ }} className="text-zinc-600 hover:text-emerald-400 transition-colors"><Plus size={12} /></button>
+                                    </div>
+                                )}
+                                <div className="space-y-1">
+                                    {Array.from({ length: totalVersions }).map((_, idx) => {
+                                        const v = idx + 1;
+                                        const isSelected = activeTab === `SESION_${v}`;
+                                        return (
+                                            <button
+                                                key={v}
+                                                onClick={() => {
+                                                    setSelectedVersion(v);
+                                                    setActiveTab(`SESION_${v}`);
+                                                }}
+                                                className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${
+                                                    isSelected ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'
+                                                } transition-all`}
+                                            >
+                                                <Mic className="w-4.5 h-4.5 shrink-0" />
+                                                {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Sesión {v}</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* SECCIÓN: HALLAZGOS */}
+                            <div className="space-y-2 w-full">
+                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Hallazgos</span>}
+                                <button onClick={() => setActiveTab('HALLAZGOS')} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                    <Eye className="w-4.5 h-4.5 shrink-0" />
+                                    {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Profesional</span>}
+                                </button>
+                            </div>
+
+                            {/* SECCIÓN: DOCUMENTOS */}
+                            <div className="space-y-2 w-full">
+                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Exportar</span>}
+                                <button onClick={() => setActiveTab('DOCUMENTOS')} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                    <Folder className="w-4.5 h-4.5 shrink-0" />
+                                    {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Documentos</span>}
+                                </button>
+                            </div>
+
                         </nav>
                     </div>
 
                     {/* Sidebar Footer */}
-                    <div className="hidden md:flex p-6 border-t border-white/5 mt-auto">
+                    <div className="hidden md:flex p-6 border-t border-white/5 mt-auto shrink-0">
                         <button
                             onClick={() => {
                                 setSelectedPatient(null);
@@ -4312,8 +4318,8 @@ Devuelve estrictamente el JSON sin formato extra.
                 {/* Right Clinical Area */}
                 <main className="flex-1 overflow-y-auto p-4 md:p-10 bg-[#060607]">
                     <div className="max-w-[100%] md:max-w-[95%] w-full mx-auto h-full">
-                        {activeTab === 'CLINICAL_REPORT' && (
-                            <ViewErrorBoundary key={`eb-${reloadTrigger}`}>
+                        {(activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT') && (
+                            <ViewErrorBoundary key={`eb-inicial-${reloadTrigger}`}>
                                 <MyResponsesDashboard 
                                     key={reloadTrigger}
                                     user={selectedPatient?.name || 'unknown'} 
@@ -4324,11 +4330,49 @@ Devuelve estrictamente el JSON sin formato extra.
                                 />
                             </ViewErrorBoundary>
                         )}
-                        {activeTab === 'ICAR16' && renderIcarTab()}
-                        {activeTab === 'EXISTENTIAL_ANALYSIS' && renderExistentialAnalysisTab()}
-                          {activeTab === 'KIO_CHATS' && renderKioChatsTab()}
-                          {activeTab === 'CONTEXTUAL_REPORT' && renderContextualReportTab()}
-                          {activeTab === 'TRANSCRIPTIONS' && <TranscriptionsTab patientName={selectedPatient?.name} />}
+                        {activeTab === 'ACTUALIZACIONES' && (
+                            <ViewErrorBoundary key={`eb-act-${reloadTrigger}`}>
+                                <MyResponsesDashboard 
+                                    key={reloadTrigger + 1}
+                                    user={selectedPatient?.name || 'unknown'} 
+                                    isEmbedded={true} 
+                                    accent="#10b981" 
+                                    conversations={conversations}
+                                    onOpenNodeChat={() => {}}
+                                />
+                            </ViewErrorBoundary>
+                        )}
+                        
+                        {activeTab.startsWith('SESION_') && (
+                            <div className="space-y-8 animate-in fade-in duration-300">
+                                <div>
+                                    <h3 className="text-lg font-black text-white italic">Registro de Sesión</h3>
+                                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
+                                        Audios, transcripciones y análisis de la sesión actual
+                                    </p>
+                                </div>
+                                <TranscriptionsTab patientName={selectedPatient?.name} />
+                            </div>
+                        )}
+
+                        {activeTab === 'HALLAZGOS' && (
+                            <div className="space-y-8 animate-in fade-in duration-300 h-full">
+                                <div>
+                                    <h3 className="text-lg font-black text-white italic">Reflexión Profesional</h3>
+                                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
+                                        Hipótesis, observaciones privadas y hallazgos continuos
+                                    </p>
+                                </div>
+                                <textarea
+                                    value={privateNotes}
+                                    onChange={e => setPrivateNotes(e.target.value)}
+                                    placeholder="Escribe tus observaciones y hallazgos clínicos aquí. Estos apuntes son estrictamente privados..."
+                                    className="w-full h-[60vh] bg-zinc-950/70 border border-emerald-500/20 rounded-3xl p-6 text-sm text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950/50"
+                                />
+                            </div>
+                        )}
+
+                        {(activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT') && renderContextualReportTab()}
                     </div>
                 </main>
             </div>
