@@ -1000,18 +1000,23 @@ const PsychologistDashboard = ({ onClose }) => {
         }
         
         const currentUser = localStorage.getItem('oasis_user');
-        if (currentUser) {
-            patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser };
-        }
 
         // 2. Load all registered users from the backend
         try {
-            const res = await fetch(`${API_URL}/api/oasis/users`);
+            const res = await fetch(`${API_URL}/api/oasis/users`, {
+                headers: { 'X-Oasis-User': currentUser }
+            });
             if (res.ok) {
                 const backendUsers = await res.json();
+                
+                // If we successfully get backend users, we should CLEAR the local patientsMap 
+                // and ONLY show the ones the backend says belong to this clinician.
+                const newPatientsMap = {};
+                newPatientsMap[currentUser] = { name: currentUser };
+
                 backendUsers.forEach(u => {
                     if (u.username) {
-                        patientsMap[u.username] = {
+                        newPatientsMap[u.username] = {
                             name: u.username,
                             fullName: u.fullName || '',
                             age: u.age || null,
@@ -1031,9 +1036,16 @@ const PsychologistDashboard = ({ onClose }) => {
                         }
                     }
                 });
+                
+                // Replace the local map entirely with the correct backend map
+                for (const k in patientsMap) delete patientsMap[k];
+                Object.assign(patientsMap, newPatientsMap);
             }
-        } catch (err) {
-            console.error("Error loading users from backend database:", err);
+        } catch (e) {
+            console.error("Error loading backend users:", e);
+            if (currentUser) {
+                patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser };
+            }
         }
         
         const list = Object.keys(patientsMap).map(username => {
