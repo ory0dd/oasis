@@ -9,6 +9,12 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
     const [playingId, setPlayingId] = useState(null);
+    
+    // Manual Note States
+    const [isAddingManual, setIsAddingManual] = useState(false);
+    const [manualTitle, setManualTitle] = useState('');
+    const [manualText, setManualText] = useState('');
+
     const audioRef = useRef(null);
 
     useEffect(() => {
@@ -116,6 +122,27 @@ export const TranscriptionsTab = ({ patientName }) => {
         }
     };
 
+    const handleSaveManualNote = () => {
+        if (!manualTitle.trim() || !manualText.trim()) {
+            setErrorMessage("El título y el contenido son obligatorios para una nota manual.");
+            return;
+        }
+
+        const newItem = {
+            id: `manual_${Date.now()}`,
+            date: new Date().toLocaleString(),
+            filename: manualTitle.trim() + " (Nota/Resumen Manual)",
+            audioUrl: null, // No audio
+            text: manualText.trim(),
+            isManual: true
+        };
+
+        saveToLocal([newItem, ...transcriptions]);
+        setIsAddingManual(false);
+        setManualTitle('');
+        setManualText('');
+    };
+
     const getFullAudioUrl = (url) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
@@ -137,17 +164,62 @@ export const TranscriptionsTab = ({ patientName }) => {
 
     return (
         <div className="flex flex-col gap-6 p-6 overflow-y-auto max-h-full h-full text-white">
-            <div className="flex justify-between items-center bg-[#111113] p-6 rounded-3xl border border-white/5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111113] p-6 rounded-3xl border border-white/5 gap-4">
                 <div>
                     <h2 className="text-xl font-bold flex items-center gap-2"><Mic className="text-emerald-400"/> Transcripción de Sesiones</h2>
-                    <p className="text-zinc-400 text-sm mt-1">Sube audios de las sesiones con {patientName} para transcribir y separar las voces automáticamente (Terapeuta y Consultante).</p>
+                    <p className="text-zinc-400 text-sm mt-1 max-w-lg">Sube audios (máx ~25MB) para transcribir automáticamente, o pega tus propias notas si el audio es muy largo o ya lo transcribiste en otro lugar.</p>
                 </div>
-                <label className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest text-xs px-6 py-3 rounded-full cursor-pointer transition-colors shadow-lg shadow-emerald-500/20 flex items-center gap-2">
-                    {isUploading ? 'Subiendo...' : isTranscribing ? 'Transcribiendo...' : 'Subir y Transcribir'}
-                    {!(isUploading || isTranscribing) && <Upload size={16} />}
-                    <input type="file" accept="audio/*" className="hidden" onChange={handleUploadAndTranscribe} disabled={isUploading || isTranscribing} />
-                </label>
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+                    <button 
+                        onClick={() => setIsAddingManual(!isAddingManual)}
+                        className={`font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl border transition-colors flex items-center justify-center gap-2 ${
+                            isAddingManual ? 'bg-zinc-800 border-zinc-600 text-white' : 'bg-transparent border-white/20 text-zinc-300 hover:bg-white/5'
+                        }`}
+                    >
+                        <FileText size={14} /> {isAddingManual ? 'Cancelar Nota' : 'Poner Nota Manual'}
+                    </button>
+                    <label className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl cursor-pointer transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                        {isUploading ? 'Subiendo...' : isTranscribing ? 'Transcribiendo...' : 'Subir y Transcribir'}
+                        {!(isUploading || isTranscribing) && <Upload size={14} />}
+                        <input type="file" accept="audio/*" className="hidden" onChange={handleUploadAndTranscribe} disabled={isUploading || isTranscribing} />
+                    </label>
+                </div>
             </div>
+
+            {isAddingManual && (
+                <div className="bg-zinc-950/80 border border-emerald-500/30 rounded-3xl p-6 animate-in slide-in-from-top-4 fade-in duration-300">
+                    <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">Añadir Resumen / Transcripción Manual</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">Título de la Sesión o Nota</label>
+                            <input 
+                                type="text" 
+                                value={manualTitle}
+                                onChange={e => setManualTitle(e.target.value)}
+                                placeholder="Ej: Sesión 3 - Lunes 15 (Audio Largo)" 
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500/50"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">Contenido (Texto, Notas, Transcripción generada externamente)</label>
+                            <textarea 
+                                value={manualText}
+                                onChange={e => setManualText(e.target.value)}
+                                placeholder="Pega aquí la transcripción que hiciste, o tus apuntes detallados de la hora y media de sesión..." 
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500/50 min-h-[200px]"
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={handleSaveManualNote}
+                                className="bg-emerald-500 text-black px-6 py-2.5 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-emerald-400 transition-colors"
+                            >
+                                Guardar Nota Manual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} />
 
