@@ -167,7 +167,7 @@ export const TranscriptionsTab = ({ patientName }) => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111113] p-6 rounded-3xl border border-white/5 gap-4">
                 <div>
                     <h2 className="text-xl font-bold flex items-center gap-2"><Mic className="text-emerald-400"/> Transcripción de Sesiones</h2>
-                    <p className="text-zinc-400 text-sm mt-1 max-w-lg">Sube audios (máx ~25MB) para transcribir automáticamente, o pega tus propias notas si el audio es muy largo o ya lo transcribiste en otro lugar.</p>
+                    <p className="text-zinc-400 text-sm mt-1 max-w-lg">Sube audios largos de tus sesiones (hasta 1-2 GB). El sistema usa IA avanzada para transcribir automáticamente la hora y media completa, o pega tus propias notas si ya lo tienes escrito.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
                     <button 
