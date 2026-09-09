@@ -7838,7 +7838,7 @@ export default function App() {
 
 
 
-    const handleAuth = async (username, password, fullName = "", age = null, role = "patient") => {
+    const handleAuth = async (username, password, fullName = "", age = null, role = "patient", clinicianId = "") => {
         setAuthError('');
         const endpoint = isRegisterMode ? 'register' : 'login';
         try {
@@ -7847,6 +7847,7 @@ export default function App() {
                 reqBody.FullName = fullName;
                 reqBody.Age = age ? parseInt(age, 10) : null;
                 reqBody.Role = role;
+                reqBody.ClinicianId = clinicianId;
             }
             const res = await fetch(`${API_URL}/api/oasis/${endpoint}`, {
                 method: 'POST',
@@ -12858,6 +12859,18 @@ ${afcMapContext}
                                         className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
                                     />
                                 </div>
+                                <div className="space-y-1 text-left mt-4">
+                                    <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
+                                        Código de tu Psicólogo (Opcional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="oasis_clinician_code_input"
+                                        placeholder="EJ. 2112"
+                                        onKeyDown={handleKeyPress}
+                                        className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
+                                    />
+                                </div>
                                 <div className="flex items-center gap-2 mt-4 ml-1">
                                     <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
                                     <label htmlFor="oasis_is_clinician" className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-400">
@@ -12876,7 +12889,9 @@ ${afcMapContext}
                                     const age = null;
                                     const isClinician = isRegisterMode ? (document.getElementById('oasis_is_clinician')?.checked || false) : false;
                                     const role = isClinician ? 'clinician' : 'patient';
-                                    if (u && p) handleAuth(u, p, fn, age, role);
+                                    const clinicianIdInput = isRegisterMode ? (document.getElementById('oasis_clinician_code_input')?.value || "") : "";
+                                    const finalClinicianId = isClinician ? "" : clinicianIdInput.trim();
+                                    if (u && p) handleAuth(u, p, fn, age, role, finalClinicianId);
                                 }}
                                 className="w-full h-11 border border-zinc-800 hover:border-zinc-500 text-white text-[9px] font-bold uppercase tracking-[0.25em] rounded-none bg-transparent hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-300"
                             >
