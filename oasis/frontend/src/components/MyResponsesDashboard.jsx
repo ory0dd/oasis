@@ -2566,9 +2566,25 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
             const end2 = raw2.lastIndexOf('}');
             let cleanContent2 = (start2 !== -1 && end2 !== -1) ? raw2.substring(start2, end2 + 1) : raw2;
             
-            // Auto-heal common JSON syntax hallucinations from Deepseek (extra '}' before claves_salida or similar root keys)
+            // Auto-heal common JSON syntax hallucinations from Deepseek
+            // 1. Rogue '}' or ']' after a string right before root keys
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"claves_salida\":/g, '",\n  "claves_salida":');
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"analysis_breakdown\":/g, '",\n  "analysis_breakdown":');
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"blind_spots\":/g, '",\n  "blind_spots":');
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"patrones_dificultad\":/g, '",\n  "patrones_dificultad":');
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"explicacion_sencilla\":/g, '",\n  "explicacion_sencilla":');
+            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"hypotheses\":/g, '",\n  "hypotheses":');
+
+            // 2. Extra '}' before keys when it wasn't after a string
             cleanContent2 = cleanContent2.replace(/},\s*"claves_salida":/g, ',\n  "claves_salida":');
             cleanContent2 = cleanContent2.replace(/},\s*"analysis_breakdown":/g, ',\n  "analysis_breakdown":');
+            cleanContent2 = cleanContent2.replace(/},\s*"blind_spots":/g, ',\n  "blind_spots":');
+            cleanContent2 = cleanContent2.replace(/},\s*"patrones_dificultad":/g, ',\n  "patrones_dificultad":');
+            cleanContent2 = cleanContent2.replace(/},\s*"explicacion_sencilla":/g, ',\n  "explicacion_sencilla":');
+
+            // 3. Trailing commas before closing objects/arrays
+            cleanContent2 = cleanContent2.replace(/,\s*}/g, '}');
+            cleanContent2 = cleanContent2.replace(/,\s*]/g, ']');
 
             let parsedInsights;
             try {
