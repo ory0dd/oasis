@@ -1719,29 +1719,29 @@ const PsychologistDashboard = ({ onClose }) => {
         );
 
         return (
-            <div className="w-full h-full p-8 overflow-y-auto animate-in fade-in zoom-in-95 duration-500 relative bg-[#060607]">
-                <div className="mb-10 flex items-start justify-between">
+            <div className="w-full h-full p-4 md:p-8 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-500 relative bg-[#060607]">
+                <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-start justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                            <Hexagon className="text-emerald-500 w-8 h-8" />
+                        <h1 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                            <Hexagon className="text-emerald-500 w-6 h-6 md:w-8 md:h-8" />
                             Centro de Mando Clínico
                         </h1>
-                        <p className="text-zinc-500 mt-2 font-mono text-xs uppercase tracking-widest">Observación Científica de la Consciencia</p>
+                        <p className="text-zinc-500 mt-2 font-mono text-[10px] md:text-xs uppercase tracking-widest">Observación Científica de la Consciencia</p>
                     </div>
                     <button
                         onClick={() => {
                             localStorage.removeItem('oasis_user');
                             window.location.reload();
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-mono text-xs uppercase tracking-widest font-bold"
+                        className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-mono text-[10px] md:text-xs uppercase tracking-widest font-bold w-fit"
                     >
                         <LogOut size={14} />
                         Cerrar Sesión
                     </button>
                 </div>
 
-                <div className="flex items-center justify-between mb-6 gap-4">
-                    <div className="relative w-1/3 min-w-[300px]">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4">
+                    <div className="relative w-full md:w-1/3 md:min-w-[300px]">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <input 
                             type="text" 
@@ -1794,14 +1794,14 @@ const PsychologistDashboard = ({ onClose }) => {
                                 }
                             }
                         }}
-                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center gap-2"
+                        className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center justify-center gap-2"
                     >
                         <Plus className="w-4 h-4" /> Crear Análisis
                     </button>
                 </div>
 
                 {filtered.length === 0 ? (
-                    <div className="bg-zinc-900/20 border border-dashed border-white/10 p-16 rounded-[2.5rem] text-center flex flex-col items-center justify-center gap-4 min-h-[300px] backdrop-blur-sm">
+                    <div className="bg-zinc-900/20 border border-dashed border-white/10 p-8 md:p-16 rounded-[2.5rem] text-center flex flex-col items-center justify-center gap-4 min-h-[250px] md:min-h-[300px] backdrop-blur-sm">
                         <Activity className="w-12 h-12 text-zinc-600 animate-pulse" />
                         <div>
                             <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Sin Evaluaciones</h4>
@@ -1809,14 +1809,14 @@ const PsychologistDashboard = ({ onClose }) => {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-zinc-900/10 border border-white/5 rounded-[2rem] overflow-hidden backdrop-blur-sm">
-                        <table className="w-full text-left border-collapse">
+                    <div className="bg-zinc-900/10 border border-white/5 rounded-[2rem] overflow-x-auto backdrop-blur-sm no-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr className="border-b border-white/5 bg-zinc-950/40">
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Identidad / Aura</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Fecha Registro</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Estado Clínico</th>
-                                    <th className="px-6 py-4 text-right"></th>
+                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Identidad / Aura</th>
+                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Fecha Registro</th>
+                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Estado Clínico</th>
+                                    <th className="px-4 md:px-6 py-4 text-right"></th>
                                 </tr>
                             </thead>
                             <tbody>
