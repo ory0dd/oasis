@@ -13461,7 +13461,6 @@ ${afcMapContext}
                                 </div>
                             </div>
                         </div>
-                        )}
 
                         {/* UI PREFERENCES */}
                         <div className="space-y-8">
