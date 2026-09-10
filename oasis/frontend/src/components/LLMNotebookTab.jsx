@@ -1,12 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X } from 'lucide-react';
+import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X, Trash2, RotateCcw } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
 export const LLMNotebookTab = ({ patientName }) => {
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState(() => {
+        if (!patientName) return [];
+        try {
+            const saved = localStorage.getItem(`oasis_llm_notebook_messages_${patientName}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Error loading saved notebook messages:", e);
+            return [];
+        }
+    });
     const [inputMsg, setInputMsg] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [confirmClear, setConfirmClear] = useState(false);
     const [sources, setSources] = useState([]);
     const [selectedSources, setSelectedSources] = useState(new Set());
     const [showSourcesMobile, setShowSourcesMobile] = useState(false);
@@ -50,6 +60,35 @@ export const LLMNotebookTab = ({ patientName }) => {
         setSelectedSources(new Set(availSources.map(s => s.id)));
     }, [patientName]);
 
+    // Load messages when patient changes
+    useEffect(() => {
+        if (!patientName) {
+            setMessages([]);
+            return;
+        }
+        try {
+            const saved = localStorage.getItem(`oasis_llm_notebook_messages_${patientName}`);
+            setMessages(saved ? JSON.parse(saved) : []);
+        } catch (e) {
+            console.error("Error updating patient notebook messages:", e);
+            setMessages([]);
+        }
+    }, [patientName]);
+
+    // Persist messages whenever messages or patientName changes
+    useEffect(() => {
+        if (!patientName) return;
+        try {
+            if (messages.length > 0) {
+                localStorage.setItem(`oasis_llm_notebook_messages_${patientName}`, JSON.stringify(messages));
+            } else {
+                localStorage.removeItem(`oasis_llm_notebook_messages_${patientName}`);
+            }
+        } catch (e) {
+            console.error("Error persisting notebook messages:", e);
+        }
+    }, [messages, patientName]);
+
     useEffect(() => {
         if (chatScrollRef.current) {
             chatScrollRef.current.scrollTo({
@@ -58,6 +97,21 @@ export const LLMNotebookTab = ({ patientName }) => {
             });
         }
     }, [messages]);
+
+    const handleClearChat = () => {
+        if (!confirmClear) {
+            setConfirmClear(true);
+            setTimeout(() => setConfirmClear(false), 3000);
+            return;
+        }
+        setMessages([]);
+        setConfirmClear(false);
+        if (patientName) {
+            try {
+                localStorage.removeItem(`oasis_llm_notebook_messages_${patientName}`);
+            } catch (e) {}
+        }
+    };
 
     const toggleSource = (id) => {
         const newSet = new Set(selectedSources);
@@ -71,7 +125,8 @@ export const LLMNotebookTab = ({ patientName }) => {
 
         const userMsg = inputMsg.trim();
         setInputMsg('');
-        setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+        const updatedMessages = [...messages, { role: 'user', content: userMsg }];
+        setMessages(updatedMessages);
         setIsTyping(true);
 
         try {
@@ -112,8 +167,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 model: model,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...messages,
-                    { role: 'user', content: userMsg }
+                    ...updatedMessages
                 ],
                 temperature: 0.2
             };
@@ -238,15 +292,32 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         </div>
                     </div>
 
-                    {/* Mobile Toggle Button for Sources */}
-                    <button
-                        onClick={() => setShowSourcesMobile(prev => !prev)}
-                        className="md:hidden flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
-                    >
-                        <BookOpen size={12} />
-                        <span>Fuentes ({selectedSources.size})</span>
-                        <ChevronDown size={12} className={`transition-transform duration-200 ${showSourcesMobile ? 'rotate-180' : ''}`} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {messages.length > 0 && (
+                            <button
+                                onClick={handleClearChat}
+                                title="Limpiar conversación actual"
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95 border ${
+                                    confirmClear 
+                                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-300 animate-pulse' 
+                                        : 'bg-zinc-900/80 hover:bg-rose-500/10 border-white/10 hover:border-rose-500/30 text-zinc-400 hover:text-rose-300'
+                                }`}
+                            >
+                                <Trash2 size={12} className={confirmClear ? 'text-rose-400' : ''} />
+                                <span>{confirmClear ? '¿Borrar chat?' : 'Limpiar'}</span>
+                            </button>
+                        )}
+
+                        {/* Mobile Toggle Button for Sources */}
+                        <button
+                            onClick={() => setShowSourcesMobile(prev => !prev)}
+                            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
+                        >
+                            <BookOpen size={12} />
+                            <span>Fuentes ({selectedSources.size})</span>
+                            <ChevronDown size={12} className={`transition-transform duration-200 ${showSourcesMobile ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Messages Container with Native Momentum Scroll */}

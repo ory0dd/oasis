@@ -4450,7 +4450,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                 </div>
                                 <textarea
                                     value={privateNotes}
-                                    onChange={e => setPrivateNotes(e.target.value)}
+                                    onChange={e => {
+                                        setPrivateNotes(e.target.value);
+                                        if (selectedPatient?.name) {
+                                            localStorage.setItem(`oasis_private_notes_${selectedPatient.name}`, e.target.value);
+                                        }
+                                    }}
                                     placeholder="Escribe tus observaciones y hallazgos clínicos aquí. Estos apuntes son estrictamente privados..."
                                     className="w-full h-[60vh] bg-zinc-950/70 border border-emerald-500/20 rounded-3xl p-6 text-sm text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950/50"
                                 />
