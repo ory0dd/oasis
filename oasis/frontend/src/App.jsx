@@ -13380,15 +13380,14 @@ ${afcMapContext}
                             );
                         })()}
 
-                        {/* CONFIGURACIÓN DE INTELIGENCIA (KIO) */}
-                        {false && (
+                        {/* CONFIGURACIÓN DE INTELIGENCIA (KIO / CHATGPT / DEEPSEEK) */}
                         <div className="space-y-4 pt-2 border-t border-white/5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Configuración de Inteligencia (Kio)</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Configuración de Inteligencia (ChatGPT / DeepSeek)</span>
                             <div className="space-y-4 bg-white/5 p-5 rounded-3xl border border-white/5">
                                 {/* API KEY */}
                                 <div className="space-y-1.5 text-left">
                                     <label className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 block ml-1">
-                                        Clave de API DeepSeek / IA
+                                        Clave de API (OpenAI / DeepSeek)
                                     </label>
                                     <input
                                         type="password"
@@ -13397,7 +13396,7 @@ ${afcMapContext}
                                             setDeepseekKey(e.target.value);
                                             localStorage.setItem('oasis_deepseek_key', e.target.value);
                                         }}
-                                        placeholder={deepseekKey ? "••••••••••••••••" : "Usando clave centralizada (Servidor)"}
+                                        placeholder={deepseekKey ? "••••••••••••••••" : "sk-proj-..."}
                                         className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-mono text-white placeholder:text-zinc-500 focus:border-accent/40 outline-none transition-all"
                                     />
                                 </div>
@@ -13405,7 +13404,7 @@ ${afcMapContext}
                                 {/* ENDPOINT */}
                                 <div className="space-y-1.5 text-left">
                                     <label className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 block ml-1">
-                                        Endpoint del Proveedor
+                                        Endpoint del Proveedor (Opcional)
                                     </label>
                                     <input
                                         type="url"
@@ -13414,15 +13413,16 @@ ${afcMapContext}
                                             setCustomEndpoint(e.target.value);
                                             localStorage.setItem('oasis_deepseek_endpoint', e.target.value);
                                         }}
-                                        placeholder="https://api.deepseek.com/chat/completions"
+                                        placeholder="Ej: https://api.openai.com/v1/chat/completions"
                                         className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-mono text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                                     />
+                                    <p className="text-[8px] text-zinc-500 ml-1">OpenAI: https://api.openai.com/v1/chat/completions</p>
                                 </div>
 
                                 {/* MODEL */}
                                 <div className="space-y-1.5 text-left">
                                     <label className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 block ml-1">
-                                        Modelo de IA
+                                        Modelo de IA (Ej: gpt-4o, gpt-4o-mini, deepseek-chat)
                                     </label>
                                     <input
                                         type="text"
@@ -13431,12 +13431,12 @@ ${afcMapContext}
                                             setCustomModel(e.target.value);
                                             localStorage.setItem('oasis_deepseek_model', e.target.value);
                                         }}
-                                        placeholder="deepseek-chat"
+                                        placeholder="gpt-4o"
                                         className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-mono text-white placeholder:text-zinc-700 focus:border-accent/40 outline-none transition-all"
                                     />
                                 </div>
 
-                                {/* PROBAR CONEXIÓN (TEST DEEPSEEK) */}
+                                {/* PROBAR CONEXIÓN */}
                                 <div className="pt-2">
                                     <button
                                         type="button"
@@ -13444,7 +13444,7 @@ ${afcMapContext}
                                         disabled={apiTestLoading}
                                         className="w-full bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent font-black uppercase text-[9px] tracking-wider py-2 rounded-xl transition-all disabled:opacity-50"
                                     >
-                                        {apiTestLoading ? 'Probando...' : 'Probar Conexión con DeepSeek'}
+                                        {apiTestLoading ? 'Probando...' : 'Probar Conexión con IA'}
                                     </button>
                                     {apiTestResult && (
                                         <div className={`mt-2 p-3 rounded-xl border text-[9px] font-mono leading-relaxed break-all ${apiTestResult.startsWith('Éxito')
