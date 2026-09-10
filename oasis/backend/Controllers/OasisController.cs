@@ -2857,7 +2857,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 using var jsonDoc = System.Text.Json.JsonDocument.Parse(uploadResText);
                 var fileUri = jsonDoc.RootElement.GetProperty("file").GetProperty("uri").GetString();
 
-                var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={geminiKey}";
+                var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={geminiKey}";
                 var prompt = "Transcribe el siguiente audio palabra por palabra. Luego, analiza la conversación y formatea la transcripción como un guion de diálogo identificando a los dos hablantes como 'Terapeuta' y 'Consultante' (si aplica).";
                 
                 var generateBody = new {
