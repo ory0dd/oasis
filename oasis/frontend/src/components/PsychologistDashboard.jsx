@@ -4237,7 +4237,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Caso Clínico</span>}
                                 <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('VISION_GENERAL'); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                    <button onClick={() => { setActiveTab('VISION_GENERAL'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <FileText className="w-4.5 h-4.5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Visión General</span>}
                                     </button>
@@ -4248,11 +4248,11 @@ Devuelve estrictamente el JSON sin formato extra.
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Espacio de Exploración</span>}
                                 <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                    <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <Folder className="w-4.5 h-4.5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Asistente Kio (Docs)</span>}
                                     </button>
-                                    <button onClick={() => { setActiveTab('REFLEXION'); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                    <button onClick={() => { setActiveTab('REFLEXION'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <Eye className="w-4.5 h-4.5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Privada</span>}
                                     </button>
@@ -4277,6 +4277,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 onClick={() => {
                                                     setSelectedVersion(v);
                                                     setActiveTab(`SESION_${v}`);
+                                                    if (window.innerWidth < 768) setIsSidebarOpen(false);
                                                 }}
                                                 className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${
                                                     isSelected ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'

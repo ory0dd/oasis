@@ -131,10 +131,10 @@ ${contextData || 'Ninguna fuente seleccionada.'}
     };
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row gap-4 bg-[#0a0a0c] p-2 md:p-4 rounded-3xl animate-in fade-in duration-300">
+        <div className="w-full h-full flex flex-col md:flex-row gap-2 md:gap-4 bg-[#0a0a0c] p-2 md:p-4 rounded-3xl animate-in fade-in duration-300 overflow-hidden">
             {/* Left Panel: Sources */}
-            <div className="w-full md:w-80 bg-zinc-950/80 border border-white/5 rounded-2xl flex flex-col shrink-0">
-                <div className="p-4 border-b border-white/5">
+            <div className="w-full md:w-80 h-40 md:h-full bg-zinc-950/80 border border-white/5 rounded-2xl flex flex-col shrink-0">
+                <div className="p-3 md:p-4 border-b border-white/5">
                     <h3 className="text-sm font-black text-white flex items-center gap-2">
                         <BookOpen size={16} className="text-blue-400" /> Fuentes
                     </h3>
