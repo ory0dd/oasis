@@ -728,7 +728,7 @@ Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'openai', endpoint: null,
                     key: activeKey,
                     payload: {
                         model: model,
@@ -858,7 +858,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'openai', endpoint: null,
                     key: activeKey,
                     payload: {
                         model: model,
@@ -2701,7 +2701,7 @@ Conexiones actuales: ${currentEdgesText}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'openai', endpoint: null,
                     key: activeKey,
                     payload: payload
                 })
@@ -2906,7 +2906,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'openai', endpoint: null,
                     key: activeKey,
                     payload: {
                         model: model,
@@ -3102,7 +3102,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: endpoint, key: activeKey, payload: payload })
+                body: JSON.stringify({ provider: 'openai', endpoint: null, key: activeKey, payload: payload })
             });
 
             if (!res.ok) {
@@ -3333,7 +3333,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: endpoint, key: activeKey, payload: payload })
+                body: JSON.stringify({ provider: 'openai', endpoint: null, key: activeKey, payload: payload })
             });
 
             if (!res.ok) throw new Error("Error en la petición a DeepSeek");
@@ -4913,7 +4913,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'openai', endpoint: null,
                     key: activeKey,
                     payload: {
                         model: model,

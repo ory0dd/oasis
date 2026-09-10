@@ -7070,7 +7070,7 @@ export default function App() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'deepseek', endpoint: null,
                     key: deepseekKey,
                     payload: {
                         model: model,
@@ -8784,7 +8784,7 @@ export default function App() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        endpoint: endpoint,
+                        provider: 'deepseek', endpoint: null,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -8878,7 +8878,7 @@ export default function App() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        endpoint: endpoint,
+                        provider: 'deepseek', endpoint: null,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -8925,7 +8925,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                endpoint: endpoint,
+                                provider: 'deepseek', endpoint: null,
                                 key: deepseekKey,
                                 payload: { model: model, messages: [{ role: 'user', content: stylePrompt }], response_format: { type: "json_object" } }
                             })
@@ -9312,7 +9312,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        endpoint: endpoint,
+                        provider: 'deepseek', endpoint: null,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -9736,7 +9736,7 @@ ${afcMapContext}
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        endpoint: endpoint,
+                        provider: 'deepseek', endpoint: null,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -9876,7 +9876,7 @@ ${afcMapContext}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    endpoint: endpoint,
+                    provider: 'deepseek', endpoint: null,
                     key: key,
                     payload: {
                         model: model,
@@ -10482,7 +10482,7 @@ ${afcMapContext}
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        endpoint: endpoint,
+                        provider: 'deepseek', endpoint: null,
                         key: deepseekKey,
                         payload: {
                             model: modelName,

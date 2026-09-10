@@ -737,6 +737,9 @@ namespace Oasis.Backend.Controllers
 
         public class ChatProxyRequest
         {
+            [JsonPropertyName("provider")]
+            public string? Provider { get; set; }
+
             [JsonPropertyName("endpoint")]
             public string? Endpoint { get; set; }
 
@@ -757,14 +760,38 @@ namespace Oasis.Backend.Controllers
                     return BadRequest("Payload no provisto.");
                 }
 
-                var resolvedKey = GetResolvedAIKey(req.Key);
-                if (IsPlaceholderOrLegacyKey(resolvedKey)) {
-                    return BadRequest(new { msg = "Clave de IA no disponible. Configúrala con 'dotnet user-secrets set DeepSeek:Key TU_KEY' o con la variable de entorno DEEPSEEK_API_KEY." });
+                // Determinar el proveedor explícito o inferirlo por el endpoint/modelo de la petición
+                string provider = (req.Provider ?? "").ToLower();
+                if (string.IsNullOrEmpty(provider)) {
+                    if (req.Endpoint != null && req.Endpoint.Contains("openai.com")) provider = "openai";
+                    else if (req.Endpoint != null && req.Endpoint.Contains("deepseek.com")) provider = "deepseek";
+                    else provider = "openai"; // Default globally to OpenAI
                 }
 
-                var resolvedEndpoint = string.IsNullOrEmpty(req.Endpoint)
-                    ? (_config["DeepSeek:BaseUrl"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com/chat/completions")
-                    : req.Endpoint;
+                string? resolvedKey = req.Key;
+                if (string.IsNullOrEmpty(resolvedKey) || IsPlaceholderOrLegacyKey(resolvedKey)) {
+                    if (provider == "deepseek") {
+                        resolvedKey = _config["DeepSeek:Key"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+                    } else {
+                        // "openai"
+                        resolvedKey = _config["OpenAI:Key"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? _config["DeepSeek:Key"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY"); 
+                    }
+                }
+                // Fallbacks finales (evita crashear si no hay)
+                resolvedKey = GetResolvedAIKey(resolvedKey);
+
+                if (IsPlaceholderOrLegacyKey(resolvedKey)) {
+                    return BadRequest(new { msg = $"Clave de IA no disponible para proveedor {provider}. Configúrala en variables de entorno (OPENAI_API_KEY o DEEPSEEK_API_KEY)." });
+                }
+
+                string resolvedEndpoint = req.Endpoint ?? "";
+                if (string.IsNullOrEmpty(resolvedEndpoint)) {
+                    if (provider == "deepseek") {
+                        resolvedEndpoint = _config["DeepSeek:BaseUrl"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com/chat/completions";
+                    } else {
+                        resolvedEndpoint = _config["OpenAI:BaseUrl"] ?? Environment.GetEnvironmentVariable("OPENAI_BASE_URL") ?? "https://api.openai.com/v1/chat/completions";
+                    }
+                }
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, resolvedEndpoint);
                 request.Headers.Add("Authorization", $"Bearer {resolvedKey}");
