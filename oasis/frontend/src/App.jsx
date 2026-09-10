@@ -10700,7 +10700,7 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="fixed bottom-[calc(36px+env(safe-area-inset-bottom,0px))] md:bottom-24 left-1/2 -translate-x-1/2 z-[2000] bg-black/80 backdrop-blur-sm border border-white/10 p-1.5 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-0.5 sm:gap-2 pointer-events-auto w-max max-w-[98vw] overflow-x-auto no-scrollbar scale-[0.85] sm:scale-100 origin-bottom"
+                    className="fixed bottom-[80px] md:bottom-24 left-1/2 -translate-x-1/2 z-[2500] bg-black/80 backdrop-blur-sm border border-white/10 p-2 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
@@ -12930,10 +12930,10 @@ ${afcMapContext}
     }
 
     return (
-        <div className="fixed top-0 left-0 w-screen h-screen bg-transparent text-zinc-100 overflow-hidden" onMouseMove={handleMove} onMouseUp={handleEnd} onTouchMove={handleMove} onTouchEnd={handleEnd} onContextMenu={(e) => { if (!e.target.closest('input') && !e.target.closest('textarea') && !e.target.closest('[contenteditable="true"]')) e.preventDefault(); }}>
+        <div className="fixed top-0 left-0 w-screen h-[100dvh] bg-transparent text-zinc-100 overflow-hidden" onMouseMove={handleMove} onMouseUp={handleEnd} onTouchMove={handleMove} onTouchEnd={handleEnd} onContextMenu={(e) => { if (!e.target.closest('input') && !e.target.closest('textarea') && !e.target.closest('[contenteditable="true"]')) e.preventDefault(); }}>
 
             {/* GLOBAL ATMOSPHERE ENGINE */}
-            <div className="fixed top-0 left-0 w-screen h-screen z-[-1] overflow-hidden pointer-events-none bg-transparent">
+            <div className="fixed top-0 left-0 w-screen h-[100dvh] z-[-1] overflow-hidden pointer-events-none bg-transparent">
                 {(() => {
                     const activeBgType = bgType;
                     const activeBgValue = bgValue;
