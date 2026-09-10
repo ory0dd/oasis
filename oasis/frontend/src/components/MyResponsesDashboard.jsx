@@ -561,7 +561,7 @@ ${userResponsesText}
 `;
 
             const payload = {
-                model: 'deepseek-chat',
+                model: 'gpt-4o',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.6,
                 response_format: { type: "json_object" }
@@ -570,7 +570,7 @@ ${userResponsesText}
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: 'https://api.deepseek.com/chat/completions', key: activeKey, payload })
+                body: JSON.stringify({ endpoint: 'https://api.openai.com/v1/chat/completions', key: activeKey, payload })
             });
 
             if (!res.ok) throw new Error("Network response was not ok");
@@ -655,8 +655,8 @@ ${userResponsesText}
         setIsGeneratingReport(true);
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const prompt = `
 Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial, actuando como SUPERVISOR CLÍNICO.
@@ -762,8 +762,8 @@ Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \
         setIsImprovingReport(true);
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const prompt = `
 Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
@@ -835,8 +835,8 @@ Instrucciones Críticas:
         setIsGeneratingKio(true);
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const prompt = `
 Eres un psicoterapeuta avanzado configurando a "Kio", una IA asistente de salud mental.
@@ -2428,8 +2428,8 @@ ${isAdditive ? `
 `;
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const payload1 = {
                 model: model,
@@ -2681,8 +2681,8 @@ Conexiones actuales: ${currentEdgesText}
         `;
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const payload = {
                 model: model,
@@ -2813,8 +2813,8 @@ ACTUALIZACIÓN DEL PACIENTE:
 "${lifeUpdateText}"
 `;
 
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const payload = {
                 model: model,
@@ -2887,8 +2887,8 @@ ACTUALIZACIÓN DEL PACIENTE:
         setIsGeneratingBioQuestions(true);
         try {
             let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const prompt = `
 Eres un psicoterapeuta avanzado analizando la Historia de Vida de un paciente.
@@ -3085,8 +3085,8 @@ ESTRUCTURA DE SALIDA ESPERADA:
 
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const payload = {
                 model: model,
@@ -3319,8 +3319,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 `;
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const payload = {
                 model: model,
@@ -4885,8 +4885,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
         try {
             let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const prompt = `
 Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Clínico.

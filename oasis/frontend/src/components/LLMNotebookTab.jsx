@@ -93,8 +93,8 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 `;
 
             const activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const payload = {
                 model: model,

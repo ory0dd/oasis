@@ -4779,8 +4779,8 @@ export default function App() {
         // Base64 of the key to completely bypass GitHub Guardian
         return atob("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=");
     });
-    const [customEndpoint, setCustomEndpoint] = useState(() => localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions');
-    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat');
+    const [customEndpoint, setCustomEndpoint] = useState(() => localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions');
+    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'gpt-4o');
     const [apiTestResult, setApiTestResult] = useState('');
     const [apiTestLoading, setApiTestLoading] = useState(false);
 
@@ -6736,7 +6736,7 @@ export default function App() {
     const [isAnalyzingNote, setIsAnalyzingNote] = useState(false);
     const [isDiaryMode, setIsDiaryMode] = useState(false);
     const [focusedResonanceField, setFocusedResonanceField] = useState(null);
-    const [availableModels, setAvailableModels] = useState(['deepseek-chat', 'deepseek-reasoner']);
+    const [availableModels, setAvailableModels] = useState(['gpt-4o', 'deepseek-reasoner']);
     const [activeModel, setActiveModel] = useState(null);
 
     // Performance Refs
@@ -7062,8 +7062,8 @@ export default function App() {
         const prompt = `Eres Kio, el núcleo digital de Ruido Interior. Genera un título corto, elegante y profesional (máximo 4 palabras) para una conversación que comienza con este mensaje: "${firstMessage}". Responde ÚNICAMENTE con el título, sin comillas ni puntos finales.`;
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'gpt-4o';
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: {
@@ -8274,7 +8274,7 @@ export default function App() {
     const [isDrawing, setIsDrawing] = useState(false);
 
     useEffect(() => {
-        setAvailableModels(['deepseek-chat', 'deepseek-reasoner']);
+        setAvailableModels(['gpt-4o', 'deepseek-reasoner']);
 
         setDeepseekKey(atob("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU="));
     }, [deepseekKey]);
@@ -8743,10 +8743,10 @@ export default function App() {
         // Deshabilitado por petición del usuario
         return;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
-            : [customModel, 'deepseek-chat', 'deepseek-reasoner'];
+            : [customModel, 'gpt-4o', 'deepseek-reasoner'];
         let success = false;
 
         const chatHistory = chatMessages
@@ -8776,7 +8776,7 @@ export default function App() {
 
         for (const modelName of MODELS_TO_TRY) {
             try {
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
 
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
@@ -8865,13 +8865,13 @@ export default function App() {
         
         Responde ÚNICAMENTE con el JSON o "SIN CAMBIOS".`;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
-            : [customModel, 'deepseek-chat', 'deepseek-reasoner'];
+            : [customModel, 'gpt-4o', 'deepseek-reasoner'];
         for (const modelName of MODELS_TO_TRY) {
             try {
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
                     headers: {
@@ -8919,8 +8919,8 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
   "examples": ["ejemplo corto 1", "ejemplo corto 2"],
   "informalityScore": 5 // Número del 0 (extremadamente formal) al 10 (extremadamente coloquial/argot callejero)
 }`;
-                        const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-                        const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+                        const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+                        const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
                         const styleRes = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -9296,16 +9296,16 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
     const backgroundAnalyzeContent = async (prompt) => {
         setAnalysisError(null);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const modelsToTry = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
-            : [customModel, 'deepseek-chat', 'deepseek-reasoner'];
+            : [customModel, 'gpt-4o', 'deepseek-reasoner'];
 
         for (const modelName of modelsToTry) {
             try {
                 console.log(`[Oasis AI] Intentando análisis invisible (Protocolo Streaming) con ${modelName}...`);
 
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const response = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
                     headers: {
@@ -9480,10 +9480,10 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
             generateChatTitle(effectiveConvId, inputToProcess);
         }
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
-            : [customModel, 'deepseek-chat', 'deepseek-reasoner'];
+            : [customModel, 'gpt-4o', 'deepseek-reasoner'];
 
         let lastError = '';
         const activeNoteContent = activeNoteId ? blocks.find(b => b.id === activeNoteId)?.content : '';
@@ -9729,7 +9729,7 @@ ${afcMapContext}
             try {
                 setActiveModel(modelName);
                 console.log(`Kio - Sintonizando frecuencia con: ${modelName}...`);
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const response = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
                     headers: {
@@ -9864,9 +9864,9 @@ ${afcMapContext}
         setApiTestLoading(true);
         setApiTestResult('Conectando con DeepSeek...');
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const key = deepseekKey;
-            const model = customModel || 'deepseek-chat';
+            const model = customModel || 'gpt-4o';
 
             console.log(`Diagnostic - Test con Endpoint: ${endpoint}, Modelo: ${model}, Key: ${key ? key.substring(0, 10) + '...' : 'Usando servidor'}`);
 
@@ -10465,17 +10465,17 @@ ${afcMapContext}
 
         console.log(`Sintetizando ${involvedBlocks.length} fragmentos con el Núcleo Cognitivo...`);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
-            : [customModel, 'deepseek-chat', 'deepseek-reasoner'];
+            : [customModel, 'gpt-4o', 'deepseek-reasoner'];
         let lastError = '';
 
         const prompt = `Analiza estos fragmentos de alma y crea un nuevo fragmento (máximo 50 palabras) que sintetice la relación entre ellos de manera poética pero profunda. \n\nFragmentos:\n${contents}`;
 
         for (const modelName of MODELS_TO_TRY) {
             try {
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
                     headers: {
@@ -13422,7 +13422,7 @@ ${afcMapContext}
                                 {/* MODEL */}
                                 <div className="space-y-1.5 text-left">
                                     <label className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 block ml-1">
-                                        Modelo de IA (Ej: gpt-4o, gpt-4o-mini, deepseek-chat)
+                                        Modelo de IA (Ej: gpt-4o, gpt-4o-mini, gpt-4o)
                                     </label>
                                     <input
                                         type="text"
