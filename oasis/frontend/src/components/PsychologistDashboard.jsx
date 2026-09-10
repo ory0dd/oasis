@@ -1721,34 +1721,34 @@ const PsychologistDashboard = ({ onClose }) => {
         );
 
         return (
-            <div className="w-full h-full p-4 sm:p-6 md:p-10 overflow-y-auto overflow-x-hidden animate-in fade-in duration-300 relative bg-[#070709] selection:bg-emerald-500/30">
+            <div className="w-full flex-1 min-h-0 p-3 sm:p-6 md:p-10 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#070709] selection:bg-emerald-500/30">
                 {/* AMBIENT GLOW */}
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/[0.03] rounded-full blur-3xl pointer-events-none -z-10" />
 
                 {/* 2026 HEADER BAR */}
-                <div className="mb-6 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)] shrink-0">
-                            <Hexagon className="w-5 h-5" />
+                <div className="mb-4 sm:mb-6 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)] shrink-0">
+                            <Hexagon className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-base sm:text-lg md:text-2xl font-black text-white tracking-tight">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <h1 className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-tight truncate">
                                     Centro de Mando
                                 </h1>
                                 <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                     CLÍNICO
                                 </span>
                             </div>
-                            <p className="text-zinc-500 text-[9px] sm:text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                                <span>Observación de la Consciencia</span>
+                            <p className="text-zinc-500 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest flex items-center gap-1 mt-0.5 truncate">
+                                <span>Observación</span>
                                 <span>•</span>
                                 <span className="text-zinc-400">{patients.length} identidades</span>
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                         <button 
                             onClick={async () => {
                                 const newUser = prompt("Nombre de usuario del nuevo sujeto:");
@@ -1790,7 +1790,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                     }
                                 }
                             }}
-                            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:scale-105 active:scale-95 flex items-center gap-1.5 shrink-0"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:scale-105 active:scale-95 flex items-center gap-1 shrink-0"
                         >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Nuevo</span>
@@ -1801,18 +1801,18 @@ const PsychologistDashboard = ({ onClose }) => {
                                 localStorage.removeItem('oasis_user');
                                 window.location.reload();
                             }}
-                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/[0.03] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0"
+                            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/[0.03] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0"
                             title="Cerrar Sesión"
                         >
-                            <LogOut size={13} />
+                            <LogOut size={12} />
                         </button>
                     </div>
                 </div>
 
                 {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
-                <div className="mb-5">
-                    <div className="relative flex items-center bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.05] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-2xl px-3.5 py-2 backdrop-blur-xl transition-all">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 mr-2.5 shrink-0" />
+                <div className="mb-4">
+                    <div className="relative flex items-center bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.05] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-3 py-1.5 sm:py-2 backdrop-blur-xl transition-all">
+                        <Search className="w-3.5 h-3.5 text-zinc-500 mr-2 shrink-0" />
                         <input 
                             type="text" 
                             placeholder="Filtrar por identidad, nombre o ID..."
@@ -1830,8 +1830,8 @@ const PsychologistDashboard = ({ onClose }) => {
 
                 {/* CONTENT AREA */}
                 {filtered.length === 0 ? (
-                    <div className="bg-white/[0.01] border border-dashed border-white/10 p-8 rounded-3xl text-center flex flex-col items-center justify-center gap-3 min-h-[220px]">
-                        <Activity className="w-8 h-8 text-zinc-700 animate-pulse" />
+                    <div className="bg-white/[0.01] border border-dashed border-white/10 p-6 rounded-2xl text-center flex flex-col items-center justify-center gap-2.5 min-h-[180px]">
+                        <Activity className="w-7 h-7 text-zinc-700 animate-pulse" />
                         <div>
                             <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Sin Coincidencias</h4>
                             <p className="text-[10px] text-zinc-600 mt-0.5">No se encontraron identidades con los criterios de búsqueda.</p>
@@ -1839,48 +1839,27 @@ const PsychologistDashboard = ({ onClose }) => {
                     </div>
                 ) : (
                     <>
-                        {/* ── MOBILE: 2026 MODERN CARD FEED (NO HORIZONTAL SCROLL) ── */}
-                        <div className="block md:hidden space-y-2.5">
+                        {/* ── MOBILE: 2026 MODERN DENSE CARDS (ZERO HORIZONTAL SCROLL) ── */}
+                        <div className="block md:hidden space-y-2 w-full max-w-full">
                             {filtered.map(patient => (
                                 <div 
                                     key={patient.id} 
                                     onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
-                                    className="p-3.5 rounded-2xl bg-zinc-900/40 hover:bg-zinc-900/70 border border-white/[0.06] hover:border-emerald-500/30 backdrop-blur-md active:scale-[0.99] transition-all flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="p-3 rounded-2xl bg-[#0c0c0e]/90 hover:bg-[#121215] border border-white/[0.06] hover:border-emerald-500/30 backdrop-blur-md active:scale-[0.99] transition-all flex flex-col gap-2 group cursor-pointer w-full"
                                 >
-                                    {/* Left Info */}
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-300 font-black text-[11px] uppercase shrink-0 shadow-inner">
-                                            {patient.name.slice(0, 2)}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</span>
-                                                <span className="text-[9px] font-mono text-zinc-500 truncate">{patient.id}</span>
+                                    {/* Row 1: Avatar + Name + ID + Status Pill */}
+                                    <div className="flex items-center justify-between gap-2 min-w-0">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-300 font-black text-[10px] uppercase shrink-0">
+                                                {patient.name.slice(0, 2)}
                                             </div>
-                                            <div className="flex items-center gap-2 mt-1 text-[10px]">
-                                                {patient.password && (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigator.clipboard.writeText(patient.password);
-                                                            if (navigator.vibrate) navigator.vibrate(30);
-                                                        }}
-                                                        className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 transition-all"
-                                                        title="Copiar contraseña"
-                                                    >
-                                                        <span>🔑</span>
-                                                        <span>{patient.password}</span>
-                                                        <Copy size={9} className="opacity-60" />
-                                                    </button>
-                                                )}
-                                                <span className="font-mono text-[9px] text-zinc-600">{patient.date}</span>
+                                            <div className="min-w-0">
+                                                <div className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</div>
+                                                <div className="text-[8px] font-mono text-zinc-500 truncate">{patient.id}</div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    {/* Right Status & Action */}
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border shrink-0 ${
                                             patient.status === 'Publicado' 
                                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                                                 : patient.status === 'Editando'
@@ -1890,15 +1869,39 @@ const PsychologistDashboard = ({ onClose }) => {
                                             <span className="w-1 h-1 rounded-full bg-current" />
                                             {patient.status === 'Pendiente de revisión' ? 'Pendiente' : patient.status}
                                         </span>
+                                    </div>
 
-                                        <button 
-                                            onClick={(e) => handleDeleteUser(e, patient.name)}
-                                            className="p-1 text-zinc-600 hover:text-red-400 transition-colors"
-                                            title="Eliminar usuario"
-                                        >
-                                            <Trash2 size={13} />
-                                        </button>
-                                        <ChevronRight size={14} className="text-zinc-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                                    {/* Row 2: Password pill + Date + Action Buttons */}
+                                    <div className="flex items-center justify-between pt-1.5 border-t border-white/[0.04]">
+                                        <div className="flex items-center gap-2">
+                                            {patient.password && (
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigator.clipboard.writeText(patient.password);
+                                                        if (navigator.vibrate) navigator.vibrate(25);
+                                                    }}
+                                                    className="inline-flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/20 transition-all active:scale-95"
+                                                    title="Copiar contraseña"
+                                                >
+                                                    <span>🔑</span>
+                                                    <span>{patient.password}</span>
+                                                    <Copy size={8} className="opacity-50" />
+                                                </button>
+                                            )}
+                                            <span className="font-mono text-[8px] text-zinc-500">{patient.date}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            <button 
+                                                onClick={(e) => handleDeleteUser(e, patient.name)}
+                                                className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+                                                title="Eliminar usuario"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                            <ChevronRight size={13} className="text-zinc-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -4577,7 +4580,7 @@ Devuelve estrictamente el JSON sin formato extra.
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex">
+        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col">
             {currentModule === 'DASHBOARD' && renderDashboard()}
             {currentModule === 'PROFILE' && renderProfileWorkspace()}
 
