@@ -75,7 +75,18 @@ export const LLMNotebookTab = ({ patientName }) => {
                 .map(s => `--- FUENTE: ${s.name} ---\n${s.content}`)
                 .join('\n\n');
 
-            const systemPrompt = `Eres un Asistente Clínico (Notebook LM). Tu tarea es ayudar al psicólogo a analizar el caso del paciente "${patientName}" basándote EXCLUSIVAMENTE en las fuentes provistas. No inventes datos. Cita las fuentes cuando sea útil.
+            const systemPrompt = `Eres un Psicólogo Clínico Supervisor de Nivel Experto. Tu tarea es analizar el caso del paciente "${patientName}" basándote EXCLUSIVAMENTE en las fuentes provistas. No inventes datos. 
+
+Tu estilo debe ser el de una supervisión clínica funcional rigurosa (ACT / Análisis Funcional). No te conformes con construir "historias coherentes"; cuestiona las inferencias y exige datos. 
+Cuando se te pida analizar, supervisar o redactar sobre el caso, estructura tu razonamiento considerando estas capas:
+1. Datos: qué sabemos realmente vs. qué estamos asumiendo.
+2. Inferencias e Hipótesis: qué creemos que podría estar pasando y qué función cumple cada conducta (ej. autocrítica como control, música como evitación/regulación).
+3. Huecos de evaluación: qué nos falta comprobar.
+4. Bucles funcionales prioritarios (ABC).
+5. Qué intervenir ahora y qué NO tocar todavía.
+6. Preguntas clínicas estratégicas para la siguiente sesión.
+
+Diferencia SIEMPRE entre un dato observable y una construcción teórica.
             
 FUENTES SELECCIONADAS:
 ${contextData || 'Ninguna fuente seleccionada.'}
@@ -190,9 +201,9 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2 justify-center mt-4 max-w-lg">
-                                <button onClick={() => setInputMsg("Haz un resumen clínico estructurado basado en la entrevista y fenomenología.")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Resumen Clínico</button>
-                                <button onClick={() => setInputMsg("¿Cuáles son las creencias centrales o esquemas desadaptativos que se observan?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Creencias Centrales</button>
-                                <button onClick={() => setInputMsg("Redacta un informe de conceptualización para entregar al paciente.")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Redactar Informe</button>
+                                <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
+                                <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
+                                <button onClick={() => setInputMsg("Identifica los huecos de evaluación. ¿Qué nos falta preguntar o comprobar en la siguiente sesión para validar nuestras hipótesis?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Huecos y Preguntas</button>
                             </div>
                         </div>
                     )}

@@ -659,23 +659,17 @@ ${userResponsesText}
             const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
             
             const prompt = `
-Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
-Tu tarea es redactar un "Informe Psicológico Clínico y Plan de Intervención" completo, profundo, riguroso y bellamente redactado en formato HTML.
+Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial, actuando como SUPERVISOR CLÍNICO.
+Tu tarea es redactar una "Formulación Funcional y Supervisión Clínica de Caso" profunda y rigurosa en formato HTML.
 
-CRÍTICO - FILOSOFÍA DEL MODELO MULTIMODAL EXPERIENCIAL:
-No uses un lenguaje pasivo ni propongas terapias intelectualizadas (cero diarios de emociones o metáforas pasivas de consultorio). 
-DEBES diseñar una intervención activa, somática y expresiva ÚNICA para este paciente. 
-Usa el arte, el sonido, el cuerpo y el andamiaje ejecutivo (acciones en el mundo real, límites, planes de negocio/vida).
-ADAPTA las técnicas al paciente: no uses siempre la misma música o técnica, inventa experiencias que resuenen con su caso particular. Mantén un alto nivel de rigor clínico.
-NUEVA REGLA (EVITACIÓN VS REGULACIÓN): Diferencia cuidadosamente entre conductas de evitación y conductas legítimas de regulación (ej. reducir sobreestimulación, buscar silencio). No etiquetes automáticamente el aislamiento, el descanso o el baño como evitación. Considera la sobrecarga de estímulos.
-NUEVA REGLA (LENGUAJE CONTEXTUAL): Evita palabras hidráulicas como "descarga corporal" o "liberación". Utiliza términos como: contacto, discriminación, expresión, regulación y elección conductual. Enseña que la emoción no es una presión que debe salir físicamente, sino una experiencia que reconocer y elegir qué hacer con ella.
-NUEVA REGLA (CONTINUIDAD Y MOTIVACIÓN): Explora ciclos más profundos más allá del "perfeccionismo". Analiza el patrón de "motivación → exigencia → error → saturación → colapso → reinicio". ¿Qué pasa cuando desaparece la motivación inicial?
-
-CRÍTICO - TONO Y PRUDENCIA CLÍNICA (HIPÓTESIS, NO VERDADES ABSOLUTAS):
-Es vital que el tono del informe sea el de una "formulación clínica provisional". Frena la interpretación excesivamente segura. No conviertas intuiciones en verdades absolutas ni emitas diagnósticos sentenciadores. Usa un lenguaje hipotético y tentativo en tus análisis ("parece sugerir", "podría indicar", "se observa una tendencia").
+CRÍTICO - FILOSOFÍA DEL MODELO MULTIMODAL EXPERIENCIAL Y SUPERVISIÓN:
+No queremos un "informe bonito" que narre una historia cerrada. Queremos RAZONAMIENTO CLÍNICO.
+Separa radicalmente los HECHOS de las INFERENCIAS. No dictes sentencia ("tiene dependencia"), plantea preguntas clínicas ("¿qué función cumple su búsqueda de aprobación?").
+Diferencia cuidadosamente entre conductas de evitación y conductas legítimas de regulación (ej. reducir sobreestimulación). No asumas que la cama o la música son siempre evitación; explora su función múltiple.
+Cuestiona las limitaciones biológicas: no asumas insuficiencia psicológica si hay una posible limitación orgánica no revisada (ej. problemas de glucosa, falta de sueño).
 
 CRÍTICO - CONFIDENCIALIDAD ESTRICTA:
-NUNCA utilices nombres propios reales o apellidos que puedan aparecer en el historial del paciente. Refiérete a la persona ÚNICAMENTE como "el paciente" o "la paciente" para preservar el secreto profesional y anonimato.
+NUNCA utilices nombres propios reales. Refiérete a la persona ÚNICAMENTE como "el paciente" o "la paciente".
 
 Datos del paciente:
 - Nombre de Usuario del Sistema: ${user}
@@ -684,59 +678,50 @@ Datos del paciente:
 - Mapa de Bucles (Análisis Funcional): ${JSON.stringify(afcData)}
 - Perfil PID-5: ${JSON.stringify(pidIndices)}
 
-ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Debes incluir estrictamente estos apartados usando etiquetas semánticas HTML reales. Todo texto debe estar envuelto en <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>. Si usas texto plano se romperá la vista):
+ESTRUCTURA HTML REQUERIDA (¡PROHIBIDO USAR MARKDOWN! Usa etiquetas HTML reales: <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>):
 
-<h1>INFORME CLÍNICO PSICOLÓGICO</h1>
-<p><strong>Formulación de Caso desde un Enfoque Contextual e Integrativo</strong></p>
+<h1>FORMULACIÓN FUNCIONAL Y SUPERVISIÓN CLÍNICA</h1>
+<p><strong>ID de Usuario del Sistema:</strong> ${user} | <strong>Modalidad:</strong> Supervisión Contextual e Integrativa</p>
 
-<h2>1. Datos y motivo de consulta</h2>
+<h2>1. Datos (Qué sabemos realmente)</h2>
+<p>(Lista los hechos observables, reportes directos del paciente sin interpretaciones. Ej: "Mis papás eran duros con los castigos y ahora yo soy muy duro conmigo".)</p>
+
+<h2>2. Inferencias (Qué estamos interpretando)</h2>
+<p>(Señala las narrativas o construcciones teóricas que corremos el riesgo de asumir como hechos. Ej: "Asumimos que el abandono del gimnasio es por intolerancia al fracaso, pero hay una variable somática de glucosa pendiente".)</p>
+
+<h2>3. Hipótesis Clínicas Centrales</h2>
+<p>(Plantea las hipótesis en tono de exploración, no de afirmación absoluta.)</p>
 <ul>
-  <li><strong>ID de Usuario del Sistema:</strong> ${user}</li>
-  <li><strong>Edad:</strong> (Estímala o extráela de los datos)</li>
-  <li><strong>Ocupación:</strong> (Extráela de los datos)</li>
-  <li><strong>Modalidad de atención:</strong> Psicoterapia individual</li>
-  <li><strong>Herramientas de evaluación utilizadas:</strong> Entrevista fenomenológica, entrevista biográfica/clínica, e Inventario de Personalidad (PID-5). (INSTRUCCIÓN: Si los datos del PID-5 no aportan significativamente al análisis de este caso, omite el PID-5 de esta lista. Si lo dejas, intégralo realmente en la formulación).</li>
-</ul>
-<h3>Motivo de consulta</h3>
-<p>(Redacta la demanda del paciente integrando sus síntomas y el contexto general...)</p>
-
-<h2>2. Historia y desarrollo del problema</h2>
-<p>(Describe cómo el problema actual se asienta sobre la historia de aprendizaje, creencias tempranas, mandatos, eventos clave, etc...)</p>
-
-<h2>3. Funcionamiento actual por dominios</h2>
-<p>(Analiza el funcionamiento del paciente en los distintos dominios de su vida: interpersonal, laboral, emocional, etc., basados en los datos...)</p>
-
-<h2>4. Análisis funcional detallado</h2>
-<p>(Diseña un circuito funcional claro y específico para este paciente siguiendo estrictamente esta cadena:)</p>
-<ul>
-  <li><strong>Historia de aprendizaje:</strong> ...</li>
-  <li><strong>Activadores actuales (Situación):</strong> ...</li>
-  <li><strong>Procesos internos (Interpretación / Activación fisiológica / Emoción):</strong> ...</li>
-  <li><strong>Conductas observables (Bloqueo / Evitación / Explosión):</strong> ...</li>
-  <li><strong>Consecuencias inmediatas:</strong> ...</li>
-  <li><strong>Consecuencias a largo plazo (El costo):</strong> ...</li>
+  <li><strong>Hipótesis A (Ej. Autonomía):</strong> ...</li>
+  <li><strong>Hipótesis B (Ej. Autocrítica como regulación):</strong> ¿Qué función intenta cumplir el juez interno? (Control, prevención, castigo...)</li>
+  <li><strong>Hipótesis C (Ej. Rumiación y Desconexión):</strong> ¿Intenta resolver algo revisando el pasado? ¿Es sobrecarga o evitación?</li>
 </ul>
 
-<h2>5. Procesos de flexibilidad/inflexibilidad psicológica</h2>
-<p>(Identifica y describe los procesos presentes: fusión cognitiva, evitación experiencial, apego al autoconcepto, desconexión del presente, falta de claridad en valores, inacción...)</p>
+<h2>4. Evidencia a favor y en contra</h2>
+<p>(Contrasta las hipótesis con los datos del paciente. ¿Qué datos apoyan estas hipótesis y qué datos las contradicen o matizan?)</p>
 
-<h2>6. Hipótesis central + hipótesis alternativas</h2>
-<p>(Redacta la hipótesis transversal del caso. Usa un tono de prudencia clínica ("parece que", "se hipotetiza que"). Diferencia el contenido cognitivo -ej. insuficiencia- del proceso organizador subyacente -ej. invalidación interpersonal- si aplica al caso. Añade breves hipótesis alternativas a considerar.)</p>
+<h2>5. Huecos de evaluación</h2>
+<p>(¿Qué nos falta comprobar? ¿Qué variables médicas/fisiológicas hay que descartar? ¿Qué contexto nos falta explorar antes de concluir?)</p>
 
-<h2>7. Factores predisponentes, precipitantes y mantenedores</h2>
+<h2>6. Bucles funcionales prioritarios</h2>
+<p>(Describe el circuito o circuitos de mantenimiento prioritarios. Contexto -> Conducta -> Consecuencia inmediata (función) -> Costo a largo plazo.)</p>
+
+<h2>7. Qué SÍ intervenir ahora (Fase de Estabilización)</h2>
+<p>(Define el primer paso lógico. Ej: Estabilización, comprensión funcional, experimentación de autonomía, evaluación de riesgo estricta.)</p>
+<p><em>Evaluación de Riesgo:</em> (Detalla operativamente la ideación actual, plan, intención, factores protectores y plan de seguridad. NO te bases solo en "no hay plan actual".)</p>
+
+<h2>8. Qué NO tocar todavía</h2>
+<p>(Señala los temas que serían prematuros o "escolares" abordar ahora. Ej: No trabajar "propósito" hasta no desarrollar autonomía y toma de decisiones básicas.)</p>
+
+<h2>9. Preguntas clínicas para la siguiente sesión</h2>
 <ul>
-  <li><strong>Predisponentes:</strong> (Qué lo hizo vulnerable históricamente)</li>
-  <li><strong>Precipitantes:</strong> (Qué detonó la crisis actual)</li>
-  <li><strong>Mantenedores:</strong> (Qué hace que el problema no se resuelva hoy)</li>
+  <li>(Lista 3-5 preguntas directas, abiertas y funcionales para explorar en sesión con el paciente que ayuden a cerrar los huecos de evaluación.)</li>
 </ul>
 
-<h2>8. Recursos y factores protectores</h2>
-<p>(Lista y explica las fortalezas, habilidades, redes de apoyo, pasiones y talentos reales detectados en los datos...)</p>
+<h2>10. Plan de Tratamiento Propuesto (Primeras 4 sesiones)</h2>
+<p>(Estructura un abordaje contextual (ACT/FAP/Activación Conductual) paso a paso, orgánico, enfocado en generar experiencias y no solo debate cognitivo.)</p>
 
-<h2>9. Evaluación de riesgo y aspectos a descartar</h2>
-<p>(Esta sección DEBE SER RIGUROSA. Separa y documenta explícitamente: 1) Ideación suicida actual (presencia, plan, intención). 2) Autolesiones (antecedentes, función, urgencia). 3) Factores protectores que justifican tu evaluación de riesgo. Justifica si el riesgo es bajo, moderado o alto. Finalmente, señala áreas médicas a descartar (ej. evaluar orgánicamente síntomas gastrointestinales o de sueño antes de asumirlos psicosomáticos).)</p>
-
-Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final, solo el HTML validado.
+Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final.
             `;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
