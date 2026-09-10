@@ -10700,8 +10700,11 @@ ${afcMapContext}
             {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
             {view === 'canvas' && (
                 <div
-                    className="fixed md:bottom-24 left-1/2 -translate-x-1/2 z-[2500] bg-black/80 backdrop-blur-sm border border-white/10 p-2 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
-                    style={{ bottom: window.innerWidth < 768 ? 'calc(60px + env(safe-area-inset-bottom, 20px))' : undefined }}
+                    className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-black/80 backdrop-blur-sm border border-white/10 p-2 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
+                    style={{ 
+                        top: window.innerWidth < 768 ? `${(viewportStats.visualHeight || window.innerHeight) - 80}px` : 'auto',
+                        bottom: window.innerWidth >= 768 ? '96px' : 'auto' 
+                    }}
                     onMouseDown={e => e.stopPropagation()}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
