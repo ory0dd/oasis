@@ -4780,7 +4780,7 @@ export default function App() {
         return atob("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=");
     });
     const [customEndpoint, setCustomEndpoint] = useState(() => localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions');
-    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'gpt-4o');
+    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat');
     const [apiTestResult, setApiTestResult] = useState('');
     const [apiTestLoading, setApiTestLoading] = useState(false);
 
@@ -7063,7 +7063,7 @@ export default function App() {
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'deepseek-chat';
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: {
@@ -8743,7 +8743,7 @@ export default function App() {
         // Deshabilitado por petición del usuario
         return;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -8865,7 +8865,7 @@ export default function App() {
         
         Responde ÚNICAMENTE con el JSON o "SIN CAMBIOS".`;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -8920,7 +8920,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
   "informalityScore": 5 // Número del 0 (extremadamente formal) al 10 (extremadamente coloquial/argot callejero)
 }`;
                         const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-                        const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+                        const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
                         const styleRes = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -9296,7 +9296,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
     const backgroundAnalyzeContent = async (prompt) => {
         setAnalysisError(null);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const modelsToTry = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -9480,7 +9480,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
             generateChatTitle(effectiveConvId, inputToProcess);
         }
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -9866,7 +9866,7 @@ ${afcMapContext}
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const key = deepseekKey;
-            const model = customModel || 'gpt-4o';
+            const model = customModel || 'deepseek-chat';
 
             console.log(`Diagnostic - Test con Endpoint: ${endpoint}, Modelo: ${model}, Key: ${key ? key.substring(0, 10) + '...' : 'Usando servidor'}`);
 
@@ -10465,7 +10465,7 @@ ${afcMapContext}
 
         console.log(`Sintetizando ${involvedBlocks.length} fragmentos con el Núcleo Cognitivo...`);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
