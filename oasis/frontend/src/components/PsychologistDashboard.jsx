@@ -1719,34 +1719,34 @@ const PsychologistDashboard = ({ onClose }) => {
         );
 
         return (
-            <div className="w-full h-full p-4 md:p-8 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-500 relative bg-[#060607]">
-                <div className="mb-8 md:mb-10 flex flex-col md:flex-row items-start justify-between gap-4">
+            <div className="w-full h-full p-3 sm:p-4 md:p-8 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-500 relative bg-[#060607]">
+                <div className="mb-4 sm:mb-6 md:mb-8 flex flex-col md:flex-row items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                            <Hexagon className="text-emerald-500 w-6 h-6 md:w-8 md:h-8" />
+                        <h1 className="text-lg sm:text-xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+                            <Hexagon className="text-emerald-500 w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 shrink-0" />
                             Centro de Mando Clínico
                         </h1>
-                        <p className="text-zinc-500 mt-2 font-mono text-[10px] md:text-xs uppercase tracking-widest">Observación Científica de la Consciencia</p>
+                        <p className="text-zinc-500 mt-1 font-mono text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest">Observación Científica de la Consciencia</p>
                     </div>
                     <button
                         onClick={() => {
                             localStorage.removeItem('oasis_user');
                             window.location.reload();
                         }}
-                        className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-mono text-[10px] md:text-xs uppercase tracking-widest font-bold w-fit"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all font-mono text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest font-bold w-fit"
                     >
-                        <LogOut size={14} />
+                        <LogOut size={12} />
                         Cerrar Sesión
                     </button>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-6 gap-4">
-                    <div className="relative w-full md:w-1/3 md:min-w-[300px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between mb-4 gap-2.5">
+                    <div className="relative w-full md:w-1/3 md:min-w-[280px]">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
                         <input 
                             type="text" 
                             placeholder="Buscar identidad evaluada..."
-                            className="w-full bg-zinc-900/40 border border-white/5 rounded-xl py-3 pl-11 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all font-mono text-xs"
+                            className="w-full bg-zinc-900/40 border border-white/5 rounded-xl py-2 pl-9 pr-3 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all font-mono text-[11px] sm:text-xs"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -1794,29 +1794,29 @@ const PsychologistDashboard = ({ onClose }) => {
                                 }
                             }
                         }}
-                        className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center justify-center gap-2"
+                        className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all shadow-lg hover:scale-105 shadow-emerald-950 flex items-center justify-center gap-1.5"
                     >
-                        <Plus className="w-4 h-4" /> Crear Análisis
+                        <Plus className="w-3.5 h-3.5" /> Crear Análisis
                     </button>
                 </div>
 
                 {filtered.length === 0 ? (
-                    <div className="bg-zinc-900/20 border border-dashed border-white/10 p-8 md:p-16 rounded-[2.5rem] text-center flex flex-col items-center justify-center gap-4 min-h-[250px] md:min-h-[300px] backdrop-blur-sm">
-                        <Activity className="w-12 h-12 text-zinc-600 animate-pulse" />
+                    <div className="bg-zinc-900/20 border border-dashed border-white/10 p-6 md:p-16 rounded-[2rem] text-center flex flex-col items-center justify-center gap-3 min-h-[220px] md:min-h-[300px] backdrop-blur-sm">
+                        <Activity className="w-8 h-8 md:w-12 md:h-12 text-zinc-600 animate-pulse" />
                         <div>
-                            <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Sin Evaluaciones</h4>
-                            <p className="text-xs text-zinc-600 mt-1 max-w-sm">No se encontraron identidades con datos psicométricos registrados en este sistema.</p>
+                            <h4 className="text-xs md:text-sm font-bold text-zinc-400 uppercase tracking-widest">Sin Evaluaciones</h4>
+                            <p className="text-[10px] md:text-xs text-zinc-600 mt-1 max-w-sm">No se encontraron identidades con datos psicométricos registrados en este sistema.</p>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-zinc-900/10 border border-white/5 rounded-[2rem] overflow-x-auto backdrop-blur-sm no-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[700px]">
+                    <div className="bg-zinc-900/10 border border-white/5 rounded-[1.5rem] md:rounded-[2rem] overflow-x-auto backdrop-blur-sm no-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[480px] md:min-w-[650px]">
                             <thead>
                                 <tr className="border-b border-white/5 bg-zinc-950/40">
-                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Identidad / Aura</th>
-                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Fecha Registro</th>
-                                    <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Estado Clínico</th>
-                                    <th className="px-4 md:px-6 py-4 text-right"></th>
+                                    <th className="px-3 md:px-6 py-2.5 md:py-4 text-[9px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Identidad / Aura</th>
+                                    <th className="px-3 md:px-6 py-2.5 md:py-4 text-[9px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Fecha Registro</th>
+                                    <th className="px-3 md:px-6 py-2.5 md:py-4 text-[9px] md:text-xs font-black uppercase tracking-wider text-zinc-500 font-mono">Estado Clínico</th>
+                                    <th className="px-3 md:px-6 py-2.5 md:py-4 text-right"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1826,17 +1826,17 @@ const PsychologistDashboard = ({ onClose }) => {
                                         onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
                                         className="border-b border-white/5 hover:bg-white/[0.01] cursor-pointer transition-colors group"
                                     >
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400">
-                                                    <User className="w-5 h-5" />
+                                        <td className="px-3 md:px-6 py-2.5 md:py-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                                    <User className="w-4 h-4 md:w-5 md:h-5" />
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-black text-white italic">@{patient.name}</div>
-                                                    <div className="text-zinc-600 text-[10px] font-mono">{patient.id}</div>
+                                                    <div className="text-xs md:text-sm font-black text-white italic">@{patient.name}</div>
+                                                    <div className="text-zinc-600 text-[9px] md:text-[10px] font-mono">{patient.id}</div>
                                                     {patient.password && (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <div className="text-emerald-500/80 text-[10px] font-mono font-bold">
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                            <div className="text-emerald-500/80 text-[9px] md:text-[10px] font-mono font-bold">
                                                                 🔑 {patient.password}
                                                             </div>
                                                             <button 
@@ -1844,19 +1844,19 @@ const PsychologistDashboard = ({ onClose }) => {
                                                                     e.stopPropagation();
                                                                     navigator.clipboard.writeText(patient.password);
                                                                 }}
-                                                                className="text-zinc-500 hover:text-emerald-400 transition-colors p-1"
+                                                                className="text-zinc-500 hover:text-emerald-400 transition-colors p-0.5"
                                                                 title="Copiar contraseña"
                                                             >
-                                                                <Copy className="w-3 h-3" />
+                                                                <Copy className="w-2.5 h-2.5" />
                                                             </button>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 text-xs text-zinc-400 font-mono">{patient.date}</td>
-                                        <td className="px-6 py-5">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border
+                                        <td className="px-3 md:px-6 py-2.5 md:py-4 text-[10px] md:text-xs text-zinc-400 font-mono">{patient.date}</td>
+                                        <td className="px-3 md:px-6 py-2.5 md:py-4">
+                                            <span className={`inline-flex items-center px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest border
                                                 ${patient.status === 'Pendiente de revisión' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : ''}
                                                 ${patient.status === 'Publicado' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : ''}
                                                 ${patient.status === 'Editando' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : ''}
@@ -1864,15 +1864,15 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 {patient.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-5 text-right">
+                                        <td className="px-3 md:px-6 py-2.5 md:py-4 text-right">
                                             <button 
                                                 onClick={(e) => handleDeleteUser(e, patient.name)}
-                                                className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mr-2"
+                                                className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mr-1"
                                                 title="Eliminar usuario"
                                             >
-                                                <Trash2 className="w-5 h-5" />
+                                                <Trash2 className="w-3.5 h-3.5 md:w-5 md:h-5" />
                                             </button>
-                                            <ChevronRight className="inline-block w-5 h-5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
+                                            <ChevronRight className="inline-block w-4 h-4 md:w-5 md:h-5 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
                                         </td>
                                     </tr>
                                 ))}
