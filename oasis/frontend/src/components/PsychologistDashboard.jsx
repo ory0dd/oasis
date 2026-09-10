@@ -4017,7 +4017,7 @@ Varianza Interna Global: ${pidState.globalVariance}
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             if (!activeKey) {
-                activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+                activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
                 if (activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || activeKey.includes("VAR>")) activeKey = '';
             }
 

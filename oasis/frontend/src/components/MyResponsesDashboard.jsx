@@ -515,7 +515,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             if (!activeKey) {
-                activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+                activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
                 if (activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || activeKey.includes("VAR>")) activeKey = '';
             }
 
@@ -2317,7 +2317,7 @@ Devuelve estrictamente el JSON sin formato extra.
             generateDynamicTraits();
         }
 
-        let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+        let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
             activeKey.includes("VAR>") ||
@@ -2614,7 +2614,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
     };
 
     const generateMissingBlindSpots = async () => {
-        let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+        let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
             activeKey.includes("VAR>") ||
@@ -2751,7 +2751,7 @@ Conexiones actuales: ${currentEdgesText}
         if (!lifeUpdateText.trim()) return;
         setIsUpdatingMap(true);
         try {
-            let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+            let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             if (activeKey && (
                 activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
                 activeKey.includes("VAR>") ||
@@ -2886,7 +2886,7 @@ ACTUALIZACIÓN DEL PACIENTE:
 
         setIsGeneratingBioQuestions(true);
         try {
-            let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+            let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
@@ -2942,7 +2942,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
     };
 
     const continueNodeExploration = async (currentNode, userResponseText = null, threadIndex = selectedQuestionIndex || 0) => {
-        let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+        let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
         if (activeKey && (
             activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
             activeKey.includes("VAR>") ||
@@ -2950,7 +2950,8 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             activeKey.includes("6cf43dc93") ||
             activeKey.includes("qw12") ||
             activeKey.includes("YOUR_DEEPSEEK_KEY") ||
-            activeKey.includes("ESCRIBE_AQUI")
+            activeKey.includes("ESCRIBE_AQUI") ||
+            activeKey.includes("fb77d")
         )) {
             activeKey = '';
         }
@@ -3085,11 +3086,25 @@ ESTRUCTURA DE SALIDA ESPERADA:
 
 
         try {
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const customEp = localStorage.getItem('oasis_deepseek_endpoint') || '';
+            const customM = localStorage.getItem('oasis_deepseek_model') || '';
+
+            let provider = 'deepseek';
+            let resolvedEndpoint = customEp;
+            let resolvedModel = customM;
+
+            if (activeKey.startsWith('sk-proj-') || (customEp && customEp.includes('openai.com')) || (customM && customM.toLowerCase().includes('gpt'))) {
+                provider = 'openai';
+                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.openai.com/v1/chat/completions';
+                if (!resolvedModel) resolvedModel = 'gpt-4o';
+            } else {
+                provider = 'deepseek';
+                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.deepseek.com/chat/completions';
+                if (!resolvedModel) resolvedModel = 'deepseek-chat';
+            }
 
             const payload = {
-                model: model,
+                model: resolvedModel,
                 messages: llmMessages.length > 1 ? llmMessages : [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: `Iniciemos la exploración del nodo "${currentNode.label}". ¿Qué pregunta me harías para empezar a indagar en la raíz de esto?` }
@@ -3102,7 +3117,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ provider: 'openai', endpoint: null, key: activeKey, payload: payload })
+                body: JSON.stringify({ provider, endpoint: resolvedEndpoint, key: activeKey || null, payload: payload })
             });
 
             if (!res.ok) {
@@ -3205,7 +3220,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
                         source: currentNode.id,
                         target: uniqueId,
                         weight: 1.5,
-                        type: parsed.new_node.edge_type || 'progression'
+                        edge_type: parsed.new_node.edge_type || 'progression'
                     };
                     
                     if (afcData) {
@@ -3229,8 +3244,10 @@ ESTRUCTURA DE SALIDA ESPERADA:
                 throw new Error("No se devolvió un next_question válido en el JSON.");
             }
         } catch (err) {
-            console.error("Error generando exploración:", err);
-            alert("Ocurrió un error al continuar la conversación: " + err.message);
+            console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
+            if (userResponseText) {
+                alert("Ocurrió un error al continuar la conversación: " + err.message);
+            }
         } finally {
             setIsGeneratingExplorations(false);
             setExplorationResponse(''); // Clear input box
@@ -3264,7 +3281,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
 
     const generateReformulation = async () => {
         setIsGeneratingReformulation(true);
-        let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+        let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
         
         let globalContext = "=== RESPUESTAS EXPLORADAS (MAPA DE NODOS) ===\n";
         if (afcData && afcData.nodes && nodeChats) {
@@ -4884,7 +4901,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         setIsGeneratingTreatmentPlan(true);
 
         try {
-            let activeKey = atob('c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=');
+            let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 

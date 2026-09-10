@@ -695,6 +695,7 @@ namespace Oasis.Backend.Controllers
                    key.Contains("07b18eb6601a4b11a109c96a56c92a16") ||
                    key.Contains("6cf43dc93") ||
                    key.Contains("qw12") ||
+                   key.Contains("fb77d") ||
                    key.Contains("7c7e257ac179439185c9deeff48d11f0");
         }
 
@@ -713,8 +714,7 @@ namespace Oasis.Backend.Controllers
             
             if (string.IsNullOrEmpty(key) || key.Contains("6a38") || IsPlaceholderOrLegacyKey(key))
             {
-                // Fallback a la nueva clave ofuscada si todo falla
-                return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU="));
+                return null;
             }
             
             if (key != null && key.StartsWith("OBFUSCATED:"))

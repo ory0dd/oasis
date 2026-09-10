@@ -4776,11 +4776,11 @@ export default function App() {
     }, [user, view, setView]);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [deepseekKey, setDeepseekKey] = useState(() => {
-        // Base64 of the key to completely bypass GitHub Guardian
-        return atob("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU=");
+        const stored = localStorage.getItem('oasis_deepseek_key') || '';
+        return stored.includes('fb77d') ? '' : stored;
     });
     const [customEndpoint, setCustomEndpoint] = useState(() => localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions');
-    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat');
+    const [customModel, setCustomModel] = useState(() => localStorage.getItem('oasis_deepseek_model') || 'gpt-4o');
     const [apiTestResult, setApiTestResult] = useState('');
     const [apiTestLoading, setApiTestLoading] = useState(false);
 
@@ -8274,10 +8274,8 @@ export default function App() {
     const [isDrawing, setIsDrawing] = useState(false);
 
     useEffect(() => {
-        setAvailableModels(['gpt-4o', 'deepseek-reasoner']);
-
-        setDeepseekKey(atob("c2stZmI3N2RiMTIyNjM4NDdjOGI1N2E0ODI5Nzk3NmM4NzU="));
-    }, [deepseekKey]);
+        setAvailableModels(['gpt-4o', 'deepseek-reasoner', 'deepseek-chat']);
+    }, []);
 
     const editBlock = (block) => {
         if (block.type === 'diary_notebook') {
