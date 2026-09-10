@@ -3954,15 +3954,15 @@ const ProfileView = ({
                 {/* IG STYLE PROFILE (CONSOLIDATED) */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-16 sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-[100px] sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
                 >
-                    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-8 flex flex-col pointer-events-auto">
+                    <div className="w-full max-w-4xl mx-auto px-4 sm:px-4 md:px-8 flex flex-col pointer-events-auto">
 
                         {/* Top Stats Section */}
-                        <div className="flex items-center gap-1 sm:gap-6 md:gap-10 mb-1.5 sm:mb-6 mt-1 sm:mt-4">
+                        <div className="flex items-center gap-4 sm:gap-6 md:gap-10 mb-4 sm:mb-6 mt-4">
                             {/* Avatar */}
                             <div className="relative shrink-0">
-                                <div className={`w-10 h-10 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar`} onClick={(e) => {
+                                <div className={`w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar`} onClick={(e) => {
                                     if (hasActiveStories && !isEditingProfile) {
                                         setViewing24hStories(user24hStories);
                                     } else {
@@ -3980,37 +3980,37 @@ const ProfileView = ({
                                     )}
                                 </div>
                                 <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                                <div onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }} className="absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-6 sm:h-6 bg-accent rounded-full border border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white transition-colors z-10 shadow-lg">
-                                    <Plus size={8} strokeWidth={3} className="sm:w-3.5 sm:h-3.5" />
+                                <div onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }} className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white transition-colors z-10 shadow-lg">
+                                    <Plus size={10} strokeWidth={3} className="sm:w-3.5 sm:h-3.5" />
                                 </div>
                             </div>
 
                             {/* Stats */}
                             <div className="flex-1 flex justify-around md:justify-start md:gap-12 items-center">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-[10px] sm:text-base md:text-xl font-bold">{(feed || []).filter(b => b.username === user).length}</span>
-                                    <span className="text-[7px] sm:text-[10px] md:text-xs text-zinc-400">publicaciones</span>
+                                    <span className="text-sm sm:text-base md:text-xl font-bold">{(feed || []).filter(b => b.username === user).length}</span>
+                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">publicaciones</span>
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <span className="text-[10px] sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[7px] sm:text-[10px] md:text-xs text-zinc-400">resonancias</span>
+                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
+                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">resonancias</span>
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <span className="text-[10px] sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[7px] sm:text-[10px] md:text-xs text-zinc-400">conexiones</span>
+                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
+                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">conexiones</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Bio and Highlights Side-by-Side Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-1 sm:gap-4 mb-1 sm:mb-6 mt-0.5 sm:mt-2">
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-4 sm:mb-6 mt-4 sm:mt-2">
                             {/* Biography Card (curved rectangle module) */}
-                            <div className="md:col-span-8 bg-zinc-900/60 border border-white/5 rounded-xl py-1 px-2 sm:p-4 backdrop-blur-sm shadow-lg flex flex-col justify-between">
+                            <div className="md:col-span-8 bg-zinc-900/60 border border-white/5 rounded-xl p-3 sm:p-4 backdrop-blur-sm shadow-lg flex flex-col justify-between">
                                 <div>
-                                    <div className="flex items-center justify-between mb-0.5">
+                                    <div className="flex items-center justify-between mb-1 sm:mb-0.5">
                                         <div>
-                                            <h2 className="text-[9px] sm:text-sm font-bold text-white leading-tight">{user}</h2>
-                                            <span className="text-[6px] sm:text-[10px] text-zinc-500 font-mono tracking-wider uppercase leading-tight block mt-0.5">Creador / Explorador</span>
+                                            <h2 className="text-sm sm:text-sm font-bold text-white leading-tight">{user}</h2>
+                                            <span className="text-[10px] sm:text-[10px] text-zinc-500 font-mono tracking-wider uppercase leading-tight block mt-0.5">Creador / Explorador</span>
                                         </div>
                                     </div>
                                     {isEditingProfile ? (
