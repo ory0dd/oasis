@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2 } from 'lucide-react';
+import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
@@ -9,7 +9,8 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [isTyping, setIsTyping] = useState(false);
     const [sources, setSources] = useState([]);
     const [selectedSources, setSelectedSources] = useState(new Set());
-    const messagesEndRef = useRef(null);
+    const [showSourcesMobile, setShowSourcesMobile] = useState(false);
+    const chatScrollRef = useRef(null);
 
     // Load available sources
     useEffect(() => {
@@ -50,7 +51,12 @@ export const LLMNotebookTab = ({ patientName }) => {
     }, [patientName]);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTo({
+                top: chatScrollRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     }, [messages]);
 
     const toggleSource = (id) => {
@@ -115,7 +121,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint, key: activeKey, payload })
+                body: JSON.stringify({ endpoint, key: activeKey || null, payload })
             });
 
             if (!res.ok) throw new Error("Error en la conexión con la IA");
@@ -131,9 +137,9 @@ ${contextData || 'Ninguna fuente seleccionada.'}
     };
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row gap-2 md:gap-4 bg-[#0a0a0c] p-2 md:p-4 rounded-3xl animate-in fade-in duration-300 overflow-hidden">
-            {/* Left Panel: Sources */}
-            <div className="w-full md:w-80 h-40 md:h-full bg-zinc-950/80 border border-white/5 rounded-2xl flex flex-col shrink-0">
+        <div className="w-full h-full flex flex-col md:flex-row gap-2 md:gap-4 bg-[#0a0a0c] p-1.5 sm:p-2 md:p-4 rounded-2xl md:rounded-3xl animate-in fade-in duration-300 overflow-hidden relative">
+            {/* Desktop Left Panel: Sources */}
+            <div className="hidden md:flex md:w-80 h-full bg-zinc-950/80 border border-white/5 rounded-2xl flex-col shrink-0">
                 <div className="p-3 md:p-4 border-b border-white/5">
                     <h3 className="text-sm font-black text-white flex items-center gap-2">
                         <BookOpen size={16} className="text-blue-400" /> Fuentes
@@ -181,32 +187,85 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 </div>
             </div>
 
-            {/* Right Panel: Chat Workspace */}
-            <div className="flex-1 bg-zinc-950/50 border border-white/5 rounded-2xl flex flex-col min-w-0">
-                <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-sm font-black text-white flex items-center gap-2">
-                            <Sparkles size={16} className="text-purple-400" /> Asistente Documental
-                        </h3>
-                        <p className="text-[10px] text-zinc-500 font-mono mt-1">
-                            {selectedSources.size} fuentes seleccionadas para el contexto
-                        </p>
+            {/* Mobile Dropdown Overlay for Sources */}
+            {showSourcesMobile && (
+                <div className="md:hidden absolute top-16 left-2 right-2 z-30 bg-zinc-950/95 border border-blue-500/30 rounded-2xl p-3 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-2 duration-200 max-h-[50vh] flex flex-col">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                        <span className="text-xs font-bold text-white flex items-center gap-1.5 font-mono uppercase">
+                            <BookOpen size={13} className="text-blue-400" /> Fuentes Activas
+                        </span>
+                        <button onClick={() => setShowSourcesMobile(false)} className="p-1 text-zinc-400 hover:text-white">
+                            <X size={14} />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-1.5">
+                        {sources.length === 0 ? (
+                            <div className="text-center py-3 text-zinc-600 text-xs font-mono">No hay fuentes disponibles</div>
+                        ) : (
+                            sources.map(s => (
+                                <div 
+                                    key={s.id} 
+                                    onClick={() => toggleSource(s.id)}
+                                    className={`p-2 rounded-xl border cursor-pointer flex items-center gap-2.5 text-xs transition-all ${
+                                        selectedSources.has(s.id) 
+                                        ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
+                                        : 'bg-zinc-900/40 border-white/5 text-zinc-500'
+                                    }`}
+                                >
+                                    <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
+                                        selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
+                                    }`}>
+                                        <CheckCircle2 size={11} />
+                                    </div>
+                                    <span className="truncate">{s.name}</span>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
+            )}
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scroll">
+            {/* Right Panel: Chat Workspace */}
+            <div className="flex-1 bg-zinc-950/50 border border-white/5 rounded-2xl flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
+                <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-purple-400 shrink-0" />
+                        <div>
+                            <h3 className="text-xs md:text-sm font-black text-white">Asistente Documental</h3>
+                            <p className="text-[9px] md:text-[10px] text-zinc-500 font-mono">
+                                {selectedSources.size} de {sources.length} fuentes activas
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Mobile Toggle Button for Sources */}
+                    <button
+                        onClick={() => setShowSourcesMobile(prev => !prev)}
+                        className="md:hidden flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
+                    >
+                        <BookOpen size={12} />
+                        <span>Fuentes ({selectedSources.size})</span>
+                        <ChevronDown size={12} className={`transition-transform duration-200 ${showSourcesMobile ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
+
+                {/* Messages Container with Native Momentum Scroll */}
+                <div 
+                    ref={chatScrollRef} 
+                    className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-6 custom-scroll overscroll-contain touch-pan-y min-h-0"
+                >
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
-                                <Sparkles className="text-blue-400 w-8 h-8" />
+                        <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-8">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                <Sparkles className="text-blue-400 w-7 h-7 md:w-8 md:h-8" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-black text-white">¿Qué te gustaría hacer?</h3>
-                                <p className="text-xs text-zinc-400 max-w-sm mx-auto mt-2">
+                                <h3 className="text-base md:text-lg font-black text-white">¿Qué te gustaría hacer?</h3>
+                                <p className="text-xs text-zinc-400 max-w-sm mx-auto mt-1">
                                     Pregúntale a la IA sobre las fuentes seleccionadas, pide un resumen del caso, o pídele que arme un informe de formulación.
                                 </p>
                             </div>
-                            <div className="flex flex-wrap gap-2 justify-center mt-4 max-w-lg">
+                            <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-lg">
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
                                 <button onClick={() => setInputMsg("Identifica los huecos de evaluación. ¿Qué nos falta preguntar o comprobar en la siguiente sesión para validar nuestras hipótesis?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Huecos y Preguntas</button>
@@ -216,16 +275,16 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                     {messages.map((m, idx) => (
                         <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] rounded-2xl p-4 ${
+                            <div className={`max-w-[90%] md:max-w-[85%] rounded-2xl p-3 md:p-4 ${
                                 m.role === 'user' 
                                 ? 'bg-blue-600/20 text-blue-50 border border-blue-500/30 rounded-br-sm' 
                                 : 'bg-zinc-900/80 text-zinc-300 border border-white/5 rounded-bl-sm'
                             }`}>
-                                <div className="flex items-center gap-2 mb-2 opacity-50">
-                                    {m.role === 'user' ? <User size={12} /> : <Bot size={12} />}
+                                <div className="flex items-center gap-2 mb-1.5 opacity-50">
+                                    {m.role === 'user' ? <User size={11} /> : <Bot size={11} />}
                                     <span className="text-[9px] font-mono uppercase font-bold">{m.role === 'user' ? 'Tú' : 'Notebook LM'}</span>
                                 </div>
-                                <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                                <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans">
                                     {m.content}
                                 </div>
                             </div>
@@ -233,17 +292,17 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                     ))}
                     {isTyping && (
                         <div className="flex justify-start">
-                            <div className="bg-zinc-900/80 border border-white/5 rounded-2xl rounded-bl-sm p-4 flex gap-1">
+                            <div className="bg-zinc-900/80 border border-white/5 rounded-2xl rounded-bl-sm p-3 md:p-4 flex gap-1">
                                 <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce"></div>
                                 <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                                 <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                             </div>
                         </div>
                     )}
-                    <div ref={messagesEndRef} />
                 </div>
 
-                <div className="p-3 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl">
+                {/* Input Bottom Bar */}
+                <div className="p-2.5 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
                     <div className="relative flex items-center">
                         <textarea
                             value={inputMsg}
@@ -255,16 +314,16 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 }
                             }}
                             placeholder="Haz una pregunta o pide que redacte algo..."
-                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-4 pr-12 py-3 text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-32"
+                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-3.5 pr-11 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
                             rows={1}
-                            style={{ minHeight: '44px' }}
+                            style={{ minHeight: '40px' }}
                         />
                         <button
                             onClick={handleSend}
                             disabled={!inputMsg.trim() || isTyping}
-                            className="absolute right-2 w-8 h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"
+                            className="absolute right-1.5 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"
                         >
-                            <Send size={14} />
+                            <Send size={13} />
                         </button>
                     </div>
                 </div>

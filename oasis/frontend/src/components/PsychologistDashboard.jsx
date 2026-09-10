@@ -4413,8 +4413,8 @@ Devuelve estrictamente el JSON sin formato extra.
                 </div>
 
                 {/* Right Clinical Area */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-10 bg-[#060607]">
-                    <div className="max-w-[100%] md:max-w-[95%] w-full mx-auto h-full">
+                <main className={`flex-1 ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT' ? 'overflow-hidden p-1 sm:p-2 md:p-6 flex flex-col min-h-0' : 'overflow-y-auto p-4 md:p-10'} bg-[#060607]`}>
+                    <div className="max-w-[100%] md:max-w-[95%] w-full mx-auto h-full flex flex-col min-h-0">
                         {(activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT') && (
                             <ViewErrorBoundary key={`eb-inicial-${reloadTrigger}`}>
                                 <MyResponsesDashboard 
