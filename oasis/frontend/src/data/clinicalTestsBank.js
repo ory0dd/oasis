@@ -16,6 +16,80 @@ export const CLINICAL_TESTS = {
         referencia: 'Beck, Epstein, Brown & Steer (1988); Sanz & Navarro (2003)',
         duracionAprox: '5-10 min',
         descripcion: 'Instrumento psicométrico de auto-reporte para discriminar síntomas somáticos, cognitivos y vegetativos de la ansiedad frente a la depresión.',
+        marcoTemporal: "Durante la última semana, incluyendo el día de hoy",
+        comoSeResponde: {
+          "marcoTemporal": "Durante la última semana (últimos 7 días, incluyendo hoy)",
+          "instruccionPrincipal": "Indica cuánto te ha molestado o afectado cada síntoma físico, motor o cognitivo de la lista.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "En absoluto",
+                              "queSignifica": "No experimentaste este síntoma ningún día de la semana pasada ni hoy.",
+                              "ejemplo": "No sentiste mareos, hormigueo ni sofocos."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Levemente",
+                              "queSignifica": "El síntoma apareció en algún momento, pero fue leve, no te molestó mucho ni te impidió hacer tus cosas.",
+                              "ejemplo": "Sentiste un leve nudo en el estómago que desapareció rápido."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Moderadamente",
+                              "queSignifica": "Fue muy molesto y desagradable, pero pudiste tolerarlo y continuar.",
+                              "ejemplo": "Taquicardia o temblor en las manos que te obligó a pausar."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "Severamente",
+                              "queSignifica": "Fue muy intenso y alarmante; casi no pudiste soportarlo o te desbordó por completo.",
+                              "ejemplo": "Sensación de ahogo o miedo a morir que te paralizó."
+                    }
+          ],
+          "consejos": [
+                    "Evalúa la molestia real que sentiste en tu cuerpo y mente en estos 7 días, no meses atrás.",
+                    "Distingue entre cansancio físico común y síntomas de alarma corporal (palpitaciones, mareo, temblores).",
+                    "No hay respuestas 'buenas' ni 'malas'; sé lo más transparente posible con tu malestar somático."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Evaluar la gravedad y frecuencia de síntomas de ansiedad aguda y somática, diferenciándola de la depresión.",
+          "queMide": "Sobreactivación somática, hiperventilación, reactividad neurovegetativa, tensión motora e ideación de catástrofe.",
+          "mecanismoPuntuacion": "Suma directa de 21 reactivos (0 a 3 puntos cada uno, rango global de 0 a 63 puntos) distribuido en 4 ejes clínicos.",
+          "subescalas": [
+                    "Somático (adormecimiento, mareo, inestabilidad, desmayo)",
+                    "Vegetativo (taquicardia, sofocos, sudoración, ahogo)",
+                    "Motor (temblores en piernas, manos o estremecimientos)",
+                    "Cognitivo (miedo a morir, perder el control, temor a lo peor)"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 7 puntos",
+                              "nivel": "Ansiedad Mínima",
+                              "interpretacion": "Nivel dentro de los límites esperados de respuesta funcional.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "8 - 15 puntos",
+                              "nivel": "Ansiedad Leve",
+                              "interpretacion": "Presencia de tensión o inquietud somática ligera.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "16 - 25 puntos",
+                              "nivel": "Ansiedad Moderada",
+                              "interpretacion": "Sintomatología clínicamente significativa que genera interferencia funcional.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "26 - 63 puntos",
+                              "nivel": "Ansiedad Severa",
+                              "interpretacion": "Sobrecarga de síntomas somáticos y de pánico de alta gravedad.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite al terapeuta monitorear semana a semana si las técnicas de respiración, desactivación fisiológica o reestructuración cognitiva están reduciendo los síntomas de alarma corporal."
+},
         instrucciones: 'A continuación se presenta una lista de síntomas comunes de la ansiedad. Por favor, indique cuánto le ha molestado o afectado cada síntoma durante la última semana (incluyendo el día de hoy).',
         escala: [
             { value: 0, label: 'En absoluto (0)', desc: 'No me molestó en absoluto' },
@@ -93,6 +167,86 @@ export const CLINICAL_TESTS = {
         referencia: 'Kroenke, Spitzer & Williams (2001); Baader et al. (2012)',
         duracionAprox: '3-6 min',
         descripcion: 'Criterio diagnóstico del DSM-5 estandarizado para cribar la gravedad de episodios depresivos mayores y anhedonia.',
+        marcoTemporal: "Durante las últimas 2 semanas",
+        comoSeResponde: {
+          "marcoTemporal": "Durante las últimas 2 semanas (últimos 14 días)",
+          "instruccionPrincipal": "Indica con qué frecuencia has experimentado los problemas de estado de ánimo, energía, sueño y concentración descritos.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "Para nada",
+                              "queSignifica": "Ningún día en las últimas dos semanas.",
+                              "ejemplo": "No sentiste anhedonia ni fatiga inusual."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Varios días",
+                              "queSignifica": "De 1 a 6 días en las dos semanas.",
+                              "ejemplo": "Tuviste desánimo un par de tardes pero remontaste."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Más de la mitad de los días",
+                              "queSignifica": "De 7 a 11 días en las dos semanas.",
+                              "ejemplo": "Casi toda la semana sentiste dificultad para levantarte o concentrarte."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "Casi todos los días",
+                              "queSignifica": "De 12 a 14 días (prácticamente a diario).",
+                              "ejemplo": "La tristeza, el desgano o la falta de energía son constantes y cotidianos."
+                    }
+          ],
+          "consejos": [
+                    "El reactivo 9 evalúa pensamientos de desear estar muerto/a o autolesionarse; responde con franqueza para activar apoyo y contención inmediata.",
+                    "Ten en cuenta cómo afectó tu rutina cotidiana: trabajo, estudio, relaciones y cuidado personal."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Cribado diagnóstico y medición de severidad de episodios depresivos mayores según criterios DSM-5.",
+          "queMide": "Anhedonia (incapacidad de disfrutar), estado de ánimo deprimido, problemas de sueño, falta de energía, cambios de apetito, culpa y pensamientos de muerte.",
+          "mecanismoPuntuacion": "Suma de 9 reactivos puntuados de 0 a 3 (rango 0 a 27). Si el ítem 9 > 0, se dispara una alerta clínica de riesgo.",
+          "subescalas": [
+                    "Ánimo y Afecto (tristeza, anhedonia)",
+                    "Somático (sueño, energía, apetito)",
+                    "Cognitivo (culpa, inutilidad, concentración)",
+                    "Motor (enlentecimiento o agitación)",
+                    "Riesgo (ideación pasiva/activa)"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 4 puntos",
+                              "nivel": "Depresión Mínima",
+                              "interpretacion": "Sin sospecha de episodio depresivo mayor.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "5 - 9 puntos",
+                              "nivel": "Depresión Leve",
+                              "interpretacion": "Síntomas reactivos o distímicos leves.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "10 - 14 puntos",
+                              "nivel": "Depresión Moderada",
+                              "interpretacion": "Criterio compatible con episodio depresivo moderado.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "15 - 19 puntos",
+                              "nivel": "Depresión Moderadamente Severa",
+                              "interpretacion": "Afectación marcada de la funcionalidad y bienestar.",
+                              "color": "orange"
+                    },
+                    {
+                              "rango": "20 - 27 puntos",
+                              "nivel": "Depresión Severa",
+                              "interpretacion": "Criterio grave que requiere abordaje psicoterapéutico y valoración médica.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Medición estándar de la OMS para verificar objetivamente la reducción del afecto depresivo a lo largo de las sesiones."
+},
         instrucciones: 'Durante las últimas 2 semanas, ¿con qué frecuencia ha experimentado molestias debidas a cualquiera de los siguientes problemas?',
         escala: [
             { value: 0, label: 'Para nada (0)', desc: 'Ningún día' },
@@ -154,6 +308,81 @@ export const CLINICAL_TESTS = {
         referencia: 'Carver, C. S. (1997); Morán, Landero & González (2010)',
         duracionAprox: '6-10 min',
         descripcion: 'Evalúa las respuestas cognitivas y conductuales que el consultante utiliza para lidiar, gestionar o evadir situaciones estresantes o de crisis.',
+        marcoTemporal: "Habitualmente ante situaciones difíciles o estresantes",
+        comoSeResponde: {
+          "marcoTemporal": "En tu vida cotidiana cuando enfrentas problemas, pérdidas o momentos de alta presión",
+          "instruccionPrincipal": "Indica qué tan frecuentemente recurres a cada una de estas conductas o pensamientos para lidiar con el problema.",
+          "escalaDetallada": [
+                    {
+                              "valor": "1",
+                              "etiqueta": "Casi nunca",
+                              "queSignifica": "Nunca o casi nunca haces esto.",
+                              "ejemplo": "No recurres a esta acción ni pasa por tu mente."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "A veces",
+                              "queSignifica": "Haces esto un poco o de forma esporádica.",
+                              "ejemplo": "En ocasiones lo intentas pero no es tu primera opción."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "Frecuentemente",
+                              "queSignifica": "Haces esto en grado medio y con bastante frecuencia.",
+                              "ejemplo": "Es una de tus formas habituales de responder."
+                    },
+                    {
+                              "valor": "4",
+                              "etiqueta": "Casi siempre",
+                              "queSignifica": "Haces esto con mucha frecuencia o como hábito prioritario.",
+                              "ejemplo": "Es tu respuesta automática e inmediata ante las dificultades."
+                    }
+          ],
+          "consejos": [
+                    "No respondas lo que crees que 'deberías' hacer; responde lo que realmente haces cuando te sientes sobrepasado.",
+                    "Distingue si buscas resolver el problema, desahogarte emocionalmente o desconectarte para no sentir nada."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Evaluar el perfil y repertorio de estrategias que el consultante utiliza para enfrentar estresores o crisis.",
+          "queMide": "Estrategias adaptativas activas (afrontamiento activo, planificación, reevaluación positiva, aceptación, apoyo) frente a estrategias evitativas (desconexión conductual, negación, consumo de sustancias, autoinculpación, aislamiento).",
+          "mecanismoPuntuacion": "Compara el bloque de estrategias proactivas vs el bloque evitativo para identificar si predomina la resolución o el escape.",
+          "subescalas": [
+                    "Afrontamiento Activo",
+                    "Planificación",
+                    "Reevaluación Positiva",
+                    "Aceptación",
+                    "Autodistracción",
+                    "Desahogo",
+                    "Desconexión Conductual",
+                    "Negación",
+                    "Consumo de Sustancias",
+                    "Autoinculpación",
+                    "Búsqueda de Apoyo",
+                    "Aislamiento"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "Predominio Activo / Adaptativo",
+                              "nivel": "Afrontamiento Adaptativo",
+                              "interpretacion": "Capacidad para aceptar la realidad y buscar soluciones prácticas.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "Puntuaciones equilibradas",
+                              "nivel": "Afrontamiento Mixto",
+                              "interpretacion": "Alterna intentos activos con conductas de distracción o desahogo.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "Predominio Evitativo",
+                              "nivel": "Afrontamiento Evitativo / Desconexión",
+                              "interpretacion": "Tendencia a aislarse, abandonar metas y evadir el malestar.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite al psicólogo intervenir directamente sobre los mecanismos de evasión (sustancias, renuncia, aislamiento) y entrenar resolución activa de problemas."
+},
         instrucciones: 'Piense en cómo responde habitualmente cuando se enfrenta a situaciones difíciles, estresantes o dolorosas en su vida.',
         escala: [
             { value: 1, label: 'Casi nunca (1)', desc: 'Nunca o casi nunca hago esto' },
@@ -235,6 +464,81 @@ export const CLINICAL_TESTS = {
         referencia: 'Gratz & Roemer (2004); Bjureberg et al. (2016)',
         duracionAprox: '4-8 min',
         descripcion: 'Mide las dificultades clínicamente relevantes para modular el afecto negativo: no aceptación, impulsividad y falta de claridad emocional.',
+        marcoTemporal: "Cuando experimentas emociones difíciles o intensas",
+        comoSeResponde: {
+          "marcoTemporal": "En momentos donde sientes enojo, tristeza, frustración o estrés emocional",
+          "instruccionPrincipal": "Indica con qué frecuencia se aplican estas afirmaciones cuando estás molesto/a o alterado/a.",
+          "escalaDetallada": [
+                    {
+                              "valor": "1",
+                              "etiqueta": "Casi nunca",
+                              "queSignifica": "Aplica de 0% a 10% de las veces que estás alterado/a.",
+                              "ejemplo": "Casi nunca pierdes el control de tus conductas."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "A veces",
+                              "queSignifica": "Aplica de 11% a 35% de las veces.",
+                              "ejemplo": "En ocasiones te enfadas contigo mismo por sentirte mal."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "La mitad del tiempo",
+                              "queSignifica": "Aplica de 36% a 65% de las veces.",
+                              "ejemplo": "La mitad de las veces te cuesta concentrarte en tus tareas."
+                    },
+                    {
+                              "valor": "4",
+                              "etiqueta": "La mayoría de las veces",
+                              "queSignifica": "Aplica de 66% a 90% de las veces.",
+                              "ejemplo": "Sientes con frecuencia que tus emociones son abrumadoras."
+                    },
+                    {
+                              "valor": "5",
+                              "etiqueta": "Casi siempre",
+                              "queSignifica": "Aplica de 91% a 100% de las veces.",
+                              "ejemplo": "Prácticamente siempre sientes que no puedes hacer nada para mejorar tu estado."
+                    }
+          ],
+          "consejos": [
+                    "Los reactivos 1, 2, 3 y 8 tienen redacción positiva (claridad y atención emocional) y se invierten automáticamente en la puntuación.",
+                    "Evalúa cómo reaccionas ante tu propio malestar, no ante situaciones alegres o tranquilas."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Evaluar dificultades clínicamente relevantes para regular el afecto negativo en adultos.",
+          "queMide": "No aceptación de las emociones, dificultad para dirigir la conducta a metas en crisis, impulsividad, falta de claridad y estrategias limitadas.",
+          "mecanismoPuntuacion": "16 reactivos puntuados de 1 a 5 con inversión automática de reactivos directos (puntuación global de 16 a 80).",
+          "subescalas": [
+                    "Claridad (comprender lo que se siente)",
+                    "Atención (escuchar las señales corporales)",
+                    "Impulsos (control sobre la conducta enojada/triste)",
+                    "Metas (capacidad de seguir adelante en crisis)",
+                    "No Aceptación (culpa o vergüenza por sentir)",
+                    "Estrategias (creencia de no poder calmarse)"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "16 - 32 puntos",
+                              "nivel": "Regulación Emocional Funcional",
+                              "interpretacion": "Capacidad adecuada de modular el malestar afectivo.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "33 - 50 puntos",
+                              "nivel": "Dificultades Moderadas",
+                              "interpretacion": "Episodios de impulsividad o bloqueo ocasional bajo presión.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "51 - 80 puntos",
+                              "nivel": "Desregulación Emocional Severa",
+                              "interpretacion": "Alta reactividad, culpa afectiva y desbordamiento.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Identifica si el paciente requiere entrenamiento en tolerancia al malestar (DBT), etiquetado emocional o desculpabilización afectiva."
+},
         instrucciones: 'Indique con qué frecuencia las siguientes afirmaciones se aplican a usted cuando experimenta emociones desagradables o intensas.',
         escala: [
             { value: 1, label: 'Casi nunca (1)', desc: '0 - 10% del tiempo' },
@@ -304,6 +608,86 @@ export const CLINICAL_TESTS = {
         referencia: 'Bond, Hayes et al. (2011); Ruiz et al. (2013)',
         duracionAprox: '2-4 min',
         descripcion: 'Medida unidimensional patrón oro en Terapia de Aceptación y Compromiso (ACT) para evaluar la tendencia a evitar o controlar eventos privados displacenteros.',
+        marcoTemporal: "En general, en tu forma habitual de relacionarte con tus experiencias privadas",
+        comoSeResponde: {
+          "marcoTemporal": "En tu día a día (patrón psicológico general)",
+          "instruccionPrincipal": "Califica del 1 al 7 qué tan verdadera es cada afirmación sobre tu relación con pensamientos y sentimientos.",
+          "escalaDetallada": [
+                    {
+                              "valor": "1",
+                              "etiqueta": "Nunca es verdad",
+                              "queSignifica": "Totalmente en desacuerdo; no te describe en lo absoluto.",
+                              "ejemplo": "El dolor emocional no te impide avanzar hacia lo que valoras."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Muy rara vez",
+                              "queSignifica": "Rara vez es verdad.",
+                              "ejemplo": "Casi nunca dejas que el miedo te paralice."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "Rara vez",
+                              "queSignifica": "Poco frecuente en tu vida cotidiana.",
+                              "ejemplo": "De vez en cuando te preocupas pero actúas."
+                    },
+                    {
+                              "valor": "4",
+                              "etiqueta": "A veces",
+                              "queSignifica": "Medianamente frecuente o en situaciones difíciles.",
+                              "ejemplo": "A veces tus recuerdos te frenan a medias."
+                    },
+                    {
+                              "valor": "5",
+                              "etiqueta": "Frecuentemente",
+                              "queSignifica": "Bastante verdad en tu vida cotidiana.",
+                              "ejemplo": "Con frecuencia sientes que las emociones controlan tu rumbo."
+                    },
+                    {
+                              "valor": "6",
+                              "etiqueta": "Casi siempre",
+                              "queSignifica": "Casi siempre es verdad.",
+                              "ejemplo": "Inviertes mucha energía en no sentir dolor."
+                    },
+                    {
+                              "valor": "7",
+                              "etiqueta": "Siempre es verdad",
+                              "queSignifica": "Completamente de acuerdo; describe exactamente tu lucha diaria.",
+                              "ejemplo": "Sientes que el malestar interno te bloquea por completo la vida."
+                    }
+          ],
+          "consejos": [
+                    "Mide la tendencia a evitar o controlar recuerdos y emociones incómodas a expensas de tus valores.",
+                    "No hay respuestas correctas; responde con sinceridad cómo vives tu mundo interno."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Medida patrón oro de Inflexibilidad Psicológica y Evitación Experiencial (Terapia de Aceptación y Compromiso - ACT).",
+          "queMide": "Fusión cognitiva con el dolor emocional, resistencia a experimentar malestar y parálisis de acciones con sentido vital.",
+          "mecanismoPuntuacion": "Suma de los 7 reactivos en escala Likert de 1 a 7 (rango 7 a 49 puntos).",
+          "subescalas": [
+                    "Interferencia Vital",
+                    "Miedo Afectivo",
+                    "Control Privado",
+                    "Fusión Cognitiva",
+                    "Comparación Social"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "7 - 23 puntos",
+                              "nivel": "Flexibilidad Psicológica Conservada",
+                              "interpretacion": "Tolera el malestar privado sin frenar sus acciones valiosas.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "24 - 49 puntos",
+                              "nivel": "Inflexibilidad y Evitación Elevada",
+                              "interpretacion": "Corte clínico positivo (≥24 en población hispanohablante). Fuerte evitación y parálisis.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Determina si el paciente necesita aprender a soltar la lucha interna y comprometerse con acciones basadas en valores (ACT)."
+},
         instrucciones: 'A continuación encontrará una serie de afirmaciones. Por favor, califique cada una según el grado en que es verdad para usted.',
         escala: [
             { value: 1, label: '1 - Nunca es verdad', desc: 'Completamente en desacuerdo' },
@@ -361,6 +745,79 @@ export const CLINICAL_TESTS = {
         referencia: 'Spitzer, Kroenke, Williams & Löwe (2006); García-Campayo et al. (2010)',
         duracionAprox: '3-5 min',
         descripcion: 'Cribaje validado para detectar la gravedad del patrón de preocupación incontrolable y tensión constante.',
+        marcoTemporal: "Durante las últimas 2 semanas",
+        comoSeResponde: {
+          "marcoTemporal": "Durante las últimas 2 semanas (últimos 14 días)",
+          "instruccionPrincipal": "¿Con qué frecuencia has experimentado molestias por preocupaciones incontrolables o nerviosismo?",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "Para nada",
+                              "queSignifica": "Ningún día en las últimas dos semanas.",
+                              "ejemplo": "No experimentaste tensión ni rumiación excesiva."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Varios días",
+                              "queSignifica": "De 1 a 6 días en las dos semanas.",
+                              "ejemplo": "Tuviste inquietud en algunos momentos puntuales."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Más de la mitad de los días",
+                              "queSignifica": "De 7 a 11 días en las dos semanas.",
+                              "ejemplo": "Casi a diario sentiste dificultad para desconectar la mente."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "Casi todos los días",
+                              "queSignifica": "De 12 a 14 días (prácticamente a diario).",
+                              "ejemplo": "La preocupación incontrolable y la hiperalerta son continuas."
+                    }
+          ],
+          "consejos": [
+                    "Evalúa el hábito de preocuparte por cosas cotidianas o catastróficas que aún no han ocurrido.",
+                    "Ten en cuenta sensaciones de irritabilidad y tensión corporal derivadas del agotamiento mental."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Cribado diagnóstico para Trastorno de Ansiedad Generalizada (TAG) y preocupación excesiva incontrolable.",
+          "queMide": "Incapacidad para frenar la rumiación, sobrepreocupación múltiple, dificultad para relajarse, inquietud motora, irritabilidad y miedo anticipatorio.",
+          "mecanismoPuntuacion": "Suma de 7 reactivos puntuados de 0 a 3 (rango 0 a 21 puntos).",
+          "subescalas": [
+                    "Preocupación e Incertidumbre",
+                    "Tensión Psicomotora",
+                    "Irritabilidad Reactiva",
+                    "Temor Catastrófico"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 4 puntos",
+                              "nivel": "Ansiedad Mínima",
+                              "interpretacion": "Preocupación adaptativa cotidiana.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "5 - 9 puntos",
+                              "nivel": "Ansiedad Leve",
+                              "interpretacion": "Inquietud reactiva moderada.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "10 - 14 puntos",
+                              "nivel": "Ansiedad Moderada",
+                              "interpretacion": "Punto de corte clínico positivo para TAG (≥10). Requiere intervención.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "15 - 21 puntos",
+                              "nivel": "Ansiedad Severa",
+                              "interpretacion": "Rumiación patológica persistente e hiperalerta constante.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite enfocar la terapia en tolerancia a la incertidumbre, aplazamiento de la preocupación y desactivación fisiológica."
+},
         instrucciones: 'Durante las últimas 2 semanas, ¿con qué frecuencia ha experimentado molestias por los siguientes problemas?',
         escala: [
             { value: 0, label: 'Para nada (0)', desc: 'Ningún día' },
@@ -417,6 +874,70 @@ export const CLINICAL_TESTS = {
         referencia: 'Posner et al. (2011); Al-Halabí et al. (2016)',
         duracionAprox: '3-6 min',
         descripcion: 'Cribado clínico estandarizado de referencia mundial para detectar ideación suicida, intención, métodos, planificación y antecedentes sin sustituir la entrevista de seguridad y contención.',
+        marcoTemporal: "En el último mes y en momentos de crisis / vital",
+        comoSeResponde: {
+          "marcoTemporal": "En el último mes y en momentos de crisis o desesperanza",
+          "instruccionPrincipal": "Responde 'Sí' o 'No' a cada reactivo con total honestidad. La escala está diseñada para proteger tu vida y seguridad.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "No",
+                              "queSignifica": "No has tenido este pensamiento, deseo, plan ni conducta.",
+                              "ejemplo": "No has pensado en dormirte y no despertar ni en quitarte la vida."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Sí",
+                              "queSignifica": "Has experimentado este pensamiento, deseo, intención o conducta.",
+                              "ejemplo": "Has tenido pensamientos de muerte o planes de autolesión."
+                    }
+          ],
+          "consejos": [
+                    "No minimices lo que has sentido. El equipo clínico está para escucharte con empatía, confidencialidad y sin juzgarte.",
+                    "Esta escala no reemplaza la entrevista clínica de contención; un resultado positivo activa apoyo prioritario."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Cribado clínico de referencia mundial para graduar la gravedad de la ideación suicida, intención, planificación y antecedentes.",
+          "queMide": "Ideación pasiva, ideación activa sin método, ideación con método, intención real, plan estructurado, conductas previas y desesperanza.",
+          "mecanismoPuntuacion": "Gradación jerárquica. La presencia de intención (ítem 4), plan (ítem 5) o conducta preparatoria (ítem 6) activa automáticamente Alerta Urgente independiente del puntaje total.",
+          "subescalas": [
+                    "Ideación Pasiva",
+                    "Ideación Activa",
+                    "Método",
+                    "Intención",
+                    "Planificación",
+                    "Conducta Previa",
+                    "Desesperanza"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 puntos",
+                              "nivel": "Riesgo No Detectado",
+                              "interpretacion": "Sin ideación suicida activa ni pasiva detectada.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "1 punto (Ítem 1)",
+                              "nivel": "Riesgo Bajo (Ideación Pasiva)",
+                              "interpretacion": "Deseos pasivos de escape o descanso. Fortalecer factores protectores.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "2 puntos (Ítems 1-3)",
+                              "nivel": "Riesgo Moderado (Ideación Activa sin Plan)",
+                              "interpretacion": "Ideación activa sin intención firme. Plan de seguridad y contención.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "≥3 puntos o Ítems 4, 5, 6",
+                              "nivel": "Riesgo Alto / Alerta de Urgencia Clínica",
+                              "interpretacion": "ALERTA URGENTE: Requiere protocolo de seguridad inmediato y supervisión activa.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Dispara la formulación del Plan de Seguridad, retiro de medios letales en el entorno familiar y acuerdos de protección asistida."
+},
         instrucciones: 'Por favor, responde con total sinceridad si has tenido alguno de estos pensamientos, deseos o experiencias en el último mes o durante momentos de crisis.',
         escala: [
             { value: 0, label: 'No (0)', desc: 'No ha estado presente' },
@@ -488,6 +1009,81 @@ export const CLINICAL_TESTS = {
         referencia: 'Kovacs (2014); Figueras-Masip et al. (2010)',
         duracionAprox: '5-10 min',
         descripcion: 'Estándar internacional de cribado afectivo para adolescentes. Discrimina estado de ánimo depresivo, anhedonia, autoestima, deseo de huida y si la irritabilidad encubre un episodio depresivo.',
+        marcoTemporal: "Durante las últimas 2 semanas",
+        comoSeResponde: {
+          "marcoTemporal": "Durante las últimas 2 semanas (últimos 14 días)",
+          "instruccionPrincipal": "En cada reactivo verás un grupo de 3 frases numeradas (0, 1, 2). Elige la frase que mejor describa cómo te has sentido la mayor parte del tiempo.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "Opción 0 (Ausente / Normal)",
+                              "queSignifica": "Describe un estado anímico normal para tu edad.",
+                              "ejemplo": "'Estoy triste de vez en cuando' o 'Me gusta estar con gente'."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Opción 1 (Leve / Moderado)",
+                              "queSignifica": "El síntoma se presenta con bastante frecuencia.",
+                              "ejemplo": "'Estoy triste muchas veces' o 'Muchas veces me siento solo/a'."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Opción 2 (Severo / Persistente)",
+                              "queSignifica": "El síntoma es continuo, intenso y abrumador.",
+                              "ejemplo": "'Estoy triste siempre' o 'Siempre me siento solo/a y nadie me entiende'."
+                    }
+          ],
+          "consejos": [
+                    "En adolescentes la depresión se suele manifestar como irritabilidad, mal genio constante o ganas de irse de casa.",
+                    "Responde con sinceridad lo que sientes por dentro, incluso si frente a tus padres o amigos finges que todo está bien."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Cribado de depresión e irritabilidad clínicamente validado para niños y adolescentes (7 a 17 años).",
+          "queMide": "Ánimo disfórico, anhedonia, baja autoestima, soledad, conflictos en el hogar, culpa, autocrítica escolar e ideación de escape/muerte.",
+          "mecanismoPuntuacion": "Suma de los 12 reactivos de elección forzosa en tríadas (rango global de 0 a 24 puntos).",
+          "subescalas": [
+                    "Ánimo Disfórico",
+                    "Visión de Futuro",
+                    "Autoestima",
+                    "Placer / Anhedonia",
+                    "Auto-culpa",
+                    "Ideación de Muerte / Escape",
+                    "Aislamiento Social",
+                    "Irritabilidad",
+                    "Preocupación Corporal",
+                    "Pérdida de Amistades",
+                    "Rendimiento Escolar",
+                    "Afecto Familiar"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 6 puntos",
+                              "nivel": "Depresión Mínima",
+                              "interpretacion": "Estado afectivo dentro del rango evolutivo normativo.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "7 - 11 puntos",
+                              "nivel": "Sintomatología Leve / Moderada",
+                              "interpretacion": "Síntomas distímicos o reactivos que merecen exploración.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "12 - 16 puntos",
+                              "nivel": "Depresión Significativa",
+                              "interpretacion": "Afectación marcada de autoestima y relaciones familiares/escolares.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "17 - 24 puntos",
+                              "nivel": "Depresión Severa",
+                              "interpretacion": "Episodio depresivo grave con alta necesidad de contención clínica.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite desenmascarar el sufrimiento afectivo en jóvenes etiquetados como 'rebeldes' o 'difíciles' por sus padres."
+},
         instrucciones: 'En cada pregunta, elige la frase que mejor describa cómo te has sentido en las últimas 2 semanas.',
         escala: [
             { value: 0, label: '0', desc: 'Ausente' },
@@ -663,6 +1259,68 @@ export const CLINICAL_TESTS = {
         referencia: 'Birmaher et al. (1997); Vigil-Coello et al. (2017)',
         duracionAprox: '8-12 min',
         descripcion: 'Estándar de oro para explorar 5 subescalas de ansiedad en adolescentes: Pánico/Somatización, Ansiedad Generalizada, Separación, Ansiedad Social y Rechazo Escolar.',
+        marcoTemporal: "En los últimos 3 meses",
+        comoSeResponde: {
+          "marcoTemporal": "En los últimos 3 meses (habitualmente en casa, escuela o con amigos)",
+          "instruccionPrincipal": "Indica qué tan frecuente es cada frase para ti en tu vida diaria.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "Casi nunca o nunca",
+                              "queSignifica": "No te ocurre o te pasa muy rara vez.",
+                              "ejemplo": "No te dan ataques de pánico ni mareos al salir."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "A veces",
+                              "queSignifica": "Te ocurre en ocasiones o en situaciones específicas.",
+                              "ejemplo": "A veces te da vergüenza hablar frente a la clase o con gente nueva."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "A menudo",
+                              "queSignifica": "Te ocurre con mucha frecuencia o casi siempre.",
+                              "ejemplo": "Casi siempre te da ansiedad ir a la escuela o que te juzguen."
+                    }
+          ],
+          "consejos": [
+                    "Presta atención a situaciones como cambiarte de colegio o ciudad, adaptarte a compañeros nuevos o quedarte solo.",
+                    "Diferencia la timidez común de la angustia física (dolor de estómago, palpitaciones o temblores)."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Explorar las 5 dimensiones clave de la ansiedad en niños y adolescentes (8 a 18 años).",
+          "queMide": "Pánico/Somatización, Ansiedad Generalizada, Ansiedad por Separación, Ansiedad Social y Rechazo/Evitación Escolar.",
+          "mecanismoPuntuacion": "20 reactivos puntuados de 0 a 2 (rango 0 a 40 puntos). Punto de corte clínico de Birmaher: total ≥ 25.",
+          "subescalas": [
+                    "Pánico / Somático",
+                    "Ansiedad Generalizada",
+                    "Ansiedad de Separación",
+                    "Ansiedad Social",
+                    "Evitación Escolar"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 14 puntos",
+                              "nivel": "Ansiedad Normal",
+                              "interpretacion": "Puntuación dentro de la normalidad adolescente.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "15 - 24 puntos",
+                              "nivel": "Riesgo Subclínico / Tensión Moderada",
+                              "interpretacion": "Indicios relevantes en subescalas específicas.",
+                              "color": "yellow"
+                    },
+                    {
+                              "rango": "25 - 40 puntos",
+                              "nivel": "Sospecha de Trastorno de Ansiedad (Corte ≥ 25)",
+                              "interpretacion": "Supera el corte clínico de Birmaher. Requiere intervención diferencial.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite saber si la dificultad para hacer amigos se debe a fobia social, ansiedad de separación familiar o síntomas de pánico."
+},
         instrucciones: 'Por favor, indica qué tan cierta es cada frase para ti durante los últimos 3 meses.',
         escala: [
             { value: 0, label: 'Casi nunca o nunca (0)', desc: 'No me pasa o casi nunca' },
@@ -737,6 +1395,72 @@ export const CLINICAL_TESTS = {
         referencia: 'Goodman (2001); Rodríguez-Hernández et al. (2012)',
         duracionAprox: '6-10 min',
         descripcion: 'Cribado multidimensional de 25 reactivos que evalúa síntomas emocionales, problemas de conducta, hiperactividad, relaciones con compañeros y conducta prosocial. Permite contrastar la narrativa del adolescente frente a la de la madre/familia.',
+        marcoTemporal: "Durante los últimos 6 meses",
+        comoSeResponde: {
+          "marcoTemporal": "Durante los últimos 6 meses (o a lo largo de este ciclo escolar)",
+          "instruccionPrincipal": "Marca si cada frase es 'No es verdad (0)', 'Un poco verdad (1)' o 'Totalmente verdad (2)'.",
+          "escalaDetallada": [
+                    {
+                              "valor": "0",
+                              "etiqueta": "No es verdad",
+                              "queSignifica": "No es aplicable o describe algo que casi nunca ocurre.",
+                              "ejemplo": "No se pelea con otros chicos ni tiene rabietas."
+                    },
+                    {
+                              "valor": "1",
+                              "etiqueta": "Un poco verdad",
+                              "queSignifica": "Aplica de forma parcial, ocasional o moderada.",
+                              "ejemplo": "A veces se distrae o pierde la paciencia."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "Totalmente verdad",
+                              "queSignifica": "Describe con claridad una conducta frecuente y notable.",
+                              "ejemplo": "Claramente es muy considerado/a o tiene muchas preocupaciones."
+                    }
+          ],
+          "perspectivaDual": {
+                    "adolescente": "Si eres el adolescente (Axel), responde en primera persona según lo que tú mismo sientes y vives en casa y con tus compañeros.",
+                    "madre": "Si eres la madre, responda en tercera persona según lo que observa a diario en la conducta, límites y estados de ánimo de su hijo."
+          },
+          "consejos": [
+                    "Los reactivos 7, 11, 14, 21 y 25 tienen redacción positiva y se puntúan de forma invertida automáticamente.",
+                    "La escala prosocial mide fortalezas y se calcula por separado de las dificultades conductuales."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Cribado integral de fortalezas y dificultades emocionales/conductuales con enfoque multi-informante (Adolescente vs Madre).",
+          "queMide": "Síntomas Emocionales, Problemas de Conducta, Hiperactividad/Inatención, Problemas con Pares y Conducta Prosocial.",
+          "mecanismoPuntuacion": "25 reactivos (0 a 2 puntos). La puntuación de Dificultades Totales (0-40) suma las 4 primeras subescalas (5 reactivos c/u). La subescala Prosocial (0-10) se calcula aparte como recurso positivo.",
+          "subescalas": [
+                    "Síntomas Emocionales",
+                    "Problemas de Conducta",
+                    "Hiperactividad",
+                    "Problemas con Pares",
+                    "Conducta Prosocial (Factor Protector)"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "0 - 15 puntos",
+                              "nivel": "Dificultades Bajas / Normal",
+                              "interpretacion": "Puntuación dentro de la normalidad evolutiva.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "16 - 19 puntos",
+                              "nivel": "Limítrofe / Alerta Temprana",
+                              "interpretacion": "Dificultades moderadas que justifican acompañamiento.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "20 - 40 puntos",
+                              "nivel": "Rango Clínico / Dificultades Significativas",
+                              "interpretacion": "Dificultades notables que impactan el ámbito escolar o familiar.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite contrastar objetivamente la versión de Axel ('no respetan mis decisiones') con la de su madre ('hay límites firmes'), ubicando dónde están los verdaderos nudos relacionales."
+},
         instrucciones: 'Por favor, marca en qué medida cada frase es verdadera en los últimos 6 meses.',
         informantesDisponibles: [
             { id: 'adolescente', label: 'Adolescente (Autoinforme - 11 a 17 años)' },
@@ -833,6 +1557,80 @@ export const CLINICAL_TESTS = {
         referencia: 'Weinberg & Klonsky (2009); Gratz & Roemer (2004)',
         duracionAprox: '5-8 min',
         descripcion: 'Versión adaptada para adolescentes que evalúa dificultades para identificar emociones, impulsividad ante el malestar, no aceptación y acceso a estrategias de autorregulación adecuadas para los 14 años.',
+        marcoTemporal: "Cuando estás molesto/a, enojado/a o frustrado/a",
+        comoSeResponde: {
+          "marcoTemporal": "En momentos donde experimentas emociones difíciles o intensas",
+          "instruccionPrincipal": "Califica qué tan frecuente es cada frase del 1 (Casi nunca) al 5 (Casi siempre) cuando estás alterado/a.",
+          "escalaDetallada": [
+                    {
+                              "valor": "1",
+                              "etiqueta": "Casi nunca",
+                              "queSignifica": "Aplica de 0% a 10% de las veces que estás molesto/a.",
+                              "ejemplo": "Casi nunca pierdes el control por completo."
+                    },
+                    {
+                              "valor": "2",
+                              "etiqueta": "A veces",
+                              "queSignifica": "Aplica de 11% a 35% de las veces.",
+                              "ejemplo": "En ocasiones sientes culpa por estar triste o con rabia."
+                    },
+                    {
+                              "valor": "3",
+                              "etiqueta": "La mitad de las veces",
+                              "queSignifica": "Aplica de 36% a 65% de las veces.",
+                              "ejemplo": "Te cuesta concentrarte en tus tareas escolares cuando estás enojado/a."
+                    },
+                    {
+                              "valor": "4",
+                              "etiqueta": "La mayoría de las veces",
+                              "queSignifica": "Aplica de 66% a 90% de las veces.",
+                              "ejemplo": "Sientes que tus emociones son una montaña rusa difícil de frenar."
+                    },
+                    {
+                              "valor": "5",
+                              "etiqueta": "Casi siempre",
+                              "queSignifica": "Aplica de 91% a 100% de las veces.",
+                              "ejemplo": "Prácticamente siempre sientes que no puedes hacer nada para volver a la calma."
+                    }
+          ],
+          "consejos": [
+                    "Los reactivos 1 y 2 tienen redacción positiva (claridad y atención) y se invierten automáticamente.",
+                    "Piensa en momentos reales: discusiones con tus padres, frustración con notas o desacuerdos con amigos."
+          ]
+},
+        comoFunciona: {
+          "proposito": "Evaluar dificultades en la regulación emocional adaptada a la etapa adolescente (11 a 17 años).",
+          "queMide": "Dificultad para identificar emociones (claridad), rechazo o culpa por sentir malestar (no aceptación), pérdida de concentración en metas, impulsividad desbordada y acceso limitado a estrategias de calma.",
+          "mecanismoPuntuacion": "16 reactivos puntuados de 1 a 5 con inversión automática (puntuación global de 16 a 80).",
+          "subescalas": [
+                    "Claridad y Atención Emocional",
+                    "No Aceptación del Malestar",
+                    "Metas y Concentración",
+                    "Control de Impulsos",
+                    "Estrategias de Calma"
+          ],
+          "puntosDeCorte": [
+                    {
+                              "rango": "16 - 32 puntos",
+                              "nivel": "Regulación Adecuada",
+                              "interpretacion": "Capacidad esperada para modular y expresar emociones en la adolescencia.",
+                              "color": "emerald"
+                    },
+                    {
+                              "rango": "33 - 50 puntos",
+                              "nivel": "Dificultades Moderadas",
+                              "interpretacion": "Desbordamientos ocasionales o impulsividad reactiva en momentos de tensión.",
+                              "color": "amber"
+                    },
+                    {
+                              "rango": "51 - 80 puntos",
+                              "nivel": "Desregulación Significativa",
+                              "interpretacion": "Alta reactividad emocional, culpa y sensación de pérdida de control.",
+                              "color": "rose"
+                    }
+          ],
+          "utilidadClinica": "Permite al terapeuta trabajar con el adolescente en reconocer detonantes de ira, desescalar antes de explotar y negociar asertivamente con la familia."
+},
         instrucciones: 'Por favor, indica con qué frecuencia te ocurre cada frase cuando sientes emociones difíciles o intensas (como rabia, tristeza o frustración).',
         escala: [
             { value: 1, label: 'Casi nunca (1)', desc: '0 - 10% de las veces' },

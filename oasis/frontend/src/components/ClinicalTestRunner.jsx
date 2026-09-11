@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
     Check, ArrowRight, ArrowLeft, X, Save, AlertTriangle, 
     Sparkles, ShieldCheck, Activity, Brain, Clock, ChevronRight,
-    RotateCcw, Award, FileText
+    RotateCcw, Award, FileText, HelpCircle, Info, ListChecks,
+    TrendingUp, BookOpen
 } from 'lucide-react';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 
@@ -18,6 +19,8 @@ export function ClinicalTestRunner({
     const test = CLINICAL_TESTS[testId] || CLINICAL_TESTS.bai;
 
     const [selectedInformante, setSelectedInformante] = useState('adolescente'); // 'adolescente' | 'madre'
+    const [introTab, setIntroTab] = useState('COMO_RESPONDER'); // 'COMO_RESPONDER' | 'COMO_FUNCIONA' | 'FICHA'
+    const [showHelpModal, setShowHelpModal] = useState(false);
     
     // Load any existing saved result for this patient and test
     const getStorageKey = (inf = selectedInformante) => {
@@ -185,38 +188,42 @@ export function ClinicalTestRunner({
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 relative z-10 custom-scroll">
                     {/* STEP 1: INTRO */}
                     {step === 'intro' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-3">
-                                <div className="flex items-center justify-between text-[11px] font-mono">
-                                    <span className="text-zinc-400">Consultante evaluado:</span>
-                                    <span className="font-bold text-white uppercase tracking-wider">@{patientName}</span>
-                                </div>
-                                {test.poblacion && (
-                                    <div className="flex items-center justify-between text-[11px] font-mono">
-                                        <span className="text-zinc-400">Población objetivo:</span>
-                                        <span className="font-bold text-purple-400">{test.poblacion}</span>
+                        <div className="space-y-5 animate-in fade-in duration-300">
+                            {/* Top Summary Card */}
+                            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-zinc-400">Consultante:</span>
+                                        <span className="font-bold text-white uppercase tracking-wider">@{patientName}</span>
                                     </div>
-                                )}
-                                <div className="flex items-center justify-between text-[11px] font-mono">
-                                    <span className="text-zinc-400">Propiedad psicométrica:</span>
-                                    <span className="font-bold text-emerald-400">Consistencia Interna Alta (α = {test.alphaCronbach})</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-zinc-400">Extensión:</span>
+                                        <span className="text-purple-300 font-bold">{test.items.length} reactivos ({test.duracionAprox})</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center justify-between text-[11px] font-mono">
-                                    <span className="text-zinc-400">Extensión:</span>
-                                    <span className="text-zinc-300">{test.items.length} reactivos ({test.duracionAprox})</span>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] font-mono">
-                                    <span className="text-zinc-400">Referencia clínica:</span>
-                                    <span className="text-zinc-400 truncate max-w-[260px]">{test.referencia}</span>
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono pt-1 border-t border-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-zinc-400">Población:</span>
+                                        <span className="text-zinc-300">{test.poblacion}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-emerald-400 font-bold">
+                                        <ShieldCheck size={12} />
+                                        <span>α = {test.alphaCronbach} (Alta Confiabilidad)</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Informante Selector for Multi-Informant Tests (SDQ) */}
                             {test.informantesDisponibles && (
-                                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-2">
-                                    <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-purple-300 block">
-                                        Perspectiva / Informante a Evaluar:
-                                    </label>
+                                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-purple-300 block">
+                                            ¿Quién está respondiendo esta evaluación?
+                                        </label>
+                                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">
+                                            Multi-informante
+                                        </span>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         {test.informantesDisponibles.map(inf => (
                                             <button
@@ -236,7 +243,7 @@ export function ClinicalTestRunner({
                                                         setCalculatedResult(null);
                                                     }
                                                 }}
-                                                className={`py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all border ${
+                                                className={`py-2.5 px-3 rounded-xl text-xs font-mono font-bold transition-all border ${
                                                     selectedInformante === inf.id
                                                         ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-600/30'
                                                         : 'bg-zinc-950/60 hover:bg-zinc-900 text-zinc-400 border-white/5'
@@ -246,34 +253,237 @@ export function ClinicalTestRunner({
                                             </button>
                                         ))}
                                     </div>
-                                    <p className="text-[11px] text-zinc-400 font-sans mt-1">
+                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
                                         {selectedInformante === 'madre'
-                                            ? 'Los reactivos se presentarán redactados para que la madre o tutor responda sobre la conducta observada en el menor.'
-                                            : 'Los reactivos se presentarán en primera persona para que el adolescente responda directamente sobre su vivencia.'}
+                                            ? (test.comoSeResponde?.perspectivaDual?.madre || 'Los reactivos se adaptan para que la madre o tutor responda sobre la conducta observada en el hogar y la escuela.')
+                                            : (test.comoSeResponde?.perspectivaDual?.adolescente || 'Los reactivos se presentan en primera persona para que el adolescente exprese directamente su vivencia subjetiva y sus relaciones.')}
                                     </p>
                                 </div>
                             )}
 
-                            <div className="space-y-2">
-                                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                                    <Brain size={13} /> Objetivo del Instrumento
-                                </h4>
-                                <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
-                                    {test.descripcion}
-                                </p>
+                            {/* Didactic Navigation Tabs */}
+                            <div className="flex items-center gap-1.5 p-1 bg-zinc-950/80 rounded-xl border border-white/5">
+                                <button
+                                    type="button"
+                                    onClick={() => setIntroTab('COMO_RESPONDER')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                        introTab === 'COMO_RESPONDER'
+                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
+                                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <ListChecks size={13} />
+                                    <span>¿Cómo se responde?</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIntroTab('COMO_FUNCIONA')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                        introTab === 'COMO_FUNCIONA'
+                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
+                                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Brain size={13} />
+                                    <span>¿Cómo funciona?</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIntroTab('FICHA')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                        introTab === 'FICHA'
+                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
+                                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Award size={13} />
+                                    <span>Ficha Psicométrica</span>
+                                </button>
                             </div>
 
-                            <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 text-xs text-purple-200 leading-relaxed font-sans">
-                                <strong className="font-mono uppercase text-[10px] block mb-1 text-purple-300">Instrucciones de Administración:</strong>
-                                {test.instrucciones}
-                            </div>
+                            {/* TAB 1: ¿CÓMO SE RESPONDE? */}
+                            {introTab === 'COMO_RESPONDER' && (
+                                <div className="space-y-4 animate-in fade-in duration-200">
+                                    {/* Marco Temporal Banner */}
+                                    <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-start gap-3">
+                                        <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Clock size={16} />
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-300 block">
+                                                Marco Temporal a Evaluar:
+                                            </span>
+                                            <h4 className="text-sm font-bold text-white mt-0.5">
+                                                "{test.comoSeResponde?.marcoTemporal || test.marcoTemporal || 'Período reciente'}"
+                                            </h4>
+                                            <p className="text-xs text-zinc-300 mt-1 font-sans leading-relaxed">
+                                                {test.comoSeResponde?.instruccionPrincipal || test.instrucciones}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                                    {/* Scale Detailed Breakdown */}
+                                    <div className="space-y-2.5">
+                                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                                            <ListChecks size={13} className="text-purple-400" />
+                                            Guía de la Escala de Respuesta:
+                                        </span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            {(test.comoSeResponde?.escalaDetallada || test.escala.map(e => ({ valor: e.value, etiqueta: e.label, queSignifica: e.desc, ejemplo: '' }))).map((opt, i) => (
+                                                <div key={i} className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 space-y-1 hover:border-purple-500/20 transition-all">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-white">
+                                                            {opt.etiqueta || opt.valor}
+                                                        </span>
+                                                        <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-mono font-bold flex items-center justify-center border border-purple-500/30">
+                                                            {opt.valor}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                                                        {opt.queSignifica}
+                                                    </p>
+                                                    {opt.ejemplo && (
+                                                        <p className="text-[10px] text-purple-300/80 font-sans italic border-t border-white/5 pt-1 mt-1">
+                                                            💡 Ej: {opt.ejemplo}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Advice for answering */}
+                                    {test.comoSeResponde?.consejos && (
+                                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-white/5 space-y-2">
+                                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 block">
+                                                Recomendaciones para contestar:
+                                            </span>
+                                            <ul className="space-y-1.5 text-xs text-zinc-300 font-sans">
+                                                {test.comoSeResponde.consejos.map((tip, idx) => (
+                                                    <li key={idx} className="flex items-start gap-2">
+                                                        <span className="text-purple-400 font-bold shrink-0">•</span>
+                                                        <span>{tip}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* TAB 2: ¿CÓMO FUNCIONA LA PRUEBA? */}
+                            {introTab === 'COMO_FUNCIONA' && (
+                                <div className="space-y-4 animate-in fade-in duration-200">
+                                    <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-2">
+                                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                                            <Brain size={14} /> Propósito Clínico
+                                        </h4>
+                                        <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-sans">
+                                            {test.comoFunciona?.proposito || test.descripcion}
+                                        </p>
+                                        <div className="pt-2 border-t border-white/5">
+                                            <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider block">¿Qué evalúa exactamente?</span>
+                                            <p className="text-xs text-zinc-300 mt-0.5 font-sans leading-relaxed">
+                                                {test.comoFunciona?.queMide || test.descripcion}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-2">
+                                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                                            <TrendingUp size={14} /> Mecanismo de Puntuación
+                                        </h4>
+                                        <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                                            {test.comoFunciona?.mecanismoPuntuacion || 'Suma directa de los reactivos respondidos.'}
+                                        </p>
+                                    </div>
+
+                                    {test.comoFunciona?.subescalas && (
+                                        <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-2">
+                                            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+                                                Subescalas / Dimensiones Evaluadas ({test.comoFunciona.subescalas.length})
+                                            </h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                {test.comoFunciona.subescalas.map((s, idx) => (
+                                                    <div key={idx} className="px-3 py-1.5 rounded-lg bg-white/5 text-[11px] font-mono text-zinc-300">
+                                                        • {s}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
+                                            Baremos y Niveles de Gravedad Clínica
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {(test.comoFunciona?.puntosDeCorte || test.baremos.map(b => ({ rango: `${b.min} - ${b.max} pts`, nivel: b.nivel, interpretacion: b.desc, color: b.color }))).map((pc, idx) => (
+                                                <div key={idx} className="p-3 rounded-xl bg-zinc-950/60 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${getSeverityBadgeClasses(pc.color)}`}>
+                                                            {pc.nivel}
+                                                        </span>
+                                                        <span className="text-xs font-mono font-bold text-white">{pc.rango}</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-zinc-400 font-sans sm:max-w-xs sm:text-right">
+                                                        {pc.interpretacion}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {test.comoFunciona?.utilidadClinica && (
+                                        <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-zinc-300 leading-relaxed font-sans">
+                                            <strong className="text-[10px] font-mono uppercase text-emerald-400 block mb-1">
+                                                Utilidad en Consulta y Formulación de Caso:
+                                            </strong>
+                                            {test.comoFunciona.utilidadClinica}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* TAB 3: FICHA PSICOMÉTRICA */}
+                            {introTab === 'FICHA' && (
+                                <div className="space-y-3 animate-in fade-in duration-200">
+                                    <div className="p-4 rounded-2xl bg-zinc-950/60 border border-white/5 space-y-3 font-mono text-xs">
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                            <span className="text-zinc-400">Instrumento:</span>
+                                            <span className="font-bold text-white">{test.nombre} ({test.siglas})</span>
+                                        </div>
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                            <span className="text-zinc-400">Área de Evaluación:</span>
+                                            <span className="text-purple-300">{test.area}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                            <span className="text-zinc-400">Población Diana:</span>
+                                            <span className="text-zinc-200">{test.poblacion}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                            <span className="text-zinc-400">Consistencia Interna:</span>
+                                            <span className="text-emerald-400 font-bold">Alfa de Cronbach α = {test.alphaCronbach}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                            <span className="text-zinc-400">Tiempo de Aplicación:</span>
+                                            <span className="text-zinc-300">{test.duracionAprox}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 pt-1">
+                                            <span className="text-zinc-400">Referencia Bibliográfica:</span>
+                                            <span className="text-zinc-400 italic text-[11px] leading-relaxed">{test.referencia}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bottom Call to Action */}
+                            <div className="pt-3 flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={() => setStep('running')}
                                     className="flex-1 py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20"
                                 >
-                                    <span>Iniciar Reactivos</span>
+                                    <span>Comenzar Cuestionario ({test.items.length} Reactivos)</span>
                                     <ArrowRight size={14} />
                                 </button>
                                 {existingResult && (
@@ -290,9 +500,38 @@ export function ClinicalTestRunner({
 
                     {/* STEP 2: RUNNING QUESTIONS */}
                     {step === 'running' && currentItem && (
-                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
+                            {/* Persistent Frame Banner */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                    <Clock size={14} className="text-purple-400 shrink-0" />
+                                    <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold shrink-0">Marco:</span>
+                                    <span className="text-xs font-medium text-white truncate">
+                                        "{test.comoSeResponde?.marcoTemporal || test.marcoTemporal || 'Período reciente'}"
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowHelpModal(true)}
+                                        className="px-2.5 py-1 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/30 text-purple-200 font-mono text-[10px] font-bold flex items-center gap-1 transition-all"
+                                    >
+                                        <HelpCircle size={12} />
+                                        <span>¿Cómo responder?</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep('intro')}
+                                        className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 font-mono text-[10px] transition-all"
+                                        title="Pausar y revisar metodología sin perder avances"
+                                    >
+                                        Instrucciones
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Question progress and subscale */}
-                            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                            <div className="flex items-center justify-between border-b border-white/5 pb-2">
                                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
                                     Reactivo {currentIndex + 1} de {totalItems}
                                 </span>
@@ -441,6 +680,21 @@ export function ClinicalTestRunner({
                                 </p>
                             </div>
 
+                            {/* Detailed calculation explanation */}
+                            <div className="p-4 rounded-2xl bg-zinc-950/70 border border-white/5 space-y-2">
+                                <h4 className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1.5">
+                                    <TrendingUp size={13} /> ¿Cómo se calculó y qué implica este resultado?
+                                </h4>
+                                <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                                    {test.comoFunciona?.mecanismoPuntuacion || 'El puntaje se obtiene sumando los reactivos respondidos según el baremo estandarizado.'}
+                                </p>
+                                {test.comoFunciona?.utilidadClinica && (
+                                    <p className="text-xs text-zinc-400 pt-1 border-t border-white/5 font-sans leading-relaxed">
+                                        <strong className="text-zinc-300">Pauta clínica:</strong> {test.comoFunciona.utilidadClinica}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Subscale breakdown if exists */}
                             {calculatedResult.subescalas && Object.keys(calculatedResult.subescalas).length > 0 && (
                                 <div className="space-y-2">
@@ -491,6 +745,13 @@ export function ClinicalTestRunner({
                                     <RotateCcw size={13} />
                                     <span>Reaplicar</span>
                                 </button>
+                                
+                                <button
+                                    onClick={() => setStep('intro')}
+                                    className="py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 font-mono text-xs font-bold uppercase tracking-wider border border-white/5 transition-all"
+                                >
+                                    Ver Metodología
+                                </button>
                             </div>
                         </div>
                     )}
@@ -508,6 +769,78 @@ export function ClinicalTestRunner({
                                 className="bg-purple-500 h-full transition-all duration-300"
                                 style={{ width: `${progressPercent}%` }}
                             />
+                        </div>
+                    </div>
+                )}
+
+                {/* Help Modal Overlay while taking test */}
+                {showHelpModal && (
+                    <div className="fixed inset-0 z-[3600] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="w-full max-w-lg bg-[#0c0c0e] border border-white/15 rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xl relative overflow-hidden">
+                            {/* Accent Glow */}
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/10 blur-[50px] pointer-events-none rounded-full" />
+
+                            <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
+                                <div className="flex items-center gap-2">
+                                    <HelpCircle size={17} className="text-purple-400" />
+                                    <h4 className="text-sm font-bold text-white">
+                                        Guía de Respuesta • {test.siglas}
+                                    </h4>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowHelpModal(false)}
+                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
+                                >
+                                    <X size={15} />
+                                </button>
+                            </div>
+
+                            <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/25 space-y-1 relative z-10">
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold block">
+                                    Marco Temporal a tener en mente:
+                                </span>
+                                <p className="text-xs font-bold text-white font-sans">
+                                    "{test.comoSeResponde?.marcoTemporal || test.marcoTemporal || 'Período reciente'}"
+                                </p>
+                                <p className="text-[11px] text-zinc-300 font-sans mt-0.5">
+                                    {test.comoSeResponde?.instruccionPrincipal || test.instrucciones}
+                                </p>
+                            </div>
+
+                            <div className="space-y-2 max-h-64 overflow-y-auto custom-scroll pr-1 relative z-10">
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold block">
+                                    Significado de las Opciones:
+                                </span>
+                                {(test.comoSeResponde?.escalaDetallada || test.escala.map(e => ({ valor: e.value, etiqueta: e.label, queSignifica: e.desc, ejemplo: '' }))).map((opt, i) => (
+                                    <div key={i} className="p-2.5 rounded-xl bg-zinc-950/80 border border-white/5 space-y-0.5">
+                                        <div className="flex items-center justify-between font-bold text-white text-xs">
+                                            <span>{opt.etiqueta || opt.valor}</span>
+                                            <span className="text-[10px] font-mono text-purple-400">Valor {opt.valor}</span>
+                                        </div>
+                                        <p className="text-zinc-300 text-[11px] font-sans leading-relaxed">{opt.queSignifica}</p>
+                                        {opt.ejemplo && (
+                                            <p className="text-[10px] text-purple-300/80 font-sans italic border-t border-white/5 pt-1 mt-1">
+                                                💡 {opt.ejemplo}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {test.comoSeResponde?.consejos && (
+                                <div className="text-[11px] text-zinc-400 border-t border-white/10 pt-2 relative z-10">
+                                    <span className="font-bold text-zinc-300">💡 Consejo:</span> {test.comoSeResponde.consejos[0]}
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={() => setShowHelpModal(false)}
+                                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-600/20 relative z-10"
+                            >
+                                Entendido, Continuar con la Pregunta
+                            </button>
                         </div>
                     </div>
                 )}
