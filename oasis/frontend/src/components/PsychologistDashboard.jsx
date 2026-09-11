@@ -12,6 +12,7 @@ import MyResponsesDashboard from './MyResponsesDashboard';
 import FloatingNotebook from './FloatingNotebook';
 import { TranscriptionsTab } from './TranscriptionsTab';
 import { LLMNotebookTab } from './LLMNotebookTab';
+import { safeJSONParse } from '../utils/jsonParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
@@ -4076,8 +4077,11 @@ Instrucciones Estrictas:
 6. Devuelve ÚNICAMENTE el texto markdown del análisis (sin título de presentación, solo a partir de 'II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO' o el título principal equivalente).
 `;
 
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
             const payload = {
-                model: 'deepseek-chat',
+                model: model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.6,
                 max_tokens: 3000
@@ -4086,7 +4090,7 @@ Instrucciones Estrictas:
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: 'https://api.deepseek.com/chat/completions', key: activeKey, payload })
+                body: JSON.stringify({ endpoint, key: activeKey, payload })
             });
 
             if (!res.ok) throw new Error("Network response was not ok");
@@ -4109,8 +4113,8 @@ Instrucciones Estrictas:
 
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.deepseek.com/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const phenomData = JSON.parse(localStorage.getItem(`oasis_phenom_data_${selectedPatient.name}`) || '{}');
             const bioData = JSON.parse(localStorage.getItem(`oasis_answers_${selectedPatient.name}`) || '[]');
@@ -4160,12 +4164,9 @@ Devuelve estrictamente el JSON sin formato extra.
 
             if (!res.ok) throw new Error("Error generando el plan de tratamiento.");
             const data = await res.json();
-            let cleanContent = data.choices[0].message.content.trim();
-            if (cleanContent.startsWith("\`\`\`")) {
-                cleanContent = cleanContent.replace(/^\`\`\`[a-zA-Z]*\s*/, "").replace(/\s*\`\`\`$/, "");
-            }
+            const aiContent = data.choices?.[0]?.message?.content || "";
             
-            const parsed = JSON.parse(cleanContent);
+            const parsed = safeJSONParse(aiContent);
             setTreatmentPlan(parsed);
             localStorage.setItem(`oasis_treatment_plan_${selectedPatient.name}`, JSON.stringify(parsed));
             

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Aperture, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
+import { safeJSONParse } from '../utils/jsonParser';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -560,8 +561,11 @@ RESPUESTAS EXISTENCIALES:
 ${userResponsesText}
 `;
 
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
             const payload = {
-                model: 'gpt-4o',
+                model: model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.6,
                 response_format: { type: "json_object" }
@@ -570,7 +574,7 @@ ${userResponsesText}
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: 'https://api.openai.com/v1/chat/completions', key: activeKey, payload })
+                body: JSON.stringify({ endpoint, key: activeKey, payload })
             });
 
             if (!res.ok) throw new Error("Network response was not ok");
@@ -578,9 +582,7 @@ ${userResponsesText}
             const data = await res.json();
             aiContent = data.choices[0].message.content;
             
-            // Strip markdown block if present
-            const cleanContent = aiContent.replace(/^[\s\n]*```(?:json)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '');
-            const parsedContent = JSON.parse(cleanContent);
+            const parsedContent = safeJSONParse(aiContent);
             
             // LLMs sometimes nest things unexpectedly, search deeply for habitar
             let pTraits = parsedContent.publicTraits || parsedContent.PublicTraits;
@@ -625,14 +627,12 @@ ${userResponsesText}
                 delete parsedContent.publicTraits;
                 delete parsedContent.PublicTraits;
             } else {
-                alert("Kio generó el análisis, pero no incluyó la 'Firma de Resonancia' en el formato correcto. Por favor, dale al botón de generar de nuevo para que lo intente otra vez.");
-                parsedContent["Firma de Resonancia (Aviso)"] = "La IA no pudo estructurar la firma correctamente. Intenta generar el análisis de nuevo.";
+                console.warn("Firma de resonancia no encontrada en formato esperado.");
+                parsedContent["Firma de Resonancia (Aviso)"] = "La IA estructuró parcialmente la firma existencial.";
             }
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {
-            console.error(e);
-            alert("Kio tuvo un problema estructurando el formato JSON del análisis profundo. Revisa el apartado 'Respuesta Cruda' en el informe clínico.");
-            
+            console.error("Error en generateDynamicTraits:", e);
             // Salvage the raw text and show it in the dashboard so it's not lost
             const fallbackContent = {
                 "Error de Estructura": "La IA no devolvió el formato JSON válido que se le pidió. A continuación se muestra lo que respondió:",
@@ -2454,27 +2454,18 @@ ${isAdditive ? `
             }
 
             const data1 = await res1.json();
-            let raw1 = data1.choices[0].message.content.trim();
-            const start1 = raw1.indexOf('{');
-            const end1 = raw1.lastIndexOf('}');
-            let cleanContent1 = (start1 !== -1 && end1 !== -1) ? raw1.substring(start1, end1 + 1) : raw1;
+            const raw1 = data1.choices?.[0]?.message?.content || "";
             
             let parsedTopology;
             try {
-                parsedTopology = JSON.parse(cleanContent1);
+                parsedTopology = safeJSONParse(raw1);
             } catch(e) {
                 console.warn("JSON Parse failed in stage 1.", e);
-                const match = e.message.match(/position (\d+)/);
-                let contextStr = "";
-                if (match && match[1]) {
-                    const pos = parseInt(match[1], 10);
-                    contextStr = "\\nContexto del error: ..." + cleanContent1.substring(Math.max(0, pos - 20), pos + 20) + "...";
-                }
-                throw new Error("El modelo generó un JSON inválido en la Etapa 1. " + e.message + contextStr);
+                throw new Error("El modelo generó un JSON inválido en la Etapa 1 (Topología): " + e.message);
             }
 
             if (!parsedTopology.is_valid) {
-                throw new Error("El análisis fue rechazado por la IA: " + parsedTopology.rejection_reason);
+                throw new Error("El análisis fue rechazado por la IA: " + (parsedTopology.rejection_reason || "Datos insuficientes"));
             }
 
             setIsAnalyzing("Redactando análisis clínico profundo (Etapa 2/3)...");
@@ -2546,43 +2537,14 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
             }
 
             const data2 = await res2.json();
-            let raw2 = data2.choices[0].message.content.trim();
-            const start2 = raw2.indexOf('{');
-            const end2 = raw2.lastIndexOf('}');
-            let cleanContent2 = (start2 !== -1 && end2 !== -1) ? raw2.substring(start2, end2 + 1) : raw2;
-            
-            // Auto-heal common JSON syntax hallucinations from Deepseek
-            // 1. Rogue '}' or ']' after a string right before root keys
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"claves_salida\":/g, '",\n  "claves_salida":');
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"analysis_breakdown\":/g, '",\n  "analysis_breakdown":');
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"blind_spots\":/g, '",\n  "blind_spots":');
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"patrones_dificultad\":/g, '",\n  "patrones_dificultad":');
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"explicacion_sencilla\":/g, '",\n  "explicacion_sencilla":');
-            cleanContent2 = cleanContent2.replace(/\"\s*[\]\}]\s*,\s*\"hypotheses\":/g, '",\n  "hypotheses":');
-
-            // 2. Extra '}' before keys when it wasn't after a string
-            cleanContent2 = cleanContent2.replace(/},\s*"claves_salida":/g, ',\n  "claves_salida":');
-            cleanContent2 = cleanContent2.replace(/},\s*"analysis_breakdown":/g, ',\n  "analysis_breakdown":');
-            cleanContent2 = cleanContent2.replace(/},\s*"blind_spots":/g, ',\n  "blind_spots":');
-            cleanContent2 = cleanContent2.replace(/},\s*"patrones_dificultad":/g, ',\n  "patrones_dificultad":');
-            cleanContent2 = cleanContent2.replace(/},\s*"explicacion_sencilla":/g, ',\n  "explicacion_sencilla":');
-
-            // 3. Trailing commas before closing objects/arrays
-            cleanContent2 = cleanContent2.replace(/,\s*}/g, '}');
-            cleanContent2 = cleanContent2.replace(/,\s*]/g, ']');
+            const raw2 = data2.choices?.[0]?.message?.content || "";
 
             let parsedInsights;
             try {
-                parsedInsights = JSON.parse(cleanContent2);
+                parsedInsights = safeJSONParse(raw2);
             } catch(e) {
                 console.warn("JSON Parse failed in stage 2.", e);
-                const match = e.message.match(/position (\d+)/);
-                let contextStr = "";
-                if (match && match[1]) {
-                    const pos = parseInt(match[1], 10);
-                    contextStr = "\\nContexto del error: ..." + cleanContent2.substring(Math.max(0, pos - 20), pos + 20) + "...";
-                }
-                throw new Error("El modelo generó un JSON inválido en la Etapa 2. " + e.message + contextStr);
+                throw new Error("El modelo generó un JSON inválido en la Etapa 2 (Análisis Clínico): " + e.message);
             }
 
             const parsedAfc = {
@@ -2701,7 +2663,7 @@ Conexiones actuales: ${currentEdgesText}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    provider: 'openai', endpoint: null,
+                    endpoint: endpoint,
                     key: activeKey,
                     payload: payload
                 })
@@ -2718,15 +2680,9 @@ Conexiones actuales: ${currentEdgesText}
             }
 
             const data = await res.json();
-            const aiContent = data.choices[0].message.content;
+            const aiContent = data.choices?.[0]?.message?.content || "";
 
-            let cleanContent = aiContent.trim();
-            if (cleanContent.startsWith("```")) {
-                cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "");
-                cleanContent = cleanContent.replace(/\s*```$/, "");
-            }
-
-            const parsed = JSON.parse(cleanContent.trim());
+            const parsed = safeJSONParse(aiContent);
             if (parsed.blind_spots && parsed.blind_spots.length > 0) {
                 const updatedAfc = {
                     ...afcData,
