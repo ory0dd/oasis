@@ -391,7 +391,7 @@ const AutoResizeTextarea = ({ value, onChange, className }) => {
     );
 };
 
-const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations = [], activeConversationId = null, onOpenNodeChat, isEmbedded = false }) => {
+const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations = [], activeConversationId = null, onOpenNodeChat, isEmbedded = false, onNavigateTab }) => {
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
         const timer = setTimeout(() => setIsMounted(true), 150);
@@ -4538,18 +4538,40 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                                             ) : (
                                                 <div className="space-y-4">
                                                     {isEmbedded && (
-                                                        <div className="flex justify-end mb-2">
-                                                            <button
-                                                                onClick={generateBioStrategicQuestions}
-                                                                disabled={isGeneratingBioQuestions}
-                                                                className={`px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded-xl font-bold uppercase text-[9px] tracking-widest transition-all flex items-center gap-2 ${isGeneratingBioQuestions ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                {isGeneratingBioQuestions ? (
-                                                                    <><div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /> Analizando Respuestas...</>
-                                                                ) : (
-                                                                    <><Sparkles size={12} /> Generar Exploración Estratégica</>
+                                                        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/25 mb-2">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+                                                                <div>
+                                                                    <span className="text-[10px] font-mono font-bold text-purple-300 uppercase tracking-wider block">
+                                                                        Fase II Desbloqueada: Pruebas de Cribaje Posteriores (α &gt; 0.80)
+                                                                    </span>
+                                                                    <span className="text-[10px] text-zinc-400 font-sans">
+                                                                        El algoritmo ha seleccionado 3 instrumentos psicométricos complementarios para este caso.
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {onNavigateTab && (
+                                                                    <button
+                                                                        onClick={() => onNavigateTab('PRUEBAS_POSTERIORES')}
+                                                                        className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-mono text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+                                                                    >
+                                                                        <Activity size={11} />
+                                                                        <span>Ver Pruebas Sugeridas</span>
+                                                                    </button>
                                                                 )}
-                                                            </button>
+                                                                <button
+                                                                    onClick={generateBioStrategicQuestions}
+                                                                    disabled={isGeneratingBioQuestions}
+                                                                    className={`px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded-xl font-mono text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${isGeneratingBioQuestions ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    {isGeneratingBioQuestions ? (
+                                                                        <><div className="w-2.5 h-2.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /> Analizando...</>
+                                                                    ) : (
+                                                                        <><Sparkles size={11} /> Preguntas Estratégicas</>
+                                                                    )}
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {BIO_QUESTIONS.map((q, idx) => {

@@ -3,7 +3,8 @@ import { Aperture, Mic,
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
-    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder
+    Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
+    Lock, ShieldCheck, Award, BookOpen
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -12,6 +13,8 @@ import MyResponsesDashboard from './MyResponsesDashboard';
 import FloatingNotebook from './FloatingNotebook';
 import { TranscriptionsTab } from './TranscriptionsTab';
 import { LLMNotebookTab } from './LLMNotebookTab';
+import { CLINICAL_TESTS, recomendarPruebasPosteriores } from '../data/clinicalTestsBank';
+import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { safeJSONParse } from '../utils/jsonParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
@@ -864,6 +867,7 @@ const PsychologistDashboard = ({ onClose }) => {
     const [isReprocessing, setIsReprocessing] = useState(false);
     const [privateNotes, setPrivateNotes] = useState('');
     const [conversations, setConversations] = useState([]);
+    const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
 
     // Persist selectedPatient, currentModule and activeTab to avoid losing state on reload
     useEffect(() => {
@@ -2136,6 +2140,253 @@ const PsychologistDashboard = ({ onClose }) => {
                             );
                         })}
                     </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderPosteriorTestsTab = () => {
+        const patientName = selectedPatient?.name || 'Paciente';
+        const bioTranscripts = activePatientData?.clínicalInterview?.transcripts || 
+            (() => {
+                try {
+                    return JSON.parse(localStorage.getItem(`oasis_bio_transcriptions_${patientName}`)) || null;
+                } catch(e) { return null; }
+            })();
+
+        const pidAnswers = activePatientData?.pidAnswers || 
+            (() => {
+                try {
+                    return JSON.parse(localStorage.getItem(`oasis_pid_answers_${patientName}`)) || null;
+                } catch(e) { return null; }
+            })();
+
+        const phenomAnswers = activePatientData?.phenomAnswers ||
+            (() => {
+                try {
+                    return JSON.parse(localStorage.getItem(`oasis_phenom_qualitative_${patientName}`)) || null;
+                } catch(e) { return null; }
+            })();
+
+        const notes = privateNotes || localStorage.getItem(`oasis_private_notes_${patientName}`) || '';
+
+        const analysis = recomendarPruebasPosteriores({
+            patientName,
+            bioTranscripts,
+            pidAnswers,
+            phenomAnswers,
+            notes
+        });
+
+        // Check if a test has been completed
+        const getSavedResult = (testId) => {
+            try {
+                const raw = localStorage.getItem(`oasis_test_result_${patientName}_${testId}`);
+                return raw ? JSON.parse(raw) : null;
+            } catch(e) {
+                return null;
+            }
+        };
+
+        return (
+            <div className="space-y-8 animate-in fade-in duration-300">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-purple-400">
+                                FASE II • EVALUACIÓN PSICOMÉTRICA POSTERIOR
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-black text-white italic">
+                            Pruebas de Cribaje y Evaluación Posterior
+                        </h3>
+                        <p className="text-zinc-400 text-xs mt-1 font-sans">
+                            Instrumentos estandarizados con alto Alfa de Cronbach (α &gt; 0.80) seleccionados algorítmicamente para @{patientName}.
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {analysis.unlocked ? (
+                            <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
+                                <ShieldCheck size={13} />
+                                <span>Desbloqueado por Historia Clínica</span>
+                            </div>
+                        ) : (
+                            <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
+                                <Lock size={13} />
+                                <span>Bloqueado (Requiere Entrevista Biográfica)</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Locked State Screen */}
+                {!analysis.unlocked ? (
+                    <div className="p-8 sm:p-12 rounded-3xl bg-zinc-950/60 border border-white/5 text-center max-w-xl mx-auto space-y-4">
+                        <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+                            <Lock size={24} />
+                        </div>
+                        <h4 className="text-base font-bold text-white">
+                            Evaluaciones Posteriores Bloqueadas
+                        </h4>
+                        <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                            Estas pruebas de cribaje se desbloquean automáticamente en cuanto el consultante responde su <strong>Entrevista Biográfica Inicial</strong>. Esto asegura que el algoritmo detecte sus síntomas específicos y no aplique pruebas innecesarias o redundantes.
+                        </p>
+                        <div className="pt-2">
+                            <button
+                                onClick={() => setActiveTab('VISION_GENERAL')}
+                                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 text-xs font-mono font-bold uppercase tracking-wider transition-all"
+                            >
+                                Ir a Entrevista Biográfica
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Top 3 Algorithmic Recommendations */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-mono font-black uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                                    <Sparkles size={14} className="text-purple-400" />
+                                    Top 3 Pruebas Recomendadas por el Algoritmo Clínico
+                                </span>
+                                <span className="text-[10px] font-mono text-zinc-500">
+                                    Dimensiones clínicas diferenciadas
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {analysis.recommendations.map((rec, idx) => {
+                                    const t = rec.test;
+                                    const saved = getSavedResult(t.id);
+
+                                    return (
+                                        <div
+                                            key={t.id}
+                                            className={`p-5 rounded-3xl border flex flex-col justify-between transition-all relative overflow-hidden ${
+                                                saved
+                                                    ? 'bg-purple-950/20 border-purple-500/40'
+                                                    : 'bg-zinc-950/70 border-white/10 hover:border-purple-500/30'
+                                            }`}
+                                        >
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-black flex items-center justify-center">
+                                                        #{idx + 1}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                                        α = {t.alphaCronbach}
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-500 block">
+                                                        {t.area}
+                                                    </span>
+                                                    <h4 className="text-sm font-black text-white mt-0.5 leading-snug">
+                                                        {t.nombre} ({t.siglas})
+                                                    </h4>
+                                                </div>
+
+                                                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 text-[11px] text-zinc-300 leading-relaxed font-sans">
+                                                    <strong className="text-[9px] font-mono uppercase text-purple-300 block mb-0.5">
+                                                        Justificación Clínica del Algoritmo:
+                                                    </strong>
+                                                    {rec.justificacion}
+                                                </div>
+
+                                                {saved && (
+                                                    <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-white/5 flex items-center justify-between">
+                                                        <span className="text-[10px] font-mono text-zinc-400">Resultado Actual:</span>
+                                                        <span className="text-xs font-mono font-bold text-purple-300">
+                                                            {saved.totalScore} pts • {saved.nivel}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="pt-4 mt-2 border-t border-white/5">
+                                                <button
+                                                    onClick={() => setActiveTestRunnerId(t.id)}
+                                                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                                                        saved
+                                                            ? 'bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30'
+                                                            : 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20'
+                                                    }`}
+                                                >
+                                                    <Activity size={13} />
+                                                    <span>{saved ? 'Ver / Reaplicar Prueba' : 'Administrar Prueba'}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Full Catalog of Screening Tests */}
+                        <div className="space-y-4 pt-4 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-mono font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                                    <BookOpen size={14} />
+                                    Catálogo Completo de Pruebas de Cribaje ({Object.keys(CLINICAL_TESTS).length} Disponibles)
+                                </span>
+                                <span className="text-[10px] font-mono text-zinc-500">
+                                    Todas con Alfa de Cronbach validado
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {Object.values(CLINICAL_TESTS).map(t => {
+                                    const saved = getSavedResult(t.id);
+                                    return (
+                                        <div
+                                            key={t.id}
+                                            className="p-4 rounded-2xl bg-zinc-950/40 border border-white/5 hover:border-white/10 flex flex-col justify-between gap-3 transition-all"
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-[9px] font-mono font-bold uppercase text-purple-400">
+                                                        {t.siglas} • {t.duracionAprox}
+                                                    </span>
+                                                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
+                                                        α = {t.alphaCronbach}
+                                                    </span>
+                                                </div>
+                                                <h5 className="text-xs font-bold text-white leading-snug">
+                                                    {t.nombre}
+                                                </h5>
+                                                <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2 leading-relaxed font-sans">
+                                                    {t.descripcion}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                                {saved ? (
+                                                    <span className="text-[9px] font-mono text-emerald-400 font-bold">
+                                                        ✓ {saved.totalScore} pts ({saved.nivel})
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[9px] font-mono text-zinc-600">
+                                                        Sin aplicar
+                                                    </span>
+                                                )}
+
+                                                <button
+                                                    onClick={() => setActiveTestRunnerId(t.id)}
+                                                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-purple-600 hover:text-white text-zinc-300 font-mono text-[10px] font-bold transition-all"
+                                                >
+                                                    {saved ? 'Revisar' : 'Abrir'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
                 )}
             </div>
         );
@@ -4379,6 +4630,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <FileText className="w-4.5 h-4.5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Visión General</span>}
                                     </button>
+                                    <button onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <Activity className="w-4.5 h-4.5 shrink-0 text-purple-400" />
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Pruebas Posteriores</span>}
+                                    </button>
                                 </div>
                             </div>
 
@@ -4459,7 +4714,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                     accent="#10b981" 
                                     conversations={conversations}
                                     onOpenNodeChat={() => {}}
+                                    onNavigateTab={(tab) => setActiveTab(tab)}
                                 />
+                            </ViewErrorBoundary>
+                        )}
+
+                        {activeTab === 'PRUEBAS_POSTERIORES' && (
+                            <ViewErrorBoundary key={`eb-pruebas-${reloadTrigger}`}>
+                                {renderPosteriorTestsTab()}
                             </ViewErrorBoundary>
                         )}
                         
@@ -4623,6 +4885,18 @@ Devuelve estrictamente el JSON sin formato extra.
         <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col">
             {currentModule === 'DASHBOARD' && renderDashboard()}
             {currentModule === 'PROFILE' && renderProfileWorkspace()}
+
+            {/* Interactive Clinical Test Runner Modal */}
+            {activeTestRunnerId && (
+                <ClinicalTestRunner
+                    testId={activeTestRunnerId}
+                    patientName={selectedPatient?.name || 'Paciente'}
+                    onClose={() => setActiveTestRunnerId(null)}
+                    onSave={(res) => {
+                        setReloadTrigger(prev => prev + 1);
+                    }}
+                />
+            )}
 
             {/* Image Zoom Modal */}
             {zoomImage && (

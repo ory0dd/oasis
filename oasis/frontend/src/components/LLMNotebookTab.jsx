@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
-    Save, Clock, Download, History 
+    Save, Clock, Download, History, Activity 
 } from 'lucide-react';
+import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
+import { ClinicalTestRunner } from './ClinicalTestRunner';
+import { safeJSONParse } from '../utils/jsonParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
@@ -129,6 +132,7 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [isSavingManual, setIsSavingManual] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
     const [inputMsg, setInputMsg] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -185,6 +189,24 @@ export const LLMNotebookTab = ({ patientName }) => {
         // PID-5
         const pidStr = localStorage.getItem(`oasis_pid_answers_${patientName}`);
         if (pidStr) availSources.push({ id: 'pid5', name: 'Evaluación de Personalidad PID-5 (Completada)', type: 'data', content: pidStr });
+
+        // Completed Clinical Screening Tests (BAI, PHQ-9, COPE, DERS, AAQ-II, GAD-7)
+        if (CLINICAL_TESTS) {
+            Object.keys(CLINICAL_TESTS).forEach(tId => {
+                const resRaw = localStorage.getItem(`oasis_test_result_${patientName}_${tId}`);
+                if (resRaw) {
+                    try {
+                        const res = JSON.parse(resRaw);
+                        availSources.push({
+                            id: `test_${tId}`,
+                            name: `Prueba: ${res.nombre || tId.toUpperCase()} [${res.nivel} - ${res.totalScore} pts] (Completada)`,
+                            type: 'doc',
+                            content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre} (${tId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                        });
+                    } catch (e) {}
+                }
+            });
+        }
 
         // Transcripts
         const transStr = localStorage.getItem(`oasis_transcriptions_${patientName}`);
@@ -766,12 +788,27 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                                                 {tests.map((test, tIdx) => {
                                                     const isSelected = chosenTest && chosenTest.nombre && (
                                                         chosenTest.nombre.toLowerCase().includes(test.nombre.toLowerCase()) || 
                                                         test.nombre.toLowerCase().includes(chosenTest.nombre.toLowerCase())
                                                     );
+
+                                                    const matchedTestKey = (() => {
+                                                        const low = (test.nombre || '').toLowerCase();
+                                                        if (low.includes('ansiedad') || low.includes('beck') || low.includes('bai')) return 'bai';
+                                                        if (low.includes('gad') || low.includes('generalizada')) return 'gad7';
+                                                        if (low.includes('depres') || low.includes('phq') || low.includes('bdi')) return 'phq9';
+                                                        if (low.includes('cope') || low.includes('afronta')) return 'cope';
+                                                        if (low.includes('ders') || low.includes('regulaci')) return 'ders16';
+                                                        if (low.includes('aaq') || low.includes('aceptaci') || low.includes('act')) return 'aaq2';
+                                                        return null;
+                                                    })();
+
+                                                    const completedResult = matchedTestKey 
+                                                        ? safeJSONParse(localStorage.getItem(`oasis_test_result_${patientName}_${matchedTestKey}`))
+                                                        : null;
 
                                                     return (
                                                         <div 
@@ -801,27 +838,46 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                                         {test.justificacion}
                                                                     </p>
                                                                 )}
+
+                                                                {completedResult && (
+                                                                    <div className="mt-2 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono flex items-center justify-between">
+                                                                        <span className="text-emerald-400 font-bold">✓ Aplicada</span>
+                                                                        <span className="text-zinc-200">{completedResult.totalScore} pts ({completedResult.nivel})</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
 
-                                                            <button
-                                                                onClick={() => handleSelectTest(test)}
-                                                                disabled={isTyping}
-                                                                className={`mt-2.5 w-full py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-                                                                    isSelected 
-                                                                        ? 'bg-purple-500 text-white shadow' 
-                                                                        : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30'
-                                                                }`}
-                                                            >
-                                                                {isSelected ? (
-                                                                    <>
-                                                                        <Check size={11} /> Seleccionada
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        Escoger esta prueba <ArrowRight size={10} />
-                                                                    </>
+                                                            <div className="mt-3 space-y-1.5">
+                                                                {matchedTestKey && (
+                                                                    <button
+                                                                        onClick={() => setActiveTestRunnerId(matchedTestKey)}
+                                                                        className="w-full py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all bg-purple-600 hover:bg-purple-500 text-white shadow-sm shadow-purple-600/20"
+                                                                    >
+                                                                        <Activity size={11} />
+                                                                        <span>{completedResult ? 'Ver / Reaplicar' : 'Administrar Prueba'}</span>
+                                                                    </button>
                                                                 )}
-                                                            </button>
+
+                                                                <button
+                                                                    onClick={() => handleSelectTest(test)}
+                                                                    disabled={isTyping}
+                                                                    className={`w-full py-1 px-2 rounded-lg text-[9px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+                                                                        isSelected 
+                                                                            ? 'bg-purple-500/40 text-purple-200 border border-purple-400/40' 
+                                                                            : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 border border-white/5'
+                                                                    }`}
+                                                                >
+                                                                    {isSelected ? (
+                                                                        <>
+                                                                            <Check size={10} /> Consultando con Kio
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            Consultar a Kio <ArrowRight size={9} />
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     );
                                                 })}
@@ -964,6 +1020,28 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Interactive Clinical Test Runner Modal */}
+            {activeTestRunnerId && (
+                <ClinicalTestRunner
+                    testId={activeTestRunnerId}
+                    patientName={patientName || 'Paciente'}
+                    onClose={() => setActiveTestRunnerId(null)}
+                    onSave={(res) => {
+                        // Refresh sources list with the new completed test
+                        setSources(prev => {
+                            const newSource = {
+                                id: `test_${res.testId}`,
+                                name: `Prueba: ${res.nombre} [${res.nivel} - ${res.totalScore} pts] (Completada)`,
+                                type: 'doc',
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre} (${res.testId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                            };
+                            return [newSource, ...prev.filter(s => s.id !== newSource.id)];
+                        });
+                        setSelectedSources(prev => new Set([...prev, `test_${res.testId}`]));
+                    }}
+                />
             )}
         </div>
     );
