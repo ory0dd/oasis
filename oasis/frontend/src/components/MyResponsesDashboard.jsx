@@ -1828,6 +1828,36 @@ Devuelve estrictamente el JSON sin formato extra.
     const [tourActiveIndex, setTourActiveIndex] = useState(null);
     const [isTourMinimized, setIsTourMinimized] = useState(false);
 
+    // Derived sorted list of nodes for narrative tour
+    const sortedTourNodes = useMemo(() => {
+        let rawNodes = afcData ? afcData.nodes : [];
+        if (!rawNodes || rawNodes.length === 0) return [];
+
+        if (selectedPatternId) {
+            const activePat = currentPatterns.find(p => p.id === selectedPatternId);
+            if (activePat && activePat.node_ids) {
+                rawNodes = rawNodes.filter(n => activePat.node_ids.includes(n.id));
+            }
+        }
+
+        const typeOrder = {
+            historical: 0,
+            biological: 1,
+            social: 2,
+            cognitive: 3,
+            motor: 4,
+            physiological: 5,
+            consequence: 6
+        };
+        return [...rawNodes].sort((a, b) => {
+            const orderA = typeOrder[a.type] ?? 99;
+            const orderB = typeOrder[b.type] ?? 99;
+            if (orderA !== orderB) return orderA - orderB;
+            if (a.x !== b.x) return a.x - b.x;
+            return a.y - b.y;
+        });
+    }, [afcData, selectedPatternId, currentPatterns]);
+
     useEffect(() => {
         setIsExploringActiveNode(false);
         setSelectedExplorationSpot(null);
@@ -1888,36 +1918,6 @@ Devuelve estrictamente el JSON sin formato extra.
             setExplorationResponse('');
         }
     }, [selectedNode, tourActiveIndex, selectedQuestionIndex, mapViewTab, sortedTourNodes]);
-
-    // Derived sorted list of nodes for narrative tour
-    const sortedTourNodes = useMemo(() => {
-        let rawNodes = afcData ? afcData.nodes : [];
-        if (!rawNodes || rawNodes.length === 0) return [];
-
-        if (selectedPatternId) {
-            const activePat = currentPatterns.find(p => p.id === selectedPatternId);
-            if (activePat && activePat.node_ids) {
-                rawNodes = rawNodes.filter(n => activePat.node_ids.includes(n.id));
-            }
-        }
-
-        const typeOrder = {
-            historical: 0,
-            biological: 1,
-            social: 2,
-            cognitive: 3,
-            motor: 4,
-            physiological: 5,
-            consequence: 6
-        };
-        return [...rawNodes].sort((a, b) => {
-            const orderA = typeOrder[a.type] ?? 99;
-            const orderB = typeOrder[b.type] ?? 99;
-            if (orderA !== orderB) return orderA - orderB;
-            if (a.x !== b.x) return a.x - b.x;
-            return a.y - b.y;
-        });
-    }, [afcData, selectedPatternId, currentPatterns]);
 
     const resetMapTransform = useCallback(() => {
         if (!mapContainerRef.current) return;
