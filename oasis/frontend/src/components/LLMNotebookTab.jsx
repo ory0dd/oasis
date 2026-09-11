@@ -1,7 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X, Trash2, RotateCcw } from 'lucide-react';
+import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+
+// Helper to parse the top 3 recommended clinical tests from assistant messages
+const parseTestRecommendations = (content) => {
+    if (!content || typeof content !== 'string') return { cleanText: content, tests: [] };
+
+    // 1. Try structured tag: [PRUEBAS_SUGERIDAS: [...]]
+    const tagMatch = content.match(/\[PRUEBAS_SUGERIDAS:\s*(\[[\s\S]*?\])\s*\]/);
+    if (tagMatch) {
+        try {
+            const parsed = JSON.parse(tagMatch[1]);
+            const cleanText = content.replace(/\[PRUEBAS_SUGERIDAS:\s*\[[\s\S]*?\]\s*\]/, '').trim();
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return { cleanText, tests: parsed.slice(0, 3) };
+            }
+        } catch (e) {
+            console.warn("Error parsing PRUEBAS_SUGERIDAS JSON:", e);
+        }
+    }
+
+    // 2. Fallback heuristic: Extract numbered recommendations if message discusses evaluations/tests
+    const lower = content.toLowerCase();
+    const isTestDiscussion = lower.includes('prueba') || lower.includes('evalua') || lower.includes('test') || lower.includes('escala') || lower.includes('inventario') || lower.includes('instrumento');
+    
+    if (isTestDiscussion) {
+        const lines = content.split('\n');
+        const candidateTests = [];
+        lines.forEach(line => {
+            const m = line.match(/^\s*([1-9])[\.\-\)]\s*([^\:\-\—\n]+)(?:[:\-\—]\s*(.+))?$/);
+            if (m) {
+                const num = m[1];
+                let rawTitle = m[2].trim();
+                let rawDesc = m[3] ? m[3].trim() : '';
+                // Clean leading/trailing markdown asterisks, underscores or quotes
+                rawTitle = rawTitle.replace(/^[\*\_"'\s]+|[\*\_"'\s]+$/g, '');
+                rawDesc = rawDesc.replace(/^[\*\_"'\s]+|[\*\_"'\s]+$/g, '');
+                if (rawTitle.length >= 3 && rawTitle.length <= 60) {
+                    candidateTests.push({
+                        id: String(num),
+                        nombre: rawTitle,
+                        area: rawDesc.slice(0, 90),
+                        justificacion: rawDesc
+                    });
+                }
+            }
+        });
+
+        if (candidateTests.length >= 2) {
+            return { cleanText: content, tests: candidateTests.slice(0, 3) };
+        }
+    }
+
+    return { cleanText: content, tests: [] };
+};
 
 export const LLMNotebookTab = ({ patientName }) => {
     const [messages, setMessages] = useState(() => {
@@ -12,6 +65,15 @@ export const LLMNotebookTab = ({ patientName }) => {
         } catch (e) {
             console.error("Error loading saved notebook messages:", e);
             return [];
+        }
+    });
+    const [chosenTest, setChosenTest] = useState(() => {
+        if (!patientName) return null;
+        try {
+            const saved = localStorage.getItem(`oasis_chosen_test_${patientName}`);
+            return saved ? JSON.parse(saved) : null;
+        } catch (e) {
+            return null;
         }
     });
     const [inputMsg, setInputMsg] = useState('');
@@ -60,10 +122,11 @@ export const LLMNotebookTab = ({ patientName }) => {
         setSelectedSources(new Set(availSources.map(s => s.id)));
     }, [patientName]);
 
-    // Load messages when patient changes
+    // Load messages and chosen test when patient changes
     useEffect(() => {
         if (!patientName) {
             setMessages([]);
+            setChosenTest(null);
             return;
         }
         try {
@@ -72,6 +135,13 @@ export const LLMNotebookTab = ({ patientName }) => {
         } catch (e) {
             console.error("Error updating patient notebook messages:", e);
             setMessages([]);
+        }
+
+        try {
+            const savedTest = localStorage.getItem(`oasis_chosen_test_${patientName}`);
+            setChosenTest(savedTest ? JSON.parse(savedTest) : null);
+        } catch (e) {
+            setChosenTest(null);
         }
     }, [patientName]);
 
@@ -105,10 +175,21 @@ export const LLMNotebookTab = ({ patientName }) => {
             return;
         }
         setMessages([]);
+        setChosenTest(null);
         setConfirmClear(false);
         if (patientName) {
             try {
                 localStorage.removeItem(`oasis_llm_notebook_messages_${patientName}`);
+                localStorage.removeItem(`oasis_chosen_test_${patientName}`);
+            } catch (e) {}
+        }
+    };
+
+    const handleRemoveChosenTest = () => {
+        setChosenTest(null);
+        if (patientName) {
+            try {
+                localStorage.removeItem(`oasis_chosen_test_${patientName}`);
             } catch (e) {}
         }
     };
@@ -120,12 +201,14 @@ export const LLMNotebookTab = ({ patientName }) => {
         setSelectedSources(newSet);
     };
 
-    const handleSend = async () => {
-        if (!inputMsg.trim()) return;
+    const handleSend = async (customMsg = null) => {
+        const textToSend = typeof customMsg === 'string' ? customMsg.trim() : inputMsg.trim();
+        if (!textToSend) return;
 
-        const userMsg = inputMsg.trim();
-        setInputMsg('');
-        const updatedMessages = [...messages, { role: 'user', content: userMsg }];
+        if (typeof customMsg !== 'string') {
+            setInputMsg('');
+        }
+        const updatedMessages = [...messages, { role: 'user', content: textToSend }];
         setMessages(updatedMessages);
         setIsTyping(true);
 
@@ -138,19 +221,32 @@ export const LLMNotebookTab = ({ patientName }) => {
 
             const systemPrompt = `Eres Kio, operando como un colega y Psicólogo Clínico Supervisor. El usuario ya es un profesional clínico experto, NUNCA le preguntes su rol ni le des advertencias médicas ("no soy tu terapeuta", "solo soy una IA").
 
-REGLAS DE FORMATO (OBLIGATORIAS):
-- ESTÁ ESTRICTAMENTE PROHIBIDO usar formato Markdown.
-- CERO asteriscos. CERO negritas. CERO viñetas. CERO listas numeradas.
-- Escribe todo en texto plano, en párrafos simples, como si chatearas por WhatsApp.
-
-REGLAS DE CONVERSACIÓN (OBLIGATORIAS):
+REGLAS DE CONVERSACIÓN Y TONO (OBLIGATORIAS):
+- Escribe como un colega cercano por chat, en párrafos simples, claros y fluidos, estilo WhatsApp.
+- Evita excesos de asteriscos o negritas.
 - Si el usuario dice cosas cortas como "Hola", "Hola hola", "Buen día", RESPONDE ÚNICAMENTE CON UN SALUDO CORTITO SIMILAR, por ejemplo: "Hola, ¿qué quieres hacer hoy?" o "¿En qué te ayudo?". NUNCA lances un análisis no solicitado ni listas de opciones. Fluye con la plática.
+
+RECOMENDACIÓN DE PRUEBAS / EVALUACIÓN CLÍNICA (REGLA CRÍTICA):
+- Si el usuario pregunta qué pruebas, tests, inventarios o instrumentos aplicar o qué hacer clínicamente para evaluar:
+- NUNCA des un catálogo genérico ni una lista larga de 5 o más pruebas abstractas.
+- Analiza a fondo los datos específicos de ${patientName || 'este paciente'} (su historia biográfica, su perfil PID-5, sus síntomas y bucles de evitación o rumiación).
+- Adopta una postura clínica reflexiva de colega: empieza diciendo algo natural como: "Hm, analizando el caso específico de ${patientName || 'este caso'}... podríamos pensar en estas 3 opciones que son las más viables y estratégicas:"
+- Proporciona EXACTAMENTE 3 pruebas o instrumentos concretos (ni más ni menos) que aporten la mayor utilidad clínica inmediata para este caso. Para cada una explica brevemente qué evalúa y por qué es viable para este paciente.
+- Invita al usuario a escoger una: "¿Cuál de estas tres te gustaría priorizar o aplicar? Si escoges una, te puedo desglosar sus reactivos clave, cómo aplicarla y cómo interpretarla clínicamente para este caso."
+- OBLIGATORIO: Al final exacto de tu respuesta, añade un bloque con la etiqueta técnica en una sola línea (los datos deben ser un JSON válido):
+[PRUEBAS_SUGERIDAS: [{"id": "1", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "2", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "3", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}]]
+
+CUANDO EL USUARIO ESCOGE O INDICA UNA PRUEBA EN PARTICULAR:
+- Desarrolla la prueba seleccionada en profundidad práctica:
+  1. Breve introducción y reactivos o preguntas clave más relevantes para este paciente.
+  2. Guía paso a paso de administración adaptada a su motivo de consulta.
+  3. Pautas de puntuación e interpretación clínica contextualizada a su perfil (datos vs inferencias).
 
 CONOCIMIENTO CLÍNICO (PID-5):
 - Si las fuentes incluyen un test PID-5 con 25 ítems puntuados, asume que es el PID-5-BF (Brief Form). Utiliza tu conocimiento interno de los 5 dominios (Afecto Negativo, Desapego, Antagonismo, Desinhibición, Psicoticismo) para inferir rasgos de personalidad según las puntuaciones altas (2 o 3). NUNCA te quejes de que faltan los nombres de los ítems; deduce el perfil.
 
 SOLO CUANDO EL USUARIO TE PIDA UN ANÁLISIS DEL CASO:
-Aplica el rigor clínico de Análisis Funcional (ACT) y estructura (en texto plano) tus ideas sobre:
+Aplica el rigor clínico de Análisis Funcional (ACT) y estructura tus ideas sobre:
 - Datos vs Inferencias.
 - Bucles funcionales (ABC).
 - Huecos y preguntas para la próxima sesión.
@@ -188,6 +284,17 @@ ${contextData || 'Ninguna fuente seleccionada.'}
         } finally {
             setIsTyping(false);
         }
+    };
+
+    const handleSelectTest = (test) => {
+        setChosenTest(test);
+        if (patientName) {
+            try {
+                localStorage.setItem(`oasis_chosen_test_${patientName}`, JSON.stringify(test));
+            } catch (e) {}
+        }
+        const followUp = `He seleccionado la prueba: ${test.nombre}. Por favor desglosa sus reactivos o aspectos clave, cómo aplicarla paso a paso con ${patientName || 'el paciente'}, y cómo interpretar los resultados en el contexto de su caso.`;
+        handleSend(followUp);
     };
 
     return (
@@ -293,6 +400,16 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {chosenTest && (
+                            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-xl text-[10px] font-mono animate-in fade-in">
+                                <ClipboardCheck size={12} className="text-purple-400 shrink-0" />
+                                <span className="truncate max-w-[140px] md:max-w-[200px]">Prueba: <strong>{chosenTest.nombre}</strong></span>
+                                <button onClick={handleRemoveChosenTest} className="hover:text-white p-0.5 ml-0.5 text-zinc-400" title="Desmarcar prueba">
+                                    <X size={10} />
+                                </button>
+                            </div>
+                        )}
+
                         {messages.length > 0 && (
                             <button
                                 onClick={handleClearChat}
@@ -336,7 +453,10 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                     Pregúntale a la IA sobre las fuentes seleccionadas, pide un resumen del caso, o pídele que arme un informe de formulación.
                                 </p>
                             </div>
-                            <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-lg">
+                            <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-xl">
+                                <button onClick={() => handleSend("¿Cuáles serían las 3 pruebas psicológicas o instrumentos clínicos más viables y estratégicos para evaluar a este paciente según sus fuentes?")} className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors">
+                                    <Target size={11} className="text-purple-400" /> Top 3 Pruebas Viables
+                                </button>
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
                                 <button onClick={() => setInputMsg("Identifica los huecos de evaluación. ¿Qué nos falta preguntar o comprobar en la siguiente sesión para validar nuestras hipótesis?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Huecos y Preguntas</button>
@@ -344,23 +464,115 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         </div>
                     )}
 
-                    {messages.map((m, idx) => (
-                        <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[90%] md:max-w-[85%] rounded-2xl p-3 md:p-4 ${
-                                m.role === 'user' 
-                                ? 'bg-blue-600/20 text-blue-50 border border-blue-500/30 rounded-br-sm' 
-                                : 'bg-zinc-900/80 text-zinc-300 border border-white/5 rounded-bl-sm'
-                            }`}>
-                                <div className="flex items-center gap-2 mb-1.5 opacity-50">
-                                    {m.role === 'user' ? <User size={11} /> : <Bot size={11} />}
-                                    <span className="text-[9px] font-mono uppercase font-bold">{m.role === 'user' ? 'Tú' : 'Notebook LM'}</span>
-                                </div>
-                                <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                                    {m.content}
+                    {messages.map((m, idx) => {
+                        const isAssistant = m.role === 'assistant';
+                        const { cleanText, tests } = isAssistant ? parseTestRecommendations(m.content) : { cleanText: m.content, tests: [] };
+
+                        return (
+                            <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[92%] md:max-w-[85%] rounded-2xl p-3 md:p-4 ${
+                                    m.role === 'user' 
+                                    ? 'bg-blue-600/20 text-blue-50 border border-blue-500/30 rounded-br-sm' 
+                                    : 'bg-zinc-900/80 text-zinc-300 border border-white/5 rounded-bl-sm'
+                                }`}>
+                                    <div className="flex items-center justify-between gap-2 mb-1.5 opacity-60">
+                                        <div className="flex items-center gap-1.5">
+                                            {m.role === 'user' ? <User size={11} /> : <Bot size={11} className="text-purple-400" />}
+                                            <span className="text-[9px] font-mono uppercase font-bold tracking-wider">{m.role === 'user' ? 'Tú' : 'Notebook LM'}</span>
+                                        </div>
+                                        {isAssistant && (
+                                            <button
+                                                onClick={() => navigator.clipboard.writeText(cleanText)}
+                                                title="Copiar respuesta"
+                                                className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
+                                            >
+                                                <Copy size={11} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                                        {cleanText}
+                                    </div>
+
+                                    {/* 3 Viable Test Recommendations Cards */}
+                                    {tests.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
+                                                    <Target size={12} className="text-purple-400" />
+                                                    3 Pruebas Clínicas Viables Sugeridas
+                                                </span>
+                                                <span className="text-[9px] font-mono text-zinc-500">
+                                                    Haz clic para escoger una
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                                {tests.map((test, tIdx) => {
+                                                    const isSelected = chosenTest && chosenTest.nombre && (
+                                                        chosenTest.nombre.toLowerCase().includes(test.nombre.toLowerCase()) || 
+                                                        test.nombre.toLowerCase().includes(chosenTest.nombre.toLowerCase())
+                                                    );
+
+                                                    return (
+                                                        <div 
+                                                            key={test.id || tIdx}
+                                                            className={`p-3 rounded-xl border flex flex-col justify-between transition-all relative overflow-hidden ${
+                                                                isSelected 
+                                                                    ? 'bg-purple-500/15 border-purple-500/50 shadow-lg shadow-purple-500/10' 
+                                                                    : 'bg-zinc-950/70 border-white/10 hover:border-purple-500/30 hover:bg-zinc-900/60'
+                                                            }`}
+                                                        >
+                                                            <div>
+                                                                <div className="flex items-center justify-between mb-1.5">
+                                                                    <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-bold flex items-center justify-center">
+                                                                        #{tIdx + 1}
+                                                                    </span>
+                                                                    {test.area && (
+                                                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-white/5 truncate max-w-[120px]">
+                                                                            {test.area}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <h4 className="text-xs font-bold text-white leading-snug mb-1">
+                                                                    {test.nombre}
+                                                                </h4>
+                                                                {test.justificacion && (
+                                                                    <p className="text-[10px] text-zinc-400 line-clamp-3 leading-relaxed">
+                                                                        {test.justificacion}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            <button
+                                                                onClick={() => handleSelectTest(test)}
+                                                                disabled={isTyping}
+                                                                className={`mt-2.5 w-full py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+                                                                    isSelected 
+                                                                        ? 'bg-purple-500 text-white shadow' 
+                                                                        : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30'
+                                                                }`}
+                                                            >
+                                                                {isSelected ? (
+                                                                    <>
+                                                                        <Check size={11} /> Seleccionada
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        Escoger esta prueba <ArrowRight size={10} />
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {isTyping && (
                         <div className="flex justify-start">
                             <div className="bg-zinc-900/80 border border-white/5 rounded-2xl rounded-bl-sm p-3 md:p-4 flex gap-1">
@@ -390,7 +602,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             style={{ minHeight: '40px' }}
                         />
                         <button
-                            onClick={handleSend}
+                            onClick={() => handleSend()}
                             disabled={!inputMsg.trim() || isTyping}
                             className="absolute right-1.5 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"
                         >
