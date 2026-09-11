@@ -33,12 +33,20 @@ class ViewErrorBoundary extends React.Component {
                     <code className="text-red-500 text-[10px] font-mono bg-red-500/10 p-2 rounded-lg max-w-md break-all">
                         {this.state.error?.message || 'Error desconocido'}
                     </code>
-                    <button
-                        onClick={() => this.setState({ hasError: false, error: null })}
-                        className="px-5 py-2 bg-white/5 border border-white/10 text-zinc-200 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer"
-                    >
-                        Reintentar
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-5 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all"
+                        >
+                            Recargar página
+                        </button>
+                        <button
+                            onClick={() => this.setState({ hasError: false, error: null })}
+                            className="px-5 py-2 bg-white/5 border border-white/10 text-zinc-200 hover:bg-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
                 </div>
             );
         }
