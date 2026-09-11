@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Eye, CheckSquare, Trash2, Edit3, X, Check, Search, ChevronDown, ImageIcon } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+import { API_URL } from '../utils/api';
 const formatUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;

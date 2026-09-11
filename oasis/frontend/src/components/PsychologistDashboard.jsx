@@ -16,8 +16,7 @@ import { LLMNotebookTab } from './LLMNotebookTab';
 import { CLINICAL_TESTS, recomendarPruebasPosteriores } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { safeJSONParse } from '../utils/jsonParser';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult } from '../utils/api';
 
 // ErrorBoundary for embedded clinical views
 class ViewErrorBoundary extends React.Component {
@@ -1078,6 +1077,12 @@ const PsychologistDashboard = ({ onClose }) => {
                             try {
                                 Object.keys(u.clinicalData).forEach(key => {
                                     localStorage.setItem(key, u.clinicalData[key]);
+                                    if (key.includes('__')) {
+                                        localStorage.setItem(key.replace('__', '_'), u.clinicalData[key]);
+                                    } else if (key.startsWith(`oasis_test_result_${u.username}_`)) {
+                                        const sub = key.replace(`oasis_test_result_${u.username}_`, '');
+                                        localStorage.setItem(`oasis_test_result_${u.username}__${sub}`, u.clinicalData[key]);
+                                    }
                                 });
                             } finally {
                                 window.isDownloadingClinicalData = false;
@@ -1335,19 +1340,30 @@ const PsychologistDashboard = ({ onClose }) => {
                 }
 
                 try {
-                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${selectedPatient.name}`);
+                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(selectedPatient.name)}`, {
+                        headers: { 'X-Oasis-User': callerUser }
+                    });
                     if (res.ok && active) {
                         const clinicalData = await res.json();
                         window.isDownloadingClinicalData = true;
                         try {
                             Object.keys(clinicalData).forEach(key => {
                                 localStorage.setItem(key, clinicalData[key]);
+                                if (key.includes('__')) {
+                                    localStorage.setItem(key.replace('__', '_'), clinicalData[key]);
+                                } else if (key.startsWith(`oasis_test_result_${selectedPatient.name}_`)) {
+                                    const sub = key.replace(`oasis_test_result_${selectedPatient.name}_`, '');
+                                    localStorage.setItem(`oasis_test_result_${selectedPatient.name}__${sub}`, clinicalData[key]);
+                                }
                             });
                         } finally {
                             window.isDownloadingClinicalData = false;
                             setReloadTrigger(prev => prev + 1);
                         }
                     }
+                    // Auto-sync any existing local tests for this patient up to cloud
+                    syncAllLocalPatientTestsToCloud(selectedPatient.name);
                 } catch (e) {
                     console.error("Error fetching latest patient clínical data from backend:", e);
                 }
@@ -2200,12 +2216,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
         // Check if a test has been completed
         const getSavedResult = (testId) => {
-            try {
-                const raw = localStorage.getItem(`oasis_test_result_${patientName}_${testId}`);
-                return raw ? JSON.parse(raw) : null;
-            } catch(e) {
-                return null;
-            }
+            return getSavedTestResult(patientName, testId);
         };
 
         return (
@@ -2228,6 +2239,34 @@ const PsychologistDashboard = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={async () => {
+                                setIsReprocessing(true);
+                                await syncAllLocalPatientTestsToCloud(patientName);
+                                try {
+                                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
+                                        headers: { 'X-Oasis-User': callerUser }
+                                    });
+                                    if (res.ok) {
+                                        const cData = await res.json();
+                                        Object.keys(cData).forEach(k => {
+                                            localStorage.setItem(k, cData[k]);
+                                            if (k.includes('__')) {
+                                                localStorage.setItem(k.replace('__', '_'), cData[k]);
+                                            }
+                                        });
+                                    }
+                                } catch (e) {}
+                                setReloadTrigger(prev => prev + 1);
+                                setIsReprocessing(false);
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                            title="Sincronizar pruebas con la nube para que aparezcan en todos los dispositivos"
+                        >
+                            <Sparkles size={13} className="text-purple-400" />
+                            <span>Sincronizar Nube</span>
+                        </button>
                         {analysis.unlocked ? (
                             <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
                                 <ShieldCheck size={13} />

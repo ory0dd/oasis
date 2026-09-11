@@ -70,8 +70,7 @@ namespace Oasis.Backend.Controllers
             
             string after = key.Substring(idx + username.Length);
             if (string.IsNullOrEmpty(after)) return true;
-            if (after.StartsWith("_v", StringComparison.OrdinalIgnoreCase)) return true;
-            if (after.StartsWith("__", StringComparison.OrdinalIgnoreCase)) return true;
+            if (after.StartsWith("_", StringComparison.OrdinalIgnoreCase)) return true;
             
             return false;
         }

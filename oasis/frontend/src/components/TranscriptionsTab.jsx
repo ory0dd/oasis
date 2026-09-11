@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, Download, Play, Pause, Trash2, Mic } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+import { API_URL } from '../utils/api';
 
 export const TranscriptionsTab = ({ patientName }) => {
     const [transcriptions, setTranscriptions] = useState([]);

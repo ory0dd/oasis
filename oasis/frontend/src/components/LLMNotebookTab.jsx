@@ -9,8 +9,7 @@ import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import { safeJSONParse } from '../utils/jsonParser';
 import { PID5_METADATA, PID5_OPTIONS, PID5_DOMAINS, PID5_ITEMS, calcularResultadoPID5 } from '../data/pid5Data';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+import { API_URL, getSavedTestResult } from '../utils/api';
 
 // Storage keys helper for 100% resilient persistence and strict patient isolation
 const getNotebookKeys = (patientName) => {
@@ -384,10 +383,9 @@ ${PID5_ITEMS.map(item => {
                         } catch(e) {}
                     }
                 } else {
-                    const resRaw = localStorage.getItem(`oasis_test_result_${patientName}_${tId}`);
-                    if (resRaw) {
+                    const res = getSavedTestResult(patientName, tId);
+                    if (res) {
                         try {
-                            const res = JSON.parse(resRaw);
                             availSources.push({
                                 id: `test_${tId}`,
                                 testId: tId,
@@ -1504,12 +1502,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                                                     const completedResult = (() => {
                                                         if (!matchedTestKey) return null;
-                                                        try {
-                                                            const raw = localStorage.getItem(`oasis_test_result_${patientName}_${matchedTestKey}`);
-                                                            return raw ? JSON.parse(raw) : null;
-                                                        } catch (e) {
-                                                            return null;
-                                                        }
+                                                        return getSavedTestResult(patientName, matchedTestKey);
                                                     })();
 
                                                     return (

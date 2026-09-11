@@ -6,8 +6,7 @@ import {
     TrendingUp, BookOpen
 } from 'lucide-react';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+import { API_URL, syncTestResultToCloud, getSavedTestResult } from '../utils/api';
 
 export function ClinicalTestRunner({
     testId = 'bai',
@@ -33,16 +32,7 @@ export function ClinicalTestRunner({
     };
 
     const loadSavedResult = (inf = selectedInformante) => {
-        try {
-            const key = getStorageKey(inf);
-            let raw = localStorage.getItem(key);
-            if (!raw && test.id === 'sdq') {
-                raw = localStorage.getItem(`oasis_test_result_${patientName}_${test.id}_adolescente`) || localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`);
-            }
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) {
-            return null;
-        }
+        return getSavedTestResult(patientName, test.id, test.id === 'sdq' ? inf : null);
     };
 
     const [existingResult, setExistingResult] = useState(() => loadSavedResult(initialInformante));
@@ -75,19 +65,16 @@ export function ClinicalTestRunner({
 
     const handleSwitchResultInformante = (newInf) => {
         setSelectedInformante(newInf);
-        try {
-            const raw = localStorage.getItem(getStorageKey(newInf)) || (newInf === 'adolescente' ? localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`) : null);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                setCalculatedResult(parsed);
-                setAnswers(parsed.rawAnswers || {});
-                setStep('results');
-            } else {
-                setAnswers({});
-                setCalculatedResult(null);
-                setStep('intro');
-            }
-        } catch (e) {}
+        const saved = getSavedTestResult(patientName, test.id, test.id === 'sdq' ? newInf : null);
+        if (saved) {
+            setCalculatedResult(saved);
+            setAnswers(saved.rawAnswers || {});
+            setStep('results');
+        } else {
+            setAnswers({});
+            setCalculatedResult(null);
+            setStep('intro');
+        }
     };
 
     const isParentPerspective = test.id === 'sdq' && selectedInformante === 'madre';
@@ -124,6 +111,12 @@ export function ClinicalTestRunner({
         };
         setCalculatedResult(payload);
         setStep('results');
+
+        // Auto-save immediately to localStorage AND sync to cloud
+        syncTestResultToCloud(patientName, test.id, payload, test.id === 'sdq' ? selectedInformante : null);
+        if (onSave) {
+            onSave(payload);
+        }
     };
 
     const handleSaveToRecord = async () => {
@@ -131,29 +124,12 @@ export function ClinicalTestRunner({
         setIsSaving(true);
 
         try {
-            // 1. Save locally in localStorage
-            const keyToSave = getStorageKey(selectedInformante);
-            localStorage.setItem(keyToSave, JSON.stringify(calculatedResult));
-            if (test.id === 'sdq') {
-                localStorage.setItem(`oasis_test_result_${patientName}_${test.id}`, JSON.stringify(calculatedResult));
-            }
-
-            // Also keep a registered list of completed tests for this patient
-            const indexKey = `oasis_tests_index_${patientName}`;
-            const existingIndex = JSON.parse(localStorage.getItem(indexKey) || '[]');
-            if (!existingIndex.includes(test.id)) {
-                existingIndex.push(test.id);
-                localStorage.setItem(indexKey, JSON.stringify(existingIndex));
-            }
-
-            // 2. Sync to backend API if available
-            try {
-                await fetch(`${API_URL}/api/oasis/clinical-evaluations?patient=${encodeURIComponent(patientName)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(calculatedResult)
-                }).catch(() => null);
-            } catch (e) {}
+            await syncTestResultToCloud(
+                patientName, 
+                test.id, 
+                calculatedResult, 
+                test.id === 'sdq' ? selectedInformante : null
+            );
 
             setSaveSuccess(true);
             if (onSave) {

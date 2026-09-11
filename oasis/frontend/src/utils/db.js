@@ -1,3 +1,5 @@
+import { API_URL } from './api';
+
 const DB_NAME = 'oasis_clinical_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'observations';
@@ -25,7 +27,6 @@ export async function saveObservation(session) {
     if (session && session.videos && Object.keys(session.videos).length > 0) {
         const username = session.username || localStorage.getItem('oasis_user');
         if (username) {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
             const updatedVideos = { ...session.videos };
             let hasUploads = false;
 
