@@ -8,6 +8,7 @@ import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import { safeJSONParse } from '../utils/jsonParser';
+import { PID5_METADATA, PID5_OPTIONS, PID5_DOMAINS, PID5_ITEMS, calcularResultadoPID5 } from '../data/pid5Data';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
@@ -200,6 +201,7 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
     const [activeTestRunnerInformante, setActiveTestRunnerInformante] = useState('adolescente');
     const [viewingSource, setViewingSource] = useState(null);
+    const [pid5Filter, setPid5Filter] = useState('all');
     const [inputMsg, setInputMsg] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -294,15 +296,40 @@ export const LLMNotebookTab = ({ patientName }) => {
             });
         }
 
-        // PID-5
+        // PID-5 (Inventario de Personalidad DSM-5 - Forma Breve)
         const pidStr = localStorage.getItem(`oasis_pid_answers_${patientName}`);
         if (pidStr) {
+            let parsedPid = {};
+            try { parsedPid = JSON.parse(pidStr); } catch(e) {}
+            const pidCalc = calcularResultadoPID5(parsedPid);
+
+            const richPidContent = `INVENTARIO DE PERSONALIDAD PARA EL DSM-5 (PID-5-BF) - FORMA BREVE:
+Marco Teórico: Modelo Alternativo para Trastornos de la Personalidad (AMPD) - Criterio B (DSM-5 Sección III)
+Puntaje Global: ${pidCalc.totalGlobal} / 75 pts (Promedio general: ${pidCalc.promedioGlobal} / 3.0)
+Reactivos Respondidos: ${pidCalc.totalAnswered} de 25
+Dominios Clínicos Destacados (Elevaciones): ${pidCalc.dominiosDestacados.map(d => `${d.nombre} (${d.aliasClinico}): ${d.score}/15 pts [${d.nivel}]`).join(', ') || 'Sin elevaciones clínicas significativas (perfil normativo)'}
+
+DESGLOSE POR DOMINIOS CLÍNICOS RESUELTOS (0 a 15 pts cada uno):
+${Object.values(pidCalc.dominios).map(d => `• ${d.nombre} (${d.aliasClinico}) [${d.score}/15 pts - Nivel: ${d.nivel}]:
+  Interpretación Clínica: ${d.interpretacion}
+  Facetas DSM-5: ${d.facetas.join(', ')}`).join('\n\n')}
+
+RESPUESTAS DETALLADAS REACTIVO POR REACTIVO (25 PREGUNTAS):
+${PID5_ITEMS.map(item => {
+    const val = pidCalc.rawAnswers[item.id];
+    const opt = PID5_OPTIONS.find(o => o.value === val);
+    return `#${item.id} [${item.domainName} - ${item.faceta}] "${item.text}" -> ${opt ? opt.label : 'Sin responder'} (${val !== undefined ? `${val} pts` : 'N/A'})`;
+}).join('\n')}`;
+
+            const topDomainName = pidCalc.dominiosDestacados[0]?.aliasClinico || pidCalc.dominiosDestacados[0]?.nombre || 'Equilibrado';
+
             availSources.push({ 
                 id: 'pid5', 
-                name: 'Evaluación de Personalidad PID-5 (Completada)', 
-                type: 'psicometría', 
+                name: `Evaluación de Personalidad PID-5 [${pidCalc.totalGlobal}/75 pts - ${topDomainName}]`, 
+                type: 'psicometría DSM-5', 
                 rawData: pidStr,
-                content: pidStr 
+                resultData: pidCalc,
+                content: richPidContent 
             });
         }
 
@@ -839,39 +866,278 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             );
         }
 
-        // 3. PID-5 Personality Inventory
+        // 3. PID-5 Personality Inventory (AMPD - DSM-5)
         if (source.id === 'pid5') {
-            let pidData = {};
+            let pidRaw = {};
             try {
                 const raw = source.rawData || source.content;
-                pidData = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                pidRaw = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
             } catch(e) {
-                pidData = {};
+                pidRaw = {};
             }
 
+            const pidResult = calcularResultadoPID5(pidRaw);
+            const activeFilter = pid5Filter || 'all';
+
+            const filteredItems = activeFilter === 'all'
+                ? PID5_ITEMS
+                : PID5_ITEMS.filter(item => item.domainKey === activeFilter);
+
             return (
-                <div className="space-y-4">
-                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center gap-2.5">
-                        <Activity size={18} className="shrink-0 text-blue-400" />
-                        <div>
-                            <h5 className="font-bold text-xs">Inventario de Personalidad DSM-5 (PID-5)</h5>
-                            <p className="text-[10px] text-blue-200/80 font-sans mt-0.5">
-                                Registro de reactivos respondidos y rasgos evaluados de @{patientName}
-                            </p>
+                <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Header Banner */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-purple-950/40 via-zinc-900/60 to-zinc-950 border border-purple-500/20 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0">
+                                    <Activity size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                                        <span>{PID5_METADATA.nombre}</span>
+                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">
+                                            {PID5_METADATA.siglas}
+                                        </span>
+                                    </h4>
+                                    <p className="text-[10px] sm:text-[11px] text-zinc-400 font-mono mt-0.5">
+                                        {PID5_METADATA.marcoTeorico}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-right">
+                                    <span className="text-[9px] font-mono text-zinc-400 block uppercase">Puntaje Global</span>
+                                    <span className="text-base font-black font-mono text-white">
+                                        {pidResult.totalGlobal} <span className="text-[10px] text-zinc-500 font-normal">/ {pidResult.maxGlobal} pts</span>
+                                    </span>
+                                </div>
+                                <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-right">
+                                    <span className="text-[9px] font-mono text-zinc-400 block uppercase">Promedio</span>
+                                    <span className="text-base font-black font-mono text-purple-300">
+                                        {pidResult.promedioGlobal} <span className="text-[10px] text-zinc-500 font-normal">/ 3.0</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-300 font-sans leading-relaxed pt-1 border-t border-white/5">
+                            {PID5_METADATA.descripcionClinica}
+                        </p>
+                    </div>
+
+                    {/* Section 1: Resolved Clinical Domains (Valores Resueltos) */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                                <ShieldCheck size={14} className="text-purple-400" />
+                                <span>Dominios Clínicos Resueltos (Criterio B del DSM-5)</span>
+                            </h4>
+                            <span className="text-[10px] font-mono text-zinc-500">
+                                5 dominios de 0 a 15 puntos
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.values(pidResult.dominios).map(dom => {
+                                const percent = Math.round((dom.score / dom.max) * 100);
+                                const isHigh = dom.nivelKey === 'alta';
+                                const isMod = dom.nivelKey === 'moderada';
+                                const badgeClass = isHigh
+                                    ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 font-bold'
+                                    : (isMod
+                                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold'
+                                        : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300');
+
+                                return (
+                                    <div 
+                                        key={dom.key} 
+                                        className={`p-4 rounded-2xl border transition-all space-y-3 ${
+                                            isHigh
+                                                ? 'bg-rose-950/15 border-rose-500/30'
+                                                : (isMod ? 'bg-amber-950/10 border-amber-500/25' : 'bg-zinc-900/50 border-white/5')
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <h5 className="text-xs font-bold text-white flex items-center gap-1.5">
+                                                    <span>{dom.nombre}</span>
+                                                    <span className="text-[10px] text-zinc-400 font-normal">({dom.aliasClinico})</span>
+                                                </h5>
+                                                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                                                    5 reactivos evaluados
+                                                </p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-wider border ${badgeClass}`}>
+                                                    {dom.nivel}
+                                                </span>
+                                                <div className="text-xs font-bold font-mono text-white mt-1">
+                                                    {dom.score} / {dom.max} pts
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full transition-all duration-500 ${
+                                                    isHigh ? 'bg-rose-500' : (isMod ? 'bg-amber-500' : 'bg-emerald-500')
+                                                }`}
+                                                style={{ width: `${percent}%` }}
+                                            />
+                                        </div>
+
+                                        {/* Clinical Meaning */}
+                                        <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                                            {dom.interpretacion}
+                                        </p>
+
+                                        {/* Facets tag list */}
+                                        <div className="pt-2 border-t border-white/5 flex flex-wrap gap-1">
+                                            {dom.facetas.map((faceta, fIdx) => (
+                                                <span key={fIdx} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-white/5">
+                                                    {faceta}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 space-y-3">
-                        <h4 className="text-xs font-bold text-white font-mono uppercase">Registro de Reactivos y Valores</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {Object.entries(pidData).map(([key, val]) => (
-                                <div key={key} className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between">
-                                    <span className="text-[10px] text-zinc-400 font-mono truncate">
-                                        {key.startsWith('item_') ? `Reactivo #${key.replace('item_', '')}` : key}
-                                    </span>
-                                    <span className="text-xs font-mono font-bold text-purple-300">{String(val)} pts</span>
-                                </div>
+                    {/* Section 2: Reactivos Detallados (Preguntas y Respuestas del Paciente) */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-white/10 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
+                            <div>
+                                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                                    <ListChecks size={15} className="text-purple-400" />
+                                    <span>25 Reactivos con Pregunta y Respuesta</span>
+                                </h4>
+                                <p className="text-[10px] text-zinc-400 font-sans mt-0.5">
+                                    Inspecciona la redacción de cada pregunta del PID-5 y la respuesta exacta marcada por @{patientName}
+                                </p>
+                            </div>
+
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                {pidResult.totalAnswered} de 25 contestadas
+                            </span>
+                        </div>
+
+                        {/* Domain Filter Buttons */}
+                        <div className="flex flex-wrap gap-1.5">
+                            <button
+                                type="button"
+                                onClick={() => setPid5Filter('all')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                                    activeFilter === 'all'
+                                        ? 'bg-purple-600 text-white shadow-sm'
+                                        : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-white/5'
+                                }`}
+                            >
+                                Todos (25)
+                            </button>
+                            {Object.values(PID5_DOMAINS).map(d => (
+                                <button
+                                    key={d.key}
+                                    type="button"
+                                    onClick={() => setPid5Filter(d.key)}
+                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                                        activeFilter === d.key
+                                            ? 'bg-purple-600 text-white shadow-sm'
+                                            : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-white/5'
+                                    }`}
+                                >
+                                    {d.aliasClinico} (5)
+                                </button>
                             ))}
+                        </div>
+
+                        {/* Questions list */}
+                        <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                            {filteredItems.map(item => {
+                                const val = pidResult.rawAnswers[item.id];
+                                const opt = PID5_OPTIONS.find(o => o.value === val);
+                                const isAnswered = val !== undefined;
+                                const isHighIntensity = val === 3;
+                                const isModIntensity = val === 2;
+
+                                return (
+                                    <div 
+                                        key={item.id}
+                                        className={`p-3.5 rounded-xl border transition-all text-xs space-y-2 ${
+                                            isHighIntensity
+                                                ? 'bg-purple-950/15 border-purple-500/30'
+                                                : (isModIntensity ? 'bg-zinc-900/70 border-white/10' : 'bg-zinc-900/40 border-white/5')
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="space-y-1 flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-[10px] font-mono font-bold text-zinc-400">
+                                                        #{item.id}
+                                                    </span>
+                                                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                                                        {item.domainName}
+                                                    </span>
+                                                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-white/5">
+                                                        Faceta: {item.faceta}
+                                                    </span>
+                                                </div>
+
+                                                <p className="text-zinc-100 font-sans text-xs sm:text-sm font-medium leading-snug">
+                                                    "{item.text}"
+                                                </p>
+                                            </div>
+
+                                            <div className="shrink-0 text-right">
+                                                {isAnswered ? (
+                                                    <div className="inline-flex flex-col items-end">
+                                                        <span className={`px-2.5 py-1 rounded-lg border font-mono font-bold text-xs ${opt?.badgeBg || 'bg-purple-500/20 text-purple-200'}`}>
+                                                            {opt ? opt.label : `Valor: ${val} pts`}
+                                                        </span>
+                                                        <span className="text-[9px] font-mono text-zinc-400 mt-0.5">
+                                                            Puntaje: {val} pts
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[10px] font-mono text-zinc-500 italic">
+                                                        Sin responder
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {opt?.desc && (
+                                            <p className="text-[10px] text-zinc-400 italic bg-black/30 p-2 rounded-lg border border-white/5 leading-relaxed">
+                                                "{opt.desc}"
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Section 3: Educational scale & methodology */}
+                    <div className="p-4 rounded-xl bg-zinc-900/40 border border-white/5 space-y-2">
+                        <h4 className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1.5">
+                            <BookOpen size={13} /> Baremo y Niveles de Gravedad Dimensional
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                            <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                                <span className="text-emerald-400 font-bold font-mono text-[10px] block">0 - 5 pts: NIVEL BAJO</span>
+                                <p className="text-[10px] text-zinc-400 mt-0.5">Rango adaptativo normativo. Funcionamiento psicológico sin rigidez patológica.</p>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                                <span className="text-amber-400 font-bold font-mono text-[10px] block">6 - 10 pts: NIVEL MODERADO</span>
+                                <p className="text-[10px] text-zinc-400 mt-0.5">Rasgo notable. Puede activarse como vulnerabilidad o generar fricción ante estrés.</p>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+                                <span className="text-rose-400 font-bold font-mono text-[10px] block">11 - 15 pts: NIVEL ELEVADO</span>
+                                <p className="text-[10px] text-zinc-400 mt-0.5">Rasgo marcadamente desadaptativo según criterios DSM-5. Prioridad de intervención.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
