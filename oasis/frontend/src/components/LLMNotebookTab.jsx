@@ -806,9 +806,15 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                         return null;
                                                     })();
 
-                                                    const completedResult = matchedTestKey 
-                                                        ? safeJSONParse(localStorage.getItem(`oasis_test_result_${patientName}_${matchedTestKey}`))
-                                                        : null;
+                                                    const completedResult = (() => {
+                                                        if (!matchedTestKey) return null;
+                                                        try {
+                                                            const raw = localStorage.getItem(`oasis_test_result_${patientName}_${matchedTestKey}`);
+                                                            return raw ? JSON.parse(raw) : null;
+                                                        } catch (e) {
+                                                            return null;
+                                                        }
+                                                    })();
 
                                                     return (
                                                         <div 

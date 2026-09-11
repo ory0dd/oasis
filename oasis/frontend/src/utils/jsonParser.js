@@ -4,9 +4,10 @@
  * Features fallback repairs for trailing commas, raw unescaped newlines/tabs in strings,
  * and truncated bracket balancing.
  */
-export function safeJSONParse(rawStr) {
-    if (!rawStr) throw new Error("Respuesta vacía del modelo de IA.");
+export function safeJSONParse(rawStr, fallback = null) {
+    if (rawStr === null || rawStr === undefined || rawStr === "") return fallback;
     let text = String(rawStr).trim();
+    if (!text) return fallback;
 
     // Strip markdown code fences if wrapped in ```json ... ```
     if (text.includes("```")) {
