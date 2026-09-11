@@ -399,7 +399,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     }, []);
 
     const isMobileDevice = window.innerWidth < 768;
-    const VIRTUAL_WIDTH = isMobileDevice ? 1100 : 1850;
+    const VIRTUAL_WIDTH = isMobileDevice ? 1100 : 1950;
     const VIRTUAL_HEIGHT = isMobileDevice ? 2600 : 1150;
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
@@ -2393,33 +2393,32 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Cantidad y Balance de Nodos: Genera exactamente entre 65 y 80 nodos en total para un mapa denso, profundo y exhaustivo.
+1. Cantidad y Balance de Nodos: Genera exactamente entre 52 y 66 nodos en total para un mapa clínicamente armónico y equilibrado.
    DISTRIBUCIÓN CLÍNICA RIGUROSA:
-   a) Históricos (azules, type: 'historical'): Entre 12 y 15 nodos.
-      - Eventos de infancia, dinámicas de apego tempranas, heridas del desarrollo, mandatos parentales de rendimiento o complacencia, condicionamientos pasados, experiencias escolares/sociales tempranas, vivencias formativas clave.
-   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 24 y 30 nodos en total (¡ABUNDANTES NODOS ROJOS! El paciente necesita un mapa rico que cubra exhaustivamente todas las dimensiones de su sufrimiento):
-      - 'cognitive' (8 a 11 nodos): rumiaciones obsesivas, autocrítica destructiva interna, anticipación catastrófica, creencias nucleares disfuncionales ("no soy suficiente", "debo controlar todo"), indecisión ansiosa, perfeccionismo paralizante, miedo al juicio externo, culpa existencial.
-      - 'motor' (8 a 10 nodos): conductas de evitación experiencial activa/pasiva, procrastinación evasiva, aislamiento voluntario en la habitación, aplazamiento compulsivo de deberes, escape mediante pantallas o adicciones, abandono de rutinas saludables, evitación de confrontaciones necesarias.
-      - 'physiological' (8 a 10 nodos): taquicardia y opresión en el pecho, insomnio de conciliación y despertares angustiosos, contracturas musculares crónicas y bruxismo, fatiga psicofísica profunda, desregulación gastrointestinal por estrés, agitación psicomotriz ansiosa, cefaleas tensionales.
-   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 16 y 22 nodos en total (¡ABUNDANTES NODOS VERDES! Factores disposicionales, orgánicos y relacionales):
-      - 'biological' (8 a 11 nodos): desajuste severo de ritmos circadianos y de sueño, hipersensibilidad neurosomática del SNC, agotamiento neuroquímico por estrés continuado, consumo ansiolítico de nicotina/cafeína/estimulantes, fatiga biológica acumulada, reactividad neurovegetativa elevada.
-      - 'social' (8 a 11 nodos): dinámicas familiares invalidantes o punitivas, sobreexigencia y presión externa laboral/académica, frialdad afectiva en vínculos cercanos, distanciamiento de red de amistades, ausencia de red de contención presencial, comparación social desfavorable, mandatos y expectativas asfixiantes del entorno.
-   d) Consecuencias (blancos, type: 'consequence'): Entre 12 y 15 nodos.
-      - Consecuencias a corto plazo reforzadoras: Alivio momentáneo de la angustia, evasión transitoria de la tensión, reducción inmediata del malestar subjetivo mediante evitación.
-      - Consecuencias a largo plazo desadaptativas: Cronificación del sufrimiento emocional, deterioro de la autoeficacia sentida, distanciamiento y soledad interpersonal, pérdida de proyectos de vida significativos, perpetuación del bucle y estancamiento vital.
+   a) Históricos (azules, type: 'historical'): Entre 14 y 18 nodos (¡MUY IMPORTANTE: AUMENTA LOS NODOS AZULES para construir una base histórica y del desarrollo rica y sólida en la columna izquierda!).
+      - Eventos de infancia, heridas del desarrollo, dinámicas tempranas con figuras de apego, mandatos parentales de rendimiento o complacencia, condicionamientos pasados, experiencias escolares formativas, rupturas afectivas previas, antecedentes de consumo o soledad.
+   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 16 y 20 nodos en total (¡UN POQUITO MENOS QUE ANTES, manteniendo la riqueza clínica pero sin saturar excesivamente el mapa!):
+      - 'cognitive' (5 a 7 nodos): rumiaciones obsesivas, autocrítica destructiva interna, anticipación catastrófica, creencias nucleares disfuncionales ("no soy suficiente", "debo complacer"), indecisión ansiosa, culpa existencial.
+      - 'motor' (5 a 7 nodos): conductas de evitación experiencial activa/pasiva, procrastinación evasiva, aislamiento voluntario en la habitación, aplazamiento compulsivo de deberes, escape mediante pantallas o adicciones, abandono de rutinas saludables.
+      - 'physiological' (5 a 6 nodos): taquicardia y opresión en el pecho, insomnio de conciliación y desvelo, contracturas musculares crónicas, fatiga psicofísica profunda, agitación psicomotriz ansiosa, cefaleas tensionales.
+   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 12 y 16 nodos en total (abundantes mediadores biológicos y sociales):
+      - 'biological' (6 a 8 nodos): desajuste severo de ritmos circadianos y de sueño, hipersensibilidad neurosomática del SNC, agotamiento neuroquímico por estrés continuado, consumo ansiolítico de nicotina/cafeína, fatiga biológica acumulada.
+      - 'social' (6 a 8 nodos): dinámicas familiares invalidantes o punitivas, sobreexigencia y presión externa laboral/académica, frialdad afectiva en vínculos cercanos, distanciamiento de red de apoyo, mandatos asfixiantes del entorno.
+   d) Consecuencias (blancos, type: 'consequence'): Entre 10 y 12 nodos.
+      - Consecuencias a corto plazo reforzadoras (alivio momentáneo de la angustia, evasión transitoria de la tensión) y consecuencias a largo plazo desadaptativas (cronificación del dolor, deterioro de la autoeficacia, soledad existencial, estancamiento vital).
 
 2. REGLA DE ORO DE NOMBRADO DE NODOS ('label'):
    - ¡TOTALMENTE PROHIBIDO USAR UNA SOLA PALABRA GENÉRICA! (NUNCA uses "Ansiedad", "Familia", "Sueño", "Cigarros", "Distracción", "Trabajo", "Música", "Ejercicio", "Infancia").
    - CADA NODO DEBE TENER UN NOMBRE CLÍNICO, CLARO Y EVOCADOR DE ENTRE 2 Y 4 PALABRAS EXACTAS.
-     * Ejemplos correctos para Históricos: "Experiencias de rechazo infantil", "Ruptura afectiva traumática", "Exigencia perfeccionista materna", "Historia de consumo temprano".
+     * Ejemplos correctos para Históricos: "Experiencias de rechazo infantil", "Ruptura afectiva traumática", "Exigencia perfeccionista materna", "Historia de consumo temprano", "Dependencia emocional familiar", "Aislamiento escolar temprano".
      * Ejemplos correctos para Problemas (Rojos): "Rumiación obsesiva y culpa", "Autocrítica punitiva interna", "Aislamiento conductual evasivo", "Procrastinación por evitación de estrés", "Taquicardia y opresión torácica", "Insomnio de conciliación y desvelo", "Agitación psicomotriz ansiosa".
      * Ejemplos correctos para Mediadores (Verdes): "Consumo ansiolítico de nicotina", "Disfunción de ritmos de descanso", "Ambiente familiar invalidante y crítico", "Sobrecarga y presión del entorno", "Hipersensibilidad neurosomática y alerta", "Desconexión de redes de contención".
      * Ejemplos correctos para Consecuencias (Blancos): "Alivio transitorio de la tensión", "Deterioro de la autoeficacia sentida", "Distanciamiento interpersonal progresivo", "Cronificación del malestar emocional".
    - REGLA DE UNICIDAD: Cada nodo debe poseer un nombre absolutamente único. Jamás repitas la misma palabra clave ni el mismo concepto en dos nodos diferentes del mapa.
    - ORDEN DE RELEVANCIA: Ordena el arreglo de nodos de MAYOR a MENOR relevancia respecto al motivo de consulta del paciente (los nodos más críticos y centrales ponlos primero para que se ubiquen en la parte superior del mapa).
-   - Coordenadas estimadas de partida: historical (x: 6 a 15), cognitive (x: 22 a 32), motor/physiological (x: 39 a 50), biological (x: 57 a 66), social (x: 72 a 81), consequence (x: 86 a 95), Y: 15 a 85.
+   - Coordenadas estimadas de partida: historical (x: 6 a 15), cognitive (x: 23 a 31), motor/physiological (x: 40 a 48), biological (x: 58 a 65), social (x: 73 a 80), consequence (x: 88 a 95), Y: 15 a 85.
 
-3. Conexiones (edges): Genera entre 85 y 115 conexiones clínicas coherentes y ricas. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
+3. Conexiones (edges): Genera entre 70 y 90 conexiones clínicas coherentes y ricas. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
 `}
 
 === ESTRUCTURA JSON REQUERIDA ===
@@ -3749,7 +3748,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
         const newNodes = [...currentNodes].map(n => ({ ...n }));
 
-        const getStaggeredSlots = (count, baseX, customYStep, overflowDirection = 0) => {
+        const getStaggeredSlots = (count, baseX, customYStep, overflowDirection = 0, customZigZag = 4.0) => {
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
@@ -3781,7 +3780,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 const totalHeight = (activeRows - 1) * yStep;
                 const startY = 50 - (totalHeight / 2);
                 
-                const zigZagWidth = 4.2;
+                const zigZagWidth = customZigZag || 3.8;
                 const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
                 
                 const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 12 * overflowIndex;
@@ -3817,15 +3816,15 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return count > 0 ? sumY / count : node.y;
         };
 
-        // Sugiyama Layered Layout with 6 Granular Columns for 65-80 nodes:
-        // Históricos (10%) -> Cognitivos (26%) -> Motores/Somáticos (43%) -> Biológicos (60%) -> Sociales (75%) -> Consecuencias (90%)
+        // Sugiyama Layered Layout with 6 Granular Columns (Balanced node distribution):
+        // Históricos (10%) -> Cognitivos (27%) -> Motores/Somáticos (44%) -> Biológicos (61%) -> Sociales (77%) -> Consecuencias (92%)
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 10, customYStep: null, overflowDir: -1 },
-            { filter: n => n.type === 'cognitive', baseX: 26, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 43, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'biological', baseX: 60, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'social', baseX: 75, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'consequence', baseX: 90, customYStep: null, overflowDir: 1 }
+            { filter: n => n.type === 'historical', baseX: 10, customYStep: null, customZigZag: 3.8, overflowDir: -1 },
+            { filter: n => n.type === 'cognitive', baseX: 27, customYStep: null, customZigZag: 3.5, overflowDir: 0 },
+            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 44, customYStep: null, customZigZag: 3.8, overflowDir: 0 },
+            { filter: n => n.type === 'biological', baseX: 61, customYStep: null, customZigZag: 3.5, overflowDir: 0 },
+            { filter: n => n.type === 'social', baseX: 77, customYStep: null, customZigZag: 3.2, overflowDir: 0 },
+            { filter: n => n.type === 'consequence', baseX: 92, customYStep: null, customZigZag: 2.8, overflowDir: 1 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -3843,7 +3842,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         // determines the vertical position, placing the most important nodes at the top.
         layerNodes.forEach((nodes, layerIdx) => {
             const layer = layers[layerIdx];
-            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep, layer.overflowDir);
+            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep, layer.overflowDir, layer.customZigZag);
             nodes.forEach((n, idx) => {
                 n.x = slots[idx].x;
                 n.y = slots[idx].y;
