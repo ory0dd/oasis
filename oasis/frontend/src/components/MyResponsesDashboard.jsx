@@ -212,6 +212,68 @@ const getFallbackDescription = (node, user) => {
     }
 };
 
+export const getNodePerspectiveQuestion = (node, threadIndex = 0) => {
+    if (!node) return "¿Qué reflexión o toma de consciencia te genera este patrón en este momento?";
+
+    // 1. Si el nodo tiene preguntas específicas predefinidas en su arreglo
+    if (Array.isArray(node.questions) && node.questions[threadIndex]) {
+        return node.questions[threadIndex];
+    }
+
+    const label = node.label ? node.label.trim() : 'este patrón';
+    const type = node.type || 'cognitive';
+    const desc = node.description ? ` (${node.description.trim()})` : '';
+    const refl = node.reflection_question?.trim();
+    const challenge = node.challenge?.trim();
+
+    switch (threadIndex) {
+        case 0: // Raíz Histórica
+            if (refl) {
+                return refl.endsWith('?') ? refl : `${refl}?`;
+            }
+            if (type === 'historical') {
+                return `¿Cómo ha influido en tu historia personal el hecho de haber vivido "${label}"${desc}? ¿De qué manera sientes que este acontecimiento del pasado sigue resonando en tu vida hoy?`;
+            }
+            return `¿En qué momento o circunstancias de tu vida comenzó a formarse este patrón de "${label}"${desc}? ¿Qué situaciones del pasado te enseñaron a reaccionar o protegerte de esta manera?`;
+
+        case 1: // Relaciones Actuales y Entorno Social
+            if (type === 'social') {
+                return `¿De qué manera influye tu entorno social actual o las personas con las que convives en "${label}"${desc}? ¿Cómo reaccionan los demás y qué papel juegan en mantener este bucle?`;
+            }
+            return `¿Cómo impacta "${label}" en tus relaciones (familia, amigos, pareja o estudio/trabajo)? ¿Qué hacen o cómo reaccionan las personas cercanas a ti cuando esto ocurre?`;
+
+        case 2: // Cuerpo y Fisiología
+            if (type === 'physiological' || type === 'biological') {
+                return `¿Qué señales específicas notas en tu organismo vinculadas a "${label}"${desc}? ¿En qué parte del cuerpo sientes mayor tensión, fatiga o agitación y cómo intentas calmarlo?`;
+            }
+            return `¿Qué señales o sensaciones notas en tu cuerpo (tensión muscular, respiración, opresión en el pecho, estómago, cansancio o inquietud) justo antes o durante "${label}"?`;
+
+        case 3: // Valores y Pensamientos
+            if (type === 'cognitive') {
+                return `¿Cuáles son los pensamientos, juicios o exigencias internas más recurrentes en "${label}"${desc}? ¿Qué temes profundamente que ocurra si dejas de darle tantas vueltas a esto?`;
+            }
+            return `¿Qué pensamientos automáticos o reglas internas ("debo", "tengo que", "no puedo") se disparan cuando aparece "${label}"? ¿Qué valor importante para ti sientes que está en juego?`;
+
+        case 4: // Conductas y Patrones
+            if (type === 'motor') {
+                return `¿Cuáles son las acciones, maniobras de escape o hábitos automáticos que realizas al detonarse "${label}"${desc}? ¿Qué alivio inmediato obtienes al hacerlo?`;
+            }
+            return `Cuando se activa el patrón de "${label}", ¿qué conductas concretas o hábitos de evitación sueles ejecutar de forma automática? ¿Qué situación o emoción intentas esquivar en ese instante?`;
+
+        case 5: // Experimentos y Acciones
+            if (challenge) {
+                return `El reto terapéutico identificado es: "${challenge}". ¿Qué micro-acción o pequeño experimento conductual podrías intentar esta semana para poner a prueba "${label}"?`;
+            }
+            return `Si pudieras hacer una pequeña prueba conductual esta semana para desarmar el bucle de "${label}", ¿cuál sería ese primer paso mínimo y concreto que estarías dispuesto a intentar?`;
+
+        case 6: // Integración de Nodo
+            return `Observando el bucle completo de "${label}" y las reflexiones que has explorado: ¿Qué función protectora cumplió en tu vida y con qué nueva actitud o compromiso decides integrarlo y responder a partir de ahora?`;
+
+        default:
+            return `¿Qué significado o aprendizaje extraes de "${label}" en esta perspectiva?`;
+    }
+};
+
 const findExactUserMention = (node, bioData, phenomData) => {
     if (!node) return null;
     const label = node.label || "";
@@ -1780,16 +1842,52 @@ Devuelve estrictamente el JSON sin formato extra.
 
     // Auto-start chat when a node is opened and has no chat history
     useEffect(() => {
-        if (selectedNode) {
-            const currentChat = getSafeCurrentChat(selectedNode.id, selectedQuestionIndex !== null ? selectedQuestionIndex : 0);
+        const activeNode = selectedNode || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || null;
+        if (activeNode) {
+            const tIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
+            const currentChat = getSafeCurrentChat(activeNode.id, tIdx);
             if (!currentChat || currentChat.length === 0) {
-                // Prevenir llamadas múltiples
-                console.log("TRIGGERING API", selectedNode.id, selectedQuestionIndex); if (!isGeneratingExplorations) {
-                    continueNodeExploration(selectedNode);
-                }
+                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx);
+                setNodeChats(prev => {
+                    const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+                    const isLegacy = Array.isArray(currentThreads);
+                    if (isLegacy) {
+                        return {
+                            ...prev,
+                            [activeNode.id]: {
+                                0: [{ role: 'assistant', content: initialQ }],
+                                1: [], 2: [], 3: [], 4: [], 5: [], 6: []
+                            }
+                        };
+                    }
+                    if (currentThreads[tIdx] && currentThreads[tIdx].length > 0) return prev;
+                    return {
+                        ...prev,
+                        [activeNode.id]: {
+                            ...currentThreads,
+                            [tIdx]: [{ role: 'assistant', content: initialQ }]
+                        }
+                    };
+                });
             }
         }
-    }, [selectedNode, selectedQuestionIndex]); // dependemos de selectedNode y selectedQuestionIndex para auto-iniciar al cambiar hilo
+    }, [selectedNode, tourActiveIndex, selectedQuestionIndex, sortedTourNodes, getSafeCurrentChat]);
+
+    // Synchronize draft input per active node and perspective
+    useEffect(() => {
+        let activeId = null;
+        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+            activeId = sortedTourNodes[tourActiveIndex].id;
+        } else if (selectedNode) {
+            activeId = selectedNode.id;
+        }
+        if (activeId) {
+            const draft = localStorage.getItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0)) || '';
+            setExplorationResponse(draft);
+        } else {
+            setExplorationResponse('');
+        }
+    }, [selectedNode, tourActiveIndex, selectedQuestionIndex, mapViewTab, sortedTourNodes]);
 
     // Derived sorted list of nodes for narrative tour
     const sortedTourNodes = useMemo(() => {
@@ -2078,7 +2176,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             perspectives.push({
                                 index: i,
                                 label: threadLabels[i],
-                                question: lastAssistantMsg ? lastAssistantMsg.content : '',
+                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i),
                                 answer: lastUserMsg.content
                             });
                         }
@@ -2940,7 +3038,12 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
 
         // If user is submitting an answer, just save it and STOP. No more follow-up questions.
         if (userResponseText) {
-            const updatedChat = [...currentChat, { role: 'user', content: userResponseText }];
+            let threadChat = [...currentChat];
+            if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant')) {
+                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex);
+                threadChat = [{ role: 'assistant', content: initialQ }];
+            }
+            const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
             
             setNodeChats(prev => {
                 const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
@@ -3222,6 +3325,28 @@ ESTRUCTURA DE SALIDA ESPERADA:
             }
         } catch (err) {
             console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
+            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex);
+            setNodeChats(prev => {
+                const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+                const isLegacy = Array.isArray(currentThreads);
+                if (isLegacy) {
+                    return {
+                        ...prev,
+                        [currentNode.id]: {
+                            0: [{ role: 'assistant', content: fallbackQ }],
+                            1: [], 2: [], 3: [], 4: [], 5: [], 6: []
+                        }
+                    };
+                }
+                if (currentThreads[threadIndex] && currentThreads[threadIndex].length > 0) return prev;
+                return {
+                    ...prev,
+                    [currentNode.id]: {
+                        ...currentThreads,
+                        [threadIndex]: [{ role: 'assistant', content: fallbackQ }]
+                    }
+                };
+            });
             if (userResponseText) {
                 alert("Ocurrió un error al continuar la conversación: " + err.message);
             }
@@ -5846,8 +5971,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         {(() => {
                                                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                                             const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
-                                                                            
-
+                                                                            const effectiveChat = (currentChat && currentChat.length > 0)
+                                                                                ? currentChat
+                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex) }];
 
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[500px]" onClick={e => e.stopPropagation()}>
@@ -5867,8 +5993,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setSelectedQuestionIndex(nextIdx);
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                                                    if (!nextChat || nextChat.length === 0) {
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx);
+                                                                                                        setNodeChats(prev => ({
+                                                                                                            ...prev,
+                                                                                                            [node.id]: {
+                                                                                                                ...(prev[node.id] || {}),
+                                                                                                                [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                                            }
+                                                                                                        }));
                                                                                                     }
                                                                                                 }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
@@ -5883,8 +6016,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setSelectedQuestionIndex(nextIdx);
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                                                    if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                                                        continueNodeExploration(node, null, nextIdx);
+                                                                                                    if (!nextChat || nextChat.length === 0) {
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx);
+                                                                                                        setNodeChats(prev => ({
+                                                                                                            ...prev,
+                                                                                                            [node.id]: {
+                                                                                                                ...(prev[node.id] || {}),
+                                                                                                                [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                                            }
+                                                                                                        }));
                                                                                                     }
                                                                                                 }}
                                                                                                 className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 rounded transition-colors"
@@ -5896,7 +6036,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                     {/* Chat messages area */}
                                                                                     <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col justify-center min-h-[150px] md:min-h-[250px]">
                                                                                         <div className="flex flex-col gap-4">
-                                                                                            {currentChat.map((msg, msgIdx) => {
+                                                                                            {effectiveChat.map((msg, msgIdx) => {
                                                                                                 if (msg.role === 'assistant') {
                                                                                                     return (
                                                                                                         <div key={msgIdx} className="flex flex-col gap-1.5 items-start">
@@ -5958,7 +6098,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                 if (e.key === 'Enter' && !e.shiftKey) {
                                                                                                     e.preventDefault();
                                                                                                     if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                                        continueNodeExploration(node, explorationResponse.trim());
+                                                                                                        continueNodeExploration(node, explorationResponse.trim(), safeThreadIndex);
                                                                                                     }
                                                                                                 }
                                                                                             }}
@@ -5970,7 +6110,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                 onClick={(e) => {
                                                                                                     e.stopPropagation();
                                                                                                     if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                                        continueNodeExploration(node, explorationResponse.trim());
+                                                                                                        continueNodeExploration(node, explorationResponse.trim(), safeThreadIndex);
                                                                                                     }
                                                                                                 }}
                                                                                                 className="flex items-center gap-1.5 py-1.5 px-3 rounded text-[8px] font-bold tracking-widest uppercase bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500/20 transition-all disabled:opacity-50 disabled:grayscale"
@@ -6170,8 +6310,9 @@ Por favor, analicemos:
                                             {(() => {
                                                 const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                 const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
-                                                
-
+                                                const effectiveChat = (currentChat && currentChat.length > 0)
+                                                    ? currentChat
+                                                    : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex) }];
 
                                                 return (
                                                     <div className="flex flex-col gap-2.5 mt-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -6191,8 +6332,15 @@ Por favor, analicemos:
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, null, nextIdx);
+                                                                        if (!nextChat || nextChat.length === 0) {
+                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
+                                                                            setNodeChats(prev => ({
+                                                                                ...prev,
+                                                                                [currentNode.id]: {
+                                                                                    ...(prev[currentNode.id] || {}),
+                                                                                    [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                }
+                                                                            }));
                                                                         }
                                                                     }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
@@ -6207,8 +6355,15 @@ Por favor, analicemos:
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        if ((!nextChat || nextChat.length === 0) && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, null, nextIdx);
+                                                                        if (!nextChat || nextChat.length === 0) {
+                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
+                                                                            setNodeChats(prev => ({
+                                                                                ...prev,
+                                                                                [currentNode.id]: {
+                                                                                    ...(prev[currentNode.id] || {}),
+                                                                                    [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                }
+                                                                            }));
                                                                         }
                                                                     }}
                                                                     className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
@@ -6220,7 +6375,7 @@ Por favor, analicemos:
                                                         {/* Chat messages area */}
                                                         <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col border border-white/5 bg-zinc-900/20 p-2.5 md:p-4 rounded-xl min-h-0">
                                                         <div className="flex flex-col gap-4 md:gap-5 pb-2">
-                                                            {currentChat.map((msg, msgIdx) => {
+                                                            {effectiveChat.map((msg, msgIdx) => {
                                                                 if (msg.role === 'assistant') {
                                                                     return (
                                                                         <div key={msgIdx} className="flex flex-col gap-1.5 items-start">
@@ -6283,7 +6438,7 @@ Por favor, analicemos:
                                                                     if (e.key === 'Enter' && !e.shiftKey) {
                                                                         e.preventDefault();
                                                                         if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, explorationResponse.trim());
+                                                                            continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
                                                                         }
                                                                     }
                                                                 }}
@@ -6295,7 +6450,7 @@ Por favor, analicemos:
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, explorationResponse.trim());
+                                                                            continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
                                                                         }
                                                                     }}
                                                                     className="flex items-center justify-center w-full md:w-auto gap-2 py-2.5 px-5 rounded-xl text-[10px] md:text-[11px] font-black tracking-widest uppercase bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30 hover:border-sky-400 transition-all disabled:opacity-50 disabled:grayscale"
