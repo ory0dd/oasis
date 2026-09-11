@@ -17,11 +17,19 @@ export function ClinicalTestRunner({
 }) {
     const test = CLINICAL_TESTS[testId] || CLINICAL_TESTS.bai;
 
+    const [selectedInformante, setSelectedInformante] = useState('adolescente'); // 'adolescente' | 'madre'
+    
     // Load any existing saved result for this patient and test
-    const storageKey = `oasis_test_result_${patientName}_${test.id}`;
+    const getStorageKey = (inf = selectedInformante) => {
+        if (test.id === 'sdq') {
+            return `oasis_test_result_${patientName}_${test.id}_${inf}`;
+        }
+        return `oasis_test_result_${patientName}_${test.id}`;
+    };
+
     const [existingResult, setExistingResult] = useState(() => {
         try {
-            const raw = localStorage.getItem(storageKey);
+            const raw = localStorage.getItem(getStorageKey('adolescente')) || localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`);
             return raw ? JSON.parse(raw) : null;
         } catch (e) {
             return null;
@@ -35,6 +43,7 @@ export function ClinicalTestRunner({
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
 
+    const isParentPerspective = test.id === 'sdq' && selectedInformante === 'madre';
     const currentItem = test.items[currentIndex];
     const totalItems = test.items.length;
     const answeredCount = Object.keys(answers).length;
@@ -56,11 +65,12 @@ export function ClinicalTestRunner({
     };
 
     const finishEvaluation = (finalAnswers = answers) => {
-        const result = test.calcularResultado(finalAnswers);
+        const result = test.calcularResultado(finalAnswers, selectedInformante);
         const payload = {
             ...result,
             patientName,
             testId: test.id,
+            informante: test.id === 'sdq' ? selectedInformante : undefined,
             completedAt: new Date().toISOString(),
             dateFormatted: new Date().toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
             rawAnswers: finalAnswers
@@ -75,7 +85,11 @@ export function ClinicalTestRunner({
 
         try {
             // 1. Save locally in localStorage
-            localStorage.setItem(storageKey, JSON.stringify(calculatedResult));
+            const keyToSave = getStorageKey(selectedInformante);
+            localStorage.setItem(keyToSave, JSON.stringify(calculatedResult));
+            if (test.id === 'sdq') {
+                localStorage.setItem(`oasis_test_result_${patientName}_${test.id}`, JSON.stringify(calculatedResult));
+            }
 
             // Also keep a registered list of completed tests for this patient
             const indexKey = `oasis_tests_index_${patientName}`;
@@ -177,6 +191,12 @@ export function ClinicalTestRunner({
                                     <span className="text-zinc-400">Consultante evaluado:</span>
                                     <span className="font-bold text-white uppercase tracking-wider">@{patientName}</span>
                                 </div>
+                                {test.poblacion && (
+                                    <div className="flex items-center justify-between text-[11px] font-mono">
+                                        <span className="text-zinc-400">Población objetivo:</span>
+                                        <span className="font-bold text-purple-400">{test.poblacion}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between text-[11px] font-mono">
                                     <span className="text-zinc-400">Propiedad psicométrica:</span>
                                     <span className="font-bold text-emerald-400">Consistencia Interna Alta (α = {test.alphaCronbach})</span>
@@ -190,6 +210,49 @@ export function ClinicalTestRunner({
                                     <span className="text-zinc-400 truncate max-w-[260px]">{test.referencia}</span>
                                 </div>
                             </div>
+
+                            {/* Informante Selector for Multi-Informant Tests (SDQ) */}
+                            {test.informantesDisponibles && (
+                                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-2">
+                                    <label className="text-[10px] font-mono font-bold uppercase tracking-widest text-purple-300 block">
+                                        Perspectiva / Informante a Evaluar:
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {test.informantesDisponibles.map(inf => (
+                                            <button
+                                                key={inf.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedInformante(inf.id);
+                                                    const raw = localStorage.getItem(getStorageKey(inf.id));
+                                                    if (raw) {
+                                                        try {
+                                                            const parsed = JSON.parse(raw);
+                                                            setAnswers(parsed.rawAnswers || {});
+                                                            setCalculatedResult(parsed);
+                                                        } catch(e) {}
+                                                    } else {
+                                                        setAnswers({});
+                                                        setCalculatedResult(null);
+                                                    }
+                                                }}
+                                                className={`py-2 px-3 rounded-xl text-xs font-mono font-bold transition-all border ${
+                                                    selectedInformante === inf.id
+                                                        ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-600/30'
+                                                        : 'bg-zinc-950/60 hover:bg-zinc-900 text-zinc-400 border-white/5'
+                                                }`}
+                                            >
+                                                {inf.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-zinc-400 font-sans mt-1">
+                                        {selectedInformante === 'madre'
+                                            ? 'Los reactivos se presentarán redactados para que la madre o tutor responda sobre la conducta observada en el menor.'
+                                            : 'Los reactivos se presentarán en primera persona para que el adolescente responda directamente sobre su vivencia.'}
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
@@ -233,23 +296,30 @@ export function ClinicalTestRunner({
                                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
                                     Reactivo {currentIndex + 1} de {totalItems}
                                 </span>
-                                {currentItem.subscale && (
-                                    <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[9px] font-mono font-bold uppercase tracking-wider text-purple-300">
-                                        {currentItem.subscale}
-                                    </span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    {isParentPerspective && (
+                                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-mono font-bold uppercase tracking-wider text-amber-300">
+                                            Madre / Familia
+                                        </span>
+                                    )}
+                                    {currentItem.subscale && (
+                                        <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[9px] font-mono font-bold uppercase tracking-wider text-purple-300">
+                                            {currentItem.subscale}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Item Text */}
                             <div className="py-2">
                                 <h2 className="text-base sm:text-xl font-medium text-white leading-snug">
-                                    "{currentItem.text}"
+                                    "{isParentPerspective && currentItem.textParent ? currentItem.textParent : currentItem.text}"
                                 </h2>
                             </div>
 
                             {/* Options Scale */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                                {test.escala.map(opt => {
+                                {((currentItem.options && currentItem.options.length > 0) ? currentItem.options : test.escala).map(opt => {
                                     const isSelected = answers[currentItem.id] === opt.value;
                                     return (
                                         <button
@@ -265,7 +335,7 @@ export function ClinicalTestRunner({
                                                 <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
                                                     {opt.label}
                                                 </span>
-                                                {isSelected && <Check size={14} className="text-white" />}
+                                                {isSelected && <Check size={14} className="text-white shrink-0 ml-2" />}
                                             </div>
                                             {opt.desc && (
                                                 <span className={`text-[10px] mt-1 leading-normal ${isSelected ? 'text-purple-100' : 'text-zinc-500'}`}>
@@ -318,12 +388,34 @@ export function ClinicalTestRunner({
                     {/* STEP 3: RESULTS AND SCORING */}
                     {step === 'results' && calculatedResult && (
                         <div className="space-y-6 animate-in fade-in duration-300">
+                            {/* Urgent Clinical Alert for C-SSRS */}
+                            {calculatedResult.alertaUrgente && (
+                                <div className="p-4 rounded-2xl bg-rose-500/15 border-2 border-rose-500/40 text-rose-200 flex items-start gap-3 animate-pulse">
+                                    <AlertTriangle size={24} className="text-rose-400 shrink-0 mt-0.5" />
+                                    <div>
+                                        <h4 className="font-bold text-sm text-white uppercase tracking-wider">
+                                            Alerta Clínica Prioritaria: Riesgo Suicida Elevado
+                                        </h4>
+                                        <p className="text-xs mt-1 text-rose-200 leading-relaxed font-sans">
+                                            El cribado ha detectado ideación activa, intención, métodos o antecedentes de conducta. Es imperativo activar de inmediato el protocolo de seguridad clínica, realizar la entrevista en profundidad y asegurar supervisión directa por adultos responsables.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Score Card Banner */}
                             <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div>
-                                    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 block">
-                                        Puntuación Total Obtenida
-                                    </span>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500">
+                                            Puntuación Total Obtenida
+                                        </span>
+                                        {calculatedResult.informante && (
+                                            <span className="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] font-mono font-bold text-purple-300 uppercase">
+                                                {calculatedResult.informante === 'madre' ? 'Perspectiva Madre' : 'Autoinforme Adolescente'}
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="flex items-baseline gap-2 mt-0.5">
                                         <span className="text-3xl sm:text-4xl font-black text-white font-mono">
                                             {calculatedResult.totalScore}

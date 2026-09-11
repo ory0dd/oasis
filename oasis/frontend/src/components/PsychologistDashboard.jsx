@@ -868,6 +868,7 @@ const PsychologistDashboard = ({ onClose }) => {
     const [privateNotes, setPrivateNotes] = useState('');
     const [conversations, setConversations] = useState([]);
     const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
+    const [catalogFilter, setCatalogFilter] = useState('ALL');
 
     // Persist selectedPatient, currentModule and activeTab to avoid losing state on reload
     useEffect(() => {
@@ -2170,8 +2171,19 @@ const PsychologistDashboard = ({ onClose }) => {
 
         const notes = privateNotes || localStorage.getItem(`oasis_private_notes_${patientName}`) || '';
 
+        const bioAgeMatch = (() => {
+            if (selectedPatient?.age) return selectedPatient.age;
+            if (bioTranscripts) {
+                const text = typeof bioTranscripts === 'string' ? bioTranscripts : JSON.stringify(bioTranscripts);
+                const m = text.match(/(\b1[0-7]|\b[6-9])\s*(?:años|anos)?/i);
+                if (m) return parseInt(m[1], 10);
+            }
+            return null;
+        })();
+
         const analysis = recomendarPruebasPosteriores({
             patientName,
+            patientAge: selectedPatient?.age || bioAgeMatch,
             bioTranscripts,
             pidAnswers,
             phenomAnswers,
@@ -2276,9 +2288,26 @@ const PsychologistDashboard = ({ onClose }) => {
                                                     <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-black flex items-center justify-center">
                                                         #{idx + 1}
                                                     </span>
-                                                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                                                        α = {t.alphaCronbach}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {t.poblacion === 'adolescente' && (
+                                                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                                                                Adolescentes (11-17)
+                                                            </span>
+                                                        )}
+                                                        {t.categoria === 'riesgo' && (
+                                                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400 animate-pulse">
+                                                                Alerta Riesgo
+                                                            </span>
+                                                        )}
+                                                        {t.informantesDisponibles && (
+                                                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-blue-500/10 border border-blue-500/20 text-blue-300">
+                                                                Multi-informante
+                                                            </span>
+                                                        )}
+                                                        <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                                            α = {t.alphaCronbach}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
                                                 <div>
@@ -2327,65 +2356,110 @@ const PsychologistDashboard = ({ onClose }) => {
                         </div>
 
                         {/* Full Catalog of Screening Tests */}
-                        <div className="space-y-4 pt-4 border-t border-white/5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-mono font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-                                    <BookOpen size={14} />
-                                    Catálogo Completo de Pruebas de Cribaje ({Object.keys(CLINICAL_TESTS).length} Disponibles)
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-500">
-                                    Todas con Alfa de Cronbach validado
-                                </span>
-                            </div>
+                        {(() => {
+                            const filteredCatalog = Object.values(CLINICAL_TESTS).filter(t => {
+                                if (catalogFilter === 'ADOLESCENT') return t.poblacion === 'adolescente' || t.poblacion === 'ambos';
+                                if (catalogFilter === 'ADULT') return t.poblacion === 'adulto' || t.poblacion === 'ambos';
+                                if (catalogFilter === 'RISK') return t.categoria === 'riesgo' || t.id === 'cssrs' || t.id === 'phq9';
+                                return true;
+                            });
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {Object.values(CLINICAL_TESTS).map(t => {
-                                    const saved = getSavedResult(t.id);
-                                    return (
-                                        <div
-                                            key={t.id}
-                                            className="p-4 rounded-2xl bg-zinc-950/40 border border-white/5 hover:border-white/10 flex flex-col justify-between gap-3 transition-all"
-                                        >
-                                            <div>
-                                                <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-[9px] font-mono font-bold uppercase text-purple-400">
-                                                        {t.siglas} • {t.duracionAprox}
-                                                    </span>
-                                                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
-                                                        α = {t.alphaCronbach}
-                                                    </span>
-                                                </div>
-                                                <h5 className="text-xs font-bold text-white leading-snug">
-                                                    {t.nombre}
-                                                </h5>
-                                                <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2 leading-relaxed font-sans">
-                                                    {t.descripcion}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                                {saved ? (
-                                                    <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                                                        ✓ {saved.totalScore} pts ({saved.nivel})
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[9px] font-mono text-zinc-600">
-                                                        Sin aplicar
-                                                    </span>
-                                                )}
-
+                            return (
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <span className="text-[11px] font-mono font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                                            <BookOpen size={14} />
+                                            Catálogo de Pruebas de Cribaje ({filteredCatalog.length} de {Object.keys(CLINICAL_TESTS).length} Disponibles)
+                                        </span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {[
+                                                { id: 'ALL', label: 'Todas' },
+                                                { id: 'ADOLESCENT', label: 'Adolescentes (11-17)' },
+                                                { id: 'ADULT', label: 'Adultos (18+)' },
+                                                { id: 'RISK', label: 'Riesgo / Crisis' }
+                                            ].map(f => (
                                                 <button
-                                                    onClick={() => setActiveTestRunnerId(t.id)}
-                                                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-purple-600 hover:text-white text-zinc-300 font-mono text-[10px] font-bold transition-all"
+                                                    key={f.id}
+                                                    onClick={() => setCatalogFilter(f.id)}
+                                                    className={`px-3 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                                                        catalogFilter === f.id
+                                                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
+                                                            : 'bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                                                    }`}
                                                 >
-                                                    {saved ? 'Revisar' : 'Abrir'}
+                                                    {f.label}
                                                 </button>
-                                            </div>
+                                            ))}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {filteredCatalog.map(t => {
+                                            const saved = getSavedResult(t.id);
+                                            return (
+                                                <div
+                                                    key={t.id}
+                                                    className="p-4 rounded-2xl bg-zinc-950/40 border border-white/5 hover:border-white/10 flex flex-col justify-between gap-3 transition-all"
+                                                >
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-1.5">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="text-[9px] font-mono font-bold uppercase text-purple-400">
+                                                                    {t.siglas} • {t.duracionAprox}
+                                                                </span>
+                                                                {t.poblacion === 'adolescente' && (
+                                                                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold">
+                                                                        Adolescentes
+                                                                    </span>
+                                                                )}
+                                                                {t.categoria === 'riesgo' && (
+                                                                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 font-bold">
+                                                                        Riesgo
+                                                                    </span>
+                                                                )}
+                                                                {t.informantesDisponibles && (
+                                                                    <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-300 font-bold">
+                                                                        Multi-informante
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
+                                                                α = {t.alphaCronbach}
+                                                            </span>
+                                                        </div>
+                                                        <h5 className="text-xs font-bold text-white leading-snug">
+                                                            {t.nombre}
+                                                        </h5>
+                                                        <p className="text-[10px] text-zinc-400 mt-1 line-clamp-2 leading-relaxed font-sans">
+                                                            {t.descripcion}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                                        {saved ? (
+                                                            <span className="text-[9px] font-mono text-emerald-400 font-bold">
+                                                                ✓ {saved.totalScore} pts ({saved.nivel})
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[9px] font-mono text-zinc-600">
+                                                                Sin aplicar
+                                                            </span>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => setActiveTestRunnerId(t.id)}
+                                                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-purple-600 hover:text-white text-zinc-300 font-mono text-[10px] font-bold transition-all"
+                                                        >
+                                                            {saved ? 'Revisar' : 'Abrir'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </>
                 )}
             </div>
