@@ -66,7 +66,17 @@ const parseTestRecommendations = (content) => {
         });
 
         if (candidateTests.length >= 2) {
-            return { cleanText: content, tests: candidateTests.slice(0, 3) };
+            // Filter out redundant tests that the therapist already has (e.g. general interview or personality)
+            const nonRedundant = candidateTests.filter(t => {
+                const tLow = t.nombre.toLowerCase();
+                const isInterview = tLow.includes('entrevista') || tLow.includes('anamnesis') || tLow.includes('historia cl');
+                const isGeneralPersonality = (tLow.includes('personalidad') && !tLow.includes('ansiedad') && !tLow.includes('depresi') && !tLow.includes('afronta'));
+                const isExistentialGen = tLow.includes('existencial') && (tLow.includes('diagnostico') || tLow.includes('evaluac'));
+                return !isInterview && !isGeneralPersonality && !isExistentialGen;
+            });
+
+            const finalTests = (nonRedundant.length >= 2 ? nonRedundant : candidateTests).slice(0, 3);
+            return { cleanText: content, tests: finalTests };
         }
     }
 
@@ -166,15 +176,15 @@ export const LLMNotebookTab = ({ patientName }) => {
 
         // Bio
         const bioStr = localStorage.getItem(`oasis_bio_transcriptions_${patientName}`);
-        if (bioStr) availSources.push({ id: 'bio', name: 'Entrevista Biográfica', type: 'doc', content: bioStr });
+        if (bioStr) availSources.push({ id: 'bio', name: 'Entrevista Biográfica (Completada)', type: 'doc', content: bioStr });
 
-        // Phenom
+        // Phenom / Existential
         const phenomStr = localStorage.getItem(`oasis_phenom_qualitative_${patientName}`);
-        if (phenomStr) availSources.push({ id: 'phenom', name: 'Datos Fenomenológicos', type: 'data', content: phenomStr });
+        if (phenomStr) availSources.push({ id: 'phenom', name: 'Diagnóstico Existencial y Fenomenológico (Completado)', type: 'data', content: phenomStr });
 
         // PID-5
         const pidStr = localStorage.getItem(`oasis_pid_answers_${patientName}`);
-        if (pidStr) availSources.push({ id: 'pid5', name: 'Evaluación PID-5', type: 'data', content: pidStr });
+        if (pidStr) availSources.push({ id: 'pid5', name: 'Evaluación de Personalidad PID-5 (Completada)', type: 'data', content: pidStr });
 
         // Transcripts
         const transStr = localStorage.getItem(`oasis_transcriptions_${patientName}`);
@@ -191,6 +201,13 @@ export const LLMNotebookTab = ({ patientName }) => {
                 }
             } catch (e) {}
         }
+
+        // Blocks & Notes
+        const blocksStr = localStorage.getItem(`oasis_blocks_${patientName}`);
+        if (blocksStr) availSources.push({ id: 'blocks', name: 'Escritos y Bitácora Existencial', type: 'doc', content: blocksStr });
+
+        const notesStr = localStorage.getItem(`oasis_private_notes_${patientName}`);
+        if (notesStr) availSources.push({ id: 'notes', name: 'Formulación y Notas Clínicas', type: 'doc', content: notesStr });
 
         setSources(availSources);
         setSelectedSources(new Set(availSources.map(s => s.id)));
@@ -405,14 +422,28 @@ REGLAS DE CONVERSACIÓN Y TONO (OBLIGATORIAS):
 - Evita excesos de asteriscos o negritas.
 - Si el usuario dice cosas cortas como "Hola", "Hola hola", "Buen día", RESPONDE ÚNICAMENTE CON UN SALUDO CORTITO SIMILAR, por ejemplo: "Hola, ¿qué quieres hacer hoy?" o "¿En qué te ayudo?". NUNCA lances un análisis no solicitado ni listas de opciones. Fluye con la plática.
 
-RECOMENDACIÓN DE PRUEBAS / EVALUACIÓN CLÍNICA (REGLA CRÍTICA):
-- Si el usuario pregunta qué pruebas, tests, inventarios o instrumentos aplicar o qué hacer clínicamente para evaluar:
-- NUNCA des un catálogo genérico ni una lista larga de 5 o más pruebas abstractas.
-- Analiza a fondo los datos específicos de ${patientName || 'este paciente'} (su historia biográfica, su perfil PID-5, sus síntomas y bucles de evitación o rumiación).
-- Adopta una postura clínica reflexiva de colega: empieza diciendo algo natural como: "Hm, analizando el caso específico de ${patientName || 'este caso'}... podríamos pensar en estas 3 opciones que son las más viables y estratégicas:"
-- Proporciona EXACTAMENTE 3 pruebas o instrumentos concretos (ni más ni menos) que aporten la mayor utilidad clínica inmediata para este caso. Para cada una explica brevemente qué evalúa y por qué es viable para este paciente.
-- Invita al usuario a escoger una: "¿Cuál de estas tres te gustaría priorizar o aplicar? Si escoges una, te puedo desglosar sus reactivos clave, cómo aplicarla y cómo interpretarla clínicamente para este caso."
-- OBLIGATORIO: Al final exacto de tu respuesta, añade un bloque con la etiqueta técnica en una sola línea (los datos deben ser un JSON válido):
+REGLA CLÍNICA DE EVALUACIÓN POSTERIOR (NO REDUNDANCIA Y PERTINENCIA):
+El terapeuta ya cuenta en sus fuentes activas con las siguientes evaluaciones de base COMPLETADAS de ${patientName || 'este paciente'}:
+1. Entrevista Biográfica completa (historia vital, hitos evolutivos, dinámicas familiares y detonantes).
+2. Evaluación de Personalidad PID-5 (los 5 dominios y 25 facetas ya evaluados y puntuados).
+3. Diagnóstico Existencial y Fenomenológico (vivencia de tiempo, vacío, libertad, soledad y bloques).
+
+POR LO TANTO, SI EL TERAPEUTA PREGUNTA QUÉ PRUEBAS APLICAR O CÓMO EVALUAR CLÍNICAMENTE:
+- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir "Entrevista clínica detallada" o "Entrevista biográfica" (ya está realizada y en fuentes).
+- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir "Evaluación de personalidad (PID-5 o similar)" (ya está realizada y en fuentes).
+- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir diagnósticos o entrevistas existenciales generales (ya están realizados).
+
+TUS RECOMENDACIONES DEBEN SER EXCLUSIVAMENTE INSTRUMENTOS POSTERIORES Y COMPLEMENTARIOS:
+- Identifica qué problemáticas específicas revelan la biografía y el perfil PID-5 de ${patientName || 'este caso'} (por ejemplo: severidad de afecto negativo, bucles de rumiación, mecanismos de evitación, conductas impulsivas/autolesivas o afrontamiento desadaptativo).
+- Propón EXACTAMENTE 3 instrumentos psicométricos posteriores bien fundamentados:
+  1. Severidad de Ansiedad o Depresión actual (ej. Inventario de Ansiedad de Beck - BAI, o BDI-II, o GAD-7) para cuantificar la intensidad clínica de los síntomas somáticos y cognitivos presentes.
+  2. Estrategias de Afrontamiento ante el estrés (ej. Cuestionario Brief-COPE / COPE) para determinar qué recursos o mecanismos desadaptativos/evitativos utiliza ante crisis.
+  3. Regulación Emocional o Evitación Experiencial (ej. Escala DERS - Dificultades en la Regulación Emocional, o AAQ-II - Cuestionario de Aceptación y Acción para evitación experiencial en ACT).
+- Empieza tu respuesta reconociendo como colega supervisor lo que ya se tiene:
+  "Hm, considerando que ya tenemos en las fuentes la entrevista biográfica, el perfil PID-5 y el diagnóstico existencial de ${patientName || 'este paciente'}, lo que procede no es repetir entrevistas generales ni volver a medir personalidad, sino aplicar instrumentos posteriores para evaluar la sintomatología activa y sus mecanismos de respuesta. Podríamos pensar en estas 3 opciones que son las más viables y estratégicas:"
+- Explica de forma concisa cada una y por qué encaja con los datos de este paciente.
+- Invita a escoger una: "¿Cuál de estas tres te gustaría priorizar o aplicar? Si escoges una, te puedo desglosar sus reactivos clave, cómo aplicarla y cómo interpretarla clínicamente para este caso."
+- OBLIGATORIO: Al final exacto en una sola línea añade la etiqueta técnica con los 3 instrumentos nuevos:
 [PRUEBAS_SUGERIDAS: [{"id": "1", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "2", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "3", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}]]
 
 CUANDO EL USUARIO ESCOGE O INDICA UNA PRUEBA EN PARTICULAR:
@@ -682,8 +713,8 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-xl">
-                                <button onClick={() => handleSend("¿Cuáles serían las 3 pruebas psicológicas o instrumentos clínicos más viables y estratégicos para evaluar a este paciente según sus fuentes?")} className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors">
-                                    <Target size={11} className="text-purple-400" /> Top 3 Pruebas Viables
+                                <button onClick={() => handleSend("Tomando en cuenta que ya tenemos la biografía, el PID-5 y el diagnóstico existencial de este paciente, ¿cuáles serían las 3 pruebas psicológicas o instrumentos posteriores más viables y estratégicos para evaluar su sintomatología activa y afrontamiento?")} className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors">
+                                    <Target size={11} className="text-purple-400" /> Top 3 Pruebas Posteriores (Ansiedad / Afrontamiento)
                                 </button>
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
