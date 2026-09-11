@@ -399,8 +399,8 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     }, []);
 
     const isMobileDevice = window.innerWidth < 768;
-    const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 1650;
-    const VIRTUAL_HEIGHT = isMobileDevice ? 2200 : 1050;
+    const VIRTUAL_WIDTH = isMobileDevice ? 1100 : 1850;
+    const VIRTUAL_HEIGHT = isMobileDevice ? 2600 : 1150;
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -2393,19 +2393,20 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Cantidad y Balance de Nodos: Genera exactamente entre 46 y 54 nodos en total.
+1. Cantidad y Balance de Nodos: Genera exactamente entre 65 y 80 nodos en total para un mapa denso, profundo y exhaustivo.
    DISTRIBUCIÓN CLÍNICA RIGUROSA:
-   a) Históricos (azules, type: 'historical'): Entre 10 y 12 nodos.
-      - Eventos de infancia, heridas del desarrollo, mandatos parentales, condicionamiento o vivencias pasadas relevantes.
-   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 14 y 18 nodos en total (¡MUY IMPORTANTE: cubrir con riqueza y profundidad todo el sufrimiento y malestar del paciente!):
-      - 'cognitive' (5 a 7 nodos): rumiaciones obsesivas, autocrítica destructiva, anticipación catastrófica, creencias nucleares disfuncionales, indecisión ansiosa.
-      - 'motor' (5 a 7 nodos): conductas de evitación experiencial, procrastinación evasiva, aislamiento voluntario, aplazamiento compulsivo, escape conductual.
-      - 'physiological' (4 a 6 nodos): taquicardia y opresión torácica, insomnio de conciliación y desvelo, contracturas musculares somáticas, fatiga psicofísica, desregulación neurovegetativa.
-   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 10 y 14 nodos en total (¡MUY IMPORTANTE: generar abundantes nodos verdes para capturar factores biológicos y relacionales!):
-      - 'biological' (5 a 7 nodos): vulnerabilidades biológicas o neuroquímicas, disfunción de ritmos circadianos, hipersensibilidad sensorial, consumo ansiolítico de nicotina o estimulantes, fatiga biológica acumulada.
-      - 'social' (5 a 7 nodos): dinámicas familiares invalidantes o punitivas, exigencias externas del entorno, frialdad afectiva relacional, aislamiento de redes de apoyo, presiones socioeconómicas o de pares.
-   d) Consecuencias (blancos, type: 'consequence'): Entre 10 y 12 nodos.
-      - Consecuencias a corto plazo reforzadoras (alivio momentáneo del malestar, reducción transitoria de la tensión) y consecuencias a largo plazo (cronificación del dolor, deterioro de la autoeficacia, soledad existencial).
+   a) Históricos (azules, type: 'historical'): Entre 12 y 15 nodos.
+      - Eventos de infancia, dinámicas de apego tempranas, heridas del desarrollo, mandatos parentales de rendimiento o complacencia, condicionamientos pasados, experiencias escolares/sociales tempranas, vivencias formativas clave.
+   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 24 y 30 nodos en total (¡ABUNDANTES NODOS ROJOS! El paciente necesita un mapa rico que cubra exhaustivamente todas las dimensiones de su sufrimiento):
+      - 'cognitive' (8 a 11 nodos): rumiaciones obsesivas, autocrítica destructiva interna, anticipación catastrófica, creencias nucleares disfuncionales ("no soy suficiente", "debo controlar todo"), indecisión ansiosa, perfeccionismo paralizante, miedo al juicio externo, culpa existencial.
+      - 'motor' (8 a 10 nodos): conductas de evitación experiencial activa/pasiva, procrastinación evasiva, aislamiento voluntario en la habitación, aplazamiento compulsivo de deberes, escape mediante pantallas o adicciones, abandono de rutinas saludables, evitación de confrontaciones necesarias.
+      - 'physiological' (8 a 10 nodos): taquicardia y opresión en el pecho, insomnio de conciliación y despertares angustiosos, contracturas musculares crónicas y bruxismo, fatiga psicofísica profunda, desregulación gastrointestinal por estrés, agitación psicomotriz ansiosa, cefaleas tensionales.
+   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 16 y 22 nodos en total (¡ABUNDANTES NODOS VERDES! Factores disposicionales, orgánicos y relacionales):
+      - 'biological' (8 a 11 nodos): desajuste severo de ritmos circadianos y de sueño, hipersensibilidad neurosomática del SNC, agotamiento neuroquímico por estrés continuado, consumo ansiolítico de nicotina/cafeína/estimulantes, fatiga biológica acumulada, reactividad neurovegetativa elevada.
+      - 'social' (8 a 11 nodos): dinámicas familiares invalidantes o punitivas, sobreexigencia y presión externa laboral/académica, frialdad afectiva en vínculos cercanos, distanciamiento de red de amistades, ausencia de red de contención presencial, comparación social desfavorable, mandatos y expectativas asfixiantes del entorno.
+   d) Consecuencias (blancos, type: 'consequence'): Entre 12 y 15 nodos.
+      - Consecuencias a corto plazo reforzadoras: Alivio momentáneo de la angustia, evasión transitoria de la tensión, reducción inmediata del malestar subjetivo mediante evitación.
+      - Consecuencias a largo plazo desadaptativas: Cronificación del sufrimiento emocional, deterioro de la autoeficacia sentida, distanciamiento y soledad interpersonal, pérdida de proyectos de vida significativos, perpetuación del bucle y estancamiento vital.
 
 2. REGLA DE ORO DE NOMBRADO DE NODOS ('label'):
    - ¡TOTALMENTE PROHIBIDO USAR UNA SOLA PALABRA GENÉRICA! (NUNCA uses "Ansiedad", "Familia", "Sueño", "Cigarros", "Distracción", "Trabajo", "Música", "Ejercicio", "Infancia").
@@ -2416,9 +2417,9 @@ ${isAdditive ? `
      * Ejemplos correctos para Consecuencias (Blancos): "Alivio transitorio de la tensión", "Deterioro de la autoeficacia sentida", "Distanciamiento interpersonal progresivo", "Cronificación del malestar emocional".
    - REGLA DE UNICIDAD: Cada nodo debe poseer un nombre absolutamente único. Jamás repitas la misma palabra clave ni el mismo concepto en dos nodos diferentes del mapa.
    - ORDEN DE RELEVANCIA: Ordena el arreglo de nodos de MAYOR a MENOR relevancia respecto al motivo de consulta del paciente (los nodos más críticos y centrales ponlos primero para que se ubiquen en la parte superior del mapa).
-   - Coordenadas estimadas de partida: historical (x: 10 a 20), problemáticos (x: 32 a 44), mediadores (x: 58 a 70), consequence (x: 82 a 94), Y: 15 a 85.
+   - Coordenadas estimadas de partida: historical (x: 6 a 15), cognitive (x: 22 a 32), motor/physiological (x: 39 a 50), biological (x: 57 a 66), social (x: 72 a 81), consequence (x: 86 a 95), Y: 15 a 85.
 
-3. Conexiones (edges): Genera entre 60 y 75 conexiones clínicas coherentes. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
+3. Conexiones (edges): Genera entre 85 y 115 conexiones clínicas coherentes y ricas. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
 `}
 
 === ESTRUCTURA JSON REQUERIDA ===
@@ -3756,14 +3757,15 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             // Dynamic vertical step so fewer nodes spread out comfortably, and more nodes don't bunch up
             let yStep = customYStep;
             if (!yStep) {
-                if (rowsInThisColumn <= 2) yStep = 20;
-                else if (rowsInThisColumn <= 3) yStep = 16;
-                else if (rowsInThisColumn <= 4) yStep = 13.5;
-                else if (rowsInThisColumn <= 6) yStep = 11;
-                else yStep = 9.5;
+                if (rowsInThisColumn <= 2) yStep = 22;
+                else if (rowsInThisColumn <= 3) yStep = 18;
+                else if (rowsInThisColumn <= 4) yStep = 15;
+                else if (rowsInThisColumn <= 6) yStep = 11.5;
+                else if (rowsInThisColumn <= 8) yStep = 9.2;
+                else yStep = 8.0;
             }
 
-            const MAX_ROWS = 6;
+            const MAX_ROWS = 7;
             const slots = [];
             for (let i = 0; i < count; i++) {
                 let overflowIndex = 0;
@@ -3779,11 +3781,10 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 const totalHeight = (activeRows - 1) * yStep;
                 const startY = 50 - (totalHeight / 2);
                 
-                const zigZagWidth = 5.2;
+                const zigZagWidth = 4.2;
                 const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
                 
-                // overflowDirection: -1 empuja hacia la izquierda, 1 empuja hacia la derecha.
-                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 14 * overflowIndex;
+                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 12 * overflowIndex;
                 
                 const rowIndex = Math.floor(localI / 2);
                 slots.push({
@@ -3816,15 +3817,25 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return count > 0 ? sumY / count : node.y;
         };
 
-        // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
+        // Sugiyama Layered Layout with 6 Granular Columns for 65-80 nodes:
+        // Históricos (10%) -> Cognitivos (26%) -> Motores/Somáticos (43%) -> Biológicos (60%) -> Sociales (75%) -> Consecuencias (90%)
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 12, customYStep: null, overflowDir: -1 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 37, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 63, customYStep: null, overflowDir: 0 },
-            { filter: n => n.type === 'consequence', baseX: 88, customYStep: null, overflowDir: 1 }
+            { filter: n => n.type === 'historical', baseX: 10, customYStep: null, overflowDir: -1 },
+            { filter: n => n.type === 'cognitive', baseX: 26, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 43, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'biological', baseX: 60, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'social', baseX: 75, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'consequence', baseX: 90, customYStep: null, overflowDir: 1 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
+
+        // Safety fallback: if any node didn't match the 6 layer filters, assign it to column 2
+        const matchedIds = new Set(layerNodes.flat().map(n => n.id));
+        const unmatchedNodes = newNodes.filter(n => !matchedIds.has(n.id));
+        if (unmatchedNodes.length > 0) {
+            layerNodes[1].push(...unmatchedNodes);
+        }
 
         // Initialize all nodes to staggered slots in their layers
         // We DO NOT sort alphabetically or by barycenter anymore.
