@@ -1,7 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check } from 'lucide-react';
+import { 
+    Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
+    ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
+    Save, Clock, Download, History 
+} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
+
+// Storage keys helper for 100% resilient persistence
+const getNotebookKeys = (patientName) => {
+    const safeName = patientName && String(patientName).trim() ? String(patientName).trim() : 'general';
+    return {
+        safeName,
+        messagesKey: `oasis_llm_notebook_messages_${safeName}`,
+        backupKey: `oasis_llm_notebook_backup_${safeName}`,
+        savedSessionsKey: `oasis_llm_notebook_saved_sessions_${safeName}`,
+        chosenTestKey: `oasis_chosen_test_${safeName}`,
+        globalBackupKey: 'oasis_llm_notebook_messages_latest_backup'
+    };
+};
 
 // Helper to parse the top 3 recommended clinical tests from assistant messages
 const parseTestRecommendations = (content) => {
@@ -58,24 +75,50 @@ const parseTestRecommendations = (content) => {
 
 export const LLMNotebookTab = ({ patientName }) => {
     const [messages, setMessages] = useState(() => {
-        if (!patientName) return [];
         try {
-            const saved = localStorage.getItem(`oasis_llm_notebook_messages_${patientName}`);
-            return saved ? JSON.parse(saved) : [];
+            const k = getNotebookKeys(patientName);
+            const saved = localStorage.getItem(k.messagesKey) || localStorage.getItem(k.backupKey);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+            const globalSaved = localStorage.getItem(k.globalBackupKey);
+            if (globalSaved) {
+                const parsed = JSON.parse(globalSaved);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
         } catch (e) {
             console.error("Error loading saved notebook messages:", e);
-            return [];
         }
+        return [];
     });
+
     const [chosenTest, setChosenTest] = useState(() => {
-        if (!patientName) return null;
         try {
-            const saved = localStorage.getItem(`oasis_chosen_test_${patientName}`);
+            const k = getNotebookKeys(patientName);
+            const saved = localStorage.getItem(k.chosenTestKey);
             return saved ? JSON.parse(saved) : null;
         } catch (e) {
             return null;
         }
     });
+
+    const [savedSessions, setSavedSessions] = useState(() => {
+        try {
+            const k = getNotebookKeys(patientName);
+            const raw = localStorage.getItem(k.savedSessionsKey);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    const [lastSavedAt, setLastSavedAt] = useState(() => {
+        return localStorage.getItem('oasis_llm_notebook_last_saved_time') || null;
+    });
+    const [isSavingManual, setIsSavingManual] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [inputMsg, setInputMsg] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -83,6 +126,37 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [selectedSources, setSelectedSources] = useState(new Set());
     const [showSourcesMobile, setShowSourcesMobile] = useState(false);
     const chatScrollRef = useRef(null);
+    const prevPatientRef = useRef(patientName);
+
+    // Synchronous persistence helper to guarantee zero data loss
+    const persistMessages = (msgsList, targetName = patientName) => {
+        if (!Array.isArray(msgsList) || msgsList.length === 0) return;
+        const k = getNotebookKeys(targetName);
+        try {
+            const jsonStr = JSON.stringify(msgsList);
+            localStorage.setItem(k.messagesKey, jsonStr);
+            localStorage.setItem(k.backupKey, jsonStr);
+            localStorage.setItem(k.globalBackupKey, jsonStr);
+            const timeFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            localStorage.setItem('oasis_llm_notebook_last_saved_time', timeFormatted);
+            setLastSavedAt(timeFormatted);
+        } catch (e) {
+            console.error("Error persisting notebook messages:", e);
+        }
+    };
+
+    // BeforeUnload listener to ensure synchronous save on browser reload (F5) or exit
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (messages && messages.length > 0) {
+                persistMessages(messages, patientName);
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [messages, patientName]);
 
     // Load available sources
     useEffect(() => {
@@ -122,40 +196,50 @@ export const LLMNotebookTab = ({ patientName }) => {
         setSelectedSources(new Set(availSources.map(s => s.id)));
     }, [patientName]);
 
-    // Load messages and chosen test when patient changes
+    // Load messages and chosen test when patient changes (preserving existing data safely)
     useEffect(() => {
-        if (!patientName) {
-            setMessages([]);
-            setChosenTest(null);
-            return;
-        }
+        const k = getNotebookKeys(patientName);
+
+        // Update saved sessions list for this patient
         try {
-            const saved = localStorage.getItem(`oasis_llm_notebook_messages_${patientName}`);
-            setMessages(saved ? JSON.parse(saved) : []);
+            const raw = localStorage.getItem(k.savedSessionsKey);
+            setSavedSessions(raw ? JSON.parse(raw) : []);
         } catch (e) {
-            console.error("Error updating patient notebook messages:", e);
-            setMessages([]);
+            setSavedSessions([]);
         }
 
-        try {
-            const savedTest = localStorage.getItem(`oasis_chosen_test_${patientName}`);
-            setChosenTest(savedTest ? JSON.parse(savedTest) : null);
-        } catch (e) {
-            setChosenTest(null);
+        if (prevPatientRef.current !== patientName) {
+            prevPatientRef.current = patientName;
+            try {
+                const saved = localStorage.getItem(k.messagesKey) || localStorage.getItem(k.backupKey);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setMessages(parsed);
+                    } else {
+                        setMessages([]);
+                    }
+                } else {
+                    setMessages([]);
+                }
+            } catch (e) {
+                console.error("Error updating patient notebook messages:", e);
+                setMessages([]);
+            }
+
+            try {
+                const savedTest = localStorage.getItem(k.chosenTestKey);
+                setChosenTest(savedTest ? JSON.parse(savedTest) : null);
+            } catch (e) {
+                setChosenTest(null);
+            }
         }
     }, [patientName]);
 
-    // Persist messages whenever messages or patientName changes
+    // Continuous auto-persisting (NEVER removes on empty messages)
     useEffect(() => {
-        if (!patientName) return;
-        try {
-            if (messages.length > 0) {
-                localStorage.setItem(`oasis_llm_notebook_messages_${patientName}`, JSON.stringify(messages));
-            } else {
-                localStorage.removeItem(`oasis_llm_notebook_messages_${patientName}`);
-            }
-        } catch (e) {
-            console.error("Error persisting notebook messages:", e);
+        if (messages.length > 0) {
+            persistMessages(messages, patientName);
         }
     }, [messages, patientName]);
 
@@ -177,21 +261,115 @@ export const LLMNotebookTab = ({ patientName }) => {
         setMessages([]);
         setChosenTest(null);
         setConfirmClear(false);
-        if (patientName) {
-            try {
-                localStorage.removeItem(`oasis_llm_notebook_messages_${patientName}`);
-                localStorage.removeItem(`oasis_chosen_test_${patientName}`);
-            } catch (e) {}
-        }
+        const k = getNotebookKeys(patientName);
+        try {
+            localStorage.removeItem(k.messagesKey);
+            localStorage.removeItem(k.backupKey);
+            localStorage.removeItem(k.chosenTestKey);
+        } catch (e) {}
     };
 
     const handleRemoveChosenTest = () => {
         setChosenTest(null);
-        if (patientName) {
-            try {
-                localStorage.removeItem(`oasis_chosen_test_${patientName}`);
-            } catch (e) {}
+        const k = getNotebookKeys(patientName);
+        try {
+            localStorage.removeItem(k.chosenTestKey);
+        } catch (e) {}
+    };
+
+    // Manual Save handler with snapshot history and backend sync
+    const handleManualSave = async () => {
+        if (messages.length === 0) return;
+        setIsSavingManual(true);
+        const k = getNotebookKeys(patientName);
+
+        // 1. Immediately persist active messages locally
+        persistMessages(messages, patientName);
+
+        // 2. Save snapshot in savedSessions history
+        const now = new Date();
+        const dateStr = now.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const firstUserMsg = messages.find(m => m.role === 'user')?.content || 'Consulta clínica';
+        const cleanTitle = chosenTest?.nombre 
+            ? `Evaluación: ${chosenTest.nombre}`
+            : (firstUserMsg.length > 42 ? firstUserMsg.slice(0, 42) + '...' : firstUserMsg);
+
+        const newSession = {
+            id: `session_${Date.now()}`,
+            timestamp: now.toISOString(),
+            dateFormatted: `${dateStr} a las ${timeStr}`,
+            title: cleanTitle,
+            messageCount: messages.length,
+            chosenTest: chosenTest?.nombre || null,
+            messages: messages
+        };
+
+        try {
+            const raw = localStorage.getItem(k.savedSessionsKey);
+            const currentList = raw ? JSON.parse(raw) : [];
+            const updated = [newSession, ...currentList.filter(s => s.id !== newSession.id)].slice(0, 30);
+            localStorage.setItem(k.savedSessionsKey, JSON.stringify(updated));
+            setSavedSessions(updated);
+        } catch (e) {
+            console.error("Error saving session entry:", e);
         }
+
+        // 3. Save to backend database for permanent sync
+        try {
+            const convPayload = [{
+                id: `notebook_${k.safeName}_${Date.now()}`,
+                title: cleanTitle,
+                messages: messages.map(m => ({
+                    role: m.role,
+                    content: m.content,
+                    timestamp: new Date().toISOString()
+                })),
+                updatedAt: Date.now()
+            }];
+            await fetch(`${API_URL}/api/oasis/conversations?user=${k.safeName}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(convPayload)
+            }).catch(() => null);
+        } catch (e) {}
+
+        setIsSavingManual(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+    };
+
+    const handleRestoreSession = (session) => {
+        if (session && Array.isArray(session.messages)) {
+            setMessages(session.messages);
+            persistMessages(session.messages, patientName);
+            if (session.chosenTest) {
+                setChosenTest({ nombre: session.chosenTest });
+            }
+            setShowHistoryModal(false);
+        }
+    };
+
+    const handleDeleteSavedSession = (sessionId, e) => {
+        e?.stopPropagation();
+        const k = getNotebookKeys(patientName);
+        try {
+            const updated = savedSessions.filter(s => s.id !== sessionId);
+            localStorage.setItem(k.savedSessionsKey, JSON.stringify(updated));
+            setSavedSessions(updated);
+        } catch (err) {}
+    };
+
+    const handleExportChatTxt = (msgs = messages) => {
+        const text = msgs.map(m => `[${m.role === 'user' ? 'TERAPEUTA' : 'KIO NOTEBOOK'}]\n${m.content}\n`).join('\n---\n\n');
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Chat_Notebook_${patientName || 'caso'}_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     const toggleSource = (id) => {
@@ -210,6 +388,7 @@ export const LLMNotebookTab = ({ patientName }) => {
         }
         const updatedMessages = [...messages, { role: 'user', content: textToSend }];
         setMessages(updatedMessages);
+        persistMessages(updatedMessages, patientName);
         setIsTyping(true);
 
         try {
@@ -278,9 +457,13 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             const data = await res.json();
             const aiMsg = data.choices[0].message.content;
 
-            setMessages(prev => [...prev, { role: 'assistant', content: aiMsg }]);
+            const finalMessages = [...updatedMessages, { role: 'assistant', content: aiMsg }];
+            setMessages(finalMessages);
+            persistMessages(finalMessages, patientName);
         } catch (err) {
-            setMessages(prev => [...prev, { role: 'assistant', content: `[Error de sistema: ${err.message}]` }]);
+            const errorMessages = [...updatedMessages, { role: 'assistant', content: `[Error de sistema: ${err.message}]` }];
+            setMessages(errorMessages);
+            persistMessages(errorMessages, patientName);
         } finally {
             setIsTyping(false);
         }
@@ -288,11 +471,10 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
     const handleSelectTest = (test) => {
         setChosenTest(test);
-        if (patientName) {
-            try {
-                localStorage.setItem(`oasis_chosen_test_${patientName}`, JSON.stringify(test));
-            } catch (e) {}
-        }
+        const k = getNotebookKeys(patientName);
+        try {
+            localStorage.setItem(k.chosenTestKey, JSON.stringify(test));
+        } catch (e) {}
         const followUp = `He seleccionado la prueba: ${test.nombre}. Por favor desglosa sus reactivos o aspectos clave, cómo aplicarla paso a paso con ${patientName || 'el paciente'}, y cómo interpretar los resultados en el contexto de su caso.`;
         handleSend(followUp);
     };
@@ -399,15 +581,61 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                        {/* Auto-saved indicator */}
+                        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[10px] font-mono">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>{lastSavedAt ? `Guardado ${lastSavedAt}` : 'Auto-guardado'}</span>
+                        </div>
+
+                        {/* Chosen test pill if active */}
                         {chosenTest && (
                             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-xl text-[10px] font-mono animate-in fade-in">
                                 <ClipboardCheck size={12} className="text-purple-400 shrink-0" />
-                                <span className="truncate max-w-[140px] md:max-w-[200px]">Prueba: <strong>{chosenTest.nombre}</strong></span>
+                                <span className="truncate max-w-[120px] md:max-w-[160px]">Prueba: <strong>{chosenTest.nombre}</strong></span>
                                 <button onClick={handleRemoveChosenTest} className="hover:text-white p-0.5 ml-0.5 text-zinc-400" title="Desmarcar prueba">
                                     <X size={10} />
                                 </button>
                             </div>
+                        )}
+
+                        {/* Manual Save Chat Button */}
+                        {messages.length > 0 && (
+                            <button
+                                onClick={handleManualSave}
+                                disabled={isSavingManual}
+                                title="Guardar este chat y archivarlo en el historial del paciente"
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95 border shadow-sm ${
+                                    saveSuccess
+                                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 scale-105'
+                                        : 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400'
+                                }`}
+                            >
+                                {saveSuccess ? (
+                                    <>
+                                        <Check size={12} className="text-emerald-400" />
+                                        <span>¡Chat Guardado!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={12} className="text-emerald-400" />
+                                        <span>Guardar Chat</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+
+                        {/* Saved Sessions History Button */}
+                        {savedSessions.length > 0 && (
+                            <button
+                                onClick={() => setShowHistoryModal(true)}
+                                title="Ver historial de chats guardados"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 hover:border-white/20 text-zinc-300 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
+                            >
+                                <Clock size={12} className="text-blue-400" />
+                                <span className="hidden sm:inline">Historial ({savedSessions.length})</span>
+                                <span className="sm:hidden">({savedSessions.length})</span>
+                            </button>
                         )}
 
                         {messages.length > 0 && (
@@ -611,6 +839,101 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                     </div>
                 </div>
             </div>
+
+            {/* Modal: Historial de Chats Guardados */}
+            {showHistoryModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+                    <div className="bg-zinc-950 border border-white/15 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-zinc-900/50">
+                            <div className="flex items-center gap-2">
+                                <Clock size={16} className="text-blue-400" />
+                                <div>
+                                    <h3 className="text-sm font-black text-white">Historial de Chats Guardados</h3>
+                                    <p className="text-[10px] text-zinc-400 font-mono">
+                                        @{patientName || 'caso'} • {savedSessions.length} conversaciones archivadas
+                                    </p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowHistoryModal(false)}
+                                className="p-1.5 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
+                            {savedSessions.length === 0 ? (
+                                <div className="text-center py-8 text-zinc-500 text-xs font-mono">
+                                    No hay chats archivados todavía.
+                                </div>
+                            ) : (
+                                savedSessions.map((session) => (
+                                    <div 
+                                        key={session.id}
+                                        className="p-3.5 rounded-xl border border-white/10 bg-zinc-900/60 hover:bg-zinc-900 hover:border-blue-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[10px] font-mono text-zinc-500">
+                                                    {session.dateFormatted}
+                                                </span>
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
+                                                    {session.messageCount} msgs
+                                                </span>
+                                                {session.chosenTest && (
+                                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono truncate max-w-[130px]">
+                                                        {session.chosenTest}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h4 className="text-xs font-bold text-white truncate">
+                                                {session.title}
+                                            </h4>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                            <button
+                                                onClick={() => handleRestoreSession(session)}
+                                                className="px-2.5 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all flex items-center gap-1"
+                                                title="Cargar esta conversación en la ventana activa"
+                                            >
+                                                <RotateCcw size={11} /> Cargar
+                                            </button>
+                                            <button
+                                                onClick={() => handleExportChatTxt(session.messages)}
+                                                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/10 rounded-lg transition-all"
+                                                title="Descargar como archivo de texto"
+                                            >
+                                                <Download size={12} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDeleteSavedSession(session.id, e)}
+                                                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg transition-all"
+                                                title="Eliminar del historial"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="p-3 border-t border-white/10 bg-zinc-900/40 flex justify-between items-center">
+                            <span className="text-[10px] font-mono text-zinc-500">
+                                Al cargar un chat se restaura para continuar trabajando.
+                            </span>
+                            <button
+                                onClick={() => setShowHistoryModal(false)}
+                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

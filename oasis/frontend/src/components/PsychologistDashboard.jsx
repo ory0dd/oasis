@@ -846,13 +846,47 @@ const CognitiveRadar = ({ dimensions }) => {
 
 const PsychologistDashboard = ({ onClose }) => {
     const [patients, setPatients] = useState([]);
-    const [currentModule, setCurrentModule] = useState('DASHBOARD'); // DASHBOARD, PROFILE
-    const [selectedPatient, setSelectedPatient] = useState(null);
+    const [currentModule, setCurrentModule] = useState(() => {
+        return localStorage.getItem('oasis_psych_current_module') || 'DASHBOARD';
+    });
+    const [selectedPatient, setSelectedPatient] = useState(() => {
+        try {
+            const saved = localStorage.getItem('oasis_psych_selected_patient');
+            return saved ? JSON.parse(saved) : null;
+        } catch (e) {
+            return null;
+        }
+    });
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('VISION_GENERAL'); // VISION_GENERAL, EXPLORACION_DOCS, REFLEXION, SESION_X
+    const [activeTab, setActiveTab] = useState(() => {
+        return localStorage.getItem('oasis_psych_active_tab') || 'VISION_GENERAL';
+    });
     const [isReprocessing, setIsReprocessing] = useState(false);
     const [privateNotes, setPrivateNotes] = useState('');
     const [conversations, setConversations] = useState([]);
+
+    // Persist selectedPatient, currentModule and activeTab to avoid losing state on reload
+    useEffect(() => {
+        if (selectedPatient) {
+            try {
+                localStorage.setItem('oasis_psych_selected_patient', JSON.stringify(selectedPatient));
+            } catch (e) {}
+        } else {
+            localStorage.removeItem('oasis_psych_selected_patient');
+        }
+    }, [selectedPatient]);
+
+    useEffect(() => {
+        if (currentModule) {
+            localStorage.setItem('oasis_psych_current_module', currentModule);
+        }
+    }, [currentModule]);
+
+    useEffect(() => {
+        if (activeTab) {
+            localStorage.setItem('oasis_psych_active_tab', activeTab);
+        }
+    }, [activeTab]);
     const [selectedKioChatId, setSelectedKioChatId] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [kioSidebarWidth, setKioSidebarWidth] = useState(320);
