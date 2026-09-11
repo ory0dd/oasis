@@ -4760,7 +4760,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         )}
 
                         {(activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT') && (
-                            <LLMNotebookTab patientName={selectedPatient?.name} />
+                            <LLMNotebookTab key={'notebook-' + (selectedPatient?.name || 'default')} patientName={selectedPatient?.name} />
                         )}
                     </div>
                 </main>

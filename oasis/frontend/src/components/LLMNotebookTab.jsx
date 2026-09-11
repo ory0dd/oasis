@@ -10,7 +10,7 @@ import { safeJSONParse } from '../utils/jsonParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
 
-// Storage keys helper for 100% resilient persistence
+// Storage keys helper for 100% resilient persistence and strict patient isolation
 const getNotebookKeys = (patientName) => {
     const safeName = patientName && String(patientName).trim() ? String(patientName).trim() : 'general';
     return {
@@ -19,8 +19,88 @@ const getNotebookKeys = (patientName) => {
         backupKey: `oasis_llm_notebook_backup_${safeName}`,
         savedSessionsKey: `oasis_llm_notebook_saved_sessions_${safeName}`,
         chosenTestKey: `oasis_chosen_test_${safeName}`,
-        globalBackupKey: 'oasis_llm_notebook_messages_latest_backup'
+        lastSavedKey: `oasis_llm_notebook_last_saved_time_${safeName}`
     };
+};
+
+// Validates whether stored messages belong to another patient profile due to cross-contamination
+const isContaminatedWithOtherPatient = (msgs, currentPatient) => {
+    if (!Array.isArray(msgs) || msgs.length === 0) return false;
+    const curLower = (currentPatient || '').toLowerCase().trim();
+    if (!curLower || curLower === 'general') return false;
+
+    // 1. Tag check if available
+    const firstOwner = msgs.find(m => m.patientOwner)?.patientOwner;
+    if (firstOwner && firstOwner.toLowerCase() !== curLower) {
+        return true;
+    }
+
+    // 2. Scan all known patient names from localStorage
+    const otherPatients = new Set();
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            const match = key.match(/^oasis_(?:bio_transcriptions|phenom_qualitative|pid_answers|llm_notebook_messages)_(.+)$/);
+            if (match && match[1]) {
+                const name = match[1].trim().toLowerCase();
+                if (name && name !== curLower && name !== 'general' && name !== 'latest_backup') {
+                    otherPatients.add(name);
+                }
+            }
+        }
+    } catch (e) {}
+
+    const fullChatText = msgs.map(m => (m.content || '')).join(' ').toLowerCase();
+    const curWordRegex = new RegExp(`\\b${curLower}\\b`, 'i');
+
+    for (const other of otherPatients) {
+        const otherWordRegex = new RegExp(`\\b${other}\\b`, 'i');
+        
+        if (otherWordRegex.test(fullChatText) && !curWordRegex.test(fullChatText)) {
+            console.warn(`[LLMNotebookTab] Descartando mensajes contaminados pertenecientes a '${other}' en perfil '${curLower}'`);
+            return true;
+        }
+
+        try {
+            const otherMsgsRaw = localStorage.getItem(`oasis_llm_notebook_messages_${other}`);
+            const curMsgsRaw = localStorage.getItem(`oasis_llm_notebook_messages_${curLower}`);
+            if (curMsgsRaw && otherMsgsRaw && curMsgsRaw === otherMsgsRaw) {
+                if (!curWordRegex.test(fullChatText)) {
+                    console.warn(`[LLMNotebookTab] Descartando duplicado idéntico de '${other}' en perfil '${curLower}'`);
+                    return true;
+                }
+            }
+        } catch (e) {}
+    }
+
+    return false;
+};
+
+// Safe loader that guarantees zero leakage between different patients
+const loadStoredPatientMessages = (patientName) => {
+    try {
+        // Remove legacy global backup key that caused cross-patient pollution
+        localStorage.removeItem('oasis_llm_notebook_messages_latest_backup');
+        
+        const k = getNotebookKeys(patientName);
+        const saved = localStorage.getItem(k.messagesKey) || localStorage.getItem(k.backupKey);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                if (isContaminatedWithOtherPatient(parsed, patientName)) {
+                    // Purge the contaminated key for this patient so they get a fresh start
+                    localStorage.removeItem(k.messagesKey);
+                    localStorage.removeItem(k.backupKey);
+                    return [];
+                }
+                return parsed;
+            }
+        }
+    } catch (e) {
+        console.error("Error loading saved notebook messages:", e);
+    }
+    return [];
 };
 
 // Helper to parse the top 3 recommended clinical tests from assistant messages
@@ -87,24 +167,7 @@ const parseTestRecommendations = (content) => {
 };
 
 export const LLMNotebookTab = ({ patientName }) => {
-    const [messages, setMessages] = useState(() => {
-        try {
-            const k = getNotebookKeys(patientName);
-            const saved = localStorage.getItem(k.messagesKey) || localStorage.getItem(k.backupKey);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            }
-            const globalSaved = localStorage.getItem(k.globalBackupKey);
-            if (globalSaved) {
-                const parsed = JSON.parse(globalSaved);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            }
-        } catch (e) {
-            console.error("Error loading saved notebook messages:", e);
-        }
-        return [];
-    });
+    const [messages, setMessages] = useState(() => loadStoredPatientMessages(patientName));
 
     const [chosenTest, setChosenTest] = useState(() => {
         try {
@@ -127,7 +190,8 @@ export const LLMNotebookTab = ({ patientName }) => {
     });
 
     const [lastSavedAt, setLastSavedAt] = useState(() => {
-        return localStorage.getItem('oasis_llm_notebook_last_saved_time') || null;
+        const k = getNotebookKeys(patientName);
+        return localStorage.getItem(k.lastSavedKey) || null;
     });
     const [isSavingManual, setIsSavingManual] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -141,18 +205,27 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [showSourcesMobile, setShowSourcesMobile] = useState(false);
     const chatScrollRef = useRef(null);
     const prevPatientRef = useRef(patientName);
+    const currentPatientRef = useRef(patientName);
 
-    // Synchronous persistence helper to guarantee zero data loss
+    useEffect(() => {
+        currentPatientRef.current = patientName;
+    }, [patientName]);
+
+    // Synchronous persistence helper to guarantee zero data loss and strict isolation
     const persistMessages = (msgsList, targetName = patientName) => {
         if (!Array.isArray(msgsList) || msgsList.length === 0) return;
         const k = getNotebookKeys(targetName);
         try {
-            const jsonStr = JSON.stringify(msgsList);
+            const taggedMsgs = msgsList.map(m => ({
+                role: m.role,
+                content: m.content,
+                patientOwner: k.safeName
+            }));
+            const jsonStr = JSON.stringify(taggedMsgs);
             localStorage.setItem(k.messagesKey, jsonStr);
             localStorage.setItem(k.backupKey, jsonStr);
-            localStorage.setItem(k.globalBackupKey, jsonStr);
             const timeFormatted = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            localStorage.setItem('oasis_llm_notebook_last_saved_time', timeFormatted);
+            localStorage.setItem(k.lastSavedKey, timeFormatted);
             setLastSavedAt(timeFormatted);
         } catch (e) {
             console.error("Error persisting notebook messages:", e);
@@ -247,24 +320,17 @@ export const LLMNotebookTab = ({ patientName }) => {
             setSavedSessions([]);
         }
 
+        try {
+            const timeRaw = localStorage.getItem(k.lastSavedKey);
+            setLastSavedAt(timeRaw || null);
+        } catch (e) {
+            setLastSavedAt(null);
+        }
+
         if (prevPatientRef.current !== patientName) {
             prevPatientRef.current = patientName;
-            try {
-                const saved = localStorage.getItem(k.messagesKey) || localStorage.getItem(k.backupKey);
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        setMessages(parsed);
-                    } else {
-                        setMessages([]);
-                    }
-                } else {
-                    setMessages([]);
-                }
-            } catch (e) {
-                console.error("Error updating patient notebook messages:", e);
-                setMessages([]);
-            }
+            const patientMsgs = loadStoredPatientMessages(patientName);
+            setMessages(patientMsgs);
 
             try {
                 const savedTest = localStorage.getItem(k.chosenTestKey);
@@ -275,9 +341,9 @@ export const LLMNotebookTab = ({ patientName }) => {
         }
     }, [patientName]);
 
-    // Continuous auto-persisting (NEVER removes on empty messages)
+    // Continuous auto-persisting (strictly guarded to current patient)
     useEffect(() => {
-        if (messages.length > 0) {
+        if (messages.length > 0 && currentPatientRef.current === patientName) {
             persistMessages(messages, patientName);
         }
     }, [messages, patientName]);
@@ -300,11 +366,14 @@ export const LLMNotebookTab = ({ patientName }) => {
         setMessages([]);
         setChosenTest(null);
         setConfirmClear(false);
+        setLastSavedAt(null);
         const k = getNotebookKeys(patientName);
         try {
             localStorage.removeItem(k.messagesKey);
             localStorage.removeItem(k.backupKey);
             localStorage.removeItem(k.chosenTestKey);
+            localStorage.removeItem(k.lastSavedKey);
+            localStorage.removeItem('oasis_llm_notebook_messages_latest_backup');
         } catch (e) {}
     };
 
