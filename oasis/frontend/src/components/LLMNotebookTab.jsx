@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
-    Save, Clock, Download, History, Activity 
+    Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain
 } from 'lucide-react';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
+import { BIO_QUESTIONS } from './BiographicInterview';
 import { safeJSONParse } from '../utils/jsonParser';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5046';
@@ -197,6 +198,8 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
+    const [activeTestRunnerInformante, setActiveTestRunnerInformante] = useState('adolescente');
+    const [viewingSource, setViewingSource] = useState(null);
     const [inputMsg, setInputMsg] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -206,6 +209,22 @@ export const LLMNotebookTab = ({ patientName }) => {
     const chatScrollRef = useRef(null);
     const prevPatientRef = useRef(patientName);
     const currentPatientRef = useRef(patientName);
+
+    const handleOpenSource = (source) => {
+        if (!source) return;
+        if (source.testId || (source.id && source.id.startsWith('test_'))) {
+            let tId = source.testId;
+            if (!tId) {
+                const parts = source.id.replace('test_', '').split('_');
+                tId = parts[0];
+            }
+            const inf = source.informante || (source.id.includes('madre') ? 'madre' : 'adolescente');
+            setActiveTestRunnerInformante(inf);
+            setActiveTestRunnerId(tId);
+        } else {
+            setViewingSource(source);
+        }
+    };
 
     useEffect(() => {
         currentPatientRef.current = patientName;
@@ -253,30 +272,106 @@ export const LLMNotebookTab = ({ patientName }) => {
 
         // Bio
         const bioStr = localStorage.getItem(`oasis_bio_transcriptions_${patientName}`);
-        if (bioStr) availSources.push({ id: 'bio', name: 'Entrevista Biográfica (Completada)', type: 'doc', content: bioStr });
+        if (bioStr) {
+            availSources.push({ 
+                id: 'bio', 
+                name: 'Entrevista Biográfica (Completada)', 
+                type: 'entrevista', 
+                rawData: bioStr,
+                content: bioStr 
+            });
+        }
 
         // Phenom / Existential
         const phenomStr = localStorage.getItem(`oasis_phenom_qualitative_${patientName}`);
-        if (phenomStr) availSources.push({ id: 'phenom', name: 'Diagnóstico Existencial y Fenomenológico (Completado)', type: 'data', content: phenomStr });
+        if (phenomStr) {
+            availSources.push({ 
+                id: 'phenom', 
+                name: 'Diagnóstico Existencial y Fenomenológico (Completado)', 
+                type: 'fenomenológico', 
+                rawData: phenomStr,
+                content: phenomStr 
+            });
+        }
 
         // PID-5
         const pidStr = localStorage.getItem(`oasis_pid_answers_${patientName}`);
-        if (pidStr) availSources.push({ id: 'pid5', name: 'Evaluación de Personalidad PID-5 (Completada)', type: 'data', content: pidStr });
+        if (pidStr) {
+            availSources.push({ 
+                id: 'pid5', 
+                name: 'Evaluación de Personalidad PID-5 (Completada)', 
+                type: 'psicometría', 
+                rawData: pidStr,
+                content: pidStr 
+            });
+        }
 
-        // Completed Clinical Screening Tests (BAI, PHQ-9, COPE, DERS, AAQ-II, GAD-7)
+        // Completed Clinical Screening Tests (BAI, PHQ-9, COPE, DERS, AAQ-II, GAD-7, CDI-2, SCARED, SDQ, C-SSRS, EPDS)
         if (CLINICAL_TESTS) {
             Object.keys(CLINICAL_TESTS).forEach(tId => {
-                const resRaw = localStorage.getItem(`oasis_test_result_${patientName}_${tId}`);
-                if (resRaw) {
-                    try {
-                        const res = JSON.parse(resRaw);
-                        availSources.push({
-                            id: `test_${tId}`,
-                            name: `Prueba: ${res.nombre || tId.toUpperCase()} [${res.nivel} - ${res.totalScore} pts] (Completada)`,
-                            type: 'doc',
-                            content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre} (${tId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
-                        });
-                    } catch (e) {}
+                if (tId === 'sdq') {
+                    const resAdoRaw = localStorage.getItem(`oasis_test_result_${patientName}_sdq_adolescente`);
+                    const resMadRaw = localStorage.getItem(`oasis_test_result_${patientName}_sdq_madre`);
+                    const resGenRaw = localStorage.getItem(`oasis_test_result_${patientName}_sdq`);
+
+                    if (resAdoRaw) {
+                        try {
+                            const res = JSON.parse(resAdoRaw);
+                            availSources.push({
+                                id: `test_sdq_adolescente`,
+                                testId: 'sdq',
+                                informante: 'adolescente',
+                                name: `Prueba: SDQ (Autoinforme Adolescente) [${res.nivel} - ${res.totalScore} pts]`,
+                                type: 'prueba clínica',
+                                resultData: res,
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: SDQ (Autoinforme Adolescente)\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                            });
+                        } catch(e) {}
+                    }
+                    if (resMadRaw) {
+                        try {
+                            const res = JSON.parse(resMadRaw);
+                            availSources.push({
+                                id: `test_sdq_madre`,
+                                testId: 'sdq',
+                                informante: 'madre',
+                                name: `Prueba: SDQ (Perspectiva Madre) [${res.nivel} - ${res.totalScore} pts]`,
+                                type: 'prueba clínica',
+                                resultData: res,
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: SDQ (Perspectiva Madre)\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                            });
+                        } catch(e) {}
+                    }
+                    if (!resAdoRaw && !resMadRaw && resGenRaw) {
+                        try {
+                            const res = JSON.parse(resGenRaw);
+                            availSources.push({
+                                id: `test_sdq`,
+                                testId: 'sdq',
+                                informante: res.informante || 'adolescente',
+                                name: `Prueba: SDQ [${res.nivel} - ${res.totalScore} pts]`,
+                                type: 'prueba clínica',
+                                resultData: res,
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre || 'SDQ'}\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                            });
+                        } catch(e) {}
+                    }
+                } else {
+                    const resRaw = localStorage.getItem(`oasis_test_result_${patientName}_${tId}`);
+                    if (resRaw) {
+                        try {
+                            const res = JSON.parse(resRaw);
+                            availSources.push({
+                                id: `test_${tId}`,
+                                testId: tId,
+                                informante: 'adolescente',
+                                name: `Prueba: ${res.nombre || tId.toUpperCase()} [${res.nivel} - ${res.totalScore} pts]`,
+                                type: 'prueba clínica',
+                                resultData: res,
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre || tId.toUpperCase()} (${tId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                            });
+                        } catch (e) {}
+                    }
                 }
             });
         }
@@ -291,6 +386,7 @@ export const LLMNotebookTab = ({ patientName }) => {
                         id: 'transcripts', 
                         name: `Transcripciones (${transArr.length})`, 
                         type: 'audio', 
+                        rawData: transStr,
                         content: transArr.map(t => `[${t.date}] ${t.filename}: ${t.text}`).join('\n\n') 
                     });
                 }
@@ -299,10 +395,10 @@ export const LLMNotebookTab = ({ patientName }) => {
 
         // Blocks & Notes
         const blocksStr = localStorage.getItem(`oasis_blocks_${patientName}`);
-        if (blocksStr) availSources.push({ id: 'blocks', name: 'Escritos y Bitácora Existencial', type: 'doc', content: blocksStr });
+        if (blocksStr) availSources.push({ id: 'blocks', name: 'Escritos y Bitácora Existencial', type: 'documento', content: blocksStr, rawData: blocksStr });
 
         const notesStr = localStorage.getItem(`oasis_private_notes_${patientName}`);
-        if (notesStr) availSources.push({ id: 'notes', name: 'Formulación y Notas Clínicas', type: 'doc', content: notesStr });
+        if (notesStr) availSources.push({ id: 'notes', name: 'Formulación y Notas Clínicas', type: 'notas clínicas', content: notesStr, rawData: notesStr });
 
         setSources(availSources);
         setSelectedSources(new Set(availSources.map(s => s.id)));
@@ -601,6 +697,231 @@ ${contextData || 'Ninguna fuente seleccionada.'}
         handleSend(followUp);
     };
 
+    const renderSourceModalContent = (source) => {
+        if (!source) return null;
+
+        // 1. Biographical Interview
+        if (source.id === 'bio') {
+            let answers = {};
+            try {
+                const raw = source.rawData || source.content;
+                answers = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+            } catch(e) {
+                answers = {};
+            }
+
+            return (
+                <div className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 flex items-center gap-2.5">
+                        <ShieldCheck size={18} className="shrink-0 text-emerald-400" />
+                        <div>
+                            <h5 className="font-bold text-xs">Entrevista Biográfica Inicial Registrada</h5>
+                            <p className="text-[10px] text-emerald-200/80 font-sans mt-0.5">
+                                Respuestas textuales transcritas del paciente @{patientName}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {BIO_QUESTIONS.map((q, idx) => {
+                            const answerText = answers[idx] !== undefined 
+                                ? answers[idx] 
+                                : (answers[String(idx)] !== undefined ? answers[String(idx)] : null);
+                            
+                            return (
+                                <div key={idx} className="space-y-1.5">
+                                    {q.section && (
+                                        <div className="pt-3 pb-1 border-t border-white/5 first:border-t-0 first:pt-0">
+                                            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                                                {q.section}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-zinc-200">
+                                                #{idx + 1}. {q.title}
+                                            </span>
+                                            <span className="text-[9px] font-mono text-zinc-500 uppercase">Reactivo #{idx + 1}</span>
+                                        </div>
+                                        <p className="text-[11px] text-zinc-400 italic leading-relaxed">
+                                            "{q.text}"
+                                        </p>
+                                        <div className="mt-2 p-3 rounded-lg bg-black/50 border border-white/5">
+                                            <span className="text-[9px] font-mono font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                                                Respuesta de {patientName}:
+                                            </span>
+                                            <p className="text-xs text-zinc-100 whitespace-pre-wrap leading-relaxed">
+                                                {answerText && String(answerText).trim() 
+                                                    ? String(answerText).trim() 
+                                                    : <span className="text-zinc-500 italic font-mono text-[11px]">Sin respuesta registrada en la entrevista</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        // 2. Phenomenological / Existential Diagnosis
+        if (source.id === 'phenom') {
+            let phenom = {};
+            try {
+                const raw = source.rawData || source.content;
+                phenom = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+            } catch(e) {
+                phenom = {};
+            }
+
+            const dimensions = [
+                {
+                    key: 'antecedentes_origen',
+                    title: 'I. Antecedentes de Origen e Historia Temprana',
+                    desc: 'Configuración relacional primaria, mandatos familiares, figuras de apego y génesis del estilo de contacto.',
+                    content: phenom.antecedentes_origen || phenom['Antecedentes de Origen'] || phenom['antecedentesOrigen']
+                },
+                {
+                    key: 'experiencia_insuficiencia',
+                    title: 'II. Experiencia de Insuficiencia / Autoexigencia',
+                    desc: 'La sombra de la autoexigencia, vivencia de no ser suficiente, comparación con ideales y culpa existencial.',
+                    content: phenom.experiencia_insuficiencia || phenom['La Sombra de la Autoexigencia'] || phenom['experienciaInsuficiencia']
+                },
+                {
+                    key: 'temporalidad_vivida',
+                    title: 'III. Temporalidad Vivida y Aceleración',
+                    desc: 'Relación con el tiempo, angustia anticipatoria, ritmo de vida, desconexión del presente y proyección catastrófica.',
+                    content: phenom.temporalidad_vivida || phenom['Temporalidad Vivida'] || phenom['temporalidadVivida']
+                },
+                {
+                    key: 'premisa_realidad',
+                    title: 'IV. Premisa de Realidad y Visión del Mundo',
+                    desc: 'Postura ontológica, seguridad básica en el entorno, desconfianza o apertura vital ante las relaciones.',
+                    content: phenom.premisa_realidad || phenom['Premisa de Realidad'] || phenom['premisaRealidad']
+                }
+            ];
+
+            return (
+                <div className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 flex items-center gap-2.5">
+                        <Brain size={18} className="shrink-0 text-purple-400" />
+                        <div>
+                            <h5 className="font-bold text-xs">Diagnóstico Existencial y Fenomenológico</h5>
+                            <p className="text-[10px] text-purple-200/80 font-sans mt-0.5">
+                                Dimensiones cualitativas y vivencia subjetiva del consultante @{patientName}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {dimensions.map(dim => (
+                            <div key={dim.key} className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
+                                <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-purple-400" />
+                                    {dim.title}
+                                </h4>
+                                <p className="text-[10px] text-zinc-400 italic">
+                                    {dim.desc}
+                                </p>
+                                <div className="mt-2 p-3 rounded-lg bg-black/50 border border-white/5">
+                                    <p className="text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                                        {dim.content && String(dim.content).trim() 
+                                            ? String(dim.content).trim() 
+                                            : <span className="text-zinc-500 italic font-mono text-[11px]">Sin registro cualitativo para esta dimensión.</span>}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // 3. PID-5 Personality Inventory
+        if (source.id === 'pid5') {
+            let pidData = {};
+            try {
+                const raw = source.rawData || source.content;
+                pidData = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+            } catch(e) {
+                pidData = {};
+            }
+
+            return (
+                <div className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center gap-2.5">
+                        <Activity size={18} className="shrink-0 text-blue-400" />
+                        <div>
+                            <h5 className="font-bold text-xs">Inventario de Personalidad DSM-5 (PID-5)</h5>
+                            <p className="text-[10px] text-blue-200/80 font-sans mt-0.5">
+                                Registro de reactivos respondidos y rasgos evaluados de @{patientName}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 space-y-3">
+                        <h4 className="text-xs font-bold text-white font-mono uppercase">Registro de Reactivos y Valores</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {Object.entries(pidData).map(([key, val]) => (
+                                <div key={key} className="p-2.5 rounded-lg bg-black/40 border border-white/5 flex items-center justify-between">
+                                    <span className="text-[10px] text-zinc-400 font-mono truncate">
+                                        {key.startsWith('item_') ? `Reactivo #${key.replace('item_', '')}` : key}
+                                    </span>
+                                    <span className="text-xs font-mono font-bold text-purple-300">{String(val)} pts</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 4. Transcripts
+        if (source.id === 'transcripts') {
+            let transcripts = [];
+            try {
+                const raw = source.rawData || source.content;
+                transcripts = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (!Array.isArray(transcripts)) transcripts = [];
+            } catch(e) {
+                transcripts = [];
+            }
+
+            if (transcripts.length === 0) {
+                return (
+                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 whitespace-pre-wrap leading-relaxed text-zinc-300 text-xs">
+                        {source.content}
+                    </div>
+                );
+            }
+
+            return (
+                <div className="space-y-3">
+                    {transcripts.map((t, i) => (
+                        <div key={i} className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
+                            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 border-b border-white/5 pb-1.5">
+                                <span className="text-blue-300 font-bold">{t.filename || `Sesión #${i + 1}`}</span>
+                                <span>{t.date || 'Fecha no registrada'}</span>
+                            </div>
+                            <p className="text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                                {t.text}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // 5. General documents / notes
+        return (
+            <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 whitespace-pre-wrap leading-relaxed text-zinc-200 text-xs font-sans">
+                {source.content}
+            </div>
+        );
+    };
+
     return (
         <div className="w-full h-full flex flex-col md:flex-row gap-2 md:gap-4 bg-[#0a0a0c] p-1.5 sm:p-2 md:p-4 rounded-2xl md:rounded-3xl animate-in fade-in duration-300 overflow-hidden relative">
             {/* Desktop Left Panel: Sources */}
@@ -623,24 +944,48 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         sources.map(s => (
                             <div 
                                 key={s.id} 
-                                onClick={() => toggleSource(s.id)}
-                                className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                                className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 group ${
                                     selectedSources.has(s.id) 
                                     ? 'bg-blue-500/10 border-blue-500/30' 
-                                    : 'bg-zinc-900/40 border-white/5 opacity-50 hover:opacity-100'
+                                    : 'bg-zinc-900/40 border-white/5 opacity-60 hover:opacity-100'
                                 }`}
                             >
-                                <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border ${
-                                    selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-600 text-transparent'
-                                }`}>
-                                    <CheckCircle2 size={12} />
+                                <div 
+                                    onClick={() => toggleSource(s.id)}
+                                    className="flex items-start gap-2.5 flex-1 cursor-pointer min-w-0"
+                                >
+                                    <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border transition-all ${
+                                        selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-600 text-transparent'
+                                    }`}>
+                                        <CheckCircle2 size={12} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${selectedSources.has(s.id) ? 'text-blue-100' : 'text-zinc-400'}`}>
+                                            {s.name}
+                                        </h4>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                            <span className="text-[9px] text-zinc-500 font-mono capitalize">{s.type}</span>
+                                            {s.resultData?.totalScore !== undefined && (
+                                                <span className="text-[9px] font-mono font-bold text-purple-400 bg-purple-500/15 px-1.5 py-0.2 rounded border border-purple-500/20">
+                                                    {s.resultData.totalScore} pts
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 className={`text-xs font-bold ${selectedSources.has(s.id) ? 'text-blue-100' : 'text-zinc-400'}`}>
-                                        {s.name}
-                                    </h4>
-                                    <p className="text-[9px] text-zinc-500 font-mono mt-1 capitalize">{s.type}</p>
-                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenSource(s);
+                                    }}
+                                    title="Abrir y ver respuestas completas / resultados"
+                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                >
+                                    <Eye size={12} />
+                                    <span>Ver</span>
+                                </button>
                             </div>
                         ))
                     )}
@@ -670,19 +1015,35 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             sources.map(s => (
                                 <div 
                                     key={s.id} 
-                                    onClick={() => toggleSource(s.id)}
-                                    className={`p-2 rounded-xl border cursor-pointer flex items-center gap-2.5 text-xs transition-all ${
+                                    className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
                                         selectedSources.has(s.id) 
                                         ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
                                         : 'bg-zinc-900/40 border-white/5 text-zinc-500'
                                     }`}
                                 >
-                                    <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
-                                        selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
-                                    }`}>
-                                        <CheckCircle2 size={11} />
+                                    <div 
+                                        onClick={() => toggleSource(s.id)}
+                                        className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                    >
+                                        <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
+                                            selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
+                                        }`}>
+                                            <CheckCircle2 size={11} />
+                                        </div>
+                                        <span className="truncate">{s.name}</span>
                                     </div>
-                                    <span className="truncate">{s.name}</span>
+
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpenSource(s);
+                                        }}
+                                        className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                    >
+                                        <Eye size={12} />
+                                        <span>Ver</span>
+                                    </button>
                                 </div>
                             ))
                         )}
@@ -925,11 +1286,14 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                             <div className="mt-3 space-y-1.5">
                                                                 {matchedTestKey && (
                                                                     <button
-                                                                        onClick={() => setActiveTestRunnerId(matchedTestKey)}
+                                                                        onClick={() => {
+                                                                            setActiveTestRunnerInformante(completedResult?.informante || 'adolescente');
+                                                                            setActiveTestRunnerId(matchedTestKey);
+                                                                        }}
                                                                         className="w-full py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all bg-purple-600 hover:bg-purple-500 text-white shadow-sm shadow-purple-600/20"
                                                                     >
                                                                         <Activity size={11} />
-                                                                        <span>{completedResult ? 'Ver / Reaplicar' : 'Administrar Prueba'}</span>
+                                                                        <span>{completedResult ? 'Ver Respuestas / Reaplicar' : 'Administrar Prueba'}</span>
                                                                     </button>
                                                                 )}
 
@@ -1102,21 +1466,88 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 <ClinicalTestRunner
                     testId={activeTestRunnerId}
                     patientName={patientName || 'Paciente'}
-                    onClose={() => setActiveTestRunnerId(null)}
+                    initialInformante={activeTestRunnerInformante}
+                    onClose={() => {
+                        setActiveTestRunnerId(null);
+                        setActiveTestRunnerInformante('adolescente');
+                    }}
                     onSave={(res) => {
                         // Refresh sources list with the new completed test
                         setSources(prev => {
+                            const infSuffix = res.testId === 'sdq' && res.informante ? `_${res.informante}` : '';
+                            const infLabel = res.testId === 'sdq' && res.informante ? (res.informante === 'madre' ? ' (Perspectiva Madre)' : ' (Autoinforme Adolescente)') : '';
                             const newSource = {
-                                id: `test_${res.testId}`,
-                                name: `Prueba: ${res.nombre} [${res.nivel} - ${res.totalScore} pts] (Completada)`,
-                                type: 'doc',
-                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre} (${res.testId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                                id: `test_${res.testId}${infSuffix}`,
+                                testId: res.testId,
+                                informante: res.informante || 'adolescente',
+                                name: `Prueba: ${res.nombre}${infLabel} [${res.nivel} - ${res.totalScore} pts]`,
+                                type: 'prueba clínica',
+                                resultData: res,
+                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre}${infLabel} (${res.testId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.80'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
                             };
                             return [newSource, ...prev.filter(s => s.id !== newSource.id)];
                         });
-                        setSelectedSources(prev => new Set([...prev, `test_${res.testId}`]));
+                        const infSuffix = res.testId === 'sdq' && res.informante ? `_${res.informante}` : '';
+                        setSelectedSources(prev => new Set([...prev, `test_${res.testId}${infSuffix}`]));
                     }}
                 />
+            )}
+
+            {/* Non-Test Source Detail Modal (Bio, Phenom, PID-5, Transcripts, Notes) */}
+            {viewingSource && (
+                <div className="fixed inset-0 z-[3500] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+                    <div className="w-full max-w-3xl bg-[#0d0d12] border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-zinc-950/90">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                                    <BookOpen size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm sm:text-base font-bold text-white leading-tight">
+                                        {viewingSource.name}
+                                    </h3>
+                                    <p className="text-[10px] sm:text-xs text-zinc-400 font-mono mt-0.5 capitalize">
+                                        Expediente clínico de @{patientName} • Tipo: {viewingSource.type}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setViewingSource(null)}
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 font-sans text-xs">
+                            {renderSourceModalContent(viewingSource)}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-3.5 sm:p-4 border-t border-white/10 bg-zinc-950/95 flex items-center justify-between gap-3">
+                            <button
+                                onClick={() => toggleSource(viewingSource.id)}
+                                className={`py-2 px-3.5 rounded-xl font-mono text-xs font-bold transition-all flex items-center gap-2 ${
+                                    selectedSources.has(viewingSource.id)
+                                        ? 'bg-blue-600/20 border border-blue-500/40 text-blue-300'
+                                        : 'bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5'
+                                }`}
+                            >
+                                <CheckCircle2 size={14} className={selectedSources.has(viewingSource.id) ? 'text-blue-400' : 'text-zinc-500'} />
+                                <span>{selectedSources.has(viewingSource.id) ? 'Fuente activa en contexto de Kio' : 'Incluir en contexto de Kio'}</span>
+                            </button>
+
+                            <button
+                                onClick={() => setViewingSource(null)}
+                                className="py-2 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono text-xs font-bold uppercase tracking-wider border border-white/5 transition-all"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

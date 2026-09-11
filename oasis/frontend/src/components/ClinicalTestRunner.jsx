@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Check, ArrowRight, ArrowLeft, X, Save, AlertTriangle, 
-    Sparkles, ShieldCheck, Activity, Brain, Clock, ChevronRight,
+    Sparkles, ShieldCheck, Activity, Brain, Clock, ChevronRight, ChevronDown,
     RotateCcw, Award, FileText, HelpCircle, Info, ListChecks,
     TrendingUp, BookOpen
 } from 'lucide-react';
@@ -14,13 +14,15 @@ export function ClinicalTestRunner({
     patientName = 'Paciente',
     onClose,
     onSave,
-    readOnly = false
+    readOnly = false,
+    initialInformante = 'adolescente'
 }) {
     const test = CLINICAL_TESTS[testId] || CLINICAL_TESTS.bai;
 
-    const [selectedInformante, setSelectedInformante] = useState('adolescente'); // 'adolescente' | 'madre'
+    const [selectedInformante, setSelectedInformante] = useState(initialInformante); // 'adolescente' | 'madre'
     const [introTab, setIntroTab] = useState('COMO_RESPONDER'); // 'COMO_RESPONDER' | 'COMO_FUNCIONA' | 'FICHA'
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [showAnswersBreakdown, setShowAnswersBreakdown] = useState(true);
     
     // Load any existing saved result for this patient and test
     const getStorageKey = (inf = selectedInformante) => {
@@ -30,14 +32,20 @@ export function ClinicalTestRunner({
         return `oasis_test_result_${patientName}_${test.id}`;
     };
 
-    const [existingResult, setExistingResult] = useState(() => {
+    const loadSavedResult = (inf = selectedInformante) => {
         try {
-            const raw = localStorage.getItem(getStorageKey('adolescente')) || localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`);
+            const key = getStorageKey(inf);
+            let raw = localStorage.getItem(key);
+            if (!raw && test.id === 'sdq') {
+                raw = localStorage.getItem(`oasis_test_result_${patientName}_${test.id}_adolescente`) || localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`);
+            }
             return raw ? JSON.parse(raw) : null;
         } catch (e) {
             return null;
         }
-    });
+    };
+
+    const [existingResult, setExistingResult] = useState(() => loadSavedResult(initialInformante));
 
     const [step, setStep] = useState(existingResult ? 'results' : 'intro'); // 'intro' | 'running' | 'results'
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,6 +53,42 @@ export function ClinicalTestRunner({
     const [calculatedResult, setCalculatedResult] = useState(existingResult || null);
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+
+    // Sync when testId or initialInformante changes
+    useEffect(() => {
+        if (initialInformante) {
+            setSelectedInformante(initialInformante);
+        }
+        const saved = loadSavedResult(initialInformante);
+        if (saved) {
+            setExistingResult(saved);
+            setCalculatedResult(saved);
+            setAnswers(saved.rawAnswers || {});
+            setStep('results');
+        } else {
+            setExistingResult(null);
+            setCalculatedResult(null);
+            setAnswers({});
+            setStep('intro');
+        }
+    }, [testId, initialInformante, patientName]);
+
+    const handleSwitchResultInformante = (newInf) => {
+        setSelectedInformante(newInf);
+        try {
+            const raw = localStorage.getItem(getStorageKey(newInf)) || (newInf === 'adolescente' ? localStorage.getItem(`oasis_test_result_${patientName}_${test.id}`) : null);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                setCalculatedResult(parsed);
+                setAnswers(parsed.rawAnswers || {});
+                setStep('results');
+            } else {
+                setAnswers({});
+                setCalculatedResult(null);
+                setStep('intro');
+            }
+        } catch (e) {}
+    };
 
     const isParentPerspective = test.id === 'sdq' && selectedInformante === 'madre';
     const currentItem = test.items[currentIndex];
@@ -645,7 +689,7 @@ export function ClinicalTestRunner({
                             {/* Score Card Banner */}
                             <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div>
-                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500">
                                             Puntuación Total Obtenida
                                         </span>
@@ -653,6 +697,32 @@ export function ClinicalTestRunner({
                                             <span className="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] font-mono font-bold text-purple-300 uppercase">
                                                 {calculatedResult.informante === 'madre' ? 'Perspectiva Madre' : 'Autoinforme Adolescente'}
                                             </span>
+                                        )}
+                                        {test.id === 'sdq' && (
+                                            <div className="flex items-center gap-1 bg-zinc-900/80 p-0.5 rounded-lg border border-white/5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSwitchResultInformante('adolescente')}
+                                                    className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase transition-all ${
+                                                        (calculatedResult.informante || selectedInformante) === 'adolescente'
+                                                            ? 'bg-purple-600 text-white shadow-sm'
+                                                            : 'text-zinc-400 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Adolescente
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSwitchResultInformante('madre')}
+                                                    className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase transition-all ${
+                                                        (calculatedResult.informante || selectedInformante) === 'madre'
+                                                            ? 'bg-purple-600 text-white shadow-sm'
+                                                            : 'text-zinc-400 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Madre
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                     <div className="flex items-baseline gap-2 mt-0.5">
@@ -711,6 +781,133 @@ export function ClinicalTestRunner({
                                     </div>
                                 </div>
                             )}
+
+                            {/* Item-by-Item Answers Breakdown */}
+                            <div className="rounded-2xl border border-white/10 bg-zinc-950/70 overflow-hidden shadow-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAnswersBreakdown(prev => !prev)}
+                                    className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors text-left"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0">
+                                            <ListChecks size={15} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                                                <span>Respuestas Detalladas del Consultante</span>
+                                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold lowercase">
+                                                    reactivo por reactivo
+                                                </span>
+                                            </h4>
+                                            <p className="text-[10px] text-zinc-400 font-sans mt-0.5">
+                                                Revisa las alternativas exactas y puntajes marcados por {patientName} en cada una de las {test.items.length} preguntas
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                            {Object.keys(calculatedResult.rawAnswers || answers || {}).length} / {test.items.length} respondidos
+                                        </span>
+                                        <ChevronDown size={15} className={`text-zinc-400 transition-transform duration-200 ${showAnswersBreakdown ? 'rotate-180' : ''}`} />
+                                    </div>
+                                </button>
+
+                                {showAnswersBreakdown && (
+                                    <div className="p-4 pt-0 border-t border-white/5 space-y-2.5 max-h-[460px] overflow-y-auto">
+                                        {Object.keys(calculatedResult.rawAnswers || answers || {}).length === 0 ? (
+                                            <div className="p-4 text-center text-zinc-500 font-mono text-xs">
+                                                No se encontraron respuestas archivadas reactivo por reactivo para esta versión. Haz clic en "Reaplicar" para contestar y guardar todas las respuestas.
+                                            </div>
+                                        ) : (
+                                            test.items.map((item, idx) => {
+                                                const currentAnswersMap = calculatedResult.rawAnswers || answers || {};
+                                                const userVal = currentAnswersMap[item.id];
+                                                const isParent = test.id === 'sdq' && (calculatedResult.informante || selectedInformante) === 'madre';
+                                                const itemText = (isParent && item.textParent) ? item.textParent : item.text;
+                                                const optionsList = (item.options && item.options.length > 0) ? item.options : (test.escala || []);
+                                                const chosenOption = optionsList.find(opt => opt.value === userVal);
+                                                const isAnswered = userVal !== undefined;
+
+                                                const isAlertItem = (
+                                                    (test.id === 'cssrs' && userVal > 0) ||
+                                                    (test.id === 'cdi2' && item.id === 8 && userVal > 0) ||
+                                                    (test.id === 'phq9' && item.id === 9 && userVal > 0) ||
+                                                    (item.critical && userVal > 0)
+                                                );
+
+                                                return (
+                                                    <div 
+                                                        key={item.id || idx} 
+                                                        className={`p-3 rounded-xl border transition-all text-xs ${
+                                                            isAnswered 
+                                                                ? (isAlertItem
+                                                                    ? 'bg-rose-500/10 border-rose-500/30 shadow-sm shadow-rose-500/10' 
+                                                                    : 'bg-zinc-900/60 border-white/5') 
+                                                                : 'bg-zinc-900/20 border-white/5 opacity-60'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="space-y-1 flex-1">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="text-[10px] font-mono font-bold text-zinc-400">
+                                                                        #{idx + 1}
+                                                                    </span>
+                                                                    {item.subscale && (
+                                                                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                                                                            {item.subscale}
+                                                                        </span>
+                                                                    )}
+                                                                    {item.reversed && (
+                                                                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                                                                            Invertido
+                                                                        </span>
+                                                                    )}
+                                                                    {isAlertItem && (
+                                                                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1">
+                                                                            <AlertTriangle size={10} /> Reactivo Crítico
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-zinc-200 font-sans text-xs leading-snug">
+                                                                    {itemText}
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="shrink-0 text-right">
+                                                                {isAnswered ? (
+                                                                    <div className="inline-flex flex-col items-end">
+                                                                        <span className={`px-2.5 py-1 rounded-lg border font-mono font-bold text-xs ${
+                                                                            isAlertItem
+                                                                                ? 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+                                                                                : 'bg-purple-500/20 border-purple-500/40 text-purple-200'
+                                                                        }`}>
+                                                                            {chosenOption ? chosenOption.label : `Valor: ${userVal}`}
+                                                                        </span>
+                                                                        <span className="text-[9px] font-mono text-zinc-400 mt-0.5">
+                                                                            Puntaje: {userVal} pts
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-mono text-zinc-500 italic">
+                                                                        Sin responder
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {chosenOption?.desc && (
+                                                            <p className="mt-2 text-[10px] text-zinc-400 italic bg-black/30 p-2 rounded-lg border border-white/5 leading-relaxed">
+                                                                "{chosenOption.desc}"
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Action Buttons */}
                             <div className="pt-2 flex flex-col sm:flex-row gap-3">
