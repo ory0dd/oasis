@@ -78,11 +78,11 @@ export async function syncTestResultToCloud(patientName, testId, result, informa
  * Scans local storage for any test results belonging to this patient and syncs them all to cloud.
  */
 export async function syncAllLocalPatientTestsToCloud(patientName) {
-    if (!patientName || typeof window === 'undefined') return;
+    if (!patientName || typeof window === 'undefined') return { success: false, count: 0 };
 
     try {
         const payload = {};
-        let foundAny = false;
+        const testIds = new Set();
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -96,15 +96,16 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
                     if (key.startsWith(`oasis_test_result_${patientName}_`) && !key.includes('__')) {
                         const sub = key.replace(`oasis_test_result_${patientName}_`, '');
                         payload[`oasis_test_result_${patientName}__${sub}`] = val;
+                        const baseId = sub.split('_')[0];
+                        testIds.add(baseId);
                     }
-                    foundAny = true;
                 }
             }
         }
 
-        if (foundAny) {
+        if (Object.keys(payload).length > 0) {
             const caller = localStorage.getItem('oasis_user') || 'observador1';
-            await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
+            const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,9 +113,31 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
                 },
                 body: JSON.stringify(payload)
             });
+            return { success: res.ok, count: testIds.size, testIds: Array.from(testIds) };
         }
+        return { success: true, count: 0, testIds: [] };
     } catch (e) {
         console.error("Error in syncAllLocalPatientTestsToCloud:", e);
+        return { success: false, count: 0, error: e };
+    }
+}
+
+/**
+ * Returns the count of completed clinical tests for a patient.
+ */
+export function getCompletedTestsCount(patientName) {
+    if (!patientName || typeof window === 'undefined') return 0;
+    try {
+        const testKeys = ['bai', 'phq9', 'cope28', 'ders16', 'aaq2', 'gad7', 'cdi2', 'scared', 'sdq', 'cssrs', 'epds'];
+        let count = 0;
+        for (const tid of testKeys) {
+            if (getSavedTestResult(patientName, tid)) {
+                count++;
+            }
+        }
+        return count;
+    } catch (e) {
+        return 0;
     }
 }
 

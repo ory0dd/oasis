@@ -4,7 +4,7 @@ import { Aperture, Mic,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -16,7 +16,7 @@ import { LLMNotebookTab } from './LLMNotebookTab';
 import { CLINICAL_TESTS, recomendarPruebasPosteriores } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { safeJSONParse } from '../utils/jsonParser';
-import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult } from '../utils/api';
+import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult, getCompletedTestsCount } from '../utils/api';
 
 // ErrorBoundary for embedded clinical views
 class ViewErrorBoundary extends React.Component {
@@ -876,6 +876,9 @@ const PsychologistDashboard = ({ onClose }) => {
     const [conversations, setConversations] = useState([]);
     const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
     const [catalogFilter, setCatalogFilter] = useState('ALL');
+    const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
+    const [lastSyncTime, setLastSyncTime] = useState(null);
+    const [syncNotification, setSyncNotification] = useState(null);
 
     // Persist selectedPatient, currentModule and activeTab to avoid losing state on reload
     useEffect(() => {
@@ -2219,8 +2222,51 @@ const PsychologistDashboard = ({ onClose }) => {
             return getSavedTestResult(patientName, testId);
         };
 
+        const currentCompletedCount = getCompletedTestsCount(patientName);
+
+        const handleTriggerSync = async () => {
+            setCloudSyncStatus('syncing');
+            try {
+                const syncRes = await syncAllLocalPatientTestsToCloud(patientName);
+                const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
+                    headers: { 'X-Oasis-User': callerUser }
+                });
+                if (res.ok) {
+                    const cData = await res.json();
+                    Object.keys(cData).forEach(k => {
+                        localStorage.setItem(k, cData[k]);
+                        if (k.includes('__')) {
+                            localStorage.setItem(k.replace('__', '_'), cData[k]);
+                        } else if (k.startsWith(`oasis_test_result_${patientName}_`)) {
+                            const sub = k.replace(`oasis_test_result_${patientName}_`, '');
+                            localStorage.setItem(`oasis_test_result_${patientName}__${sub}`, cData[k]);
+                        }
+                    });
+                }
+                const now = new Date();
+                const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const updatedCount = getCompletedTestsCount(patientName);
+
+                setLastSyncTime(timeFormatted);
+                setCloudSyncStatus('synced');
+                setSyncNotification({
+                    type: 'success',
+                    count: updatedCount,
+                    time: timeFormatted,
+                    message: updatedCount > 0 
+                        ? `Se han respaldado ${updatedCount} prueba${updatedCount !== 1 ? 's' : ''} psicométrica${updatedCount !== 1 ? 's' : ''} en la base de datos de la nube. Ya están disponibles en tu PC, celular y cualquier dispositivo.`
+                        : `El expediente de @${patientName} está sincronizado con la nube. Cualquier prueba nueva se guardará automáticamente en tiempo real.`
+                });
+                setReloadTrigger(prev => prev + 1);
+            } catch (e) {
+                console.error("Manual sync failed:", e);
+                setCloudSyncStatus('error');
+            }
+        };
+
         return (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
                     <div>
@@ -2238,35 +2284,45 @@ const PsychologistDashboard = ({ onClose }) => {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {/* Dynamic Interactive Cloud Sync Button */}
                         <button
-                            onClick={async () => {
-                                setIsReprocessing(true);
-                                await syncAllLocalPatientTestsToCloud(patientName);
-                                try {
-                                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
-                                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
-                                        headers: { 'X-Oasis-User': callerUser }
-                                    });
-                                    if (res.ok) {
-                                        const cData = await res.json();
-                                        Object.keys(cData).forEach(k => {
-                                            localStorage.setItem(k, cData[k]);
-                                            if (k.includes('__')) {
-                                                localStorage.setItem(k.replace('__', '_'), cData[k]);
-                                            }
-                                        });
-                                    }
-                                } catch (e) {}
-                                setReloadTrigger(prev => prev + 1);
-                                setIsReprocessing(false);
-                            }}
-                            className="px-3 py-1.5 rounded-full bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                            title="Sincronizar pruebas con la nube para que aparezcan en todos los dispositivos"
+                            onClick={handleTriggerSync}
+                            disabled={cloudSyncStatus === 'syncing'}
+                            className={`px-3.5 py-1.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+                                cloudSyncStatus === 'syncing'
+                                    ? 'bg-purple-500/20 border-purple-500/50 text-purple-200 animate-pulse'
+                                    : cloudSyncStatus === 'synced'
+                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 shadow-emerald-950/20'
+                                    : currentCompletedCount > 0
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-300'
+                            }`}
+                            title="Sincronizar pruebas con la nube para que aparezcan en todos tus dispositivos"
                         >
-                            <Sparkles size={13} className="text-purple-400" />
-                            <span>Sincronizar Nube</span>
+                            {cloudSyncStatus === 'syncing' ? (
+                                <>
+                                    <RefreshCw size={12} className="animate-spin text-purple-300" />
+                                    <span>Sincronizando con Nube...</span>
+                                </>
+                            ) : cloudSyncStatus === 'synced' ? (
+                                <>
+                                    <CheckCircle2 size={13} className="text-emerald-400" />
+                                    <span>Nube Sincronizada • {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'} ({lastSyncTime})</span>
+                                </>
+                            ) : currentCompletedCount > 0 ? (
+                                <>
+                                    <Cloud size={13} className="text-emerald-400" />
+                                    <span>En la Nube • {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={13} className="text-purple-400" />
+                                    <span>Sincronizar Nube</span>
+                                </>
+                            )}
                         </button>
+
                         {analysis.unlocked ? (
                             <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
                                 <ShieldCheck size={13} />
@@ -2280,6 +2336,40 @@ const PsychologistDashboard = ({ onClose }) => {
                         )}
                     </div>
                 </div>
+
+                {/* Visual Cloud Sync Notification Alert */}
+                {syncNotification && (
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300 shadow-lg shadow-emerald-950/40">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-sm shadow-emerald-500/20">
+                                <CheckCircle size={16} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-white">
+                                        Sincronización en la Nube Completada
+                                    </span>
+                                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                                        {syncNotification.count} prueba{syncNotification.count !== 1 ? 's' : ''} disponible{syncNotification.count !== 1 ? 's' : ''}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-zinc-400">
+                                        • {syncNotification.time}
+                                    </span>
+                                </div>
+                                <p className="text-[11px] text-zinc-300 font-sans mt-0.5 leading-snug">
+                                    {syncNotification.message}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setSyncNotification(null)}
+                            className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-all shrink-0 cursor-pointer"
+                            title="Cerrar aviso"
+                        >
+                            <X size={15} />
+                        </button>
+                    </div>
+                )}
 
                 {/* Locked State Screen */}
                 {!analysis.unlocked ? (
@@ -2332,9 +2422,17 @@ const PsychologistDashboard = ({ onClose }) => {
                                         >
                                             <div className="space-y-3">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-black flex items-center justify-center">
-                                                        #{idx + 1}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-black flex items-center justify-center">
+                                                            #{idx + 1}
+                                                        </span>
+                                                        {saved && (
+                                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] font-mono font-bold shadow-sm shadow-emerald-950">
+                                                                <Cloud size={10} />
+                                                                En la Nube
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         {t.poblacion === 'adolescente' && (
                                                             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 border border-amber-500/20 text-amber-300">
@@ -2376,9 +2474,15 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 {saved && (
                                                     <div className="p-2.5 rounded-xl bg-zinc-900/80 border border-white/5 flex items-center justify-between">
                                                         <span className="text-[10px] font-mono text-zinc-400">Resultado Actual:</span>
-                                                        <span className="text-xs font-mono font-bold text-purple-300">
-                                                            {saved.totalScore} pts • {saved.nivel}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-mono font-bold text-purple-300">
+                                                                {saved.totalScore} pts • {saved.nivel}
+                                                            </span>
+                                                            <span className="text-[8px] font-mono text-emerald-400 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20" title="Sincronizado en la nube">
+                                                                <Cloud size={9} />
+                                                                <span>Nube</span>
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -2484,9 +2588,15 @@ const PsychologistDashboard = ({ onClose }) => {
 
                                                     <div className="flex items-center justify-between pt-2 border-t border-white/5">
                                                         {saved ? (
-                                                            <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                                                                ✓ {saved.totalScore} pts ({saved.nivel})
-                                                            </span>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-[9px] font-mono text-emerald-400 font-bold">
+                                                                    ✓ {saved.totalScore} pts ({saved.nivel})
+                                                                </span>
+                                                                <span className="text-[8px] font-mono text-emerald-400 flex items-center gap-0.5 px-1 rounded bg-emerald-500/10 border border-emerald-500/20" title="Respaldado en la nube">
+                                                                    <Cloud size={9} />
+                                                                    <span>Nube</span>
+                                                                </span>
+                                                            </div>
                                                         ) : (
                                                             <span className="text-[9px] font-mono text-zinc-600">
                                                                 Sin aplicar
