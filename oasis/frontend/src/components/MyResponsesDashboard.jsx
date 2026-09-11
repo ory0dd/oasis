@@ -399,8 +399,8 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     }, []);
 
     const isMobileDevice = window.innerWidth < 768;
-    const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 1400;
-    const VIRTUAL_HEIGHT = isMobileDevice ? 2400 : 1600;
+    const VIRTUAL_WIDTH = isMobileDevice ? 1000 : 1650;
+    const VIRTUAL_HEIGHT = isMobileDevice ? 2200 : 1050;
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -1098,22 +1098,17 @@ Devuelve estrictamente el JSON sin formato extra.
                 label: isSolidifying ? "Eslabón Integrado" : activeNode.label
             };
 
-            // Ensure coordinates are stretched and not undefined (to prevent NaN in SVG lines and nodes rendering off-screen)
-            if (injectedNode.x === undefined || injectedNode.x === null || injectedNode.x < 100) {
+            // Ensure coordinates are valid and properly mapped to columns
+            if (injectedNode.x === undefined || injectedNode.x === null) {
                 const baseX = (activeSpot.node && activeSpot.node.x !== undefined) ? activeSpot.node.x : (
                     injectedNode.type === 'historical' ? 12 :
-                        (injectedNode.type === 'biological' || injectedNode.type === 'social') ? 38 :
-                            (injectedNode.type === 'cognitive' || injectedNode.type === 'motor' || injectedNode.type === 'physiological') ? 65 : 88
+                        (injectedNode.type === 'cognitive' || injectedNode.type === 'motor' || injectedNode.type === 'physiological') ? 37 :
+                            (injectedNode.type === 'biological' || injectedNode.type === 'social') ? 63 : 88
                 );
                 const baseY = (activeSpot.node && activeSpot.node.y !== undefined) ? activeSpot.node.y : 50;
 
-                const scaleX = 1.85;
-                const scaleY = 2.8;
-                const centerX = 50;
-                const centerY = 50;
-
-                injectedNode.x = centerX + (baseX - centerX) * scaleX;
-                injectedNode.y = centerY + (baseY - centerY) * scaleY;
+                injectedNode.x = baseX;
+                injectedNode.y = baseY;
             }
 
             // Ensure no duplicate IDs
@@ -1858,17 +1853,17 @@ Devuelve estrictamente el JSON sin formato extra.
             if (ny > maxY) maxY = ny;
         });
 
-        const paddingPercentX = isMobileDevice ? 0.10 : 0.15;
-        const paddingPercentY = isMobileDevice ? 0.25 : 0.35;
+        const paddingPercentX = isMobileDevice ? 0.08 : 0.05;
+        const paddingPercentY = isMobileDevice ? 0.18 : 0.08;
         const graphWidthRange = (maxX - minX) || 100;
         const graphHeightRange = (maxY - minY) || 100;
 
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.70 : 1.20); // Zoom base ajustado para que se vea completo en móvil
-        const minScaleLimit = isMobileDevice ? 0.08 : 0.20;
-        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 4); // Límite estricto para no romper el zoom manual del usuario
+        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.72 : 1.05);
+        const minScaleLimit = isMobileDevice ? 0.08 : 0.40;
+        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 3.5);
 
         const graphCenterX = (minX + maxX) / 2;
         const graphCenterY = (minY + maxY) / 2;
@@ -1878,7 +1873,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
         // Correct top-left origin mathematical centering formula: tx = center - px * fitScale
         const tx = viewportWidth / 2 - px * fitScale;
-        const ty = (viewportHeight * (isMobileDevice ? 0.55 : 0.50)) - py * fitScale;
+        const ty = (viewportHeight * (isMobileDevice ? 0.52 : 0.50)) - py * fitScale;
 
         triggerProgrammaticTransition();
         transformRef.current = { x: tx, y: ty, scale: fitScale };
@@ -2398,13 +2393,32 @@ ${isAdditive ? `
 3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
 ` : `
 === MODO GENERACIÓN DESDE CERO ===
-1. Nodos: Genera exactamente entre 40 y 48 nodos. REGLA ESTRICTA DE BALANCE MATEMÁTICO: Debes generar entre 10 y 12 nodos de tipo 'historical' (azules), MÁXIMO 12 nodos en total sumando 'motor/cognitive/physiological' (rojos), MÁXIMO 12 nodos sumando 'biological/social' (verdes), y entre 10 y 12 nodos 'consequence' (blancos). ¡Si generas más de 12 rojos o 12 verdes, el sistema fallará por saturación visual! ORDEN DE RELEVANCIA: Identifica el motivo principal de consulta del paciente y ORDENA el arreglo de nodos de MAYOR a MENOR relevancia respecto a este motivo (los más directamente relacionados ponlos al principio del arreglo para que aparezcan en la parte superior del mapa). Usa formato ID ultracorto (n1, n2...). Textos internos del nodo ultra concisos (max 3-5 palabras).
-   - historical (azules) -> x: entre -120 y -40
-   - motor / cognitive / physiological (rojos) -> x: entre 20 y 100
-   - biological / social (verdes) -> x: entre 140 y 220
-   - consequence (blancos) -> x: entre 260 y 340
-   - Coordenadas Y: distribúyelos desde Y: -400 hasta Y: 700. REGLA ESTRICTA DE ORDEN: Si dos nodos están en la misma columna (rango X), dales al menos 50 puntos de distancia Y para que no se mezclen ni se traslapen.
-2. Conexiones (edges): Genera entre 55 y 65 conexiones. Mapa masivo y muy rico.
+1. Cantidad y Balance de Nodos: Genera exactamente entre 46 y 54 nodos en total.
+   DISTRIBUCIÓN CLÍNICA RIGUROSA:
+   a) Históricos (azules, type: 'historical'): Entre 10 y 12 nodos.
+      - Eventos de infancia, heridas del desarrollo, mandatos parentales, condicionamiento o vivencias pasadas relevantes.
+   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 14 y 18 nodos en total (¡MUY IMPORTANTE: cubrir con riqueza y profundidad todo el sufrimiento y malestar del paciente!):
+      - 'cognitive' (5 a 7 nodos): rumiaciones obsesivas, autocrítica destructiva, anticipación catastrófica, creencias nucleares disfuncionales, indecisión ansiosa.
+      - 'motor' (5 a 7 nodos): conductas de evitación experiencial, procrastinación evasiva, aislamiento voluntario, aplazamiento compulsivo, escape conductual.
+      - 'physiological' (4 a 6 nodos): taquicardia y opresión torácica, insomnio de conciliación y desvelo, contracturas musculares somáticas, fatiga psicofísica, desregulación neurovegetativa.
+   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 10 y 14 nodos en total (¡MUY IMPORTANTE: generar abundantes nodos verdes para capturar factores biológicos y relacionales!):
+      - 'biological' (5 a 7 nodos): vulnerabilidades biológicas o neuroquímicas, disfunción de ritmos circadianos, hipersensibilidad sensorial, consumo ansiolítico de nicotina o estimulantes, fatiga biológica acumulada.
+      - 'social' (5 a 7 nodos): dinámicas familiares invalidantes o punitivas, exigencias externas del entorno, frialdad afectiva relacional, aislamiento de redes de apoyo, presiones socioeconómicas o de pares.
+   d) Consecuencias (blancos, type: 'consequence'): Entre 10 y 12 nodos.
+      - Consecuencias a corto plazo reforzadoras (alivio momentáneo del malestar, reducción transitoria de la tensión) y consecuencias a largo plazo (cronificación del dolor, deterioro de la autoeficacia, soledad existencial).
+
+2. REGLA DE ORO DE NOMBRADO DE NODOS ('label'):
+   - ¡TOTALMENTE PROHIBIDO USAR UNA SOLA PALABRA GENÉRICA! (NUNCA uses "Ansiedad", "Familia", "Sueño", "Cigarros", "Distracción", "Trabajo", "Música", "Ejercicio", "Infancia").
+   - CADA NODO DEBE TENER UN NOMBRE CLÍNICO, CLARO Y EVOCADOR DE ENTRE 2 Y 4 PALABRAS EXACTAS.
+     * Ejemplos correctos para Históricos: "Experiencias de rechazo infantil", "Ruptura afectiva traumática", "Exigencia perfeccionista materna", "Historia de consumo temprano".
+     * Ejemplos correctos para Problemas (Rojos): "Rumiación obsesiva y culpa", "Autocrítica punitiva interna", "Aislamiento conductual evasivo", "Procrastinación por evitación de estrés", "Taquicardia y opresión torácica", "Insomnio de conciliación y desvelo", "Agitación psicomotriz ansiosa".
+     * Ejemplos correctos para Mediadores (Verdes): "Consumo ansiolítico de nicotina", "Disfunción de ritmos de descanso", "Ambiente familiar invalidante y crítico", "Sobrecarga y presión del entorno", "Hipersensibilidad neurosomática y alerta", "Desconexión de redes de contención".
+     * Ejemplos correctos para Consecuencias (Blancos): "Alivio transitorio de la tensión", "Deterioro de la autoeficacia sentida", "Distanciamiento interpersonal progresivo", "Cronificación del malestar emocional".
+   - REGLA DE UNICIDAD: Cada nodo debe poseer un nombre absolutamente único. Jamás repitas la misma palabra clave ni el mismo concepto en dos nodos diferentes del mapa.
+   - ORDEN DE RELEVANCIA: Ordena el arreglo de nodos de MAYOR a MENOR relevancia respecto al motivo de consulta del paciente (los nodos más críticos y centrales ponlos primero para que se ubiquen en la parte superior del mapa).
+   - Coordenadas estimadas de partida: historical (x: 10 a 20), problemáticos (x: 32 a 44), mediadores (x: 58 a 70), consequence (x: 82 a 94), Y: 15 a 85.
+
+3. Conexiones (edges): Genera entre 60 y 75 conexiones clínicas coherentes. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
 `}
 
 === ESTRUCTURA JSON REQUERIDA ===
@@ -2412,12 +2426,19 @@ ${isAdditive ? `
   "is_valid": true,
   "rejection_reason": "...",
   "nodes": [
-    // Lista de nodos
-    // Cada nodo contiene: id (usa formato ultracorto: n1, n2...), type, label (max 3 palabras), x, y, description (max 5 palabras), source (cita corta, max 4 palabras), challenge (max 5 palabras), reflection_question (max 5 palabras)
+    // Cada nodo contiene:
+    // - id: formato ultracorto: "n1", "n2", "n3"...
+    // - type: "historical" | "motor" | "cognitive" | "physiological" | "biological" | "social" | "consequence"
+    // - label: nombre clínico descriptivo (2 a 4 palabras, sin palabras genéricas sueltas)
+    // - description: explicación clínica concisa (5 a 10 palabras)
+    // - source: cita o evidencia breve (2 a 5 palabras)
+    // - challenge: reto existencial terapéutico (3 a 6 palabras)
+    // - reflection_question: pregunta para la toma de consciencia (4 a 8 palabras)
+    // - x: coordenada X sugerida (0 a 100)
+    // - y: coordenada Y sugerida (0 a 100)
   ],
   "edges": [
-    // Lista de conexiones
-    // Cada conexión contiene: source, target, weight (1, 2, 3), type ("unidirectional" | "bidirectional")
+    // Lista de conexiones: { "source": "n1", "target": "n5", "weight": 2, "type": "unidirectional" }
   ],
   "tripleModality": {
     "motor": 65,
@@ -3731,9 +3752,18 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const yStep = customYStep || 8; 
-            const MAX_ROWS = 5; // Limite vertical antes de desbordar hacia los lados
-            
+            const rowsInThisColumn = Math.ceil(count / 2);
+            // Dynamic vertical step so fewer nodes spread out comfortably, and more nodes don't bunch up
+            let yStep = customYStep;
+            if (!yStep) {
+                if (rowsInThisColumn <= 2) yStep = 20;
+                else if (rowsInThisColumn <= 3) yStep = 16;
+                else if (rowsInThisColumn <= 4) yStep = 13.5;
+                else if (rowsInThisColumn <= 6) yStep = 11;
+                else yStep = 9.5;
+            }
+
+            const MAX_ROWS = 6;
             const slots = [];
             for (let i = 0; i < count; i++) {
                 let overflowIndex = 0;
@@ -3742,18 +3772,18 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 }
                 
                 const localI = overflowDirection !== 0 ? i % (MAX_ROWS * 2) : i;
-                const rowsInThisColumn = overflowDirection !== 0 ? 
+                const activeRows = overflowDirection !== 0 ? 
                      Math.ceil(Math.min(count - overflowIndex * (MAX_ROWS * 2), MAX_ROWS * 2) / 2) : 
-                     Math.ceil(count / 2);
+                     rowsInThisColumn;
                 
-                const totalHeight = (rowsInThisColumn - 1) * yStep;
+                const totalHeight = (activeRows - 1) * yStep;
                 const startY = 50 - (totalHeight / 2);
                 
-                const zigZagWidth = 4;
+                const zigZagWidth = 5.2;
                 const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
                 
                 // overflowDirection: -1 empuja hacia la izquierda, 1 empuja hacia la derecha.
-                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 15 * overflowIndex;
+                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 14 * overflowIndex;
                 
                 const rowIndex = Math.floor(localI / 2);
                 slots.push({
@@ -3788,10 +3818,10 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
         // Sugiyama Layered Layout with Staggered Slots and Barycenter Heuristic for all datasets
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 15, yStep: 14, overflowDir: -1 },
-            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 38, yStep: 8, overflowDir: 0 },
-            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 61, yStep: 12, overflowDir: 0 },
-            { filter: n => n.type === 'consequence', baseX: 85, yStep: 8, overflowDir: 1 }
+            { filter: n => n.type === 'historical', baseX: 12, customYStep: null, overflowDir: -1 },
+            { filter: n => n.type === 'cognitive' || n.type === 'motor' || n.type === 'physiological', baseX: 37, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'biological' || n.type === 'social', baseX: 63, customYStep: null, overflowDir: 0 },
+            { filter: n => n.type === 'consequence', baseX: 88, customYStep: null, overflowDir: 1 }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -3802,7 +3832,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         // determines the vertical position, placing the most important nodes at the top.
         layerNodes.forEach((nodes, layerIdx) => {
             const layer = layers[layerIdx];
-            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.yStep, layer.overflowDir);
+            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep, layer.overflowDir);
             nodes.forEach((n, idx) => {
                 n.x = slots[idx].x;
                 n.y = slots[idx].y;
