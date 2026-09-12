@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
@@ -735,6 +737,13 @@ REGLAS CLÍNICAS Y CONVERSACIONALES OBLIGATORIAS:
    - Únicamente si el terapeuta pregunta explícitamente qué otro cribado complementario que NO se haya aplicado convendría considerar (ej. cribado de trauma/TEPT, déficit de atención o riesgo de crisis), sugiere hasta 3 pruebas NUEVAS que no estén ya en su expediente.
    - En ese caso excepcional de pruebas nuevas no realizadas, incluye al final exacto:
    [PRUEBAS_SUGERIDAS: [{"id": "identificador", "nombre": "Nombre del instrumento nuevo", "area": "Área clínica", "justificacion": "Por qué complementa lo ya evaluado"}]]
+
+5. FORMATO VISUAL Y TIPOGRAFÍA (ESTILO CHATGPT):
+   - Emplea formato Markdown completo para que la lectura en pantalla sea jerarquizada, estética y profesional:
+     * Utiliza encabezados con ### y #### para títulos y subsecciones (se verán como textos más grandes y destacados en la pantalla).
+     * Utiliza **negritas con asteriscos** para resaltar categorías, conceptos clínicos clave, términos técnicos o encabezados de punto (se verán con resalte blanco nítido y prominente).
+     * Utiliza viñetas (-) o listas numeradas (1., 2.) para desglosar observaciones, hipótesis y pasos de intervención.
+     * Mantén saltos de línea limpios entre párrafos para máxima legibilidad.
 
 FUENTES DOCUMENTALES SELECCIONADAS:
 ${contextData || 'Ninguna fuente seleccionada.'}
@@ -1542,9 +1551,85 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             </button>
                                         )}
                                     </div>
-                                    <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                                        {cleanText}
-                                    </div>
+                                    {isAssistant ? (
+                                        <div className="text-xs md:text-sm leading-relaxed font-sans text-zinc-200">
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    h1: ({ node, ...props }) => (
+                                                        <h1 className="text-base md:text-lg font-black text-white mt-4 mb-2 pb-1.5 border-b border-white/10 tracking-tight" {...props} />
+                                                    ),
+                                                    h2: ({ node, ...props }) => (
+                                                        <h2 className="text-sm md:text-base font-black text-white mt-3.5 mb-2 tracking-tight flex items-center gap-1.5" {...props} />
+                                                    ),
+                                                    h3: ({ node, ...props }) => (
+                                                        <h3 className="text-xs md:text-sm font-bold text-purple-200 mt-3 mb-1.5 tracking-normal" {...props} />
+                                                    ),
+                                                    h4: ({ node, ...props }) => (
+                                                        <h4 className="text-xs font-bold text-emerald-300 mt-2 mb-1" {...props} />
+                                                    ),
+                                                    p: ({ node, children, ...props }) => {
+                                                        // Check if paragraph consists solely of a single <strong> child (like **3. Comportamientos Observables:** or **Hipótesis de Trabajo:**)
+                                                        const isStandaloneStrong = node?.children?.length === 1 && node.children[0]?.type === 'element' && node.children[0]?.tagName === 'strong';
+                                                        if (isStandaloneStrong) {
+                                                            return (
+                                                                <p className="mt-3.5 mb-1.5 text-xs md:text-sm font-black text-purple-200 tracking-wide" {...props}>
+                                                                    {children}
+                                                                </p>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <p className="mb-2 leading-relaxed text-zinc-300 last:mb-0 text-xs md:text-sm" {...props}>
+                                                                {children}
+                                                            </p>
+                                                        );
+                                                    },
+                                                    strong: ({ node, ...props }) => (
+                                                        <strong className="font-black text-white tracking-wide" {...props} />
+                                                    ),
+                                                    em: ({ node, ...props }) => (
+                                                        <em className="italic text-purple-300/90 font-medium" {...props} />
+                                                    ),
+                                                    ul: ({ node, ...props }) => (
+                                                        <ul className="list-disc list-outside ml-4 my-2 space-y-1.5 text-zinc-300 text-xs md:text-sm" {...props} />
+                                                    ),
+                                                    ol: ({ node, ...props }) => (
+                                                        <ol className="list-decimal list-outside ml-4 my-2 space-y-1.5 text-zinc-300 text-xs md:text-sm" {...props} />
+                                                    ),
+                                                    li: ({ node, ...props }) => (
+                                                        <li className="pl-1 leading-relaxed marker:text-purple-400" {...props} />
+                                                    ),
+                                                    blockquote: ({ node, ...props }) => (
+                                                        <blockquote className="border-l-2 border-purple-500/60 pl-3 py-1.5 my-2.5 bg-purple-500/10 rounded-r-xl text-zinc-200 italic" {...props} />
+                                                    ),
+                                                    code: ({ inline, node, ...props }) => inline ? (
+                                                        <code className="font-mono text-[11px] bg-zinc-800/90 text-purple-200 px-1.5 py-0.5 rounded border border-white/5" {...props} />
+                                                    ) : (
+                                                        <pre className="bg-zinc-950 p-3 rounded-xl border border-white/10 overflow-x-auto my-2 text-xs text-zinc-300 font-mono">
+                                                            <code {...props} />
+                                                        </pre>
+                                                    ),
+                                                    hr: () => <hr className="border-white/10 my-3" />,
+                                                    table: ({ node, ...props }) => (
+                                                        <div className="overflow-x-auto my-3 rounded-xl border border-white/10">
+                                                            <table className="w-full text-left text-xs border-collapse" {...props} />
+                                                        </div>
+                                                    ),
+                                                    thead: ({ node, ...props }) => <thead className="bg-white/5 border-b border-white/10 text-zinc-300 font-bold" {...props} />,
+                                                    tbody: ({ node, ...props }) => <tbody className="divide-y divide-white/5" {...props} />,
+                                                    tr: ({ node, ...props }) => <tr className="hover:bg-white/[0.02] transition-colors" {...props} />,
+                                                    th: ({ node, ...props }) => <th className="px-3 py-2 font-bold text-white" {...props} />,
+                                                    td: ({ node, ...props }) => <td className="px-3 py-2 text-zinc-300 align-top" {...props} />,
+                                                }}
+                                            >
+                                                {cleanText}
+                                            </ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans text-blue-50">
+                                            {cleanText}
+                                        </div>
+                                    )}
 
                                     {/* 3 Viable Test Recommendations Cards */}
                                     {tests.length > 0 && (
