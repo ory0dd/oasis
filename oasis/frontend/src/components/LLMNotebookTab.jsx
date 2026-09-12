@@ -6,7 +6,7 @@ import {
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
     Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus,
     Printer, Edit3, RefreshCw, Paperclip, FileUp, Mic, MicOff, Volume2, VolumeX, Square, Search, ExternalLink, Maximize2,
-    Play, Pause
+    Play, Pause, FileDown
 } from 'lucide-react';
 import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
@@ -965,6 +965,242 @@ ${PID5_ITEMS.map(item => {
         }, 400);
     };
 
+    const handleDownloadMessageAsPdf = (idx, text) => {
+        const el = document.getElementById(`msg-content-${idx}`);
+        let bodyHtml = '';
+
+        if (el) {
+            const clone = el.cloneNode(true);
+            clone.querySelectorAll('.no-print, button, .voice-indicator').forEach(n => n.remove());
+            bodyHtml = clone.innerHTML;
+        }
+
+        if (!bodyHtml || bodyHtml.trim().length === 0) {
+            bodyHtml = (text || '')
+                .split('\n\n')
+                .map(block => {
+                    const b = block.trim();
+                    if (!b) return '';
+                    if (b.startsWith('# ')) return `<h1>${b.replace('# ', '')}</h1>`;
+                    if (b.startsWith('## ')) return `<h2>${b.replace('## ', '')}</h2>`;
+                    if (b.startsWith('### ')) return `<h3>${b.replace('### ', '')}</h3>`;
+                    if (b.startsWith('#### ')) return `<h4>${b.replace('#### ', '')}</h4>`;
+                    if (b.startsWith('- ') || b.startsWith('* ')) {
+                        const items = b.split('\n').map(li => `<li>${li.replace(/^[-*]\s+/, '')}</li>`).join('');
+                        return `<ul>${items}</ul>`;
+                    }
+                    if (/^\d+\.\s+/.test(b)) {
+                        const items = b.split('\n').map(li => `<li>${li.replace(/^\d+\.\s+/, '')}</li>`).join('');
+                        return `<ol>${items}</ol>`;
+                    }
+                    return `<p>${b.replace(/\n/g, '<br/>')}</p>`;
+                })
+                .join('');
+        }
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Por favor habilita las ventanas emergentes (popups) en tu navegador para generar y descargar el PDF.");
+            return;
+        }
+
+        const cleanPatient = (patientName && String(patientName).trim() ? String(patientName).trim() : 'CONSULTANTE').toUpperCase();
+        const filePatient = (patientName && String(patientName).trim() ? String(patientName).trim().replace(/\s+/g, '_') : 'Consultante');
+        const dateStr = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+        const docTitle = `Informe_Clinico_${filePatient}_${new Date().toISOString().slice(0, 10)}`;
+
+        const htmlDoc = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <title>${docTitle}</title>
+            <style>
+                @page {
+                    size: letter portrait;
+                    margin: 2.2cm 2.54cm;
+                }
+                body {
+                    font-family: 'Times New Roman', Times, Georgia, serif;
+                    font-size: 11pt;
+                    line-height: 1.75;
+                    color: #111;
+                    background: #fff;
+                    margin: 0;
+                    padding: 0;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+                * {
+                    color: #111 !important;
+                    background-color: transparent !important;
+                    box-shadow: none !important;
+                }
+                .header-cornisa {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 8.5pt;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #444 !important;
+                    border-bottom: 1px solid #888;
+                    padding-bottom: 5px;
+                    margin-bottom: 24px;
+                }
+                .document-title-header {
+                    text-align: center;
+                    margin-bottom: 24px;
+                }
+                .document-title-header h1 {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    margin: 0 0 6px 0;
+                    letter-spacing: 0.03em;
+                    border: none;
+                }
+                .document-title-header .meta-sub {
+                    font-size: 9.5pt;
+                    color: #555 !important;
+                    font-style: italic;
+                }
+                h1 {
+                    font-size: 13pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin-top: 18px;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    line-height: 1.3;
+                }
+                h2 {
+                    font-size: 11.5pt;
+                    font-weight: bold;
+                    margin-top: 22px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #222;
+                    padding-bottom: 3px;
+                    text-transform: uppercase;
+                    page-break-after: avoid;
+                    break-after: avoid;
+                }
+                h3 {
+                    font-size: 10.5pt;
+                    font-weight: bold;
+                    margin-top: 16px;
+                    margin-bottom: 6px;
+                    text-transform: uppercase;
+                    page-break-after: avoid;
+                    break-after: avoid;
+                }
+                h4 {
+                    font-size: 10pt;
+                    font-weight: bold;
+                    font-style: italic;
+                    margin-top: 12px;
+                    margin-bottom: 4px;
+                    page-break-after: avoid;
+                    break-after: avoid;
+                }
+                p {
+                    text-align: justify;
+                    margin-bottom: 10px;
+                    text-indent: 1.27cm;
+                }
+                p.no-indent, .no-indent p {
+                    text-indent: 0;
+                }
+                ul, ol {
+                    margin-top: 4px;
+                    margin-bottom: 12px;
+                    padding-left: 1.8cm;
+                }
+                li {
+                    margin-bottom: 5px;
+                    text-align: justify;
+                }
+                strong, b {
+                    font-weight: bold;
+                    color: #000 !important;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 18px 0;
+                    font-size: 9.5pt;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                    border-top: 2px solid #000;
+                    border-bottom: 2px solid #000;
+                }
+                th {
+                    border-bottom: 1px solid #000;
+                    padding: 6px 8px;
+                    font-weight: bold;
+                    text-align: left;
+                }
+                td {
+                    padding: 5px 8px;
+                    border-bottom: 1px solid #ddd;
+                }
+                tbody tr:last-child td {
+                    border-bottom: none;
+                }
+                blockquote {
+                    border-left: 2.5px solid #666;
+                    margin: 12px 0 12px 1.27cm;
+                    padding-left: 14px;
+                    font-style: italic;
+                    color: #222 !important;
+                }
+                hr {
+                    border: none;
+                    border-top: 1px solid #bbb;
+                    margin: 22px 0;
+                }
+                .footer-sign {
+                    margin-top: 40px;
+                    padding-top: 12px;
+                    border-top: 1px solid #999;
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 8.5pt;
+                    color: #555 !important;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header-cornisa">
+                <span>INFORME CLÍNICO / FORMULACIÓN DE CASO — ${cleanPatient}</span>
+                <span>${dateStr}</span>
+            </div>
+            <div class="document-title-header">
+                <h1>INFORME PSICOLÓGICO CLÍNICO</h1>
+                <div class="meta-sub">Evaluación y Supervisión de Caso — Consultante: ${cleanPatient}</div>
+            </div>
+            ${bodyHtml}
+            <div class="footer-sign">
+                <span>Documento confidencial para uso clínico exclusivo</span>
+                <span>Generado desde Oasis • Ruido Interior</span>
+            </div>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(htmlDoc);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 400);
+    };
+
     const handleGenerateApaReport = async () => {
         setIsGeneratingApaReport(true);
         try {
@@ -1839,6 +2075,12 @@ REGLAS CLÍNICAS Y CONVERSACIONALES OBLIGATORIAS:
      * Utiliza **negritas con asteriscos** para resaltar categorías, conceptos clínicos clave, términos técnicos o encabezados de punto (se verán con resalte blanco nítido y prominente).
      * Utiliza viñetas (-) o listas numeradas (1., 2.) para desglosar observaciones, hipótesis y pasos de intervención.
      * Mantén saltos de línea limpios entre párrafos para máxima legibilidad.
+
+6. SOLICITUDES DE REDACCIÓN, RECREACIÓN O INTEGRACIÓN DE INFORMES CLÍNICOS:
+   - Cuando el terapeuta te pida recrear, redactar, integrar o actualizar el informe psicológico (ej. "recrea el informe integrando lo que ya estaba y lo que mencionas"):
+     * Redáctalo con máxima exhaustividad, profundidad analítica y rigor técnico (Estructura APA: Datos y Motivo de Consulta, Integración de Instrumentos Psicodiagnósticos Aplicados con sus puntuaciones reales, Análisis Funcional del Bucle de Mantenimiento, Hipótesis Diagnóstica/Conceptual y Plan de Intervención por Sesiones).
+     * Emplea títulos claros en Markdown (#, ##, ###), tablas si aplican y viñetas estructuradas.
+     * Ten en cuenta que el terapeuta podrá descargar este informe directamente en PDF desde la conversación.
 
 FUENTES DOCUMENTALES SELECCIONADAS:
 ${contextData || 'Ninguna fuente seleccionada.'}
@@ -2972,6 +3214,15 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     type="button"
+                                                    onClick={() => handleDownloadMessageAsPdf(idx, cleanText)}
+                                                    title="Descargar este mensaje como documento PDF"
+                                                    className="px-1.5 py-0.5 rounded-md transition-all flex items-center gap-1 text-[10px] font-mono font-bold text-zinc-400 hover:text-purple-300 hover:bg-white/5"
+                                                >
+                                                    <FileDown size={11} />
+                                                    <span className="hidden sm:inline text-[9px]">PDF</span>
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     onClick={() => toggleSpeakMessage(idx, cleanText)}
                                                     title={speakingMsgIndex === idx ? "Detener lector de voz" : "Escuchar respuesta (Lector de voz)"}
                                                     className={`px-1.5 py-0.5 rounded-md transition-all flex items-center gap-1 text-[10px] font-mono font-bold ${
@@ -3003,9 +3254,9 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                         )}
                                     </div>
                                     {isAssistant ? (
-                                        <div className="text-xs md:text-sm leading-relaxed font-sans text-zinc-200">
+                                        <div id={`msg-content-${idx}`} className="text-xs md:text-sm leading-relaxed font-sans text-zinc-200">
                                             {speakingMsgIndex === idx && (
-                                                <div className="mb-2.5 p-2 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between gap-2 text-purple-200 text-[10px] font-mono animate-pulse">
+                                                <div className="no-print mb-2.5 p-2 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between gap-2 text-purple-200 text-[10px] font-mono animate-pulse">
                                                     <span className="flex items-center gap-1.5">
                                                         <Volume2 size={12} className="text-purple-400 animate-bounce" />
                                                         <span>Reproduciendo lectura en voz alta...</span>
@@ -3090,6 +3341,44 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             >
                                                 {cleanText}
                                             </ReactMarkdown>
+
+                                            {/* Card de Exportación Directa a PDF para informes y documentos clínicos */}
+                                            {(cleanText.includes('#') || cleanText.length > 350 || cleanText.toLowerCase().includes('informe') || cleanText.toLowerCase().includes('formulaci')) && (
+                                                <div className="no-print mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap bg-purple-950/25 p-2.5 rounded-xl border border-purple-500/20">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <div className="w-6 h-6 rounded-md bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
+                                                            <FileText size={13} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-[11px] font-bold text-white truncate">Documento clínico / Informe generado</p>
+                                                            <p className="text-[9px] text-zinc-400 font-mono">Formato APA • Listo para guardar en PDF</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setApaReportContent(cleanText);
+                                                                setShowApaReportModal(true);
+                                                            }}
+                                                            className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-mono flex items-center gap-1 transition-all border border-white/10"
+                                                            title="Abrir en maqueta APA para editar o revisar antes de imprimir"
+                                                        >
+                                                            <Eye size={11} />
+                                                            <span>Vista APA</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDownloadMessageAsPdf(idx, cleanText)}
+                                                            className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                                                            title="Descargar directamente este informe en PDF"
+                                                        >
+                                                            <Download size={12} />
+                                                            <span>Descargar PDF</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="space-y-2.5">
