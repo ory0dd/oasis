@@ -5,7 +5,8 @@ import {
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
     Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus,
-    Printer, Edit3, RefreshCw, Paperclip, FileUp, Mic, MicOff, Volume2, VolumeX, Square, Search, ExternalLink, Maximize2
+    Printer, Edit3, RefreshCw, Paperclip, FileUp, Mic, MicOff, Volume2, VolumeX, Square, Search, ExternalLink, Maximize2,
+    Play, Pause
 } from 'lucide-react';
 import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
@@ -277,11 +278,14 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [recordedAudio, setRecordedAudio] = useState(null); // { id, blob, url, fileName, durationSeconds, formattedDuration, isTranscribed, transcription, pendingTranscript }
     const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const audioPreviewRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const recordingTimerRef = useRef(null);
     const audioChunksRef = useRef([]);
     const backgroundRecognitionRef = useRef(null);
     const pendingTranscriptRef = useRef('');
+    const chatInputTextareaRef = useRef(null);
 
     // Voice Reader (TTS / Sintetizador de voz para Kio)
     const [speakingMsgIndex, setSpeakingMsgIndex] = useState(null);
@@ -1368,13 +1372,14 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 }
             }
 
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
                 const finalDuration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
                 setRecordingDuration(finalDuration);
 
                 stream.getTracks().forEach(track => track.stop());
 
+                const capturedTranscript = pendingTranscriptRef.current;
                 if (backgroundRecognitionRef.current) {
                     try { backgroundRecognitionRef.current.stop(); } catch (e) {}
                     backgroundRecognitionRef.current = null;
@@ -1390,19 +1395,82 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 const audioFileName = `Audio_${timeTag}.mp3`;
                 const formattedDuration = formatAudioDuration(finalDuration);
 
-                setRecordedAudio({
-                    id: `audio_${Date.now()}`,
-                    blob: audioBlob,
-                    url: blobUrl,
-                    fileName: audioFileName,
-                    durationSeconds: finalDuration,
-                    formattedDuration: formattedDuration,
-                    pendingTranscript: pendingTranscriptRef.current,
-                    isTranscribed: false,
-                    transcription: ''
-                });
-
                 setIsRecordingAudio(false);
+                setIsTranscribingAudio(true);
+
+                let transcriptionResult = '';
+
+                try {
+                    // 1. Try server-side transcription with verbatim prompt
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', audioBlob, audioFileName);
+                        const uploadRes = await fetch(`${API_URL}/api/oasis/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (uploadRes.ok) {
+                            const uploadData = await uploadRes.json();
+                            const transRes = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    url: uploadData.url,
+                                    prompt: "Transcribe literal y exactamente lo que dice el audio palabra por palabra. Devuelve únicamente el texto exacto dicho en el audio, sin agregar comentarios, sin inventar nombres ni personajes ni formatos de guion o diálogo."
+                                })
+                            });
+                            if (transRes.ok) {
+                                const transData = await transRes.json();
+                                if (transData && transData.transcription) {
+                                    transcriptionResult = transData.transcription.trim();
+                                }
+                            }
+                        }
+                    } catch (serverErr) {
+                        console.warn("Backend transcription unavailable, using browser speech recognition:", serverErr);
+                    }
+
+                    // 2. Client-side speech recognition fallback if server offline or empty
+                    if (!transcriptionResult && capturedTranscript) {
+                        transcriptionResult = capturedTranscript.trim();
+                    }
+
+                    // 3. Clean script prefixes or quotation wrappers strictly
+                    if (transcriptionResult) {
+                        transcriptionResult = transcriptionResult
+                            .replace(/^(?:Terapeuta|Consultante|Usuario|Paciente|Hablante\s*\d*|Voz\s*\d*):\s*/gi, '')
+                            .replace(/^["'«“](.*)["'»”]$/, '$1')
+                            .trim();
+                    }
+
+                    // Put verbatim text directly into inputMsg for the clinician to review, edit or send
+                    if (transcriptionResult) {
+                        setInputMsg(prev => {
+                            const trimmed = (prev || '').trim();
+                            return trimmed ? `${trimmed} ${transcriptionResult}` : transcriptionResult;
+                        });
+                    }
+
+                    setRecordedAudio({
+                        id: `audio_${Date.now()}`,
+                        blob: audioBlob,
+                        url: blobUrl,
+                        fileName: audioFileName,
+                        durationSeconds: finalDuration,
+                        formattedDuration: formattedDuration,
+                        isTranscribed: true,
+                        transcription: transcriptionResult
+                    });
+                } catch (err) {
+                    console.error("Error al procesar audio:", err);
+                } finally {
+                    setIsTranscribingAudio(false);
+                    setTimeout(() => {
+                        if (chatInputTextareaRef.current) {
+                            chatInputTextareaRef.current.focus();
+                        }
+                    }, 60);
+                }
             };
 
             mediaRecorder.start(250);
@@ -1436,6 +1504,7 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         audioChunksRef.current = [];
         pendingTranscriptRef.current = '';
         setIsRecordingAudio(false);
+        setIsTranscribingAudio(false);
         setRecordingDuration(0);
     };
 
@@ -1444,68 +1513,6 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
             try { URL.revokeObjectURL(recordedAudio.url); } catch (e) {}
         }
         setRecordedAudio(null);
-    };
-
-    // Process & Transcribe Recorded Audio
-    const handleTranscribeRecordedAudio = async () => {
-        if (!recordedAudio) return;
-        setIsTranscribingAudio(true);
-
-        try {
-            let transcriptionResult = '';
-
-            // 1. Try backend transcription endpoint if server is reachable
-            try {
-                const formData = new FormData();
-                formData.append('file', recordedAudio.blob, recordedAudio.fileName);
-                const uploadRes = await fetch(`${API_URL}/api/oasis/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                if (uploadRes.ok) {
-                    const uploadData = await uploadRes.json();
-                    const transRes = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url: uploadData.url })
-                    });
-                    if (transRes.ok) {
-                        const transData = await transRes.json();
-                        if (transData && transData.transcription) {
-                            transcriptionResult = transData.transcription.trim();
-                        }
-                    }
-                }
-            } catch (serverErr) {
-                // Backend not running or offline, proceed to client transcript
-            }
-
-            // 2. Use the captured speech transcript from recording session
-            if (!transcriptionResult && recordedAudio.pendingTranscript) {
-                transcriptionResult = recordedAudio.pendingTranscript.trim();
-            }
-
-            // 3. Fallback placeholder if no voice was detected
-            if (!transcriptionResult) {
-                transcriptionResult = `[Audio grabado: ${recordedAudio.fileName} (duración ${recordedAudio.formattedDuration})]`;
-            }
-
-            // Put transcribed text directly into inputMsg for review & editing
-            setInputMsg(prev => prev && prev.trim() ? `${prev.trim()} ${transcriptionResult}` : transcriptionResult);
-
-            // Mark recorded audio as transcribed
-            setRecordedAudio(prev => prev ? {
-                ...prev,
-                isTranscribed: true,
-                transcription: transcriptionResult
-            } : null);
-
-        } catch (err) {
-            console.error("Error al procesar audio:", err);
-            alert("No se pudo transcribir el audio: " + err.message);
-        } finally {
-            setIsTranscribingAudio(false);
-        }
     };
 
     // Voice Reader (Text-to-Speech / Sintetizador de voz para Kio)
@@ -1673,12 +1680,6 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
     };
 
     const handleSend = async (customMsg = null) => {
-        // If there's an untranscribed recorded audio and user clicks Send without custom text, transcribe it first!
-        if (recordedAudio && !recordedAudio.isTranscribed && !customMsg && !inputMsg.trim()) {
-            await handleTranscribeRecordedAudio();
-            return;
-        }
-
         const defaultText = attachedPdf 
             ? `¿Qué piensas de este informe de forma completa con las bases actuales que tienes ahora de este caso y qué le falta? ¿Cómo podemos explorar eso juntos?`
             : '';
@@ -3272,99 +3273,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 </div>
 
                 {/* Input Bottom Bar */}
-                <div className="p-2.5 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
-                    {/* Direct Audio Recording Active Banner */}
-                    {isRecordingAudio && (
-                        <div className="mb-2.5 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-rose-950/80 via-purple-950/60 to-rose-950/80 border border-rose-500/50 flex items-center justify-between gap-3 text-rose-200 animate-in fade-in shadow-lg shadow-rose-950/40">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="relative flex h-3 w-3 shrink-0">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                                </span>
-                                <span className="font-bold text-xs sm:text-sm font-mono text-white shrink-0">Grabando audio...</span>
-                                <span className="text-xs sm:text-sm font-mono px-2 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-200 font-bold shrink-0">
-                                    ⏱️ {formatAudioDuration(recordingDuration)}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                    type="button"
-                                    onClick={cancelAudioRecording}
-                                    className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-xs font-mono transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={stopAudioRecording}
-                                    className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
-                                >
-                                    <Square size={11} className="fill-current" />
-                                    <span>Detener</span>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Recorded Audio Card (mp3 preview with duration and transcribe action) */}
-                    {recordedAudio && (
-                        <div className="mb-2 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-purple-950/60 via-zinc-900 to-purple-950/60 border border-purple-500/40 flex flex-wrap items-center justify-between gap-2.5 shadow-md animate-in fade-in">
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 text-sm">
-                                    🎵
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="text-xs font-bold text-white truncate max-w-[140px] sm:max-w-xs">{recordedAudio.fileName}</p>
-                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30 shrink-0">
-                                            ⏱️ {recordedAudio.formattedDuration}
-                                        </span>
-                                    </div>
-                                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                                        {isTranscribingAudio 
-                                            ? '⏳ Procesando y transcribiendo audio...' 
-                                            : (recordedAudio.isTranscribed ? '✓ Audio transcrito en el campo de texto' : 'Audio guardado como mp3 • Pulsa Transcribir o Enviar')}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                <audio src={recordedAudio.url} controls className="h-7 w-32 sm:w-40 outline-none" />
-
-                                {!recordedAudio.isTranscribed && (
-                                    <button
-                                        type="button"
-                                        onClick={handleTranscribeRecordedAudio}
-                                        disabled={isTranscribingAudio}
-                                        className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                                        title="Transcribir audio a texto"
-                                    >
-                                        {isTranscribingAudio ? (
-                                            <>
-                                                <RefreshCw size={11} className="animate-spin" />
-                                                <span>Procesando...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Sparkles size={11} />
-                                                <span>Transcribir</span>
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-
-                                <button
-                                    type="button"
-                                    onClick={handleDiscardRecordedAudio}
-                                    className="p-1.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-all border border-white/5"
-                                    title="Eliminar grabación"
-                                >
-                                    <Trash2 size={13} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
+                <div className="p-2.5 md:p-3.5 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
                     {/* PDF Extraction Progress Indicator */}
                     {isExtractingPdf && (
                         <div className="mb-2 p-2 sm:p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center gap-2 text-blue-300 text-xs font-mono animate-pulse">
@@ -3427,6 +3336,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         </div>
                     )}
 
+                    {/* Unified Minimalist Input Bar (Antigravity Style) */}
                     <div className="relative flex items-center">
                         <input
                             type="file"
@@ -3435,88 +3345,99 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             onChange={handlePdfFileSelected}
                             style={{ display: 'none' }}
                         />
+
+                        {/* Left: Attachment Paperclip */}
                         <button
                             type="button"
                             onClick={() => pdfInputRef.current?.click()}
-                            disabled={isExtractingPdf || isTyping}
-                            className={`absolute left-1.5 sm:left-2 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all z-10 ${
+                            disabled={isExtractingPdf || isTyping || isRecordingAudio || isTranscribingAudio}
+                            className={`absolute left-2 w-8 h-8 flex items-center justify-center rounded-full transition-all z-10 ${
                                 attachedPdf 
-                                    ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm' 
-                                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
+                                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 shadow-sm' 
+                                    : 'text-zinc-400 hover:text-white hover:bg-white/10'
                             }`}
                             title="Adjuntar documento PDF para analizar o visualizar en el chat"
                         >
-                            <Paperclip size={14} className={attachedPdf ? 'text-blue-400' : ''} />
+                            <Paperclip size={16} className={attachedPdf ? 'text-blue-400' : ''} />
                         </button>
+
+                        {/* Center: Clean Textarea */}
                         <textarea
-                            value={inputMsg}
+                            ref={chatInputTextareaRef}
+                            value={isTranscribingAudio ? '' : inputMsg}
                             onChange={e => setInputMsg(e.target.value)}
+                            disabled={isRecordingAudio || isTranscribingAudio}
                             onKeyDown={e => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
-                                    if (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()) {
-                                        handleTranscribeRecordedAudio();
-                                    } else {
+                                    if (!isRecordingAudio && !isTranscribingAudio && !isTyping) {
                                         handleSend();
                                     }
                                 }
                             }}
                             placeholder={
-                                isRecordingAudio 
-                                    ? "Grabando tu voz en audio mp3... pulsa Detener al terminar" 
-                                    : (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
-                                        ? `Audio listo (${recordedAudio.formattedDuration}). Pulsa Transcribir o Enviar para procesarlo...`
-                                        : (attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" (ej. ¿qué le falta?)...` : "Haz una pregunta o pide que redacte algo..."))
+                                isTranscribingAudio
+                                    ? "Finalizing..."
+                                    : (isRecordingAudio 
+                                        ? `Escuchando... (${formatAudioDuration(recordingDuration)})`
+                                        : (attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}"...` : "Haz una pregunta o presiona el micrófono..."))
                             }
-                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-10 sm:pl-11 pr-20 sm:pr-24 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
+                            className="w-full bg-zinc-900/90 border border-white/10 rounded-2xl pl-11 pr-24 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-500 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900 transition-all max-h-28 md:max-h-32 disabled:opacity-90"
                             rows={1}
-                            style={{ minHeight: '40px' }}
+                            style={{ minHeight: '42px' }}
                         />
-                        <div className="absolute right-1.5 sm:right-2 flex items-center gap-1 sm:gap-1.5 z-10">
+
+                        {/* Right: Antigravity-Style Voice & Send Controls */}
+                        <div className="absolute right-2 flex items-center gap-1.5 z-10">
+                            {/* 1. Recording State: Coral-Red Equalizer Pill Button */}
+                            {isRecordingAudio && (
+                                <button
+                                    type="button"
+                                    onClick={stopAudioRecording}
+                                    className="w-8 h-8 rounded-full bg-[#e55353] hover:bg-[#eb5757] flex items-center justify-center transition-all active:scale-95 shadow-md shadow-red-500/20 animate-in fade-in duration-150"
+                                    title="Detener y finalizar grabación"
+                                >
+                                    <div className="flex items-center justify-center gap-[2.5px] h-3.5">
+                                        <span className="w-[2.5px] h-2 bg-white rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
+                                        <span className="w-[2.5px] h-3.5 bg-white rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
+                                        <span className="w-[2.5px] h-2 bg-white rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
+                                    </div>
+                                </button>
+                            )}
+
+                            {/* 2. Finalizing State: Sleek Arc Spinner */}
+                            {isTranscribingAudio && (
+                                <div className="w-8 h-8 flex items-center justify-center animate-in fade-in duration-150">
+                                    <div className="w-4 h-4 border-[1.8px] border-zinc-600 border-t-zinc-200 rounded-full animate-spin" />
+                                </div>
+                            )}
+
+                            {/* 3. Idle State: Clean Mic Button */}
+                            {!isRecordingAudio && !isTranscribingAudio && (
+                                <button
+                                    type="button"
+                                    onClick={startAudioRecording}
+                                    disabled={isTyping}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                                    title="Hablar (dictado por voz)"
+                                >
+                                    <Mic size={16} />
+                                </button>
+                            )}
+
+                            {/* 4. Circular Blue Send Arrow Button */}
                             <button
                                 type="button"
-                                onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
-                                disabled={isTyping || isTranscribingAudio}
-                                className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all ${
-                                    isRecordingAudio
-                                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 animate-pulse'
-                                        : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
+                                onClick={() => handleSend()}
+                                disabled={(!inputMsg.trim() && !attachedPdf) || isTyping || isRecordingAudio || isTranscribingAudio}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                    (inputMsg.trim() || attachedPdf) && !isTyping && !isRecordingAudio && !isTranscribingAudio
+                                        ? 'bg-[#007aff] hover:bg-[#0069d9] text-white shadow-sm active:scale-95 cursor-pointer'
+                                        : 'bg-[#007aff] text-white opacity-40 cursor-not-allowed'
                                 }`}
-                                title={isRecordingAudio ? "Detener grabación de audio" : "Grabar audio directo (nota de voz)"}
+                                title={inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Preguntar sobre el PDF" : "Escribe una pregunta o graba un audio")}
                             >
-                                {isRecordingAudio ? <Square size={13} className="fill-current" /> : <Mic size={14} />}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()) {
-                                        handleTranscribeRecordedAudio();
-                                    } else {
-                                        handleSend();
-                                    }
-                                }}
-                                disabled={(!inputMsg.trim() && !attachedPdf && !recordedAudio) || isTyping || isExtractingPdf || isTranscribingAudio}
-                                className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all active:scale-95 ${
-                                    recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
-                                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/30'
-                                        : 'bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white'
-                                }`}
-                                title={
-                                    isTranscribingAudio 
-                                        ? "Transcribiendo audio..." 
-                                        : (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
-                                            ? `Transcribir audio (${recordedAudio.formattedDuration})`
-                                            : (inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Preguntar sobre el PDF" : "Escribe una pregunta o graba un audio")))
-                                }
-                            >
-                                {isTranscribingAudio ? (
-                                    <RefreshCw size={13} className="animate-spin" />
-                                ) : (
-                                    recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim() ? (
-                                        <Sparkles size={13} />
-                                    ) : (
-                                        <Send size={13} />
-                                    )
-                                )}
+                                <ArrowRight size={15} strokeWidth={2.3} />
                             </button>
                         </div>
                     </div>

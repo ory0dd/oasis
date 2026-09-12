@@ -2857,7 +2857,9 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 var fileUri = jsonDoc.RootElement.GetProperty("file").GetProperty("uri").GetString();
 
                 var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={geminiKey}";
-                var prompt = "Transcribe el siguiente audio palabra por palabra. Luego, analiza la conversación y formatea la transcripción como un guion de diálogo identificando a los dos hablantes como 'Terapeuta' y 'Consultante' (si aplica).";
+                var prompt = !string.IsNullOrWhiteSpace(req?.Prompt) 
+                    ? req.Prompt 
+                    : "Transcribe literal y exactamente lo que dice el audio palabra por palabra. Devuelve únicamente el texto exacto dicho en el audio, sin agregar comentarios, sin inventar nombres ni personajes ni formatos de guion o diálogo.";
                 
                 var generateBody = new {
                     contents = new[] {
@@ -2897,5 +2899,4 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
     }
 }
 
-public class TranscribeRequest { public string Url { get; set; } = ""; }
-
+public class TranscribeRequest { public string Url { get; set; } = ""; public string? Prompt { get; set; } }
