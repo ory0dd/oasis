@@ -3,6 +3,12 @@ import { Aperture, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, B
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
+import { 
+    AXEL_NODE_ENRICHMENT, 
+    getAxelEnrichedPerspectiveQuestion, 
+    getAxelEnrichedDescription, 
+    getAxelEnrichedSource 
+} from '../data/axelAfcEnrichedData';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -198,6 +204,17 @@ const getFallbackDescription = (node, user) => {
             return `${baseDescription}Pregunta de Introspección: ${question}\n\nTu respuesta y toma de conciencia: ${answer}`;
         }
     }
+
+    // Enriquecimiento grounded en las entrevistas clínicas reales
+    const axelDesc = getAxelEnrichedDescription(node);
+    if (axelDesc && (!node.description || node.description.length < 35 || node.description.includes('Pensamientos repetitivos') || node.description.includes('este patrón') || node.description.includes('Factor de tu mapa'))) {
+        return axelDesc;
+    }
+
+    if (node && node.description && node.description.length >= 35 && !node.description.includes('Pensamientos repetitivos') && !node.description.includes('Factor de tu mapa')) {
+        return node.description;
+    }
+    if (axelDesc) return axelDesc;
     if (node && node.description) return node.description;
     if (!node) return "";
     switch (node.type) {
@@ -215,9 +232,15 @@ const getFallbackDescription = (node, user) => {
 export const getNodePerspectiveQuestion = (node, threadIndex = 0) => {
     if (!node) return "¿Qué reflexión o toma de consciencia te genera este patrón en este momento?";
 
-    // 1. Si el nodo tiene preguntas específicas predefinidas en su arreglo
-    if (Array.isArray(node.questions) && node.questions[threadIndex]) {
+    // 1. Si el nodo tiene preguntas específicas predefinidas en su arreglo y no son genéricas
+    if (Array.isArray(node.questions) && node.questions[threadIndex] && node.questions[threadIndex].length > 30 && !node.questions[threadIndex].includes('¿Qué te hace sentir culpable?')) {
         return node.questions[threadIndex];
+    }
+
+    // 2. Enriquecimiento clínico grounded directamente en las entrevistas biográfica y existencial
+    const axelQ = getAxelEnrichedPerspectiveQuestion(node, threadIndex);
+    if (axelQ) {
+        return axelQ;
     }
 
     const label = node.label ? node.label.trim() : 'este patrón';
@@ -228,7 +251,7 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0) => {
 
     switch (threadIndex) {
         case 0: // Raíz Histórica
-            if (refl) {
+            if (refl && refl.length > 38 && !refl.includes('¿Qué te hace sentir culpable?') && !refl.includes('¿Qué significado')) {
                 return refl.endsWith('?') ? refl : `${refl}?`;
             }
             if (type === 'historical') {
@@ -370,6 +393,15 @@ const findExactUserMention = (node, bioData, phenomData) => {
 };
 
 const getFallbackSource = (node, bioData, phenomData) => {
+    const axelSrc = getAxelEnrichedSource(node);
+    if (axelSrc && (!node.source || node.source.length < 35 || node.source.includes('Relato de tu Entrevista') || node.source.includes('Información extraída'))) {
+        return axelSrc;
+    }
+
+    if (node && node.source && node.source.length >= 35 && !node.source.includes('Información extraída')) {
+        return node.source;
+    }
+    if (axelSrc) return axelSrc;
     if (node && node.source) return node.source;
     if (!node) return "";
 
@@ -1799,12 +1831,37 @@ Devuelve estrictamente el JSON sin formato extra.
         setLocalItem(`oasis_node_explorations_${user}`, JSON.stringify(newExplorations));
     };
 
-    // Load nodeChats from localStorage
+    // Load nodeChats from localStorage and sanitize stale generic questions
     useEffect(() => {
         try {
             const saved = localStorage.getItem(`oasis_node_chats_${user}`);
             if (saved) {
-                setNodeChats(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                if (parsed && typeof parsed === 'object') {
+                    Object.keys(parsed).forEach(nodeId => {
+                        const threads = parsed[nodeId];
+                        if (threads && typeof threads === 'object') {
+                            Object.keys(threads).forEach(tIdx => {
+                                const thread = threads[tIdx];
+                                if (Array.isArray(thread) && thread.length === 1 && thread[0].role === 'assistant') {
+                                    const c = thread[0].content || '';
+                                    const isGeneric = c.length < 40 ||
+                                        c.includes('¿Qué te hace sentir culpable?') ||
+                                        c.includes('¿Qué significado o aprendizaje extraes') ||
+                                        c.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                        c.includes('¿Cómo impacta "');
+                                    if (isGeneric) {
+                                        const enrQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
+                                        if (enrQ) {
+                                            thread[0].content = enrQ;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+                setNodeChats(parsed);
             }
         } catch (e) {
             console.error(e);
@@ -1870,13 +1927,22 @@ Devuelve estrictamente el JSON sin formato extra.
         }
     }, [selectedNode, tourActiveIndex]);
 
-    // Auto-start chat when a node is opened and has no chat history
+    // Auto-start chat when a node is opened and has no chat history (or has stale generic prompt)
     useEffect(() => {
         const activeNode = selectedNode || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || null;
         if (activeNode) {
             const tIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
             const currentChat = getSafeCurrentChat(activeNode.id, tIdx);
-            if (!currentChat || currentChat.length === 0) {
+            const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+            const isGenericAssistant = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
+                !currentChat[0].content ||
+                currentChat[0].content.length < 40 ||
+                currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                currentChat[0].content.includes('¿Cómo impacta "')
+            );
+            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
                 const initialQ = getNodePerspectiveQuestion(activeNode, tIdx);
                 setNodeChats(prev => {
                     const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
@@ -1890,7 +1956,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             }
                         };
                     }
-                    if (currentThreads[tIdx] && currentThreads[tIdx].length > 0) return prev;
+                    if (currentThreads[tIdx] && currentThreads[tIdx].length > 0 && !isGenericAssistant) return prev;
                     return {
                         ...prev,
                         [activeNode.id]: {
@@ -2321,12 +2387,30 @@ Devuelve estrictamente el JSON sin formato extra.
             } catch (e) { console.error(e); }
         }
 
+        const enrichAfcNodesWithAxelInterviews = (nodes) => {
+            if (!Array.isArray(nodes)) return nodes;
+            return nodes.map(n => {
+                const enr = AXEL_NODE_ENRICHMENT[n.id];
+                if (enr) {
+                    return {
+                        ...n,
+                        description: enr.desc || n.description,
+                        source: enr.src || n.source,
+                        reflection_question: enr.refl || n.reflection_question,
+                        challenge: enr.challenge || n.challenge,
+                        questions: (Array.isArray(enr.questions) && enr.questions.length > 0) ? enr.questions : n.questions
+                    };
+                }
+                return n;
+            });
+        };
+
         const storedAfc = localStorage.getItem(`oasis_afc_real_data_${user}`);
         if (storedAfc) {
             try {
                 const parsed = JSON.parse(storedAfc);
                 if (parsed && parsed.nodes) {
-                    parsed.nodes = resolveCollisions(parsed.nodes);
+                    parsed.nodes = resolveCollisions(enrichAfcNodesWithAxelInterviews(parsed.nodes));
                     console.log("🟢 afcData loaded successfully:", parsed);
                     setAfcData(parsed);
                 } else {
@@ -2346,6 +2430,27 @@ Devuelve estrictamente el JSON sin formato extra.
             const mock = { ...MOCK_AFC_DATA };
             mock.nodes = resolveCollisions(mock.nodes);
             setAfcData(mock);
+        }
+
+        // Sincronizar desde la nube clínica (Supabase) para asegurar datos actualizados
+        if (user) {
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`)
+                .then(r => r.ok ? r.json() : {})
+                .then(cloudData => {
+                    const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
+                                     cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
+                                     cloudData[`oasis_afc_real_data_Axel Roben`] ||
+                                     cloudData[`oasis_afc_real_data_axel roben`];
+                    if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
+                        const enrichedNodes = resolveCollisions(enrichAfcNodesWithAxelInterviews(cloudAfc.nodes));
+                        const resolved = { ...cloudAfc, nodes: enrichedNodes };
+                        setAfcData(resolved);
+                        try {
+                            localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
+                        } catch (e) {}
+                    }
+                })
+                .catch(() => null);
         }
 
         const storedNotes = localStorage.getItem(`oasis_afc_notes_${user}`);
@@ -3039,7 +3144,16 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         // If user is submitting an answer, just save it and STOP. No more follow-up questions.
         if (userResponseText) {
             let threadChat = [...currentChat];
-            if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant')) {
+            const userHasAnswered = threadChat.some(m => m.role === 'user');
+            const isGenericAssistant = threadChat.length === 1 && threadChat[0].role === 'assistant' && (
+                !threadChat[0].content ||
+                threadChat[0].content.length < 40 ||
+                threadChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                threadChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                threadChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                threadChat[0].content.includes('¿Cómo impacta "')
+            );
+            if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
                 const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex);
                 threadChat = [{ role: 'assistant', content: initialQ }];
             }
@@ -5971,7 +6085,16 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         {(() => {
                                                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                                             const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
-                                                                            const effectiveChat = (currentChat && currentChat.length > 0)
+                                                                            const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
+                                                                                !currentChat[0].content ||
+                                                                                currentChat[0].content.length < 40 ||
+                                                                                currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                                currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                                currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                                currentChat[0].content.includes('¿Cómo impacta "')
+                                                                            );
+                                                                            const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
                                                                                 : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex) }];
 
@@ -5993,7 +6116,16 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setSelectedQuestionIndex(nextIdx);
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                                                    if (!nextChat || nextChat.length === 0) {
+                                                                                                    const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                                                        !nextChat[0].content ||
+                                                                                                        nextChat[0].content.length < 40 ||
+                                                                                                        nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                                                        nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                                                        nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                                                        nextChat[0].content.includes('¿Cómo impacta "')
+                                                                                                    );
+                                                                                                    if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                                         const initialQ = getNodePerspectiveQuestion(node, nextIdx);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
@@ -6016,7 +6148,16 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setSelectedQuestionIndex(nextIdx);
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
-                                                                                                    if (!nextChat || nextChat.length === 0) {
+                                                                                                    const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                                                        !nextChat[0].content ||
+                                                                                                        nextChat[0].content.length < 40 ||
+                                                                                                        nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                                                        nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                                                        nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                                                        nextChat[0].content.includes('¿Cómo impacta "')
+                                                                                                    );
+                                                                                                    if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                                         const initialQ = getNodePerspectiveQuestion(node, nextIdx);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
@@ -6310,7 +6451,16 @@ Por favor, analicemos:
                                             {(() => {
                                                 const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                 const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
-                                                const effectiveChat = (currentChat && currentChat.length > 0)
+                                                const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+                                                const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
+                                                    !currentChat[0].content ||
+                                                    currentChat[0].content.length < 40 ||
+                                                    currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                    currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                    currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                    currentChat[0].content.includes('¿Cómo impacta "')
+                                                );
+                                                const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                     ? currentChat
                                                     : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex) }];
 
@@ -6332,7 +6482,16 @@ Por favor, analicemos:
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        if (!nextChat || nextChat.length === 0) {
+                                                                        const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                        const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                            !nextChat[0].content ||
+                                                                            nextChat[0].content.length < 40 ||
+                                                                            nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                            nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                            nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                            nextChat[0].content.includes('¿Cómo impacta "')
+                                                                        );
+                                                                        if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                             const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
                                                                             setNodeChats(prev => ({
                                                                                 ...prev,
@@ -6355,7 +6514,16 @@ Por favor, analicemos:
                                                                         setSelectedQuestionIndex(nextIdx);
                                                                         setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                         const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        if (!nextChat || nextChat.length === 0) {
+                                                                        const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                        const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                            !nextChat[0].content ||
+                                                                            nextChat[0].content.length < 40 ||
+                                                                            nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                            nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                            nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                            nextChat[0].content.includes('¿Cómo impacta "')
+                                                                        );
+                                                                        if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                             const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
                                                                             setNodeChats(prev => ({
                                                                                 ...prev,

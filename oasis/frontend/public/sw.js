@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ruido-interior-v15';
+const CACHE_NAME = 'ruido-interior-v16';
 const ASSETS = [
   '/',
   '/index.html',
