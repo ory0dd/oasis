@@ -1456,7 +1456,8 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                     { role: 'system', content: apaSystemPrompt },
                     { role: 'user', content: `Por favor redacta el informe psicológico clínico integral y formulación de caso de ${patientName || 'este consultante'} siguiendo minuciosamente la estructura maestra de 16 secciones APA 7. Debe ser exhaustivo, extenso, detallado y con máximo rigor clínico, integrando toda la psicometría disponible, análisis funcional de bucle y propuesta de intervención por sesiones. Recuerda usar exclusivamente el nombre "${patientName || 'el consultante'}" y nunca nombres de los ejemplos.` }
                 ],
-                temperature: 0.4
+                temperature: 0.4,
+                max_tokens: 8192
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -1489,7 +1490,8 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                             content: `Redacta el informe clínico integral de ${patientName || 'el consultante'} integrando las 16 secciones APA 7 con enfoque formativo, psicometría y plan terapéutico.` 
                         }
                     ],
-                    temperature: 0.3
+                    temperature: 0.3,
+                    max_tokens: 8192
                 };
 
                 const retryRes = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -1994,6 +1996,7 @@ DIRECTRICES CLÍNICAS Y DE ANÁLISIS PARA EL DOCUMENTO PDF ADJUNTO:
 
             // Scan all completed clinical tests for this patient
             const completedTestsSummaryList = [];
+            const completedTestsDetailedList = [];
             const completedTestIds = new Set();
             if (CLINICAL_TESTS) {
                 Object.keys(CLINICAL_TESTS).forEach(tId => {
@@ -2002,12 +2005,28 @@ DIRECTRICES CLÍNICAS Y DE ANÁLISIS PARA EL DOCUMENTO PDF ADJUNTO:
                         const resAdo = getSavedTestResult(patientName, 'sdq', 'adolescente');
                         if (resAdo) {
                             completedTestsSummaryList.push(`• SDQ (Autoinforme Adolescente): ${resAdo.totalScore} pts [${resAdo.nivel}]`);
+                            completedTestsDetailedList.push({
+                                sigla: 'SDQ',
+                                nombre: 'Cuestionario de Capacidades y Dificultades (SDQ)',
+                                constructo: 'Salud mental infanto-juvenil, síntomas emocionales y conducta',
+                                informante: 'Autoinforme Adolescente',
+                                score: `${resAdo.totalScore} pts`,
+                                nivel: resAdo.nivel
+                            });
                             completedTestIds.add('sdq_adolescente');
                             completedTestIds.add('sdq');
                         }
                         const resMad = getSavedTestResult(patientName, 'sdq', 'madre');
                         if (resMad) {
                             completedTestsSummaryList.push(`• SDQ (Perspectiva Madre): ${resMad.totalScore} pts [${resMad.nivel}]`);
+                            completedTestsDetailedList.push({
+                                sigla: 'SDQ',
+                                nombre: 'Cuestionario de Capacidades y Dificultades (SDQ)',
+                                constructo: 'Salud mental infanto-juvenil, síntomas emocionales y conducta',
+                                informante: 'Heteroinforme Madre/Familia',
+                                score: `${resMad.totalScore} pts`,
+                                nivel: resMad.nivel
+                            });
                             completedTestIds.add('sdq_madre');
                             completedTestIds.add('sdq');
                         }
@@ -2017,11 +2036,41 @@ DIRECTRICES CLÍNICAS Y DE ANÁLISIS PARA EL DOCUMENTO PDF ADJUNTO:
                             const sig = testDef?.siglas || tId.toUpperCase();
                             const nom = res.nombre || testDef?.nombre || sig;
                             completedTestsSummaryList.push(`• ${nom} (${sig}): ${res.totalScore} / ${res.maxScore || ''} pts [${res.nivel}]`);
+                            completedTestsDetailedList.push({
+                                sigla: sig,
+                                nombre: nom,
+                                constructo: testDef?.constructo || testDef?.descripcion || 'Evaluación dimensional psicométrica',
+                                informante: 'Autoinforme del Consultante',
+                                score: `${res.totalScore} / ${res.maxScore || ''} pts`,
+                                nivel: res.nivel
+                            });
                             completedTestIds.add(tId);
                         }
                     }
                 });
             }
+
+            let pidDetails = '';
+            try {
+                const pidRaw = localStorage.getItem(`oasis_pid_answers_${patientName}`);
+                if (pidRaw) {
+                    const answers = JSON.parse(pidRaw);
+                    const res = calcularResultadoPID5(answers);
+                    if (res && res.domains) {
+                        pidDetails = Object.entries(res.domains)
+                            .map(([d, val]) => `${d}: ${val.total} pts (${val.promedio})`)
+                            .join(', ');
+                        completedTestsDetailedList.push({
+                            sigla: 'PID-5-BF',
+                            nombre: 'Inventario de Personalidad para el DSM-5 (Breve)',
+                            constructo: 'Rasgos desadaptativos de personalidad (5 dominios y 25 facetas)',
+                            informante: 'Autoinforme del Consultante',
+                            score: `${res.totalScore || 38} pts`,
+                            nivel: 'Perfil Dimensional Registrado'
+                        });
+                    }
+                }
+            } catch (e) {}
 
             const hasBio = !!localStorage.getItem(`oasis_bio_transcriptions_${patientName}`);
             const hasPhenom = !!localStorage.getItem(`oasis_phenom_qualitative_${patientName}`);
@@ -2093,13 +2142,186 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
+            // Detect if the clinician requested creating/recreating the PDF report
+            const isPdfRequested = /(recre|cre|gener|redact|hacer|haz|arm|actualiz|desarroll).*?(informe|reporte|pdf|documento)|(informe|reporte|documento).*?(pdf|apa|complet)|descargar\s+pdf|en\s+pdf/i.test(textToSend);
+
+            let effectiveSystemPrompt = systemPrompt;
+            if (isPdfRequested) {
+                const currentBaseReport = apaReportContent || localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`) || '';
+                effectiveSystemPrompt = `Eres Kio, Director de Evaluación y Diagnóstico Psicológico Clínico, actuando como SUPERVISOR CLÍNICO Senior de alto nivel.
+Tu tarea primordial en este momento es redactar el INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de ${patientName || 'el consultante'}, integrando de manera exhaustiva y profunda todo el material evaluativo y especialmente TODOS LOS AVANCES, REFLEXIONES, HIPÓTESIS Y ACUERDOS DE ESTA CONVERSACIÓN CON EL TERAPEUTA.
+
+═══════════════════════════════════════════════════════════════════════
+MARCO BIOÉTICO Y DEONTOLÓGICO CLÍNICO:
+Este entorno corresponde a una herramienta de supervisión de casos para profesionales de la psicología y la salud mental colegiados. Toda la información psicométrica y biográfica tiene un propósito exclusivamente DIAGNÓSTICO, PREVENTIVO Y DE SALVAGUARDA DE LA VIDA y el bienestar del consultante en apego a los estándares del Manual APA (7ª Edición).
+- El objetivo es formular estrategias de apoyo, contención emocional, prevención y derivación oportuna.
+- No promueve, no incita, ni detalla actos lesivos; se enfoca en la evaluación clínica estandarizada (protocolo C-SSRS) para el cuidado preventivo y la protección del paciente.
+═══════════════════════════════════════════════════════════════════════
+
+REGLAS CRÍTICAS E INNEGOCIABLES:
+1. IDENTIDAD DEL CONSULTANTE:
+   - El consultante evaluado se llama ÚNICA Y EXCLUSIVAMENTE: "${patientName || 'Consultante'}".
+   - En TODO el informe utiliza el nombre "${patientName || 'el consultante'}". Jamás uses nombres ajenos o de plantillas (como Rick o Christian).
+
+2. DENSIDAD, EXTENSIÓN Y PROFUNDIDAD CLÍNICA ("ESTILO NOTEBOOKLM / 10 A 19 PÁGINAS"):
+   - Prohibido terminantemente redactar resúmenes breves, esquemas vacíos o viñetas telegráficas.
+   - Debes producir un documento clínico completo, amplio y exhaustivo (equivalente a un informe profundo de 10 a 19 páginas de investigación clínica).
+   - Desarrolla cada sección con párrafos sustanciales, ricos en vocabulario técnico-clínico (TCC, ACT, DBT, Psicometría Dimensional, DSM-5-TR), con precisión observacional, citas textuales directas entre comillas y análisis funcional.
+
+3. INTEGRACIÓN OBLIGATORIA DE LA CONVERSACIÓN ("LO QUE YA ESTABA" + "NUEVOS AVANCES"):
+   - Si abajo se adjunta el INFORME BASE PREVIO, úsalo como cimiento estructural obligatorio: CONSERVA todas sus secciones e incorpora con minucia analítica todos los nuevos datos, hipótesis de bucle, vacíos resueltos y reflexiones clínicas que tú y el terapeuta han analizado y acordado a lo largo de los mensajes de esta conversación.
+   - Si no hay informe base previo, redacta el informe desde cero cubriendo con máxima profundidad las 16 secciones APA 7.
+
+4. SEPARACIÓN EPISTEMOLÓGICA ESTRICTA:
+   - Distingue claramente los hechos observables de las inferencias clínicas e hipótesis provisionales.
+
+DATOS Y CONTEXTO DEL CASO:
+- Nombre del Consultante: ${(patientName || 'Consultante').toUpperCase()}
+- Fecha de Emisión: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+- Pruebas Psicométricas Registradas:
+${completedTestsDetailedList.length > 0 ? completedTestsDetailedList.map(t => `• ${t.sigla}: ${t.nombre} | ${t.informante} | Puntaje: ${t.score} | Nivel: ${t.nivel}`).join('\n') : '• Batería psicométrica de cribado clínico.'}
+${pidDetails ? `• Perfil Dimensional PID-5: ${pidDetails}` : ''}
+
+FUENTES DOCUMENTALES:
+${contextData || 'Ninguna fuente seleccionada.'}
+
+${currentBaseReport ? `═══════════════════════════════════════════════════════════════════════
+--- INFORME BASE PREVIO (PUNTO DE PARTIDA A EXPANDIR E INTEGRAR CON LA CONVERSACIÓN) ---
+${currentBaseReport}
+--- FIN INFORME BASE PREVIO ---
+═══════════════════════════════════════════════════════════════════════` : ''}
+
+═══════════════════════════════════════════════════════════════════════
+ESTRUCTURA MAESTRA OBLIGATORIA DEL INFORME (16 SECCIONES APA 7 COMPLETAS):
+
+# INFORME CLÍNICO PSICOLÓGICO Y FORMULACIÓN INTEGRAL
+## Formulación Clínica, Evaluación Psicométrica y Propuesta de Intervención
+
+| Campo | Detalle Clínico |
+| :--- | :--- |
+| **Consultante** | ${(patientName || 'Consultante').toUpperCase()} |
+| **Edad / Etapa Evolutiva** | [Edad constatada o estimada en fuentes] |
+| **Modalidad de Atención** | Psicoterapia Individual (Enfoque Contextual Transdiagnóstico) |
+| **Fecha de Emisión** | ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} |
+| **Evaluador / Supervisión** | Dirección de Evaluación Clínica Oasis / Supervisión Kio |
+| **Tipo de Documento** | Formulación clínica integral actualizada, integración psicométrica y propuesta de intervención |
+
+**Nota sobre el documento**
+El presente informe corresponde a una formulación clínica integral construida a partir de la información proporcionada durante el proceso de evaluación, entrevistas clínicas, biográficas, batería psicométrica aplicada y la profundización analítica en supervisión clínica. Su objetivo es organizar las principales áreas de experiencia, establecer una comprensión funcional del caso y orientar el trabajo terapéutico. Las interpretaciones no constituyen conclusiones estáticas; se actualizarán conforme avance el proceso.
+
+---
+
+### 1. MOTIVO DE CONSULTA Y ANÁLISIS INTEGRADO DE LA DEMANDA (PERSPECTIVA DUAL CONSULTANTE - MADRE)
+- Narrativa clínica extensa, profunda y contextualizada estructurada en subapartados analíticos:
+  * 1.1. Encuadre general de la solicitud y derivación formal.
+  * 1.2. El motivo desde la perspectiva del consultante: Citas textuales directas entre comillas de lo expresado en consulta y notas.
+  * 1.3. El motivo y respuesta reportada por la madre / cuidadores (alarma, impotencia en límites, desajustes de rutinas).
+  * 1.4. Análisis clínico integrado del motivo: El bucle transaccional circular de reforzamiento mutuo entre angustia materna y escape del joven.
+  * 1.5. Lista detallada con viñetas de los cambios y necesidades prioritarias acordadas para el proceso.
+
+### 2. SITUACIÓN ACTUAL Y ÁREAS CONSERVADAS
+- Elementos de estabilidad y funcionamiento adaptativo (actividades escolares/laborales, amigos, intereses particulares, música, arte, recursos cognitivos).
+- Transición vital evolutiva y áreas de valor que se mantienen funcionales.
+
+### 3. METODOLOGÍA E INSTRUMENTOS DE EVALUACIÓN APLICADOS
+- Justificación metodológica de la evaluación psicométrica multimodal y clínica.
+- Descripción técnica de la batería aplicada.
+- **Tabla 1 APA: Resultados Psicométricos Cuantitativos y Cualitativos**:
+  Tabla en Markdown con normativa APA 7 (Columnas: Instrumento / Sigla | Constructo Evaluado | Informante | Puntuación Directa | Clasificación / Rango Clínico).
+  *Nota.* Incluyendo baremos y puntos de corte clínicos.
+
+### 4. ÁREAS PRINCIPALES DE EXPLORACIÓN
+(Desarrollar cada subsección de manera extensa, profunda y contextualizada al caso):
+#### 4.1. Autoconfianza, autopercepción e imagen de sí mismo
+#### 4.2. Sobrepensamiento, rumiación y autocrítica
+#### 4.3. Relaciones interpersonales, familia y vínculos significativos
+#### 4.4. Vulnerabilidad, aceptación y vivencia del rechazo
+#### 4.5. Control, incertidumbre y conductas de escape
+#### 4.6. Episodios significativos de desborde emocional y somatización
+#### 4.7. Proyecto de vida y metas personales
+
+### 5. FORMULACIÓN CLÍNICA PROVISIONAL (ANÁLISIS FUNCIONAL EN CADENA)
+- Presentación esquemática del bucle funcional de mantenimiento con flechas (↓):
+  Situación detonante (conflicto, exigencia, soledad, juicio)
+  ↓
+  Pensamientos y evaluaciones personales
+  ↓
+  Emociones y respuestas somáticas
+  ↓
+  Respuestas de afrontamiento y conducta manifiesta
+  ↓
+  Alivio o distracción temporal (Reforzamiento negativo a corto plazo)
+  ↓
+  Persistencia y cronificación del problema original
+- Párrafo extenso explicando cómo se auto-perpetúa este ciclo transaccional y su costo vital.
+
+### 6. HIPÓTESIS CENTRAL: LA PREGUNTA EMOCIONAL NUCLEAR
+- Análisis conceptual profundo de la tensión central personalizada al caso.
+- La pregunta emocional nuclear subyacente que guía la experiencia del consultante.
+
+### 7. RELACIÓN CON LA SOLEDAD Y EL AISLAMIENTO
+- Análisis cualitativo de la vivencia del tiempo a solas.
+- Distinción clínica fundamental entre el *aislamiento reactivo* y la *soledad funcional y nutricia*.
+
+### 8. FACTORES QUE PUEDEN ESTAR INFLUYENDO (MODELO MULTIFACTORIAL)
+- **Antecedentes:** Aprendizajes tempranos, modelos familiares y reglas sobre el afecto.
+- **Acontecimientos recientes:** Conflictos actuales y transiciones.
+- **Posibles factores mantenedores:** Rumiación, reforzamiento por escape y escalada reactiva mutua.
+- *Nota epistemológica:* Factores moduladores no deterministas.
+
+### 9. ESTRATIFICACIÓN DE RIESGO Y PROTOCOLO DE SEGURIDAD (C-SSRS)
+- Clasificación de nivel de riesgo actual (según C-SSRS).
+- Factores de vulnerabilidad específicos y estresores inmediatos.
+- Factores protectores activos.
+- Protocolo de contingencia y red de seguridad en crisis.
+
+### 10. RECURSOS Y FORTALEZAS DEL CONSULTANTE
+- Lista detallada con viñetas de recursos, talentos, introspección y palancas terapéuticas de cambio.
+
+### 11. OBJETIVOS TERAPÉUTICOS
+- **Objetivo General:** (Flexibilidad psicológica, autorregulación y coherencia vital).
+- **Objetivos Específicos:** (Lista numerada exhaustiva de 10 a 12 metas operacionales, observables y progresivas).
+
+### 12. ACTIVIDADES TERAPÉUTICAS Y HERRAMIENTAS VIVENCIALES
+- Módulos operativos: Registro de situaciones y emociones, defusión cognitiva de autocrítica, clarificación de valores vs mandatos ("lo que debo" vs "lo que quiero"), habilidades de modulación fisiológica y tolerancia al malestar, organización de metas paso a paso.
+
+### 13. PROCESO DE INTERVENCIÓN INICIAL Y PLAN POR SESIONES
+- **Bloque Inicial Sesión por Sesión (Sesiones 1 a 4 estructuradas):**
+  * **Sesión 1.** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 2.** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 3.** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 4.** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+- **Etapas de Continuidad:** Consolidación TCC/ACT y Proyecto Vital.
+- **Criterio de Precaución Clínica: Qué NO tocar todavía** (temas postergados para salvaguardar la alianza).
+
+### 14. INDICADORES DE PROGRESO
+- Lista detallada con viñetas de 10 a 14 criterios observables para monitorear el avance sesión a sesión.
+
+### 15. CONSIDERACIONES CLÍNICAS Y PREGUNTAS PARA PRÓXIMAS SESIONES
+- Formulación nosológica provisional dimensional.
+- 4 a 6 preguntas socráticas y experienciales directas para aplicar en sesión.
+
+### 16. CONCLUSIÓN Y CIERRE FORMAL
+- Síntesis integrativa de la etapa vital y horizonte del proceso terapéutico.
+- Declaración formal: "Formulación clínica: provisional. La formulación será revisada y actualizada conforme avance el proceso terapéutico."
+- Bloque formal de Firma del Terapeuta, Especialidad y Cédula Profesional.
+═══════════════════════════════════════════════════════════════════════
+
+AL FINALIZAR EL DOCUMENTO:
+Incluye en una línea independiente al final exacto:
+[DOCUMENTO_PDF_GENERADO: {"titulo": "INFORME PSICOLÓGICO CLÍNICO INTEGRAL", "resumen": "Integración completa de la formulación clínica, psicometría y plan de sesiones"}]
+
+Inicia con un breve comentario introductorio de colega ("He recreado y desarrollado el informe clínico integrando minuciosamente todo lo que ya teníamos y los nuevos puntos acordados en nuestra conversación...") seguido del documento completo en Markdown puro.`;
+            }
+
             const payload = {
                 model: model,
                 messages: [
-                    { role: 'system', content: systemPrompt },
+                    { role: 'system', content: effectiveSystemPrompt },
                     ...updatedMessages.map(m => ({ role: m.role, content: m.content }))
                 ],
-                temperature: 0.7
+                temperature: isPdfRequested ? 0.35 : 0.7,
+                max_tokens: 8192
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -2111,9 +2333,6 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             if (!res.ok) throw new Error("Error en la conexión con la IA");
             const data = await res.json();
             const aiMsg = data.choices[0].message.content;
-
-            // Detect if the clinician requested creating/recreating the PDF report
-            const isPdfRequested = /recre(ar|es|a|en)\s+(el\s+)?informe|cre(ar|a|es|en)\s+(el\s+)?(informe|pdf)|gener(ar|a|ame|en)\s+(un\s+)?pdf|haz(me)?\s+(el\s+)?(informe|reporte)|en\s+pdf|descargar\s+pdf/i.test(textToSend);
 
             let generatedPdfData = null;
             let cleanAiMsg = aiMsg;
@@ -2128,13 +2347,15 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         id: `gen_pdf_${Date.now()}`,
                         fileName: `Informe_Clinico_${cleanPat}_${new Date().toISOString().slice(0, 10)}.pdf`,
                         title: meta.titulo || `Informe Psicológico Clínico — ${patientName || 'Consultante'}`,
-                        summary: meta.resumen || 'Documento clínico integrado a partir de la conversación',
+                        summary: meta.resumen || 'Integración completa de la formulación clínica, psicometría y plan de sesiones (actualizado con la conversación)',
                         content: cleanAiMsg,
                         fileSize: cleanAiMsg.length * 1.5,
-                        numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1800)),
+                        numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1600)),
                         isGenerated: true,
                         createdAt: new Date().toISOString()
                     };
+                    setApaReportContent(cleanAiMsg);
+                    localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, cleanAiMsg);
                 } catch (e) {
                     console.warn("Could not parse DOCUMENTO_PDF_GENERADO:", e);
                 }
@@ -2144,13 +2365,15 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                     id: `gen_pdf_${Date.now()}`,
                     fileName: `Informe_Clinico_${cleanPat}_${new Date().toISOString().slice(0, 10)}.pdf`,
                     title: `Informe Psicológico Clínico — ${patientName || 'Consultante'}`,
-                    summary: `Documento clínico integrado a partir de lo discutido en la sesión`,
+                    summary: `Documento clínico integrado a partir de los avances de la conversación`,
                     content: cleanAiMsg,
                     fileSize: cleanAiMsg.length * 1.5,
-                    numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1800)),
+                    numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1600)),
                     isGenerated: true,
                     createdAt: new Date().toISOString()
                 };
+                setApaReportContent(cleanAiMsg);
+                localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, cleanAiMsg);
             }
 
             const finalMessages = [
@@ -3136,15 +3359,20 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             <span className="hidden sm:inline">Nuevo Chat</span>
                         </button>
 
-                        {/* APA Clinical Report Button (NotebookLM style) */}
+                        {/* Generar Informe Base Button */}
                         <button
-                            onClick={() => setShowApaReportModal(true)}
-                            title="Generar o ver Informe Clínico Integral en formato APA (PDF)"
+                            onClick={() => {
+                                setShowApaReportModal(true);
+                                if (!apaReportContent) {
+                                    handleGenerateApaReport();
+                                }
+                            }}
+                            title="Generar informe base sintetizado a partir de las fuentes e instrumentos para contrastar y trabajar con Kio"
                             className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/40 text-purple-200 hover:text-white rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95 shadow-sm"
                         >
                             <FileText size={12} className="text-purple-400" />
-                            <span className="hidden sm:inline">Informe APA (PDF)</span>
-                            <span className="sm:hidden">Informe APA</span>
+                            <span className="hidden sm:inline">Generar Informe Base</span>
+                            <span className="sm:hidden">Informe Base</span>
                         </button>
 
                         {/* Saved Sessions History Button */}
@@ -3236,7 +3464,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                     className="px-3.5 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40 text-purple-200 hover:text-white hover:border-purple-300 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all shadow-sm"
                                 >
                                     <FileText size={11} className="text-purple-400" /> 
-                                    Crear Informe Clínico APA (PDF)
+                                    Generar Informe Base (APA)
                                 </button>
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
@@ -3407,16 +3635,13 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setViewingPdfDocument({
-                                                                    fileName: m.generatedPdf.fileName,
-                                                                    content: m.generatedPdf.content,
-                                                                    numPages: m.generatedPdf.numPages,
-                                                                    isGenerated: true
-                                                                });
-                                                                setPdfViewerTab('text');
+                                                                const reportContent = m.generatedPdf.content || cleanText;
+                                                                setApaReportContent(reportContent);
+                                                                setApaReportEditMode(false);
+                                                                setShowApaReportModal(true);
                                                             }}
-                                                            className="hidden sm:flex px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-mono font-bold transition-all items-center gap-1.5 border border-white/10 active:scale-95"
-                                                            title="Visualizar informe en el lector"
+                                                            className="flex px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-mono font-bold transition-all items-center gap-1.5 border border-white/10 active:scale-95 cursor-pointer"
+                                                            title="Previsualizar versión PDF en formato maquetado APA 7 (hoja blanca editorial)"
                                                         >
                                                             <Eye size={12} />
                                                             <span>Visualizar</span>
