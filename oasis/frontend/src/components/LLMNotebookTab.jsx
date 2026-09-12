@@ -2076,11 +2076,14 @@ REGLAS CLÍNICAS Y CONVERSACIONALES OBLIGATORIAS:
      * Utiliza viñetas (-) o listas numeradas (1., 2.) para desglosar observaciones, hipótesis y pasos de intervención.
      * Mantén saltos de línea limpios entre párrafos para máxima legibilidad.
 
-6. SOLICITUDES DE REDACCIÓN, RECREACIÓN O INTEGRACIÓN DE INFORMES CLÍNICOS:
-   - Cuando el terapeuta te pida recrear, redactar, integrar o actualizar el informe psicológico (ej. "recrea el informe integrando lo que ya estaba y lo que mencionas"):
-     * Redáctalo con máxima exhaustividad, profundidad analítica y rigor técnico (Estructura APA: Datos y Motivo de Consulta, Integración de Instrumentos Psicodiagnósticos Aplicados con sus puntuaciones reales, Análisis Funcional del Bucle de Mantenimiento, Hipótesis Diagnóstica/Conceptual y Plan de Intervención por Sesiones).
-     * Emplea títulos claros en Markdown (#, ##, ###), tablas si aplican y viñetas estructuradas.
-     * Ten en cuenta que el terapeuta podrá descargar este informe directamente en PDF desde la conversación.
+6. CAPACIDAD DE CREACIÓN Y DESCARGA DE INFORMES EN PDF EN BASE A LA CONVERSACIÓN:
+   - Tienes la capacidad activa de CREAR Y GENERAR DOCUMENTOS PDF CLÍNICOS completos cuando el terapeuta te lo pida (ej. "recrea el informe integrando lo que ya estaba y lo que mencionas", "créame el informe en pdf", "genera un pdf con esto", "redacta el informe del caso").
+   - Cuando el clínico te pida crear, recrear o generar el informe:
+     1. INTEGRA TODA LA CONVERSACIÓN Y LO QUE HAN ESTADO HABLANDO: No redactes un informe genérico o de plantilla vacía. Utiliza minuciosamente todo lo que han venido conversando (los antecedentes biográficos, la psicometría calificada con sus puntajes reales, el análisis funcional del bucle, las hipótesis clínicas discutidas y las reflexiones o puntos que el clínico y tú acaban de analizar en el chat).
+     2. REDACTA EL DOCUMENTO COMPLETO Y RIGUROSO: Con estructura formal APA 7 (Título centrado, Secciones con ## y ###, datos, motivos, integración psicométrica, formulación analítica de bucle, hipótesis y plan de sesiones).
+     3. INCLUYE AL FINAL LA ETIQUETA DE GENERACIÓN DE PDF:
+        [DOCUMENTO_PDF_GENERADO: {"titulo": "INFORME PSICOLÓGICO CLÍNICO INTEGRAL", "resumen": "Integración completa de la formulación clínica, psicometría y plan de sesiones"}]
+     4. En tu mensaje en el chat, inicia con un comentario natural de colega ("He recreado el informe integrando todo lo que hemos venido analizando...") seguido del documento completo.
 
 FUENTES DOCUMENTALES SELECCIONADAS:
 ${contextData || 'Ninguna fuente seleccionada.'}
@@ -2109,7 +2112,55 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             const data = await res.json();
             const aiMsg = data.choices[0].message.content;
 
-            const finalMessages = [...updatedMessages, { role: 'assistant', content: aiMsg }];
+            // Detect if the clinician requested creating/recreating the PDF report
+            const isPdfRequested = /recre(ar|es|a|en)\s+(el\s+)?informe|cre(ar|a|es|en)\s+(el\s+)?(informe|pdf)|gener(ar|a|ame|en)\s+(un\s+)?pdf|haz(me)?\s+(el\s+)?(informe|reporte)|en\s+pdf|descargar\s+pdf/i.test(textToSend);
+
+            let generatedPdfData = null;
+            let cleanAiMsg = aiMsg;
+
+            const pdfTagMatch = aiMsg.match(/\[DOCUMENTO_PDF_GENERADO:\s*({[\s\S]*?})\]/i);
+            if (pdfTagMatch) {
+                try {
+                    const meta = JSON.parse(pdfTagMatch[1]);
+                    cleanAiMsg = aiMsg.replace(pdfTagMatch[0], '').trim();
+                    const cleanPat = (patientName || 'Consultante').replace(/\s+/g, '_');
+                    generatedPdfData = {
+                        id: `gen_pdf_${Date.now()}`,
+                        fileName: `Informe_Clinico_${cleanPat}_${new Date().toISOString().slice(0, 10)}.pdf`,
+                        title: meta.titulo || `Informe Psicológico Clínico — ${patientName || 'Consultante'}`,
+                        summary: meta.resumen || 'Documento clínico integrado a partir de la conversación',
+                        content: cleanAiMsg,
+                        fileSize: cleanAiMsg.length * 1.5,
+                        numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1800)),
+                        isGenerated: true,
+                        createdAt: new Date().toISOString()
+                    };
+                } catch (e) {
+                    console.warn("Could not parse DOCUMENTO_PDF_GENERADO:", e);
+                }
+            } else if (isPdfRequested && cleanAiMsg.length > 250) {
+                const cleanPat = (patientName || 'Consultante').replace(/\s+/g, '_');
+                generatedPdfData = {
+                    id: `gen_pdf_${Date.now()}`,
+                    fileName: `Informe_Clinico_${cleanPat}_${new Date().toISOString().slice(0, 10)}.pdf`,
+                    title: `Informe Psicológico Clínico — ${patientName || 'Consultante'}`,
+                    summary: `Documento clínico integrado a partir de lo discutido en la sesión`,
+                    content: cleanAiMsg,
+                    fileSize: cleanAiMsg.length * 1.5,
+                    numPages: Math.max(1, Math.ceil(cleanAiMsg.length / 1800)),
+                    isGenerated: true,
+                    createdAt: new Date().toISOString()
+                };
+            }
+
+            const finalMessages = [
+                ...updatedMessages, 
+                { 
+                    role: 'assistant', 
+                    content: cleanAiMsg,
+                    generatedPdf: generatedPdfData 
+                }
+            ];
             setMessages(finalMessages);
             persistMessages(finalMessages, patientName);
         } catch (err) {
@@ -3214,15 +3265,6 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleDownloadMessageAsPdf(idx, cleanText)}
-                                                    title="Descargar este mensaje como documento PDF"
-                                                    className="px-1.5 py-0.5 rounded-md transition-all flex items-center gap-1 text-[10px] font-mono font-bold text-zinc-400 hover:text-purple-300 hover:bg-white/5"
-                                                >
-                                                    <FileDown size={11} />
-                                                    <span className="hidden sm:inline text-[9px]">PDF</span>
-                                                </button>
-                                                <button
-                                                    type="button"
                                                     onClick={() => toggleSpeakMessage(idx, cleanText)}
                                                     title={speakingMsgIndex === idx ? "Detener lector de voz" : "Escuchar respuesta (Lector de voz)"}
                                                     className={`px-1.5 py-0.5 rounded-md transition-all flex items-center gap-1 text-[10px] font-mono font-bold ${
@@ -3342,38 +3384,50 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                 {cleanText}
                                             </ReactMarkdown>
 
-                                            {/* Card de Exportación Directa a PDF para informes y documentos clínicos */}
-                                            {(cleanText.includes('#') || cleanText.length > 350 || cleanText.toLowerCase().includes('informe') || cleanText.toLowerCase().includes('formulaci')) && (
-                                                <div className="no-print mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap bg-purple-950/25 p-2.5 rounded-xl border border-purple-500/20">
-                                                    <div className="flex items-center gap-2 min-w-0">
-                                                        <div className="w-6 h-6 rounded-md bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
-                                                            <FileText size={13} />
+                                            {/* Card de Documento PDF Generado y Descargable en la Conversación */}
+                                            {m.generatedPdf && (
+                                                <div className="no-print my-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-zinc-900/90 border border-purple-400/40 flex items-center justify-between gap-3 shadow-xl">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="w-10 h-10 rounded-xl bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
+                                                            <FileText size={20} />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-[11px] font-bold text-white truncate">Documento clínico / Informe generado</p>
-                                                            <p className="text-[9px] text-zinc-400 font-mono">Formato APA • Listo para guardar en PDF</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[180px] sm:max-w-xs">{m.generatedPdf.fileName}</span>
+                                                                <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 border border-purple-400/30">
+                                                                    PDF Generado
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[10.5px] text-zinc-300 font-sans mt-0.5 truncate">
+                                                                {m.generatedPdf.title} • {m.generatedPdf.numPages} {m.generatedPdf.numPages === 1 ? 'pág' : 'págs'} • Formato APA
+                                                            </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                                    <div className="flex items-center gap-2 shrink-0">
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setApaReportContent(cleanText);
-                                                                setShowApaReportModal(true);
+                                                                setViewingPdfDocument({
+                                                                    fileName: m.generatedPdf.fileName,
+                                                                    content: m.generatedPdf.content,
+                                                                    numPages: m.generatedPdf.numPages,
+                                                                    isGenerated: true
+                                                                });
+                                                                setPdfViewerTab('text');
                                                             }}
-                                                            className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-mono flex items-center gap-1 transition-all border border-white/10"
-                                                            title="Abrir en maqueta APA para editar o revisar antes de imprimir"
+                                                            className="hidden sm:flex px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-mono font-bold transition-all items-center gap-1.5 border border-white/10 active:scale-95"
+                                                            title="Visualizar informe en el lector"
                                                         >
-                                                            <Eye size={11} />
-                                                            <span>Vista APA</span>
+                                                            <Eye size={12} />
+                                                            <span>Visualizar</span>
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleDownloadMessageAsPdf(idx, cleanText)}
-                                                            className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
-                                                            title="Descargar directamente este informe en PDF"
+                                                            onClick={() => handleDownloadMessageAsPdf(idx, m.generatedPdf.content || cleanText)}
+                                                            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
+                                                            title="Descargar este documento PDF directamente a tu dispositivo"
                                                         >
-                                                            <Download size={12} />
+                                                            <Download size={14} />
                                                             <span>Descargar PDF</span>
                                                         </button>
                                                     </div>
