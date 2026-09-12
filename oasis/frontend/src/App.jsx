@@ -175,6 +175,21 @@ localStorage.setItem = function (key, value) {
                 'oasis_canvas_edges_',
                 'oasis_afc_real_data_',
                 'oasis_afc_notes_',
+                'oasis_node_chats_',
+                'oasis_node_intensities_',
+                'oasis_node_challenges_',
+                'oasis_node_explorations_',
+                'oasis_bio_answers_',
+                'oasis_phenom_answers_',
+                'oasis_treatment_plan_',
+                'oasis_apa_clinical_report_',
+                'oasis_conversations_',
+                'oasis_facts_',
+                'oasis_style_profile_',
+                'oasis_avatar_',
+                'oasis_credits_',
+                'oasis_public_traits_',
+                'oasis_afc_attempted_',
                 'oasis_blindspot_answer_',
                 'oasis_blindspot_resolved_',
                 'oasis_blindspot_question_',
@@ -202,7 +217,7 @@ localStorage.setItem = function (key, value) {
 
         const currentUser = localStorage.getItem('oasis_user');
         const targetUser = getTargetUserFromKey(key, currentUser);
-        if (targetUser) {
+        if (targetUser && currentUser && targetUser === currentUser) {
             let envUrl = import.meta.env.VITE_API_URL;
             if (envUrl && envUrl.includes('localhost') && typeof window !== 'undefined' && window.location.hostname !== 'localhost') envUrl = null;
             const API_URL = envUrl ||
@@ -7165,10 +7180,28 @@ export default function App() {
 
 
     const logout = () => {
+        const prevUser = user;
         setUser('');
         setIsLoggedIn(false);
         setIsDataLoaded(false);
         localStorage.removeItem('oasis_user');
+
+        // Clear all user-scoped keys from localStorage to prevent profile leakage between users
+        if (prevUser) {
+            try {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && (k.endsWith(`_${prevUser}`) || k.includes(`_${prevUser}__`))) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+            } catch (e) {
+                console.error("Error clearing user storage on logout:", e);
+            }
+        }
+
         setBlocks(INITIAL_BLOCKS);
         setPlaylists({ 'Favoritos': [] });
         setPlayQueue(playerTracks);
@@ -7282,17 +7315,65 @@ export default function App() {
                     // This will NOT block the UI loading anymore!
                     setTimeout(async () => {
                         try {
-                            const getTargetUserFromKey = (k, defaultUser) => {
-                                const prefixes = ['oasis_bio_transcriptions_', 'oasis_phenom_qualitative_', 'oasis_pid_answers_', 'oasis_icar_answers_', 'oasis_icar_dwell_', 'oasis_icar_changes_', 'oasis_bio_metadata_', 'oasis_phenom_metadata_', 'oasis_active_version_', 'oasis_total_versions_', 'oasis_patient_status_', 'oasis_session_videos_bio_videos_', 'oasis_session_videos_phenom_videos_', 'oasis_session_videos_icar_videos_', 'oasis_clinician_notes_', 'oasis_private_notes_', 'oasis_canvas_nodes_', 'oasis_canvas_edges_'];
+                            const getTargetUserFromKey = (k) => {
+                                const prefixes = [
+                                    'oasis_bio_transcriptions_',
+                                    'oasis_phenom_qualitative_',
+                                    'oasis_pid_answers_',
+                                    'oasis_icar_answers_',
+                                    'oasis_icar_dwell_',
+                                    'oasis_icar_changes_',
+                                    'oasis_bio_metadata_',
+                                    'oasis_phenom_metadata_',
+                                    'oasis_active_version_',
+                                    'oasis_total_versions_',
+                                    'oasis_patient_status_',
+                                    'oasis_session_videos_bio_videos_',
+                                    'oasis_session_videos_phenom_videos_',
+                                    'oasis_session_videos_icar_videos_',
+                                    'oasis_clinician_notes_',
+                                    'oasis_private_notes_',
+                                    'oasis_canvas_nodes_',
+                                    'oasis_canvas_edges_',
+                                    'oasis_afc_real_data_',
+                                    'oasis_afc_notes_',
+                                    'oasis_node_chats_',
+                                    'oasis_node_intensities_',
+                                    'oasis_node_challenges_',
+                                    'oasis_node_explorations_',
+                                    'oasis_bio_answers_',
+                                    'oasis_phenom_answers_',
+                                    'oasis_treatment_plan_',
+                                    'oasis_apa_clinical_report_',
+                                    'oasis_conversations_',
+                                    'oasis_facts_',
+                                    'oasis_style_profile_',
+                                    'oasis_avatar_',
+                                    'oasis_credits_',
+                                    'oasis_public_traits_',
+                                    'oasis_afc_attempted_',
+                                    'oasis_blindspot_answer_',
+                                    'oasis_blindspot_resolved_',
+                                    'oasis_blindspot_question_',
+                                    'oasis_blindspot_title_',
+                                    'oasis_blindspot_answer_cronologico_',
+                                    'oasis_blindspot_answer_desarme_',
+                                    'oasis_blindspot_answer_identidad_',
+                                    'oasis_blindspot_resolved_cronologico_',
+                                    'oasis_blindspot_resolved_desarme_',
+                                    'oasis_blindspot_resolved_identidad_'
+                                ];
                                 for (const prefix of prefixes) {
                                     if (k.startsWith(prefix)) {
                                         let part = k.substring(prefix.length);
                                         const vIndex = part.indexOf('_v');
                                         if (vIndex > -1) part = part.substring(0, vIndex);
+                                        const dIndex = part.indexOf('__');
+                                        if (dIndex > -1) part = part.substring(0, dIndex);
                                         return part;
                                     }
                                 }
-                                return defaultUser;
+                                return null;
                             };
 
                             // Fetch clinical data
@@ -7304,35 +7385,32 @@ export default function App() {
                                 finally { window.isDownloadingClinicalData = false; }
                             }
 
-                            // Scan localStorage
-                            const groups = {};
+                            // Scan localStorage strictly for the active user
+                            let serverDataForUser = {};
+                            try {
+                                const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${user}`);
+                                if (res.ok) serverDataForUser = await res.json();
+                            } catch (e) { }
+
+                            const keysToPush = {};
                             for (let i = 0; i < localStorage.length; i++) {
                                 const key = localStorage.key(i);
                                 if (key && key.startsWith('oasis_') && key !== 'oasis_user' && !key.startsWith('oasis_bg_')) {
-                                    const targetUser = getTargetUserFromKey(key, user);
-                                    if (targetUser) {
-                                        groups[targetUser] = groups[targetUser] || {};
-                                        groups[targetUser][key] = localStorage.getItem(key);
+                                    const targetUser = getTargetUserFromKey(key);
+                                    if (targetUser === user) {
+                                        const val = localStorage.getItem(key);
+                                        if (serverDataForUser[key] !== val) {
+                                            keysToPush[key] = val;
+                                        }
                                     }
                                 }
                             }
 
-                            for (const [targetUser, data] of Object.entries(groups)) {
-                                let serverDataForUser = {};
-                                try {
-                                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${targetUser}`);
-                                    if (res.ok) serverDataForUser = await res.json();
-                                } catch (e) { }
-
-                                const keysToPush = {};
-                                Object.keys(data).forEach(key => { if (serverDataForUser[key] !== data[key]) keysToPush[key] = data[key]; });
-
-                                if (Object.keys(keysToPush).length > 0) {
-                                    await fetch(`${API_URL}/api/oasis/clinical-data?user=${targetUser}`, {
-                                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(keysToPush)
-                                    }).catch(() => { });
-                                }
+                            if (Object.keys(keysToPush).length > 0) {
+                                await fetch(`${API_URL}/api/oasis/clinical-data?user=${user}`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(keysToPush)
+                                }).catch(() => { });
                             }
 
                             // Video sync

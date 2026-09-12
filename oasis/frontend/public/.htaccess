@@ -1,0 +1,26 @@
+# ==============================================================================
+# RUIDO INTERIOR - CONFIGURACIÓN DEL SERVIDOR (LITESPEED / APACHE - HOSTINGER)
+# ==============================================================================
+
+# 1. Asignar el tipo MIME correcto a módulos JavaScript (.mjs y .js)
+# Evita el error "Setting up fake worker failed: Failed to fetch dynamically imported module"
+<IfModule mod_mime.c>
+    AddType application/javascript .mjs .js
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# 2. Habilitar compresión si está disponible
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript text/css text/html text/plain application/json
+</IfModule>
+
+# 3. Soporte para rutas SPA (React / Vite) y PWA
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>

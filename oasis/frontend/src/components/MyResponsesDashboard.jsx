@@ -205,17 +205,25 @@ const getFallbackDescription = (node, user) => {
         }
     }
 
-    // Enriquecimiento grounded en las entrevistas clínicas reales
-    const axelDesc = getAxelEnrichedDescription(node);
-    if (axelDesc && (!node.description || node.description.length < 35 || node.description.includes('Pensamientos repetitivos') || node.description.includes('este patrón') || node.description.includes('Factor de tu mapa'))) {
-        return axelDesc;
+    // Enriquecimiento grounded en las entrevistas clínicas reales (SOLO PARA AXEL ROBEN)
+    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+    if (isAxel) {
+        const axelDesc = getAxelEnrichedDescription(node);
+        if (axelDesc && (!node.description || node.description.length < 35 || node.description.includes('Pensamientos repetitivos') || node.description.includes('este patrón') || node.description.includes('Factor de tu mapa'))) {
+            return axelDesc;
+        }
+        if (node && node.description && node.description.length >= 35 && !node.description.includes('Pensamientos repetitivos') && !node.description.includes('Factor de tu mapa')) {
+            return node.description;
+        }
+        if (axelDesc) return axelDesc;
     }
 
-    if (node && node.description && node.description.length >= 35 && !node.description.includes('Pensamientos repetitivos') && !node.description.includes('Factor de tu mapa')) {
+    // Para cualquier otro usuario, si la descripción coincide con una de Axel por residuo previo en localStorage, descartarla
+    const isCorruptedWithAxel = !isAxel && node && AXEL_NODE_ENRICHMENT[node.id]?.desc && node.description === AXEL_NODE_ENRICHMENT[node.id]?.desc;
+    if (node && node.description && !isCorruptedWithAxel && !node.description.includes('Factor de tu mapa')) {
         return node.description;
     }
-    if (axelDesc) return axelDesc;
-    if (node && node.description) return node.description;
+    if (node && node.description && !isCorruptedWithAxel) return node.description;
     if (!node) return "";
     switch (node.type) {
         case 'historical': return "Este es un hecho o vivencia de tu pasado que influye en cómo interpretas el mundo hoy.";
@@ -229,7 +237,7 @@ const getFallbackDescription = (node, user) => {
     }
 };
 
-export const getNodePerspectiveQuestion = (node, threadIndex = 0) => {
+export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '') => {
     if (!node) return "¿Qué reflexión o toma de consciencia te genera este patrón en este momento?";
 
     // 1. Si el nodo tiene preguntas específicas predefinidas en su arreglo y no son genéricas
@@ -237,10 +245,13 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0) => {
         return node.questions[threadIndex];
     }
 
-    // 2. Enriquecimiento clínico grounded directamente en las entrevistas biográfica y existencial
-    const axelQ = getAxelEnrichedPerspectiveQuestion(node, threadIndex);
-    if (axelQ) {
-        return axelQ;
+    // 2. Enriquecimiento clínico grounded directamente en las entrevistas biográfica y existencial (SOLO PARA AXEL ROBEN)
+    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+    if (isAxel) {
+        const axelQ = getAxelEnrichedPerspectiveQuestion(node, threadIndex);
+        if (axelQ) {
+            return axelQ;
+        }
     }
 
     const label = node.label ? node.label.trim() : 'este patrón';
@@ -392,17 +403,24 @@ const findExactUserMention = (node, bioData, phenomData) => {
     return null;
 };
 
-const getFallbackSource = (node, bioData, phenomData) => {
-    const axelSrc = getAxelEnrichedSource(node);
-    if (axelSrc && (!node.source || node.source.length < 35 || node.source.includes('Relato de tu Entrevista') || node.source.includes('Información extraída'))) {
-        return axelSrc;
+const getFallbackSource = (node, bioData, phenomData, user = '') => {
+    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+    if (isAxel) {
+        const axelSrc = getAxelEnrichedSource(node);
+        if (axelSrc && (!node.source || node.source.length < 35 || node.source.includes('Relato de tu Entrevista') || node.source.includes('Información extraída'))) {
+            return axelSrc;
+        }
+        if (node && node.source && node.source.length >= 35 && !node.source.includes('Información extraída')) {
+            return node.source;
+        }
+        if (axelSrc) return axelSrc;
     }
 
-    if (node && node.source && node.source.length >= 35 && !node.source.includes('Información extraída')) {
+    const isCorruptedWithAxel = !isAxel && node && AXEL_NODE_ENRICHMENT[node.id]?.src && node.source === AXEL_NODE_ENRICHMENT[node.id]?.src;
+    if (node && node.source && !isCorruptedWithAxel && !node.source.includes('Información extraída')) {
         return node.source;
     }
-    if (axelSrc) return axelSrc;
-    if (node && node.source) return node.source;
+    if (node && node.source && !isCorruptedWithAxel) return node.source;
     if (!node) return "";
 
     const exactMention = findExactUserMention(node, bioData, phenomData);
@@ -1850,10 +1868,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                         c.includes('¿Qué significado o aprendizaje extraes') ||
                                         c.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
                                         c.includes('¿Cómo impacta "');
-                                    if (isGeneric) {
-                                        const enrQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
-                                        if (enrQ) {
-                                            thread[0].content = enrQ;
+                                    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+                                    if (isAxel) {
+                                        if (isGeneric) {
+                                            const enrQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
+                                            if (enrQ) {
+                                                thread[0].content = enrQ;
+                                            }
+                                        }
+                                    } else {
+                                        const axelQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
+                                        const containsAxel = (axelQ && c === axelQ) ||
+                                            c.includes('pantalones') || c.includes('ruido') || c.includes('noise') ||
+                                            c.includes('corte de pelo') || c.includes('colegio católico');
+                                        if (isGeneric || containsAxel) {
+                                            thread[0].content = getNodePerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10), user);
                                         }
                                     }
                                 }
@@ -1942,8 +1971,19 @@ Devuelve estrictamente el JSON sin formato extra.
                 currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
                 currentChat[0].content.includes('¿Cómo impacta "')
             );
-            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx);
+            const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+            const axelQ = getAxelEnrichedPerspectiveQuestion(activeNode, tIdx);
+            const containsAxel = !isAxel && currentChat && currentChat[0] && (
+                (axelQ && currentChat[0].content === axelQ) ||
+                (currentChat[0].content && (
+                    currentChat[0].content.includes('pantalones') || 
+                    currentChat[0].content.includes('noise-rock') || 
+                    currentChat[0].content.includes('corte de pelo') || 
+                    currentChat[0].content.includes('colegio católico')
+                ))
+            );
+            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && (isGenericAssistant || containsAxel))) {
+                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user);
                 setNodeChats(prev => {
                     const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                     const isLegacy = Array.isArray(currentThreads);
@@ -2242,7 +2282,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             perspectives.push({
                                 index: i,
                                 label: threadLabels[i],
-                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i),
+                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i, user),
                                 answer: lastUserMsg.content
                             });
                         }
@@ -2387,8 +2427,33 @@ Devuelve estrictamente el JSON sin formato extra.
             } catch (e) { console.error(e); }
         }
 
+        const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+
         const enrichAfcNodesWithAxelInterviews = (nodes) => {
             if (!Array.isArray(nodes)) return nodes;
+            if (!isAxel) {
+                // Si NO es Axel Roben, limpiar cualquier dato residual de Axel que haya quedado contaminado en localStorage
+                return nodes.map(n => {
+                    const enr = AXEL_NODE_ENRICHMENT[n.id];
+                    if (enr) {
+                        const isAxelDesc = n.description === enr.desc;
+                        const isAxelSrc = n.source === enr.src;
+                        const isAxelRefl = n.reflection_question === enr.refl;
+                        const isAxelChal = n.challenge === enr.challenge;
+                        if (isAxelDesc || isAxelSrc || isAxelRefl || isAxelChal) {
+                            return {
+                                ...n,
+                                description: isAxelDesc ? '' : n.description,
+                                source: isAxelSrc ? '' : n.source,
+                                reflection_question: isAxelRefl ? '' : n.reflection_question,
+                                challenge: isAxelChal ? '' : n.challenge,
+                                questions: undefined
+                            };
+                        }
+                    }
+                    return n;
+                });
+            }
             return nodes.map(n => {
                 const enr = AXEL_NODE_ENRICHMENT[n.id];
                 if (enr) {
@@ -2439,8 +2504,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 .then(cloudData => {
                     const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
-                                     cloudData[`oasis_afc_real_data_Axel Roben`] ||
-                                     cloudData[`oasis_afc_real_data_axel roben`];
+                                     (isAxel ? (cloudData[`oasis_afc_real_data_Axel Roben`] || cloudData[`oasis_afc_real_data_axel roben`]) : null);
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
                         const enrichedNodes = resolveCollisions(enrichAfcNodesWithAxelInterviews(cloudAfc.nodes));
                         const resolved = { ...cloudAfc, nodes: enrichedNodes };
@@ -3154,7 +3218,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 threadChat[0].content.includes('¿Cómo impacta "')
             );
             if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex);
+                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user);
                 threadChat = [{ role: 'assistant', content: initialQ }];
             }
             const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
@@ -3439,7 +3503,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             }
         } catch (err) {
             console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
-            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex);
+            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user);
             setNodeChats(prev => {
                 const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                 const isLegacy = Array.isArray(currentThreads);
@@ -6078,7 +6142,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         <div className="mt-1 pt-3 border-t border-white/10 pl-3 border-l-[3px] border-white/20 bg-black/20 p-3 rounded-r-xl">
                                                                             <p className="text-[9px] font-mono font-black uppercase tracking-widest text-zinc-400">Origen o Hipótesis</p>
                                                                             <p className="text-[9.5px] text-zinc-400 italic leading-relaxed mt-1.5">
-                                                                                {getFallbackSource(node, bioData, phenomData)}
+                                                                                {getFallbackSource(node, bioData, phenomData, user)}
                                                                             </p>
                                                                         </div>
 
@@ -6096,7 +6160,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             );
                                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
-                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex) }];
+                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user) }];
 
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[500px]" onClick={e => e.stopPropagation()}>
@@ -6126,7 +6190,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                         nextChat[0].content.includes('¿Cómo impacta "')
                                                                                                     );
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -6158,7 +6222,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                         nextChat[0].content.includes('¿Cómo impacta "')
                                                                                                     );
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -6462,7 +6526,7 @@ Por favor, analicemos:
                                                 );
                                                 const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                     ? currentChat
-                                                    : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex) }];
+                                                    : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user) }];
 
                                                 return (
                                                     <div className="flex flex-col gap-2.5 mt-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -6492,7 +6556,7 @@ Por favor, analicemos:
                                                                             nextChat[0].content.includes('¿Cómo impacta "')
                                                                         );
                                                                         if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
+                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
                                                                             setNodeChats(prev => ({
                                                                                 ...prev,
                                                                                 [currentNode.id]: {
@@ -6524,7 +6588,7 @@ Por favor, analicemos:
                                                                             nextChat[0].content.includes('¿Cómo impacta "')
                                                                         );
                                                                         if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx);
+                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
                                                                             setNodeChats(prev => ({
                                                                                 ...prev,
                                                                                 [currentNode.id]: {
