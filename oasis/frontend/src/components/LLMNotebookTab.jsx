@@ -9,7 +9,7 @@ import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import { safeJSONParse } from '../utils/jsonParser';
 import { PID5_METADATA, PID5_OPTIONS, PID5_DOMAINS, PID5_ITEMS, calcularResultadoPID5 } from '../data/pid5Data';
-import { API_URL, getSavedTestResult } from '../utils/api';
+import { API_URL, getSavedTestResult, getCompletedTestsCount } from '../utils/api';
 
 // Storage keys helper for 100% resilient persistence and strict patient isolation
 const getNotebookKeys = (patientName) => {
@@ -104,66 +104,99 @@ const loadStoredPatientMessages = (patientName) => {
     return [];
 };
 
-// Helper to parse the top 3 recommended clinical tests from assistant messages
-const parseTestRecommendations = (content) => {
+// Formatter for standardized clinical test results into rich, structured clinical markdown
+const formatTestResultContent = (res, testDef) => {
+    if (!res) return '';
+    const testName = res.nombre || testDef?.nombre || res.testId?.toUpperCase();
+    const siglas = testDef?.siglas || res.testId?.toUpperCase();
+    const alpha = res.alphaCronbach || testDef?.alphaCronbach || '0.85';
+    const date = res.dateFormatted || res.completedAt || 'Reciente';
+    const infLabel = res.informante === 'madre' ? 'Perspectiva Madre / Cuidador' : 'Autoinforme del Consultante';
+
+    let out = `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA (${siglas}):
+Instrumento: ${testName} (${siglas})
+Población / Informante: ${infLabel}
+Fecha de Registro: ${date}
+Puntaje Total Obtenido: ${res.totalScore} / ${res.maxScore || testDef?.maxScore || 'N/A'} puntos
+Clasificación / Nivel Clínico: ${res.nivel}
+Consistencia Interna: Alfa de Cronbach α = ${alpha}
+
+Interpretación Clínica Estandarizada:
+${res.interpretacion || 'Sin interpretación registrada.'}
+`;
+
+    // Desglose detallado por subescalas
+    if (res.subescalas && typeof res.subescalas === 'object' && Object.keys(res.subescalas).length > 0) {
+        out += `\nDesglose por Subescalas / Ejes Clínicos:\n`;
+        Object.entries(res.subescalas).forEach(([subName, score]) => {
+            out += `• ${subName}: ${score} pts\n`;
+        });
+    }
+
+    // Reactivos Críticos / Alertas
+    if (res.reactivosCriticos && Array.isArray(res.reactivosCriticos) && res.reactivosCriticos.length > 0) {
+        out += `\n⚠️ REACTIVOS CRÍTICOS / ALERTA DE ATENCIÓN PRIORITARIA:\n`;
+        res.reactivosCriticos.forEach(rc => {
+            out += `• Ítem ${rc.item}: "${rc.texto || ''}" -> Respuesta: ${rc.respuesta || rc.valor} (${rc.significado || rc.riesgo || 'Riesgo Clínico'})\n`;
+        });
+    } else if (res.rawAnswers && testDef?.items) {
+        const elevated = [];
+        testDef.items.forEach(it => {
+            const val = res.rawAnswers[it.id];
+            if (val !== undefined && val !== null) {
+                const num = Number(val);
+                if (num >= 2) {
+                    elevated.push({ it, num });
+                }
+            }
+        });
+        if (elevated.length > 0) {
+            out += `\nReactivos con Mayor Elevación Sintomática Reportados:\n`;
+            elevated.slice(0, 6).forEach(e => {
+                out += `• [${e.it.subscale || 'Ítem'}] "${e.it.text}": ${e.num} pts\n`;
+            });
+        }
+    }
+
+    return out;
+};
+
+// Helper to parse genuine unapplied test recommendations from assistant messages
+const parseTestRecommendations = (content, patientName = null) => {
     if (!content || typeof content !== 'string') return { cleanText: content, tests: [] };
 
-    // 1. Try structured tag: [PRUEBAS_SUGERIDAS: [...]]
+    // 1. Strict structured tag: [PRUEBAS_SUGERIDAS: [...]]
     const tagMatch = content.match(/\[PRUEBAS_SUGERIDAS:\s*(\[[\s\S]*?\])\s*\]/);
     if (tagMatch) {
         try {
             const parsed = JSON.parse(tagMatch[1]);
             const cleanText = content.replace(/\[PRUEBAS_SUGERIDAS:\s*\[[\s\S]*?\]\s*\]/, '').trim();
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return { cleanText, tests: parsed.slice(0, 3) };
+                // Filter out any tests that have already been completed for this patient!
+                const filtered = parsed.filter(t => {
+                    const low = ((t.nombre || '') + ' ' + (t.id || '')).toLowerCase();
+                    const testKeys = ['bai', 'phq9', 'cope28', 'ders16', 'aaq2', 'gad7', 'cdi2', 'scared', 'sdq', 'cssrs', 'epds'];
+                    for (const tk of testKeys) {
+                        const def = CLINICAL_TESTS && CLINICAL_TESTS[tk];
+                        const isMatch = low.includes(tk) || 
+                                       (def && low.includes(def.siglas.toLowerCase())) ||
+                                       (def && low.includes(def.nombre.toLowerCase()));
+                        if (isMatch) {
+                            if (getSavedTestResult(patientName, tk)) {
+                                return false; // Already completed, exclude!
+                            }
+                        }
+                    }
+                    return true;
+                });
+                return { cleanText, tests: filtered.slice(0, 3) };
             }
         } catch (e) {
             console.warn("Error parsing PRUEBAS_SUGERIDAS JSON:", e);
         }
     }
 
-    // 2. Fallback heuristic: Extract numbered recommendations if message discusses evaluations/tests
-    const lower = content.toLowerCase();
-    const isTestDiscussion = lower.includes('prueba') || lower.includes('evalua') || lower.includes('test') || lower.includes('escala') || lower.includes('inventario') || lower.includes('instrumento');
-    
-    if (isTestDiscussion) {
-        const lines = content.split('\n');
-        const candidateTests = [];
-        lines.forEach(line => {
-            const m = line.match(/^\s*([1-9])[\.\-\)]\s*([^\:\-\—\n]+)(?:[:\-\—]\s*(.+))?$/);
-            if (m) {
-                const num = m[1];
-                let rawTitle = m[2].trim();
-                let rawDesc = m[3] ? m[3].trim() : '';
-                // Clean leading/trailing markdown asterisks, underscores or quotes
-                rawTitle = rawTitle.replace(/^[\*\_"'\s]+|[\*\_"'\s]+$/g, '');
-                rawDesc = rawDesc.replace(/^[\*\_"'\s]+|[\*\_"'\s]+$/g, '');
-                if (rawTitle.length >= 3 && rawTitle.length <= 60) {
-                    candidateTests.push({
-                        id: String(num),
-                        nombre: rawTitle,
-                        area: rawDesc.slice(0, 90),
-                        justificacion: rawDesc
-                    });
-                }
-            }
-        });
-
-        if (candidateTests.length >= 2) {
-            // Filter out redundant tests that the therapist already has (e.g. general interview or personality)
-            const nonRedundant = candidateTests.filter(t => {
-                const tLow = t.nombre.toLowerCase();
-                const isInterview = tLow.includes('entrevista') || tLow.includes('anamnesis') || tLow.includes('historia cl');
-                const isGeneralPersonality = (tLow.includes('personalidad') && !tLow.includes('ansiedad') && !tLow.includes('depresi') && !tLow.includes('afronta'));
-                const isExistentialGen = tLow.includes('existencial') && (tLow.includes('diagnostico') || tLow.includes('evaluac'));
-                return !isInterview && !isGeneralPersonality && !isExistentialGen;
-            });
-
-            const finalTests = (nonRedundant.length >= 2 ? nonRedundant : candidateTests).slice(0, 3);
-            return { cleanText: content, tests: finalTests };
-        }
-    }
-
+    // Do NOT guess or convert regular numbered paragraphs into test recommendation cards
     return { cleanText: content, tests: [] };
 };
 
@@ -335,6 +368,7 @@ ${PID5_ITEMS.map(item => {
         // Completed Clinical Screening Tests (BAI, PHQ-9, COPE, DERS, AAQ-II, GAD-7, CDI-2, SCARED, SDQ, C-SSRS, EPDS)
         if (CLINICAL_TESTS) {
             Object.keys(CLINICAL_TESTS).forEach(tId => {
+                const testDef = CLINICAL_TESTS[tId];
                 if (tId === 'sdq') {
                     const resAdoRaw = localStorage.getItem(`oasis_test_result_${patientName}_sdq_adolescente`);
                     const resMadRaw = localStorage.getItem(`oasis_test_result_${patientName}_sdq_madre`);
@@ -350,7 +384,7 @@ ${PID5_ITEMS.map(item => {
                                 name: `Prueba: SDQ (Autoinforme Adolescente) [${res.nivel} - ${res.totalScore} pts]`,
                                 type: 'prueba clínica',
                                 resultData: res,
-                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: SDQ (Autoinforme Adolescente)\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                                content: formatTestResultContent(res, testDef)
                             });
                         } catch(e) {}
                     }
@@ -364,7 +398,7 @@ ${PID5_ITEMS.map(item => {
                                 name: `Prueba: SDQ (Perspectiva Madre) [${res.nivel} - ${res.totalScore} pts]`,
                                 type: 'prueba clínica',
                                 resultData: res,
-                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: SDQ (Perspectiva Madre)\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                                content: formatTestResultContent(res, testDef)
                             });
                         } catch(e) {}
                     }
@@ -378,7 +412,7 @@ ${PID5_ITEMS.map(item => {
                                 name: `Prueba: SDQ [${res.nivel} - ${res.totalScore} pts]`,
                                 type: 'prueba clínica',
                                 resultData: res,
-                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre || 'SDQ'}\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach || '0.78'}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                                content: formatTestResultContent(res, testDef)
                             });
                         } catch(e) {}
                     }
@@ -390,10 +424,10 @@ ${PID5_ITEMS.map(item => {
                                 id: `test_${tId}`,
                                 testId: tId,
                                 informante: 'adolescente',
-                                name: `Prueba: ${res.nombre || tId.toUpperCase()} [${res.nivel} - ${res.totalScore} pts]`,
+                                name: `Prueba: ${res.nombre || testDef?.siglas || tId.toUpperCase()} [${res.nivel} - ${res.totalScore} pts]`,
                                 type: 'prueba clínica',
                                 resultData: res,
-                                content: `EVALUACIÓN PSICOMÉTRICA ESTANDARIZADA:\nInstrumento: ${res.nombre || tId.toUpperCase()} (${tId.toUpperCase()})\nFecha: ${res.dateFormatted || res.completedAt}\nPuntaje Total: ${res.totalScore} / ${res.maxScore} pts\nNivel Clínico: ${res.nivel}\nAlfa de Cronbach: α = ${res.alphaCronbach}\nInterpretación Clínica: ${res.interpretacion}\nSubescalas: ${JSON.stringify(res.subescalas || {})}`
+                                content: formatTestResultContent(res, testDef)
                             });
                         } catch (e) {}
                     }
@@ -627,53 +661,82 @@ ${PID5_ITEMS.map(item => {
                 .map(s => `--- FUENTE: ${s.name} ---\n${s.content}`)
                 .join('\n\n');
 
-            const systemPrompt = `Eres Kio, operando como un colega y Psicólogo Clínico Supervisor. El usuario ya es un profesional clínico experto, NUNCA le preguntes su rol ni le des advertencias médicas ("no soy tu terapeuta", "solo soy una IA").
+            // Scan all completed clinical tests for this patient
+            const completedTestsSummaryList = [];
+            const completedTestIds = new Set();
+            if (CLINICAL_TESTS) {
+                Object.keys(CLINICAL_TESTS).forEach(tId => {
+                    const testDef = CLINICAL_TESTS[tId];
+                    if (tId === 'sdq') {
+                        const resAdo = getSavedTestResult(patientName, 'sdq', 'adolescente');
+                        if (resAdo) {
+                            completedTestsSummaryList.push(`• SDQ (Autoinforme Adolescente): ${resAdo.totalScore} pts [${resAdo.nivel}]`);
+                            completedTestIds.add('sdq_adolescente');
+                            completedTestIds.add('sdq');
+                        }
+                        const resMad = getSavedTestResult(patientName, 'sdq', 'madre');
+                        if (resMad) {
+                            completedTestsSummaryList.push(`• SDQ (Perspectiva Madre): ${resMad.totalScore} pts [${resMad.nivel}]`);
+                            completedTestIds.add('sdq_madre');
+                            completedTestIds.add('sdq');
+                        }
+                    } else {
+                        const res = getSavedTestResult(patientName, tId);
+                        if (res) {
+                            const sig = testDef?.siglas || tId.toUpperCase();
+                            const nom = res.nombre || testDef?.nombre || sig;
+                            completedTestsSummaryList.push(`• ${nom} (${sig}): ${res.totalScore} / ${res.maxScore || ''} pts [${res.nivel}]`);
+                            completedTestIds.add(tId);
+                        }
+                    }
+                });
+            }
 
-REGLAS DE CONVERSACIÓN Y TONO (OBLIGATORIAS):
-- Escribe como un colega cercano por chat, en párrafos simples, claros y fluidos, estilo WhatsApp.
-- Evita excesos de asteriscos o negritas.
-- Si el usuario dice cosas cortas como "Hola", "Hola hola", "Buen día", RESPONDE ÚNICAMENTE CON UN SALUDO CORTITO SIMILAR, por ejemplo: "Hola, ¿qué quieres hacer hoy?" o "¿En qué te ayudo?". NUNCA lances un análisis no solicitado ni listas de opciones. Fluye con la plática.
+            const hasBio = !!localStorage.getItem(`oasis_bio_transcriptions_${patientName}`);
+            const hasPhenom = !!localStorage.getItem(`oasis_phenom_qualitative_${patientName}`);
+            const hasPid5 = !!localStorage.getItem(`oasis_pid_answers_${patientName}`);
+            if (hasPid5) completedTestIds.add('pid5');
 
-REGLA CLÍNICA DE EVALUACIÓN POSTERIOR (NO REDUNDANCIA Y PERTINENCIA):
-El terapeuta ya cuenta en sus fuentes activas con las siguientes evaluaciones de base COMPLETADAS de ${patientName || 'este paciente'}:
-1. Entrevista Biográfica completa (historia vital, hitos evolutivos, dinámicas familiares y detonantes).
-2. Evaluación de Personalidad PID-5 (los 5 dominios y 25 facetas ya evaluados y puntuados).
-3. Diagnóstico Existencial y Fenomenológico (vivencia de tiempo, vacío, libertad, soledad y bloques).
+            const systemPrompt = `Eres Kio, Psicólogo Clínico Supervisor de alto nivel y colega de interconsulta del terapeuta.
+Tu estilo debe ser INTELIGENTE, ORGÁNICO, REALISTA, CURIOSO Y PROFUNDAMENTE FUNCIONAL. Conversas con la agilidad, perspicacia y naturalidad de ChatGPT avanzado entre dos psicólogos clínicos experimentados.
 
-POR LO TANTO, SI EL TERAPEUTA PREGUNTA QUÉ PRUEBAS APLICAR O CÓMO EVALUAR CLÍNICAMENTE:
-- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir "Entrevista clínica detallada" o "Entrevista biográfica" (ya está realizada y en fuentes).
-- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir "Evaluación de personalidad (PID-5 o similar)" (ya está realizada y en fuentes).
-- ESTÁ ESTRICTAMENTE PROHIBIDO sugerir diagnósticos o entrevistas existenciales generales (ya están realizados).
+EL USUARIO ES UN PSICÓLOGO CLÍNICO PROFESIONAL:
+- NUNCA le preguntes su rol ni añadas disclaimers médicos ("recuerda que soy una IA", "no soy terapeuta").
+- Trátalo como a un par profesional: con rigor conceptual y técnico (TCC, ACT, DBT, FAP, Psicometría psicodinámica/funcional), pero con un tono conversacional fresco, humano, cercano y sin rodeos burocráticos.
+- Si el usuario dice un saludo breve ("hola", "buen día"), responde con un saludo breve y cálido ("¡Hola! ¿Qué aspecto del caso de ${patientName || 'tu consultante'} quieres que exploremos hoy?"). NUNCA dispares listas no solicitadas ante un simple saludo.
 
-TUS RECOMENDACIONES DEBEN SER EXCLUSIVAMENTE INSTRUMENTOS POSTERIORES Y COMPLEMENTARIOS:
-- Identifica qué problemáticas específicas revelan la biografía y el perfil PID-5 de ${patientName || 'este caso'} (por ejemplo: severidad de afecto negativo, bucles de rumiación, mecanismos de evitación, conductas impulsivas/autolesivas o afrontamiento desadaptativo).
-- Propón EXACTAMENTE 3 instrumentos psicométricos posteriores bien fundamentados:
-  1. Severidad de Ansiedad o Depresión actual (ej. Inventario de Ansiedad de Beck - BAI, o BDI-II, o GAD-7) para cuantificar la intensidad clínica de los síntomas somáticos y cognitivos presentes.
-  2. Estrategias de Afrontamiento ante el estrés (ej. Cuestionario Brief-COPE / COPE) para determinar qué recursos o mecanismos desadaptativos/evitativos utiliza ante crisis.
-  3. Regulación Emocional o Evitación Experiencial (ej. Escala DERS - Dificultades en la Regulación Emocional, o AAQ-II - Cuestionario de Aceptación y Acción para evitación experiencial en ACT).
-- Empieza tu respuesta reconociendo como colega supervisor lo que ya se tiene:
-  "Hm, considerando que ya tenemos en las fuentes la entrevista biográfica, el perfil PID-5 y el diagnóstico existencial de ${patientName || 'este paciente'}, lo que procede no es repetir entrevistas generales ni volver a medir personalidad, sino aplicar instrumentos posteriores para evaluar la sintomatología activa y sus mecanismos de respuesta. Podríamos pensar en estas 3 opciones que son las más viables y estratégicas:"
-- Explica de forma concisa cada una y por qué encaja con los datos de este paciente.
-- Invita a escoger una: "¿Cuál de estas tres te gustaría priorizar o aplicar? Si escoges una, te puedo desglosar sus reactivos clave, cómo aplicarla y cómo interpretarla clínicamente para este caso."
-- OBLIGATORIO: Al final exacto en una sola línea añade la etiqueta técnica con los 3 instrumentos nuevos:
-[PRUEBAS_SUGERIDAS: [{"id": "1", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "2", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}, {"id": "3", "nombre": "Nombre de la prueba", "area": "Área clínica evaluada", "justificacion": "Por qué es viable para este caso específico"}]]
+EXPEDIENTE Y EVALUACIONES DE ${patientName ? patientName.toUpperCase() : 'ESTE PACIENTE'}:
+1. Entrevista Biográfica: ${hasBio ? 'COMPLETADA (disponible en fuentes)' : 'Pendiente'}
+2. Diagnóstico Fenomenológico / Existencial: ${hasPhenom ? 'COMPLETADO (disponible en fuentes)' : 'Pendiente'}
+3. Inventario de Personalidad DSM-5 (PID-5-BF): ${hasPid5 ? 'COMPLETADO Y CALIFICADO (5 dominios y 25 facetas en fuentes)' : 'Pendiente'}
+4. PRUEBAS PSICOMÉTRICAS DE CRIBAJE YA CONTESTADAS Y CALIFICADAS:
+${completedTestsSummaryList.length > 0 ? completedTestsSummaryList.join('\n') : '• Ninguna prueba psicométrica de cribaje adicional aplicada aún.'}
 
-CUANDO EL USUARIO ESCOGE O INDICA UNA PRUEBA EN PARTICULAR:
-- Desarrolla la prueba seleccionada en profundidad práctica:
-  1. Breve introducción y reactivos o preguntas clave más relevantes para este paciente.
-  2. Guía paso a paso de administración adaptada a su motivo de consulta.
-  3. Pautas de puntuación e interpretación clínica contextualizada a su perfil (datos vs inferencias).
+REGLAS CLÍNICAS Y CONVERSACIONALES OBLIGATORIAS:
 
-CONOCIMIENTO CLÍNICO (PID-5):
-- Si las fuentes incluyen un test PID-5 con 25 ítems puntuados, asume que es el PID-5-BF (Brief Form). Utiliza tu conocimiento interno de los 5 dominios (Afecto Negativo, Desapego, Antagonismo, Desinhibición, Psicoticismo) para inferir rasgos de personalidad según las puntuaciones altas (2 o 3). NUNCA te quejes de que faltan los nombres de los ítems; deduce el perfil.
+1. PROHIBICIÓN ESTRICTA DE RECOMENDAR PRUEBAS YA REALIZADAS:
+   - El terapeuta ya aplicó y tiene evaluadas las pruebas arriba listadas (${completedTestsSummaryList.length > 0 ? Array.from(completedTestIds).join(', ') : 'ninguna aún'}).
+   - NUNCA sugieras ni recomiendes aplicar de nuevo estas pruebas ya contestadas.
+   - Si el terapeuta pregunta "¿qué pruebas aplicar?", "¿cómo evalúo?" o "¿qué hacemos ahora?", RECONOCE DE INMEDIATO las pruebas que YA ESTÁN APLICADAS. Integra sus resultados, analiza sus implicaciones y guía al clínico sobre qué significa el cuadro integral y cómo intervenir. No caigas en guiones rígidos ni repitas listas de instrumentos ya contestados.
 
-SOLO CUANDO EL USUARIO TE PIDA UN ANÁLISIS DEL CASO:
-Aplica el rigor clínico de Análisis Funcional (ACT) y estructura tus ideas sobre:
-- Datos vs Inferencias.
-- Bucles funcionales (ABC).
-- Huecos y preguntas para la próxima sesión.
+2. CÓMO "LEER" E INTEGRAR TODAS LAS PRUEBAS QUE YA SE HICIERON (INTEGRACIÓN FUNCIONAL):
+   - No te limites a repetir números aislados. Tu valor como supervisor clínico es CONECTAR LOS PUNTOS y entender el proceso real del paciente:
+     * Triangula el perfil de personalidad (PID-5) con los síntomas activos (ej. ansiedad somática en BAI, decaimiento en PHQ-9 o rumiación en GAD-7).
+     * Cruza las estrategias de afrontamiento (Brief-COPE) con la regulación emocional (DERS-16) y la evitación experiencial (AAQ-II): ¿Qué hace el consultante ante el malestar o la angustia? ¿Se desconecta, se aísla, se culpa, o evita el contacto con sus emociones?
+     * Identifica la función del síntoma: ¿Qué protege o de qué intenta escapar este patrón? (Análisis funcional: Antecedente -> Respuesta Interna -> Evitación -> Alivio a corto plazo -> Costo vital a largo plazo).
+     * Si hay evaluación multi-informante (ej. SDQ madre vs adolescente), señala con agudeza dónde difiere la vivencia interna del joven respecto a lo que observa la familia.
 
-FUENTES SELECCIONADAS:
+3. CURIOSIDAD CLÍNICA Y DIÁLOGO EXPLORATORIO:
+   - Sé inquisitivo y perspicaz. No des respuestas genéricas de manual; formula hipótesis vivas sobre el consultante.
+   - Plantea preguntas reflexivas que abran perspectivas útiles para la próxima sesión con el paciente.
+   - Acompaña al terapeuta a pensar, explorar y diseñar intervenciones vivas (experimentos conductuales, defusión cognitiva, aceptación o exposición gradual).
+
+4. RECOMENDACIÓN DE NUEVOS INSTRUMENTOS (SOLO CUANDO SE SOLICITE O FALTE UN ÁREA CRÍTICA):
+   - Únicamente si el terapeuta pregunta explícitamente qué otro cribado complementario que NO se haya aplicado convendría considerar (ej. cribado de trauma/TEPT, déficit de atención o riesgo de crisis), sugiere hasta 3 pruebas NUEVAS que no estén ya en su expediente.
+   - En ese caso excepcional de pruebas nuevas no realizadas, incluye al final exacto:
+   [PRUEBAS_SUGERIDAS: [{"id": "identificador", "nombre": "Nombre del instrumento nuevo", "area": "Área clínica", "justificacion": "Por qué complementa lo ya evaluado"}]]
+
+FUENTES DOCUMENTALES SELECCIONADAS:
 ${contextData || 'Ninguna fuente seleccionada.'}
 `;
 
@@ -687,7 +750,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                     { role: 'system', content: systemPrompt },
                     ...updatedMessages
                 ],
-                temperature: 0.2
+                temperature: 0.7
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -1429,9 +1492,23 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2 justify-center mt-3 max-w-xl">
-                                <button onClick={() => handleSend("Tomando en cuenta que ya tenemos la biografía, el PID-5 y el diagnóstico existencial de este paciente, ¿cuáles serían las 3 pruebas psicológicas o instrumentos posteriores más viables y estratégicos para evaluar su sintomatología activa y afrontamiento?")} className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors">
-                                    <Target size={11} className="text-purple-400" /> Top 3 Pruebas Posteriores (Ansiedad / Afrontamiento)
-                                </button>
+                                {getCompletedTestsCount(patientName) > 0 ? (
+                                    <button 
+                                        onClick={() => handleSend(`Analiza e integra orgánicamente todas las pruebas psicométricas y evaluaciones que ya completamos para ${patientName || 'este paciente'} (PID-5, sintomatología activa, afrontamiento y regulación). ¿Cuál es la lectura clínica conjunta de estos resultados y qué nos revela sobre su proceso real y sus bucles funcionales?`)} 
+                                        className="px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 hover:bg-emerald-500/25 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors shadow-sm shadow-emerald-950"
+                                    >
+                                        <Sparkles size={11} className="text-emerald-400" /> 
+                                        Integrar Pruebas Completadas ({getCompletedTestsCount(patientName)}) y Formulación
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => handleSend(`Tomando en cuenta la historia y perfil de ${patientName || 'este paciente'}, ¿cuáles serían las 3 pruebas de cribaje posteriores más viables y estratégicas para evaluar su sintomatología activa y afrontamiento?`)} 
+                                        className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-colors"
+                                    >
+                                        <Target size={11} className="text-purple-400" /> 
+                                        Top 3 Pruebas Posteriores Sugeridas
+                                    </button>
+                                )}
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
                                 <button onClick={() => setInputMsg("Identifica los huecos de evaluación. ¿Qué nos falta preguntar o comprobar en la siguiente sesión para validar nuestras hipótesis?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Huecos y Preguntas</button>
@@ -1441,7 +1518,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                     {messages.map((m, idx) => {
                         const isAssistant = m.role === 'assistant';
-                        const { cleanText, tests } = isAssistant ? parseTestRecommendations(m.content) : { cleanText: m.content, tests: [] };
+                        const { cleanText, tests } = isAssistant ? parseTestRecommendations(m.content, patientName) : { cleanText: m.content, tests: [] };
 
                         return (
                             <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
