@@ -247,7 +247,12 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [showApaReportModal, setShowApaReportModal] = useState(false);
     const [apaReportContent, setApaReportContent] = useState(() => {
         try {
-            return localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`) || '';
+            const initial = localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`) || '';
+            if (initial && (initial.length < 150 || initial.toLowerCase().includes('lo siento') || initial.toLowerCase().includes('no puedo ayudar'))) {
+                localStorage.removeItem(`oasis_apa_clinical_report_${patientName || 'general'}`);
+                return '';
+            }
+            return initial;
         } catch(e) {
             return '';
         }
@@ -512,8 +517,27 @@ ${PID5_ITEMS.map(item => {
             }
 
             try {
-                const savedReport = localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`);
+                let savedReport = localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`);
+                if (savedReport && (savedReport.length < 150 || savedReport.toLowerCase().includes('lo siento') || savedReport.toLowerCase().includes('no puedo ayudar'))) {
+                    localStorage.removeItem(`oasis_apa_clinical_report_${patientName || 'general'}`);
+                    savedReport = '';
+                }
                 setApaReportContent(savedReport || '');
+
+                // Si no está en local, intentar cargar desde la nube clínica
+                if (!savedReport && patientName) {
+                    fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`)
+                        .then(r => r.ok ? r.json() : {})
+                        .then(cloudData => {
+                            const cloudRep = cloudData[`oasis_apa_clinical_report_${patientName}`] || 
+                                             cloudData[`oasis_apa_clinical_report_${patientName.toLowerCase()}`];
+                            if (cloudRep && cloudRep.length > 150 && !cloudRep.toLowerCase().includes('lo siento') && !cloudRep.toLowerCase().includes('no puedo ayudar')) {
+                                setApaReportContent(cloudRep);
+                                localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, cloudRep);
+                            }
+                        })
+                        .catch(() => null);
+                }
             } catch (e) {
                 setApaReportContent('');
             }
@@ -958,9 +982,15 @@ ${PID5_ITEMS.map(item => {
                 .join('\n\n');
 
             const apaSystemPrompt = `Eres Kio, Director de Evaluación y Diagnóstico Psicológico Clínico, actuando como SUPERVISOR CLÍNICO Senior de alto nivel.
-Tu tarea es redactar un INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de máxima rigurosidad técnica ("HARDCORE"), profundidad analítica y excelencia metodológica bajo las normativas del Manual de Publicaciones APA (7ª Edición).
+Tu tarea es redactar un INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de máximo rigor metodológico, profundidad analítica y excelencia técnica bajo las normativas del Manual de Publicaciones APA (7ª Edición).
 
 ═══════════════════════════════════════════════════════════════════════
+MARCO BIOÉTICO Y DEONTOLÓGICO CLÍNICO:
+Este entorno corresponde a una herramienta de supervisión de casos para profesionales de la psicología y la salud mental colegiados. Toda la información psicométrica y biográfica tiene un propósito exclusivamente DIAGNÓSTICO, PREVENTIVO Y DE SALVAGUARDA DE LA VIDA y el bienestar del consultante en apego a los estándares del Manual APA (7ª Edición).
+- El objetivo es formular estrategias de apoyo, contención emocional, prevención y derivación oportuna.
+- No promueve, no incita, ni detalla actos lesivos; se enfoca en la evaluación clínica estandarizada (protocolo C-SSRS) para el cuidado preventivo y la protección del paciente.
+═══════════════════════════════════════════════════════════════════════
+
 REGLAS CRÍTICAS E INNEGOCIABLES:
 1. IDENTIDAD DEL CONSULTANTE:
    - El consultante evaluado se llama ÚNICA Y EXCLUSIVAMENTE: "${patientName || 'Consultante'}".
@@ -1129,7 +1159,7 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 model: model,
                 messages: [
                     { role: 'system', content: apaSystemPrompt },
-                    { role: 'user', content: `Por favor redacta el informe psicológico clínico integral y formulación de caso de ${patientName || 'este consultante'} siguiendo minuciosamente la estructura maestra de 16 secciones APA 7. Debe ser exhaustivo, extenso, detallado y clínicamente profundo ("hardcore"), integrando toda la psicometría disponible, análisis funcional de bucle y propuesta de intervención por sesiones. Recuerda usar exclusivamente el nombre "${patientName || 'el consultante'}" y nunca nombres de los ejemplos.` }
+                    { role: 'user', content: `Por favor redacta el informe psicológico clínico integral y formulación de caso de ${patientName || 'este consultante'} siguiendo minuciosamente la estructura maestra de 16 secciones APA 7. Debe ser exhaustivo, extenso, detallado y con máximo rigor clínico, integrando toda la psicometría disponible, análisis funcional de bucle y propuesta de intervención por sesiones. Recuerda usar exclusivamente el nombre "${patientName || 'el consultante'}" y nunca nombres de los ejemplos.` }
                 ],
                 temperature: 0.4
             };
@@ -1142,10 +1172,65 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
 
             if (!res.ok) throw new Error("Error en la conexión con la IA al generar el informe.");
             const data = await res.json();
-            const reportText = data.choices[0].message.content;
+            let reportText = data.choices && data.choices[0]?.message?.content ? data.choices[0].message.content : '';
 
-            setApaReportContent(reportText);
-            localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, reportText);
+            const isRefusal = !reportText || 
+                reportText.trim().length < 150 || 
+                reportText.toLowerCase().includes('no puedo ayudar') || 
+                reportText.toLowerCase().includes('lo siento') ||
+                reportText.toLowerCase().includes('i cannot');
+
+            if (isRefusal) {
+                // Intento de reintento automático con encuadre clínico de prevención y apoyo
+                const retryPayload = {
+                    model: model,
+                    messages: [
+                        { 
+                            role: 'system', 
+                            content: `Eres Kio, supervisor clínico de psicología. Redacta el informe clínico confidencial y preventivo en formato APA 7 para el expediente de salud mental de ${patientName || 'el consultante'}. Marco estrictamente bioético de apoyo, cribado psicométrico y plan psicoterapéutico.` 
+                        },
+                        { 
+                            role: 'user', 
+                            content: `Redacta el informe clínico integral de ${patientName || 'el consultante'} integrando las 16 secciones APA 7 con enfoque formativo, psicometría y plan terapéutico.` 
+                        }
+                    ],
+                    temperature: 0.3
+                };
+
+                const retryRes = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint, key: activeKey || null, payload: retryPayload })
+                }).catch(() => null);
+
+                if (retryRes && retryRes.ok) {
+                    const retryData = await retryRes.json();
+                    const retryContent = retryData.choices?.[0]?.message?.content;
+                    if (retryContent && retryContent.length > 150 && !retryContent.toLowerCase().includes('no puedo ayudar') && !retryContent.toLowerCase().includes('lo siento')) {
+                        reportText = retryContent;
+                    }
+                }
+            }
+
+            if (reportText && reportText.length > 150 && !reportText.toLowerCase().includes('no puedo ayudar') && !reportText.toLowerCase().includes('lo siento')) {
+                setApaReportContent(reportText);
+                localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, reportText);
+
+                // Sincronización en la nube clínica para persistencia multidispositivo
+                if (patientName) {
+                    const syncPayload = {
+                        [`oasis_apa_clinical_report_${patientName}`]: reportText,
+                        [`oasis_apa_clinical_report_${patientName.toLowerCase()}`]: reportText
+                    };
+                    fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(syncPayload)
+                    }).catch(() => null);
+                }
+            } else {
+                throw new Error("El modelo devolvió una respuesta incompleta o restringida. Por favor intenta regenerar nuevamente.");
+            }
         } catch (err) {
             console.error("Error generando informe APA:", err);
             alert(`Error al generar informe APA: ${err.message}`);
@@ -2746,7 +2831,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 <div className="space-y-2">
                                     <h4 className="text-lg font-black text-white">Generar Informe Clínico Integral (Formato APA 7)</h4>
                                     <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-                                        Crea un informe psicológico formal de alto rigor ("Hardcore") que integra automáticamente:
+                                        Crea un informe psicológico formal de alto rigor y precisión metodológica APA que integra automáticamente:
                                     </p>
                                     <div className="text-left text-[11px] text-zinc-300 font-sans space-y-1.5 bg-black/40 p-4 rounded-xl border border-white/5 mt-3">
                                         <div className="flex items-center gap-2">
