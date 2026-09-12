@@ -262,7 +262,7 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [apaCopySuccess, setApaCopySuccess] = useState(false);
     const apaPrintRef = useRef(null);
     const chatScrollRef = useRef(null);
-    const prevPatientRef = useRef(patientName);
+    const prevPatientRef = useRef(null);
     const currentPatientRef = useRef(patientName);
 
     const handleOpenSource = (source) => {
@@ -524,14 +524,14 @@ ${PID5_ITEMS.map(item => {
                 }
                 setApaReportContent(savedReport || '');
 
-                // Si no está en local, intentar cargar desde la nube clínica
-                if (!savedReport && patientName) {
+                // Sincronizar desde la nube clínica (actualizar si en la nube hay una versión más completa/maestra)
+                if (patientName) {
                     fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`)
                         .then(r => r.ok ? r.json() : {})
                         .then(cloudData => {
                             const cloudRep = cloudData[`oasis_apa_clinical_report_${patientName}`] || 
                                              cloudData[`oasis_apa_clinical_report_${patientName.toLowerCase()}`];
-                            if (cloudRep && cloudRep.length > 150 && !cloudRep.toLowerCase().includes('lo siento') && !cloudRep.toLowerCase().includes('no puedo ayudar')) {
+                            if (cloudRep && cloudRep.length > (savedReport ? savedReport.length : 150) && !cloudRep.toLowerCase().includes('lo siento') && !cloudRep.toLowerCase().includes('no puedo ayudar')) {
                                 setApaReportContent(cloudRep);
                                 localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, cloudRep);
                             }
