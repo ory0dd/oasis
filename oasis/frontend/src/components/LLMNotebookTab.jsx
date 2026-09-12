@@ -339,6 +339,17 @@ export const LLMNotebookTab = ({ patientName }) => {
                     durationFormatted: m.attachedAudio.durationFormatted,
                     url: m.attachedAudio.url
                 } : undefined,
+                generatedPdf: m.generatedPdf ? {
+                    id: m.generatedPdf.id,
+                    fileName: m.generatedPdf.fileName,
+                    title: m.generatedPdf.title,
+                    summary: m.generatedPdf.summary,
+                    content: m.generatedPdf.content,
+                    fileSize: m.generatedPdf.fileSize,
+                    numPages: m.generatedPdf.numPages,
+                    isGenerated: true,
+                    createdAt: m.generatedPdf.createdAt
+                } : undefined,
                 patientOwner: k.safeName
             }));
             const jsonStr = JSON.stringify(taggedMsgs);
@@ -2142,8 +2153,8 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
-            // Detect if the clinician requested creating/recreating the PDF report
-            const isPdfRequested = /(recre|cre|gener|redact|hacer|haz|arm|actualiz|desarroll).*?(informe|reporte|pdf|documento)|(informe|reporte|documento).*?(pdf|apa|complet)|descargar\s+pdf|en\s+pdf/i.test(textToSend);
+            // Detect if the clinician requested creating/recreating the PDF report, expanding depth, or 10-19 pages
+            const isPdfRequested = /(recre|cre|gener|gner|redact|hacer|haz|arm|actualiz|desarroll|ampli|expand|detall|estructur|aument).*?(inform|ifnorm|report|pdf|doc|investig|caso|versi)|(inform|ifnorm|report|doc|investig).*?(pdf|apa|complet|detall|estructur|profund)|19\s*p[aá]g|\d+\s*p[aá]g|m[aá]s\s*p[aá]g|notebook|descargar\s+pdf|en\s+pdf/i.test(textToSend);
 
             let effectiveSystemPrompt = systemPrompt;
             if (isPdfRequested) {
@@ -2359,7 +2370,7 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                 } catch (e) {
                     console.warn("Could not parse DOCUMENTO_PDF_GENERADO:", e);
                 }
-            } else if (isPdfRequested && cleanAiMsg.length > 250) {
+            } else if ((isPdfRequested || cleanAiMsg.includes('#') || cleanAiMsg.toLowerCase().includes('informe') || cleanAiMsg.toLowerCase().includes('plan') || cleanAiMsg.toLowerCase().includes('formulaci') || cleanAiMsg.toLowerCase().includes('seguimiento') || cleanAiMsg.toLowerCase().includes('intervenci')) && cleanAiMsg.length > 250) {
                 const cleanPat = (patientName || 'Consultante').replace(/\s+/g, '_');
                 generatedPdfData = {
                     id: `gen_pdf_${Date.now()}`,
@@ -3613,51 +3624,68 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                             </ReactMarkdown>
 
                                             {/* Card de Documento PDF Generado y Descargable en la Conversación */}
-                                            {m.generatedPdf && (
-                                                <div className="no-print my-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-zinc-900/90 border border-purple-400/40 flex items-center justify-between gap-3 shadow-xl">
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="w-10 h-10 rounded-xl bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
-                                                            <FileText size={20} />
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[180px] sm:max-w-xs">{m.generatedPdf.fileName}</span>
-                                                                <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 border border-purple-400/30">
-                                                                    PDF Generado
-                                                                </span>
+                                            {(m.generatedPdf || (cleanText.length > 280 && (
+                                                cleanText.includes('#') || 
+                                                cleanText.toLowerCase().includes('informe') || 
+                                                cleanText.toLowerCase().includes('plan') || 
+                                                cleanText.toLowerCase().includes('formulaci') || 
+                                                cleanText.toLowerCase().includes('seguimiento') ||
+                                                cleanText.toLowerCase().includes('intervenci') ||
+                                                cleanText.toLowerCase().includes('objetivo') ||
+                                                cleanText.toLowerCase().includes('sesi')
+                                            ))) && (() => {
+                                                const docData = m.generatedPdf || {
+                                                    fileName: `Informe_Clinico_${(patientName || 'Consultante').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`,
+                                                    title: cleanText.includes('#') ? 'Informe Psicológico Clínico' : 'Documento Clínico / Plan de Caso',
+                                                    numPages: Math.max(1, Math.ceil(cleanText.length / 1600)),
+                                                    content: cleanText
+                                                };
+                                                return (
+                                                    <div className="no-print my-3 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-zinc-900/90 border border-purple-400/40 flex items-center justify-between gap-3 shadow-xl">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className="w-10 h-10 rounded-xl bg-purple-500/25 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0 shadow-inner">
+                                                                <FileText size={20} />
                                                             </div>
-                                                            <p className="text-[10.5px] text-zinc-300 font-sans mt-0.5 truncate">
-                                                                {m.generatedPdf.title} • {m.generatedPdf.numPages} {m.generatedPdf.numPages === 1 ? 'pág' : 'págs'} • Formato APA
-                                                            </p>
+                                                            <div className="min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[180px] sm:max-w-xs">{docData.fileName}</span>
+                                                                    <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 text-[9px] font-mono font-bold uppercase tracking-wider shrink-0 border border-purple-400/30">
+                                                                        {m.generatedPdf ? 'PDF Generado' : 'Documento Clínico'}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-[10.5px] text-zinc-300 font-sans mt-0.5 truncate">
+                                                                    {docData.title} • {docData.numPages} {docData.numPages === 1 ? 'pág' : 'págs'} • Formato APA
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const reportContent = docData.content || cleanText;
+                                                                    setApaReportContent(reportContent);
+                                                                    setApaReportEditMode(false);
+                                                                    setShowApaReportModal(true);
+                                                                }}
+                                                                className="flex px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-mono font-bold transition-all items-center gap-1.5 border border-white/10 active:scale-95 cursor-pointer"
+                                                                title="Previsualizar versión PDF en formato maquetado APA 7 (hoja blanca editorial)"
+                                                            >
+                                                                <Eye size={12} />
+                                                                <span>Visualizar</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDownloadMessageAsPdf(idx, docData.content || cleanText)}
+                                                                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
+                                                                title="Descargar este documento PDF directamente a tu dispositivo"
+                                                            >
+                                                                <Download size={14} />
+                                                                <span>Descargar PDF</span>
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const reportContent = m.generatedPdf.content || cleanText;
-                                                                setApaReportContent(reportContent);
-                                                                setApaReportEditMode(false);
-                                                                setShowApaReportModal(true);
-                                                            }}
-                                                            className="flex px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-[10px] font-mono font-bold transition-all items-center gap-1.5 border border-white/10 active:scale-95 cursor-pointer"
-                                                            title="Previsualizar versión PDF en formato maquetado APA 7 (hoja blanca editorial)"
-                                                        >
-                                                            <Eye size={12} />
-                                                            <span>Visualizar</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDownloadMessageAsPdf(idx, m.generatedPdf.content || cleanText)}
-                                                            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
-                                                            title="Descargar este documento PDF directamente a tu dispositivo"
-                                                        >
-                                                            <Download size={14} />
-                                                            <span>Descargar PDF</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </div>
                                     ) : (
                                         <div className="space-y-2.5">
