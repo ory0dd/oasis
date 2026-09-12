@@ -5,8 +5,9 @@ import {
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
     Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus,
-    Printer, Edit3, RefreshCw
+    Printer, Edit3, RefreshCw, Paperclip, FileUp
 } from 'lucide-react';
+import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { BIO_QUESTIONS } from './BiographicInterview';
@@ -260,6 +261,10 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [isGeneratingApaReport, setIsGeneratingApaReport] = useState(false);
     const [apaReportEditMode, setApaReportEditMode] = useState(false);
     const [apaCopySuccess, setApaCopySuccess] = useState(false);
+    const [attachedPdf, setAttachedPdf] = useState(null); // { id, fileName, fileSize, numPages, content, isPdf }
+    const [isExtractingPdf, setIsExtractingPdf] = useState(false);
+    const [pdfExtractionStatus, setPdfExtractionStatus] = useState('');
+    const pdfInputRef = useRef(null);
     const apaPrintRef = useRef(null);
     const chatScrollRef = useRef(null);
     const prevPatientRef = useRef(null);
@@ -479,6 +484,19 @@ ${PID5_ITEMS.map(item => {
 
         const notesStr = localStorage.getItem(`oasis_private_notes_${patientName}`);
         if (notesStr) availSources.push({ id: 'notes', name: 'Formulación y Notas Clínicas', type: 'notas clínicas', content: notesStr, rawData: notesStr });
+
+        // Documentos PDF personalizados adjuntados por el clínico
+        try {
+            const customPdfStr = localStorage.getItem(`oasis_custom_sources_${patientName || 'general'}`);
+            if (customPdfStr) {
+                const customPdfs = JSON.parse(customPdfStr);
+                if (Array.isArray(customPdfs)) {
+                    customPdfs.forEach(pdfSrc => {
+                        availSources.push(pdfSrc);
+                    });
+                }
+            }
+        } catch (e) {}
 
         setSources(availSources);
         setSelectedSources(new Set(availSources.map(s => s.id)));
@@ -1247,8 +1265,96 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         setSelectedSources(newSet);
     };
 
+    // Client-side PDF Upload & Instant Text Extraction Handler
+    const handlePdfFileSelected = async (e) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+            alert("Por favor selecciona un archivo en formato PDF.");
+            if (pdfInputRef.current) pdfInputRef.current.value = '';
+            return;
+        }
+
+        setIsExtractingPdf(true);
+        setPdfExtractionStatus(`Cargando ${file.name}...`);
+
+        try {
+            const result = await extractTextFromPdf(file, ({ current, total }) => {
+                setPdfExtractionStatus(`Extrayendo texto: pág ${current} de ${total}...`);
+            });
+
+            if (!result.text || result.text.trim().length === 0) {
+                throw new Error("No se pudo extraer texto legible del documento PDF (puede ser un documento escaneado como imagen sin OCR).");
+            }
+
+            const newPdfSource = {
+                id: `pdf_${Date.now()}`,
+                name: `📄 ${file.name} (${result.numPages} págs)`,
+                type: 'documento PDF',
+                fileName: file.name,
+                fileSize: file.size,
+                numPages: result.numPages,
+                isPdf: true,
+                content: result.text,
+                createdAt: new Date().toISOString()
+            };
+
+            // 1. Add to active sources & select it
+            setSources(prev => [newPdfSource, ...prev.filter(s => s.fileName !== file.name)]);
+            setSelectedSources(prev => new Set([...prev, newPdfSource.id]));
+
+            // 2. Persist in custom sources for this patient
+            const storageKey = `oasis_custom_sources_${patientName || 'general'}`;
+            try {
+                const raw = localStorage.getItem(storageKey);
+                const list = raw ? JSON.parse(raw) : [];
+                const updatedList = [newPdfSource, ...list.filter(s => s.fileName !== file.name)].slice(0, 15);
+                localStorage.setItem(storageKey, JSON.stringify(updatedList));
+            } catch (storageErr) {
+                console.warn("Error saving custom source to localStorage:", storageErr);
+            }
+
+            // 3. Set as active attached PDF for immediate exploration
+            setAttachedPdf(newPdfSource);
+
+        } catch (err) {
+            console.error("Error al procesar el archivo PDF:", err);
+            alert(`Error al procesar el PDF: ${err.message}`);
+        } finally {
+            setIsExtractingPdf(false);
+            setPdfExtractionStatus('');
+            if (pdfInputRef.current) pdfInputRef.current.value = '';
+        }
+    };
+
+    // Remove a custom PDF source
+    const handleDeletePdfSource = (sourceId, e) => {
+        e?.stopPropagation();
+        setSources(prev => prev.filter(s => s.id !== sourceId));
+        setSelectedSources(prev => {
+            const next = new Set(prev);
+            next.delete(sourceId);
+            return next;
+        });
+        if (attachedPdf?.id === sourceId) {
+            setAttachedPdf(null);
+        }
+        const storageKey = `oasis_custom_sources_${patientName || 'general'}`;
+        try {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+                const list = JSON.parse(raw);
+                const updatedList = list.filter(s => s.id !== sourceId);
+                localStorage.setItem(storageKey, JSON.stringify(updatedList));
+            }
+        } catch (err) {}
+    };
+
     const handleSend = async (customMsg = null) => {
-        const textToSend = typeof customMsg === 'string' ? customMsg.trim() : inputMsg.trim();
+        const defaultText = attachedPdf 
+            ? `Analiza en profundidad este documento PDF adjunto (${attachedPdf.fileName}). Extrae, desglosa y explícame claramente punto por punto sus aspectos más relevantes, hallazgos y conclusiones clave ("el punto claro ++").`
+            : '';
+        const textToSend = typeof customMsg === 'string' ? customMsg.trim() : (inputMsg.trim() || defaultText);
         if (!textToSend) return;
 
         if (typeof customMsg !== 'string') {
@@ -1265,6 +1371,32 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 .filter(s => selectedSources.has(s.id))
                 .map(s => `--- FUENTE: ${s.name} ---\n${s.content}`)
                 .join('\n\n');
+
+            // Attached PDF instruction if present
+            let attachedPdfSection = '';
+            if (attachedPdf) {
+                attachedPdfSection = `
+--- DOCUMENTO PDF ADJUNTO Y PRIORITARIO POR EL CLÍNICO ---
+Nombre del archivo: ${attachedPdf.fileName}
+Extensión y formato: PDF (${attachedPdf.numPages} páginas, ${(attachedPdf.fileSize / 1024).toFixed(1)} KB)
+
+CONTENIDO ÍNTEGRO EXTRAÍDO DEL DOCUMENTO PDF:
+${attachedPdf.content}
+
+DIRECTRICES CLÍNICAS Y DE ANÁLISIS PARA EL DOCUMENTO PDF ADJUNTO:
+1. EXPLORACIÓN DE PUNTOS CLAVE ("EL PUNTO CLARO ++"):
+   - El clínico ha adjuntado este documento específicamente para analizar, clarificar y desglosar sus puntos medulares ("el punto claro ++").
+   - Analiza minuciosamente el contenido: desglosa con precisión los puntos clave, hallazgos, hipótesis, conceptos y conclusiones que contiene el documento.
+   - Cita textualmente citas o fragmentos entrecomillados y refiere la sección/página de donde provienen para máxima transparencia metodológica.
+2. TRIANGULACIÓN CON EL EXPEDIENTE CLÍNICO:
+   - Si la consulta involucra al consultante actual (${patientName || 'este caso'}), conecta y triangula de forma inmediata lo que dice este PDF con las evaluaciones que ya se completaron (PID-5, entrevistas, pruebas psicométricas).
+   - Identifica con agudeza coincidencias, discrepancias o nuevas hipótesis diagnósticas y de intervención que surjan de este documento.
+3. FORMATO Y TIPOGRAFÍA:
+   - Utiliza encabezados ### y #### para cada punto analizado.
+   - Usa **negritas** para resaltar conceptos y términos clave.
+   - Brinda explicaciones sustanciosas, claras y operativas, sin rodeos burocráticos.
+`;
+            }
 
             // Scan all completed clinical tests for this patient
             const completedTestsSummaryList = [];
@@ -1309,6 +1441,8 @@ EL USUARIO ES UN PSICÓLOGO CLÍNICO PROFESIONAL:
 - NUNCA le preguntes su rol ni añadas disclaimers médicos ("recuerda que soy una IA", "no soy terapeuta").
 - Trátalo como a un par profesional: con rigor conceptual y técnico (TCC, ACT, DBT, FAP, Psicometría psicodinámica/funcional), pero con un tono conversacional fresco, humano, cercano y sin rodeos burocráticos.
 - Si el usuario dice un saludo breve ("hola", "buen día"), responde con un saludo breve y cálido ("¡Hola! ¿Qué aspecto del caso de ${patientName || 'tu consultante'} quieres que exploremos hoy?"). NUNCA dispares listas no solicitadas ante un simple saludo.
+
+${attachedPdfSection}
 
 EXPEDIENTE Y EVALUACIONES DE ${patientName ? patientName.toUpperCase() : 'ESTE PACIENTE'}:
 1. Entrevista Biográfica: ${hasBio ? 'COMPLETADA (disponible en fuentes)' : 'Pendiente'}
@@ -1853,7 +1987,48 @@ ${contextData || 'Ninguna fuente seleccionada.'}
             );
         }
 
-        // 5. General documents / notes
+        // 5. PDF Uploaded Document
+        if (source.isPdf) {
+            return (
+                <div className="space-y-4">
+                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <FileText size={20} className="shrink-0 text-blue-400" />
+                            <div className="min-w-0">
+                                <h5 className="font-bold text-xs text-white truncate">{source.fileName || source.name}</h5>
+                                <p className="text-[10px] text-blue-200/80 font-mono mt-0.5">
+                                    {source.numPages} páginas • {((source.fileSize || 0) / 1024).toFixed(1)} KB • Extraído con pdfjs-dist
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setAttachedPdf(source);
+                                setViewingSource(null);
+                                setInputMsg(`Explora en detalle los puntos clave del documento ${source.fileName || ''} ("el punto claro ++") y explícame qué implicaciones tiene para el caso.`);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-mono font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-md active:scale-95"
+                        >
+                            <Sparkles size={12} />
+                            <span>Explorar en Chat</span>
+                        </button>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-zinc-900/70 border border-white/5 max-h-[460px] overflow-y-auto custom-scroll space-y-2">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 border-b border-white/5 pb-2">
+                            <span>TRANSCRIPCIÓN COMPLETA DEL DOCUMENTO</span>
+                            <span>{source.content?.length || 0} caracteres</span>
+                        </div>
+                        <p className="text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed font-mono select-text">
+                            {source.content}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // 6. General documents / notes
         return (
             <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 whitespace-pre-wrap leading-relaxed text-zinc-200 text-xs font-sans">
                 {source.content}
@@ -1959,25 +2134,52 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             </div>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenSource(s);
-                                            }}
-                                            title="Abrir y ver respuestas completas / resultados"
-                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
-                                        >
-                                            <Eye size={12} />
-                                            <span>Ver</span>
-                                        </button>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {s.isPdf && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleDeletePdfSource(s.id, e)}
+                                                    title="Eliminar este PDF de las fuentes"
+                                                    className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-all"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenSource(s);
+                                                }}
+                                                title="Abrir y ver documento completo"
+                                                className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                            >
+                                                <Eye size={12} />
+                                                <span>Ver</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))
                             )}
                         </div>
                         <div className="p-3 border-t border-white/5">
-                            <button className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all flex items-center justify-center gap-2">
-                                + Agregar Fuente
+                            <button 
+                                type="button"
+                                onClick={() => pdfInputRef.current?.click()}
+                                disabled={isExtractingPdf}
+                                className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2 active:scale-95"
+                            >
+                                {isExtractingPdf ? (
+                                    <span className="flex items-center gap-2 text-blue-400">
+                                        <RefreshCw size={12} className="animate-spin" />
+                                        Extrayendo PDF...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-2">
+                                        <Paperclip size={12} className="text-zinc-400" />
+                                        + Agregar Fuente (PDF)
+                                    </span>
+                                )}
                             </button>
                         </div>
                     </>
@@ -2115,44 +2317,67 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                     <div className="flex-1 overflow-y-auto space-y-2 custom-scroll">
                         {sidebarTab === 'sources' ? (
-                            sources.length === 0 ? (
-                                <div className="text-center py-4 text-zinc-600 text-xs font-mono">No hay fuentes disponibles</div>
-                            ) : (
-                                sources.map(s => (
-                                    <div 
-                                        key={s.id} 
-                                        className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
-                                            selectedSources.has(s.id) 
-                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
-                                            : 'bg-zinc-900/40 border-white/5 text-zinc-500'
-                                        }`}
-                                    >
+                            <div className="space-y-2">
+                                {sources.length === 0 ? (
+                                    <div className="text-center py-4 text-zinc-600 text-xs font-mono">No hay fuentes disponibles</div>
+                                ) : (
+                                    sources.map(s => (
                                         <div 
-                                            onClick={() => toggleSource(s.id)}
-                                            className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                            key={s.id} 
+                                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
+                                                selectedSources.has(s.id) 
+                                                ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
+                                                : 'bg-zinc-900/40 border-white/5 text-zinc-500'
+                                            }`}
                                         >
-                                            <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
-                                                selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
-                                            }`}>
-                                                <CheckCircle2 size={11} />
+                                            <div 
+                                                onClick={() => toggleSource(s.id)}
+                                                className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                            >
+                                                <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
+                                                    selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
+                                                }`}>
+                                                    <CheckCircle2 size={11} />
+                                                </div>
+                                                <span className="truncate">{s.name}</span>
                                             </div>
-                                            <span className="truncate">{s.name}</span>
-                                        </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenSource(s);
-                                            }}
-                                            className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
-                                        >
-                                            <Eye size={12} />
-                                            <span>Ver</span>
-                                        </button>
-                                    </div>
-                                ))
-                            )
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                {s.isPdf && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleDeletePdfSource(s.id, e)}
+                                                        className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                                        title="Eliminar PDF"
+                                                    >
+                                                        <Trash2 size={11} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenSource(s);
+                                                    }}
+                                                    className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                                >
+                                                    <Eye size={12} />
+                                                    <span>Ver</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                                <button 
+                                    type="button"
+                                    onClick={() => pdfInputRef.current?.click()}
+                                    disabled={isExtractingPdf}
+                                    className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2 mt-2 active:scale-95"
+                                >
+                                    <Paperclip size={12} className="text-zinc-400" />
+                                    + Agregar Fuente (PDF)
+                                </button>
+                            </div>
                         ) : (
                             savedSessions.length === 0 ? (
                                 <div className="text-center py-6 text-zinc-500 text-xs font-mono">
@@ -2605,7 +2830,87 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                 {/* Input Bottom Bar */}
                 <div className="p-2.5 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
+                    {/* PDF Extraction Progress Indicator */}
+                    {isExtractingPdf && (
+                        <div className="mb-2 p-2 sm:p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center gap-2 text-blue-300 text-xs font-mono animate-pulse">
+                            <RefreshCw size={13} className="animate-spin text-blue-400 shrink-0" />
+                            <span>{pdfExtractionStatus || 'Extrayendo texto del documento PDF...'}</span>
+                        </div>
+                    )}
+
+                    {/* Attached PDF Preview Chip with Instant Exploration Actions */}
+                    {attachedPdf && (
+                        <div className="mb-2 p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-blue-950/50 via-indigo-950/40 to-purple-950/50 border border-blue-500/30 flex flex-wrap items-center justify-between gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200 shadow-sm">
+                            <div className="flex items-center gap-2 min-w-0 max-w-full sm:max-w-[45%]">
+                                <div className="w-6 h-6 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                                    <FileText size={13} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[11px] font-bold text-white truncate flex items-center gap-1.5">
+                                        <span className="truncate">{attachedPdf.fileName}</span>
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono shrink-0">
+                                            {attachedPdf.numPages} {attachedPdf.numPages === 1 ? 'pág' : 'págs'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] text-zinc-400 font-mono">
+                                        PDF activo en prompt • {(attachedPdf.fileSize / 1024).toFixed(0)} KB
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 ml-auto shrink-0 flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSend(`Analiza en profundidad este documento PDF (${attachedPdf.fileName}). Extrae, desglosa y explícame claramente punto por punto sus aspectos más relevantes, hallazgos y conclusiones clave ("el punto claro ++").`)}
+                                    disabled={isTyping}
+                                    className="px-2 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500 text-blue-300 hover:text-white border border-blue-500/30 text-[10px] font-mono font-bold transition-all flex items-center gap-1 active:scale-95"
+                                    title="Explorar puntos clave del documento en el chat"
+                                >
+                                    <Sparkles size={11} />
+                                    <span>Explorar Puntos Clave</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSend(`Contrasta y relaciona los puntos clave de este documento PDF (${attachedPdf.fileName}) con la historia clínica, pruebas psicométricas y formulación de ${patientName || 'este consultante'}. ¿Qué aporta, qué clarifica o cómo orienta la intervención clínica?`)}
+                                    disabled={isTyping}
+                                    className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 text-[10px] font-mono font-bold transition-all active:scale-95"
+                                    title="Contrastar documento con el caso clínico actual"
+                                >
+                                    <Target size={11} />
+                                    <span>Contrastar con Caso</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAttachedPdf(null)}
+                                    className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-rose-400 transition-all"
+                                    title="Descartar documento de esta pregunta"
+                                >
+                                    <X size={13} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="relative flex items-center">
+                        <input
+                            type="file"
+                            ref={pdfInputRef}
+                            accept=".pdf,application/pdf"
+                            onChange={handlePdfFileSelected}
+                            style={{ display: 'none' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => pdfInputRef.current?.click()}
+                            disabled={isExtractingPdf || isTyping}
+                            className={`absolute left-1.5 sm:left-2 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all z-10 ${
+                                attachedPdf 
+                                    ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm' 
+                                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
+                            }`}
+                            title="Adjuntar documento PDF para analizar o explorar puntos clave"
+                        >
+                            <Paperclip size={14} className={attachedPdf ? 'text-blue-400' : ''} />
+                        </button>
                         <textarea
                             value={inputMsg}
                             onChange={e => setInputMsg(e.target.value)}
@@ -2615,15 +2920,16 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                     handleSend();
                                 }
                             }}
-                            placeholder="Haz una pregunta o pide que redacte algo..."
-                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-3.5 pr-11 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
+                            placeholder={attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" o pide explorar un punto...` : "Haz una pregunta o pide que redacte algo..."}
+                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-10 sm:pl-11 pr-11 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
                             rows={1}
                             style={{ minHeight: '40px' }}
                         />
                         <button
                             onClick={() => handleSend()}
-                            disabled={!inputMsg.trim() || isTyping}
-                            className="absolute right-1.5 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"
+                            disabled={(!inputMsg.trim() && !attachedPdf) || isTyping || isExtractingPdf}
+                            className="absolute right-1.5 sm:right-2 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all active:scale-95 z-10"
+                            title={inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Explorar puntos clave del PDF" : "Escribe una pregunta")}
                         >
                             <Send size={13} />
                         </button>
