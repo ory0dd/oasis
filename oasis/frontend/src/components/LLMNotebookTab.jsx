@@ -272,11 +272,19 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [pdfSearchQuery, setPdfSearchQuery] = useState('');
     const [pdfCopyDone, setPdfCopyDone] = useState(false);
 
-    // Voice Reader (TTS) & Voice Input (STT) State
-    const [isListeningVoice, setIsListeningVoice] = useState(false);
-    const [voiceInterim, setVoiceInterim] = useState('');
+    // Direct Audio Recording & Transcription State
+    const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+    const [recordingDuration, setRecordingDuration] = useState(0);
+    const [recordedAudio, setRecordedAudio] = useState(null); // { id, blob, url, fileName, durationSeconds, formattedDuration, isTranscribed, transcription, pendingTranscript }
+    const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const recordingTimerRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const backgroundRecognitionRef = useRef(null);
+    const pendingTranscriptRef = useRef('');
+
+    // Voice Reader (TTS / Sintetizador de voz para Kio)
     const [speakingMsgIndex, setSpeakingMsgIndex] = useState(null);
-    const speechRecognitionRef = useRef(null);
 
     const apaPrintRef = useRef(null);
     const chatScrollRef = useRef(null);
@@ -320,6 +328,12 @@ export const LLMNotebookTab = ({ patientName }) => {
                     numPages: m.attachedPdf.numPages,
                     fileSize: m.attachedPdf.fileSize,
                     content: m.attachedPdf.content
+                } : undefined,
+                attachedAudio: m.attachedAudio ? {
+                    id: m.attachedAudio.id,
+                    fileName: m.attachedAudio.fileName,
+                    durationFormatted: m.attachedAudio.durationFormatted,
+                    url: m.attachedAudio.url
                 } : undefined,
                 patientOwner: k.safeName
             }));
@@ -1288,80 +1302,209 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         setSelectedSources(newSet);
     };
 
-    // Voice Input (Speech-to-Text / Micrófono)
-    const toggleVoiceInput = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Tu navegador no soporta reconocimiento de voz nativo. Te sugerimos usar Google Chrome, Microsoft Edge o Safari.");
-            return;
-        }
+    const formatAudioDuration = (seconds) => {
+        const mins = Math.floor((seconds || 0) / 60);
+        const secs = Math.floor((seconds || 0) % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
 
-        if (isListeningVoice) {
-            if (speechRecognitionRef.current) {
-                try { speechRecognitionRef.current.abort(); } catch (e) {}
-                speechRecognitionRef.current = null;
-            }
-            setIsListeningVoice(false);
-            setVoiceInterim('');
+    // Direct Audio Recording (MediaRecorder + Instant local mp3 packaging)
+    const startAudioRecording = async () => {
+        if (typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Tu navegador no soporta grabación directa de audio. Te recomendamos usar Chrome, Edge o Safari.");
             return;
         }
 
         try {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'es-ES';
-            recognition.maxAlternatives = 1;
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunksRef.current = [];
+            pendingTranscriptRef.current = '';
 
-            let baseText = inputMsg.trim();
+            let chosenMime = '';
+            if (typeof MediaRecorder !== 'undefined') {
+                const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+                chosenMime = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+            }
 
-            recognition.onstart = () => {
-                setIsListeningVoice(true);
-                setVoiceInterim('');
+            const mediaRecorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    audioChunksRef.current.push(e.data);
+                }
             };
 
-            recognition.onresult = (event) => {
-                let finalSegment = '';
-                let interimSegment = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        finalSegment += event.results[i][0].transcript;
-                    } else {
-                        interimSegment += event.results[i][0].transcript;
+            const startTime = Date.now();
+            setRecordingDuration(0);
+            setIsRecordingAudio(true);
+
+            if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+            recordingTimerRef.current = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                setRecordingDuration(elapsed);
+            }, 1000);
+
+            // Capture speech transcription in parallel (robust non-duplicating collector)
+            const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+            if (SpeechRecognition) {
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = 'es-ES';
+                    recognition.onresult = (event) => {
+                        let fullText = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            fullText += event.results[i][0].transcript + ' ';
+                        }
+                        pendingTranscriptRef.current = fullText.trim();
+                    };
+                    recognition.onerror = () => {};
+                    recognition.start();
+                    backgroundRecognitionRef.current = recognition;
+                } catch (recErr) {
+                    console.warn("Background recognition not available:", recErr);
+                }
+            }
+
+            mediaRecorder.onstop = () => {
+                if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+                const finalDuration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+                setRecordingDuration(finalDuration);
+
+                stream.getTracks().forEach(track => track.stop());
+
+                if (backgroundRecognitionRef.current) {
+                    try { backgroundRecognitionRef.current.stop(); } catch (e) {}
+                    backgroundRecognitionRef.current = null;
+                }
+
+                const mime = chosenMime || 'audio/webm';
+                const audioBlob = new Blob(audioChunksRef.current, { type: mime });
+                const blobUrl = URL.createObjectURL(audioBlob);
+
+                const now = new Date();
+                const pad = n => n < 10 ? '0' + n : n;
+                const timeTag = `${pad(now.getHours())}${pad(now.getMinutes())}_${pad(now.getSeconds())}`;
+                const audioFileName = `Audio_${timeTag}.mp3`;
+                const formattedDuration = formatAudioDuration(finalDuration);
+
+                setRecordedAudio({
+                    id: `audio_${Date.now()}`,
+                    blob: audioBlob,
+                    url: blobUrl,
+                    fileName: audioFileName,
+                    durationSeconds: finalDuration,
+                    formattedDuration: formattedDuration,
+                    pendingTranscript: pendingTranscriptRef.current,
+                    isTranscribed: false,
+                    transcription: ''
+                });
+
+                setIsRecordingAudio(false);
+            };
+
+            mediaRecorder.start(250);
+        } catch (err) {
+            console.error("Error al iniciar grabación de audio:", err);
+            alert("No se pudo iniciar la grabación: " + (err.message || "Verifica los permisos del micrófono en tu navegador."));
+            setIsRecordingAudio(false);
+        }
+    };
+
+    const stopAudioRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            try {
+                mediaRecorderRef.current.stop();
+            } catch (e) {}
+        }
+    };
+
+    const cancelAudioRecording = () => {
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            try {
+                mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+                mediaRecorderRef.current.stop();
+            } catch (e) {}
+        }
+        if (backgroundRecognitionRef.current) {
+            try { backgroundRecognitionRef.current.abort(); } catch (e) {}
+            backgroundRecognitionRef.current = null;
+        }
+        audioChunksRef.current = [];
+        pendingTranscriptRef.current = '';
+        setIsRecordingAudio(false);
+        setRecordingDuration(0);
+    };
+
+    const handleDiscardRecordedAudio = () => {
+        if (recordedAudio?.url) {
+            try { URL.revokeObjectURL(recordedAudio.url); } catch (e) {}
+        }
+        setRecordedAudio(null);
+    };
+
+    // Process & Transcribe Recorded Audio
+    const handleTranscribeRecordedAudio = async () => {
+        if (!recordedAudio) return;
+        setIsTranscribingAudio(true);
+
+        try {
+            let transcriptionResult = '';
+
+            // 1. Try backend transcription endpoint if server is reachable
+            try {
+                const formData = new FormData();
+                formData.append('file', recordedAudio.blob, recordedAudio.fileName);
+                const uploadRes = await fetch(`${API_URL}/api/oasis/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    const transRes = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: uploadData.url })
+                    });
+                    if (transRes.ok) {
+                        const transData = await transRes.json();
+                        if (transData && transData.transcription) {
+                            transcriptionResult = transData.transcription.trim();
+                        }
                     }
                 }
+            } catch (serverErr) {
+                // Backend not running or offline, proceed to client transcript
+            }
 
-                if (finalSegment) {
-                    baseText = baseText ? `${baseText} ${finalSegment.trim()}` : finalSegment.trim();
-                    setInputMsg(baseText);
-                    setVoiceInterim('');
-                } else if (interimSegment) {
-                    setVoiceInterim(interimSegment);
-                }
-            };
+            // 2. Use the captured speech transcript from recording session
+            if (!transcriptionResult && recordedAudio.pendingTranscript) {
+                transcriptionResult = recordedAudio.pendingTranscript.trim();
+            }
 
-            recognition.onerror = (event) => {
-                if (event.error !== 'no-speech' && event.error !== 'aborted') {
-                    console.warn("Speech recognition error:", event.error);
-                }
-                if (event.error === 'not-allowed') {
-                    alert("Permiso de micrófono denegado. Por favor permite el acceso al micrófono en los ajustes de tu navegador.");
-                    setIsListeningVoice(false);
-                    speechRecognitionRef.current = null;
-                }
-            };
+            // 3. Fallback placeholder if no voice was detected
+            if (!transcriptionResult) {
+                transcriptionResult = `[Audio grabado: ${recordedAudio.fileName} (duración ${recordedAudio.formattedDuration})]`;
+            }
 
-            recognition.onend = () => {
-                setIsListeningVoice(false);
-                setVoiceInterim('');
-                speechRecognitionRef.current = null;
-            };
+            // Put transcribed text directly into inputMsg for review & editing
+            setInputMsg(prev => prev && prev.trim() ? `${prev.trim()} ${transcriptionResult}` : transcriptionResult);
 
-            speechRecognitionRef.current = recognition;
-            recognition.start();
+            // Mark recorded audio as transcribed
+            setRecordedAudio(prev => prev ? {
+                ...prev,
+                isTranscribed: true,
+                transcription: transcriptionResult
+            } : null);
+
         } catch (err) {
-            console.error("Error al inicializar reconocimiento de voz:", err);
-            setIsListeningVoice(false);
+            console.error("Error al procesar audio:", err);
+            alert("No se pudo transcribir el audio: " + err.message);
+        } finally {
+            setIsTranscribingAudio(false);
         }
     };
 
@@ -1420,8 +1563,17 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
     // Cleanup audio resources on unmount
     useEffect(() => {
         return () => {
-            if (speechRecognitionRef.current) {
-                try { speechRecognitionRef.current.abort(); } catch(e) {}
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+            }
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                try {
+                    mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+                    mediaRecorderRef.current.stop();
+                } catch(e) {}
+            }
+            if (backgroundRecognitionRef.current) {
+                try { backgroundRecognitionRef.current.abort(); } catch(e) {}
             }
             if (typeof window !== 'undefined' && window.speechSynthesis) {
                 window.speechSynthesis.cancel();
@@ -1521,17 +1673,24 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
     };
 
     const handleSend = async (customMsg = null) => {
+        // If there's an untranscribed recorded audio and user clicks Send without custom text, transcribe it first!
+        if (recordedAudio && !recordedAudio.isTranscribed && !customMsg && !inputMsg.trim()) {
+            await handleTranscribeRecordedAudio();
+            return;
+        }
+
         const defaultText = attachedPdf 
             ? `¿Qué piensas de este informe de forma completa con las bases actuales que tienes ahora de este caso y qué le falta? ¿Cómo podemos explorar eso juntos?`
             : '';
         const textToSend = typeof customMsg === 'string' ? customMsg.trim() : (inputMsg.trim() || defaultText);
-        if (!textToSend) return;
+        if (!textToSend && !recordedAudio) return;
 
         if (typeof customMsg !== 'string') {
             setInputMsg('');
         }
 
         const activePdfForThisMessage = attachedPdf ? { ...attachedPdf } : null;
+        const activeAudioForThisMessage = recordedAudio ? { ...recordedAudio } : null;
 
         const userMsgPayload = {
             role: 'user',
@@ -1543,6 +1702,12 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 fileSize: activePdfForThisMessage.fileSize,
                 content: activePdfForThisMessage.content,
                 blobUrl: activePdfForThisMessage.blobUrl
+            } : null,
+            attachedAudio: activeAudioForThisMessage ? {
+                id: activeAudioForThisMessage.id,
+                fileName: activeAudioForThisMessage.fileName,
+                durationFormatted: activeAudioForThisMessage.formattedDuration,
+                url: activeAudioForThisMessage.url
             } : null
         };
 
@@ -1551,8 +1716,9 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         persistMessages(updatedMessages, patientName);
         setIsTyping(true);
 
-        // Clear attached PDF from input after attaching to conversation message
+        // Clear attached PDF and recorded audio from input after attaching to conversation message
         setAttachedPdf(null);
+        setRecordedAudio(null);
 
         try {
             // Gather context from selected sources
@@ -2953,6 +3119,24 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                     </button>
                                                 </div>
                                             )}
+                                            {m.attachedAudio && (
+                                                <div className="p-2.5 rounded-xl bg-purple-950/70 border border-purple-400/30 flex flex-col gap-2 shadow-inner">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <div className="w-6 h-6 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0 text-xs">
+                                                                🎵
+                                                            </div>
+                                                            <span className="text-xs font-bold text-white truncate max-w-[180px] sm:max-w-xs">{m.attachedAudio.fileName}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30 shrink-0">
+                                                            ⏱️ {m.attachedAudio.durationFormatted}
+                                                        </span>
+                                                    </div>
+                                                    {m.attachedAudio.url && (
+                                                        <audio src={m.attachedAudio.url} controls className="w-full h-8 outline-none rounded-lg" />
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans text-blue-50">
                                                 {cleanText}
                                             </div>
@@ -3089,23 +3273,95 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                 {/* Input Bottom Bar */}
                 <div className="p-2.5 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
-                    {/* Voice Listening Active Banner */}
-                    {isListeningVoice && (
-                        <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-rose-950/60 via-purple-950/50 to-rose-950/60 border border-rose-500/40 flex items-center justify-between gap-2 text-rose-300 text-xs font-mono animate-in fade-in">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0"></span>
-                                <span className="font-bold shrink-0">🎙️ Escuchando...</span>
-                                <span className="text-zinc-300 italic truncate text-[11px]">
-                                    {voiceInterim || 'Habla con Kio, tu voz se escribe automáticamente en el chat...'}
+                    {/* Direct Audio Recording Active Banner */}
+                    {isRecordingAudio && (
+                        <div className="mb-2.5 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-rose-950/80 via-purple-950/60 to-rose-950/80 border border-rose-500/50 flex items-center justify-between gap-3 text-rose-200 animate-in fade-in shadow-lg shadow-rose-950/40">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="relative flex h-3 w-3 shrink-0">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                                </span>
+                                <span className="font-bold text-xs sm:text-sm font-mono text-white shrink-0">Grabando audio...</span>
+                                <span className="text-xs sm:text-sm font-mono px-2 py-0.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-200 font-bold shrink-0">
+                                    ⏱️ {formatAudioDuration(recordingDuration)}
                                 </span>
                             </div>
-                            <button
-                                type="button"
-                                onClick={toggleVoiceInput}
-                                className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold shrink-0 transition-all shadow active:scale-95"
-                            >
-                                Listo
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={cancelAudioRecording}
+                                    className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-xs font-mono transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={stopAudioRecording}
+                                    className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                                >
+                                    <Square size={11} className="fill-current" />
+                                    <span>Detener</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Recorded Audio Card (mp3 preview with duration and transcribe action) */}
+                    {recordedAudio && (
+                        <div className="mb-2 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-purple-950/60 via-zinc-900 to-purple-950/60 border border-purple-500/40 flex flex-wrap items-center justify-between gap-2.5 shadow-md animate-in fade-in">
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shrink-0 text-sm">
+                                    🎵
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="text-xs font-bold text-white truncate max-w-[140px] sm:max-w-xs">{recordedAudio.fileName}</p>
+                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30 shrink-0">
+                                            ⏱️ {recordedAudio.formattedDuration}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                                        {isTranscribingAudio 
+                                            ? '⏳ Procesando y transcribiendo audio...' 
+                                            : (recordedAudio.isTranscribed ? '✓ Audio transcrito en el campo de texto' : 'Audio guardado como mp3 • Pulsa Transcribir o Enviar')}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                <audio src={recordedAudio.url} controls className="h-7 w-32 sm:w-40 outline-none" />
+
+                                {!recordedAudio.isTranscribed && (
+                                    <button
+                                        type="button"
+                                        onClick={handleTranscribeRecordedAudio}
+                                        disabled={isTranscribingAudio}
+                                        className="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                        title="Transcribir audio a texto"
+                                    >
+                                        {isTranscribingAudio ? (
+                                            <>
+                                                <RefreshCw size={11} className="animate-spin" />
+                                                <span>Procesando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles size={11} />
+                                                <span>Transcribir</span>
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={handleDiscardRecordedAudio}
+                                    className="p-1.5 rounded-xl bg-white/5 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-all border border-white/5"
+                                    title="Eliminar grabación"
+                                >
+                                    <Trash2 size={13} />
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -3198,13 +3454,19 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             onKeyDown={e => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
-                                    handleSend();
+                                    if (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()) {
+                                        handleTranscribeRecordedAudio();
+                                    } else {
+                                        handleSend();
+                                    }
                                 }
                             }}
                             placeholder={
-                                isListeningVoice 
-                                    ? "Escuchando tu voz... habla libremente..." 
-                                    : (attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" (ej. ¿qué le falta?)...` : "Haz una pregunta o pide que redacte algo...")
+                                isRecordingAudio 
+                                    ? "Grabando tu voz en audio mp3... pulsa Detener al terminar" 
+                                    : (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
+                                        ? `Audio listo (${recordedAudio.formattedDuration}). Pulsa Transcribir o Enviar para procesarlo...`
+                                        : (attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" (ej. ¿qué le falta?)...` : "Haz una pregunta o pide que redacte algo..."))
                             }
                             className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-10 sm:pl-11 pr-20 sm:pr-24 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
                             rows={1}
@@ -3213,23 +3475,48 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                         <div className="absolute right-1.5 sm:right-2 flex items-center gap-1 sm:gap-1.5 z-10">
                             <button
                                 type="button"
-                                onClick={toggleVoiceInput}
+                                onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
+                                disabled={isTyping || isTranscribingAudio}
                                 className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all ${
-                                    isListeningVoice
+                                    isRecordingAudio
                                         ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 animate-pulse'
                                         : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
                                 }`}
-                                title={isListeningVoice ? "Detener dictado por voz" : "Hablar con Kio por voz (dictado)"}
+                                title={isRecordingAudio ? "Detener grabación de audio" : "Grabar audio directo (nota de voz)"}
                             >
-                                {isListeningVoice ? <MicOff size={14} /> : <Mic size={14} />}
+                                {isRecordingAudio ? <Square size={13} className="fill-current" /> : <Mic size={14} />}
                             </button>
                             <button
-                                onClick={() => handleSend()}
-                                disabled={(!inputMsg.trim() && !attachedPdf) || isTyping || isExtractingPdf}
-                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
-                                title={inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Preguntar sobre el PDF" : "Escribe una pregunta")}
+                                onClick={() => {
+                                    if (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()) {
+                                        handleTranscribeRecordedAudio();
+                                    } else {
+                                        handleSend();
+                                    }
+                                }}
+                                disabled={(!inputMsg.trim() && !attachedPdf && !recordedAudio) || isTyping || isExtractingPdf || isTranscribingAudio}
+                                className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all active:scale-95 ${
+                                    recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/30'
+                                        : 'bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white'
+                                }`}
+                                title={
+                                    isTranscribingAudio 
+                                        ? "Transcribiendo audio..." 
+                                        : (recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim()
+                                            ? `Transcribir audio (${recordedAudio.formattedDuration})`
+                                            : (inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Preguntar sobre el PDF" : "Escribe una pregunta o graba un audio")))
+                                }
                             >
-                                <Send size={13} />
+                                {isTranscribingAudio ? (
+                                    <RefreshCw size={13} className="animate-spin" />
+                                ) : (
+                                    recordedAudio && !recordedAudio.isTranscribed && !inputMsg.trim() ? (
+                                        <Sparkles size={13} />
+                                    ) : (
+                                        <Send size={13} />
+                                    )
+                                )}
                             </button>
                         </div>
                     </div>
