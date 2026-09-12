@@ -1037,13 +1037,13 @@ Las interpretaciones planteadas no constituyen conclusiones definitivas ni etiqu
 
 ---
 
-### 1. MOTIVO DE CONSULTA
-- Narrativa clínica extensa y contextualizada del motivo por el que acude o es referido (detallar tensiones familiares, escolares o personales, expresiones de malestar emocional, ideación o conductas observadas).
-- Lista detallada con viñetas de los cambios identificados como prioritarios por el consultante y su entorno:
-  • Desarrollar mayor confianza personal y autorregulación...
-  • Disminuir periodos de ánimo bajo, reactividad o sobrepensamiento...
-  • Mejorar los patrones de comunicación y resolución de conflictos...
-- Citas textuales directas entre comillas de lo que el consultante expresa espontáneamente (ej. "me siento incomprendido", "no sé cómo salir adelante", "a veces solo quiero desaparecer").
+### 1. MOTIVO DE CONSULTA Y ANÁLISIS INTEGRADO DE LA DEMANDA (PERSPECTIVA DUAL CONSULTANTE - MADRE)
+- Narrativa clínica extensa, profunda y contextualizada estructurada en subapartados analíticos:
+  * 1.1. Encuadre general de la solicitud y derivación formal (motivo por el que acude, tensiones familiares agudas, desbordes emocionales o ideación suicida).
+  * 1.2. El motivo desde la perspectiva y vivencia del consultante: Citas textuales directas entre comillas de lo que expresa espontáneamente (ej. "siento que he estado muy incontrolable", "mi mamá no respeta eso", "quiero ser libre"), vivencia de anulación, autonomía, elecciones estéticas, música o límites.
+  * 1.3. El motivo y respuesta reportada por la madre / cuidadores: Alarma extrema ante las amenazas de suicidio o fuga, quiebre conductual en el último año, aislamiento prolongado en la habitación con música a alto volumen, desajuste de rutinas (pantallas de madrugada y sueño invertido), impotencia y parálisis en la puesta de límites por miedo a detonar una crisis ("si le exijo explota y amenaza con suicidarse, si no le digo nada se hunde"), y la demanda de auxilio profesional.
+  * 1.4. Análisis clínico integrado del motivo: El bucle transaccional circular de reforzamiento mutuo entre la angustia/supervisión materna y la respuesta reactiva/defensiva de escape del adolescente.
+  * 1.5. Lista detallada con viñetas de los cambios y necesidades prioritarias acordadas para el proceso por el consultante, la familia y el equipo clínico.
 
 ### 2. SITUACIÓN ACTUAL Y ÁREAS CONSERVADAS
 - Elementos de estabilidad y funcionamiento adaptativo (actividades escolares/laborales, amigos, intereses particulares, música, arte, deportes, recursos cognitivos).
