@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { 
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
-    Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain
+    Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus
 } from 'lucide-react';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
@@ -231,7 +231,8 @@ export const LLMNotebookTab = ({ patientName }) => {
     });
     const [isSavingManual, setIsSavingManual] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [sidebarTab, setSidebarTab] = useState('sources'); // 'sources' | 'history'
+    const [activeSessionId, setActiveSessionId] = useState(null);
     const [activeTestRunnerId, setActiveTestRunnerId] = useState(null);
     const [activeTestRunnerInformante, setActiveTestRunnerInformante] = useState('adolescente');
     const [viewingSource, setViewingSource] = useState(null);
@@ -486,6 +487,7 @@ ${PID5_ITEMS.map(item => {
 
         if (prevPatientRef.current !== patientName) {
             prevPatientRef.current = patientName;
+            setActiveSessionId(null);
             const patientMsgs = loadStoredPatientMessages(patientName);
             setMessages(patientMsgs);
 
@@ -522,6 +524,7 @@ ${PID5_ITEMS.map(item => {
         }
         setMessages([]);
         setChosenTest(null);
+        setActiveSessionId(null);
         setConfirmClear(false);
         setLastSavedAt(null);
         const k = getNotebookKeys(patientName);
@@ -532,6 +535,53 @@ ${PID5_ITEMS.map(item => {
             localStorage.removeItem(k.lastSavedKey);
             localStorage.removeItem('oasis_llm_notebook_messages_latest_backup');
         } catch (e) {}
+    };
+
+    const handleStartNewChat = () => {
+        // If current conversation has messages, snapshot into history first so nothing is lost
+        if (messages.length > 0) {
+            const k = getNotebookKeys(patientName);
+            const now = new Date();
+            const dateStr = now.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const firstUserMsg = messages.find(m => m.role === 'user')?.content || 'Consulta clínica';
+            const cleanTitle = chosenTest?.nombre 
+                ? `Evaluación: ${chosenTest.nombre}`
+                : (firstUserMsg.length > 42 ? firstUserMsg.slice(0, 42) + '...' : firstUserMsg);
+
+            const sessionSnapshot = {
+                id: activeSessionId || `session_${Date.now()}`,
+                timestamp: now.toISOString(),
+                dateFormatted: `${dateStr} a las ${timeStr}`,
+                title: cleanTitle,
+                messageCount: messages.length,
+                chosenTest: chosenTest?.nombre || null,
+                messages: messages
+            };
+
+            try {
+                const raw = localStorage.getItem(k.savedSessionsKey);
+                const currentList = raw ? JSON.parse(raw) : [];
+                const exists = currentList.some(s => s.id === sessionSnapshot.id);
+                const updated = exists 
+                    ? currentList.map(s => s.id === sessionSnapshot.id ? sessionSnapshot : s)
+                    : [sessionSnapshot, ...currentList].slice(0, 30);
+                localStorage.setItem(k.savedSessionsKey, JSON.stringify(updated));
+                setSavedSessions(updated);
+            } catch (e) {}
+        }
+
+        setMessages([]);
+        setChosenTest(null);
+        setActiveSessionId(null);
+        setInputMsg('');
+        const k = getNotebookKeys(patientName);
+        try {
+            localStorage.removeItem(k.messagesKey);
+            localStorage.removeItem(k.chosenTestKey);
+            localStorage.removeItem(k.backupKey);
+        } catch (e) {}
+        setShowSourcesMobile(false);
     };
 
     const handleRemoveChosenTest = () => {
@@ -561,8 +611,11 @@ ${PID5_ITEMS.map(item => {
             ? `Evaluación: ${chosenTest.nombre}`
             : (firstUserMsg.length > 42 ? firstUserMsg.slice(0, 42) + '...' : firstUserMsg);
 
+        const currentId = activeSessionId || `session_${Date.now()}`;
+        setActiveSessionId(currentId);
+
         const newSession = {
-            id: `session_${Date.now()}`,
+            id: currentId,
             timestamp: now.toISOString(),
             dateFormatted: `${dateStr} a las ${timeStr}`,
             title: cleanTitle,
@@ -574,7 +627,10 @@ ${PID5_ITEMS.map(item => {
         try {
             const raw = localStorage.getItem(k.savedSessionsKey);
             const currentList = raw ? JSON.parse(raw) : [];
-            const updated = [newSession, ...currentList.filter(s => s.id !== newSession.id)].slice(0, 30);
+            const exists = currentList.some(s => s.id === currentId);
+            const updated = exists
+                ? currentList.map(s => s.id === currentId ? newSession : s)
+                : [newSession, ...currentList].slice(0, 30);
             localStorage.setItem(k.savedSessionsKey, JSON.stringify(updated));
             setSavedSessions(updated);
         } catch (e) {
@@ -584,7 +640,7 @@ ${PID5_ITEMS.map(item => {
         // 3. Save to backend database for permanent sync
         try {
             const convPayload = [{
-                id: `notebook_${k.safeName}_${Date.now()}`,
+                id: `notebook_${k.safeName}_${currentId}`,
                 title: cleanTitle,
                 messages: messages.map(m => ({
                     role: m.role,
@@ -611,8 +667,11 @@ ${PID5_ITEMS.map(item => {
             persistMessages(session.messages, patientName);
             if (session.chosenTest) {
                 setChosenTest({ nombre: session.chosenTest });
+            } else {
+                setChosenTest(null);
             }
-            setShowHistoryModal(false);
+            setActiveSessionId(session.id);
+            setShowSourcesMobile(false);
         }
     };
 
@@ -623,6 +682,9 @@ ${PID5_ITEMS.map(item => {
             const updated = savedSessions.filter(s => s.id !== sessionId);
             localStorage.setItem(k.savedSessionsKey, JSON.stringify(updated));
             setSavedSessions(updated);
+            if (activeSessionId === sessionId) {
+                setActiveSessionId(null);
+            }
         } catch (err) {}
     };
 
@@ -1260,128 +1322,331 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
     return (
         <div className="w-full h-full flex flex-col md:flex-row gap-2 md:gap-4 bg-[#0a0a0c] p-1.5 sm:p-2 md:p-4 rounded-2xl md:rounded-3xl animate-in fade-in duration-300 overflow-hidden relative">
-            {/* Desktop Left Panel: Sources */}
-            <div className="hidden md:flex md:w-80 h-full bg-zinc-950/80 border border-white/5 rounded-2xl flex-col shrink-0">
-                <div className="p-3 md:p-4 border-b border-white/5">
-                    <h3 className="text-sm font-black text-white flex items-center gap-2">
-                        <BookOpen size={16} className="text-blue-400" /> Fuentes
-                    </h3>
-                    <p className="text-[10px] text-zinc-500 font-mono mt-1">
-                        Documentos del paciente @{patientName}
-                    </p>
-                </div>
-                
-                <div className="flex-1 p-3 overflow-y-auto space-y-2">
-                    {sources.length === 0 ? (
-                        <div className="text-center p-4 text-zinc-600 text-xs font-mono">
-                            No hay fuentes disponibles
-                        </div>
-                    ) : (
-                        sources.map(s => (
-                            <div 
-                                key={s.id} 
-                                className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 group ${
-                                    selectedSources.has(s.id) 
-                                    ? 'bg-blue-500/10 border-blue-500/30' 
-                                    : 'bg-zinc-900/40 border-white/5 opacity-60 hover:opacity-100'
-                                }`}
+            {/* Desktop Left Panel: Sources & History Sidebar */}
+            <div className="hidden md:flex md:w-80 h-full bg-zinc-950/80 border border-white/5 rounded-2xl flex-col shrink-0 overflow-hidden shadow-lg">
+                {/* Header with Segmented Navigation & New Chat Button */}
+                <div className="p-3 border-b border-white/5 bg-zinc-900/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-zinc-400 font-mono tracking-wider flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            @{patientName || 'caso'}
+                        </span>
+                        {sidebarTab === 'history' ? (
+                            <button
+                                onClick={handleStartNewChat}
+                                className="flex items-center gap-1 px-2 py-0.5 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 rounded-lg text-[10px] font-mono font-bold transition-all active:scale-95 shadow-sm"
+                                title="Iniciar una nueva consulta clínica en blanco"
                             >
-                                <div 
-                                    onClick={() => toggleSource(s.id)}
-                                    className="flex items-start gap-2.5 flex-1 cursor-pointer min-w-0"
-                                >
-                                    <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border transition-all ${
-                                        selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-600 text-transparent'
-                                    }`}>
-                                        <CheckCircle2 size={12} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${selectedSources.has(s.id) ? 'text-blue-100' : 'text-zinc-400'}`}>
-                                            {s.name}
-                                        </h4>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                            <span className="text-[9px] text-zinc-500 font-mono capitalize">{s.type}</span>
-                                            {s.resultData?.totalScore !== undefined && (
-                                                <span className="text-[9px] font-mono font-bold text-purple-400 bg-purple-500/15 px-1.5 py-0.2 rounded border border-purple-500/20">
-                                                    {s.resultData.totalScore} pts
-                                                </span>
-                                            )}
+                                <Plus size={11} />
+                                <span>Nuevo Chat</span>
+                            </button>
+                        ) : (
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                                {selectedSources.size} de {sources.length} sel.
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Segmented Control Switcher */}
+                    <div className="grid grid-cols-2 p-0.5 bg-black/50 border border-white/10 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => setSidebarTab('sources')}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all ${
+                                sidebarTab === 'sources'
+                                    ? 'bg-zinc-800 text-blue-300 shadow border border-blue-500/30'
+                                    : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                        >
+                            <BookOpen size={12} className={sidebarTab === 'sources' ? 'text-blue-400' : ''} />
+                            <span>Fuentes ({sources.length})</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSidebarTab('history')}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all ${
+                                sidebarTab === 'history'
+                                    ? 'bg-zinc-800 text-purple-300 shadow border border-purple-500/30'
+                                    : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                        >
+                            <History size={12} className={sidebarTab === 'history' ? 'text-purple-400' : ''} />
+                            <span>Historial ({savedSessions.length})</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sidebar Body */}
+                {sidebarTab === 'sources' ? (
+                    <>
+                        <div className="flex-1 p-3 overflow-y-auto space-y-2 custom-scroll">
+                            {sources.length === 0 ? (
+                                <div className="text-center p-4 text-zinc-600 text-xs font-mono">
+                                    No hay fuentes disponibles
+                                </div>
+                            ) : (
+                                sources.map(s => (
+                                    <div 
+                                        key={s.id} 
+                                        className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 group ${
+                                            selectedSources.has(s.id) 
+                                            ? 'bg-blue-500/10 border-blue-500/30' 
+                                            : 'bg-zinc-900/40 border-white/5 opacity-60 hover:opacity-100'
+                                        }`}
+                                    >
+                                        <div 
+                                            onClick={() => toggleSource(s.id)}
+                                            className="flex items-start gap-2.5 flex-1 cursor-pointer min-w-0"
+                                        >
+                                            <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border transition-all ${
+                                                selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-600 text-transparent'
+                                            }`}>
+                                                <CheckCircle2 size={12} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${selectedSources.has(s.id) ? 'text-blue-100' : 'text-zinc-400'}`}>
+                                                    {s.name}
+                                                </h4>
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    <span className="text-[9px] text-zinc-500 font-mono capitalize">{s.type}</span>
+                                                    {s.resultData?.totalScore !== undefined && (
+                                                        <span className="text-[9px] font-mono font-bold text-purple-400 bg-purple-500/15 px-1.5 py-0.2 rounded border border-purple-500/20">
+                                                            {s.resultData.totalScore} pts
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenSource(s);
+                                            }}
+                                            title="Abrir y ver respuestas completas / resultados"
+                                            className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                        >
+                                            <Eye size={12} />
+                                            <span>Ver</span>
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="p-3 border-t border-white/5">
+                            <button className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all flex items-center justify-center gap-2">
+                                + Agregar Fuente
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 p-3 overflow-y-auto space-y-2.5 custom-scroll">
+                            {savedSessions.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center p-4 space-y-3">
+                                    <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                        <History size={18} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-xs font-bold text-zinc-300">Sin consultas previas</h4>
+                                        <p className="text-[10px] text-zinc-500 leading-relaxed font-sans max-w-[200px]">
+                                            Tus sesiones se guardan automáticamente o puedes pulsar "Guardar Chat" arriba.
+                                        </p>
                                     </div>
                                 </div>
+                            ) : (
+                                savedSessions.map(session => {
+                                    const isActive = activeSessionId === session.id;
+                                    return (
+                                        <div
+                                            key={session.id}
+                                            onClick={() => handleRestoreSession(session)}
+                                            className={`p-3 rounded-xl border transition-all cursor-pointer group flex flex-col gap-2 ${
+                                                isActive
+                                                    ? 'bg-purple-950/30 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)]'
+                                                    : 'bg-zinc-900/50 hover:bg-zinc-900 border-white/5 hover:border-white/15'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-1.5">
+                                                <span className="text-[10px] font-mono text-zinc-500 truncate">
+                                                    {session.dateFormatted}
+                                                </span>
+                                                {isActive ? (
+                                                    <span className="px-1.5 py-0.2 text-[8px] font-mono font-bold rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 animate-pulse">
+                                                        EN CURSO
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono">
+                                                        {session.messageCount} msgs
+                                                    </span>
+                                                )}
+                                            </div>
 
+                                            <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${
+                                                isActive ? 'text-purple-100' : 'text-zinc-200 group-hover:text-white'
+                                            }`}>
+                                                {session.title}
+                                            </h4>
+
+                                            {session.chosenTest && (
+                                                <div className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 w-fit truncate max-w-full">
+                                                    <ClipboardCheck size={10} className="shrink-0 text-purple-400" />
+                                                    <span className="truncate">{session.chosenTest}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-0.5 opacity-80 group-hover:opacity-100">
+                                                <span className="text-[9px] font-mono text-purple-400 font-semibold flex items-center gap-1 group-hover:underline">
+                                                    <RotateCcw size={10} /> Cargar
+                                                </span>
+
+                                                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={() => handleExportChatTxt(session.messages)}
+                                                        title="Descargar como TXT"
+                                                        className="p-1 rounded bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 transition-all"
+                                                    >
+                                                        <Download size={11} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteSavedSession(session.id, e)}
+                                                        title="Eliminar del historial"
+                                                        className="p-1 rounded bg-white/5 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-all"
+                                                    >
+                                                        <Trash2 size={11} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                        {savedSessions.length > 0 && (
+                            <div className="p-2.5 border-t border-white/5 bg-black/30">
                                 <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenSource(s);
-                                    }}
-                                    title="Abrir y ver respuestas completas / resultados"
-                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                    onClick={handleStartNewChat}
+                                    className="w-full py-2 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/25 text-purple-300 text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95"
                                 >
-                                    <Eye size={12} />
-                                    <span>Ver</span>
+                                    <Plus size={12} />
+                                    <span>+ Nueva Consulta</span>
                                 </button>
                             </div>
-                        ))
-                    )}
-                </div>
-                <div className="p-3 border-t border-white/5">
-                    <button className="w-full py-2.5 rounded-xl border border-dashed border-white/10 text-zinc-400 text-[10px] font-bold uppercase tracking-widest hover:border-white/30 hover:text-white transition-all flex items-center justify-center gap-2">
-                        + Agregar Fuente
-                    </button>
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* Mobile Dropdown Overlay for Sources */}
+            {/* Mobile Dropdown Overlay for Sources & History */}
             {showSourcesMobile && (
-                <div className="md:hidden absolute top-16 left-2 right-2 z-30 bg-zinc-950/95 border border-blue-500/30 rounded-2xl p-3 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-2 duration-200 max-h-[50vh] flex flex-col">
+                <div className="md:hidden absolute top-16 left-2 right-2 z-30 bg-zinc-950/95 border border-purple-500/30 rounded-2xl p-3 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-2 duration-200 max-h-[60vh] flex flex-col">
                     <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                        <span className="text-xs font-bold text-white flex items-center gap-1.5 font-mono uppercase">
-                            <BookOpen size={13} className="text-blue-400" /> Fuentes Activas
-                        </span>
+                        {/* Segmented Control Switcher on Mobile */}
+                        <div className="flex items-center gap-1 p-0.5 bg-black/50 border border-white/10 rounded-xl">
+                            <button
+                                type="button"
+                                onClick={() => setSidebarTab('sources')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                                    sidebarTab === 'sources'
+                                        ? 'bg-zinc-800 text-blue-300 border border-blue-500/30'
+                                        : 'text-zinc-500'
+                                }`}
+                            >
+                                Fuentes ({sources.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSidebarTab('history')}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
+                                    sidebarTab === 'history'
+                                        ? 'bg-zinc-800 text-purple-300 border border-purple-500/30'
+                                        : 'text-zinc-500'
+                                }`}
+                            >
+                                Historial ({savedSessions.length})
+                            </button>
+                        </div>
                         <button onClick={() => setShowSourcesMobile(false)} className="p-1 text-zinc-400 hover:text-white">
                             <X size={14} />
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-1.5">
-                        {sources.length === 0 ? (
-                            <div className="text-center py-3 text-zinc-600 text-xs font-mono">No hay fuentes disponibles</div>
-                        ) : (
-                            sources.map(s => (
-                                <div 
-                                    key={s.id} 
-                                    className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
-                                        selectedSources.has(s.id) 
-                                        ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
-                                        : 'bg-zinc-900/40 border-white/5 text-zinc-500'
-                                    }`}
-                                >
-                                    <div 
-                                        onClick={() => toggleSource(s.id)}
-                                        className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
-                                    >
-                                        <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
-                                            selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
-                                        }`}>
-                                            <CheckCircle2 size={11} />
-                                        </div>
-                                        <span className="truncate">{s.name}</span>
-                                    </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleOpenSource(s);
-                                        }}
-                                        className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                    <div className="flex-1 overflow-y-auto space-y-2 custom-scroll">
+                        {sidebarTab === 'sources' ? (
+                            sources.length === 0 ? (
+                                <div className="text-center py-4 text-zinc-600 text-xs font-mono">No hay fuentes disponibles</div>
+                            ) : (
+                                sources.map(s => (
+                                    <div 
+                                        key={s.id} 
+                                        className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
+                                            selectedSources.has(s.id) 
+                                            ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
+                                            : 'bg-zinc-900/40 border-white/5 text-zinc-500'
+                                        }`}
                                     >
-                                        <Eye size={12} />
-                                        <span>Ver</span>
-                                    </button>
+                                        <div 
+                                            onClick={() => toggleSource(s.id)}
+                                            className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                        >
+                                            <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
+                                                selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
+                                            }`}>
+                                                <CheckCircle2 size={11} />
+                                            </div>
+                                            <span className="truncate">{s.name}</span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenSource(s);
+                                            }}
+                                            className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                        >
+                                            <Eye size={12} />
+                                            <span>Ver</span>
+                                        </button>
+                                    </div>
+                                ))
+                            )
+                        ) : (
+                            savedSessions.length === 0 ? (
+                                <div className="text-center py-6 text-zinc-500 text-xs font-mono">
+                                    No hay consultas archivadas todavía.
                                 </div>
-                            ))
+                            ) : (
+                                savedSessions.map(session => (
+                                    <div
+                                        key={session.id}
+                                        onClick={() => handleRestoreSession(session)}
+                                        className={`p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 ${
+                                            activeSessionId === session.id
+                                                ? 'bg-purple-950/30 border-purple-500/50'
+                                                : 'bg-zinc-900/50 border-white/5'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                                            <span>{session.dateFormatted}</span>
+                                            <span className="text-purple-400 font-bold">{session.messageCount} msgs</span>
+                                        </div>
+                                        <h5 className="text-xs font-bold text-white truncate">{session.title}</h5>
+                                        <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                                            <span className="text-[10px] font-mono text-purple-300 font-bold flex items-center gap-1">
+                                                <RotateCcw size={10} /> Cargar
+                                            </span>
+                                            <button
+                                                onClick={(e) => handleDeleteSavedSession(session.id, e)}
+                                                className="p-1 text-rose-400 hover:text-rose-300"
+                                            >
+                                                <Trash2 size={11} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )
                         )}
                     </div>
                 </div>
@@ -1444,18 +1709,33 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             </button>
                         )}
 
+                        {/* New Chat Button */}
+                        <button
+                            onClick={handleStartNewChat}
+                            title="Iniciar un nuevo chat (el actual queda respaldado en el historial)"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
+                        >
+                            <Plus size={12} className="text-purple-400" />
+                            <span className="hidden sm:inline">Nuevo Chat</span>
+                        </button>
+
                         {/* Saved Sessions History Button */}
-                        {savedSessions.length > 0 && (
-                            <button
-                                onClick={() => setShowHistoryModal(true)}
-                                title="Ver historial de chats guardados"
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 hover:border-white/20 text-zinc-300 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
-                            >
-                                <Clock size={12} className="text-blue-400" />
-                                <span className="hidden sm:inline">Historial ({savedSessions.length})</span>
-                                <span className="sm:hidden">({savedSessions.length})</span>
-                            </button>
-                        )}
+                        <button
+                            onClick={() => {
+                                setSidebarTab('history');
+                                setShowSourcesMobile(true);
+                            }}
+                            title="Ver historial de chats archivados en el panel lateral"
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95 border ${
+                                sidebarTab === 'history'
+                                    ? 'bg-purple-500/20 border-purple-500/40 text-purple-300 shadow-sm'
+                                    : 'bg-zinc-900/80 hover:bg-zinc-800 border-white/10 hover:border-white/20 text-zinc-300'
+                            }`}
+                        >
+                            <History size={12} className="text-purple-400" />
+                            <span className="hidden sm:inline">Historial ({savedSessions.length})</span>
+                            <span className="sm:hidden">({savedSessions.length})</span>
+                        </button>
 
                         {messages.length > 0 && (
                             <button
@@ -1472,13 +1752,13 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             </button>
                         )}
 
-                        {/* Mobile Toggle Button for Sources */}
+                        {/* Mobile Toggle Button for Sources / History Drawer */}
                         <button
                             onClick={() => setShowSourcesMobile(prev => !prev)}
                             className="md:hidden flex items-center gap-1 px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/25 text-blue-400 rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95"
                         >
-                            <BookOpen size={12} />
-                            <span>Fuentes ({selectedSources.size})</span>
+                            {sidebarTab === 'history' ? <History size={12} className="text-purple-400" /> : <BookOpen size={12} />}
+                            <span>{sidebarTab === 'history' ? `Historial (${savedSessions.length})` : `Fuentes (${selectedSources.size})`}</span>
                             <ChevronDown size={12} className={`transition-transform duration-200 ${showSourcesMobile ? 'rotate-180' : ''}`} />
                         </button>
                     </div>
@@ -1787,100 +2067,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 </div>
             </div>
 
-            {/* Modal: Historial de Chats Guardados */}
-            {showHistoryModal && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-                    <div className="bg-zinc-950 border border-white/15 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-zinc-900/50">
-                            <div className="flex items-center gap-2">
-                                <Clock size={16} className="text-blue-400" />
-                                <div>
-                                    <h3 className="text-sm font-black text-white">Historial de Chats Guardados</h3>
-                                    <p className="text-[10px] text-zinc-400 font-mono">
-                                        @{patientName || 'caso'} • {savedSessions.length} conversaciones archivadas
-                                    </p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={() => setShowHistoryModal(false)}
-                                className="p-1.5 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
-                            {savedSessions.length === 0 ? (
-                                <div className="text-center py-8 text-zinc-500 text-xs font-mono">
-                                    No hay chats archivados todavía.
-                                </div>
-                            ) : (
-                                savedSessions.map((session) => (
-                                    <div 
-                                        key={session.id}
-                                        className="p-3.5 rounded-xl border border-white/10 bg-zinc-900/60 hover:bg-zinc-900 hover:border-blue-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-[10px] font-mono text-zinc-500">
-                                                    {session.dateFormatted}
-                                                </span>
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
-                                                    {session.messageCount} msgs
-                                                </span>
-                                                {session.chosenTest && (
-                                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono truncate max-w-[130px]">
-                                                        {session.chosenTest}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h4 className="text-xs font-bold text-white truncate">
-                                                {session.title}
-                                            </h4>
-                                        </div>
-
-                                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                                            <button
-                                                onClick={() => handleRestoreSession(session)}
-                                                className="px-2.5 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all flex items-center gap-1"
-                                                title="Cargar esta conversación en la ventana activa"
-                                            >
-                                                <RotateCcw size={11} /> Cargar
-                                            </button>
-                                            <button
-                                                onClick={() => handleExportChatTxt(session.messages)}
-                                                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/10 rounded-lg transition-all"
-                                                title="Descargar como archivo de texto"
-                                            >
-                                                <Download size={12} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteSavedSession(session.id, e)}
-                                                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg transition-all"
-                                                title="Eliminar del historial"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="p-3 border-t border-white/10 bg-zinc-900/40 flex justify-between items-center">
-                            <span className="text-[10px] font-mono text-zinc-500">
-                                Al cargar un chat se restaura para continuar trabajando.
-                            </span>
-                            <button
-                                onClick={() => setShowHistoryModal(false)}
-                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-colors"
-                            >
-                                Cerrar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Interactive Clinical Test Runner Modal */}
             {activeTestRunnerId && (
