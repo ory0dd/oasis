@@ -741,16 +741,16 @@ ${PID5_ITEMS.map(item => {
         <html lang="es">
         <head>
             <meta charset="utf-8">
-            <title>Informe Clínico APA - ${patientName || 'Paciente'}</title>
+            <title>Informe Clínico Psicológico - ${patientName || 'Consultante'}</title>
             <style>
                 @page {
                     size: letter portrait;
-                    margin: 2.54cm;
+                    margin: 2.2cm 2.54cm;
                 }
                 body {
                     font-family: 'Times New Roman', Times, Georgia, serif;
                     font-size: 11pt;
-                    line-height: 1.8;
+                    line-height: 1.75;
                     color: #111;
                     background: #fff;
                     margin: 0;
@@ -762,50 +762,64 @@ ${PID5_ITEMS.map(item => {
                     font-size: 8.5pt;
                     text-transform: uppercase;
                     letter-spacing: 0.05em;
-                    color: #555;
-                    border-bottom: 1px solid #aaa;
-                    padding-bottom: 4px;
-                    margin-bottom: 20px;
+                    color: #444;
+                    border-bottom: 1px solid #999;
+                    padding-bottom: 5px;
+                    margin-bottom: 22px;
                 }
                 h1 {
                     font-size: 14pt;
                     font-weight: bold;
                     text-align: center;
-                    margin-top: 15px;
-                    margin-bottom: 8px;
+                    margin-top: 16px;
+                    margin-bottom: 6px;
                     text-transform: uppercase;
                     line-height: 1.3;
                 }
                 h2 {
-                    font-size: 12pt;
+                    font-size: 11.5pt;
                     font-weight: bold;
                     margin-top: 24px;
                     margin-bottom: 8px;
-                    border-bottom: 1.5px solid #000;
-                    padding-bottom: 2px;
+                    border-bottom: 1px solid #111;
+                    padding-bottom: 3px;
                     text-transform: uppercase;
                     page-break-after: avoid;
+                    break-after: avoid;
                 }
                 h3 {
-                    font-size: 11pt;
+                    font-size: 10.5pt;
+                    font-weight: bold;
+                    margin-top: 18px;
+                    margin-bottom: 6px;
+                    text-transform: uppercase;
+                    page-break-after: avoid;
+                    break-after: avoid;
+                }
+                h4 {
+                    font-size: 10pt;
                     font-weight: bold;
                     font-style: italic;
-                    margin-top: 16px;
-                    margin-bottom: 6px;
+                    margin-top: 14px;
+                    margin-bottom: 4px;
                     page-break-after: avoid;
+                    break-after: avoid;
                 }
                 p {
                     text-align: justify;
                     margin-bottom: 10px;
                     text-indent: 1.27cm;
                 }
+                p.no-indent, .no-indent p, p:has(span.diagram-arrow), p:contains("↓") {
+                    text-indent: 0;
+                }
                 ul, ol {
                     margin-top: 4px;
                     margin-bottom: 12px;
-                    padding-left: 2cm;
+                    padding-left: 1.8cm;
                 }
                 li {
-                    margin-bottom: 4px;
+                    margin-bottom: 5px;
                     text-align: justify;
                 }
                 table {
@@ -814,6 +828,7 @@ ${PID5_ITEMS.map(item => {
                     margin: 18px 0;
                     font-size: 9.5pt;
                     page-break-inside: avoid;
+                    break-inside: avoid;
                     border-top: 2px solid #000;
                     border-bottom: 2px solid #000;
                 }
@@ -826,15 +841,22 @@ ${PID5_ITEMS.map(item => {
                 }
                 td {
                     padding: 5px 8px;
-                    border: none;
+                    border-bottom: 1px solid #eee;
                 }
-                tbody tr:last-child {
-                    border-bottom: 2px solid #000;
+                tbody tr:last-child td {
+                    border-bottom: none;
+                }
+                blockquote {
+                    border-left: 2.5px solid #666;
+                    margin: 12px 0 12px 1.27cm;
+                    padding-left: 14px;
+                    font-style: italic;
+                    color: #222;
                 }
                 hr {
                     border: none;
-                    border-top: 1px solid #ccc;
-                    margin: 20px 0;
+                    border-top: 1px solid #bbb;
+                    margin: 22px 0;
                 }
                 @media print {
                     body { padding: 0; }
@@ -845,7 +867,7 @@ ${PID5_ITEMS.map(item => {
         <body>
             <div class="header-cornisa">
                 <span>INFORME PSICOLÓGICO CLÍNICO — CASO: ${(patientName || 'CASO').toUpperCase()}</span>
-                <span>FORMATO APA 7</span>
+                <span>FORMATO APA (7ª EDICIÓN) / EVALUACIÓN INTEGRAL</span>
             </div>
             ${bodyHtml}
         </body>
@@ -932,64 +954,172 @@ ${PID5_ITEMS.map(item => {
 
             // Sources content
             const contextData = sources
-                .map(s => `--- FUENTE: ${s.name} ---\n${s.content.slice(0, 3000)}`)
+                .map(s => `--- FUENTE: ${s.name} ---\n${s.content.slice(0, 4000)}`)
                 .join('\n\n');
 
             const apaSystemPrompt = `Eres Kio, Director de Evaluación y Diagnóstico Psicológico Clínico, actuando como SUPERVISOR CLÍNICO Senior de alto nivel.
-Tu tarea es redactar un INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de máxima rigurosidad técnica ("HARDCORE") y excelencia metodológica bajo las normativas del Manual de Publicaciones APA (7ª Edición).
+Tu tarea es redactar un INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de máxima rigurosidad técnica ("HARDCORE"), profundidad analítica y excelencia metodológica bajo las normativas del Manual de Publicaciones APA (7ª Edición).
 
-CRÍTICO - RIGOR CLÍNICO Y METODOLOGÍA:
-- Redacta con profundidad técnica, rigor conceptual y terminología clínica de precisión (DSM-5, TCC, ACT, DBT, FAP, Psicometría Funcional).
-- SEPARACIÓN TAJANTE: Separa estrictamente los HECHOS OBSERVABLES (reportes textuales del paciente y puntajes psicométricos) de las INFERENCIAS CLÍNICAS (interpretaciones y formulación teórica).
-- ANÁLISIS PSICOMÉTRICO INTEGRADO: Genera OBLIGATORIAMENTE la Tabla 1 en Markdown según formato APA 7 (Instrumento/Sigla, Constructo, Informante, Puntaje, Nivel/Baremo). Conecta los puntajes de las pruebas con las facetas de personalidad del PID-5 y el motivo de consulta.
-- ESTRATIFICACIÓN DEL RIESGO (C-SSRS): Analiza con detalle cualquier reactivo de riesgo o ideación suicida, factores de vulnerabilidad, factores protectores y plan de contingencia.
-- ANÁLISIS FUNCIONAL TRANSDIAGNÓSTICO: Mapea la función del síntoma (Detonante -> Respuesta Cognitivo-Emocional Somática -> Conducta de Evitación -> Alivio Inmediato -> Costo a Largo Plazo).
-- PLAN DE TRATAMIENTO OPERACIONAL: Qué SÍ intervenir ahora (Estabilización) y qué NO tocar todavía (evitar intervenciones prematuras).
-- Preguntas operativas abiertas para el terapeuta en la próxima sesión.
+═══════════════════════════════════════════════════════════════════════
+REGLAS CRÍTICAS E INNEGOCIABLES:
+1. IDENTIDAD DEL CONSULTANTE:
+   - El consultante evaluado se llama ÚNICA Y EXCLUSIVAMENTE: "${patientName || 'Consultante'}".
+   - En TODO el informe utiliza el nombre "${patientName || 'el consultante'}".
+   - BAJO NINGUNA CIRCUNSTANCIA uses nombres de informes ejemplo como "Rick", "Rickk" o "Christian". El paciente real aquí es "${patientName || 'el consultante'}".
 
-DATOS DEL CONSULTANTE:
-- Identificador / Nombre: ${(patientName || 'caso').toUpperCase()}
-- Fecha de Evaluación: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+2. DENSIDAD, EXTENSIÓN Y PROFUNDIDAD CLÍNICA ("MÁS LLENO, MÁS GRANDE"):
+   - Este no es un resumen sintético breve. Debe ser un informe exhaustivo, amplio y profundo (equivalente a un documento de 8 a 12 páginas).
+   - Desarrolla párrafos sustanciales, ricos en vocabulario técnico-clínico (TCC, ACT, DBT, Psicometría, DSM-5).
+   - NO omitas ninguna sección ni resumas en una sola frase; aborda cada punto con precisión observacional, citas textuales del caso y análisis funcional.
 
-PRUEBAS PSICOMÉTRICAS CONTESTADAS Y CALIFICADAS:
-${completedTestsList.length > 0 ? completedTestsList.map(t => `• ${t.sigla}: ${t.nombre} | ${t.informante} | Puntaje: ${t.score} | Nivel: ${t.nivel}`).join('\n') : '• Batería psicométrica de entrevistas preliminares.'}
-${pidDetails ? `• Detalle Dominios PID-5: ${pidDetails}` : ''}
+3. SEPARACIÓN EPISTEMOLÓGICA ESTRICTA:
+   - Distingue claramente los HECHOS OBSERVABLES (expresiones directas del consultante, conductas manifiestas, puntuaciones directas) de las INFERENCIAS CLÍNICAS (hipótesis de trabajo, formulación teórica y bucles funcionales).
+═══════════════════════════════════════════════════════════════════════
 
-FUENTES DOCUMENTALES DEL CASO:
-${contextData || 'Datos documentales de entrevista inicial.'}
+DATOS Y CONTEXTO DEL CASO:
+- Nombre del Consultante: ${(patientName || 'Consultante').toUpperCase()}
+- Fecha de Emisión: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+- Pruebas Psicométricas Registradas:
+${completedTestsList.length > 0 ? completedTestsList.map(t => `• ${t.sigla}: ${t.nombre} | ${t.informante} | Puntaje: ${t.score} | Nivel: ${t.nivel}`).join('\n') : '• Batería psicométrica de entrevistas preliminares y cribado clínico.'}
+${pidDetails ? `• Perfil Dimensional PID-5: ${pidDetails}` : ''}
 
-ESTRUCTURA DEL DOCUMENTO (FORMATO APA 7):
-# INFORME DE EVALUACIÓN PSICOLÓGICA CLÍNICA Y FORMULACIÓN DE CASO
-*Integración Psicométrica Multimodal, Estratificación de Riesgo y Plan Terapéutico Contextual*
+FUENTES DOCUMENTALES Y BIOGRÁFICAS DISPONIBLES:
+${contextData || 'Datos documentales de entrevistas iniciales y notas de campo.'}
 
-**Ficha de Identificación:**
-- **Consultante:** ${(patientName || 'caso').toUpperCase()}
-- **Fecha de Emisión:** ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
-- **Evaluador Responsable:** Psicología Clínica (Supervisión Interconsulta Oasis / Kio)
-- **Marco Normativo:** APA 7ª Edición / Criterios DSM-5
+═══════════════════════════════════════════════════════════════════════
+ESTRUCTURA MAESTRA OBLIGATORIA DEL INFORME (16 SECCIONES APA 7 COMPLETAS):
+
+# INFORME CLÍNICO PSICOLÓGICO Y FORMULACIÓN INTEGRAL
+## Formulación Clínica, Evaluación Psicométrica y Propuesta de Intervención
+
+| Campo | Detalle Clínico |
+| :--- | :--- |
+| **Consultante** | ${(patientName || 'Consultante').toUpperCase()} |
+| **Edad / Etapa Evolutiva** | [Edad del consultante, ej. 14 años / Adolescente, o edad constatada en fuentes] |
+| **Modalidad de Atención** | Psicoterapia Individual (Enfoque Contextual Transdiagnóstico) |
+| **Fecha de Emisión** | ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} |
+| **Evaluador / Supervisión** | Dirección de Evaluación Clínica Oasis / Supervisión Kio |
+| **Tipo de Documento** | Formulación clínica inicial, integración psicométrica y propuesta de intervención |
+
+**Nota sobre el documento**
+El presente informe corresponde a una formulación clínica inicial e integral construida a partir de la información proporcionada durante el proceso de evaluación, entrevistas clínicas, biográficas y la batería psicométrica aplicada. Su objetivo es organizar las principales áreas de experiencia identificadas, establecer una comprensión funcional del caso y orientar el trabajo terapéutico.
+Las interpretaciones planteadas no constituyen conclusiones definitivas ni etiquetas categoriales estáticas. La comprensión del caso podrá profundizarse y modificarse conforme avance el proceso y se obtenga nueva información clínica.
 
 ---
 
-## 1. Motivo de Consulta y Antecedentes Biográficos Relevantes
-## 2. Metodología e Instrumentos de Evaluación Aplicados
-## 3. Resultados Psicométricos y Evaluación Dimensional
-(Inserta aquí la Tabla 1 en formato Markdown APA con las pruebas realizadas y explica la correlación clínica)
+### 1. MOTIVO DE CONSULTA
+- Narrativa clínica extensa y contextualizada del motivo por el que acude o es referido (detallar tensiones familiares, escolares o personales, expresiones de malestar emocional, ideación o conductas observadas).
+- Lista detallada con viñetas de los cambios identificados como prioritarios por el consultante y su entorno:
+  • Desarrollar mayor confianza personal y autorregulación...
+  • Disminuir periodos de ánimo bajo, reactividad o sobrepensamiento...
+  • Mejorar los patrones de comunicación y resolución de conflictos...
+- Citas textuales directas entre comillas de lo que el consultante expresa espontáneamente (ej. "me siento incomprendido", "no sé cómo salir adelante", "a veces solo quiero desaparecer").
 
-## 4. Evaluación de Riesgo y Protocolo de Seguridad (Columbia C-SSRS)
-## 5. Formulación Clínica y Análisis Funcional Transdiagnóstico (ACT / DBT / TCC)
-- **Hechos Observables vs. Inferencias:**
-- **Bucles de Mantenimiento Funcional:**
-- **Función Adaptativa y de Escape del Síntoma:**
+### 2. SITUACIÓN ACTUAL Y ÁREAS CONSERVADAS
+- Elementos de estabilidad y funcionamiento adaptativo (actividades escolares/laborales, amigos, intereses particulares, música, arte, deportes, recursos cognitivos).
+- Convivencia entre la estabilidad cotidiana y los cuestionamientos o tensiones emocionales importantes.
+- Etapa de transición vital (adolescencia o adultez temprana, metas alcanzadas vs. qué necesita construir o decidir a partir de ahora).
 
-## 6. Hipótesis Diagnóstica Dimensional (DSM-5 / CIE-11)
-## 7. Objetivos Terapéuticos y Plan de Intervención por Fases
-- **Fase I (Inmediata / Estabilización):** Qué SÍ intervenir ahora
-- **Fase II (Procesamiento y Flexibilidad):** Qué trabajar en segunda etapa
-- **Qué NO tocar todavía:** (Riesgos de intervención prematura)
+### 3. METODOLOGÍA E INSTRUMENTOS DE EVALUACIÓN APLICADOS
+- Justificación metodológica de la evaluación psicométrica multimodal y clínica.
+- Descripción de cada instrumento aplicado (C-SSRS, CDI-2, SCARED, SDQ adolescente/madre, DERS, Brief-COPE, BAI, PHQ-9, PID-5-BF, etc.).
+- **Tabla 1 APA: Resultados Psicométricos Cuantitativos y Cualitativos**:
+  Tabla en Markdown con normativa APA 7 (Instrumento / Sigla, Constructo Evaluado, Informante, Puntuación Directa, Clasificación / Rango Clínico).
+  *Nota.* Incluyendo los baremos, percentiles y puntos de corte clínicos utilizados.
 
-## 8. Recomendaciones y Preguntas Clínicas para la Siguiente Sesión
+### 4. ÁREAS PRINCIPALES DE EXPLORACIÓN
+(Desarrollar cada subsección de manera extensa, profunda y contextualizada al caso):
+#### 4.1. Autoconfianza, autopercepción e imagen de sí mismo
+(Tensión entre la fortaleza/independencia que proyecta y la vulnerabilidad interna; autoevaluación y expectativas sobre si está "haciendo suficiente").
+#### 4.2. Sobrepensamiento, rumiación y autocrítica
+(Tendencia a regresar a eventos pasados; diferenciar entre reflexión productiva y bucles improductivos; reglas personales autoimpuestas de exigencia o fracaso).
+#### 4.3. Relaciones interpersonales, familia y vínculos significativos
+(Dinámicas de interacción en el hogar y con pares; qué ocurre cuando aumenta la cercanía; patrones defensivos de dureza o aislamiento; idealización vs. ser conocido).
+#### 4.4. Vulnerabilidad, aceptación y vivencia del rechazo
+(Resonancia emocional ante la apertura; temor a que al ser realmente conocido no sea aceptado o sea invalidado; experiencias de incomprensión).
+#### 4.5. Control, incertidumbre y conductas de escape
+(La necesidad de control como intento de mitigar la incertidumbre; conductas automáticas de escape o evitación experiencial).
+#### 4.6. Episodios significativos de desborde emocional y somatización
+(Reconstrucción contextual de episodios críticos, llanto, tensión fisiológica, ansiedad somática o alteraciones del sueño).
+#### 4.7. Proyecto de vida y metas personales
+(Diferenciación entre lo que hace por mandato o expectativa externa vs. lo que verdaderamente elige y desea construir).
 
-Devuelve el documento completo en Markdown nítido y exhaustivo.`;
+### 5. FORMULACIÓN CLÍNICA PROVISIONAL (ANÁLISIS FUNCIONAL EN CADENA)
+- Presentación esquemática del bucle funcional de mantenimiento con flechas (↓):
+  Situación detonante (conflicto, exigencia, soledad, juicio)
+  ↓
+  Pensamientos y evaluaciones personales ("No me entienden", "Debería ser diferente", "No puedo con esto")
+  ↓
+  Emociones y respuestas somáticas (Ansiedad, tristeza, frustración, vacío, tensión corporal)
+  ↓
+  Respuestas de afrontamiento y conducta manifiesta (Sobrepensamiento, aislamiento en su habitación, confrontación defensiva o escape)
+  ↓
+  Alivio o distracción temporal (Reforzamiento negativo a corto plazo)
+  ↓
+  Persistencia y cronificación del problema original
+- Párrafo extenso explicando cómo se auto-perpetúa este ciclo y por qué el alivio inmediato consolida la dificultad a largo plazo.
+
+### 6. HIPÓTESIS CENTRAL: LA PREGUNTA EMOCIONAL NUCLEAR
+- Análisis conceptual profundo de la tensión central personalizada al caso (ej. Cumplir y Elegir, Fortaleza y Vulnerabilidad, o Pertenencia y Diferenciación).
+- La pregunta emocional nuclear subyacente (ej. “Si me conoces realmente, ¿seguirás aceptándome?” o “¿Puedo ser yo mismo sin perder el afecto de quienes me importan?”).
+- Contraste entre el imperativo de cumplir lo esperado vs. la necesidad legítima de construir una identidad auténtica.
+
+### 7. RELACIÓN CON LA SOLEDAD Y EL AISLAMIENTO
+- Análisis cualitativo de la vivencia del tiempo a solas.
+- Distinción clínica fundamental entre el *aislamiento reactivo* (huida del juicio o del conflicto) y la *soledad funcional y nutricia* (espacio de autonomía, descanso, reflexión y creatividad).
+
+### 8. FACTORES QUE PUEDEN ESTAR INFLUYENDO (MODELO MULTIFACTORIAL)
+- **Antecedentes:** Aprendizajes tempranos, modelos familiares de relación, reglas sobre el afecto y el desempeño, experiencias previas de invalidación.
+- **Acontecimientos recientes:** Conflictos actuales, transiciones escolares o laborales, crisis de comunicación con figuras clave.
+- **Posibles factores mantenedores:** Rumiación cognitiva, reforzamiento por escape, escalada reactiva mutua en el hogar, evitación de emociones difíciles.
+- *Nota epistemológica:* "Estos elementos se consideran posibles factores moduladores, no causas deterministas demostradas."
+
+### 9. ESTRATIFICACIÓN DE RIESGO Y PROTOCOLO DE SEGURIDAD (C-SSRS)
+- Clasificación de nivel de riesgo actual (según el reporte del C-SSRS y antecedentes clínicos).
+- Factores de vulnerabilidad específicos y estresores inmediatos.
+- Factores protectores activos (metas vitales, vínculos de confianza, actividades artísticas o académicas, capacidad de pedir ayuda).
+- Protocolo de contingencia y red de seguridad en crisis (pasos claros para el consultante, cuidadores y manejo de emergencias).
+
+### 10. RECURSOS Y FORTALEZAS DEL CONSULTANTE
+- Lista detallada con viñetas de recursos: capacidad de introspección, honestidad para reconocer dificultades, talentos, sensibilidad, creatividad, receptividad al acompañamiento terapéutico.
+- Fundamento clínico: El trabajo terapéutico no se limitará a reparar déficits, sino a apalancarse en lo que ya funciona y en los valores genuinos del consultante.
+
+### 11. OBJETIVOS TERAPÉUTICOS
+- **Objetivo General:** (Formulación integrativa de flexibilidad psicológica, autorregulación y coherencia vital).
+- **Objetivos Específicos:** (Lista numerada exhaustiva de 10 a 12 metas operacionales, observables y progresivas).
+
+### 12. ACTIVIDADES TERAPÉUTICAS Y HERRAMIENTAS VIVENCIALES
+- **Registro de situaciones y emociones:** (Situación → Pensamiento → Emoción → Conducta → Consecuencia).
+- **Trabajo con autocrítica y defusión cognitiva:** Identificación de pensamientos automáticos de descalificación y desarrollo de perspectivas más flexibles.
+- **Distinción entre "lo que debo" y "lo que quiero":** Exploración de expectativas ajenas vs. decisiones propias.
+- **Habilidades de regulación emocional y tolerancia al malestar:** Técnicas de anclaje, respiración y modulación fisiológica.
+- **Organización de metas personales:** Esquema paso a paso con flechas: Deseo general → ¿Qué significa para mí? → ¿Qué quiero construir? → ¿Qué puedo comenzar a hacer hoy?
+
+### 13. PROCESO DE INTERVENCIÓN INICIAL Y PLAN POR SESIONES
+- **Bloque Inicial Sesión por Sesión (Sesiones 1 a 4 estructuradas):**
+  * **Sesión 1. Reconstrucción de los patrones relacionales y línea de tiempo:** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 2. Vulnerabilidad, aceptación y expresión emocional:** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 3. Control, sobrepensamiento y análisis funcional del malestar:** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+  * **Sesión 4. Integración, clarificación de valores y nueva forma de vincularse:** Objetivo clínico, Actividad terapéutica vivencial e Indicadores de evolución esperados.
+- **Etapas de Continuidad:**
+  * Etapa de Consolidación Cognitiva y Flexibilidad (TCC / ACT).
+  * Etapa de Proyecto Vital y Autonomía.
+- **Criterio de Precaución Clínica: Qué NO tocar todavía** (áreas de alta reactividad emocional o temas familiares que deben postergarse hasta afianzar la alianza terapéutica y los recursos de autorregulación).
+
+### 14. INDICADORES DE PROGRESO
+- Lista detallada con viñetas de 10 a 14 criterios observables para monitorear el avance terapéutico en cada sesión.
+
+### 15. CONSIDERACIONES CLÍNICAS Y PREGUNTAS PARA PRÓXIMAS SESIONES
+- Formulación nosológica y dimensional provisional (justificando por qué se priorizan los procesos funcionales sobre etiquetas diagnósticas rígidas).
+- 4 a 6 preguntas socráticas y experienciales directas de alto impacto para que el terapeuta aplique en consulta.
+
+### 16. CONCLUSIÓN Y CIERRE FORMAL
+- Síntesis integrativa de la etapa vital que atraviesa el consultante y horizonte del proceso terapéutico.
+- Declaración formal: "Formulación clínica: provisional. La formulación será revisada y actualizada conforme avance el proceso terapéutico."
+- Bloque formal de Firma del Terapeuta, Especialidad y Cédula Profesional.
+═══════════════════════════════════════════════════════════════════════
+
+Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omisiones.`;
 
             const activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
@@ -999,9 +1129,9 @@ Devuelve el documento completo en Markdown nítido y exhaustivo.`;
                 model: model,
                 messages: [
                     { role: 'system', content: apaSystemPrompt },
-                    { role: 'user', content: `Por favor redacta el informe psicológico clínico integral de ${patientName || 'este paciente'} en formato APA 7 con máxima rigurosidad técnica ("hardcore"), tabla psicométrica APA y plan contextual.` }
+                    { role: 'user', content: `Por favor redacta el informe psicológico clínico integral y formulación de caso de ${patientName || 'este consultante'} siguiendo minuciosamente la estructura maestra de 16 secciones APA 7. Debe ser exhaustivo, extenso, detallado y clínicamente profundo ("hardcore"), integrando toda la psicometría disponible, análisis funcional de bucle y propuesta de intervención por sesiones. Recuerda usar exclusivamente el nombre "${patientName || 'el consultante'}" y nunca nombres de los ejemplos.` }
                 ],
-                temperature: 0.5
+                temperature: 0.4
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -1023,6 +1153,7 @@ Devuelve el documento completo en Markdown nítido y exhaustivo.`;
             setIsGeneratingApaReport(false);
         }
     };
+
 
     const toggleSource = (id) => {
         const newSet = new Set(selectedSources);
@@ -2695,12 +2826,36 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                 <h2 className="text-sm sm:text-base font-bold text-left text-zinc-950 mt-8 mb-3 uppercase tracking-wider font-serif border-b pb-1.5 border-zinc-400" {...props} />
                                             ),
                                             h3: ({ node, ...props }) => (
-                                                <h3 className="text-xs sm:text-sm font-bold text-left text-zinc-900 mt-5 mb-2 italic font-serif" {...props} />
+                                                <h3 className="text-xs sm:text-sm font-bold text-left text-zinc-900 mt-6 mb-2 tracking-wide font-serif" {...props} />
                                             ),
-                                            p: ({ node, children, ...props }) => (
-                                                <p className="text-justify text-zinc-850 leading-relaxed mb-3 font-serif" style={{ textIndent: '1.27cm' }} {...props}>
+                                            h4: ({ node, ...props }) => (
+                                                <h4 className="text-[12px] sm:text-xs font-bold italic text-left text-zinc-800 mt-4 mb-1.5 font-serif" {...props} />
+                                            ),
+                                            p: ({ node, children, ...props }) => {
+                                                const textContent = Array.isArray(children) 
+                                                    ? children.map(c => typeof c === 'string' ? c : '').join('')
+                                                    : (typeof children === 'string' ? children : '');
+                                                const isDiagramOrMeta = textContent.includes('↓') || 
+                                                    textContent.startsWith('Nota') || 
+                                                    textContent.startsWith('Consultante') || 
+                                                    textContent.startsWith('Edad') ||
+                                                    textContent.startsWith('Modalidad') ||
+                                                    textContent.startsWith('Fecha') ||
+                                                    textContent.startsWith('Tipo de documento');
+                                                return (
+                                                    <p 
+                                                        className={`leading-relaxed mb-3 font-serif text-zinc-850 ${isDiagramOrMeta ? 'text-center font-medium pl-0' : 'text-justify'}`} 
+                                                        style={{ textIndent: isDiagramOrMeta ? '0cm' : '1.27cm' }} 
+                                                        {...props}
+                                                    >
+                                                        {children}
+                                                    </p>
+                                                );
+                                            },
+                                            blockquote: ({ node, children, ...props }) => (
+                                                <blockquote className="border-l-2 border-zinc-500 pl-4 py-1.5 my-3 italic text-zinc-800 font-serif bg-zinc-50/60 rounded-r" style={{ marginLeft: '1.27cm' }} {...props}>
                                                     {children}
-                                                </p>
+                                                </blockquote>
                                             ),
                                             table: ({ node, ...props }) => (
                                                 <div className="overflow-x-auto my-6">
@@ -2708,13 +2863,13 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                 </div>
                                             ),
                                             thead: ({ node, ...props }) => (
-                                                <thead className="border-b border-zinc-950" {...props} />
+                                                <thead className="border-b border-zinc-950 bg-zinc-50/70" {...props} />
                                             ),
                                             th: ({ node, ...props }) => (
-                                                <th className="py-2.5 px-3 text-left font-bold text-zinc-950 font-serif text-xs bg-zinc-50/50" {...props} />
+                                                <th className="py-2.5 px-3 text-left font-bold text-zinc-950 font-serif text-xs border-b border-zinc-950" {...props} />
                                             ),
                                             td: ({ node, ...props }) => (
-                                                <td className="py-2 px-3 text-zinc-800 border-none font-serif text-[11px] sm:text-xs" {...props} />
+                                                <td className="py-2 px-3 text-zinc-850 font-serif text-[11px] sm:text-xs border-b border-zinc-200" {...props} />
                                             ),
                                             ul: ({ node, ...props }) => (
                                                 <ul className="list-disc pl-8 sm:pl-12 space-y-1.5 mb-4 text-zinc-850 font-serif" {...props} />
@@ -2732,6 +2887,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                                 <hr className="my-8 border-zinc-300" {...props} />
                                             )
                                         }}
+
                                     >
                                         {apaReportContent}
                                     </ReactMarkdown>
