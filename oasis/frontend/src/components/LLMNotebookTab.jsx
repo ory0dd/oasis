@@ -4,7 +4,8 @@ import remarkGfm from 'remark-gfm';
 import { 
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
-    Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus
+    Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus,
+    Printer, Edit3, RefreshCw
 } from 'lucide-react';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
@@ -243,6 +244,18 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [sources, setSources] = useState([]);
     const [selectedSources, setSelectedSources] = useState(new Set());
     const [showSourcesMobile, setShowSourcesMobile] = useState(false);
+    const [showApaReportModal, setShowApaReportModal] = useState(false);
+    const [apaReportContent, setApaReportContent] = useState(() => {
+        try {
+            return localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`) || '';
+        } catch(e) {
+            return '';
+        }
+    });
+    const [isGeneratingApaReport, setIsGeneratingApaReport] = useState(false);
+    const [apaReportEditMode, setApaReportEditMode] = useState(false);
+    const [apaCopySuccess, setApaCopySuccess] = useState(false);
+    const apaPrintRef = useRef(null);
     const chatScrollRef = useRef(null);
     const prevPatientRef = useRef(patientName);
     const currentPatientRef = useRef(patientName);
@@ -497,6 +510,14 @@ ${PID5_ITEMS.map(item => {
             } catch (e) {
                 setChosenTest(null);
             }
+
+            try {
+                const savedReport = localStorage.getItem(`oasis_apa_clinical_report_${patientName || 'general'}`);
+                setApaReportContent(savedReport || '');
+            } catch (e) {
+                setApaReportContent('');
+            }
+            setApaReportEditMode(false);
         }
     }, [patientName]);
 
@@ -697,6 +718,310 @@ ${PID5_ITEMS.map(item => {
         a.download = `Chat_Notebook_${patientName || 'caso'}_${new Date().toISOString().slice(0,10)}.txt`;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    const handleCopyApaReport = () => {
+        if (!apaReportContent) return;
+        navigator.clipboard.writeText(apaReportContent);
+        setApaCopySuccess(true);
+        setTimeout(() => setApaCopySuccess(false), 2500);
+    };
+
+    const handlePrintPdf = () => {
+        if (!apaPrintRef.current) return;
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Por favor habilita las ventanas emergentes (popups) en tu navegador para generar el PDF.");
+            return;
+        }
+
+        const bodyHtml = apaPrintRef.current.innerHTML;
+        const htmlDoc = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <title>Informe Clínico APA - ${patientName || 'Paciente'}</title>
+            <style>
+                @page {
+                    size: letter portrait;
+                    margin: 2.54cm;
+                }
+                body {
+                    font-family: 'Times New Roman', Times, Georgia, serif;
+                    font-size: 11pt;
+                    line-height: 1.8;
+                    color: #111;
+                    background: #fff;
+                    margin: 0;
+                    padding: 0;
+                }
+                .header-cornisa {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 8.5pt;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #555;
+                    border-bottom: 1px solid #aaa;
+                    padding-bottom: 4px;
+                    margin-bottom: 20px;
+                }
+                h1 {
+                    font-size: 14pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin-top: 15px;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    line-height: 1.3;
+                }
+                h2 {
+                    font-size: 12pt;
+                    font-weight: bold;
+                    margin-top: 24px;
+                    margin-bottom: 8px;
+                    border-bottom: 1.5px solid #000;
+                    padding-bottom: 2px;
+                    text-transform: uppercase;
+                    page-break-after: avoid;
+                }
+                h3 {
+                    font-size: 11pt;
+                    font-weight: bold;
+                    font-style: italic;
+                    margin-top: 16px;
+                    margin-bottom: 6px;
+                    page-break-after: avoid;
+                }
+                p {
+                    text-align: justify;
+                    margin-bottom: 10px;
+                    text-indent: 1.27cm;
+                }
+                ul, ol {
+                    margin-top: 4px;
+                    margin-bottom: 12px;
+                    padding-left: 2cm;
+                }
+                li {
+                    margin-bottom: 4px;
+                    text-align: justify;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 18px 0;
+                    font-size: 9.5pt;
+                    page-break-inside: avoid;
+                    border-top: 2px solid #000;
+                    border-bottom: 2px solid #000;
+                }
+                th {
+                    border-bottom: 1px solid #000;
+                    padding: 6px 8px;
+                    font-weight: bold;
+                    text-align: left;
+                    background: transparent;
+                }
+                td {
+                    padding: 5px 8px;
+                    border: none;
+                }
+                tbody tr:last-child {
+                    border-bottom: 2px solid #000;
+                }
+                hr {
+                    border: none;
+                    border-top: 1px solid #ccc;
+                    margin: 20px 0;
+                }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header-cornisa">
+                <span>INFORME PSICOLÓGICO CLÍNICO — CASO: ${(patientName || 'CASO').toUpperCase()}</span>
+                <span>FORMATO APA 7</span>
+            </div>
+            ${bodyHtml}
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(htmlDoc);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 400);
+    };
+
+    const handleGenerateApaReport = async () => {
+        setIsGeneratingApaReport(true);
+        try {
+            // 1. Gather all clinical instruments and results
+            const completedTestsList = [];
+            if (CLINICAL_TESTS) {
+                Object.keys(CLINICAL_TESTS).forEach(tId => {
+                    const testDef = CLINICAL_TESTS[tId];
+                    if (tId === 'sdq') {
+                        const resAdo = getSavedTestResult(patientName, 'sdq', 'adolescente');
+                        if (resAdo) {
+                            completedTestsList.push({
+                                sigla: 'SDQ',
+                                nombre: 'Cuestionario de Capacidades y Dificultades (SDQ)',
+                                constructo: 'Salud mental infanto-juvenil, síntomas emocionales y conducta',
+                                informante: 'Autoinforme Adolescente',
+                                score: `${resAdo.totalScore} pts`,
+                                nivel: resAdo.nivel
+                            });
+                        }
+                        const resMad = getSavedTestResult(patientName, 'sdq', 'madre');
+                        if (resMad) {
+                            completedTestsList.push({
+                                sigla: 'SDQ',
+                                nombre: 'Cuestionario de Capacidades y Dificultades (SDQ)',
+                                constructo: 'Salud mental infanto-juvenil, síntomas emocionales y conducta',
+                                informante: 'Heteroinforme Madre/Familia',
+                                score: `${resMad.totalScore} pts`,
+                                nivel: resMad.nivel
+                            });
+                        }
+                    } else {
+                        const res = getSavedTestResult(patientName, tId);
+                        if (res) {
+                            completedTestsList.push({
+                                sigla: testDef?.siglas || tId.toUpperCase(),
+                                nombre: res.nombre || testDef?.nombre || tId.toUpperCase(),
+                                constructo: testDef?.constructo || testDef?.descripcion || 'Evaluación dimensional psicométrica',
+                                informante: 'Autoinforme del Consultante',
+                                score: `${res.totalScore} / ${res.maxScore || ''} pts`,
+                                nivel: res.nivel
+                            });
+                        }
+                    }
+                });
+            }
+
+            // PID-5 check
+            let pidDetails = '';
+            try {
+                const pidRaw = localStorage.getItem(`oasis_pid_answers_${patientName}`);
+                if (pidRaw) {
+                    const answers = JSON.parse(pidRaw);
+                    const res = calcularResultadoPID5(answers);
+                    if (res && res.domains) {
+                        pidDetails = Object.entries(res.domains)
+                            .map(([d, val]) => `${d}: ${val.total} pts (${val.promedio})`)
+                            .join(', ');
+                        completedTestsList.push({
+                            sigla: 'PID-5-BF',
+                            nombre: 'Inventario de Personalidad para el DSM-5 (Breve)',
+                            constructo: 'Rasgos desadaptativos de personalidad (5 dominios y 25 facetas)',
+                            informante: 'Autoinforme del Consultante',
+                            score: `${res.totalScore || 38} pts`,
+                            nivel: 'Perfil Dimensional Registrado'
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            // Sources content
+            const contextData = sources
+                .map(s => `--- FUENTE: ${s.name} ---\n${s.content.slice(0, 3000)}`)
+                .join('\n\n');
+
+            const apaSystemPrompt = `Eres Kio, Director de Evaluación y Diagnóstico Psicológico Clínico, actuando como SUPERVISOR CLÍNICO Senior de alto nivel.
+Tu tarea es redactar un INFORME PSICOLÓGICO CLÍNICO INTEGRAL Y FORMULACIÓN DE CASO de máxima rigurosidad técnica ("HARDCORE") y excelencia metodológica bajo las normativas del Manual de Publicaciones APA (7ª Edición).
+
+CRÍTICO - RIGOR CLÍNICO Y METODOLOGÍA:
+- Redacta con profundidad técnica, rigor conceptual y terminología clínica de precisión (DSM-5, TCC, ACT, DBT, FAP, Psicometría Funcional).
+- SEPARACIÓN TAJANTE: Separa estrictamente los HECHOS OBSERVABLES (reportes textuales del paciente y puntajes psicométricos) de las INFERENCIAS CLÍNICAS (interpretaciones y formulación teórica).
+- ANÁLISIS PSICOMÉTRICO INTEGRADO: Genera OBLIGATORIAMENTE la Tabla 1 en Markdown según formato APA 7 (Instrumento/Sigla, Constructo, Informante, Puntaje, Nivel/Baremo). Conecta los puntajes de las pruebas con las facetas de personalidad del PID-5 y el motivo de consulta.
+- ESTRATIFICACIÓN DEL RIESGO (C-SSRS): Analiza con detalle cualquier reactivo de riesgo o ideación suicida, factores de vulnerabilidad, factores protectores y plan de contingencia.
+- ANÁLISIS FUNCIONAL TRANSDIAGNÓSTICO: Mapea la función del síntoma (Detonante -> Respuesta Cognitivo-Emocional Somática -> Conducta de Evitación -> Alivio Inmediato -> Costo a Largo Plazo).
+- PLAN DE TRATAMIENTO OPERACIONAL: Qué SÍ intervenir ahora (Estabilización) y qué NO tocar todavía (evitar intervenciones prematuras).
+- Preguntas operativas abiertas para el terapeuta en la próxima sesión.
+
+DATOS DEL CONSULTANTE:
+- Identificador / Nombre: ${(patientName || 'caso').toUpperCase()}
+- Fecha de Evaluación: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+
+PRUEBAS PSICOMÉTRICAS CONTESTADAS Y CALIFICADAS:
+${completedTestsList.length > 0 ? completedTestsList.map(t => `• ${t.sigla}: ${t.nombre} | ${t.informante} | Puntaje: ${t.score} | Nivel: ${t.nivel}`).join('\n') : '• Batería psicométrica de entrevistas preliminares.'}
+${pidDetails ? `• Detalle Dominios PID-5: ${pidDetails}` : ''}
+
+FUENTES DOCUMENTALES DEL CASO:
+${contextData || 'Datos documentales de entrevista inicial.'}
+
+ESTRUCTURA DEL DOCUMENTO (FORMATO APA 7):
+# INFORME DE EVALUACIÓN PSICOLÓGICA CLÍNICA Y FORMULACIÓN DE CASO
+*Integración Psicométrica Multimodal, Estratificación de Riesgo y Plan Terapéutico Contextual*
+
+**Ficha de Identificación:**
+- **Consultante:** ${(patientName || 'caso').toUpperCase()}
+- **Fecha de Emisión:** ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+- **Evaluador Responsable:** Psicología Clínica (Supervisión Interconsulta Oasis / Kio)
+- **Marco Normativo:** APA 7ª Edición / Criterios DSM-5
+
+---
+
+## 1. Motivo de Consulta y Antecedentes Biográficos Relevantes
+## 2. Metodología e Instrumentos de Evaluación Aplicados
+## 3. Resultados Psicométricos y Evaluación Dimensional
+(Inserta aquí la Tabla 1 en formato Markdown APA con las pruebas realizadas y explica la correlación clínica)
+
+## 4. Evaluación de Riesgo y Protocolo de Seguridad (Columbia C-SSRS)
+## 5. Formulación Clínica y Análisis Funcional Transdiagnóstico (ACT / DBT / TCC)
+- **Hechos Observables vs. Inferencias:**
+- **Bucles de Mantenimiento Funcional:**
+- **Función Adaptativa y de Escape del Síntoma:**
+
+## 6. Hipótesis Diagnóstica Dimensional (DSM-5 / CIE-11)
+## 7. Objetivos Terapéuticos y Plan de Intervención por Fases
+- **Fase I (Inmediata / Estabilización):** Qué SÍ intervenir ahora
+- **Fase II (Procesamiento y Flexibilidad):** Qué trabajar en segunda etapa
+- **Qué NO tocar todavía:** (Riesgos de intervención prematura)
+
+## 8. Recomendaciones y Preguntas Clínicas para la Siguiente Sesión
+
+Devuelve el documento completo en Markdown nítido y exhaustivo.`;
+
+            const activeKey = localStorage.getItem('oasis_deepseek_key') || '';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
+            const payload = {
+                model: model,
+                messages: [
+                    { role: 'system', content: apaSystemPrompt },
+                    { role: 'user', content: `Por favor redacta el informe psicológico clínico integral de ${patientName || 'este paciente'} en formato APA 7 con máxima rigurosidad técnica ("hardcore"), tabla psicométrica APA y plan contextual.` }
+                ],
+                temperature: 0.5
+            };
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint, key: activeKey || null, payload })
+            });
+
+            if (!res.ok) throw new Error("Error en la conexión con la IA al generar el informe.");
+            const data = await res.json();
+            const reportText = data.choices[0].message.content;
+
+            setApaReportContent(reportText);
+            localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, reportText);
+        } catch (err) {
+            console.error("Error generando informe APA:", err);
+            alert(`Error al generar informe APA: ${err.message}`);
+        } finally {
+            setIsGeneratingApaReport(false);
+        }
     };
 
     const toggleSource = (id) => {
@@ -1719,6 +2044,17 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             <span className="hidden sm:inline">Nuevo Chat</span>
                         </button>
 
+                        {/* APA Clinical Report Button (NotebookLM style) */}
+                        <button
+                            onClick={() => setShowApaReportModal(true)}
+                            title="Generar o ver Informe Clínico Integral en formato APA (PDF)"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 hover:from-purple-500/30 hover:to-blue-500/30 border border-purple-500/40 text-purple-200 hover:text-white rounded-xl text-[10px] font-mono font-bold transition-all active:scale-95 shadow-sm"
+                        >
+                            <FileText size={12} className="text-purple-400" />
+                            <span className="hidden sm:inline">Informe APA (PDF)</span>
+                            <span className="sm:hidden">Informe APA</span>
+                        </button>
+
                         {/* Saved Sessions History Button */}
                         <button
                             onClick={() => {
@@ -1798,6 +2134,18 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                         Top 3 Pruebas Posteriores Sugeridas
                                     </button>
                                 )}
+                                <button 
+                                    onClick={() => {
+                                        setShowApaReportModal(true);
+                                        if (!apaReportContent) {
+                                            handleGenerateApaReport();
+                                        }
+                                    }} 
+                                    className="px-3.5 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40 text-purple-200 hover:text-white hover:border-purple-300 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                                >
+                                    <FileText size={11} className="text-purple-400" /> 
+                                    Crear Informe Clínico APA (PDF)
+                                </button>
                                 <button onClick={() => setInputMsg("Haz una supervisión clínica del caso estructurada en las 6 capas (Datos, Hipótesis, Huecos, Bucles, Intervenciones y Preguntas).")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Supervisión Completa</button>
                                 <button onClick={() => setInputMsg("Analiza la función de las conductas principales (ej. aislamiento, escuchar música, autocastigo). ¿Qué están intentando regular o evitar?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Análisis Funcional Conductual</button>
                                 <button onClick={() => setInputMsg("Identifica los huecos de evaluación. ¿Qué nos falta preguntar o comprobar en la siguiente sesión para validar nuestras hipótesis?")} className="px-3 py-1.5 bg-zinc-900 border border-white/5 rounded-full text-[10px] text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors">Huecos y Preguntas</button>
@@ -2154,6 +2502,256 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                 Cerrar
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal / Workspace: Informe Clínico Integral APA (NotebookLM Style) */}
+            {showApaReportModal && (
+                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-2 sm:p-4 overflow-hidden animate-in fade-in duration-200">
+                    {/* Header Bar */}
+                    <div className="bg-zinc-950 border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between shrink-0 mb-3 shadow-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
+                                <FileText size={16} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-black text-white">Informe Psicológico Clínico APA 7</h3>
+                                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                                        @{patientName || 'caso'}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-zinc-400 font-mono hidden sm:block">
+                                    Integración psicométrica multimodal, análisis funcional y formulación clínica
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {apaReportContent && !isGeneratingApaReport && (
+                                <>
+                                    {/* Regenerate Button */}
+                                    <button
+                                        onClick={handleGenerateApaReport}
+                                        title="Regenerar informe con Kio IA"
+                                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-xl text-xs font-mono font-bold transition-all"
+                                    >
+                                        <RefreshCw size={12} className="text-purple-400" />
+                                        <span>Regenerar</span>
+                                    </button>
+
+                                    {/* Edit / Preview Toggle */}
+                                    <button
+                                        onClick={() => setApaReportEditMode(prev => !prev)}
+                                        title={apaReportEditMode ? "Ver documento maquetado APA" : "Editar texto del informe"}
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 border rounded-xl text-xs font-mono font-bold transition-all ${
+                                            apaReportEditMode
+                                                ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                                                : 'bg-zinc-900 hover:bg-zinc-800 border-white/10 text-zinc-300'
+                                        }`}
+                                    >
+                                        {apaReportEditMode ? <Eye size={12} /> : <Edit3 size={12} />}
+                                        <span>{apaReportEditMode ? 'Vista APA' : 'Editar'}</span>
+                                    </button>
+
+                                    {/* Copy Text Button */}
+                                    <button
+                                        onClick={handleCopyApaReport}
+                                        title="Copiar texto completo al portapapeles"
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-xl text-xs font-mono font-bold transition-all"
+                                    >
+                                        {apaCopySuccess ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                                        <span>{apaCopySuccess ? '¡Copiado!' : 'Copiar'}</span>
+                                    </button>
+
+                                    {/* Print / Download PDF Button */}
+                                    <button
+                                        onClick={handlePrintPdf}
+                                        title="Descargar o imprimir informe en PDF con formato APA reglamentario"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-mono font-bold transition-all shadow-md active:scale-95"
+                                    >
+                                        <Printer size={13} />
+                                        <span>Descargar PDF (APA)</span>
+                                    </button>
+                                </>
+                            )}
+
+                            <button
+                                onClick={() => setShowApaReportModal(false)}
+                                className="p-1.5 rounded-xl hover:bg-white/10 text-zinc-400 hover:text-white transition-colors ml-1"
+                                title="Cerrar"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Document Workspace Area */}
+                    <div className="flex-1 overflow-y-auto custom-scroll p-2 sm:p-6 flex justify-center items-start">
+                        {isGeneratingApaReport ? (
+                            <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 max-w-md my-auto">
+                                <div className="relative">
+                                    <div className="w-16 h-16 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 animate-pulse">
+                                        <Sparkles size={28} className="animate-spin" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-black text-white">Redactando Informe Clínico APA...</h4>
+                                    <p className="text-xs text-zinc-400 mt-2 leading-relaxed font-sans">
+                                        Kio está sintetizando la batería psicométrica, la estratificación del riesgo Columbia C-SSRS, los bucles funcionales de mantenimiento y el plan de intervención.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-mono text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+                                    Aplicando normativas de estilo APA (7ª Edición)
+                                </div>
+                            </div>
+                        ) : !apaReportContent ? (
+                            <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-5 max-w-lg bg-zinc-950/80 border border-white/10 rounded-3xl my-auto shadow-2xl">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-inner">
+                                    <FileText size={32} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="text-lg font-black text-white">Generar Informe Clínico Integral (Formato APA 7)</h4>
+                                    <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+                                        Crea un informe psicológico formal de alto rigor ("Hardcore") que integra automáticamente:
+                                    </p>
+                                    <div className="text-left text-[11px] text-zinc-300 font-sans space-y-1.5 bg-black/40 p-4 rounded-xl border border-white/5 mt-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Portada y Ficha Técnica de Identificación
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Tabla 1 APA con todas las pruebas psicométricas y baremos
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Estratificación de Riesgo Suicida (C-SSRS) y Protocolo
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Análisis Funcional de Bucles Transdiagnósticos (ACT/DBT/TCC)
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Plan de Tratamiento por Fases y Preguntas para Sesión
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-purple-400">✓</span> Exportación directa a PDF limpio con paginación y firma
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleGenerateApaReport}
+                                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-2xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+                                >
+                                    <Sparkles size={14} />
+                                    <span>Redactar Informe con Kio IA</span>
+                                </button>
+                            </div>
+                        ) : apaReportEditMode ? (
+                            <div className="w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-2xl p-4 flex flex-col gap-3 shadow-2xl">
+                                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                                    <span className="text-xs font-mono text-zinc-400">Editor de Informe (Markdown APA)</span>
+                                    <button
+                                        onClick={() => {
+                                            localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, apaReportContent);
+                                            setApaReportEditMode(false);
+                                        }}
+                                        className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-mono font-bold hover:bg-emerald-500/30 transition-all"
+                                    >
+                                        Guardar y Ver Vista APA
+                                    </button>
+                                </div>
+                                <textarea
+                                    value={apaReportContent}
+                                    onChange={(e) => {
+                                        setApaReportContent(e.target.value);
+                                        localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, e.target.value);
+                                    }}
+                                    className="w-full h-[70vh] bg-black/60 border border-white/5 rounded-xl p-4 text-xs font-mono text-zinc-200 resize-none outline-none focus:border-purple-500/40 custom-scroll leading-relaxed"
+                                    placeholder="Texto del informe..."
+                                />
+                            </div>
+                        ) : (
+                            /* Authentic APA White Paper Sheet */
+                            <div 
+                                ref={apaPrintRef}
+                                className="w-full max-w-4xl bg-white text-zinc-900 rounded-sm shadow-2xl p-6 sm:p-12 md:p-16 border border-zinc-300 font-serif my-2 select-text"
+                                style={{ minHeight: '1050px' }}
+                            >
+                                {/* Top APA Running Head */}
+                                <div className="flex items-center justify-between text-[10px] uppercase font-serif tracking-widest text-zinc-500 border-b border-zinc-300 pb-2 mb-8">
+                                    <span>INFORME PSICOLÓGICO CLÍNICO — @{(patientName || 'CASO').toUpperCase()}</span>
+                                    <span>FORMATO APA (7ª EDICIÓN)</span>
+                                </div>
+
+                                {/* APA Markdown Document Renderer */}
+                                <div className="apa-document-content font-serif text-zinc-900 leading-relaxed text-[13px] sm:text-[14px]">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            h1: ({ node, ...props }) => (
+                                                <h1 className="text-base sm:text-lg font-bold text-center text-zinc-950 mt-6 mb-4 tracking-tight uppercase font-serif leading-snug" {...props} />
+                                            ),
+                                            h2: ({ node, ...props }) => (
+                                                <h2 className="text-sm sm:text-base font-bold text-left text-zinc-950 mt-8 mb-3 uppercase tracking-wider font-serif border-b pb-1.5 border-zinc-400" {...props} />
+                                            ),
+                                            h3: ({ node, ...props }) => (
+                                                <h3 className="text-xs sm:text-sm font-bold text-left text-zinc-900 mt-5 mb-2 italic font-serif" {...props} />
+                                            ),
+                                            p: ({ node, children, ...props }) => (
+                                                <p className="text-justify text-zinc-850 leading-relaxed mb-3 font-serif" style={{ textIndent: '1.27cm' }} {...props}>
+                                                    {children}
+                                                </p>
+                                            ),
+                                            table: ({ node, ...props }) => (
+                                                <div className="overflow-x-auto my-6">
+                                                    <table className="w-full border-collapse text-xs font-serif border-t-2 border-b-2 border-zinc-950" {...props} />
+                                                </div>
+                                            ),
+                                            thead: ({ node, ...props }) => (
+                                                <thead className="border-b border-zinc-950" {...props} />
+                                            ),
+                                            th: ({ node, ...props }) => (
+                                                <th className="py-2.5 px-3 text-left font-bold text-zinc-950 font-serif text-xs bg-zinc-50/50" {...props} />
+                                            ),
+                                            td: ({ node, ...props }) => (
+                                                <td className="py-2 px-3 text-zinc-800 border-none font-serif text-[11px] sm:text-xs" {...props} />
+                                            ),
+                                            ul: ({ node, ...props }) => (
+                                                <ul className="list-disc pl-8 sm:pl-12 space-y-1.5 mb-4 text-zinc-850 font-serif" {...props} />
+                                            ),
+                                            ol: ({ node, ...props }) => (
+                                                <ol className="list-decimal pl-8 sm:pl-12 space-y-1.5 mb-4 text-zinc-850 font-serif" {...props} />
+                                            ),
+                                            li: ({ node, ...props }) => (
+                                                <li className="text-justify leading-relaxed" {...props} />
+                                            ),
+                                            strong: ({ node, ...props }) => (
+                                                <strong className="font-bold text-zinc-950 font-serif" {...props} />
+                                            ),
+                                            hr: ({ node, ...props }) => (
+                                                <hr className="my-8 border-zinc-300" {...props} />
+                                            )
+                                        }}
+                                    >
+                                        {apaReportContent}
+                                    </ReactMarkdown>
+
+                                    {/* Signature Section */}
+                                    <div className="mt-14 pt-8 border-t border-zinc-300 flex flex-col items-center text-center font-serif">
+                                        <div className="w-64 border-t border-zinc-900 pt-2 mb-1"></div>
+                                        <span className="font-bold text-xs uppercase tracking-wider text-zinc-900">
+                                            Psicólogo(a) Clínico Evaluador
+                                        </span>
+                                        <span className="text-[11px] text-zinc-600 font-serif">
+                                            Cédula Profesional / Matrícula: ________________________
+                                        </span>
+                                        <span className="text-[10px] text-zinc-500 font-serif mt-1">
+                                            Centro de Atención Psicológica y Supervisión Oasis
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
