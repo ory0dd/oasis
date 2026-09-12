@@ -5,7 +5,7 @@ import {
     Send, FileText, Bot, User, Sparkles, BookOpen, AlertCircle, Copy, CheckCircle2, 
     ChevronDown, X, Trash2, RotateCcw, Target, ClipboardCheck, ArrowRight, Check, 
     Save, Clock, Download, History, Activity, Eye, ListChecks, ShieldCheck, Brain, Plus,
-    Printer, Edit3, RefreshCw, Paperclip, FileUp
+    Printer, Edit3, RefreshCw, Paperclip, FileUp, Mic, MicOff, Volume2, VolumeX, Square, Search, ExternalLink, Maximize2
 } from 'lucide-react';
 import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { CLINICAL_TESTS } from '../data/clinicalTestsBank';
@@ -261,10 +261,23 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [isGeneratingApaReport, setIsGeneratingApaReport] = useState(false);
     const [apaReportEditMode, setApaReportEditMode] = useState(false);
     const [apaCopySuccess, setApaCopySuccess] = useState(false);
-    const [attachedPdf, setAttachedPdf] = useState(null); // { id, fileName, fileSize, numPages, content, isPdf }
+    const [attachedPdf, setAttachedPdf] = useState(null); // { id, fileName, fileSize, numPages, content, isPdf, blobUrl }
     const [isExtractingPdf, setIsExtractingPdf] = useState(false);
     const [pdfExtractionStatus, setPdfExtractionStatus] = useState('');
     const pdfInputRef = useRef(null);
+
+    // Dedicated PDF Document Viewer Modal State
+    const [viewingPdfDocument, setViewingPdfDocument] = useState(null); // { fileName, numPages, fileSize, content, blobUrl }
+    const [pdfViewerTab, setPdfViewerTab] = useState('document'); // 'document' | 'text'
+    const [pdfSearchQuery, setPdfSearchQuery] = useState('');
+    const [pdfCopyDone, setPdfCopyDone] = useState(false);
+
+    // Voice Reader (TTS) & Voice Input (STT) State
+    const [isListeningVoice, setIsListeningVoice] = useState(false);
+    const [voiceInterim, setVoiceInterim] = useState('');
+    const [speakingMsgIndex, setSpeakingMsgIndex] = useState(null);
+    const speechRecognitionRef = useRef(null);
+
     const apaPrintRef = useRef(null);
     const chatScrollRef = useRef(null);
     const prevPatientRef = useRef(null);
@@ -272,7 +285,10 @@ export const LLMNotebookTab = ({ patientName }) => {
 
     const handleOpenSource = (source) => {
         if (!source) return;
-        if (source.testId || (source.id && source.id.startsWith('test_'))) {
+        if (source.isPdf) {
+            setViewingPdfDocument(source);
+            setPdfViewerTab(source.blobUrl ? 'document' : 'text');
+        } else if (source.testId || (source.id && source.id.startsWith('test_'))) {
             let tId = source.testId;
             if (!tId) {
                 const parts = source.id.replace('test_', '').split('_');
@@ -298,6 +314,13 @@ export const LLMNotebookTab = ({ patientName }) => {
             const taggedMsgs = msgsList.map(m => ({
                 role: m.role,
                 content: m.content,
+                attachedPdf: m.attachedPdf ? {
+                    id: m.attachedPdf.id,
+                    fileName: m.attachedPdf.fileName,
+                    numPages: m.attachedPdf.numPages,
+                    fileSize: m.attachedPdf.fileSize,
+                    content: m.attachedPdf.content
+                } : undefined,
                 patientOwner: k.safeName
             }));
             const jsonStr = JSON.stringify(taggedMsgs);
@@ -1265,6 +1288,147 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         setSelectedSources(newSet);
     };
 
+    // Voice Input (Speech-to-Text / Micrófono)
+    const toggleVoiceInput = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Tu navegador no soporta reconocimiento de voz nativo. Te sugerimos usar Google Chrome, Microsoft Edge o Safari.");
+            return;
+        }
+
+        if (isListeningVoice) {
+            if (speechRecognitionRef.current) {
+                try { speechRecognitionRef.current.abort(); } catch (e) {}
+                speechRecognitionRef.current = null;
+            }
+            setIsListeningVoice(false);
+            setVoiceInterim('');
+            return;
+        }
+
+        try {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'es-ES';
+            recognition.maxAlternatives = 1;
+
+            let baseText = inputMsg.trim();
+
+            recognition.onstart = () => {
+                setIsListeningVoice(true);
+                setVoiceInterim('');
+            };
+
+            recognition.onresult = (event) => {
+                let finalSegment = '';
+                let interimSegment = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        finalSegment += event.results[i][0].transcript;
+                    } else {
+                        interimSegment += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalSegment) {
+                    baseText = baseText ? `${baseText} ${finalSegment.trim()}` : finalSegment.trim();
+                    setInputMsg(baseText);
+                    setVoiceInterim('');
+                } else if (interimSegment) {
+                    setVoiceInterim(interimSegment);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                if (event.error !== 'no-speech' && event.error !== 'aborted') {
+                    console.warn("Speech recognition error:", event.error);
+                }
+                if (event.error === 'not-allowed') {
+                    alert("Permiso de micrófono denegado. Por favor permite el acceso al micrófono en los ajustes de tu navegador.");
+                    setIsListeningVoice(false);
+                    speechRecognitionRef.current = null;
+                }
+            };
+
+            recognition.onend = () => {
+                setIsListeningVoice(false);
+                setVoiceInterim('');
+                speechRecognitionRef.current = null;
+            };
+
+            speechRecognitionRef.current = recognition;
+            recognition.start();
+        } catch (err) {
+            console.error("Error al inicializar reconocimiento de voz:", err);
+            setIsListeningVoice(false);
+        }
+    };
+
+    // Voice Reader (Text-to-Speech / Sintetizador de voz para Kio)
+    const stopSpeaking = () => {
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        setSpeakingMsgIndex(null);
+    };
+
+    const toggleSpeakMessage = (msgIndex, rawText) => {
+        if (typeof window === 'undefined' || !window.speechSynthesis) {
+            alert("Tu navegador no soporta lector de voz (SpeechSynthesis).");
+            return;
+        }
+
+        if (speakingMsgIndex === msgIndex) {
+            stopSpeaking();
+            return;
+        }
+
+        stopSpeaking();
+
+        // Clean markdown and markup for natural audio speech
+        const cleanForSpeech = (rawText || '')
+            .replace(/\[PRUEBAS_SUGERIDAS:[\s\S]*?\]/g, '')
+            .replace(/#{1,6}\s+/g, '')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/\*([^*]+)\*/g, '$1')
+            .replace(/`([^`]+)`/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/[-*•]\s+/g, '')
+            .replace(/---+/g, '')
+            .replace(/\n+/g, '. ')
+            .trim();
+
+        if (!cleanForSpeech) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanForSpeech);
+        utterance.lang = 'es-ES';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Paulina') || v.name.includes('Sabina') || v.name.includes('Helena') || v.name.includes('Jorge'))) || voices.find(v => v.lang.startsWith('es'));
+        if (esVoice) utterance.voice = esVoice;
+
+        utterance.onstart = () => setSpeakingMsgIndex(msgIndex);
+        utterance.onend = () => setSpeakingMsgIndex(null);
+        utterance.onerror = () => setSpeakingMsgIndex(null);
+
+        window.speechSynthesis.speak(utterance);
+    };
+
+    // Cleanup audio resources on unmount
+    useEffect(() => {
+        return () => {
+            if (speechRecognitionRef.current) {
+                try { speechRecognitionRef.current.abort(); } catch(e) {}
+            }
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
     // Client-side PDF Upload & Instant Text Extraction Handler
     const handlePdfFileSelected = async (e) => {
         const file = e.target?.files?.[0];
@@ -1287,6 +1451,11 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 throw new Error("No se pudo extraer texto legible del documento PDF (puede ser un documento escaneado como imagen sin OCR).");
             }
 
+            let blobUrl = null;
+            try {
+                blobUrl = URL.createObjectURL(file);
+            } catch (err) {}
+
             const newPdfSource = {
                 id: `pdf_${Date.now()}`,
                 name: `📄 ${file.name} (${result.numPages} págs)`,
@@ -1296,6 +1465,7 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 numPages: result.numPages,
                 isPdf: true,
                 content: result.text,
+                blobUrl: blobUrl,
                 createdAt: new Date().toISOString()
             };
 
@@ -1352,7 +1522,7 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
 
     const handleSend = async (customMsg = null) => {
         const defaultText = attachedPdf 
-            ? `Analiza en profundidad este documento PDF adjunto (${attachedPdf.fileName}). Extrae, desglosa y explícame claramente punto por punto sus aspectos más relevantes, hallazgos y conclusiones clave ("el punto claro ++").`
+            ? `¿Qué piensas de este informe de forma completa con las bases actuales que tienes ahora de este caso y qué le falta? ¿Cómo podemos explorar eso juntos?`
             : '';
         const textToSend = typeof customMsg === 'string' ? customMsg.trim() : (inputMsg.trim() || defaultText);
         if (!textToSend) return;
@@ -1360,10 +1530,29 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
         if (typeof customMsg !== 'string') {
             setInputMsg('');
         }
-        const updatedMessages = [...messages, { role: 'user', content: textToSend }];
+
+        const activePdfForThisMessage = attachedPdf ? { ...attachedPdf } : null;
+
+        const userMsgPayload = {
+            role: 'user',
+            content: textToSend,
+            attachedPdf: activePdfForThisMessage ? {
+                id: activePdfForThisMessage.id,
+                fileName: activePdfForThisMessage.fileName,
+                numPages: activePdfForThisMessage.numPages,
+                fileSize: activePdfForThisMessage.fileSize,
+                content: activePdfForThisMessage.content,
+                blobUrl: activePdfForThisMessage.blobUrl
+            } : null
+        };
+
+        const updatedMessages = [...messages, userMsgPayload];
         setMessages(updatedMessages);
         persistMessages(updatedMessages, patientName);
         setIsTyping(true);
+
+        // Clear attached PDF from input after attaching to conversation message
+        setAttachedPdf(null);
 
         try {
             // Gather context from selected sources
@@ -1373,28 +1562,30 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 .join('\n\n');
 
             // Attached PDF instruction if present
+            const targetPdf = activePdfForThisMessage || attachedPdf;
             let attachedPdfSection = '';
-            if (attachedPdf) {
+            if (targetPdf) {
                 attachedPdfSection = `
---- DOCUMENTO PDF ADJUNTO Y PRIORITARIO POR EL CLÍNICO ---
-Nombre del archivo: ${attachedPdf.fileName}
-Extensión y formato: PDF (${attachedPdf.numPages} páginas, ${(attachedPdf.fileSize / 1024).toFixed(1)} KB)
+--- DOCUMENTO PDF ADJUNTO DIRECTAMENTE EN LA CONVERSACIÓN POR EL CLÍNICO ---
+Nombre del archivo: ${targetPdf.fileName}
+Extensión y formato: PDF (${targetPdf.numPages} páginas, ${(targetPdf.fileSize / 1024).toFixed(1)} KB)
 
 CONTENIDO ÍNTEGRO EXTRAÍDO DEL DOCUMENTO PDF:
-${attachedPdf.content}
+${targetPdf.content}
 
 DIRECTRICES CLÍNICAS Y DE ANÁLISIS PARA EL DOCUMENTO PDF ADJUNTO:
-1. EXPLORACIÓN DE PUNTOS CLAVE ("EL PUNTO CLARO ++"):
-   - El clínico ha adjuntado este documento específicamente para analizar, clarificar y desglosar sus puntos medulares ("el punto claro ++").
-   - Analiza minuciosamente el contenido: desglosa con precisión los puntos clave, hallazgos, hipótesis, conceptos y conclusiones que contiene el documento.
-   - Cita textualmente citas o fragmentos entrecomillados y refiere la sección/página de donde provienen para máxima transparencia metodológica.
-2. TRIANGULACIÓN CON EL EXPEDIENTE CLÍNICO:
-   - Si la consulta involucra al consultante actual (${patientName || 'este caso'}), conecta y triangula de forma inmediata lo que dice este PDF con las evaluaciones que ya se completaron (PID-5, entrevistas, pruebas psicométricas).
-   - Identifica con agudeza coincidencias, discrepancias o nuevas hipótesis diagnósticas y de intervención que surjan de este documento.
-3. FORMATO Y TIPOGRAFÍA:
-   - Utiliza encabezados ### y #### para cada punto analizado.
-   - Usa **negritas** para resaltar conceptos y términos clave.
-   - Brinda explicaciones sustanciosas, claras y operativas, sin rodeos burocráticos.
+1. ANÁLISIS COMPLETO Y CONTRASTACIÓN CON EL CASO VIVO:
+   - El clínico ha adjuntado este documento directamente al chat para analizarlo, evaluarlo y discutirlo contigo de colega a colega.
+   - Si el clínico pregunta qué opinas del informe, qué le falta o cómo explorarlo:
+     * ANALIZA EL DOCUMENTO EN SU TOTALIDAD: Explica de manera lúcida sus puntos fuertes, conceptos, estructura y vacíos actuales.
+     * CONTRASTA CON EL CASO REAL: Cruza el documento con la información viva de ${patientName || 'este caso'} (entrevistas biográficas, perspectiva materna y familiar, perfil de personalidad PID-5, pruebas psicométricas de cribaje como SDQ, C-SSRS, BAI, PHQ-9, DERS).
+     * IDENTIFICA QUÉ LE FALTA: Señala con agudeza qué vacíos clínicos, datos psicométricos, análisis funcional transaccional o directrices de intervención le faltan al documento o podrían robustecerlo.
+     * PROPÓN QUÉ COSAS AÑADIR: Da sugerencias concretas y operativas de qué secciones, puntos, preguntas o actividades terapéuticas se deberían incorporar o profundizar ("hablar sobre qué cosas poner").
+     * DIÁLOGO EXPLORATORIO: Acompaña al clínico proponiendo cómo explorar esos puntos juntos en esta misma conversación de manera colaborativa.
+2. CITAS Y RIGOR TEXTUAL:
+   - Cita textualmente conceptos clave o números de página del documento para respaldar tus observaciones.
+3. FORMATO Y CLARIDAD:
+   - Estructura con títulos ###, viñetas y **negritas** para máxima nitidez visual.
 `;
             }
 
@@ -1494,7 +1685,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                 model: model,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...updatedMessages
+                    ...updatedMessages.map(m => ({ role: m.role, content: m.content }))
                 ],
                 temperature: 0.7
             };
@@ -2611,17 +2802,56 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             <span className="text-[9px] font-mono uppercase font-bold tracking-wider">{m.role === 'user' ? 'Tú' : 'Notebook LM'}</span>
                                         </div>
                                         {isAssistant && (
-                                            <button
-                                                onClick={() => navigator.clipboard.writeText(cleanText)}
-                                                title="Copiar respuesta"
-                                                className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
-                                            >
-                                                <Copy size={11} />
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleSpeakMessage(idx, cleanText)}
+                                                    title={speakingMsgIndex === idx ? "Detener lector de voz" : "Escuchar respuesta (Lector de voz)"}
+                                                    className={`px-1.5 py-0.5 rounded-md transition-all flex items-center gap-1 text-[10px] font-mono font-bold ${
+                                                        speakingMsgIndex === idx
+                                                            ? 'bg-purple-500 text-white shadow-sm animate-pulse'
+                                                            : 'text-zinc-400 hover:text-purple-300 hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    {speakingMsgIndex === idx ? (
+                                                        <>
+                                                            <Square size={10} className="fill-current" />
+                                                            <span className="text-[9px]">Detener</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Volume2 size={11} />
+                                                            <span className="hidden sm:inline text-[9px]">Lector de voz</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => navigator.clipboard.writeText(cleanText)}
+                                                    title="Copiar respuesta"
+                                                    className="text-zinc-500 hover:text-zinc-300 p-0.5 rounded transition-colors"
+                                                >
+                                                    <Copy size={11} />
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                     {isAssistant ? (
                                         <div className="text-xs md:text-sm leading-relaxed font-sans text-zinc-200">
+                                            {speakingMsgIndex === idx && (
+                                                <div className="mb-2.5 p-2 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between gap-2 text-purple-200 text-[10px] font-mono animate-pulse">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Volume2 size={12} className="text-purple-400 animate-bounce" />
+                                                        <span>Reproduciendo lectura en voz alta...</span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={stopSpeaking}
+                                                        className="text-purple-300 hover:text-white underline font-bold"
+                                                    >
+                                                        Detener
+                                                    </button>
+                                                </div>
+                                            )}
                                             <ReactMarkdown
                                                 remarkPlugins={[remarkGfm]}
                                                 components={{
@@ -2695,8 +2925,37 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                             </ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans text-blue-50">
-                                            {cleanText}
+                                        <div className="space-y-2.5">
+                                            {m.attachedPdf && (
+                                                <div className="p-2.5 rounded-xl bg-blue-950/70 border border-blue-400/40 flex items-center justify-between gap-3 shadow-inner">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
+                                                            <FileText size={16} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-white truncate max-w-[180px] sm:max-w-xs">{m.attachedPdf.fileName}</p>
+                                                            <p className="text-[10px] text-blue-200/80 font-mono">
+                                                                {m.attachedPdf.numPages} {m.attachedPdf.numPages === 1 ? 'página' : 'páginas'} • {((m.attachedPdf.fileSize || 0) / 1024).toFixed(0)} KB
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setViewingPdfDocument(m.attachedPdf);
+                                                            setPdfViewerTab(m.attachedPdf.blobUrl ? 'document' : 'text');
+                                                        }}
+                                                        className="px-2.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-mono font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-md active:scale-95"
+                                                        title="Visualizar documento PDF completo"
+                                                    >
+                                                        <Eye size={12} />
+                                                        <span>Visualizar PDF</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <div className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap font-sans text-blue-50">
+                                                {cleanText}
+                                            </div>
                                         </div>
                                     )}
 
@@ -2830,6 +3089,26 @@ ${contextData || 'Ninguna fuente seleccionada.'}
 
                 {/* Input Bottom Bar */}
                 <div className="p-2.5 md:p-4 border-t border-white/5 bg-zinc-950/80 rounded-b-2xl shrink-0">
+                    {/* Voice Listening Active Banner */}
+                    {isListeningVoice && (
+                        <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-rose-950/60 via-purple-950/50 to-rose-950/60 border border-rose-500/40 flex items-center justify-between gap-2 text-rose-300 text-xs font-mono animate-in fade-in">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0"></span>
+                                <span className="font-bold shrink-0">🎙️ Escuchando...</span>
+                                <span className="text-zinc-300 italic truncate text-[11px]">
+                                    {voiceInterim || 'Habla con Kio, tu voz se escribe automáticamente en el chat...'}
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={toggleVoiceInput}
+                                className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold shrink-0 transition-all shadow active:scale-95"
+                            >
+                                Listo
+                            </button>
+                        </div>
+                    )}
+
                     {/* PDF Extraction Progress Indicator */}
                     {isExtractingPdf && (
                         <div className="mb-2 p-2 sm:p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center gap-2 text-blue-300 text-xs font-mono animate-pulse">
@@ -2860,23 +3139,25 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             <div className="flex items-center gap-1.5 ml-auto shrink-0 flex-wrap">
                                 <button
                                     type="button"
-                                    onClick={() => handleSend(`Analiza en profundidad este documento PDF (${attachedPdf.fileName}). Extrae, desglosa y explícame claramente punto por punto sus aspectos más relevantes, hallazgos y conclusiones clave ("el punto claro ++").`)}
-                                    disabled={isTyping}
-                                    className="px-2 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500 text-blue-300 hover:text-white border border-blue-500/30 text-[10px] font-mono font-bold transition-all flex items-center gap-1 active:scale-95"
-                                    title="Explorar puntos clave del documento en el chat"
+                                    onClick={() => {
+                                        setViewingPdfDocument(attachedPdf);
+                                        setPdfViewerTab(attachedPdf.blobUrl ? 'document' : 'text');
+                                    }}
+                                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white border border-white/10 text-[10px] font-mono font-bold transition-all flex items-center gap-1 active:scale-95"
+                                    title="Visualizar documento PDF completo"
                                 >
-                                    <Sparkles size={11} />
-                                    <span>Explorar Puntos Clave</span>
+                                    <Eye size={11} />
+                                    <span>Visualizar PDF</span>
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handleSend(`Contrasta y relaciona los puntos clave de este documento PDF (${attachedPdf.fileName}) con la historia clínica, pruebas psicométricas y formulación de ${patientName || 'este consultante'}. ¿Qué aporta, qué clarifica o cómo orienta la intervención clínica?`)}
+                                    onClick={() => handleSend(`¿Qué piensas de este informe en su totalidad con las bases actuales que tienes ahora de este caso y qué le falta? ¿Cómo podemos explorar eso juntos?`)}
                                     disabled={isTyping}
-                                    className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 text-[10px] font-mono font-bold transition-all active:scale-95"
-                                    title="Contrastar documento con el caso clínico actual"
+                                    className="px-2 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500 text-blue-300 hover:text-white border border-blue-500/30 text-[10px] font-mono font-bold transition-all flex items-center gap-1 active:scale-95"
+                                    title="Preguntar a Kio sobre el informe"
                                 >
-                                    <Target size={11} />
-                                    <span>Contrastar con Caso</span>
+                                    <Sparkles size={11} />
+                                    <span>¿Qué le falta?</span>
                                 </button>
                                 <button
                                     type="button"
@@ -2907,7 +3188,7 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                     ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40 shadow-sm' 
                                     : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
                             }`}
-                            title="Adjuntar documento PDF para analizar o explorar puntos clave"
+                            title="Adjuntar documento PDF para analizar o visualizar en el chat"
                         >
                             <Paperclip size={14} className={attachedPdf ? 'text-blue-400' : ''} />
                         </button>
@@ -2920,19 +3201,37 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                                     handleSend();
                                 }
                             }}
-                            placeholder={attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" o pide explorar un punto...` : "Haz una pregunta o pide que redacte algo..."}
-                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-10 sm:pl-11 pr-11 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
+                            placeholder={
+                                isListeningVoice 
+                                    ? "Escuchando tu voz... habla libremente..." 
+                                    : (attachedPdf ? `Pregunta sobre "${attachedPdf.fileName}" (ej. ¿qué le falta?)...` : "Haz una pregunta o pide que redacte algo...")
+                            }
+                            className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-10 sm:pl-11 pr-20 sm:pr-24 py-2.5 md:py-3 text-xs md:text-sm text-white placeholder:text-zinc-600 resize-none outline-none focus:border-blue-500/50 focus:bg-zinc-900/80 transition-all max-h-28 md:max-h-32"
                             rows={1}
                             style={{ minHeight: '40px' }}
                         />
-                        <button
-                            onClick={() => handleSend()}
-                            disabled={(!inputMsg.trim() && !attachedPdf) || isTyping || isExtractingPdf}
-                            className="absolute right-1.5 sm:right-2 w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all active:scale-95 z-10"
-                            title={inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Explorar puntos clave del PDF" : "Escribe una pregunta")}
-                        >
-                            <Send size={13} />
-                        </button>
+                        <div className="absolute right-1.5 sm:right-2 flex items-center gap-1 sm:gap-1.5 z-10">
+                            <button
+                                type="button"
+                                onClick={toggleVoiceInput}
+                                className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl transition-all ${
+                                    isListeningVoice
+                                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40 animate-pulse'
+                                        : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5'
+                                }`}
+                                title={isListeningVoice ? "Detener dictado por voz" : "Hablar con Kio por voz (dictado)"}
+                            >
+                                {isListeningVoice ? <MicOff size={14} /> : <Mic size={14} />}
+                            </button>
+                            <button
+                                onClick={() => handleSend()}
+                                disabled={(!inputMsg.trim() && !attachedPdf) || isTyping || isExtractingPdf}
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 disabled:opacity-50 disabled:bg-transparent disabled:text-zinc-600 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
+                                title={inputMsg.trim() ? "Enviar mensaje" : (attachedPdf ? "Preguntar sobre el PDF" : "Escribe una pregunta")}
+                            >
+                                <Send size={13} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3020,6 +3319,141 @@ ${contextData || 'Ninguna fuente seleccionada.'}
                             <button
                                 onClick={() => setViewingSource(null)}
                                 className="py-2 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono text-xs font-bold uppercase tracking-wider border border-white/5 transition-all"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Dedicated High-Fidelity PDF Document Viewer Modal */}
+            {viewingPdfDocument && (
+                <div className="fixed inset-0 z-[3600] bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+                    <div className="w-full max-w-5xl bg-[#0d0d12] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-[92vh] overflow-hidden">
+                        {/* Header Bar */}
+                        <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between bg-zinc-950/90 shrink-0">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                                    <FileText size={18} />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-xs sm:text-sm font-bold text-white leading-tight truncate">
+                                        {viewingPdfDocument.fileName || viewingPdfDocument.name}
+                                    </h3>
+                                    <p className="text-[10px] sm:text-xs text-zinc-400 font-mono mt-0.5 flex items-center gap-2">
+                                        <span>{viewingPdfDocument.numPages} páginas</span>
+                                        <span>•</span>
+                                        <span>{((viewingPdfDocument.fileSize || 0) / 1024).toFixed(1)} KB</span>
+                                        <span>•</span>
+                                        <span className="text-blue-400">Visor de Documento</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                {viewingPdfDocument.blobUrl && (
+                                    <div className="hidden sm:flex items-center p-0.5 bg-zinc-900 border border-white/10 rounded-xl text-xs font-mono">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPdfViewerTab('document')}
+                                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                                                pdfViewerTab === 'document' ? 'bg-blue-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                        >
+                                            Documento Original
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPdfViewerTab('text')}
+                                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                                                pdfViewerTab === 'text' ? 'bg-blue-600 text-white shadow' : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                        >
+                                            Texto Extraído
+                                        </button>
+                                    </div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAttachedPdf(viewingPdfDocument);
+                                        setViewingPdfDocument(null);
+                                    }}
+                                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-mono font-bold transition-all shadow-md active:scale-95"
+                                >
+                                    <Bot size={13} />
+                                    <span>Hablar con Kio sobre este PDF</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewingPdfDocument(null)}
+                                    className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-hidden relative flex flex-col bg-zinc-950/50">
+                            {pdfViewerTab === 'document' && viewingPdfDocument.blobUrl ? (
+                                <div className="w-full h-full relative bg-[#525659]">
+                                    <iframe
+                                        src={viewingPdfDocument.blobUrl}
+                                        className="w-full h-full border-0"
+                                        title={viewingPdfDocument.fileName}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-full h-full flex flex-col p-3 sm:p-4 space-y-3">
+                                    <div className="flex items-center justify-between gap-2 shrink-0">
+                                        <div className="relative flex-1 max-w-md">
+                                            <Search size={13} className="absolute left-3 top-2.5 text-zinc-500" />
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar término en el documento..."
+                                                value={pdfSearchQuery}
+                                                onChange={e => setPdfSearchQuery(e.target.value)}
+                                                className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-blue-500/50 font-mono"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(viewingPdfDocument.content || '');
+                                                setPdfCopyDone(true);
+                                                setTimeout(() => setPdfCopyDone(false), 2000);
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/10 text-xs font-mono font-bold transition-all flex items-center gap-1.5 active:scale-95"
+                                        >
+                                            {pdfCopyDone ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                                            <span>{pdfCopyDone ? 'Copiado' : 'Copiar Texto'}</span>
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto custom-scroll p-4 rounded-xl bg-zinc-900/40 border border-white/5 font-mono text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap select-text">
+                                        {viewingPdfDocument.content}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer (mobile action) */}
+                        <div className="p-3 border-t border-white/10 bg-zinc-950/95 flex sm:hidden items-center justify-between gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAttachedPdf(viewingPdfDocument);
+                                    setViewingPdfDocument(null);
+                                }}
+                                className="flex-1 py-2 rounded-xl bg-blue-500 text-white text-xs font-mono font-bold text-center"
+                            >
+                                Hablar con Kio sobre este PDF
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewingPdfDocument(null)}
+                                className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-400 text-xs font-mono font-bold"
                             >
                                 Cerrar
                             </button>
