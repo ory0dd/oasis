@@ -149,11 +149,11 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
 
                 ctx.fillStyle = '#c084fc'; // purple-400
                 ctx.font = `bold ${Math.max(10, Math.round(barH * 0.32))}px -apple-system, BlinkMacSystemFont, sans-serif`;
-                ctx.fillText("OASIS • CONSTANCIA DE FIRMA Y CONFORMIDAD", 12, canvas.height - (barH * 0.54));
+                ctx.fillText("OASIS ✨ SELFIE PARA RECORDAR EL MOMENTO", 12, canvas.height - (barH * 0.54));
 
                 ctx.fillStyle = '#e4e4e7'; // zinc-200
                 ctx.font = `${Math.max(9, Math.round(barH * 0.26))}px -apple-system, BlinkMacSystemFont, sans-serif`;
-                const nameDisplay = consultantName.trim() ? `Consultante: ${consultantName.trim()}` : `Usuario: @${user}`;
+                const nameDisplay = consultantName.trim() ? `Firma digital: ${consultantName.trim()}` : `Firma digital: @${user}`;
                 const dateDisplay = `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
                 ctx.fillText(`${nameDisplay} | ${dateDisplay}`, 12, canvas.height - (barH * 0.2));
 
@@ -194,11 +194,11 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
 
                     ctx.fillStyle = '#c084fc';
                     ctx.font = `bold ${Math.max(10, Math.round(barH * 0.32))}px -apple-system, BlinkMacSystemFont, sans-serif`;
-                    ctx.fillText("OASIS • CONSTANCIA DE FIRMA Y CONFORMIDAD", 12, canvas.height - (barH * 0.54));
+                    ctx.fillText("OASIS ✨ SELFIE PARA RECORDAR EL MOMENTO", 12, canvas.height - (barH * 0.54));
 
                     ctx.fillStyle = '#e4e4e7';
                     ctx.font = `${Math.max(9, Math.round(barH * 0.26))}px -apple-system, BlinkMacSystemFont, sans-serif`;
-                    const nameDisplay = consultantName.trim() ? `Consultante: ${consultantName.trim()}` : `Usuario: @${user}`;
+                    const nameDisplay = consultantName.trim() ? `Firma digital: ${consultantName.trim()}` : `Firma digital: @${user}`;
                     const dateDisplay = `${new Date().toLocaleDateString('es-MX')} ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`;
                     ctx.fillText(`${nameDisplay} | ${dateDisplay}`, 12, canvas.height - (barH * 0.2));
 
@@ -491,19 +491,19 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                         />
                     </div>
 
-                    {/* Camera & Photographic Signature Section */}
+                    {/* Selfie & Signature Section */}
                     <div className="bg-purple-950/15 border border-purple-500/25 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-xs font-semibold text-purple-200">
                                 <Camera size={16} className="text-purple-400 shrink-0" />
-                                <span>Fotografía de Conformidad (Firma con Cámara):</span>
+                                <span>Selfie para recordar el momento ✨</span>
                             </div>
-                            <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded border border-purple-500/30">
-                                Foto de Ambos o Consultante
+                            <span className="text-[9px] font-mono uppercase tracking-wider text-purple-300 bg-purple-500/15 px-2.5 py-0.5 rounded-full border border-purple-500/30">
+                                Firma digital
                             </span>
                         </div>
                         <p className="text-[11px] text-zinc-400 leading-snug">
-                            Puedes habilitar la cámara para capturar una foto tuya o de ambos (consultante y terapeuta/supervisor) como constancia y rúbrica visual de este consentimiento.
+                            Tómate una selfie (tú solo/a o junto con tu terapeuta) para sellar el inicio de este proceso. <span className="text-[9.5px] text-purple-400/80 font-mono block sm:inline sm:ml-1 font-medium">(Actúa como constancia visual y firma digital de tu consentimiento)</span>
                         </p>
 
                         {/* Camera Error */}
@@ -520,7 +520,7 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                 <div className="relative group w-36 h-28 sm:w-44 sm:h-32 rounded-lg overflow-hidden border border-purple-500/40 shrink-0 shadow-lg bg-black">
                                     <img 
                                         src={capturedPhoto} 
-                                        alt="Fotografía de Firma" 
+                                        alt="Selfie de recuerdo y firma" 
                                         className="w-full h-full object-cover"
                                     />
                                     <div className="absolute top-1 right-1 bg-emerald-500 text-black p-1 rounded-full shadow">
@@ -530,10 +530,10 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                 <div className="flex flex-col gap-2 flex-1 w-full text-center sm:text-left">
                                     <div className="flex items-center gap-1.5 justify-center sm:justify-start text-emerald-400 font-bold text-xs">
                                         <CheckCircle2 size={14} />
-                                        <span>Fotografía de firma registrada con éxito</span>
+                                        <span>✨ ¡Selfie guardada! • Firma digital vinculada</span>
                                     </div>
                                     <p className="text-[10px] text-zinc-400">
-                                        Esta fotografía queda sellada con fecha, hora y firma dentro de tu expediente clínico de Oasis.
+                                        Esta selfie queda registrada en tu expediente clínico como constancia afectiva y formal de tu conformidad.
                                     </p>
                                     <div className="flex items-center gap-2 justify-center sm:justify-start pt-1">
                                         <button
@@ -542,7 +542,7 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                                         >
                                             <RefreshCw size={12} />
-                                            <span>Tomar otra foto</span>
+                                            <span>Tomar otra selfie</span>
                                         </button>
                                         <button
                                             type="button"
@@ -570,8 +570,8 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                     />
                                     {/* Live indicator */}
                                     <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
-                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                        <span className="text-[9px] font-mono text-zinc-300 uppercase tracking-widest font-bold">En Vivo</span>
+                                        <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
+                                        <span className="text-[9px] font-mono text-zinc-300 uppercase tracking-widest font-bold">Cámara lista ✨</span>
                                     </div>
                                     {/* Flash effect overlay */}
                                     {isTakingSnapshot && (
@@ -586,7 +586,7 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                         className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-black font-black uppercase text-xs tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all active:scale-95"
                                     >
                                         <Camera size={16} />
-                                        <span>Capturar Fotografía</span>
+                                        <span>Capturar Selfie ✨</span>
                                     </button>
                                     <button
                                         type="button"
@@ -617,7 +617,7 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                     className="px-4 py-2.5 rounded-xl bg-purple-600/90 hover:bg-purple-500 text-black font-black uppercase text-xs tracking-wider flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(168,85,247,0.25)] active:scale-95"
                                 >
                                     <Camera size={15} />
-                                    <span>Habilitar Cámara para Foto</span>
+                                    <span>📸 Tomar selfie para recordar el momento</span>
                                 </button>
                                 <button
                                     type="button"
@@ -625,10 +625,10 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                                     className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 text-xs font-semibold flex items-center gap-2 transition-colors"
                                 >
                                     <Upload size={14} />
-                                    <span>Subir Foto de Archivo</span>
+                                    <span>Subir selfie</span>
                                 </button>
                                 <span className="text-[10px] text-zinc-500 italic pl-1">
-                                    (Opcional pero recomendado para certificación)
+                                    (Opcional pero lindo para comenzar el viaje ✨)
                                 </span>
                             </div>
                         )}

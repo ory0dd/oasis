@@ -4885,7 +4885,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
                                                             <span className="text-[8px] font-mono text-purple-300 font-semibold flex items-center gap-1">
                                                                 <Camera size={9} />
-                                                                <span>Ver Foto de Firma</span>
+                                                                <span>Ver Selfie de Firma ✨</span>
                                                             </span>
                                                         </div>
                                                     </div>
@@ -5203,7 +5203,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         <div className="flex items-center justify-between border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
                                 <Camera size={16} className="text-purple-400" />
-                                <span>Fotografía de Firma y Conformidad</span>
+                                <span>Selfie para Recordar el Momento ✨ (Firma Digital)</span>
                             </div>
                             <button 
                                 onClick={() => setViewingConsentPhoto(null)}
