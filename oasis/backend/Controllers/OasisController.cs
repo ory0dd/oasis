@@ -2152,6 +2152,10 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                             }
                         }
                         u.ClinicalData[kvp.Key] = kvp.Value;
+                        if (kvp.Key.Equals($"oasis_fullname_{user}", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(kvp.Value))
+                        {
+                            u.FullName = kvp.Value.Trim();
+                        }
                     }
                 }
                 SaveState();

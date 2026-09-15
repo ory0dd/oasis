@@ -50,6 +50,133 @@ const MOCK_AFC_DATA = {
     }
 };
 
+export const softenNodeLabel = (label) => {
+    if (!label || typeof label !== 'string') return label;
+    let s = label.trim();
+
+    const transformations = [
+        [/\bautocrítica\s+punitiva\s+interna\b/gi, "Autoexigencia y reproche"],
+        [/\bautocrítica\s+punitiva\b/gi, "Autoexigencia y reproche"],
+        [/\bpunitiva\b/gi, "severa"],
+        [/\bagotamiento\s+neuroquímico\s+por\s+estrés\b/gi, "Cansancio mental acumulado"],
+        [/\bagotamiento\s+neuroquímico\b/gi, "Cansancio mental"],
+        [/\bhipersensibilidad\s+neurosomática\b/gi, "Tensión física ante el estrés"],
+        [/\bneurosomática\b/gi, "corporal"],
+        [/\bneuroquímic[oa]s?\b/gi, "mental"],
+        [/\bconsumo\s+ansiolítico\s+de\s+nicotina\b/gi, "Fumar para calmar la ansiedad"],
+        [/\bconsumo\s+ansiolítico\b/gi, "Consumo para calmarse"],
+        [/\bansiosa\s+constante\b/gi, "por inseguridad"],
+        [/\bindecisión\s+ansiosa\s+constante\b/gi, "Dudas frecuentes al decidir"],
+        [/\baislamiento\s+conductual\s+evasivo\b/gi, "Necesidad de aislarse"],
+        [/\bconductual\s+evasiv[oa]\b/gi, "de desconexión"],
+        [/\bculpa\s+existencial\s+persistente\b/gi, "Dudas frecuentes y culpa"],
+        [/\bculpa\s+existencial\b/gi, "Sentimiento de culpa"],
+        [/\bdinámicas\s+familiares\s+invalidantes\b/gi, "Incomprensión en la familia"],
+        [/\binvalidantes?\b/gi, "distantes"],
+        [/\bfrialdad\s+afectiva\s+en\s+vínculos\b/gi, "Distancia emocional con otros"],
+        [/\bfrialdad\s+afectiva\b/gi, "Distancia afectiva"],
+        [/\bdistanciamiento\s+interpersonal\s+progresivo\b/gi, "Alejamiento de las personas"],
+        [/\balivio\s+transitorio\s+de\s+la\s+tensión\b/gi, "Alivio temporal de la tensión"],
+        [/\bdeterioro\s+de\s+la\s+autoeficacia\b/gi, "Dudas sobre la propia capacidad"],
+        [/\bdeterioro\s+severo\b/gi, "Desgaste"],
+        [/\bcronificación\s+del\s+malestar\b/gi, "Sensación de estancamiento"],
+        [/\bcronificación\b/gi, "Mantenimiento"],
+        [/\bescape\s+mediante\s+videojuegos\b/gi, "Refugio en videojuegos"],
+        [/\bagitación\s+psicomotriz\s+ansiosa\b/gi, "Inquietud física por estrés"],
+        [/\bdesajuste\s+de\s+ritmos\s+circadianos\b/gi, "Dificultad en horarios de sueño"],
+        [/\bfatiga\s+psicofísica\s+profunda\b/gi, "Cansancio físico y mental"],
+        [/\brumiación\s+obsesiva\s+y\s+culpa\b/gi, "Darle vueltas a las cosas"]
+    ];
+
+    for (const [regex, replacement] of transformations) {
+        if (regex.test(s)) {
+            s = s.replace(regex, replacement);
+        }
+    }
+    return s;
+};
+
+export const softenNodeLabels = (nodes) => {
+    if (!Array.isArray(nodes)) return nodes;
+    return nodes.map(n => ({
+        ...n,
+        label: softenNodeLabel(n.label)
+    }));
+};
+
+export const CUTE_NODE_THEMES = {
+    historical: {
+        icon: "🌱",
+        category: "Origen",
+        color: "#a5b4fc",
+        badge: "bg-indigo-500/15 text-indigo-300 border-indigo-400/30",
+        border: "border-indigo-400/30 hover:border-indigo-300",
+        glow: "hover:shadow-[0_0_20px_rgba(165,180,252,0.3)]",
+        selected: "border-indigo-300 bg-indigo-950/40 shadow-[0_0_28px_rgba(165,180,252,0.45)]",
+        textColor: "text-indigo-100"
+    },
+    cognitive: {
+        icon: "💭",
+        category: "Mente",
+        color: "#f472b6",
+        badge: "bg-pink-500/15 text-pink-300 border-pink-400/30",
+        border: "border-pink-400/30 hover:border-pink-300",
+        glow: "hover:shadow-[0_0_20px_rgba(244,114,182,0.3)]",
+        selected: "border-pink-300 bg-pink-950/40 shadow-[0_0_28px_rgba(244,114,182,0.45)]",
+        textColor: "text-pink-100"
+    },
+    motor: {
+        icon: "🐾",
+        category: "Acción",
+        color: "#fbbf24",
+        badge: "bg-amber-500/15 text-amber-300 border-amber-400/30",
+        border: "border-amber-400/30 hover:border-amber-300",
+        glow: "hover:shadow-[0_0_20px_rgba(251,191,36,0.3)]",
+        selected: "border-amber-300 bg-amber-950/40 shadow-[0_0_28px_rgba(251,191,36,0.45)]",
+        textColor: "text-amber-100"
+    },
+    physiological: {
+        icon: "🌸",
+        category: "Cuerpo",
+        color: "#fb7185",
+        badge: "bg-rose-500/15 text-rose-300 border-rose-400/30",
+        border: "border-rose-400/30 hover:border-rose-300",
+        glow: "hover:shadow-[0_0_20px_rgba(251,113,133,0.3)]",
+        selected: "border-rose-300 bg-rose-950/40 shadow-[0_0_28px_rgba(251,113,133,0.45)]",
+        textColor: "text-rose-100"
+    },
+    biological: {
+        icon: "🌿",
+        category: "Físico",
+        color: "#6ee7b7",
+        badge: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
+        border: "border-emerald-400/30 hover:border-emerald-300",
+        glow: "hover:shadow-[0_0_20px_rgba(110,231,183,0.3)]",
+        selected: "border-emerald-300 bg-emerald-950/40 shadow-[0_0_28px_rgba(110,231,183,0.45)]",
+        textColor: "text-emerald-100"
+    },
+    social: {
+        icon: "🫧",
+        category: "Vínculo",
+        color: "#7dd3fc",
+        badge: "bg-sky-500/15 text-sky-300 border-sky-400/30",
+        border: "border-sky-400/30 hover:border-sky-300",
+        glow: "hover:shadow-[0_0_20px_rgba(125,211,252,0.3)]",
+        selected: "border-sky-300 bg-sky-950/40 shadow-[0_0_28px_rgba(125,211,252,0.45)]",
+        textColor: "text-sky-100"
+    },
+    consequence: {
+        icon: "🪄",
+        category: "Desenlace",
+        color: "#c084fc",
+        badge: "bg-purple-500/15 text-purple-300 border-purple-400/30",
+        border: "border-purple-400/30 hover:border-purple-300",
+        glow: "hover:shadow-[0_0_20px_rgba(192,132,252,0.3)]",
+        selected: "border-purple-300 bg-purple-950/40 shadow-[0_0_28px_rgba(192,132,252,0.45)]",
+        textColor: "text-purple-100"
+    }
+};
+
 const BLIND_SPOTS_CONFIG = [
     {
         id: "cronologico",
@@ -179,11 +306,11 @@ const resolveCollisions = (nodes) => {
                     n2.x += moveX;
                     n2.y += moveY;
 
-                    // Keep within bounds
-                    n1.x = Math.max(-30, Math.min(130, n1.x));
-                    n2.x = Math.max(-30, Math.min(130, n2.x));
-                    n1.y = Math.max(-120, Math.min(220, n1.y));
-                    n2.y = Math.max(-120, Math.min(220, n2.y));
+                    // Keep within comfortable virtual canvas bounds
+                    n1.x = Math.max(8, Math.min(92, n1.x));
+                    n2.x = Math.max(8, Math.min(92, n2.x));
+                    n1.y = Math.max(8, Math.min(92, n1.y));
+                    n2.y = Math.max(8, Math.min(92, n2.y));
                 }
             }
         }
@@ -503,6 +630,24 @@ const AutoResizeTextarea = ({ value, onChange, className }) => {
     );
 };
 
+const getLocalItemCaseInsensitive = (prefix, u) => {
+    if (!u) return null;
+    let val = localStorage.getItem(`${prefix}_${u}`);
+    if (val !== null) return val;
+    val = localStorage.getItem(`${prefix}_${u.toLowerCase()}`);
+    if (val !== null) return val;
+    val = localStorage.getItem(`${prefix}_${u.toUpperCase()}`);
+    if (val !== null) return val;
+    const target = `${prefix}_${u}`.toLowerCase();
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.toLowerCase() === target) {
+            return localStorage.getItem(k);
+        }
+    }
+    return null;
+};
+
 const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations = [], activeConversationId = null, onOpenNodeChat, isEmbedded = false, onNavigateTab }) => {
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -566,7 +711,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     const setLocalItem = useCallback((key, value) => {
         localStorage.setItem(key, value);
         if (user) {
-            fetch(`${API_URL}/api/oasis/clínical-data?user=${user}`, {
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [key]: value })
@@ -2057,20 +2202,29 @@ Devuelve estrictamente el JSON sin formato extra.
             if (ny > maxY) maxY = ny;
         });
 
-        const paddingPercentX = isMobileDevice ? 0.08 : 0.05;
-        const paddingPercentY = isMobileDevice ? 0.18 : 0.08;
-        const graphWidthRange = (maxX - minX) || 100;
-        const graphHeightRange = (maxY - minY) || 100;
+        // Add node half-width margin (~7% of virtual width) so bounds include cards, not just their centers
+        const nodeHalfWidthPct = 7;
+        const nodeHalfHeightPct = 6;
+        const boundedMinX = Math.max(0, minX - nodeHalfWidthPct);
+        const boundedMaxX = Math.min(100, maxX + nodeHalfWidthPct);
+        const boundedMinY = Math.max(0, minY - nodeHalfHeightPct);
+        const boundedMaxY = Math.min(100, maxY + nodeHalfHeightPct);
+
+        const paddingPercentX = isMobileDevice ? 0.22 : 0.16;
+        const paddingPercentY = isMobileDevice ? 0.25 : 0.16;
+        const graphWidthRange = (boundedMaxX - boundedMinX) || 80;
+        const graphHeightRange = (boundedMaxY - boundedMinY) || 80;
 
         const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
         const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.72 : 1.05);
-        const minScaleLimit = isMobileDevice ? 0.08 : 0.40;
-        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 3.5);
+        // Safe breathing zoom factor: 0.86 desktop, 0.70 mobile (NEVER > 1.0 to avoid cutting off edges)
+        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.70 : 0.86);
+        const minScaleLimit = isMobileDevice ? 0.08 : 0.12;
+        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 2.5);
 
-        const graphCenterX = (minX + maxX) / 2;
-        const graphCenterY = (minY + maxY) / 2;
+        const graphCenterX = (boundedMinX + boundedMaxX) / 2;
+        const graphCenterY = (boundedMinY + boundedMaxY) / 2;
 
         const px = VIRTUAL_WIDTH * (graphCenterX / 100);
         const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
@@ -2408,17 +2562,17 @@ Devuelve estrictamente el JSON sin formato extra.
     useEffect(() => {
         if (!user) return;
 
-        const storedPhenom = localStorage.getItem(`oasis_phenom_qualitative_${user}`);
+        const storedPhenom = getLocalItemCaseInsensitive('oasis_phenom_qualitative', user);
         if (storedPhenom) {
             try { setPhenomData(JSON.parse(storedPhenom)); } catch (e) { console.error(e); }
         }
 
-        const storedBio = localStorage.getItem(`oasis_bio_transcriptions_${user}`);
+        const storedBio = getLocalItemCaseInsensitive('oasis_bio_transcriptions', user);
         if (storedBio) {
             try { setBioData(JSON.parse(storedBio)); } catch (e) { console.error(e); }
         }
 
-        const storedPid = localStorage.getItem(`oasis_pid_answers_${user}`);
+        const storedPid = getLocalItemCaseInsensitive('oasis_pid_answers', user);
         if (storedPid) {
             try {
                 const pData = JSON.parse(storedPid);
@@ -2470,13 +2624,13 @@ Devuelve estrictamente el JSON sin formato extra.
             });
         };
 
-        const storedAfc = localStorage.getItem(`oasis_afc_real_data_${user}`);
+        const storedAfc = getLocalItemCaseInsensitive('oasis_afc_real_data', user);
         if (storedAfc) {
             try {
                 const parsed = JSON.parse(storedAfc);
                 if (parsed && parsed.nodes) {
-                    parsed.nodes = resolveCollisions(enrichAfcNodesWithAxelInterviews(parsed.nodes));
-                    console.log("🟢 afcData loaded successfully:", parsed);
+                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithAxelInterviews(parsed.nodes)));
+                    console.log("🟢 afcData loaded successfully (softened):", parsed);
                     setAfcData(parsed);
                 } else {
                     console.warn("⚠️ afcData parsed but invalid format, using mock.");
@@ -2497,16 +2651,49 @@ Devuelve estrictamente el JSON sin formato extra.
             setAfcData(mock);
         }
 
-        // Sincronizar desde la nube clínica (Supabase) para asegurar datos actualizados
+        // Sincronizar desde la nube clínica para asegurar datos actualizados
         if (user) {
             fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`)
                 .then(r => r.ok ? r.json() : {})
                 .then(cloudData => {
+                    if (!cloudData) return;
+
+                    // Si falta bioData localmente, sincronizar desde backend
+                    const cloudBio = cloudData[`oasis_bio_transcriptions_${user}`] || cloudData[`oasis_bio_transcriptions_${user.toLowerCase()}`];
+                    if (cloudBio) {
+                        try {
+                            const parsedBio = JSON.parse(cloudBio);
+                            setBioData(prev => prev || parsedBio);
+                            localStorage.setItem(`oasis_bio_transcriptions_${user}`, cloudBio);
+                        } catch (e) {}
+                    }
+
+                    // Si falta phenomData localmente, sincronizar desde backend
+                    const cloudPhenom = cloudData[`oasis_phenom_qualitative_${user}`] || cloudData[`oasis_phenom_qualitative_${user.toLowerCase()}`];
+                    if (cloudPhenom) {
+                        try {
+                            const parsedPhenom = JSON.parse(cloudPhenom);
+                            setPhenomData(prev => prev || parsedPhenom);
+                            localStorage.setItem(`oasis_phenom_qualitative_${user}`, cloudPhenom);
+                        } catch (e) {}
+                    }
+
+                    // Si falta PID-5 localmente, sincronizar desde backend
+                    const cloudPid = cloudData[`oasis_pid_answers_${user}`] || cloudData[`oasis_pid_answers_${user.toLowerCase()}`];
+                    if (cloudPid) {
+                        try {
+                            const parsedPid = JSON.parse(cloudPid);
+                            setPidData(prev => prev || parsedPid);
+                            setPidIndices(prev => prev || computePid5Indices(parsedPid));
+                            localStorage.setItem(`oasis_pid_answers_${user}`, cloudPid);
+                        } catch (e) {}
+                    }
+
                     const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
                                      (isAxel ? (cloudData[`oasis_afc_real_data_Axel Roben`] || cloudData[`oasis_afc_real_data_axel roben`]) : null);
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const enrichedNodes = resolveCollisions(enrichAfcNodesWithAxelInterviews(cloudAfc.nodes));
+                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithAxelInterviews(cloudAfc.nodes)));
                         const resolved = { ...cloudAfc, nodes: enrichedNodes };
                         setAfcData(resolved);
                         try {
@@ -2517,7 +2704,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 .catch(() => null);
         }
 
-        const storedNotes = localStorage.getItem(`oasis_afc_notes_${user}`);
+        const storedNotes = getLocalItemCaseInsensitive('oasis_afc_notes', user);
         if (storedNotes) {
             try { setNodeNotes(JSON.parse(storedNotes)); } catch (e) { console.error(e); }
         } else {
@@ -2591,7 +2778,7 @@ Devuelve estrictamente el JSON sin formato extra.
         )) {
             activeKey = '';
         }
-        setIsAnalyzing("Construyendo topología masiva de nodos (Etapa 1/2)...");
+        setIsAnalyzing("Extrayendo bucles reales de la historia clínica (Etapa 1/2)...");
         
         // Retrieve resolved blind spot answers dynamically from localStorage keys
         let blindSpotAnswersContext = "";
@@ -2603,10 +2790,12 @@ Devuelve estrictamente el JSON sin formato extra.
                 if (dIndex > -1) {
                     const keyUser = part.substring(0, dIndex);
                     const spotId = part.substring(dIndex + 2);
-                    if (keyUser === user) {
+                    if (keyUser.toLowerCase() === (user || '').toLowerCase()) {
                         const answer = localStorage.getItem(key);
-                        const question = localStorage.getItem(`oasis_blindspot_question_${user}__${spotId}`) || "Pregunta de punto ciego";
-                        const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || "Punto ciego clínico";
+                        const question = localStorage.getItem(`oasis_blindspot_question_${user}__${spotId}`) || 
+                                         localStorage.getItem(`oasis_blindspot_question_${user.toLowerCase()}__${spotId}`) || "Pregunta de punto ciego";
+                        const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || 
+                                      localStorage.getItem(`oasis_blindspot_title_${user.toLowerCase()}__${spotId}`) || "Punto ciego clínico";
                         if (answer) {
                             blindSpotAnswersContext += `- ${title} / Pregunta: "${question}" => Respuesta del paciente: "${answer}"\n`;
                         }
@@ -2615,22 +2804,63 @@ Devuelve estrictamente el JSON sin formato extra.
             }
         }
 
+        // Build robust, authentic patient context from all available sources
+        let bioText = "";
+        if (bioData) {
+            if (typeof bioData === 'object') {
+                const entries = Object.entries(bioData);
+                if (entries.length > 0) {
+                    bioText = entries.map(([key, val]) => {
+                        if (!val || !val.toString().trim()) return null;
+                        const idx = parseInt(key, 10);
+                        const qText = (!isNaN(idx) && BIO_QUESTIONS[idx]) ? BIO_QUESTIONS[idx].text : `Pregunta ${key}`;
+                        return `${qText}:\n"${val}"`;
+                    }).filter(Boolean).join('\n\n');
+                }
+            } else {
+                bioText = String(bioData);
+            }
+        }
+
+        let phenomText = "";
+        if (phenomData) {
+            if (typeof phenomData === 'object') {
+                phenomText = Object.entries(phenomData)
+                    .filter(([_, v]) => v && typeof v === 'string' && v.trim())
+                    .map(([k, v]) => `[${k.toUpperCase().replace(/_/g, ' ')}]:\n"${v}"`)
+                    .join('\n\n');
+            } else {
+                phenomText = String(phenomData);
+            }
+        }
+
+        let clinicianNotesText = "";
+        try {
+            const rawC = getLocalItemCaseInsensitive('oasis_clinician_notes', user);
+            if (rawC) {
+                const p = JSON.parse(rawC);
+                clinicianNotesText = typeof p === 'object' ? Object.values(p).filter(Boolean).join('\n') : String(p);
+            }
+        } catch(e) {}
+        const privateNotesText = getLocalItemCaseInsensitive('oasis_private_notes', user) || "";
+        const allNotes = [treatmentPlan?.patientExtras, clinicianNotesText, privateNotesText].filter(Boolean).join('\n---\n');
+
         const currentNodesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.nodes || [], null, 2) : "Ninguno (generación desde cero)";
         const currentEdgesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno (generación desde cero)";
         const currentBlindSpotsText = afcData && afcData.blind_spots ? JSON.stringify(afcData.blind_spots, null, 2) : "Ninguno";
 
         const context = `
-=== EXTRAS / NOTAS ESPECÍFICAS DEL PACIENTE ===
-${treatmentPlan?.patientExtras ? treatmentPlan.patientExtras : "No hay notas adicionales."}
+=== HISTORIA DE VIDA (ENTREVISTA BIOGRÁFICA) ===
+${bioText || "No aportada aún."}
 
-=== DIAGNÓSTICO EXISTENCIAL ===
-${phenomData ? JSON.stringify(phenomData, null, 2) : "No hay datos."}
+=== DIAGNÓSTICO EXISTENCIAL (FENOMENOLOGÍA VIVIDA) ===
+${phenomText || "No aportado aún."}
 
-=== HISTORIA DE VIDA ===
-${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos."}
+=== NOTAS CLÍNICAS / OBSERVACIONES DEL ESPECIALISTA ===
+${allNotes || "No hay notas adicionales."}
 
 === RASGOS PID-5 ===
-${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No hay datos."}
+${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No evaluado aún."}
 
 === RESPUESTAS A PUNTOS CIEGOS ===
 ${blindSpotAnswersContext || "Ninguno aún."}
@@ -2647,70 +2877,83 @@ ${currentBlindSpotsText}
         `;
 
         const systemPromptTopology = `
-Eres un Psicólogo Clínico y Analista Existencial Especializado en Análisis Funcional de la Conducta (AFC).
-ETAPA 1: TOPOLOGÍA. Tu tarea exclusiva es generar los nodos, conexiones y la distribución de modalidad.
+Eres un Psicólogo Clínico y Analista Existencial de Alto Nivel Especializado en Análisis Funcional de la Conducta (AFC).
+ETAPA 1: TOPOLOGÍA. Tu tarea es estructurar los nodos y conexiones funcionales que explican el sufrimiento del paciente.
 
-=== REGLAS GENERALES ===
-Analiza si las respuestas del paciente son congruentes y suficientes. Si es basura, devuelve "is_valid": false.
+=== REGLA DE ORO DE VERACIDAD Y FIDELIDAD CLÍNICA (ESTRICTA Y OBLIGATORIA) ===
+1. CADA NODO DEBE BASARSE EXCLUSIVAMENTE Y ESTRICTAMENTE EN LOS DATOS REALES DE LA HISTORIA DEL PACIENTE.
+   - ¡ESTÁ TOTALMENTE PROHIBIDO INVENTAR SÍNTOMAS, VIVENCIAS, EMPLEOS O CONCEPTOS QUE EL PACIENTE NO HAYA RELATADO!
+   - Si el paciente NO mencionó dolores de cabeza, NO inventes cefaleas.
+   - Si el paciente NO mencionó trabajo corporativo ni pantallas, NO inventes obsesión laboral ni escape por pantallas.
+   - Basa cada nodo en su ocupación real, sus relaciones reales, sus sustancias reales (o la falta de ellas) y sus síntomas somáticos y emocionales reales relatados.
+   - En el campo 'source', incluye SIEMPRE la cita textual corta o fragmento exacto entre comillas de lo que dijo el paciente.
+   - Si el paciente aportó respuestas breves o concisas, enfócate solo en lo reportado. Jamás inventes nodos ficticios para abultar el mapa.
 
+2. Cantidad y Balance de Nodos:
+   - Genera un mapa funcional nítido, ágil y clínicamente certero de entre 15 y 22 nodos en total (enfócate en las variables funcionales reales del paciente; NUNCA agregues nodos inventados de relleno).
+   - DISTRIBUCIÓN FUNCIONAL:
+     a) Históricos (azules, type: 'historical'): 3 a 5 nodos (origen familiar, infancia, rupturas o eventos del pasado narrados por el paciente).
+     b) Mediadores Biológicos (verdes, type: 'biological'): 2 a 4 nodos (patrones de sueño, dolores físicos específicos, consumo de sustancias o reactividad somática reportada).
+     c) Mediadores Sociales (verdes, type: 'social'): 2 a 4 nodos (relación de pareja, dinámicas familiares, aislamiento o vínculos reales).
+     d) Conductas Problema (rojos, types: 'cognitive', 'motor', 'physiological'): 5 a 8 nodos en total:
+        - 'cognitive': pensamientos automáticos, autocrítica o creencias nucleares expresadas por el paciente.
+        - 'motor': conductas de evitación, escape, llanto, discusiones o hábitos reportados.
+        - 'physiological': sensaciones somáticas reales (nudo en garganta, opresión, agitación, visión borrosa) reportadas.
+     e) Consecuencias (blancos, type: 'consequence'): 3 a 5 nodos (consecuencias a corto plazo de alivio y consecuencias a largo plazo de estancamiento o sufrimiento).
+
+3. REGLA DE NOMBRADO DE NODOS ('label') — TONO CERCANO, LIGERO Y REAL ("HEY MIRA", NUNCA "¡¡¡HEY MIRA!!!"):
+   - Los nombres NO deben sonar como alarmas médicas catastróficas, diagnósticos psiquiátricos rimbombantes ni etiquetas abstractas que asusten al consultante.
+   - Deben sonar como un terapeuta empático y agudo diciéndole amablemente: "hey mira, esto es lo que te pasa", de forma ligera, clara y profundamente humana.
+   - EXTENSIÓN: Entre 2 y 4 palabras exactas por nodo.
+   - PROHIBIDO USAR JERGA MÉDICA O ALARMISTA:
+     * ❌ NUNCA uses términos como: "punitiva", "neurosomática", "neuroquímico", "ansiolítico", "evasivo", "circadiano", "frialdad afectiva", "cronificación", "disfunción", "patología".
+     * ✔️ Transforma a lenguaje natural, descriptivo y comprensivo:
+       - En vez de "Autocrítica punitiva interna" -> "Autoexigencia y reproche" o "Dificultad para perdonarse"
+       - En vez de "Agotamiento neuroquímico por estrés" -> "Cansancio mental acumulado" o "Sobrecarga de energía"
+       - En vez de "Escape mediante videojuegos" -> "Refugio en videojuegos" o "Desconexión temporal"
+       - En vez de "Hipersensibilidad neurosomática" -> "Tensión física ante el estrés" o "Sensibilidad corporal"
+       - En vez de "Consumo ansiolítico de nicotina" -> "Fumar para calmar la ansiedad"
+       - En vez de "Aislamiento conductual evasivo" -> "Necesidad de aislarse"
+       - En vez de "Culpa existencial persistente" -> "Dudas frecuentes y culpa"
+       - En vez de "Dinámicas familiares invalidantes" -> "Incomprensión en la familia"
+       - En vez de "Deterioro de la autoeficacia" -> "Dudas sobre la propia capacidad"
+       - En vez de "Cronificación del malestar" -> "Sensación de estancamiento"
+   - CADA NOMBRE DEBE SER ÚNICO Y BASADO EN HECHOS REALES DEL PACIENTE (si es estudiante o adolescente, no inventes presión laboral corporativa ni ambientes de oficina).
+   - Coordenadas sugeridas: historical (x: 12 a 16), cognitive (x: 26 a 30), motor/physiological (x: 41 a 45), biological (x: 55 a 59), social (x: 69 a 73), consequence (x: 84 a 88), Y: 20 a 80.
+
+4. Conexiones (edges):
+   - Genera entre 20 y 30 conexiones funcionales dirigidas ("unidirectional" o "bidirectional") con weight (1, 2 o 3).
+   - Muestra cómo los eventos históricos y mediadores activan las conductas problema, cómo las conductas generan consecuencias, y cómo las consecuencias retroalimentan el bucle.
 ${isAdditive ? `
 === MODO ACTUALIZACIÓN ADITIVA ===
 1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
 2. Copia EXACTAMENTE todas las conexiones de 'Conexiones actuales'.
-3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones.
-` : `
-=== MODO GENERACIÓN DESDE CERO ===
-1. Cantidad y Balance de Nodos: Genera exactamente entre 52 y 66 nodos en total para un mapa clínicamente armónico y equilibrado.
-   DISTRIBUCIÓN CLÍNICA RIGUROSA:
-   a) Históricos (azules, type: 'historical'): Entre 14 y 18 nodos (¡MUY IMPORTANTE: AUMENTA LOS NODOS AZULES para construir una base histórica y del desarrollo rica y sólida en la columna izquierda!).
-      - Eventos de infancia, heridas del desarrollo, dinámicas tempranas con figuras de apego, mandatos parentales de rendimiento o complacencia, condicionamientos pasados, experiencias escolares formativas, rupturas afectivas previas, antecedentes de consumo o soledad.
-   b) Problemas y Conductas problemáticas (rojos, types: 'cognitive', 'motor', 'physiological'): Genera entre 16 y 20 nodos en total (¡UN POQUITO MENOS QUE ANTES, manteniendo la riqueza clínica pero sin saturar excesivamente el mapa!):
-      - 'cognitive' (5 a 7 nodos): rumiaciones obsesivas, autocrítica destructiva interna, anticipación catastrófica, creencias nucleares disfuncionales ("no soy suficiente", "debo complacer"), indecisión ansiosa, culpa existencial.
-      - 'motor' (5 a 7 nodos): conductas de evitación experiencial activa/pasiva, procrastinación evasiva, aislamiento voluntario en la habitación, aplazamiento compulsivo de deberes, escape mediante pantallas o adicciones, abandono de rutinas saludables.
-      - 'physiological' (5 a 6 nodos): taquicardia y opresión en el pecho, insomnio de conciliación y desvelo, contracturas musculares crónicas, fatiga psicofísica profunda, agitación psicomotriz ansiosa, cefaleas tensionales.
-   c) Mediadores y Vulnerabilidades (verdes, types: 'biological', 'social'): Genera entre 12 y 16 nodos en total (abundantes mediadores biológicos y sociales):
-      - 'biological' (6 a 8 nodos): desajuste severo de ritmos circadianos y de sueño, hipersensibilidad neurosomática del SNC, agotamiento neuroquímico por estrés continuado, consumo ansiolítico de nicotina/cafeína, fatiga biológica acumulada.
-      - 'social' (6 a 8 nodos): dinámicas familiares invalidantes o punitivas, sobreexigencia y presión externa laboral/académica, frialdad afectiva en vínculos cercanos, distanciamiento de red de apoyo, mandatos asfixiantes del entorno.
-   d) Consecuencias (blancos, type: 'consequence'): Entre 10 y 12 nodos.
-      - Consecuencias a corto plazo reforzadoras (alivio momentáneo de la angustia, evasión transitoria de la tensión) y consecuencias a largo plazo desadaptativas (cronificación del dolor, deterioro de la autoeficacia, soledad existencial, estancamiento vital).
-
-2. REGLA DE ORO DE NOMBRADO DE NODOS ('label'):
-   - ¡TOTALMENTE PROHIBIDO USAR UNA SOLA PALABRA GENÉRICA! (NUNCA uses "Ansiedad", "Familia", "Sueño", "Cigarros", "Distracción", "Trabajo", "Música", "Ejercicio", "Infancia").
-   - CADA NODO DEBE TENER UN NOMBRE CLÍNICO, CLARO Y EVOCADOR DE ENTRE 2 Y 4 PALABRAS EXACTAS.
-     * Ejemplos correctos para Históricos: "Experiencias de rechazo infantil", "Ruptura afectiva traumática", "Exigencia perfeccionista materna", "Historia de consumo temprano", "Dependencia emocional familiar", "Aislamiento escolar temprano".
-     * Ejemplos correctos para Problemas (Rojos): "Rumiación obsesiva y culpa", "Autocrítica punitiva interna", "Aislamiento conductual evasivo", "Procrastinación por evitación de estrés", "Taquicardia y opresión torácica", "Insomnio de conciliación y desvelo", "Agitación psicomotriz ansiosa".
-     * Ejemplos correctos para Mediadores (Verdes): "Consumo ansiolítico de nicotina", "Disfunción de ritmos de descanso", "Ambiente familiar invalidante y crítico", "Sobrecarga y presión del entorno", "Hipersensibilidad neurosomática y alerta", "Desconexión de redes de contención".
-     * Ejemplos correctos para Consecuencias (Blancos): "Alivio transitorio de la tensión", "Deterioro de la autoeficacia sentida", "Distanciamiento interpersonal progresivo", "Cronificación del malestar emocional".
-   - REGLA DE UNICIDAD: Cada nodo debe poseer un nombre absolutamente único. Jamás repitas la misma palabra clave ni el mismo concepto en dos nodos diferentes del mapa.
-   - ORDEN DE RELEVANCIA: Ordena el arreglo de nodos de MAYOR a MENOR relevancia respecto al motivo de consulta del paciente (los nodos más críticos y centrales ponlos primero para que se ubiquen en la parte superior del mapa).
-   - Coordenadas estimadas de partida: historical (x: 6 a 15), cognitive (x: 23 a 31), motor/physiological (x: 40 a 48), biological (x: 58 a 65), social (x: 73 a 80), consequence (x: 88 a 95), Y: 15 a 85.
-
-3. Conexiones (edges): Genera entre 70 y 90 conexiones clínicas coherentes y ricas. Conecta antecedentes históricos hacia mediadores, mediadores hacia conductas problemáticas, conductas hacia consecuencias, y bucles de retroalimentación de consecuencias hacia mediadores y conductas.
-`}
+3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones reales basados en lo que respondió el paciente.
+` : ''}
 
 === ESTRUCTURA JSON REQUERIDA ===
 {
   "is_valid": true,
-  "rejection_reason": "...",
+  "rejection_reason": "",
   "nodes": [
     // Cada nodo contiene:
     // - id: formato ultracorto: "n1", "n2", "n3"...
     // - type: "historical" | "motor" | "cognitive" | "physiological" | "biological" | "social" | "consequence"
-    // - label: nombre clínico descriptivo (2 a 4 palabras, sin palabras genéricas sueltas)
-    // - description: explicación clínica concisa (5 a 10 palabras)
-    // - source: cita o evidencia breve (2 a 5 palabras)
-    // - challenge: reto existencial terapéutico (3 a 6 palabras)
-    // - reflection_question: pregunta para la toma de consciencia (4 a 8 palabras)
+    // - label: nombre clínico descriptivo (2 a 4 palabras, fiel al paciente)
+    // - description: explicación clínica concisa (5 a 12 palabras)
+    // - source: cita textual corta del paciente entre comillas (3 a 8 palabras)
+    // - challenge: reto existencial terapéutico (3 a 7 palabras)
+    // - reflection_question: pregunta reflexiva directa para el paciente (5 a 10 palabras)
     // - x: coordenada X sugerida (0 a 100)
     // - y: coordenada Y sugerida (0 a 100)
   ],
   "edges": [
-    // Lista de conexiones: { "source": "n1", "target": "n5", "weight": 2, "type": "unidirectional" }
+    // Conexiones: { "source": "n1", "target": "n2", "weight": 2, "type": "unidirectional" }
   ],
   "tripleModality": {
     "motor": 65,
-    "cognitive": 85,
-    "physiological": 40
+    "cognitive": 80,
+    "physiological": 50
   }
 }
 `;
@@ -2723,11 +2966,11 @@ ${isAdditive ? `
                 model: model,
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: "Genera exclusivamente la TOPOLOGÍA (nodos y edges) del AFC. Datos:\n" + context }
+                    { role: 'user', content: "Genera exclusivamente la TOPOLOGÍA funcional (nodos y conexiones) basada 100% en la historia real del paciente. Datos clínicos:\n" + context }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.3,
-                max_tokens: 8192
+                temperature: 0.2,
+                max_tokens: 4096
             };
 
             const res1 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -2756,48 +2999,52 @@ ${isAdditive ? `
                 throw new Error("El análisis fue rechazado por la IA: " + (parsedTopology.rejection_reason || "Datos insuficientes"));
             }
 
-            setIsAnalyzing("Redactando análisis clínico profundo (Etapa 2/3)...");
+            setIsAnalyzing("Formulando hipótesis clínicas y claves terapéuticas (Etapa 2/2)...");
 
             const systemPromptInsights = `
-Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 1. Tu tarea es generar el análisis escrito, hipótesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
+Eres un Psicólogo Clínico y Analista Existencial de Alto Nivel.
+ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la Etapa 1. Tu tarea es generar el análisis escrito, hipótesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
+
+=== REGLA DE TONO Y FIDELIDAD CLÍNICA ("HEY MIRA", NO "¡¡¡HEY MIRA!!!") ===
+- Basa todo tu análisis, hipótesis y claves terapéuticas EXCLUSIVAMENTE en la persona real del paciente (su historia, ocupación real, vivencias y palabras). NUNCA asumas ni inventes conceptos no respaldados por sus datos.
+- Habla en un tono empático, ligero, lúcido y humano ("hey mira"), jamás acusatorio, hiperpatologizante ni catastrófico ("¡¡¡HEY MIRA!!!").
+- Evita jerga médica intimidante o rimbombante.
 
 === ESTRUCTURA JSON REQUERIDA ===
-(CRÍTICO: Devuelve EXCLUSIVAMENTE un objeto JSON válido, verifica no agregar llaves "}" adicionales de cierre donde no van, y cuida las comas finales)
+(CRÍTICO: Devuelve EXCLUSIVAMENTE un objeto JSON válido)
 {
   "firma_resonancia": {
-    "habitar": "Una frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y el espacio.",
-    "vinculo": "Una frase de máx. 12 palabras sobre cómo se conecta con otros o su barrera principal.",
-    "busqueda": "Una frase de máx. 12 palabras sobre su anhelo existencial no resuelto o su motor oculto.",
+    "habitar": "Frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y espacio.",
+    "vinculo": "Frase de máx. 12 palabras sobre cómo se conecta con otros o su barrera principal.",
+    "busqueda": "Frase de máx. 12 palabras sobre su anhelo existencial o motor oculto.",
     "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   },
   "hypotheses": {
-    "mantenimiento": "Escribe un análisis profundo pero conciso (alrededor de 120 a 130 palabras, dividido en 2 párrafos). Explica clínica y fenomenológicamente cómo el paciente perpetúa su sufrimiento y mantiene el bucle activo.",
-    "solucion": "Escribe una propuesta estructurada (alrededor de 120 a 130 palabras, dividida en 2 párrafos). Debe ser COMPLETAMENTE DISTINTA al mantenimiento. Enfócate radicalmente en la acción clínica para romper la evitación."
+    "mantenimiento": "Análisis clínico profundo (alrededor de 100 a 120 palabras, dividido en 2 párrafos). Explica clara y fenomenológicamente cómo el paciente perpetúa su bucle basado en sus vivencias reales.",
+    "solucion": "Propuesta estructurada (alrededor de 100 a 120 palabras, dividida en 2 párrafos). Enfoque radical en la acción clínica y psicológica para romper el bucle."
   },
-  "explicacion_sencilla": "Escribe una narración cálida y empática (alrededor de 120 a 130 palabras, dividida en 2 párrafos). Explícale cómo funciona su bucle. Háblale directamente de 'tú'. Profundiza en su dolor, pero sé directo.",
-  "claves_salida": "Escribe una lista de 3 a 4 consejos prácticos, empáticos y muy sencillos de leer (en un tono cercano de 'tú'), separados por saltos de línea y comenzando con un guion. Cada consejo debe sugerir un cambio de actitud o acción cotidiana realista.",
+  "explicacion_sencilla": "Narración empática y cálida (alrededor de 100 a 120 palabras, dividida en 2 párrafos). Explícale cómo funciona su bucle hablándole directamente de 'tú', conectando con sus experiencias reales.",
+  "claves_salida": "3 a 4 consejos prácticos y cotidianos (en tono cercano de 'tú'), separados por saltos de línea y comenzando con un guion (- consejo).",
   "analysis_breakdown": {
-    "historical_evidence": "Evidencia histórica.",
-    "mediators_evidence": "Evidencia de mediadores.",
-    "conducts_evidence": "Evidencia de conductas.",
-    "consequences_evidence": "Evidencia de consecuencias."
+    "historical_evidence": "Evidencia histórica real del paciente.",
+    "mediators_evidence": "Evidencia de mediadores reales.",
+    "conducts_evidence": "Evidencia de conductas reales.",
+    "consequences_evidence": "Evidencia de consecuencias reales."
   },
   "blind_spots": [
-    // Pool de puntos ciegos (5 elementos en modo generación desde cero, o los restantes en modo aditivo)
-    // Cada punto ciego contiene:
-    // - id: identificador único.
-    // - title: título de la brecha.
-    // - question: la pregunta de confrontación.
-    // - node: el nodo "incompleto" o "dashed" propuesto: { id: "blind_spot_...", type, label, x, y }
-    // - edge: la conexión propuesta: { source, target, weight, type }
+    // Entre 3 y 5 puntos ciegos clínicos personalizados que confronten con agudeza y empatía
+    // Cada punto ciego:
+    // - id: identificador único (ej. "vacio_vincular")
+    // - title: título de la brecha (máx. 6 palabras)
+    // - question: pregunta de confrontación terapéutica
+    // - node: { id: "blind_spot_1", type: "dashed", label: "Nombre brecha", x: 50, y: 50 }
+    // - edge: { source: "n1", target: "blind_spot_1", weight: 2, type: "unidirectional" } (usa IDs existentes de la etapa 1)
   ],
   "patrones_dificultad": [
-    // Array de 1 a 2 patrones de dificultad o circuitos clínicos identificados.
-    // Cada patrón encadena de 3 a 6 nodos.
+    // 1 a 2 patrones o circuitos clínicos clave identificados
     // - id: string único
     // - nombre: título cortísimo del ciclo (máximo 4 palabras)
-    // - clave_salida: un consejo práctico, único y amable (máximo 25 palabras) específico para flexibilizar este circuito.
+    // - clave_salida: un consejo práctico y específico para flexibilizar este circuito (máximo 25 palabras)
   ]
 }
 `;
@@ -2806,11 +3053,11 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes el mapa topológico generado en la Etapa 
                 model: model,
                 messages: [
                     { role: 'system', content: systemPromptInsights },
-                    { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones):\n${JSON.stringify(parsedTopology.nodes)}` }
+                    { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify(parsedTopology.nodes)}` }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.3,
-                max_tokens: 8192
+                temperature: 0.2,
+                max_tokens: 4096
             };
 
             const res2 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -4049,50 +4296,37 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const currentNodes = isArray ? inputNodes : (afcData ? afcData.nodes : null);
         if (!currentNodes || currentNodes.length === 0) return isArray ? inputNodes : [];
 
-        const newNodes = [...currentNodes].map(n => ({ ...n }));
+        const newNodes = [...currentNodes].map(n => ({ 
+            ...n, 
+            label: softenNodeLabel(n.label) 
+        }));
 
-        const getStaggeredSlots = (count, baseX, customYStep, overflowDirection = 0, customZigZag = 4.0) => {
+        const getStaggeredSlots = (count, baseX, customYStep) => {
             if (count <= 0) return [];
             if (count === 1) return [{ x: baseX, y: 50 }];
 
-            const rowsInThisColumn = Math.ceil(count / 2);
-            // Dynamic vertical step so fewer nodes spread out comfortably, and more nodes don't bunch up
+            // Each node receives its own unique vertical level for optimal readability and soft constellation flow
             let yStep = customYStep;
             if (!yStep) {
-                if (rowsInThisColumn <= 2) yStep = 22;
-                else if (rowsInThisColumn <= 3) yStep = 18;
-                else if (rowsInThisColumn <= 4) yStep = 15;
-                else if (rowsInThisColumn <= 6) yStep = 11.5;
-                else if (rowsInThisColumn <= 8) yStep = 9.2;
-                else yStep = 8.0;
+                if (count === 2) yStep = 24;
+                else if (count === 3) yStep = 19;
+                else if (count === 4) yStep = 15;
+                else if (count === 5) yStep = 12.5;
+                else if (count === 6) yStep = 10.5;
+                else if (count <= 8) yStep = 9.0;
+                else yStep = Math.max(6.5, 68 / (count - 1));
             }
 
-            const MAX_ROWS = 7;
+            const totalHeight = (count - 1) * yStep;
+            const startY = 50 - (totalHeight / 2);
             const slots = [];
             for (let i = 0; i < count; i++) {
-                let overflowIndex = 0;
-                if (overflowDirection !== 0) {
-                    overflowIndex = Math.floor(i / (MAX_ROWS * 2));
-                }
-                
-                const localI = overflowDirection !== 0 ? i % (MAX_ROWS * 2) : i;
-                const activeRows = overflowDirection !== 0 ? 
-                     Math.ceil(Math.min(count - overflowIndex * (MAX_ROWS * 2), MAX_ROWS * 2) / 2) : 
-                     rowsInThisColumn;
-                
-                const totalHeight = (activeRows - 1) * yStep;
-                const startY = 50 - (totalHeight / 2);
-                
-                const zigZagWidth = customZigZag || 3.8;
-                const localXOffset = (localI % 2 === 0) ? -zigZagWidth : zigZagWidth;
-                
-                const overflowXOffset = overflowIndex === 0 ? 0 : overflowDirection * 12 * overflowIndex;
-                
-                const rowIndex = Math.floor(localI / 2);
-                slots.push({
-                    x: baseX + localXOffset + overflowXOffset,
-                    y: startY + (rowIndex * yStep)
-                });
+                // Organic floating wave offset (alternating + subtle sine wave)
+                const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 2.2 : 0;
+                const altX = (i % 2 === 0 ? -1.8 : 1.8);
+                const x = Math.max(9, Math.min(91, baseX + altX + waveX));
+                const y = Math.max(14, Math.min(86, startY + (i * yStep)));
+                slots.push({ x, y });
             }
             return slots;
         };
@@ -4119,15 +4353,15 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return count > 0 ? sumY / count : node.y;
         };
 
-        // Sugiyama Layered Layout with 6 Granular Columns (Balanced node distribution):
-        // Históricos (10%) -> Cognitivos (27%) -> Motores/Somáticos (44%) -> Biológicos (61%) -> Sociales (77%) -> Consecuencias (92%)
+        // Sugiyama Layered Layout with 6 Granular Columns (Balanced node distribution with safe margins):
+        // Históricos (14%) -> Cognitivos (28%) -> Motores/Somáticos (43%) -> Biológicos (57%) -> Sociales (71%) -> Consecuencias (86%)
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 10, customYStep: null, customZigZag: 3.8, overflowDir: -1 },
-            { filter: n => n.type === 'cognitive', baseX: 27, customYStep: null, customZigZag: 3.5, overflowDir: 0 },
-            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 44, customYStep: null, customZigZag: 3.8, overflowDir: 0 },
-            { filter: n => n.type === 'biological', baseX: 61, customYStep: null, customZigZag: 3.5, overflowDir: 0 },
-            { filter: n => n.type === 'social', baseX: 77, customYStep: null, customZigZag: 3.2, overflowDir: 0 },
-            { filter: n => n.type === 'consequence', baseX: 92, customYStep: null, customZigZag: 2.8, overflowDir: 1 }
+            { filter: n => n.type === 'historical', baseX: 14, customYStep: null },
+            { filter: n => n.type === 'cognitive', baseX: 28, customYStep: null },
+            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 43, customYStep: null },
+            { filter: n => n.type === 'biological', baseX: 57, customYStep: null },
+            { filter: n => n.type === 'social', baseX: 71, customYStep: null },
+            { filter: n => n.type === 'consequence', baseX: 86, customYStep: null }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -4145,10 +4379,10 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         // determines the vertical position, placing the most important nodes at the top.
         layerNodes.forEach((nodes, layerIdx) => {
             const layer = layers[layerIdx];
-            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep, layer.overflowDir, layer.customZigZag);
+            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep);
             nodes.forEach((n, idx) => {
-                n.x = slots[idx].x;
-                n.y = slots[idx].y;
+                n.x = Math.max(9, Math.min(91, slots[idx].x));
+                n.y = Math.max(12, Math.min(88, slots[idx].y));
             });
         });
 
@@ -5336,9 +5570,9 @@ Devuelve estrictamente el JSON sin formato extra.
                         <div className="bg-[#18181b] border border-orange-500/30 rounded-xl p-4 max-w-md w-full flex items-start gap-3 text-left">
                             <ShieldAlert className="text-orange-400 shrink-0 mt-0.5" size={18} />
                             <div>
-                                <h4 className="text-orange-400 font-bold text-xs uppercase tracking-wider mb-1">Análisis de Nivel Experto</h4>
+                                <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">Análisis Clínico Personalizado</h4>
                                 <p className="text-[11px] text-zinc-400">
-                                    Este proceso requiere un alto poder de cómputo y puede demorar entre <strong className="text-zinc-200">60 y 90 segundos</strong>. Por favor, <strong className="text-white">no cierres esta pestaña ni recargues la página</strong> mientras el clínico virtual estructura tu red conductual.
+                                    Estructurando la red funcional basada 100% en la historia real del paciente. Este proceso demorará entre <strong className="text-zinc-200">10 y 15 segundos</strong>.
                                 </p>
                             </div>
                         </div>
@@ -5349,12 +5583,16 @@ Devuelve estrictamente el JSON sin formato extra.
                         {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
                             <div className="absolute top-[80px] md:top-6 left-4 md:left-6 z-[120] hidden md:flex items-center gap-2 pointer-events-none">
-                                    <h2 className="text-sm font-bold text-white flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg">
-                                        <Target size={16} className="text-emerald-400" /> Mapa de Bucles
-                                        {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] uppercase font-bold text-zinc-400 border border-zinc-700">Plantilla</span>}
+                                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-zinc-950/70 border border-pink-400/20 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+                                    <span className="text-xs">✨</span>
+                                    <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
+                                        Mapa de Bucles
                                     </h2>
+                                    <span className="text-[11px]">🍃</span>
+                                    {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
                                 </div>
-                                <div className={`absolute bottom-[90px] md:bottom-6 left-3 md:left-6 z-[120] flex-col items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${selectedNode ? 'hidden md:flex' : 'flex'}`}>
+                            </div>
+                                <div className={`absolute bottom-[90px] md:bottom-6 left-3 md:left-6 z-[120] flex-col items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
 
 
                                     {/* Action Buttons */}
@@ -5441,8 +5679,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                 onDragStart={(e) => e.preventDefault()}
                                 style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
                             >
-                                {/* Decoración de fondo del lienzo (fija) */}
-                                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+                                {/* Decoración de fondo del lienzo (fija kawaii / dreamy constellation) */}
+                                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
+                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full mix-blend-screen pointer-events-none" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full mix-blend-screen pointer-events-none" />
+                                    <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
+                                </div>
 
 
 
@@ -5459,7 +5702,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Zoom Controls Overlay - Compact Glass Toolbar */}
                                 {mapViewTab === 'map' && (
                                     <div 
-                                        className={`zoom-controls absolute bottom-[90px] md:bottom-2.5 right-3 md:right-2.5 z-[60] flex-row items-center gap-0.5 bg-zinc-950/85 border border-white/10 sm:backdrop-blur-md p-0.5 rounded-xl shadow-2xl transition-all duration-300 ${selectedNode ? 'hidden md:flex' : 'flex'}`}
+                                        className={`zoom-controls absolute bottom-[90px] md:bottom-2.5 right-3 md:right-2.5 z-[60] flex-row items-center gap-0.5 bg-zinc-950/85 border border-white/10 sm:backdrop-blur-md p-0.5 rounded-xl shadow-2xl transition-all duration-300 ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                     >
@@ -5547,23 +5790,23 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     }
                                                 `}</style>
                                         <defs>
-                                            <marker id="arrowhead-default" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="rgba(255,255,255,0.25)" />
+                                            <marker id="arrowhead-default" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.36" fill="rgba(255,255,255,0.35)" />
                                             </marker>
-                                            <marker id="arrowhead-incoming" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="#818cf8" />
+                                            <marker id="arrowhead-incoming" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#a5b4fc" />
                                             </marker>
-                                            <marker id="arrowhead-outgoing" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="#fb7185" />
+                                            <marker id="arrowhead-outgoing" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#f472b6" />
                                             </marker>
-                                            <marker id="arrowhead-both" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="#a78bfa" />
+                                            <marker id="arrowhead-both" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#c084fc" />
                                             </marker>
-                                            <marker id="arrowhead-blindspot" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="#38bdf8" />
+                                            <marker id="arrowhead-blindspot" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#38bdf8" />
                                             </marker>
-                                            <marker id="arrowhead-feedback" markerWidth="0.8" markerHeight="0.6" refX="0.7" refY="0.3" orient="auto">
-                                                <polygon points="0 0, 0.8 0.3, 0 0.6" fill="rgba(168, 85, 247, 0.8)" />
+                                            <marker id="arrowhead-feedback" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
+                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#f472b6" />
                                             </marker>
                                         </defs>
                                         {finalEdgesToRender.map((edge, i) => {
@@ -5582,16 +5825,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                             const dist = Math.hypot(dx, dy) || 1;
 
                                             // Node radii offsets
-                                            let sourceOffset = 5;
-                                            let targetOffset = 5;
+                                            let sourceOffset = 5.2;
+                                            let targetOffset = 5.2;
 
-                                            if (source.type === 'historical') sourceOffset = 4.0;
+                                            if (source.type === 'historical') sourceOffset = 5.2;
                                             if (source.type === 'biological' || source.type === 'social') sourceOffset = 5.0;
-                                            if (source.type === 'motor' || source.type === 'cognitive' || source.type === 'physiological') sourceOffset = 6.0;
+                                            if (source.type === 'motor' || source.type === 'cognitive' || source.type === 'physiological') sourceOffset = 5.2;
+                                            if (source.type === 'consequence') sourceOffset = 5.2;
 
-                                            if (target.type === 'historical') targetOffset = 4.0;
+                                            if (target.type === 'historical') targetOffset = 5.2;
                                             if (target.type === 'biological' || target.type === 'social') targetOffset = 5.0;
-                                            if (target.type === 'motor' || target.type === 'cognitive' || target.type === 'physiological') targetOffset = 6.0;
+                                            if (target.type === 'motor' || target.type === 'cognitive' || target.type === 'physiological') targetOffset = 5.2;
+                                            if (target.type === 'consequence') targetOffset = 5.2;
 
                                             // Apply offsets only if there's enough space
                                             const actualSourceOffset = dist > sourceOffset + targetOffset + 2 ? sourceOffset : 0;
@@ -5610,10 +5855,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                             if (isFeedback) {
                                                 const midX = (x1 + x2) / 2;
                                                 const midY = (y1 + y2) / 2;
-                                                const bowFactor = midY < 50 ? -30 : 30;
-                                                pathData = `M ${x1} ${y1} Q ${midX} ${midY + bowFactor} ${x2} ${y2}`;
+                                                const bowFactor = midY < 50 ? -22 : 22;
+                                                pathData = `M ${x1} ${y1} C ${x1 - 14} ${y1 + bowFactor}, ${x2 + 14} ${y2 + bowFactor}, ${x2} ${y2}`;
                                             } else {
-                                                pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
+                                                const deltaX = x2 - x1;
+                                                const curvature = Math.max(5, Math.min(Math.abs(deltaX) * 0.45, 18));
+                                                pathData = `M ${x1} ${y1} C ${x1 + curvature} ${y1}, ${x2 - curvature} ${y2}, ${x2} ${y2}`;
                                             }
 
                                             // Determine highlight state
@@ -5872,37 +6119,68 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
                                             >
 
-                                                {node.type === 'historical' && (
-                                                    <div className="relative flex items-center justify-center">
-                                                        <div className={`w-28 h-28 absolute bg-[#0a0a0c]/90 border-2 rotate-45 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-blue-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(59,130,246,0.3)]' : 'border-blue-500/40 hover:border-blue-400'))}`} />
-                                                        <span className={`relative z-10 text-[10px] font-bold text-center leading-snug w-[140px] break-words p-3 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-blue-200')}`}>{node.label}</span>
-                                                    </div>
-                                                )}
-                                                {(node.type === 'biological' || node.type === 'social') && (
-                                                    <div className={`min-w-[130px] max-w-[170px] min-h-[130px] rounded-full bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-5 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-emerald-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(16,185,129,0.3)]' : 'border-emerald-500/40 hover:border-emerald-400'))}`}>
-                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-emerald-200')}`}>{node.label}</span>
-                                                    </div>
-                                                )}
-                                                {(node.type === 'motor' || node.type === 'cognitive' || node.type === 'physiological') && (
-                                                    <div className={`min-w-[150px] max-w-[200px] min-h-[64px] rounded-xl bg-[#0a0a0c]/90 border-2 flex items-center justify-center p-4 transition-colors ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : (node.status === 'integrated' ? 'border-yellow-400 bg-yellow-950/40 shadow-[0_0_30px_rgba(250,204,21,0.5)]' : (isSelected ? 'border-rose-400 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(244,63,94,0.3)]' : 'border-rose-500/40 hover:border-rose-400'))}`}>
-                                                        <span className={`text-[11px] font-bold text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] ${node.status === 'integrated' ? 'text-yellow-300' : (node.dashed ? 'text-sky-300' : 'text-rose-200')}`}>{node.label}</span>
-                                                    </div>
-                                                )}
-                                                
-                                                {node.type === 'mini_chat' && (
+                                                {node.type === 'mini_chat' ? (
                                                     <div className="group relative cursor-pointer flex items-center justify-center w-8 h-8">
-                                                        <div className={`w-2 h-2 rounded-full border shadow-sm transition-transform duration-300 group-hover:scale-150 ${node.role === 'assistant' ? 'bg-sky-500/30 border-sky-500/80' : 'bg-emerald-500/30 border-emerald-500/80'}`} />
-                                                        <div className={`absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 rounded-lg bg-black/90 border p-1.5 backdrop-blur-md shadow-lg z-50 ${node.role === 'assistant' ? 'border-sky-500/60 shadow-[0_0_15px_rgba(14,165,233,0.3)]' : 'border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.3)]'}`}>
-                                                            <span className={`block text-[6.5px] font-medium text-center whitespace-nowrap ${node.role === 'assistant' ? 'text-sky-100' : 'text-emerald-100'}`}>{node.label}</span>
+                                                        <div className={`w-2.5 h-2.5 rounded-full border shadow-sm transition-transform duration-300 group-hover:scale-150 ${node.role === 'assistant' ? 'bg-sky-400/40 border-sky-300' : 'bg-pink-400/40 border-pink-300'}`} />
+                                                        <div className={`absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 rounded-xl bg-black/90 border p-1.5 backdrop-blur-md shadow-lg z-50 ${node.role === 'assistant' ? 'border-sky-400/60 shadow-[0_0_15px_rgba(14,165,233,0.3)]' : 'border-pink-400/60 shadow-[0_0_15px_rgba(244,114,182,0.3)]'}`}>
+                                                            <span className="block text-[7px] font-medium text-center whitespace-nowrap text-zinc-100">{softenNodeLabel(node.label)}</span>
                                                         </div>
                                                     </div>
-                                                )}
+                                                ) : (() => {
+                                                    const theme = CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
+                                                    const isIntegrated = node.status === 'integrated';
+                                                    const isDashed = Boolean(node.dashed);
 
-                                                {node.type === 'consequence' && (
-                                                    <div className={`min-w-[150px] max-w-[200px] min-h-[80px] rounded-[2rem] bg-[#0a0a0c]/90 border-2 border-dashed flex items-center justify-center p-4 transition-colors ${isSelected ? 'border-zinc-300 bg-[#0a0a0c] shadow-[inset_0_0_30px_rgba(255,255,255,0.15)]' : 'border-zinc-500/60 hover:border-zinc-400'} ${node.dashed ? 'border-dashed border-sky-400 bg-sky-950/30' : ''}`}>
-                                                        <span className="text-[11px] font-bold text-zinc-300 text-center leading-snug break-words [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">{node.label}</span>
-                                                    </div>
-                                                )}
+                                                    let borderStyle = theme.border;
+                                                    let bgStyle = "bg-[#0c0d15]/85";
+                                                    let shadowStyle = theme.glow;
+                                                    let textStyle = theme.textColor;
+
+                                                    if (isIntegrated) {
+                                                        borderStyle = "border-amber-300/80 bg-amber-950/40 shadow-[0_0_24px_rgba(251,191,36,0.35)]";
+                                                        textStyle = "text-amber-200 font-bold";
+                                                    } else if (isSelected) {
+                                                        borderStyle = theme.selected;
+                                                        bgStyle = "bg-[#111222]/95";
+                                                        textStyle = "text-white font-semibold";
+                                                    } else if (isDashed) {
+                                                        borderStyle = "border-dashed border-sky-400/50 bg-sky-950/30";
+                                                        textStyle = "text-sky-200";
+                                                    }
+
+                                                    return (
+                                                        <div 
+                                                            className={`group relative min-w-[105px] max-w-[155px] px-2.5 py-1.5 rounded-[1.2rem] border backdrop-blur-xl transition-all duration-300 flex flex-col items-center justify-center gap-1 shadow-md ${bgStyle} ${borderStyle} ${shadowStyle} hover:-translate-y-0.5 active:scale-95`}
+                                                            style={{
+                                                                boxShadow: isSelected 
+                                                                    ? `0 0 20px ${theme.color}45, 0 6px 18px rgba(0,0,0,0.4)`
+                                                                    : `0 3px 12px rgba(0,0,0,0.3)`
+                                                            }}
+                                                        >
+                                                            {/* Soft inner ambient gloss shine */}
+                                                            <div className="absolute inset-x-2.5 top-0.5 h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
+                                                            {/* Cute Micro-badge pill */}
+                                                            <div 
+                                                                className="flex items-center gap-1 px-2 py-0.5 rounded-full border text-[7.5px] font-bold tracking-wider uppercase select-none shadow-sm backdrop-blur-sm"
+                                                                style={{
+                                                                    backgroundColor: `${theme.color}18`,
+                                                                    borderColor: `${theme.color}35`,
+                                                                    color: theme.color
+                                                                }}
+                                                            >
+                                                                <span className="text-[9px] leading-none">{theme.icon}</span>
+                                                                <span className="leading-none">{theme.category}</span>
+                                                                {isIntegrated && <span className="text-[7.5px] text-amber-300 ml-0.5">✨</span>}
+                                                            </div>
+
+                                                            {/* Node Label */}
+                                                            <span className={`text-[9.5px] font-medium text-center leading-tight break-words px-0.5 line-clamp-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.85)] ${textStyle}`}>
+                                                                {softenNodeLabel(node.label)}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         )
                                     })}
@@ -6122,7 +6400,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     
                                                                     <div className="flex flex-col min-w-0 flex-1">
                                                                         <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{typeShortLabels[node.type]}</span>
-                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{node.label}</span>
+                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{softenNodeLabel(node.label)}</span>
                                                                     </div>
 
                                                                     <div className={`ml-auto shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-white' : 'text-zinc-600'}`}>
@@ -6433,10 +6711,12 @@ Por favor, analicemos:
                                 const { incoming, outgoing } = currentTourNodeEdges;
                                 const totalConnections = incoming.length + outgoing.length;
 
+                                const currentTheme = CUTE_NODE_THEMES[currentNode.type] || CUTE_NODE_THEMES.cognitive;
+
                                 return (
                                     <div
-                                        className={`absolute top-1/2 md:top-auto md:bottom-[100px] left-1/2 z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-bottom-4' : ''}`}
-                                        style={{ transform: `translate(calc(-50% + ${tourModalPos.x}px), ${typeof window !== 'undefined' && window.innerWidth < 768 ? `calc(-50% + ${tourModalPos.y}px)` : `${tourModalPos.y}px`}) scale(${typeof window !== 'undefined' && window.innerWidth < 768 ? 0.9 : 1})`, transformOrigin: 'center center' }}
+                                        className={`fixed md:absolute top-1/2 md:top-6 left-1/2 md:left-auto md:right-6 md:bottom-auto z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-top-4' : ''}`}
+                                        style={{ transform: typeof window !== 'undefined' && window.innerWidth < 768 ? `translate(calc(-50% + ${tourModalPos.x}px), calc(-50% + ${tourModalPos.y}px)) scale(0.92)` : `translate(${tourModalPos.x}px, ${tourModalPos.y}px)`, transformOrigin: 'top right' }}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                         onMouseMove={e => e.stopPropagation()}
@@ -6445,10 +6725,10 @@ Por favor, analicemos:
                                         onTouchMove={e => e.stopPropagation()}
                                         onTouchEnd={e => e.stopPropagation()}
                                     >
-                                        <div className="bg-zinc-950/95 border border-white/10 rounded-2xl p-4 shadow-2xl sm:backdrop-blur-md flex flex-col gap-3 min-w-[300px] md:min-w-[450px] w-auto max-w-[90vw] md:resize md:overflow-hidden max-h-[85vh] md:max-h-[90vh]">
+                                        <div className="bg-zinc-950/90 border border-white/10 rounded-2xl p-3 shadow-2xl backdrop-blur-xl flex flex-col gap-2 w-[340px] max-w-[92vw] max-h-[80vh] md:max-h-[490px] overflow-hidden">
                                             {/* Minimalist Header */}
                                             <div 
-                                                className="flex items-center justify-between border-b border-white/5 pb-2 cursor-grab active:cursor-grabbing select-none"
+                                                className="flex items-center justify-between border-b border-white/5 pb-1.5 cursor-grab active:cursor-grabbing select-none shrink-0"
                                                 onMouseDown={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
@@ -6461,22 +6741,29 @@ Por favor, analicemos:
                                                     dragTourStartRef.current = { x: e.touches[0].clientX - tourModalPos.x, y: e.touches[0].clientY - tourModalPos.y };
                                                 }}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs md:text-sm font-mono font-bold">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono font-bold">
                                                         {tourActiveIndex + 1}/{sortedTourNodes.length}
                                                     </span>
-                                                    <span className="flex items-center gap-1.5 text-xs md:text-sm font-mono font-bold uppercase tracking-wider text-zinc-400">
-                                                        {React.createElement(typeIcons[currentNode.type] || Activity, { size: 14, className: typeColors[currentNode.type] })}
-                                                        <span>{typeCompactLabels[currentNode.type]}</span>
+                                                    <span 
+                                                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border text-[8.5px] font-bold tracking-wide select-none"
+                                                        style={{
+                                                            backgroundColor: `${currentTheme.color}15`,
+                                                            borderColor: `${currentTheme.color}35`,
+                                                            color: currentTheme.color
+                                                        }}
+                                                    >
+                                                        <span className="text-[10px] leading-none">{currentTheme.icon}</span>
+                                                        <span className="leading-none uppercase">{currentTheme.category}</span>
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <button
                                                         onClick={() => setIsTourMinimized(!isTourMinimized)}
-                                                        className="p-1 text-zinc-500 hover:text-white transition-colors"
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded hover:bg-white/10"
                                                         title={isTourMinimized ? "Maximizar" : "Minimizar"}
                                                     >
-                                                        {isTourMinimized ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
+                                                        {isTourMinimized ? <Maximize2 size={11} /> : <Minimize2 size={11} />}
                                                     </button>
                                                     <button
                                                         onClick={() => {
@@ -6492,233 +6779,236 @@ Por favor, analicemos:
                                                                 setTimeout(resetMapTransform, 15);
                                                             }
                                                         }}
-                                                        className="p-1 text-zinc-500 hover:text-white transition-colors"
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded hover:bg-white/10"
                                                         title="Cerrar tour"
                                                     >
-                                                        <X size={14} />
+                                                        <X size={13} />
                                                     </button>
                                                 </div>
                                             </div>
 
                                             {!isTourMinimized && (
                                                 <>
-                                            <div className="flex flex-col gap-1.5 pr-1 pb-1 flex-1 min-h-0 overflow-hidden">
-                                                {/* Node Label */}
-                                            <h4 className="text-sm md:text-base font-black text-white leading-snug tracking-wide uppercase">{currentNode.label}</h4>
+                                            <div className="flex flex-col gap-1.5 pr-0.5 pb-0.5 flex-1 min-h-0 overflow-hidden">
+                                                {/* Node Label (Human, friendly & compact) */}
+                                                <h4 className="text-xs md:text-[13px] font-bold text-white leading-snug tracking-tight">
+                                                    {softenNodeLabel(currentNode.label)}
+                                                </h4>
 
-                                            {/* Description (Minimal Info) */}
-                                            <div className="text-xs md:text-sm text-zinc-300 leading-relaxed bg-zinc-900/40 border border-white/5 rounded-xl p-3 md:p-4">
-                                                <p className="text-zinc-200 whitespace-pre-line break-words leading-relaxed">{getFallbackDescription(currentNode, user)}</p>
-                                            </div>
-
-                                            {/* Wizard for 3 Questions */}
-                                            {(() => {
-                                                const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
-                                                const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
-                                                const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
-                                                    !currentChat[0].content ||
-                                                    currentChat[0].content.length < 40 ||
-                                                    currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                    currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                    currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                    currentChat[0].content.includes('¿Cómo impacta "')
-                                                );
-                                                const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
-                                                    ? currentChat
-                                                    : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user) }];
-
-                                                return (
-                                                    <div className="flex flex-col gap-2.5 mt-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
-                                                        {/* Header with arrows */}
-                                                        <div className="flex items-center justify-between bg-zinc-900/40 px-3 py-2 rounded-xl border border-white/5 mb-1 shrink-0">
-                                                            <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                                                                <Sparkles size={12} className="text-sky-500" />
-                                                                {safeThreadIndex === 6 ? '✨ INTEGRACIÓN DE NODO' : `PERSPECTIVA ${safeThreadIndex + 1} DE 6`}
-                                                            </span>
-                                                            <div className="flex gap-1.5">
-                                                                
-                                                                <button 
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
-                                                                        const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
-                                                                        setSelectedQuestionIndex(nextIdx);
-                                                                        setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
-                                                                        const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                        const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                            !nextChat[0].content ||
-                                                                            nextChat[0].content.length < 40 ||
-                                                                            nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                            nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                            nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                            nextChat[0].content.includes('¿Cómo impacta "')
-                                                                        );
-                                                                        if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
-                                                                            setNodeChats(prev => ({
-                                                                                ...prev,
-                                                                                [currentNode.id]: {
-                                                                                    ...(prev[currentNode.id] || {}),
-                                                                                    [nextIdx]: [{ role: 'assistant', content: initialQ }]
-                                                                                }
-                                                                            }));
-                                                                        }
-                                                                    }}
-                                                                    className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
-                                                                >
-                                                                    <ChevronLeft size={14} />
-                                                                </button>
-                                                                <button 
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
-                                                                        const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
-                                                                        setSelectedQuestionIndex(nextIdx);
-                                                                        setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
-                                                                        const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                        const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                        const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                            !nextChat[0].content ||
-                                                                            nextChat[0].content.length < 40 ||
-                                                                            nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                            nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                            nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                            nextChat[0].content.includes('¿Cómo impacta "')
-                                                                        );
-                                                                        if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                            const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
-                                                                            setNodeChats(prev => ({
-                                                                                ...prev,
-                                                                                [currentNode.id]: {
-                                                                                    ...(prev[currentNode.id] || {}),
-                                                                                    [nextIdx]: [{ role: 'assistant', content: initialQ }]
-                                                                                }
-                                                                            }));
-                                                                        }
-                                                                    }}
-                                                                    className="p-1.5 text-zinc-500 hover:text-white bg-black/40 hover:bg-white/10 rounded-lg transition-colors border border-white/5"
-                                                                >
-                                                                    <ChevronRight size={14} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        {/* Chat messages area */}
-                                                        <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col border border-white/5 bg-zinc-900/20 p-2.5 md:p-4 rounded-xl min-h-0">
-                                                        <div className="flex flex-col gap-4 md:gap-5 pb-2">
-                                                            {effectiveChat.map((msg, msgIdx) => {
-                                                                if (msg.role === 'assistant') {
-                                                                    return (
-                                                                        <div key={msgIdx} className="flex flex-col gap-1.5 items-start">
-                                                                            <div className="p-4 rounded-2xl text-[12px] md:text-[13px] leading-relaxed max-w-[95%] shadow-md bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm">
-                                                                                {msg.content}
-                                                                                {msg.newNodeAdded && (
-                                                                                    <div className="mt-3 pt-3 border-t border-sky-500/30">
-                                                                                        <span className="text-[10px] font-mono font-bold text-amber-400 flex items-center gap-1.5"><Sparkles size={12}/> NUEVO PATRÓN DETECTADO: {msg.newNodeAdded.label}</span>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                } else {
-                                                                    return (
-                                                                        <div key={msgIdx} className="flex flex-col gap-1.5 items-end">
-                                                                            <div className="p-4 rounded-2xl text-[12px] md:text-[13px] leading-relaxed max-w-[95%] shadow-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm">
-                                                                                {msg.content}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                }
-                                                            })}
-                                                            
-                                                            {isGeneratingExplorations && (
-                                                                <div className="flex items-center gap-2 text-[11px] text-zinc-400 italic justify-center mt-3">
-                                                                    <Sparkles size={14} className="animate-spin text-sky-400" />
-                                                                    <span>Analizando...</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        </div>
-                                                        
-                                                        {/* Input area */}
-                                                        <div className="flex flex-col gap-2 shrink-0 pt-1">
-                                                            <textarea 
-                                                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-[11px] md:text-[12px] text-white placeholder-zinc-500 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 outline-none resize-none custom-scroll min-h-[60px]"
-                                                                rows={2}
-                                                                placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
-                                                                value={explorationResponse}
-                                                                disabled={isGeneratingExplorations}
-                                                                onChange={(e) => {
-        const val = e.target.value;
-        setExplorationResponse(val);
-        let activeId = null;
-        if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
-            activeId = sortedTourNodes[tourActiveIndex].id;
-        } else if (selectedNode) {
-            activeId = selectedNode.id;
-        }
-        if (activeId) {
-            localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
-        }
-    }}
-                                                                onMouseDown={e => e.stopPropagation()}
-                                                                onClick={e => e.stopPropagation()}
-                                                                onTouchStart={e => e.stopPropagation()}
-                                                                onKeyDown={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                                        e.preventDefault();
-                                                                        if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
-                                                                        }
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <div className="flex justify-end">
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={isGeneratingExplorations || !explorationResponse.trim()}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                            continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
-                                                                        }
-                                                                    }}
-                                                                    className="flex items-center justify-center w-full md:w-auto gap-2 py-2.5 px-5 rounded-xl text-[10px] md:text-[11px] font-black tracking-widest uppercase bg-sky-500/20 border border-sky-500/30 text-sky-400 hover:bg-sky-500/30 hover:border-sky-400 transition-all disabled:opacity-50 disabled:grayscale"
-                                                                >
-                                                                    {isGeneratingExplorations ? 'ENVIANDO...' : 'ENVIAR RESPUESTA'}
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                                {/* Description (Minimal Info) */}
+                                                {getFallbackDescription(currentNode, user) && (
+                                                    <div className="text-[10.5px] text-zinc-300 leading-snug bg-zinc-900/40 border border-white/5 rounded-xl p-2 max-h-[70px] overflow-y-auto custom-scroll shrink-0">
+                                                        <p className="text-zinc-300 whitespace-pre-line break-words leading-snug">{getFallbackDescription(currentNode, user)}</p>
                                                     </div>
-                                                );
-                                            })()}
+                                                )}
+
+                                                {/* Wizard for Questions */}
+                                                {(() => {
+                                                    const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
+                                                    const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+                                                    const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
+                                                        !currentChat[0].content ||
+                                                        currentChat[0].content.length < 40 ||
+                                                        currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                        currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                        currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                        currentChat[0].content.includes('¿Cómo impacta "')
+                                                    );
+                                                    const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
+                                                        ? currentChat
+                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user) }];
+
+                                                    return (
+                                                        <div className="flex flex-col gap-1.5 mt-1 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
+                                                            {/* Header with arrows */}
+                                                            <div className="flex items-center justify-between bg-zinc-900/40 px-2 py-1 rounded-lg border border-white/5 shrink-0">
+                                                                <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                                                    <Sparkles size={10} className="text-sky-400" />
+                                                                    {safeThreadIndex === 6 ? '✨ Integración' : `Perspectiva ${safeThreadIndex + 1} de 6`}
+                                                                </span>
+                                                                <div className="flex gap-1">
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
+                                                                            const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
+                                                                            setSelectedQuestionIndex(nextIdx);
+                                                                            setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
+                                                                            const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
+                                                                            const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                                !nextChat[0].content ||
+                                                                                nextChat[0].content.length < 40 ||
+                                                                                nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                                nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                                nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                                nextChat[0].content.includes('¿Cómo impacta "')
+                                                                            );
+                                                                            if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
+                                                                                setNodeChats(prev => ({
+                                                                                    ...prev,
+                                                                                    [currentNode.id]: {
+                                                                                        ...(prev[currentNode.id] || {}),
+                                                                                        [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                    }
+                                                                                }));
+                                                                            }
+                                                                        }}
+                                                                        className="p-1 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 rounded transition-colors border border-white/5"
+                                                                    >
+                                                                        <ChevronLeft size={12} />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
+                                                                            const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
+                                                                            setSelectedQuestionIndex(nextIdx);
+                                                                            setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
+                                                                            const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
+                                                                            const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
+                                                                                !nextChat[0].content ||
+                                                                                nextChat[0].content.length < 40 ||
+                                                                                nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
+                                                                                nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
+                                                                                nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
+                                                                                nextChat[0].content.includes('¿Cómo impacta "')
+                                                                            );
+                                                                            if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
+                                                                                setNodeChats(prev => ({
+                                                                                    ...prev,
+                                                                                    [currentNode.id]: {
+                                                                                        ...(prev[currentNode.id] || {}),
+                                                                                        [nextIdx]: [{ role: 'assistant', content: initialQ }]
+                                                                                    }
+                                                                                }));
+                                                                            }
+                                                                        }}
+                                                                        className="p-1 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 rounded transition-colors border border-white/5"
+                                                                    >
+                                                                        <ChevronRight size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            {/* Chat messages area */}
+                                                            <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col border border-white/5 bg-zinc-900/20 p-2 rounded-xl min-h-[70px] max-h-[140px]">
+                                                            <div className="flex flex-col gap-2 pb-1">
+                                                                {effectiveChat.map((msg, msgIdx) => {
+                                                                    if (msg.role === 'assistant') {
+                                                                        return (
+                                                                            <div key={msgIdx} className="flex flex-col gap-1 items-start">
+                                                                                <div className="p-2.5 rounded-xl text-[11px] leading-relaxed max-w-[95%] shadow-sm bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm">
+                                                                                    {msg.content}
+                                                                                    {msg.newNodeAdded && (
+                                                                                        <div className="mt-2 pt-2 border-t border-sky-500/30">
+                                                                                            <span className="text-[9px] font-mono font-bold text-amber-300 flex items-center gap-1"><Sparkles size={10}/> Nuevo patrón: {softenNodeLabel(msg.newNodeAdded.label)}</span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    } else {
+                                                                        return (
+                                                                            <div key={msgIdx} className="flex flex-col gap-1 items-end">
+                                                                                <div className="p-2.5 rounded-xl text-[11px] leading-relaxed max-w-[95%] shadow-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm">
+                                                                                    {msg.content}
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                })}
+                                                                
+                                                                {isGeneratingExplorations && (
+                                                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 italic justify-center mt-2">
+                                                                        <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                        <span>Analizando...</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            </div>
+                                                            
+                                                            {/* Input area */}
+                                                            <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
+                                                                <textarea 
+                                                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-2 text-[11px] text-white placeholder-zinc-500 focus:border-sky-500/50 outline-none resize-none custom-scroll min-h-[44px] max-h-[58px]"
+                                                                    rows={2}
+                                                                    placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
+                                                                    value={explorationResponse}
+                                                                    disabled={isGeneratingExplorations}
+                                                                    onChange={(e) => {
+                                            const val = e.target.value;
+                                            setExplorationResponse(val);
+                                            let activeId = null;
+                                            if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+                                                activeId = sortedTourNodes[tourActiveIndex].id;
+                                            } else if (selectedNode) {
+                                                activeId = selectedNode.id;
+                                            }
+                                            if (activeId) {
+                                                localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
+                                            }
+                                        }}
+                                                                    onMouseDown={e => e.stopPropagation()}
+                                                                    onClick={e => e.stopPropagation()}
+                                                                    onTouchStart={e => e.stopPropagation()}
+                                                                    onKeyDown={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                                                            e.preventDefault();
+                                                                            if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <div className="flex justify-end">
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={isGeneratingExplorations || !explorationResponse.trim()}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                            }
+                                                                        }}
+                                                                        className="flex items-center justify-center w-auto gap-1.5 py-1.5 px-3 rounded-lg text-[9px] font-bold tracking-wider uppercase bg-sky-500/20 border border-sky-500/30 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400 transition-all disabled:opacity-50 disabled:grayscale"
+                                                                    >
+                                                                        {isGeneratingExplorations ? 'ENVIANDO...' : 'ENVIAR RESPUESTA'}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
+                                                </div>
+                                                {/* Footer Navigation */}
+                                                <div className="flex items-center justify-between border-t border-white/5 pt-1.5 mt-0.5 shrink-0">
+                                                    <button
+                                                        onClick={prevTourNode}
+                                                        disabled={tourActiveIndex === 0}
+                                                        className="w-8 h-6 bg-zinc-900 border border-white/5 hover:border-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
+                                                        title="Atrás"
+                                                    >
+                                                        <ChevronLeft size={12} />
+                                                    </button>
+                                                    
+                                                    <button
+                                                        onClick={nextTourNode}
+                                                        disabled={tourActiveIndex === sortedTourNodes.length - 1}
+                                                        className="w-8 h-6 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-colors flex items-center justify-center shadow-md shadow-indigo-600/10 disabled:opacity-30 disabled:pointer-events-none"
+                                                        title="Siguiente"
+                                                    >
+                                                        <ChevronRight size={12} />
+                                                    </button>
+                                                </div>
+                                                    </>
+                                                )}
                                             </div>
-                                            {/* Footer Navigation */}
-                                            <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-0.5">
-                                                <button
-                                                    onClick={prevTourNode}
-                                                    disabled={tourActiveIndex === 0}
-                                                    className="w-10 h-8 bg-zinc-900 border border-white/5 hover:border-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
-                                                    title="Atrás"
-                                                >
-                                                    <ChevronLeft size={14} />
-                                                </button>
-                                                
-                                                <button
-                                                    onClick={nextTourNode}
-                                                    disabled={tourActiveIndex === sortedTourNodes.length - 1}
-                                                    className="w-10 h-8 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-colors flex items-center justify-center shadow-md shadow-indigo-600/10 disabled:opacity-30 disabled:pointer-events-none"
-                                                    title="Siguiente"
-                                                >
-                                                    <ChevronRight size={14} />
-                                                </button>
-                                            </div>
-                                                </>
-                                            )}
                                         </div>
-                                    </div>
                                 );
                             })()}
 

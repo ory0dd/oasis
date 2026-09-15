@@ -29,6 +29,7 @@ import PublishNoteSelector from './components/PublishNoteSelector';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
+import InformedConsentModal from './components/InformedConsentModal';
 
 // ErrorBoundary: Prevents black screen crashes by catching render errors
 class ErrorBoundary extends React.Component {
@@ -4750,6 +4751,19 @@ export default function App() {
     }, [bgType, bgValue]);
 
     const [user, setUser] = useState(localStorage.getItem('oasis_user') || '');
+    const [hasAcceptedConsent, setHasAcceptedConsent] = useState(() => {
+        return typeof window !== 'undefined' && (localStorage.getItem('oasis_user') || '')
+            ? localStorage.getItem('oasis_consent_accepted_' + (localStorage.getItem('oasis_user') || '')) === 'true'
+            : false;
+    });
+
+    useEffect(() => {
+        if (user) {
+            setHasAcceptedConsent(localStorage.getItem('oasis_consent_accepted_' + user) === 'true');
+        } else {
+            setHasAcceptedConsent(false);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (user) {
@@ -7961,6 +7975,7 @@ export default function App() {
                             localStorage.setItem(key, userData.clinicalData[key]);
                         });
                     }
+                    setHasAcceptedConsent(localStorage.getItem('oasis_consent_accepted_' + userData.username) === 'true');
 
                     // Load user data immediately
                     const serverBlocks = (userData.blocks || []).filter(b => b.type !== 'diary' && b.type !== 'diary_notebook' && (!b.entries || b.entries.length === 0));
@@ -10983,6 +10998,23 @@ ${afcMapContext}
         const activeTabName = (!hasMap && soulTab === 'loop_map') ? 'tests' : soulTab;
 
         if (activeTest === 'phenom') {
+            const currentU = user || (typeof window !== 'undefined' ? localStorage.getItem('oasis_user') : '') || '';
+            const isConsentSigned = currentU ? localStorage.getItem('oasis_consent_accepted_' + currentU) === 'true' : false;
+
+            if (!isConsentSigned || !hasAcceptedConsent) {
+                return (
+                    <InformedConsentModal
+                        user={currentU}
+                        initialFullName={localStorage.getItem('oasis_fullname_' + currentU) || ''}
+                        onAccept={() => {
+                            setHasAcceptedConsent(true);
+                            setShowPhenomIntro(false);
+                            setCurrentPhenomIndex(0);
+                        }}
+                        onCancel={!isFresh ? () => setActiveTest(null) : undefined}
+                    />
+                );
+            }
             const safeIndex = Math.min(currentPhenomIndex, 3);
             return (
                 <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 md:p-12 overflow-y-auto no-scroll font-sans select-none text-zinc-100 animate-in fade-in duration-500">
@@ -12130,7 +12162,19 @@ ${afcMapContext}
 
                                     </div>
                                 ) : activeTest === 'phenom' ? (
-                                    <div className="mx-auto max-w-3xl w-full animate-in slide-in-from-right duration-300 pt-4 px-2">
+                                    (!hasAcceptedConsent || !localStorage.getItem('oasis_consent_accepted_' + (user || localStorage.getItem('oasis_user') || ''))) ? (
+                                        <InformedConsentModal
+                                            user={user || localStorage.getItem('oasis_user') || ''}
+                                            initialFullName={localStorage.getItem('oasis_fullname_' + (user || localStorage.getItem('oasis_user') || '')) || ''}
+                                            onAccept={() => {
+                                                setHasAcceptedConsent(true);
+                                                setShowPhenomIntro(false);
+                                                setCurrentPhenomIndex(0);
+                                            }}
+                                            onCancel={!isFresh ? () => setActiveTest(null) : undefined}
+                                        />
+                                    ) : (
+                                        <div className="mx-auto max-w-3xl w-full animate-in slide-in-from-right duration-300 pt-4 px-2">
                                         <div className="flex justify-between items-center mb-4 px-2">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
@@ -12217,6 +12261,7 @@ ${afcMapContext}
                                             </div>
                                         )}
                                     </div>
+                                    )
                                 ) : null}
                             </div>
                         )}

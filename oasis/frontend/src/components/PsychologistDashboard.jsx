@@ -4,7 +4,7 @@ import { Aperture, Mic,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -926,6 +926,7 @@ const PsychologistDashboard = ({ onClose }) => {
     const [bioMetadata, setBioMetadata] = useState({});
     const [phenomVideos, setPhenomVideos] = useState({});
     const [phenomMetadata, setPhenomMetadata] = useState({});
+    const [viewingConsentPhoto, setViewingConsentPhoto] = useState(null);
 
     useEffect(() => {
         const handleGlobalMouseMove = (e) => {
@@ -4849,6 +4850,51 @@ Devuelve estrictamente el JSON sin formato extra.
                                     selectedPatient.status === 'Publicado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
                                 }`}>{selectedPatient.status}</span>
                             </div>
+                            {(() => {
+                                const hasConsent = localStorage.getItem(`oasis_consent_accepted_${selectedPatient.name}`) === 'true';
+                                const consentSigner = localStorage.getItem(`oasis_consent_name_${selectedPatient.name}`);
+                                const consentDate = localStorage.getItem(`oasis_consent_date_${selectedPatient.name}`);
+                                const consentPhoto = localStorage.getItem(`oasis_consent_photo_${selectedPatient.name}`);
+                                return (
+                                    <>
+                                        <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                                            <span className="text-[8px] font-mono text-zinc-500 uppercase font-black">Consentimiento:</span>
+                                            <span 
+                                                className={`text-[8px] font-mono font-black uppercase px-2 py-0.5 rounded ${
+                                                    hasConsent 
+                                                        ? 'bg-sky-500/10 text-sky-400 border border-sky-500/25' 
+                                                        : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                                                }`}
+                                                title={hasConsent && consentSigner ? `Firmado por: ${consentSigner} (${consentDate ? new Date(consentDate).toLocaleDateString() : ''})` : 'Pendiente de suscripción'}
+                                            >
+                                                {hasConsent ? '✓ Firmado' : 'Pendiente'}
+                                            </span>
+                                        </div>
+                                        {hasConsent && (
+                                            <div className="pt-1.5 border-t border-white/5 flex flex-col gap-1">
+                                                <div className="text-[8px] font-mono text-zinc-400 truncate">
+                                                    Firma: <strong className="text-zinc-200">{consentSigner || selectedPatient.name}</strong>
+                                                </div>
+                                                {consentPhoto && (
+                                                    <div 
+                                                        onClick={() => setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate })}
+                                                        className="group relative w-full h-14 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 cursor-pointer transition-all bg-black/40 mt-0.5"
+                                                        title="Clic para ver fotografía de firma ampliada"
+                                                    >
+                                                        <img src={consentPhoto} alt="Foto de firma" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
+                                                            <span className="text-[8px] font-mono text-purple-300 font-semibold flex items-center gap-1">
+                                                                <Camera size={9} />
+                                                                <span>Ver Foto de Firma</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         {/* Navigation Structure */}
@@ -4934,9 +4980,12 @@ Devuelve estrictamente el JSON sin formato extra.
                 </div>
 
                 {/* Right Clinical Area */}
-                <main className={`flex-1 ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT' ? 'overflow-hidden p-1 sm:p-2 md:p-6 flex flex-col min-h-0' : 'overflow-y-auto p-4 md:p-10'} bg-[#060607]`}>
-                    <div className="max-w-[100%] md:max-w-[95%] w-full mx-auto h-full flex flex-col min-h-0">
-                        {(activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT') && (
+                {(() => {
+                    const isFullBleedTab = activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT' || activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT';
+                    return (
+                        <main className={`flex-1 ${isFullBleedTab ? 'overflow-hidden p-0 flex flex-col min-h-0' : 'overflow-y-auto p-4 md:p-10'} bg-[#060607]`}>
+                            <div className={`${isFullBleedTab ? 'w-full max-w-full' : 'max-w-[100%] md:max-w-[95%] mx-auto'} w-full h-full flex flex-col min-h-0`}>
+                                {(activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT') && (
                             <ViewErrorBoundary key={`eb-inicial-${reloadTrigger}`}>
                                 <MyResponsesDashboard 
                                     key={reloadTrigger}
@@ -4995,6 +5044,8 @@ Devuelve estrictamente el JSON sin formato extra.
                         )}
                     </div>
                 </main>
+            );
+        })()}
             </div>
         );
     };
@@ -5136,6 +5187,53 @@ Devuelve estrictamente el JSON sin formato extra.
                     <button className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-3 transition-all border border-white/5">
                         <X size={24} />
                     </button>
+                </div>
+            )}
+            
+            {/* Consent Photo Lightbox Modal */}
+            {viewingConsentPhoto && (
+                <div 
+                    onClick={() => setViewingConsentPhoto(null)}
+                    className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-zinc-950 border border-purple-500/30 rounded-3xl p-5 sm:p-6 max-w-lg w-full flex flex-col gap-4 shadow-2xl relative animate-in zoom-in-95 duration-200"
+                    >
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
+                                <Camera size={16} className="text-purple-400" />
+                                <span>Fotografía de Firma y Conformidad</span>
+                            </div>
+                            <button 
+                                onClick={() => setViewingConsentPhoto(null)}
+                                className="p-1.5 text-zinc-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-black aspect-[4/3] flex items-center justify-center shadow-lg">
+                            <img 
+                                src={viewingConsentPhoto.photo} 
+                                alt="Fotografía de consentimiento" 
+                                className="w-full h-full object-contain" 
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5 text-xs text-zinc-300 bg-white/[0.03] border border-white/5 p-3.5 rounded-2xl">
+                            <div className="flex justify-between items-center">
+                                <span className="text-zinc-500 font-mono text-[10px] uppercase">Consultante:</span>
+                                <strong className="text-white font-semibold">{viewingConsentPhoto.signer || selectedPatient?.name}</strong>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-zinc-500 font-mono text-[10px] uppercase">Fecha:</span>
+                                <span className="text-zinc-300 font-mono text-[11px]">{viewingConsentPhoto.date ? new Date(viewingConsentPhoto.date).toLocaleString('es-MX') : 'Registrada'}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-white/5 pt-1.5 mt-0.5">
+                                <span className="text-zinc-500 font-mono text-[10px] uppercase">Supervisión:</span>
+                                <span className="text-purple-300 text-[10px]">Psic. Ángela Sofía Martínez Salazar (Céd. 14354378)</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
             
