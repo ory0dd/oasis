@@ -260,13 +260,13 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 12;
-    const paddingY = 8;
+    const paddingX = 7.0; // Anisotropic padding: suave holgura horizontal
+    const paddingY = 8.5; // Espacio vertical suficiente para no solapar tarjetas
 
     let adjusted = true;
     let iterations = 0;
     const maxIterations = 50;
-    const damping = 0.35; // Damping factor to prevent jitter/oscillations
+    const damping = 0.35; // Factor de amortiguación para evitar oscilaciones
 
     while (adjusted && iterations < maxIterations) {
         adjusted = false;
@@ -279,9 +279,9 @@ const resolveCollisions = (nodes) => {
                 let dx = n2.x - n1.x;
                 let dy = n2.y - n1.y;
 
-                // Nudge nodes that are directly or nearly on top of each other to break symmetry
+                // Si están exactamente superpuestos, desempatar suavemente
                 if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
-                    dx = (Math.random() - 0.5) * 2;
+                    dx = (Math.random() - 0.5) * 1.5;
                     dy = (Math.random() - 0.5) * 2;
                 }
 
@@ -289,16 +289,17 @@ const resolveCollisions = (nodes) => {
                 const dy_norm = dy / paddingY;
                 const dist_norm = Math.hypot(dx_norm, dy_norm) || 0.01;
 
-                if (dist_norm < 1.05) {
+                if (dist_norm < 1.0) {
                     adjusted = true;
 
                     const ux = dx_norm / dist_norm;
                     const uy = dy_norm / dist_norm;
+                    const overlap = 1.0 - dist_norm;
 
-                    const overlap = 1.05 - dist_norm;
-
-                    // Move them back with damping to ensure stable convergence
-                    const moveX = ux * overlap * damping * paddingX;
+                    // Si pertenecen a columnas sustancialmente diferentes (dx > 6.5), priorizar ajuste puramente vertical
+                    // para no romper el orden columnar de la topología funcional
+                    const sameColumn = Math.abs(dx) < 6.5;
+                    const moveX = sameColumn ? ux * overlap * damping * paddingX * 0.35 : 0;
                     const moveY = uy * overlap * damping * paddingY;
 
                     n1.x -= moveX;
@@ -306,11 +307,11 @@ const resolveCollisions = (nodes) => {
                     n2.x += moveX;
                     n2.y += moveY;
 
-                    // Keep within comfortable virtual canvas bounds
-                    n1.x = Math.max(8, Math.min(92, n1.x));
-                    n2.x = Math.max(8, Math.min(92, n2.x));
-                    n1.y = Math.max(8, Math.min(92, n1.y));
-                    n2.y = Math.max(8, Math.min(92, n2.y));
+                    // Mantener dentro de los límites cómodos del lienzo virtual
+                    n1.x = Math.max(9, Math.min(91, n1.x));
+                    n2.x = Math.max(9, Math.min(91, n2.x));
+                    n1.y = Math.max(12, Math.min(88, n1.y));
+                    n2.y = Math.max(12, Math.min(88, n2.y));
                 }
             }
         }
@@ -364,75 +365,239 @@ const getFallbackDescription = (node, user) => {
     }
 };
 
-export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '') => {
-    if (!node) return "¿Qué reflexión o toma de consciencia te genera este patrón en este momento?";
+export const extractHumanExperience = (node) => {
+    if (!node) return "esta vivencia";
+    const rawLabel = (node.label || "").trim();
+    const rawDesc = (node.description || "").trim();
 
-    // 1. Si el nodo tiene preguntas específicas predefinidas en su arreglo y no son genéricas
-    if (Array.isArray(node.questions) && node.questions[threadIndex] && node.questions[threadIndex].length > 30 && !node.questions[threadIndex].includes('¿Qué te hace sentir culpable?')) {
-        return node.questions[threadIndex];
+    let text = rawLabel;
+    if (rawDesc && rawDesc.length > 8 && !rawDesc.toLowerCase().startsWith('representa') && !rawDesc.toLowerCase().startsWith('factor de tu mapa')) {
+        text = rawDesc;
+    } else {
+        text = softenNodeLabel(rawLabel);
+    }
+
+    text = text.replace(/["'()¿?¡!]/g, '').trim();
+    text = text.replace(/^(este es un hecho o vivencia|representa lo que te dices|representa cómo reacciona|representa un factor|patrón de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '');
+
+    if (text.length > 0) {
+        text = text.charAt(0).toLowerCase() + text.slice(1);
+    }
+    return text || "este patrón";
+};
+
+export const getClinicalTheme = (node) => {
+    if (!node) return 'general';
+    const combined = `${node.label || ''} ${node.description || ''} ${node.type || ''}`.toLowerCase();
+
+    if (/dependen|apego|atenci[oó]n|valida|abandono|rechazo|afecto|pareja|separaci[oó]n|soledad vincular/i.test(combined)) {
+        return 'attachment';
+    }
+    if (/autoexigen|cr[ií]tica|perfecc|culpa|reproche|rumia|insufic|duda.*decidir|equivocar|fallar/i.test(combined)) {
+        return 'perfectionism';
+    }
+    if (/aisla|evita|silencio|retirada|distancia.*emocional|desconexi[oó]n|repleg|encerr/i.test(combined)) {
+        return 'avoidance';
+    }
+    if (/ira|enojo|rabia|frustra|discusi|explosi|agresi|impuls|irritab/i.test(combined)) {
+        return 'anger';
+    }
+    if (/cuerpo|tensi[oó]n|som[aá]t|pecho|nudo|garganta|est[oó]mago|respiraci|fatiga|cansancio|sueño|insomnio|agotamiento/i.test(combined) || node.type === 'physiological' || node.type === 'biological') {
+        return 'somatic';
+    }
+    if (/miedo|ansiedad|alerta|insegur|panico|cat[aá]strof|control|peligro/i.test(combined)) {
+        return 'anxiety';
+    }
+    if (/vac[ií]o|prop[oó]sito|sentido|futuro|desgano|rumbo|ilusi[oó]n|direcci/i.test(combined)) {
+        return 'purpose';
+    }
+    return 'general';
+};
+
+export const generateEmpatheticPerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null) => {
+    if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
+    const safeIdx = Math.max(0, Math.min(6, threadIndex));
+    const theme = getClinicalTheme(node);
+    const humanExp = extractHumanExperience(node);
+
+    switch (theme) {
+        case 'attachment':
+            switch (safeIdx) {
+                case 0: return "Mirando hacia tu historia personal y los vínculos que marcaron tu vida, ¿en qué momentos de tu infancia o juventud recuerdas haber sentido por primera vez ese miedo al rechazo o esa necesidad urgente de que te confirmaran su presencia y atención? ¿Qué vivencias del pasado te enseñaron a dudar de que podías estar seguro/a por tu cuenta?";
+                case 1: return "En tus relaciones actuales (pareja, amistades o familia), cuando sientes que no recibes la atención o cercanía que esperas, ¿de qué forma cambia tu trato hacia ellos? ¿Qué temes profundamente que ocurra si te permites soltar un poco la necesidad de confirmación constante?";
+                case 2: return "En el momento en que se detona la necesidad de atención o el miedo a la distancia, ¿qué señales físicas notas en tu cuerpo (un nudo en la garganta, opresión en el pecho o inquietud en el estómago)? ¿Qué te pide tu cuerpo en ese instante?";
+                case 3: return "¿Cuáles son los pensamientos o exigencias internas que más se repiten en tu mente cuando no tienes la certeza inmediata del afecto del otro? ¿Qué valor tuyo (como la seguridad, el amor o la lealtad) sientes que estás intentando proteger?";
+                case 4: return "Cuando la incertidumbre de no tener la atención de la otra persona se vuelve abrumadora, ¿qué conductas automáticas sueles realizar para calmarte de inmediato? ¿Qué impacto tiene esa reacción a largo plazo en ti y en la relación?";
+                case 5: return "Si pudieras hacer una pequeña prueba conductual esta semana para darte a ti mismo/a esa validación antes de buscarla afuera, ¿cuál sería ese primer paso mínimo y amable que estarías dispuesto/a a intentar?";
+                case 6: return "Reconociendo que este anhelo de atención nació en su momento como una forma legítima de buscar afecto y protegerte de la soledad: ¿Qué comprensión le darías a esa parte de ti, y con qué compromiso decides empezar a cuidarte desde hoy?";
+            }
+            break;
+
+        case 'perfectionism':
+            switch (safeIdx) {
+                case 0: return "Mirando hacia tu pasado y las expectativas del entorno en que creciste, ¿recuerdas en qué momentos sentiste que solo valías si cumplías las expectativas de los demás o que equivocarte no estaba permitido? ¿De quién aprendiste esa voz tan exigente?";
+                case 1: return "¿De qué manera influye esta autoexigencia en la forma en que te comunicas y convives con tu familia, pareja o amigos? ¿Sientes que te cuesta pedir ayuda o mostrarte vulnerable por miedo a que noten tus dudas?";
+                case 2: return "Cuando te exiges al límite o aparece el reproche interno, ¿en qué zona de tu cuerpo notas la sobrecarga (mandíbula apretada, pesadez en hombros o respiración corta)? ¿Qué señales te da tu organismo antes de saturarse?";
+                case 3: return "¿Cuáles son los juicios o reproches automáticos que tu mente te repite en silencio cuando sientes que algo no salió perfecto? ¿Qué temes profundamente que ocurra si te permites descansar o cometer un error?";
+                case 4: return "Frente al temor de no dar la talla o de equivocarte, ¿qué conductas sueles hacer de inmediato (sobrecargarte de tareas, posponer cosas por miedo a fallar o revisar todo de forma repetitiva)?";
+                case 5: return "¿Qué pequeña tarea o situación cotidiana podrías permitirte dejar en un nivel 'suficientemente bueno' esta semana, observando qué pasa si no buscas la perfección?";
+                case 6: return "Esta autoexigencia probablemente fue tu escudo para no ser criticado/a en el pasado. ¿Cómo puedes hoy valorar tu esfuerzo sin castigarte, reconociendo tu valor intrínseco más allá de lo que produces?";
+            }
+            break;
+
+        case 'avoidance':
+            switch (safeIdx) {
+                case 0: return "Pensando en las etapas difíciles de tu vida, ¿en qué momentos descubriste que aislarte, replegarte o guardar silencio era la forma más segura de no salir lastimado/a? ¿Qué situaciones de tu historia te enseñaron a cerrar la puerta?";
+                case 1: return "Cuando decides replegarte o alejarte de los demás, ¿cómo interpretan tu distancia las personas cercanas a ti? ¿Qué puente de comunicación sientes que se corta cuando te encierras?";
+                case 2: return "¿Qué experimenta tu cuerpo cuando te sientes sobrepasado/a por las situaciones del entorno (pesadez general, ganas de dormir o bloqueo en la garganta)? ¿Cómo cambia tu respiración y tu energía física?";
+                case 3: return "¿Qué pensamientos de desánimo o desconfianza surgen en tu mente justo antes de decidir no responder o quedarte solo/a? ¿Qué emoción dolorosa estás intentando esquivar?";
+                case 4: return "¿Cuáles son tus hábitos o refugios de escape más frecuentes (pasar horas en el teléfono, dormir o desconectarte de todo)? ¿Cuánto tiempo suele durar ese repliegue hasta que te sientes listo/a para volver?";
+                case 5: return "Si pudieras tender un puente mínimo hacia afuera esta semana, ¿a qué persona de confianza podrías enviarle un mensaje breve compartiendo sinceramente cómo te encuentras?";
+                case 6: return "Aislarte te cuidó cuando no había un entorno seguro para expresarte. ¿Cómo puedes hoy abrir una pequeña ventana hacia los demás, sabiendo que ya no eres la misma persona indefensa del pasado?";
+            }
+            break;
+
+        case 'anger':
+            switch (safeIdx) {
+                case 0: return "Mirando hacia las dinámicas familiares en las que creciste, ¿cómo se manejaba el enojo, la frustración o el desacuerdo en tu casa? ¿Sentiste que tenías espacio para ser escuchado/a o tenías que guardártelo hasta explotar?";
+                case 1: return "Cuando sientes que la frustración o la molestia te desborda con alguien importante, ¿qué sucede con la comunicación entre ustedes? ¿Qué mensaje de fondo sientes que la otra persona no logra comprender?";
+                case 2: return "¿Cómo te avisa físicamente tu cuerpo antes de que la molestia o el impulso se desate (calor en el pecho, pulso acelerado o mandíbula tensa)? ¿Qué pasa si te detienes unos segundos a respirar?";
+                case 3: return "¿Qué juicios o pensamientos de injusticia cruzan por tu mente cuando sientes que algo te saca de tus casillas? ¿Qué límite personal sientes que está siendo vulnerado en ese momento?";
+                case 4: return "Al detonarse el malestar, ¿qué conductas automáticas sueles tener (levantar la voz, cerrarte de golpe o responder con ironía)? ¿Qué sensación deja esa reacción después?";
+                case 5: return "¿Qué señal de 'pausa' o acuerdo podrías establecer contigo mismo/a para retirarte a respirar unos minutos la próxima vez que sientas que la temperatura interna empieza a subir?";
+                case 6: return "El enojo es una emoción que señala que algo te importa o te duele. ¿Cómo puedes escuchar su mensaje de fondo sin permitir que la reacción impulsiva tome el control de tus vínculos?";
+            }
+            break;
+
+        case 'somatic':
+            switch (safeIdx) {
+                case 0: return "Revisando tus recuerdos personales, ¿desde qué época de tu vida empezaste a notar que las tensiones emocionales o el estrés se manifestaban directamente en tu cuerpo o en tu descanso?";
+                case 1: return "¿De qué manera estos síntomas físicos o el cansancio acumulado afectan tu convivencia diaria y tu energía para compartir con las personas que te rodean?";
+                case 2: return "Si pudieras dialogar con la parte de tu cuerpo que más se tensa o resiente en estos días, ¿qué mensaje de alarma o qué necesidad de descanso crees que te está transmitiendo?";
+                case 3: return "¿Qué pensamientos de angustia o preocupación suelen acompañar a esa molestia física? ¿Qué temes profundamente que signifique ese cansancio o reactividad?";
+                case 4: return "Cuando tu cuerpo te pide una pausa y el malestar físico se hace presente, ¿qué sueles hacer: escucharlo y parar, o forzarte a seguir adelante ignorando las señales?";
+                case 5: return "¿Qué micro-hábito de cuidado corporal (un estiramiento suave, desconectar pantallas 20 minutos antes de dormir o una pausa de respiración lenta) podrías regalarle a tu cuerpo hoy?";
+                case 6: return "Tu cuerpo no es tu enemigo: es quien absorbe el impacto de todo lo que vives para mantenerte a flote. ¿Con qué actitud de mayor respeto y cariño decides escucharlo a partir de ahora?";
+            }
+            break;
+
+        case 'anxiety':
+            switch (safeIdx) {
+                case 0: return "Pensando en tu infancia o adolescencia, ¿qué acontecimientos o cambios imprevistos te hicieron sentir que el entorno no era predecible ni seguro? ¿De dónde viene esa necesidad de anticipar cualquier peligro?";
+                case 1: return "¿Cómo afecta este estado de alerta constante la forma en que te relacionas y confías en las personas cercanas? ¿Sientes que necesitas tener el control para sentirte en paz?";
+                case 2: return "¿En qué parte del cuerpo se aloja primero esa inquietud (un temblor leve, opresión en el pecho, respiración superficial o vacío en el estómago)? ¿Qué sensación física te resulta más difícil de tolerar?";
+                case 3: return "¿Cuál es el escenario catastrófico más recurrente que tu mente anticipa? ¿Qué certeza absoluta sientes que necesitas tener para poder soltar la tensión?";
+                case 4: return "Para intentar calmar la ansiedad o mantener el control, ¿qué conductas o comprobaciones automáticas realizas? ¿Cuánto dura el alivio que te generan?";
+                case 5: return "¿Qué pequeño acto de aceptación de la incertidumbre podrías practicar esta semana, permitiéndote estar en el presente sin adelantarte a lo que vendrá?";
+                case 6: return "Este estado de alerta fue útil en momentos en que realmente estuviste en riesgo. ¿Cómo puedes recordarle hoy a tu mente que ahora cuentas con recursos propios para cuidarte?";
+            }
+            break;
+
+        case 'purpose':
+            switch (safeIdx) {
+                case 0: return "Al reflexionar sobre tu camino, ¿en qué momentos sentiste que perdiste la conexión con aquello que realmente te apasionaba o te daba ilusión en el pasado?";
+                case 1: return "¿Sientes que las personas con las que convives hoy comprenden tus verdaderos anhelos y tu búsqueda personal, o experimentas una distancia profunda en ese aspecto?";
+                case 2: return "Esa sensación de vacío o desconexión con el rumbo de tu vida, ¿cómo se siente físicamente en tu día a día (desgano, pesadez corporal o falta de vitalidad)?";
+                case 3: return "¿Qué te dice tu voz interna sobre tu futuro cuando te invade la incertidumbre? ¿Qué valor fundamental tuyo sientes que está esperando ser rescatado?";
+                case 4: return "¿Qué conductas de evasión sueles usar cuando aparece la pregunta de qué hacer con tu vida (postergar proyectos, llenar el tiempo de distracciones)?";
+                case 5: return "¿Qué pequeña actividad o momento de exploración personal podrías dedicarte esta semana que te devuelva aunque sea una chispa de curiosidad o entusiasmo?";
+                case 6: return "El vacío muchas veces no es ausencia de vida, sino un espacio fértil listo para ser redefinido. ¿Qué nuevo significado decides comenzar a sembrar en tu presente?";
+            }
+            break;
+
+        default: // 'general'
+            switch (safeIdx) {
+                case 0: return `Mirando hacia tu historia personal, ¿en qué momento o circunstancias de tu pasado recuerdas haber empezado a experimentar ${humanExp}? ¿Qué situaciones de tu vida te enseñaron a reaccionar de esta forma para protegerte?`;
+                case 1: return `¿De qué manera resuena ${humanExp} en tus vínculos más cercanos (familia, pareja o amigos)? ¿Cómo reaccionan los demás y qué sientes que cambia en tu relación con ellos?`;
+                case 2: return `Cuando se hace presente ${humanExp}, ¿qué señales o sensaciones específicas notas en tu cuerpo (en el pecho, la respiración, el estómago o tu nivel de energía)?`;
+                case 3: return `¿Cuáles son los pensamientos, dudas o temores que tu mente te repite en silencio frente a ${humanExp}? ¿Qué valor importante para ti sientes que está en juego?`;
+                case 4: return `Frente a esa incomodidad de ${humanExp}, ¿qué conductas o maniobras automáticas sueles ejecutar para aliviarte en ese instante? ¿Qué situación o emoción intentas esquivar?`;
+                case 5: return `Si pudieras intentar un pequeño paso o experimento seguro esta semana para responder de una manera más amable frente a ${humanExp}, ¿cuál sería ese primer paso concreto?`;
+                case 6: return `Observando el propósito de cuidado que este patrón tuvo en tu vida: ¿Con qué nueva actitud de comprensión y compasión decides acompañarte a partir de ahora?`;
+            }
+    }
+    return `¿Qué reflexión o toma de consciencia surge al observar ${humanExp} en esta perspectiva?`;
+};
+
+export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData = null, phenomData = null) => {
+    if (!Array.isArray(nodes)) return nodes;
+    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
+
+    return nodes.map(node => {
+        let n = { ...node, label: softenNodeLabel(node.label) };
+
+        // Si NO es Axel Roben, limpiar datos residuales hardcodeados de Axel en caso de que persistieran
+        if (!isAxel && AXEL_NODE_ENRICHMENT && AXEL_NODE_ENRICHMENT[n.id]) {
+            const enr = AXEL_NODE_ENRICHMENT[n.id];
+            if (n.description === enr.desc) n.description = '';
+            if (n.source === enr.src) n.source = '';
+            if (n.reflection_question === enr.refl) n.reflection_question = '';
+            if (n.challenge === enr.challenge) n.challenge = '';
+        }
+
+        // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas con comillas
+        const hasValidQuestions = Array.isArray(n.questions) && 
+            n.questions.length === 7 && 
+            n.questions.every(q => typeof q === 'string' && q.length > 25 && !q.includes('haber vivido "') && !q.includes('¿Qué te hace sentir culpable?'));
+
+        if (!hasValidQuestions) {
+            n.questions = [0, 1, 2, 3, 4, 5, 6].map(idx => 
+                getNodePerspectiveQuestion(n, idx, user, bioData, phenomData)
+            );
+        }
+
+        // Incorporar metadatos por apartado para que cada perspectiva tenga su identidad clínica
+        const perspectiveNames = [
+            'Raíz Histórica & Origen',
+            'Relaciones Actuales y Entorno Social',
+            'Cuerpo y Fisiología Somática',
+            'Valores y Diálogo Interno',
+            'Conductas y Patrones Automáticos',
+            'Reto Conductual Amable',
+            'Integración y Cierre Compasivo'
+        ];
+
+        n.perspectives_metadata = n.questions.map((q, idx) => ({
+            index: idx,
+            name: perspectiveNames[idx],
+            question: q
+        }));
+
+        return n;
+    });
+};
+
+export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null) => {
+    if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
+    const safeIdx = Math.max(0, Math.min(6, threadIndex));
+
+    // 1. Si el nodo ya tiene preguntas personalizadas válidas y no son genéricas ni usan plantillas con comillas
+    if (Array.isArray(node.questions) && node.questions[safeIdx]) {
+        const q = node.questions[safeIdx];
+        const isRobotic = typeof q === 'string' && (
+            q.includes('el hecho de haber vivido "') || 
+            q.includes('¿Cómo ha influido en tu historia personal el hecho') || 
+            q.includes('¿Qué te hace sentir culpable?') ||
+            q.includes('¿Qué significado o aprendizaje extraes') ||
+            q.includes('("') || 
+            q.includes('")')
+        );
+        if (!isRobotic && q.length > 25) {
+            return q;
+        }
     }
 
     // 2. Enriquecimiento clínico grounded directamente en las entrevistas biográfica y existencial (SOLO PARA AXEL ROBEN)
     const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
     if (isAxel) {
-        const axelQ = getAxelEnrichedPerspectiveQuestion(node, threadIndex);
+        const axelQ = getAxelEnrichedPerspectiveQuestion(node, safeIdx);
         if (axelQ) {
             return axelQ;
         }
     }
 
-    const label = node.label ? node.label.trim() : 'este patrón';
-    const type = node.type || 'cognitive';
-    const desc = node.description ? ` (${node.description.trim()})` : '';
-    const refl = node.reflection_question?.trim();
-    const challenge = node.challenge?.trim();
-
-    switch (threadIndex) {
-        case 0: // Raíz Histórica
-            if (refl && refl.length > 38 && !refl.includes('¿Qué te hace sentir culpable?') && !refl.includes('¿Qué significado')) {
-                return refl.endsWith('?') ? refl : `${refl}?`;
-            }
-            if (type === 'historical') {
-                return `¿Cómo ha influido en tu historia personal el hecho de haber vivido "${label}"${desc}? ¿De qué manera sientes que este acontecimiento del pasado sigue resonando en tu vida hoy?`;
-            }
-            return `¿En qué momento o circunstancias de tu vida comenzó a formarse este patrón de "${label}"${desc}? ¿Qué situaciones del pasado te enseñaron a reaccionar o protegerte de esta manera?`;
-
-        case 1: // Relaciones Actuales y Entorno Social
-            if (type === 'social') {
-                return `¿De qué manera influye tu entorno social actual o las personas con las que convives en "${label}"${desc}? ¿Cómo reaccionan los demás y qué papel juegan en mantener este bucle?`;
-            }
-            return `¿Cómo impacta "${label}" en tus relaciones (familia, amigos, pareja o estudio/trabajo)? ¿Qué hacen o cómo reaccionan las personas cercanas a ti cuando esto ocurre?`;
-
-        case 2: // Cuerpo y Fisiología
-            if (type === 'physiological' || type === 'biological') {
-                return `¿Qué señales específicas notas en tu organismo vinculadas a "${label}"${desc}? ¿En qué parte del cuerpo sientes mayor tensión, fatiga o agitación y cómo intentas calmarlo?`;
-            }
-            return `¿Qué señales o sensaciones notas en tu cuerpo (tensión muscular, respiración, opresión en el pecho, estómago, cansancio o inquietud) justo antes o durante "${label}"?`;
-
-        case 3: // Valores y Pensamientos
-            if (type === 'cognitive') {
-                return `¿Cuáles son los pensamientos, juicios o exigencias internas más recurrentes en "${label}"${desc}? ¿Qué temes profundamente que ocurra si dejas de darle tantas vueltas a esto?`;
-            }
-            return `¿Qué pensamientos automáticos o reglas internas ("debo", "tengo que", "no puedo") se disparan cuando aparece "${label}"? ¿Qué valor importante para ti sientes que está en juego?`;
-
-        case 4: // Conductas y Patrones
-            if (type === 'motor') {
-                return `¿Cuáles son las acciones, maniobras de escape o hábitos automáticos que realizas al detonarse "${label}"${desc}? ¿Qué alivio inmediato obtienes al hacerlo?`;
-            }
-            return `Cuando se activa el patrón de "${label}", ¿qué conductas concretas o hábitos de evitación sueles ejecutar de forma automática? ¿Qué situación o emoción intentas esquivar en ese instante?`;
-
-        case 5: // Experimentos y Acciones
-            if (challenge) {
-                return `El reto terapéutico identificado es: "${challenge}". ¿Qué micro-acción o pequeño experimento conductual podrías intentar esta semana para poner a prueba "${label}"?`;
-            }
-            return `Si pudieras hacer una pequeña prueba conductual esta semana para desarmar el bucle de "${label}", ¿cuál sería ese primer paso mínimo y concreto que estarías dispuesto a intentar?`;
-
-        case 6: // Integración de Nodo
-            return `Observando el bucle completo de "${label}" y las reflexiones que has explorado: ¿Qué función protectora cumplió en tu vida y con qué nueva actitud o compromiso decides integrarlo y responder a partir de ahora?`;
-
-        default:
-            return `¿Qué significado o aprendizaje extraes de "${label}" en esta perspectiva?`;
-    }
+    // 3. Generación empática profunda conectada con el individuo (sin comillas, sin paréntesis técnicos)
+    return generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData);
 };
 
 const findExactUserMention = (node, bioData, phenomData) => {
@@ -2012,7 +2177,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                         c.includes('¿Qué te hace sentir culpable?') ||
                                         c.includes('¿Qué significado o aprendizaje extraes') ||
                                         c.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                        c.includes('¿Cómo impacta "');
+                                        c.includes('¿Cómo impacta "') ||
+                                        c.includes('el hecho de haber vivido "') ||
+                                        c.includes('¿Cómo ha influido en tu historia personal') ||
+                                        c.includes('este acontecimiento del pasado sigue resonando');
                                     const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
                                     if (isAxel) {
                                         if (isGeneric) {
@@ -2027,7 +2195,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                             c.includes('pantalones') || c.includes('ruido') || c.includes('noise') ||
                                             c.includes('corte de pelo') || c.includes('colegio católico');
                                         if (isGeneric || containsAxel) {
-                                            thread[0].content = getNodePerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10), user);
+                                            const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
+                                            thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData);
                                         }
                                     }
                                 }
@@ -2114,7 +2283,10 @@ Devuelve estrictamente el JSON sin formato extra.
                 currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
                 currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
                 currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                currentChat[0].content.includes('¿Cómo impacta "')
+                currentChat[0].content.includes('¿Cómo impacta "') ||
+                currentChat[0].content.includes('el hecho de haber vivido "') ||
+                currentChat[0].content.includes('¿Cómo ha influido en tu historia personal') ||
+                currentChat[0].content.includes('este acontecimiento del pasado sigue resonando')
             );
             const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
             const axelQ = getAxelEnrichedPerspectiveQuestion(activeNode, tIdx);
@@ -2128,7 +2300,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 ))
             );
             if (!currentChat || currentChat.length === 0 || (!userHasAnswered && (isGenericAssistant || containsAxel))) {
-                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user);
+                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData);
                 setNodeChats(prev => {
                     const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                     const isLegacy = Array.isArray(currentThreads);
@@ -2436,7 +2608,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             perspectives.push({
                                 index: i,
                                 label: threadLabels[i],
-                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i, user),
+                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i, user, bioData, phenomData),
                                 answer: lastUserMsg.content
                             });
                         }
@@ -2583,71 +2755,30 @@ Devuelve estrictamente el JSON sin formato extra.
 
         const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
 
-        const enrichAfcNodesWithAxelInterviews = (nodes) => {
-            if (!Array.isArray(nodes)) return nodes;
-            if (!isAxel) {
-                // Si NO es Axel Roben, limpiar cualquier dato residual de Axel que haya quedado contaminado en localStorage
-                return nodes.map(n => {
-                    const enr = AXEL_NODE_ENRICHMENT[n.id];
-                    if (enr) {
-                        const isAxelDesc = n.description === enr.desc;
-                        const isAxelSrc = n.source === enr.src;
-                        const isAxelRefl = n.reflection_question === enr.refl;
-                        const isAxelChal = n.challenge === enr.challenge;
-                        if (isAxelDesc || isAxelSrc || isAxelRefl || isAxelChal) {
-                            return {
-                                ...n,
-                                description: isAxelDesc ? '' : n.description,
-                                source: isAxelSrc ? '' : n.source,
-                                reflection_question: isAxelRefl ? '' : n.reflection_question,
-                                challenge: isAxelChal ? '' : n.challenge,
-                                questions: undefined
-                            };
-                        }
-                    }
-                    return n;
-                });
-            }
-            return nodes.map(n => {
-                const enr = AXEL_NODE_ENRICHMENT[n.id];
-                if (enr) {
-                    return {
-                        ...n,
-                        description: enr.desc || n.description,
-                        source: enr.src || n.source,
-                        reflection_question: enr.refl || n.reflection_question,
-                        challenge: enr.challenge || n.challenge,
-                        questions: (Array.isArray(enr.questions) && enr.questions.length > 0) ? enr.questions : n.questions
-                    };
-                }
-                return n;
-            });
-        };
-
         const storedAfc = getLocalItemCaseInsensitive('oasis_afc_real_data', user);
         if (storedAfc) {
             try {
                 const parsed = JSON.parse(storedAfc);
                 if (parsed && parsed.nodes) {
-                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithAxelInterviews(parsed.nodes)));
-                    console.log("🟢 afcData loaded successfully (softened):", parsed);
+                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData)));
+                    console.log("🟢 afcData loaded successfully (softened & enriched):", parsed);
                     setAfcData(parsed);
                 } else {
                     console.warn("⚠️ afcData parsed but invalid format, using mock.");
                     const mock = { ...MOCK_AFC_DATA };
-                    mock.nodes = resolveCollisions(mock.nodes);
+                    mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
                     setAfcData(mock);
                 }
             } catch (e) { 
                 console.error("🔴 Error parsing afcData, using mock:", e); 
                 const mock = { ...MOCK_AFC_DATA };
-                mock.nodes = resolveCollisions(mock.nodes);
+                mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
                 setAfcData(mock);
             }
         } else {
             console.log("ℹ️ No afcData found, using mock.");
             const mock = { ...MOCK_AFC_DATA };
-            mock.nodes = resolveCollisions(mock.nodes);
+            mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
             setAfcData(mock);
         }
 
@@ -2693,7 +2824,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
                                      (isAxel ? (cloudData[`oasis_afc_real_data_Axel Roben`] || cloudData[`oasis_afc_real_data_axel roben`]) : null);
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithAxelInterviews(cloudAfc.nodes)));
+                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData)));
                         const resolved = { ...cloudAfc, nodes: enrichedNodes };
                         setAfcData(resolved);
                         try {
@@ -2711,6 +2842,29 @@ Devuelve estrictamente el JSON sin formato extra.
             setNodeNotes({});
         }
     }, [user]);
+
+    // Garantizar que todos los nodos del mapa tengan sus propios metadatos de perspectiva y preguntas empáticas
+    useEffect(() => {
+        if (afcData && Array.isArray(afcData.nodes) && afcData.nodes.length > 0) {
+            const needsEnrichment = afcData.nodes.some(n => 
+                !Array.isArray(n.questions) || 
+                n.questions.length < 7 || 
+                n.questions[0]?.includes('haber vivido "') ||
+                n.questions[0]?.includes('¿Cómo ha influido en tu historia personal') ||
+                !Array.isArray(n.perspectives_metadata)
+            );
+            if (needsEnrichment) {
+                const enriched = enrichAfcNodesWithPerspectiveMetadata(afcData.nodes, user, bioData, phenomData);
+                const updated = { ...afcData, nodes: enriched };
+                setAfcData(updated);
+                if (user) {
+                    try {
+                        localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
+                    } catch (e) {}
+                }
+            }
+        }
+    }, [afcData, user, bioData, phenomData]);
 
     const handleSaveNote = (nodeId, text) => {
         const updatedNotes = {
@@ -2921,7 +3075,20 @@ ETAPA 1: TOPOLOGÍA. Tu tarea es estructurar los nodos y conexiones funcionales 
    - CADA NOMBRE DEBE SER ÚNICO Y BASADO EN HECHOS REALES DEL PACIENTE (si es estudiante o adolescente, no inventes presión laboral corporativa ni ambientes de oficina).
    - Coordenadas sugeridas: historical (x: 12 a 16), cognitive (x: 26 a 30), motor/physiological (x: 41 a 45), biological (x: 55 a 59), social (x: 69 a 73), consequence (x: 84 a 88), Y: 20 a 80.
 
-4. Conexiones (edges):
+4. REGLA DE METADATOS Y PREGUNTAS DE CONEXIÓN CLÍNICA ('questions') — OBLIGATORIO PARA CADA NODO:
+   - Cada nodo DEBE incluir un arreglo 'questions' con EXACTAMENTE 7 preguntas terapéuticas (perspectivas 0 a 6).
+   - ¡REGLA CRÍTICA DE CONEXIÓN EMOCIONAL!: NUNCA pongas nombres en comillas (ej. ❌ "¿Cómo influye \"Dependencia emocional\"?"). NUNCA agregues paréntesis explicativos (ej. ❌ "(Dependencia de atención)").
+   - Habla con profunda empatía y conexión directa de "tú", aterrizado a las situaciones reales, vivencias concretas y sensaciones que relató el paciente.
+   - Distribución de las 7 preguntas:
+     [0] Raíz Histórica: Conecta con su infancia, familia o vivencias pasadas específicas que originaron este patrón de supervivencia.
+     [1] Relaciones y Entorno Social: Cómo resuena en sus relaciones reales (pareja, familia, amistades) y qué teme que pase si no reacciona así.
+     [2] Sensaciones Corporales: Dónde en el cuerpo siente la tensión, nudo en garganta, opresión en pecho o agotamiento.
+     [3] Diálogo Interno y Creencias: Qué reproches o ideas se repite en silencio y qué valor importante siente que está en juego.
+     [4] Respuestas Automáticas y Hábitos: Qué acciones o maniobras de escape automáticas hace en ese instante para aliviar el malestar.
+     [5] Experimento Conductual Amable: Un micro-paso seguro, amable y concreto para probar esta semana.
+     [6] Integración y Compasión: Cómo resignificar la función protectora de esta vivencia y cómo tratarse con más cariño y calma.
+
+5. Conexiones (edges):
    - Genera entre 20 y 30 conexiones funcionales dirigidas ("unidirectional" o "bidirectional") con weight (1, 2 o 3).
    - Muestra cómo los eventos históricos y mediadores activan las conductas problema, cómo las conductas generan consecuencias, y cómo las consecuencias retroalimentan el bucle.
 ${isAdditive ? `
@@ -2944,6 +3111,7 @@ ${isAdditive ? `
     // - source: cita textual corta del paciente entre comillas (3 a 8 palabras)
     // - challenge: reto existencial terapéutico (3 a 7 palabras)
     // - reflection_question: pregunta reflexiva directa para el paciente (5 a 10 palabras)
+    // - questions: [q0, q1, q2, q3, q4, q5, q6] // 7 preguntas empáticas, profundas y sin comillas, dirigidas al paciente
     // - x: coordenada X sugerida (0 a 100)
     // - y: coordenada Y sugerida (0 a 100)
   ],
@@ -3090,6 +3258,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             
 
             if (parsedAfc.is_valid && parsedAfc.nodes) {
+                parsedAfc.nodes = enrichAfcNodesWithPerspectiveMetadata(parsedAfc.nodes, user, bioData, phenomData);
                 if (!isAdditive) {
                     parsedAfc.nodes = reorganizeNodes(parsedAfc.nodes, true);
                 } else {
@@ -3462,10 +3631,13 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 threadChat[0].content.includes('¿Qué te hace sentir culpable?') ||
                 threadChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
                 threadChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                threadChat[0].content.includes('¿Cómo impacta "')
+                threadChat[0].content.includes('¿Cómo impacta "') ||
+                threadChat[0].content.includes('el hecho de haber vivido "') ||
+                threadChat[0].content.includes('¿Cómo ha influido en tu historia personal') ||
+                threadChat[0].content.includes('este acontecimiento del pasado sigue resonando')
             );
             if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user);
+                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData);
                 threadChat = [{ role: 'assistant', content: initialQ }];
             }
             const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
@@ -3750,7 +3922,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             }
         } catch (err) {
             console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
-            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user);
+            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData);
             setNodeChats(prev => {
                 const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                 const isLegacy = Array.isArray(currentThreads);
@@ -4296,10 +4468,15 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const currentNodes = isArray ? inputNodes : (afcData ? afcData.nodes : null);
         if (!currentNodes || currentNodes.length === 0) return isArray ? inputNodes : [];
 
-        const newNodes = [...currentNodes].map(n => ({ 
-            ...n, 
-            label: softenNodeLabel(n.label) 
-        }));
+        const newNodes = enrichAfcNodesWithPerspectiveMetadata(
+            [...currentNodes].map(n => ({ 
+                ...n, 
+                label: softenNodeLabel(n.label) 
+            })),
+            user,
+            bioData,
+            phenomData
+        );
 
         const getStaggeredSlots = (count, baseX, customYStep) => {
             if (count <= 0) return [];
@@ -4309,12 +4486,12 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             let yStep = customYStep;
             if (!yStep) {
                 if (count === 2) yStep = 24;
-                else if (count === 3) yStep = 19;
-                else if (count === 4) yStep = 15;
-                else if (count === 5) yStep = 12.5;
-                else if (count === 6) yStep = 10.5;
-                else if (count <= 8) yStep = 9.0;
-                else yStep = Math.max(6.5, 68 / (count - 1));
+                else if (count === 3) yStep = 18;
+                else if (count === 4) yStep = 14;
+                else if (count === 5) yStep = 11.5;
+                else if (count === 6) yStep = 9.8;
+                else if (count <= 8) yStep = 8.5;
+                else yStep = Math.max(6.5, 66 / (count - 1));
             }
 
             const totalHeight = (count - 1) * yStep;
@@ -4322,9 +4499,9 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             const slots = [];
             for (let i = 0; i < count; i++) {
                 // Organic floating wave offset (alternating + subtle sine wave)
-                const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 2.2 : 0;
-                const altX = (i % 2 === 0 ? -1.8 : 1.8);
-                const x = Math.max(9, Math.min(91, baseX + altX + waveX));
+                const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 1.5 : 0;
+                const altX = (i % 2 === 0 ? -1.2 : 1.2);
+                const x = Math.max(8, Math.min(92, baseX + altX + waveX));
                 const y = Math.max(14, Math.min(86, startY + (i * yStep)));
                 slots.push({ x, y });
             }
@@ -4354,14 +4531,14 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         };
 
         // Sugiyama Layered Layout with 6 Granular Columns (Balanced node distribution with safe margins):
-        // Históricos (14%) -> Cognitivos (28%) -> Motores/Somáticos (43%) -> Biológicos (57%) -> Sociales (71%) -> Consecuencias (86%)
+        // Históricos (13%) -> Cognitivos (28%) -> Motores/Somáticos (43%) -> Biológicos (58%) -> Sociales (72%) -> Consecuencias (87%)
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 14, customYStep: null },
+            { filter: n => n.type === 'historical', baseX: 13, customYStep: null },
             { filter: n => n.type === 'cognitive', baseX: 28, customYStep: null },
             { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 43, customYStep: null },
-            { filter: n => n.type === 'biological', baseX: 57, customYStep: null },
-            { filter: n => n.type === 'social', baseX: 71, customYStep: null },
-            { filter: n => n.type === 'consequence', baseX: 86, customYStep: null }
+            { filter: n => n.type === 'biological', baseX: 58, customYStep: null },
+            { filter: n => n.type === 'social', baseX: 72, customYStep: null },
+            { filter: n => n.type === 'consequence', baseX: 87, customYStep: null }
         ];
 
         const layerNodes = layers.map(l => newNodes.filter(l.filter));
@@ -6428,17 +6605,28 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                                             const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
                                                                             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
-                                                                                !currentChat[0].content ||
-                                                                                currentChat[0].content.length < 40 ||
-                                                                                currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                                currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                                currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                                currentChat[0].content.includes('¿Cómo impacta "')
-                                                                            );
+                                                                            const isGenericQuestion = (content) => {
+                                                                                if (!content || typeof content !== 'string') return true;
+                                                                                if (content.length < 35) return true;
+                                                                                if (content.includes('¿Qué te hace sentir culpable?')) return true;
+                                                                                if (content.includes('¿Qué significado o aprendizaje extraes')) return true;
+                                                                                if (content.includes('¿En qué momento o circunstancias de tu vida comenzó')) return true;
+                                                                                if (content.includes('¿Cómo impacta "')) return true;
+                                                                                if (content.includes('el hecho de haber vivido "')) return true;
+                                                                                if (content.includes('¿Cómo ha influido en tu historia personal')) return true;
+                                                                                if (content.includes('este acontecimiento del pasado sigue resonando')) return true;
+                                                                                if (content.includes('¿Qué señales específicas notas en tu organismo vinculadas a "')) return true;
+                                                                                if (content.includes('¿Cuáles son los pensamientos, juicios o exigencias')) return true;
+                                                                                if (content.includes('¿Cuáles son las acciones, maniobras de escape')) return true;
+                                                                                if (content.includes('desarmar el bucle de "')) return true;
+                                                                                if (content.includes('Observando el bucle completo de "')) return true;
+                                                                                return false;
+                                                                            };
+
+                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isGenericQuestion(currentChat[0].content);
                                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
-                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user) }];
+                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user, bioData, phenomData) }];
 
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[500px]" onClick={e => e.stopPropagation()}>
@@ -6459,16 +6647,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                                                        !nextChat[0].content ||
-                                                                                                        nextChat[0].content.length < 40 ||
-                                                                                                        nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                                                        nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                                                        nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                                                        nextChat[0].content.includes('¿Cómo impacta "')
-                                                                                                    );
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -6491,16 +6672,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                                                        !nextChat[0].content ||
-                                                                                                        nextChat[0].content.length < 40 ||
-                                                                                                        nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                                                        nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                                                        nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                                                        nextChat[0].content.includes('¿Cómo impacta "')
-                                                                                                    );
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -6807,17 +6981,28 @@ Por favor, analicemos:
                                                     const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                     const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
                                                     const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
-                                                        !currentChat[0].content ||
-                                                        currentChat[0].content.length < 40 ||
-                                                        currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                        currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                        currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                        currentChat[0].content.includes('¿Cómo impacta "')
-                                                    );
+                                                    const isGenericQuestion = (content) => {
+                                                        if (!content || typeof content !== 'string') return true;
+                                                        if (content.length < 35) return true;
+                                                        if (content.includes('¿Qué te hace sentir culpable?')) return true;
+                                                        if (content.includes('¿Qué significado o aprendizaje extraes')) return true;
+                                                        if (content.includes('¿En qué momento o circunstancias de tu vida comenzó')) return true;
+                                                        if (content.includes('¿Cómo impacta "')) return true;
+                                                        if (content.includes('el hecho de haber vivido "')) return true;
+                                                        if (content.includes('¿Cómo ha influido en tu historia personal')) return true;
+                                                        if (content.includes('este acontecimiento del pasado sigue resonando')) return true;
+                                                        if (content.includes('¿Qué señales específicas notas en tu organismo vinculadas a "')) return true;
+                                                        if (content.includes('¿Cuáles son los pensamientos, juicios o exigencias')) return true;
+                                                        if (content.includes('¿Cuáles son las acciones, maniobras de escape')) return true;
+                                                        if (content.includes('desarmar el bucle de "')) return true;
+                                                        if (content.includes('Observando el bucle completo de "')) return true;
+                                                        return false;
+                                                    };
+
+                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isGenericQuestion(currentChat[0].content);
                                                     const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                         ? currentChat
-                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user) }];
+                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData) }];
 
                                                     return (
                                                         <div className="flex flex-col gap-1.5 mt-1 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -6837,16 +7022,9 @@ Por favor, analicemos:
                                                                             setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                             const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                                !nextChat[0].content ||
-                                                                                nextChat[0].content.length < 40 ||
-                                                                                nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                                nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                                nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                                nextChat[0].content.includes('¿Cómo impacta "')
-                                                                            );
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
                                                                                 setNodeChats(prev => ({
                                                                                     ...prev,
                                                                                     [currentNode.id]: {
@@ -6869,16 +7047,9 @@ Por favor, analicemos:
                                                                             setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                             const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && (
-                                                                                !nextChat[0].content ||
-                                                                                nextChat[0].content.length < 40 ||
-                                                                                nextChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                                                                                nextChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                                                                                nextChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                                                                nextChat[0].content.includes('¿Cómo impacta "')
-                                                                            );
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user);
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
                                                                                 setNodeChats(prev => ({
                                                                                     ...prev,
                                                                                     [currentNode.id]: {
