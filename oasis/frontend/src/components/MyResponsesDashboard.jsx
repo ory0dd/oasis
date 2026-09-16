@@ -365,25 +365,68 @@ const getFallbackDescription = (node, user) => {
     }
 };
 
+export const getNodeExperiencePhrases = (node) => {
+    if (!node) return { short: "esta experiencia", full: "esta experiencia en tu vida" };
+    
+    let rawLabel = softenNodeLabel(node.label || "").trim().replace(/["'“”()¿?¡!]/g, '');
+    let rawDesc = (node.description || "").trim().replace(/["'“”()¿?¡!]/g, '');
+    
+    // Limpiar prefijos analíticos o técnicos residuales
+    rawLabel = rawLabel.replace(/^(este es un hecho|representa lo que|representa cómo|representa un factor|patrón de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
+    rawDesc = rawDesc.replace(/^(este es un hecho|representa lo que|representa cómo|representa un factor|patrón de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
+    
+    if (rawLabel.length > 0) {
+        rawLabel = rawLabel.charAt(0).toLowerCase() + rawLabel.slice(1);
+    }
+    if (rawDesc.length > 0) {
+        rawDesc = rawDesc.charAt(0).toLowerCase() + rawDesc.slice(1);
+    }
+
+    // Determinar artículo gramatical natural en español
+    const getArticle = (str) => {
+        if (!str) return 'el';
+        const firstWord = str.split(/\s+/)[0].toLowerCase();
+        if (/^(pensamientos|juicios|errores|problemas|reproches|miedos|temores|dudas|conflictos|límites)/i.test(firstWord)) {
+            return firstWord.endsWith('as') ? 'las' : 'los';
+        }
+        if (/^(duda|dudas|culpa|culpas|tensión|tensiones|opresión|angustia|ansiedad|inseguridad|inseguridades|autoexigencia|necesidad|falta|dificultad|dificultades|distancia|incomprensión|irritabilidad|tristeza|sensación|sensaciones|búsqueda|rabia|frustración|vergüenza|preocupación|preocupaciones|desconexión)/i.test(firstWord)) {
+            return 'la';
+        }
+        if (/^(sobrepensar|aislamiento|cansancio|agotamiento|miedo|miedos|temor|temores|consumo|refugio|dolor|dolores|nudo|deseo|deseos|diálogo|juicio|juicios|reproche|reproches|malestar|estancamiento|rechazo|vacío|desapego|impulso|impulsos)/i.test(firstWord)) {
+            return 'el';
+        }
+        if (str.endsWith('as') || str.endsWith('ciones')) return 'las';
+        if (str.endsWith('os') || str.endsWith('es')) return 'los';
+        if (str.endsWith('a') || str.endsWith('ción') || str.endsWith('sión') || str.endsWith('dad')) return 'la';
+        return 'el';
+    };
+
+    let shortExp = rawLabel || "esta vivencia";
+    const art = getArticle(rawLabel);
+    if (!shortExp.startsWith('el ') && !shortExp.startsWith('la ') && !shortExp.startsWith('los ') && !shortExp.startsWith('las ')) {
+        shortExp = `${art} ${shortExp}`;
+    }
+
+    // Construir frase descriptiva rica combinando label + description si aporta información distinta
+    let fullExp = shortExp;
+    if (rawDesc && rawDesc.length > 5 && !rawDesc.toLowerCase().includes(rawLabel.toLowerCase().slice(0, 7))) {
+        const descArticle = getArticle(rawDesc);
+        if (rawDesc.startsWith('para ') || rawDesc.startsWith('ante ') || rawDesc.startsWith('frente ') || rawDesc.startsWith('cuando ')) {
+            fullExp = `${shortExp} ${rawDesc}`;
+        } else if (rawDesc.startsWith('el ') || rawDesc.startsWith('la ') || rawDesc.startsWith('los ') || rawDesc.startsWith('las ')) {
+            fullExp = `${shortExp} junto con ${rawDesc}`;
+        } else {
+            fullExp = `${shortExp} y ${descArticle} ${rawDesc}`;
+        }
+    }
+
+    return { short: shortExp, full: fullExp };
+};
+
 export const extractHumanExperience = (node) => {
     if (!node) return "esta vivencia";
-    const rawLabel = (node.label || "").trim();
-    const rawDesc = (node.description || "").trim();
-
-    let text = rawLabel;
-    if (rawDesc && rawDesc.length > 8 && !rawDesc.toLowerCase().startsWith('representa') && !rawDesc.toLowerCase().startsWith('factor de tu mapa')) {
-        text = rawDesc;
-    } else {
-        text = softenNodeLabel(rawLabel);
-    }
-
-    text = text.replace(/["'()¿?¡!]/g, '').trim();
-    text = text.replace(/^(este es un hecho o vivencia|representa lo que te dices|representa cómo reacciona|representa un factor|patrón de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '');
-
-    if (text.length > 0) {
-        text = text.charAt(0).toLowerCase() + text.slice(1);
-    }
-    return text || "este patrón";
+    const { full } = getNodeExperiencePhrases(node);
+    return full || "esta experiencia";
 };
 
 export const isStaleOrRoboticQuestion = (q) => {
@@ -393,11 +436,15 @@ export const isStaleOrRoboticQuestion = (q) => {
     // Rechazar preguntas con comillas alrededor de etiquetas clínicas o explicaciones entre paréntesis
     if (trimmed.includes('"') || trimmed.includes('“') || trimmed.includes('”') || trimmed.includes("''")) return true;
     if (trimmed.includes('(') || trimmed.includes(')')) return true;
-    // Detectar plantillas robóticas heredadas de versiones anteriores
+    
+    // Detectar patrones genéricos o repetitivos que impiden el análisis específico del nodo
     const stalePhrases = [
-        '¿En qué momento o circunstancias de tu vida comenzó',
+        'convivir con este patrón',
+        'este patrón',
+        'este bucle',
         'este patrón de',
         'el hecho de haber vivido',
+        '¿En qué momento o circunstancias de tu vida comenzó',
         '¿Cómo ha influido en tu historia personal',
         'este acontecimiento del pasado sigue resonando',
         '¿Cómo impacta',
@@ -410,10 +457,23 @@ export const isStaleOrRoboticQuestion = (q) => {
         '¿Qué señales específicas notas en tu organismo',
         '¿De qué manera influye tu entorno social actual',
         '¿Qué pensamientos automáticos o reglas internas',
-        'Considerando lo que mencionaste en tu historia de vida'
+        'Considerando lo que mencionaste en tu historia de vida',
+        '¿en qué etapas o momentos recuerdas haber aprendido a convivir',
+        '¿Qué vivencias tempranas te llevaron a desarrollar esta forma de protegerte o responder?',
+        '¿en qué momentos de tu vida o de tu infancia recuerdas haber aprendido que equivocarte o ser juzgado',
+        '¿recuerdas en qué época o ante qué situaciones de presión o soledad descubriste que recurrir a esto',
+        '¿de dónde aprendiste a dudar tanto de tu valor?',
+        '¿recuerdas en qué momentos anteriores viviste entornos donde sentías que tu esfuerzo no era reconocido',
+        'miedo al rechazo o esa necesidad urgente de que te confirmaran su presencia y atención',
+        '¿recuerdas en qué momentos sentiste que solo valías si cumplías las expectativas',
+        'descubriste que aislarte, replegarte o guardar silencio era la forma más segura',
+        '¿cómo se manejaba el enojo, la frustración o el desacuerdo en tu casa?',
+        '¿desde qué época de tu vida empezaste a notar que las tensiones emocionales',
+        '¿qué acontecimientos o cambios imprevistos te hicieron sentir que el entorno no era predecible ni seguro?',
+        '¿en qué momentos sentiste que perdiste la conexión con aquello que realmente te apasionaba'
     ];
     for (const phrase of stalePhrases) {
-        if (trimmed.includes(phrase)) return true;
+        if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
     }
     return false;
 };
@@ -458,160 +518,178 @@ export const getClinicalTheme = (node) => {
     return 'general';
 };
 
-export const generateEmpatheticPerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null) => {
-    if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
-    const safeIdx = Math.max(0, Math.min(6, threadIndex));
-    const theme = getClinicalTheme(node);
-    const humanExp = extractHumanExperience(node);
-
-    switch (theme) {
-        case 'overthinking':
-            switch (safeIdx) {
-                case 0: return "Al mirar tu historia personal, ¿en qué momentos de tu vida o de tu infancia recuerdas haber aprendido que equivocarte o ser juzgado por los demás era peligroso? ¿Qué vivencias te enseñaron a repasar las cosas una y otra vez en tu mente como una forma de mantenerte a salvo?";
-                case 1: return "Cuando te encuentras atrapado/a dándole vueltas a posibles errores o a lo que otros piensen de ti, ¿cómo cambia tu manera de convivir con las personas cercanas? ¿Sientes que te callas o buscas aprobación constante para calmar esa duda interna?";
-                case 2: return "Cuando la mente se acelera sobrepensando cada detalle, ¿en qué parte de tu cuerpo se concentra la mayor carga: dolor de cabeza, tensión en la mandíbula, opresión en el pecho o dificultad para descansar?";
-                case 3: return "¿Qué anhelo de paz, libertad o disfrute auténtico sientes que se apaga mientras estás ocupado/a defendiéndote de tus propios juicios internos? ¿Qué temes profundamente que pase si dejas de analizarlo todo?";
-                case 4: return "Frente al temor de equivocarte o no tener el control, ¿qué conductas automáticas sueles hacer: posponer decisiones importantes, revisar lo mismo muchas veces o quedarte paralizado/a?";
-                case 5: return "¿Qué pequeña decisión cotidiana podrías tomar hoy sin repasarla una y otra vez en tu mente, permitiéndote que sea simplemente suficientemente buena?";
-                case 6: return "Sobrepensar fue el guardián que tu mente creó en el pasado para que nadie te lastimara ni te criticara. ¿Qué comprensión compasiva puedes ofrecerte hoy, recordándote que ya no necesitas controlarlo todo para tener valor?";
-            }
-            break;
-
-        case 'substances':
-            switch (safeIdx) {
-                case 0: return "Al revisar tu historia personal, ¿recuerdas en qué época o ante qué situaciones de presión o soledad descubriste que recurrir a esto te ofrecía una vía rápida de desconexión o desahogo?";
-                case 1: return "¿De qué manera influye este hábito en tus relaciones más cercanas? ¿Sientes que a veces lo utilizas para facilitar el contacto social o, por el contrario, para evadir conversaciones difíciles?";
-                case 2: return "Físicamente, ¿qué sensaciones o inquietud previa aparecen en tu organismo justo antes de sentir la necesidad de recurrir a esto? ¿Cómo se siente tu cuerpo al día siguiente?";
-                case 3: return "¿Qué malestar emocional, vacío o autoexigencia estás intentando silenciar momentáneamente en esos instantes? ¿Qué necesidad profunda tuya no está siendo atendida de otra manera?";
-                case 4: return "Cuando surge el impulso automático, ¿cuánto tiempo pasa antes de ceder, y qué alternativas saludables sueles pasar por alto por buscar el alivio inmediato?";
-                case 5: return "¿Qué pequeño espacio de pausa (por ejemplo, esperar 10 minutos y tomar un vaso de agua o respirar) podrías darte la próxima vez que sientas el impulso?";
-                case 6: return "Comprendiendo que este comportamiento nació como un intento de calmar un dolor o una sobrecarga real: ¿Qué otra forma más amable y compasiva decides ofrecerte para cuidar de ti?";
-            }
-            break;
-
-        case 'insecurity':
-            switch (safeIdx) {
-                case 0: return "Mirando hacia las etapas tempranas de tu vida, ¿en qué momentos o ante qué figuras sentiste por primera vez que lo que hacías o lo que eras no era suficiente? ¿De dónde aprendiste a dudar tanto de tu valor?";
-                case 1: return "¿Cómo se refleja esta inseguridad al compartir con tu pareja, amistades o familia? ¿Tiendes a compararte, a buscar señales de rechazo o a asumir que los demás tienen más seguridad que tú?";
-                case 2: return "¿En qué parte de tu cuerpo se manifiesta la sensación de inseguridad o vulnerabilidad (vacío en el estómago, encogimiento postural o respiración contenida)?";
-                case 3: return "¿Cuáles son las frases más duras que tu voz interior te dice cuando dudas de ti? ¿Qué parte valiosa y auténtica tuya se queda escondida por miedo a ser juzgada?";
-                case 4: return "Ante el temor a no ser capaz o a quedar expuesto/a, ¿qué conductas sueles adoptar: retroceder, disculparte en exceso o dejar que otros decidan por ti?";
-                case 5: return "¿Qué pequeño acto de confianza en tu propio criterio podrías realizar esta semana, defendiendo tu postura o tu gusto personal sin pedir permiso?";
-                case 6: return "La duda nació para protegerte de la desaprobación cuando eras más vulnerable. ¿Cómo puedes recordarte hoy que tu valía humana no depende de la aprobación externa?";
-            }
-            break;
-
-        case 'work_pressure':
-            switch (safeIdx) {
-                case 0: return "Pensando en tu trayectoria, ¿recuerdas en qué momentos anteriores viviste entornos donde sentías que tu esfuerzo no era reconocido o donde debías mantenerte en alerta constante?";
-                case 1: return "¿De qué manera la tensión o el clima hostil de este entorno se traslada a tu vida personal y a la convivencia con tus seres queridos al terminar el día?";
-                case 2: return "¿Qué señales físicas de agotamiento o sobrecarga experimentas al empezar o terminar tu jornada (pesadez en hombros, rigidez en cuello o falta de energía vital)?";
-                case 3: return "¿Qué pensamientos de injusticia, desgaste o frustración rondan tu mente ante esta situación? ¿Qué límites personales sientes que se están poniendo a prueba?";
-                case 4: return "Para sobrellevar la tensión de este ambiente, ¿qué respuestas automáticas sueles tener durante el día: callar la molestia, acelerarte o aislarte de los demás?";
-                case 5: return "¿Qué límite saludable o pausa reparadora podrías establecer hoy durante tu jornada para cuidar tu espacio interno sin desgastarte?";
-                case 6: return "Reconociendo que tu bienestar y dignidad van antes que cualquier demanda externa: ¿Qué compromiso de autocuidado y firmeza decides mantener contigo mismo/a?";
-            }
-            break;
-
-        case 'attachment':
-            switch (safeIdx) {
-                case 0: return "Mirando hacia tu historia personal y los vínculos que marcaron tu vida, ¿en qué momentos de tu infancia o juventud recuerdas haber sentido por primera vez ese miedo al rechazo o esa necesidad urgente de que te confirmaran su presencia y atención? ¿Qué vivencias del pasado te enseñaron a dudar de que podías estar seguro/a por tu cuenta?";
-                case 1: return "En tus relaciones actuales (pareja, amistades o familia), cuando sientes que no recibes la atención o cercanía que esperas, ¿de qué forma cambia tu trato hacia ellos? ¿Qué temes profundamente que ocurra si te permites soltar un poco la necesidad de confirmación constante?";
-                case 2: return "En el momento en que se detona la necesidad de atención o el miedo a la distancia, ¿qué señales físicas notas en tu cuerpo (un nudo en la garganta, opresión en el pecho o inquietud en el estómago)? ¿Qué te pide tu cuerpo en ese instante?";
-                case 3: return "¿Cuáles son los pensamientos o exigencias internas que más se repiten en tu mente cuando no tienes la certeza inmediata del afecto del otro? ¿Qué valor tuyo (como la seguridad, el amor o la lealtad) sientes que estás intentando proteger?";
-                case 4: return "Cuando la incertidumbre de no tener la atención de la otra persona se vuelve abrumadora, ¿qué conductas automáticas sueles realizar para calmarte de inmediato? ¿Qué impacto tiene esa reacción a largo plazo en ti y en la relación?";
-                case 5: return "Si pudieras hacer una pequeña prueba conductual esta semana para darte a ti mismo/a esa validación antes de buscarla afuera, ¿cuál sería ese primer paso mínimo y amable que estarías dispuesto/a a intentar?";
-                case 6: return "Reconociendo que este anhelo de atención nació en su momento como una forma legítima de buscar afecto y protegerte de la soledad: ¿Qué comprensión le darías a esa parte de ti, y con qué compromiso decides empezar a cuidarte desde hoy?";
-            }
-            break;
-
-        case 'perfectionism':
-            switch (safeIdx) {
-                case 0: return "Mirando hacia tu pasado y las expectativas del entorno en que creciste, ¿recuerdas en qué momentos sentiste que solo valías si cumplías las expectativas de los demás o que equivocarte no estaba permitido? ¿De quién aprendiste esa voz tan exigente?";
-                case 1: return "¿De qué manera influye esta autoexigencia en la forma en que te comunicas y convives con tu familia, pareja o amigos? ¿Sientes que te cuesta pedir ayuda o mostrarte vulnerable por miedo a que noten tus dudas?";
-                case 2: return "Cuando te exiges al límite o aparece el reproche interno, ¿en qué zona de tu cuerpo notas la sobrecarga (mandíbula apretada, pesadez en hombros o respiración corta)? ¿Qué señales te da tu organismo antes de saturarse?";
-                case 3: return "¿Cuáles son los juicios o reproches automáticos que tu mente te repite en silencio cuando sientes que algo no salió perfecto? ¿Qué temes profundamente que ocurra si te permites descansar o cometer un error?";
-                case 4: return "Frente al temor de no dar la talla o de equivocarte, ¿qué conductas sueles hacer de inmediato (sobrecargarte de tareas, posponer cosas por miedo a fallar o revisar todo de forma repetitiva)?";
-                case 5: return "¿Qué pequeña tarea o situación cotidiana podrías permitirte dejar en un nivel 'suficientemente bueno' esta semana, observando qué pasa si no buscas la perfección?";
-                case 6: return "Esta autoexigencia probablemente fue tu escudo para no ser criticado/a en el pasado. ¿Cómo puedes hoy valorar tu esfuerzo sin castigarte, reconociendo tu valor intrínseco más allá de lo que produces?";
-            }
-            break;
-
-        case 'avoidance':
-            switch (safeIdx) {
-                case 0: return "Pensando en las etapas difíciles de tu vida, ¿en qué momentos descubriste que aislarte, replegarte o guardar silencio era la forma más segura de no salir lastimado/a? ¿Qué situaciones de tu historia te enseñaron a cerrar la puerta?";
-                case 1: return "Cuando decides replegarte o alejarte de los demás, ¿cómo interpretan tu distancia las personas cercanas a ti? ¿Qué puente de comunicación sientes que se corta cuando te encierras?";
-                case 2: return "¿Qué experimenta tu cuerpo cuando te sientes sobrepasado/a por las situaciones del entorno (pesadez general, ganas de dormir o bloqueo en la garganta)? ¿Cómo cambia tu respiración y tu energía física?";
-                case 3: return "¿Qué pensamientos de desánimo o desconfianza surgen en tu mente justo antes de decidir no responder o quedarte solo/a? ¿Qué emoción dolorosa estás intentando esquivar?";
-                case 4: return "¿Cuáles son tus hábitos o refugios de escape más frecuentes (pasar horas en el teléfono, dormir o desconectarte de todo)? ¿Cuánto tiempo suele durar ese repliegue hasta que te sientes listo/a para volver?";
-                case 5: return "Si pudieras tender un puente mínimo hacia afuera esta semana, ¿a qué persona de confianza podrías enviarle un mensaje breve compartiendo sinceramente cómo te encuentras?";
-                case 6: return "Aislarte te cuidó cuando no había un entorno seguro para expresarte. ¿Cómo puedes hoy abrir una pequeña ventana hacia los demás, sabiendo que ya no eres la misma persona indefensa del pasado?";
-            }
-            break;
-
-        case 'anger':
-            switch (safeIdx) {
-                case 0: return "Mirando hacia las dinámicas familiares en las que creciste, ¿cómo se manejaba el enojo, la frustración o el desacuerdo en tu casa? ¿Sentiste que tenías espacio para ser escuchado/a o tenías que guardártelo hasta explotar?";
-                case 1: return "Cuando sientes que la frustración o la molestia te desborda con alguien importante, ¿qué sucede con la comunicación entre ustedes? ¿Qué mensaje de fondo sientes que la otra persona no logra comprender?";
-                case 2: return "¿Cómo te avisa físicamente tu cuerpo antes de que la molestia o el impulso se desate (calor en el pecho, pulso acelerado o mandíbula tensa)? ¿Qué pasa si te detienes unos segundos a respirar?";
-                case 3: return "¿Qué juicios o pensamientos de injusticia cruzan por tu mente cuando sientes que algo te saca de tus casillas? ¿Qué límite personal sientes que está siendo vulnerado en ese momento?";
-                case 4: return "Al detonarse el malestar, ¿qué conductas automáticas sueles tener (levantar la voz, cerrarte de golpe o responder con ironía)? ¿Qué sensación deja esa reacción después?";
-                case 5: return "¿Qué señal de 'pausa' o acuerdo podrías establecer contigo mismo/a para retirarte a respirar unos minutos la próxima vez que sientas que la temperatura interna empieza a subir?";
-                case 6: return "El enojo es una emoción que señala que algo te importa o te duele. ¿Cómo puedes escuchar su mensaje de fondo sin permitir que la reacción impulsiva tome el control de tus vínculos?";
-            }
-            break;
-
-        case 'somatic':
-            switch (safeIdx) {
-                case 0: return "Revisando tus recuerdos personales, ¿desde qué época de tu vida empezaste a notar que las tensiones emocionales o el estrés se manifestaban directamente en tu cuerpo o en tu descanso?";
-                case 1: return "¿De qué manera estos síntomas físicos o el cansancio acumulado afectan tu convivencia diaria y tu energía para compartir con las personas que te rodean?";
-                case 2: return "Si pudieras dialogar con la parte de tu cuerpo que más se tensa o resiente en estos días, ¿qué mensaje de alarma o qué necesidad de descanso crees que te está transmitiendo?";
-                case 3: return "¿Qué pensamientos de angustia o preocupación suelen acompañar a esa molestia física? ¿Qué temes profundamente que signifique ese cansancio o reactividad?";
-                case 4: return "Cuando tu cuerpo te pide una pausa y el malestar físico se hace presente, ¿qué sueles hacer: escucharlo y parar, o forzarte a seguir adelante ignorando las señales?";
-                case 5: return "¿Qué micro-hábito de cuidado corporal (un estiramiento suave, desconectar pantallas 20 minutos antes de dormir o una pausa de respiración lenta) podrías regalarle a tu cuerpo hoy?";
-                case 6: return "Tu cuerpo no es tu enemigo: es quien absorbe el impacto de todo lo que vives para mantenerte a flote. ¿Con qué actitud de mayor respeto y cariño decides escucharlo a partir de ahora?";
-            }
-            break;
-
-        case 'anxiety':
-            switch (safeIdx) {
-                case 0: return "Pensando en tu infancia o adolescencia, ¿qué acontecimientos o cambios imprevistos te hicieron sentir que el entorno no era predecible ni seguro? ¿De dónde viene esa necesidad de anticipar cualquier peligro?";
-                case 1: return "¿Cómo afecta este estado de alerta constante la forma en que te relacionas y confías en las personas cercanas? ¿Sientes que necesitas tener el control para sentirte en paz?";
-                case 2: return "¿En qué parte del cuerpo se aloja primero esa inquietud (un temblor leve, opresión en el pecho, respiración superficial o vacío en el estómago)? ¿Qué sensación física te resulta más difícil de tolerar?";
-                case 3: return "¿Cuál es el escenario catastrófico más recurrente que tu mente anticipa? ¿Qué certeza absoluta sientes que necesitas tener para poder soltar la tensión?";
-                case 4: return "Para intentar calmar la ansiedad o mantener el control, ¿qué conductas o comprobaciones automáticas realizas? ¿Cuánto dura el alivio que te generan?";
-                case 5: return "¿Qué pequeño acto de aceptación de la incertidumbre podrías practicar esta semana, permitiéndote estar en el presente sin adelantarte a lo que vendrá?";
-                case 6: return "Este estado de alerta fue útil en momentos en que realmente estuviste en riesgo. ¿Cómo puedes recordarle hoy a tu mente que ahora cuentas con recursos propios para cuidarte?";
-            }
-            break;
-
-        case 'purpose':
-            switch (safeIdx) {
-                case 0: return "Al reflexionar sobre tu camino, ¿en qué momentos sentiste que perdiste la conexión con aquello que realmente te apasionaba o te daba ilusión en el pasado?";
-                case 1: return "¿Sientes que las personas con las que convives hoy comprenden tus verdaderos anhelos y tu búsqueda personal, o experimentas una distancia profunda en ese aspecto?";
-                case 2: return "Esa sensación de vacío o desconexión con el rumbo de tu vida, ¿cómo se siente físicamente en tu día a día (desgano, pesadez corporal o falta de vitalidad)?";
-                case 3: return "¿Qué te dice tu voz interna sobre tu futuro cuando te invade la incertidumbre? ¿Qué valor fundamental tuyo sientes que está esperando ser rescatado?";
-                case 4: return "¿Qué conductas de evasión sueles usar cuando aparece la pregunta de qué hacer con tu vida (postergar proyectos, llenar el tiempo de distracciones)?";
-                case 5: return "¿Qué pequeña actividad o momento de exploración personal podrías dedicarte esta semana que te devuelva aunque sea una chispa de curiosidad o entusiasmo?";
-                case 6: return "El vacío muchas veces no es ausencia de vida, sino un espacio fértil listo para ser redefinido. ¿Qué nuevo significado decides comenzar a sembrar en tu presente?";
-            }
-            break;
-
-        default: // 'general'
-            switch (safeIdx) {
-                case 0: return `Al reflexionar sobre las raíces de tu historia, ¿en qué etapas o momentos recuerdas haber aprendido a convivir con ${humanExp}? ¿Qué vivencias tempranas te llevaron a desarrollar esta forma de protegerte o responder?`;
-                case 1: return `¿De qué manera resuena ${humanExp} en tus vínculos más cercanos (familia, pareja o amigos)? ¿Cómo reaccionan los demás y qué sientes que cambia en tu relación con ellos?`;
-                case 2: return `Cuando se hace presente ${humanExp}, ¿qué señales o sensaciones específicas notas en tu cuerpo (en el pecho, la respiración, el estómago o tu nivel de energía)?`;
-                case 3: return `¿Cuáles son los pensamientos, dudas o temores que tu mente te repite en silencio frente a ${humanExp}? ¿Qué valor importante para ti sientes que está en juego?`;
-                case 4: return `Frente a esa incomodidad de ${humanExp}, ¿qué conductas o maniobras automáticas sueles ejecutar para aliviarte en ese instante? ¿Qué situación o emoción intentas esquivar?`;
-                case 5: return `Si pudieras intentar un pequeño paso o experimento seguro esta semana para responder de una manera más amable frente a ${humanExp}, ¿cuál sería ese primer paso concreto?`;
-                case 6: return `Observando el propósito de cuidado que este patrón tuvo en tu vida: ¿Con qué nueva actitud de comprensión y compasión decides acompañarte a partir de ahora?`;
-            }
+export const getNodeOriginContext = (node, edges = [], allNodes = []) => {
+    if (!node || !Array.isArray(edges) || edges.length === 0) {
+        return null;
     }
-    return `¿Qué reflexión o toma de consciencia surge al observar ${humanExp} en esta perspectiva?`;
+    const incomingEdges = edges.filter(e => e && e.target === node.id);
+    if (incomingEdges.length === 0) return null;
+
+    const incomingNodes = incomingEdges
+        .map(e => (allNodes || []).find(n => n && n.id === e.source))
+        .filter(Boolean);
+
+    if (incomingNodes.length === 0) return null;
+
+    // Prioridad clínica de antecedentes: histórico -> social -> biológico -> cognitivo -> motor
+    const typePriority = { historical: 0, social: 1, biological: 2, cognitive: 3, motor: 4, physiological: 5, consequence: 6 };
+    const sorted = [...incomingNodes].sort((a, b) => (typePriority[a.type] ?? 4) - (typePriority[b.type] ?? 4));
+
+    const primaryOrigin = sorted[0];
+    const { short: originShort, full: originFull } = getNodeExperiencePhrases(primaryOrigin);
+
+    return {
+        originNode: primaryOrigin,
+        originShort,
+        originFull,
+        originType: primaryOrigin.type || 'historical',
+        originCount: incomingNodes.length
+    };
 };
 
-export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData = null, phenomData = null) => {
+export const getNodeConsequenceContext = (node, edges = [], allNodes = []) => {
+    if (!node || !Array.isArray(edges) || edges.length === 0) {
+        return null;
+    }
+    const outgoingEdges = edges.filter(e => e && e.source === node.id);
+    if (outgoingEdges.length === 0) return null;
+
+    const outgoingNodes = outgoingEdges
+        .map(e => (allNodes || []).find(n => n && n.id === e.target))
+        .filter(Boolean);
+
+    if (outgoingNodes.length === 0) return null;
+
+    // Prioridad clínica de consecuencias: consequence -> physiological -> motor -> social -> cognitive
+    const typePriority = { consequence: 0, physiological: 1, motor: 2, social: 3, cognitive: 4, biological: 5, historical: 6 };
+    const sorted = [...outgoingNodes].sort((a, b) => (typePriority[a.type] ?? 4) - (typePriority[b.type] ?? 4));
+
+    const primaryTarget = sorted[0];
+    const { short: targetShort, full: targetFull } = getNodeExperiencePhrases(primaryTarget);
+
+    return {
+        targetNode: primaryTarget,
+        targetShort,
+        targetFull,
+        targetType: primaryTarget.type || 'consequence',
+        targetCount: outgoingNodes.length
+    };
+};
+
+export const generateEmpatheticPerspectiveQuestion = (
+    node, 
+    threadIndex = 0, 
+    user = '', 
+    bioData = null, 
+    phenomData = null, 
+    edges = [], 
+    allNodes = []
+) => {
+    if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
+    const safeIdx = Math.max(0, Math.min(6, threadIndex));
+
+    const { short: shortExp, full: fullExp } = getNodeExperiencePhrases(node);
+    const originContext = getNodeOriginContext(node, edges, allNodes);
+    const consequenceContext = getNodeConsequenceContext(node, edges, allNodes);
+
+    const sourceQuote = (node.source || '').replace(/["'“”]/g, '').trim();
+    const challenge = (node.challenge || '').replace(/["'“”]/g, '').trim();
+    const reflection = (node.reflection_question || '').replace(/["'“”]/g, '').trim();
+    const nodeType = node.type || 'cognitive';
+
+    switch (safeIdx) {
+        case 0: { // Raíz Histórica y Origen ("De dónde viene y qué dice el nodo")
+            if (originContext) {
+                const originVerb = originContext.originType === 'historical' 
+                    ? 'forjarse a partir de vivencias formativas como' 
+                    : originContext.originType === 'social'
+                    ? 'activarse ante situaciones del entorno como'
+                    : originContext.originType === 'biological'
+                    ? 'enraizarse en el desgaste físico de'
+                    : 'desprenderse directamente de';
+                return `Observando en tu dinámica funcional que ${fullExp} suele ${originVerb} ${originContext.originShort}, ¿en qué vivencias tempranas o etapas clave de tu historia recuerdas que comenzó a gestarse este vínculo? ¿Qué circunstancias pasadas te llevaron a que hoy ${shortExp} funcione como tu forma aprendida de protegerte o responder?`;
+            }
+            if (sourceQuote && sourceQuote.length > 5) {
+                return `Al profundizar en las raíces de ${fullExp}, conectando con lo que compartías al decir que «${sourceQuote}», ¿en qué momentos de tu infancia o juventud recuerdas haber experimentado por primera vez este peso? ¿Qué vivencias formativas sembraron esta situación en ti?`;
+            }
+            if (nodeType === 'historical') {
+                return `Al situarte en el origen de ${fullExp}, ¿de qué manera recuerdas que este hecho o vivencia formativa marcó tu manera de interpretar el mundo y tu trato con los demás? ¿Qué sentías que necesitabas proteger en ese entonces frente a esa realidad?`;
+            }
+            return `Al mirar tu historia personal y las raíces de ${fullExp}, ¿en qué etapas o momentos recuerdas haber sentido por primera vez que esta vivencia se volvía parte de tu realidad cotidiana? ¿Qué aprendizajes tempranos te llevaron a desarrollar esta forma de estar en el mundo?`;
+        }
+
+        case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
+            if (nodeType === 'cognitive') {
+                return `Cuando ${fullExp} se apodera de tu mente, ¿de qué manera cambia tu trato y tu apertura hacia las personas más cercanas a ti? ¿Tiendes a guardar silencio, a mostrar una fachada de tranquilidad o a sobre-analizar cada gesto ajeno por temor a ser juzgado/a?`;
+            }
+            if (nodeType === 'motor') {
+                return `En los momentos en que recurres a ${fullExp}, ¿qué puente de comunicación o cercanía sientes que se interrumpe con quienes te rodean? ¿Cómo crees que las personas significativas de tu vida interpretan esa distancia o reacción?`;
+            }
+            if (nodeType === 'physiological') {
+                return `Cuando tu cuerpo manifiesta ${fullExp}, ¿cómo reacciona tu entorno inmediato? ¿Sientes que las personas con las que convives comprenden la sobrecarga que estás cargando, o te sientes obligado/a a disimular el malestar para no preocupar a nadie?`;
+            }
+            if (nodeType === 'social') {
+                return `Al reflexionar sobre cómo impacta ${fullExp} en tu vida relacional, ¿de qué manera esta dinámica condiciona el grado de intimidad y confianza que permites con los demás? ¿Qué temes que ocurra si te atreves a poner un límite claro?`;
+            }
+            return `¿De qué manera resuena ${fullExp} en tus vínculos más significativos (pareja, familia o amistades)? ¿Qué barrera o cambio en tu forma de comunicarte notas cuando esta vivencia está activa?`;
+        }
+
+        case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
+            if (nodeType === 'physiological') {
+                return `Conectando con la sensación concreta de ${fullExp}, ¿qué otras señales sutiles de alarma aparecen a la par en tu organismo (respiración corta, taquicardia leve, pesadez o tensión mandibular)? Si esta respuesta física pudiera pedirte algo en este instante, ¿qué pausa o tregua te estaría solicitando?`;
+            }
+            if (nodeType === 'cognitive') {
+                return `Cuando tu mente se ve sobrecargada por ${fullExp}, ¿en qué zona específica de tu cuerpo se concentra la mayor pesadez o contractura (en el pecho, el cuello, el estómago o la cabeza)? ¿Qué pasa con tu capacidad para descansar profundamente después de sostener esa tensión mental?`;
+            }
+            if (nodeType === 'motor') {
+                return `Justo en los instantes previos a que se active ${shortExp}, ¿qué inquietud física, vacío visceral o aceleración interna notas en tu organismo? ¿Cómo responde tu respiración en ese momento exacto?`;
+            }
+            return `En el instante en que se hace presente ${fullExp}, ¿qué notas que ocurre en tu organismo: cómo cambia tu respiración, el tono muscular de tus hombros y tu nivel general de energía física?`;
+        }
+
+        case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
+            if (reflection && reflection.length > 10) {
+                const cleanRefl = reflection.toLowerCase().replace(/[¿?]/g, '').trim();
+                return `Pensando en ${fullExp}, y considerando ${cleanRefl}: ¿Cuál es el reproche o mandato interno más duro que tu mente te repite en silencio? ¿Qué valor humano irrenunciable para ti (como tu paz interior, tu dignidad o tu autenticidad) sientes que estás intentando proteger desesperadamente con esto?`;
+            }
+            if (nodeType === 'cognitive') {
+                return `Frente a ${fullExp}, ¿cuáles son los juicios, exigencias o escenarios temidos que tu diálogo interno anticipa? ¿Qué temes profundamente que signifique sobre ti si te permites soltar el intento de controlarlo todo?`;
+            }
+            return `Detrás de la tensión que despierta ${fullExp}, ¿qué necesidad existencial o valor fundamental tuyo sientes que se queda postergado? ¿Qué regla silenciosa crees que debes cumplir para sentirte valioso/a y seguro/a?`;
+        }
+
+        case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
+            if (consequenceContext) {
+                return `En la estructura de tu mapa se observa con claridad que ${shortExp} suele derivar directamente en ${consequenceContext.targetShort}. Al mirar este paso en tu vida diaria, ¿qué conductas impulsivas, de comprobación o de escape realizas buscando un alivio momentáneo que, sin querer, termina reforzando esa consecuencia?`;
+            }
+            if (nodeType === 'motor') {
+                return `Al observar la acción concreta de ${fullExp}, ¿cuánto tiempo suele durar la sensación de alivio que te brinda, y qué desgaste posterior o sensación de culpa suele dejarte al cabo de unas horas?`;
+            }
+            return `Frente a la incomodidad o la sobrecarga de ${fullExp}, ¿qué conductas automáticas sueles ejecutar en piloto automático para quitarte la presión de encima? ¿Qué emoción dolorosa o situación difícil estás intentando eludir en ese instante?`;
+        }
+
+        case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
+            if (challenge && challenge.length > 6) {
+                return `Tomando en cuenta el reto reflexivo de «${challenge}»: ¿Cuál sería un experimento seguro, mínimo y alcanzable que podrías practicar esta semana frente a ${shortExp}, permitiéndote responder de una manera más amable sin caer en la autoexigencia?`;
+            }
+            if (nodeType === 'cognitive') {
+                return `La próxima vez que sientas que empieza a intensificarse ${shortExp}, ¿qué pequeña pausa de sesenta segundos (respirar tres veces con lentitud, nombrar lo que sientes sin juzgarlo o cambiar de postura física) podrías regalarte para no engancharte en automático con esa rumiación?`;
+            }
+            if (nodeType === 'motor') {
+                return `Frente al impulso inmediato de caer en ${shortExp}, ¿qué alternativa micro-conductual y compasiva (tomar un vaso de agua, salir al aire libre tres minutos o enviar un mensaje sincero) te gustaría probar para darte un espacio antes de reaccionar?`;
+            }
+            return `Si pudieras intentar un primer paso seguro y realista esta semana para relacionarte de otra forma con ${shortExp}, ¿cuál sería esa pequeña acción bondadosa contigo mismo/a que te gustaría experimentar?`;
+        }
+
+        case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
+            return `Reconociendo con honestidad y ternura que ${fullExp} no nació para dañarte, sino como una respuesta adaptativa que tu historia construyó para cuidarte en momentos en que no contabas con mejores recursos: ¿Qué mirada más compasiva y comprensiva decides ofrecerte hoy frente a esta vivencia, y qué compromiso de autocuidado eliges renovar contigo a partir de este momento?`;
+        }
+    }
+
+    return `¿Qué reflexión o toma de consciencia surge al observar ${fullExp} desde esta perspectiva?`;
+};
+
+export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData = null, phenomData = null, edges = []) => {
     if (!Array.isArray(nodes)) return nodes;
     const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
 
@@ -627,14 +705,14 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
             if (n.challenge === enr.challenge) n.challenge = '';
         }
 
-        // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas con comillas
+        // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas o genéricas
         const hasValidQuestions = Array.isArray(n.questions) && 
             n.questions.length === 7 && 
             n.questions.every(q => !isStaleOrRoboticQuestion(q));
 
         if (!hasValidQuestions) {
             n.questions = [0, 1, 2, 3, 4, 5, 6].map(idx => 
-                generateEmpatheticPerspectiveQuestion(n, idx, user, bioData, phenomData)
+                getNodePerspectiveQuestion(n, idx, user, bioData, phenomData, edges, nodes)
             );
         }
 
@@ -660,7 +738,7 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
     });
 };
 
-export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null) => {
+export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null, edges = [], allNodes = []) => {
     if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
     const safeIdx = Math.max(0, Math.min(6, threadIndex));
 
@@ -681,8 +759,8 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bio
         }
     }
 
-    // 3. Generación empática profunda conectada con el individuo (sin comillas, sin paréntesis técnicos)
-    const freshQ = generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData);
+    // 3. Generación empática profunda conectada con el individuo (analiza lo que dice el nodo y de dónde viene en el grafo)
+    const freshQ = generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData, edges, allNodes);
     if (Array.isArray(node.questions)) {
         node.questions[safeIdx] = freshQ;
     }
@@ -2265,7 +2343,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                     const c = thread[0].content || '';
                                     if (isStaleOrRoboticQuestion(c)) {
                                         const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
-                                        thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData);
+                                        thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                                         hasRepaired = true;
                                     }
                                 }
@@ -2351,7 +2429,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
             const isGenericAssistant = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
             if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData);
+                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                 setNodeChats(prev => {
                     const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                     const isLegacy = Array.isArray(currentThreads);
@@ -2659,7 +2737,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             perspectives.push({
                                 index: i,
                                 label: threadLabels[i],
-                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i, user, bioData, phenomData),
+                                question: lastAssistantMsg ? lastAssistantMsg.content : getNodePerspectiveQuestion(node, i, user, bioData, phenomData, afcData?.edges, afcData?.nodes),
                                 answer: lastUserMsg.content
                             });
                         }
@@ -2811,25 +2889,25 @@ Devuelve estrictamente el JSON sin formato extra.
             try {
                 const parsed = JSON.parse(storedAfc);
                 if (parsed && parsed.nodes) {
-                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData)));
+                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData, parsed.edges || [])));
                     console.log("🟢 afcData loaded successfully (softened & enriched):", parsed);
                     setAfcData(parsed);
                 } else {
                     console.warn("⚠️ afcData parsed but invalid format, using mock.");
                     const mock = { ...MOCK_AFC_DATA };
-                    mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
+                    mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
                     setAfcData(mock);
                 }
             } catch (e) { 
                 console.error("🔴 Error parsing afcData, using mock:", e); 
                 const mock = { ...MOCK_AFC_DATA };
-                mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
+                mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
                 setAfcData(mock);
             }
         } else {
             console.log("ℹ️ No afcData found, using mock.");
             const mock = { ...MOCK_AFC_DATA };
-            mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData)));
+            mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
             setAfcData(mock);
         }
 
@@ -2875,7 +2953,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
                                      (isAxel ? (cloudData[`oasis_afc_real_data_Axel Roben`] || cloudData[`oasis_afc_real_data_axel roben`]) : null);
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData)));
+                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
                         const resolved = { ...cloudAfc, nodes: enrichedNodes };
                         setAfcData(resolved);
                         try {
@@ -2904,7 +2982,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 !Array.isArray(n.perspectives_metadata)
             );
             if (needsEnrichment) {
-                const enriched = enrichAfcNodesWithPerspectiveMetadata(afcData.nodes, user, bioData, phenomData);
+                const enriched = enrichAfcNodesWithPerspectiveMetadata(afcData.nodes, user, bioData, phenomData, afcData.edges || []);
                 const updated = { ...afcData, nodes: enriched };
                 setAfcData(updated);
                 if (user) {
@@ -3294,7 +3372,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             
 
             if (parsedAfc.is_valid && parsedAfc.nodes) {
-                parsedAfc.nodes = enrichAfcNodesWithPerspectiveMetadata(parsedAfc.nodes, user, bioData, phenomData);
+                parsedAfc.nodes = enrichAfcNodesWithPerspectiveMetadata(parsedAfc.nodes, user, bioData, phenomData, parsedAfc.edges || []);
                 if (!isAdditive) {
                     parsedAfc.nodes = reorganizeNodes(parsedAfc.nodes, true);
                 } else {
@@ -3664,16 +3742,10 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             const isGenericAssistant = threadChat.length === 1 && threadChat[0].role === 'assistant' && (
                 !threadChat[0].content ||
                 threadChat[0].content.length < 40 ||
-                threadChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                threadChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                threadChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                threadChat[0].content.includes('¿Cómo impacta "') ||
-                threadChat[0].content.includes('el hecho de haber vivido "') ||
-                threadChat[0].content.includes('¿Cómo ha influido en tu historia personal') ||
-                threadChat[0].content.includes('este acontecimiento del pasado sigue resonando')
+                isStaleOrRoboticQuestion(threadChat[0].content)
             );
             if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData);
+                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                 threadChat = [{ role: 'assistant', content: initialQ }];
             }
             const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
@@ -3958,7 +4030,7 @@ ESTRUCTURA DE SALIDA ESPERADA:
             }
         } catch (err) {
             console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
-            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData);
+            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
             setNodeChats(prev => {
                 const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
                 const isLegacy = Array.isArray(currentThreads);
@@ -4511,7 +4583,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             })),
             user,
             bioData,
-            phenomData
+            phenomData,
+            afcData?.edges || []
         );
 
         const getStaggeredSlots = (count, baseX, customYStep) => {
@@ -6644,7 +6717,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
                                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
-                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user, bioData, phenomData) }];
+                                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
 
                                                                             return (
                                                                                 <div className="flex flex-col gap-3 mt-1 h-full max-h-[500px]" onClick={e => e.stopPropagation()}>
@@ -6667,7 +6740,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
                                                                                                     const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -6692,7 +6765,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
                                                                                                     const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
+                                                                                                        const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                                                                                                         setNodeChats(prev => ({
                                                                                                             ...prev,
                                                                                                             [node.id]: {
@@ -7002,7 +7075,7 @@ Por favor, analicemos:
                                                     const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
                                                     const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                         ? currentChat
-                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData) }];
+                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
 
                                                     return (
                                                         <div className="flex flex-col gap-1.5 mt-1 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -7024,7 +7097,7 @@ Por favor, analicemos:
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
                                                                             const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                                                                                 setNodeChats(prev => ({
                                                                                     ...prev,
                                                                                     [currentNode.id]: {
@@ -7049,7 +7122,7 @@ Por favor, analicemos:
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
                                                                             const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
+                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                                                                                 setNodeChats(prev => ({
                                                                                     ...prev,
                                                                                     [currentNode.id]: {
