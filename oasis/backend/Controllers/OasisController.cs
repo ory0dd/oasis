@@ -806,7 +806,12 @@ namespace Oasis.Backend.Controllers
                     Response.Headers.Append("Access-Control-Allow-Origin", "*");
                 }
 
-                return StatusCode((int)response.StatusCode, Content(responseContent, "application/json; charset=utf-8"));
+                return new ContentResult
+                {
+                    Content = responseContent,
+                    ContentType = "application/json; charset=utf-8",
+                    StatusCode = (int)response.StatusCode
+                };
             }
             catch (Exception ex)
             {

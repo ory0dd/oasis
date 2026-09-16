@@ -3274,12 +3274,34 @@ ${isAdditive ? `
 
                 let lastErr = null;
 
+                const extractMessageContent = (data) => {
+                    if (!data) return "";
+                    if (data.choices?.[0]?.message?.content) {
+                        return data.choices[0].message.content;
+                    }
+                    if (typeof data.content === 'string') {
+                        try {
+                            const inner = JSON.parse(data.content);
+                            if (inner && inner.choices?.[0]?.message?.content) {
+                                return inner.choices[0].message.content;
+                            }
+                            if (inner && (inner.nodes || inner.hypotheses || inner.is_valid !== undefined)) {
+                                return data.content;
+                            }
+                        } catch (e) {
+                            return data.content;
+                        }
+                    }
+                    return "";
+                };
+
                 // Intento 1: Modelo configurado a través del proxy del backend
                 try {
                     const res = await attemptCall(configuredModel, endpoint, activeKey, false);
                     if (res.ok) {
                         const data = await res.json();
-                        return data.choices?.[0]?.message?.content || "";
+                        const content = extractMessageContent(data);
+                        if (content) return content;
                     }
                     const errTxt = await res.text();
                     lastErr = new Error(`Error HTTP ${res.status} (${stageName}): ${errTxt}`);
@@ -3295,7 +3317,8 @@ ${isAdditive ? `
                         const directRes = await attemptCall(configuredModel, endpoint, activeKey, true);
                         if (directRes.ok) {
                             const data = await directRes.json();
-                            return data.choices?.[0]?.message?.content || "";
+                            const content = extractMessageContent(data);
+                            if (content) return content;
                         }
                     } catch (directErr) {
                         console.warn("[AFC] Falló llamada directa:", directErr.message);
@@ -3309,7 +3332,8 @@ ${isAdditive ? `
                         const fastRes = await attemptCall('gpt-4o-mini', 'https://api.openai.com/v1/chat/completions', activeKey, false);
                         if (fastRes.ok) {
                             const data = await fastRes.json();
-                            return data.choices?.[0]?.message?.content || "";
+                            const content = extractMessageContent(data);
+                            if (content) return content;
                         }
                     } catch (fastErr) {
                         console.warn("[AFC] Fallback gpt-4o-mini falló:", fastErr.message);
@@ -3342,7 +3366,11 @@ ${isAdditive ? `
                 throw new Error("El modelo generó un JSON inválido en la Etapa 1 (Topología): " + e.message);
             }
 
-            if (!parsedTopology.is_valid) {
+            if (!parsedTopology || typeof parsedTopology !== 'object') {
+                throw new Error("No se pudo estructurar la topología de bucles del paciente. Por favor, intenta de nuevo.");
+            }
+
+            if (parsedTopology.is_valid === false) {
                 throw new Error("El análisis fue rechazado por la IA: " + (parsedTopology.rejection_reason || "Datos insuficientes"));
             }
 
@@ -3413,6 +3441,10 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             } catch(e) {
                 console.warn("JSON Parse failed in stage 2.", e);
                 throw new Error("El modelo generó un JSON inválido en la Etapa 2 (Análisis Clínico): " + e.message);
+            }
+
+            if (!parsedInsights || typeof parsedInsights !== 'object') {
+                throw new Error("No se pudo formular el análisis clínico en la Etapa 2. Por favor, intenta de nuevo.");
             }
 
             const parsedAfc = {
