@@ -251,7 +251,9 @@ const BLIND_SPOTS_CONFIG = [
 ];
 
 
-const API_URL = import.meta.env.VITE_API_URL ||
+let envUrl = import.meta.env.VITE_API_URL;
+if (envUrl && envUrl.includes('localhost') && typeof window !== 'undefined' && window.location.hostname !== 'localhost') envUrl = null;
+const API_URL = envUrl ||
     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
         ? `http://${window.location.hostname}:5046`
         : 'https://oasis-production-6303.up.railway.app');
@@ -3242,32 +3244,95 @@ ${isAdditive ? `
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const configuredModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
+            const executeAICallWithFallback = async (basePayload, stageName, maxTokens = 4000) => {
+                const targetPayload = { ...basePayload, max_tokens: maxTokens };
+
+                const attemptCall = async (modelToUse, customEndpoint, customKey, isDirect = false) => {
+                    const callPayload = { ...targetPayload, model: modelToUse };
+                    if (isDirect) {
+                        return await fetch(customEndpoint || 'https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${customKey}`
+                            },
+                            body: JSON.stringify(callPayload)
+                        });
+                    }
+                    return await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            endpoint: customEndpoint,
+                            key: customKey,
+                            payload: callPayload
+                        })
+                    });
+                };
+
+                let lastErr = null;
+
+                // Intento 1: Modelo configurado a través del proxy del backend
+                try {
+                    const res = await attemptCall(configuredModel, endpoint, activeKey, false);
+                    if (res.ok) {
+                        const data = await res.json();
+                        return data.choices?.[0]?.message?.content || "";
+                    }
+                    const errTxt = await res.text();
+                    lastErr = new Error(`Error HTTP ${res.status} (${stageName}): ${errTxt}`);
+                } catch (netErr) {
+                    lastErr = netErr;
+                    console.warn(`[AFC] Intento 1 con ${configuredModel} falló por red/timeout:`, netErr.message);
+                }
+
+                // Intento 2: Si el usuario tiene una API key directa, intentar llamada directa cliente->OpenAI
+                if (activeKey && activeKey.startsWith('sk-') && activeKey.length >= 20) {
+                    try {
+                        console.log(`[AFC] Intentando llamada directa a ${endpoint} con clave de usuario...`);
+                        const directRes = await attemptCall(configuredModel, endpoint, activeKey, true);
+                        if (directRes.ok) {
+                            const data = await directRes.json();
+                            return data.choices?.[0]?.message?.content || "";
+                        }
+                    } catch (directErr) {
+                        console.warn("[AFC] Falló llamada directa:", directErr.message);
+                    }
+                }
+
+                // Intento 3: Modelo ágil de respaldo (gpt-4o-mini) que genera en 5-8 segundos evitando timeouts
+                if (configuredModel !== 'gpt-4o-mini') {
+                    try {
+                        setIsAnalyzing(`Acelerando análisis con modelo ágil (${stageName})...`);
+                        const fastRes = await attemptCall('gpt-4o-mini', 'https://api.openai.com/v1/chat/completions', activeKey, false);
+                        if (fastRes.ok) {
+                            const data = await fastRes.json();
+                            return data.choices?.[0]?.message?.content || "";
+                        }
+                    } catch (fastErr) {
+                        console.warn("[AFC] Fallback gpt-4o-mini falló:", fastErr.message);
+                    }
+                }
+
+                // Si todos los intentos fallaron, devolver error claro y amigable
+                if (lastErr && lastErr.message && (lastErr.message.includes('Failed to fetch') || lastErr.message.includes('NetworkError'))) {
+                    throw new Error(`No se pudo conectar con el servidor de análisis clínico (${stageName}). Esto ocurre si la conexión a internet es inestable, si hay un bloqueador de red o si el servidor tardó demasiado. Por favor verifica tu conexión y presiona de nuevo.`);
+                }
+                throw lastErr || new Error(`Error de comunicación en ${stageName}`);
+            };
 
             const payload1 = {
-                model: model,
                 messages: [
                     { role: 'system', content: systemPromptTopology },
                     { role: 'user', content: "Genera exclusivamente la TOPOLOGÍA funcional (nodos y conexiones) basada 100% en la historia real del paciente. Datos clínicos:\n" + context }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.2,
-                max_tokens: 8192
+                temperature: 0.2
             };
 
-            const res1 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint, key: activeKey, payload: payload1 })
-            });
-
-            if (!res1.ok) {
-                const errText = await res1.text();
-                throw new Error(`Error HTTP ${res1.status} (Etapa 1): ${errText}`);
-            }
-
-            const data1 = await res1.json();
-            const raw1 = data1.choices?.[0]?.message?.content || "";
+            const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topología", 4200);
             
             let parsedTopology;
             try {
@@ -3332,29 +3397,15 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
 `;
 
             const payload2 = {
-                model: model,
                 messages: [
                     { role: 'system', content: systemPromptInsights },
                     { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify((parsedTopology.nodes || []).map(n => ({ id: n.id, label: n.label, type: n.type })))}` }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.2,
-                max_tokens: 4096
+                temperature: 0.2
             };
 
-            const res2 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint, key: activeKey, payload: payload2 })
-            });
-
-            if (!res2.ok) {
-                const errText = await res2.text();
-                throw new Error(`Error HTTP ${res2.status} (Etapa 2): ${errText}`);
-            }
-
-            const data2 = await res2.json();
-            const raw2 = data2.choices?.[0]?.message?.content || "";
+            const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: Análisis Clínico", 2500);
 
             let parsedInsights;
             try {
@@ -3472,7 +3523,7 @@ Conexiones actuales: ${currentEdgesText}
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.3,
-                max_tokens: 8192
+                max_tokens: 3000
             };
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {

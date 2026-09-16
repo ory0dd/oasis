@@ -798,32 +798,22 @@ namespace Oasis.Backend.Controllers
                 var jsonPayload = JsonSerializer.Serialize(req.Payload, JsonOptions);
                 request.Content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
 
-                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-                
-                Response.StatusCode = (int)response.StatusCode;
-                
-                if (response.Content.Headers.ContentType != null)
+                using var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
                 {
-                    Response.ContentType = response.Content.Headers.ContentType.ToString();
+                    Response.Headers.Append("Access-Control-Allow-Origin", "*");
                 }
 
-                foreach (var header in response.Headers)
-                {
-                    var key = header.Key;
-                    if (key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase) ||
-                        key.Equals("Connection", StringComparison.OrdinalIgnoreCase) ||
-                        key.Equals("Keep-Alive", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-                    Response.Headers[key] = header.Value.ToArray();
-                }
-
-                await response.Content.CopyToAsync(Response.Body);
-                return new EmptyResult();
+                return StatusCode((int)response.StatusCode, Content(responseContent, "application/json; charset=utf-8"));
             }
             catch (Exception ex)
             {
+                if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                {
+                    Response.Headers.Append("Access-Control-Allow-Origin", "*");
+                }
                 return StatusCode(500, new { msg = "Error en el proxy de IA: " + ex.Message });
             }
         }
