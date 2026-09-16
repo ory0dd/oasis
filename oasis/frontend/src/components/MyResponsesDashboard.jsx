@@ -386,29 +386,73 @@ export const extractHumanExperience = (node) => {
     return text || "este patrón";
 };
 
+export const isStaleOrRoboticQuestion = (q) => {
+    if (!q || typeof q !== 'string') return true;
+    const trimmed = q.trim();
+    if (trimmed.length < 35) return true;
+    // Rechazar preguntas con comillas alrededor de etiquetas clínicas o explicaciones entre paréntesis
+    if (trimmed.includes('"') || trimmed.includes('“') || trimmed.includes('”') || trimmed.includes("''")) return true;
+    if (trimmed.includes('(') || trimmed.includes(')')) return true;
+    // Detectar plantillas robóticas heredadas de versiones anteriores
+    const stalePhrases = [
+        '¿En qué momento o circunstancias de tu vida comenzó',
+        'este patrón de',
+        'el hecho de haber vivido',
+        '¿Cómo ha influido en tu historia personal',
+        'este acontecimiento del pasado sigue resonando',
+        '¿Cómo impacta',
+        '¿Qué te hace sentir culpable?',
+        '¿Qué significado o aprendizaje extraes',
+        'desarmar el bucle',
+        'Observando el bucle completo',
+        '¿Cuáles son los pensamientos, juicios o exigencias',
+        '¿Cuáles son las acciones, maniobras de escape',
+        '¿Qué señales específicas notas en tu organismo',
+        '¿De qué manera influye tu entorno social actual',
+        '¿Qué pensamientos automáticos o reglas internas',
+        'Considerando lo que mencionaste en tu historia de vida'
+    ];
+    for (const phrase of stalePhrases) {
+        if (trimmed.includes(phrase)) return true;
+    }
+    return false;
+};
+
 export const getClinicalTheme = (node) => {
     if (!node) return 'general';
     const combined = `${node.label || ''} ${node.description || ''} ${node.type || ''}`.toLowerCase();
 
-    if (/dependen|apego|atenci[oó]n|valida|abandono|rechazo|afecto|pareja|separaci[oó]n|soledad vincular/i.test(combined)) {
+    if (/sobrepens|rumia|juicio|error|mente.*acelerada|dar.*vuelta|pensar.*demasiado|par[aá]lisis.*an[aá]lisis|pensamiento.*repetitivo|preocupaci/i.test(combined)) {
+        return 'overthinking';
+    }
+    if (/alcohol|trago|cerveza|copa|fumar|cigarro|nicotina|sustancia|consumo.*alcohol|consumo.*calmar/i.test(combined)) {
+        return 'substances';
+    }
+    if (/insegur|autoestima|duda.*capacidad|desconfianza.*mismo|sentirme.*menos|no dar la talla/i.test(combined)) {
+        return 'insecurity';
+    }
+    if (/laboral|trabajo|empleo|oficina|jefe|ambiente.*hostil/i.test(combined)) {
+        return 'work_pressure';
+    }
+    if (/dependen|apego|atenci[oó]n|valida|abandono|rechazo|afecto|pareja|separaci[oó]n|soledad vincular|desaprobaci|vac[ií]o vincular/i.test(combined)) {
         return 'attachment';
     }
-    if (/autoexigen|cr[ií]tica|perfecc|culpa|reproche|rumia|insufic|duda.*decidir|equivocar|fallar/i.test(combined)) {
+    if (/autoexigen|cr[ií]tica|perfecc|culpa|reproche|insufic|equivocar|fallar|expectativa/i.test(combined)) {
         return 'perfectionism';
     }
-    if (/aisla|evita|silencio|retirada|distancia.*emocional|desconexi[oó]n|repleg|encerr/i.test(combined)) {
+    if (/aisla|evita|silencio|retirada|distancia.*emocional|desconexi[oó]n|repleg|encerr|huida|escap/i.test(combined)) {
         return 'avoidance';
     }
-    if (/ira|enojo|rabia|frustra|discusi|explosi|agresi|impuls|irritab/i.test(combined)) {
+    if (/ira|enojo|rabia|frustra|discusi|explosi|agresi|impuls|irritab|pelea|conflicto/i.test(combined)) {
         return 'anger';
     }
-    if (/cuerpo|tensi[oó]n|som[aá]t|pecho|nudo|garganta|est[oó]mago|respiraci|fatiga|cansancio|sueño|insomnio|agotamiento/i.test(combined) || node.type === 'physiological' || node.type === 'biological') {
+    if (/cuerpo|tensi[oó]n|som[aá]t|pecho|nudo|garganta|est[oó]mago|respiraci|fatiga|cansancio|sueño|insomnio|agotamiento|opresi[oó]n/i.test(combined) || node.type === 'physiological' || node.type === 'biological') {
         return 'somatic';
     }
-    if (/miedo|ansiedad|alerta|insegur|panico|cat[aá]strof|control|peligro/i.test(combined)) {
+    if (/miedo|ansiedad|alerta|panico|cat[aá]strof|control|peligro/i.test(combined)) {
         return 'anxiety';
     }
-    if (/vac[ií]o|prop[oó]sito|sentido|futuro|desgano|rumbo|ilusi[oó]n|direcci/i.test(combined)) {
+    if (/vac[ií]o|prop[oó]sito|sentido|futuro|desgano|rumbo|ilusi[oó]n|direcci|estancamiento/i.test(combined)) {
         return 'purpose';
     }
     return 'general';
@@ -421,6 +465,54 @@ export const generateEmpatheticPerspectiveQuestion = (node, threadIndex = 0, use
     const humanExp = extractHumanExperience(node);
 
     switch (theme) {
+        case 'overthinking':
+            switch (safeIdx) {
+                case 0: return "Al mirar tu historia personal, ¿en qué momentos de tu vida o de tu infancia recuerdas haber aprendido que equivocarte o ser juzgado por los demás era peligroso? ¿Qué vivencias te enseñaron a repasar las cosas una y otra vez en tu mente como una forma de mantenerte a salvo?";
+                case 1: return "Cuando te encuentras atrapado/a dándole vueltas a posibles errores o a lo que otros piensen de ti, ¿cómo cambia tu manera de convivir con las personas cercanas? ¿Sientes que te callas o buscas aprobación constante para calmar esa duda interna?";
+                case 2: return "Cuando la mente se acelera sobrepensando cada detalle, ¿en qué parte de tu cuerpo se concentra la mayor carga: dolor de cabeza, tensión en la mandíbula, opresión en el pecho o dificultad para descansar?";
+                case 3: return "¿Qué anhelo de paz, libertad o disfrute auténtico sientes que se apaga mientras estás ocupado/a defendiéndote de tus propios juicios internos? ¿Qué temes profundamente que pase si dejas de analizarlo todo?";
+                case 4: return "Frente al temor de equivocarte o no tener el control, ¿qué conductas automáticas sueles hacer: posponer decisiones importantes, revisar lo mismo muchas veces o quedarte paralizado/a?";
+                case 5: return "¿Qué pequeña decisión cotidiana podrías tomar hoy sin repasarla una y otra vez en tu mente, permitiéndote que sea simplemente suficientemente buena?";
+                case 6: return "Sobrepensar fue el guardián que tu mente creó en el pasado para que nadie te lastimara ni te criticara. ¿Qué comprensión compasiva puedes ofrecerte hoy, recordándote que ya no necesitas controlarlo todo para tener valor?";
+            }
+            break;
+
+        case 'substances':
+            switch (safeIdx) {
+                case 0: return "Al revisar tu historia personal, ¿recuerdas en qué época o ante qué situaciones de presión o soledad descubriste que recurrir a esto te ofrecía una vía rápida de desconexión o desahogo?";
+                case 1: return "¿De qué manera influye este hábito en tus relaciones más cercanas? ¿Sientes que a veces lo utilizas para facilitar el contacto social o, por el contrario, para evadir conversaciones difíciles?";
+                case 2: return "Físicamente, ¿qué sensaciones o inquietud previa aparecen en tu organismo justo antes de sentir la necesidad de recurrir a esto? ¿Cómo se siente tu cuerpo al día siguiente?";
+                case 3: return "¿Qué malestar emocional, vacío o autoexigencia estás intentando silenciar momentáneamente en esos instantes? ¿Qué necesidad profunda tuya no está siendo atendida de otra manera?";
+                case 4: return "Cuando surge el impulso automático, ¿cuánto tiempo pasa antes de ceder, y qué alternativas saludables sueles pasar por alto por buscar el alivio inmediato?";
+                case 5: return "¿Qué pequeño espacio de pausa (por ejemplo, esperar 10 minutos y tomar un vaso de agua o respirar) podrías darte la próxima vez que sientas el impulso?";
+                case 6: return "Comprendiendo que este comportamiento nació como un intento de calmar un dolor o una sobrecarga real: ¿Qué otra forma más amable y compasiva decides ofrecerte para cuidar de ti?";
+            }
+            break;
+
+        case 'insecurity':
+            switch (safeIdx) {
+                case 0: return "Mirando hacia las etapas tempranas de tu vida, ¿en qué momentos o ante qué figuras sentiste por primera vez que lo que hacías o lo que eras no era suficiente? ¿De dónde aprendiste a dudar tanto de tu valor?";
+                case 1: return "¿Cómo se refleja esta inseguridad al compartir con tu pareja, amistades o familia? ¿Tiendes a compararte, a buscar señales de rechazo o a asumir que los demás tienen más seguridad que tú?";
+                case 2: return "¿En qué parte de tu cuerpo se manifiesta la sensación de inseguridad o vulnerabilidad (vacío en el estómago, encogimiento postural o respiración contenida)?";
+                case 3: return "¿Cuáles son las frases más duras que tu voz interior te dice cuando dudas de ti? ¿Qué parte valiosa y auténtica tuya se queda escondida por miedo a ser juzgada?";
+                case 4: return "Ante el temor a no ser capaz o a quedar expuesto/a, ¿qué conductas sueles adoptar: retroceder, disculparte en exceso o dejar que otros decidan por ti?";
+                case 5: return "¿Qué pequeño acto de confianza en tu propio criterio podrías realizar esta semana, defendiendo tu postura o tu gusto personal sin pedir permiso?";
+                case 6: return "La duda nació para protegerte de la desaprobación cuando eras más vulnerable. ¿Cómo puedes recordarte hoy que tu valía humana no depende de la aprobación externa?";
+            }
+            break;
+
+        case 'work_pressure':
+            switch (safeIdx) {
+                case 0: return "Pensando en tu trayectoria, ¿recuerdas en qué momentos anteriores viviste entornos donde sentías que tu esfuerzo no era reconocido o donde debías mantenerte en alerta constante?";
+                case 1: return "¿De qué manera la tensión o el clima hostil de este entorno se traslada a tu vida personal y a la convivencia con tus seres queridos al terminar el día?";
+                case 2: return "¿Qué señales físicas de agotamiento o sobrecarga experimentas al empezar o terminar tu jornada (pesadez en hombros, rigidez en cuello o falta de energía vital)?";
+                case 3: return "¿Qué pensamientos de injusticia, desgaste o frustración rondan tu mente ante esta situación? ¿Qué límites personales sientes que se están poniendo a prueba?";
+                case 4: return "Para sobrellevar la tensión de este ambiente, ¿qué respuestas automáticas sueles tener durante el día: callar la molestia, acelerarte o aislarte de los demás?";
+                case 5: return "¿Qué límite saludable o pausa reparadora podrías establecer hoy durante tu jornada para cuidar tu espacio interno sin desgastarte?";
+                case 6: return "Reconociendo que tu bienestar y dignidad van antes que cualquier demanda externa: ¿Qué compromiso de autocuidado y firmeza decides mantener contigo mismo/a?";
+            }
+            break;
+
         case 'attachment':
             switch (safeIdx) {
                 case 0: return "Mirando hacia tu historia personal y los vínculos que marcaron tu vida, ¿en qué momentos de tu infancia o juventud recuerdas haber sentido por primera vez ese miedo al rechazo o esa necesidad urgente de que te confirmaran su presencia y atención? ¿Qué vivencias del pasado te enseñaron a dudar de que podías estar seguro/a por tu cuenta?";
@@ -507,7 +599,7 @@ export const generateEmpatheticPerspectiveQuestion = (node, threadIndex = 0, use
 
         default: // 'general'
             switch (safeIdx) {
-                case 0: return `Mirando hacia tu historia personal, ¿en qué momento o circunstancias de tu pasado recuerdas haber empezado a experimentar ${humanExp}? ¿Qué situaciones de tu vida te enseñaron a reaccionar de esta forma para protegerte?`;
+                case 0: return `Al reflexionar sobre las raíces de tu historia, ¿en qué etapas o momentos recuerdas haber aprendido a convivir con ${humanExp}? ¿Qué vivencias tempranas te llevaron a desarrollar esta forma de protegerte o responder?`;
                 case 1: return `¿De qué manera resuena ${humanExp} en tus vínculos más cercanos (familia, pareja o amigos)? ¿Cómo reaccionan los demás y qué sientes que cambia en tu relación con ellos?`;
                 case 2: return `Cuando se hace presente ${humanExp}, ¿qué señales o sensaciones específicas notas en tu cuerpo (en el pecho, la respiración, el estómago o tu nivel de energía)?`;
                 case 3: return `¿Cuáles son los pensamientos, dudas o temores que tu mente te repite en silencio frente a ${humanExp}? ¿Qué valor importante para ti sientes que está en juego?`;
@@ -538,11 +630,11 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
         // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas con comillas
         const hasValidQuestions = Array.isArray(n.questions) && 
             n.questions.length === 7 && 
-            n.questions.every(q => typeof q === 'string' && q.length > 25 && !q.includes('haber vivido "') && !q.includes('¿Qué te hace sentir culpable?'));
+            n.questions.every(q => !isStaleOrRoboticQuestion(q));
 
         if (!hasValidQuestions) {
             n.questions = [0, 1, 2, 3, 4, 5, 6].map(idx => 
-                getNodePerspectiveQuestion(n, idx, user, bioData, phenomData)
+                generateEmpatheticPerspectiveQuestion(n, idx, user, bioData, phenomData)
             );
         }
 
@@ -560,6 +652,7 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
         n.perspectives_metadata = n.questions.map((q, idx) => ({
             index: idx,
             name: perspectiveNames[idx],
+            theme: getClinicalTheme(n),
             question: q
         }));
 
@@ -571,18 +664,10 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bio
     if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
     const safeIdx = Math.max(0, Math.min(6, threadIndex));
 
-    // 1. Si el nodo ya tiene preguntas personalizadas válidas y no son genéricas ni usan plantillas con comillas
+    // 1. Si el nodo ya tiene preguntas personalizadas válidas y no son obsoletas ni genéricas
     if (Array.isArray(node.questions) && node.questions[safeIdx]) {
         const q = node.questions[safeIdx];
-        const isRobotic = typeof q === 'string' && (
-            q.includes('el hecho de haber vivido "') || 
-            q.includes('¿Cómo ha influido en tu historia personal el hecho') || 
-            q.includes('¿Qué te hace sentir culpable?') ||
-            q.includes('¿Qué significado o aprendizaje extraes') ||
-            q.includes('("') || 
-            q.includes('")')
-        );
-        if (!isRobotic && q.length > 25) {
+        if (!isStaleOrRoboticQuestion(q)) {
             return q;
         }
     }
@@ -591,13 +676,17 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bio
     const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
     if (isAxel) {
         const axelQ = getAxelEnrichedPerspectiveQuestion(node, safeIdx);
-        if (axelQ) {
+        if (axelQ && !isStaleOrRoboticQuestion(axelQ)) {
             return axelQ;
         }
     }
 
     // 3. Generación empática profunda conectada con el individuo (sin comillas, sin paréntesis técnicos)
-    return generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData);
+    const freshQ = generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData);
+    if (Array.isArray(node.questions)) {
+        node.questions[safeIdx] = freshQ;
+    }
+    return freshQ;
 };
 
 const findExactUserMention = (node, bioData, phenomData) => {
@@ -2166,6 +2255,7 @@ Devuelve estrictamente el JSON sin formato extra.
             if (saved) {
                 const parsed = JSON.parse(saved);
                 if (parsed && typeof parsed === 'object') {
+                    let hasRepaired = false;
                     Object.keys(parsed).forEach(nodeId => {
                         const threads = parsed[nodeId];
                         if (threads && typeof threads === 'object') {
@@ -2173,43 +2263,25 @@ Devuelve estrictamente el JSON sin formato extra.
                                 const thread = threads[tIdx];
                                 if (Array.isArray(thread) && thread.length === 1 && thread[0].role === 'assistant') {
                                     const c = thread[0].content || '';
-                                    const isGeneric = c.length < 40 ||
-                                        c.includes('¿Qué te hace sentir culpable?') ||
-                                        c.includes('¿Qué significado o aprendizaje extraes') ||
-                                        c.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                                        c.includes('¿Cómo impacta "') ||
-                                        c.includes('el hecho de haber vivido "') ||
-                                        c.includes('¿Cómo ha influido en tu historia personal') ||
-                                        c.includes('este acontecimiento del pasado sigue resonando');
-                                    const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
-                                    if (isAxel) {
-                                        if (isGeneric) {
-                                            const enrQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
-                                            if (enrQ) {
-                                                thread[0].content = enrQ;
-                                            }
-                                        }
-                                    } else {
-                                        const axelQ = getAxelEnrichedPerspectiveQuestion({ id: nodeId }, parseInt(tIdx, 10));
-                                        const containsAxel = (axelQ && c === axelQ) ||
-                                            c.includes('pantalones') || c.includes('ruido') || c.includes('noise') ||
-                                            c.includes('corte de pelo') || c.includes('colegio católico');
-                                        if (isGeneric || containsAxel) {
-                                            const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
-                                            thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData);
-                                        }
+                                    if (isStaleOrRoboticQuestion(c)) {
+                                        const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
+                                        thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData);
+                                        hasRepaired = true;
                                     }
                                 }
                             });
                         }
                     });
+                    if (hasRepaired) {
+                        setLocalItem(`oasis_node_chats_${user}`, JSON.stringify(parsed));
+                    }
+                    setNodeChats(parsed);
                 }
-                setNodeChats(parsed);
             }
         } catch (e) {
             console.error(e);
         }
-    }, [user]);
+    }, [user, afcData]);
 
     // Save nodeChats to localStorage when it changes
     useEffect(() => {
@@ -2277,29 +2349,8 @@ Devuelve estrictamente el JSON sin formato extra.
             const tIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
             const currentChat = getSafeCurrentChat(activeNode.id, tIdx);
             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-            const isGenericAssistant = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && (
-                !currentChat[0].content ||
-                currentChat[0].content.length < 40 ||
-                currentChat[0].content.includes('¿Qué te hace sentir culpable?') ||
-                currentChat[0].content.includes('¿Qué significado o aprendizaje extraes') ||
-                currentChat[0].content.includes('¿En qué momento o circunstancias de tu vida comenzó') ||
-                currentChat[0].content.includes('¿Cómo impacta "') ||
-                currentChat[0].content.includes('el hecho de haber vivido "') ||
-                currentChat[0].content.includes('¿Cómo ha influido en tu historia personal') ||
-                currentChat[0].content.includes('este acontecimiento del pasado sigue resonando')
-            );
-            const isAxel = user && typeof user === 'string' && user.toLowerCase().includes('axel');
-            const axelQ = getAxelEnrichedPerspectiveQuestion(activeNode, tIdx);
-            const containsAxel = !isAxel && currentChat && currentChat[0] && (
-                (axelQ && currentChat[0].content === axelQ) ||
-                (currentChat[0].content && (
-                    currentChat[0].content.includes('pantalones') || 
-                    currentChat[0].content.includes('noise-rock') || 
-                    currentChat[0].content.includes('corte de pelo') || 
-                    currentChat[0].content.includes('colegio católico')
-                ))
-            );
-            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && (isGenericAssistant || containsAxel))) {
+            const isGenericAssistant = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
                 const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData);
                 setNodeChats(prev => {
                     const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
@@ -2849,8 +2900,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const needsEnrichment = afcData.nodes.some(n => 
                 !Array.isArray(n.questions) || 
                 n.questions.length < 7 || 
-                n.questions[0]?.includes('haber vivido "') ||
-                n.questions[0]?.includes('¿Cómo ha influido en tu historia personal') ||
+                n.questions.some(q => isStaleOrRoboticQuestion(q)) ||
                 !Array.isArray(n.perspectives_metadata)
             );
             if (needsEnrichment) {
@@ -2859,7 +2909,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 setAfcData(updated);
                 if (user) {
                     try {
-                        localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
+                        setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
                     } catch (e) {}
                 }
             }
@@ -3044,16 +3094,16 @@ ETAPA 1: TOPOLOGÍA. Tu tarea es estructurar los nodos y conexiones funcionales 
    - Si el paciente aportó respuestas breves o concisas, enfócate solo en lo reportado. Jamás inventes nodos ficticios para abultar el mapa.
 
 2. Cantidad y Balance de Nodos:
-   - Genera un mapa funcional nítido, ágil y clínicamente certero de entre 15 y 22 nodos en total (enfócate en las variables funcionales reales del paciente; NUNCA agregues nodos inventados de relleno).
+   - Genera un mapa funcional exhaustivo, profundo y clínicamente completo de entre 30 y 42 nodos en total (enfócate en las variables funcionales reales del paciente; NUNCA agregues nodos inventados de relleno).
    - DISTRIBUCIÓN FUNCIONAL:
-     a) Históricos (azules, type: 'historical'): 3 a 5 nodos (origen familiar, infancia, rupturas o eventos del pasado narrados por el paciente).
-     b) Mediadores Biológicos (verdes, type: 'biological'): 2 a 4 nodos (patrones de sueño, dolores físicos específicos, consumo de sustancias o reactividad somática reportada).
-     c) Mediadores Sociales (verdes, type: 'social'): 2 a 4 nodos (relación de pareja, dinámicas familiares, aislamiento o vínculos reales).
-     d) Conductas Problema (rojos, types: 'cognitive', 'motor', 'physiological'): 5 a 8 nodos en total:
-        - 'cognitive': pensamientos automáticos, autocrítica o creencias nucleares expresadas por el paciente.
-        - 'motor': conductas de evitación, escape, llanto, discusiones o hábitos reportados.
-        - 'physiological': sensaciones somáticas reales (nudo en garganta, opresión, agitación, visión borrosa) reportadas.
-     e) Consecuencias (blancos, type: 'consequence'): 3 a 5 nodos (consecuencias a corto plazo de alivio y consecuencias a largo plazo de estancamiento o sufrimiento).
+     a) Históricos (azules, type: 'historical'): 6 a 8 nodos (origen familiar, infancia, vivencias formativas tempranas relatadas por el paciente).
+     b) Mediadores Biológicos (verdes, type: 'biological'): 4 a 6 nodos (patrones de sueño, tensión somática, fatiga, sustancias o reactividad corporal).
+     c) Mediadores Sociales (verdes, type: 'social'): 5 a 7 nodos (vínculos familiares, dinámicas de pareja, amistades, demandas y clima del entorno real).
+     d) Conductas Problema (rojos, types: 'cognitive', 'motor', 'physiological'): 12 a 16 nodos en total:
+        - 'cognitive': 5 a 7 nodos (diálogo interno, rumiación mental, sobrepensar constante, juicios sobre errores, autocrítica o dudas frecuentes).
+        - 'motor': 4 a 6 nodos (conductas de evitación, aislamiento, comprobación, escape o hábitos automáticos).
+        - 'physiological': 3 a 5 nodos (opresión en el pecho, nudo en la garganta, respiración acelerada, tensión física).
+     e) Consecuencias (blancos, type: 'consequence'): 6 a 9 nodos (alivio momentáneo a corto plazo, y a largo plazo: estancamiento existencial, desgaste vincular y reforzamiento del bucle).
 
 3. REGLA DE NOMBRADO DE NODOS ('label') — TONO CERCANO, LIGERO Y REAL ("HEY MIRA", NUNCA "¡¡¡HEY MIRA!!!"):
    - Los nombres NO deben sonar como alarmas médicas catastróficas, diagnósticos psiquiátricos rimbombantes ni etiquetas abstractas que asusten al consultante.
@@ -3072,25 +3122,12 @@ ETAPA 1: TOPOLOGÍA. Tu tarea es estructurar los nodos y conexiones funcionales 
        - En vez de "Dinámicas familiares invalidantes" -> "Incomprensión en la familia"
        - En vez de "Deterioro de la autoeficacia" -> "Dudas sobre la propia capacidad"
        - En vez de "Cronificación del malestar" -> "Sensación de estancamiento"
-   - CADA NOMBRE DEBE SER ÚNICO Y BASADO EN HECHOS REALES DEL PACIENTE (si es estudiante o adolescente, no inventes presión laboral corporativa ni ambientes de oficina).
-   - Coordenadas sugeridas: historical (x: 12 a 16), cognitive (x: 26 a 30), motor/physiological (x: 41 a 45), biological (x: 55 a 59), social (x: 69 a 73), consequence (x: 84 a 88), Y: 20 a 80.
+   - CADA NOMBRE DEBE SER ÚNICO Y BASADO EN HECHOS REALES DEL PACIENTE.
+   - Coordenadas sugeridas: historical (x: 12 a 16), cognitive (x: 26 a 30), motor/physiological (x: 41 a 45), biological (x: 55 a 59), social (x: 69 a 73), consequence (x: 84 a 88), Y: 15 a 85.
 
-4. REGLA DE METADATOS Y PREGUNTAS DE CONEXIÓN CLÍNICA ('questions') — OBLIGATORIO PARA CADA NODO:
-   - Cada nodo DEBE incluir un arreglo 'questions' con EXACTAMENTE 7 preguntas terapéuticas (perspectivas 0 a 6).
-   - ¡REGLA CRÍTICA DE CONEXIÓN EMOCIONAL!: NUNCA pongas nombres en comillas (ej. ❌ "¿Cómo influye \"Dependencia emocional\"?"). NUNCA agregues paréntesis explicativos (ej. ❌ "(Dependencia de atención)").
-   - Habla con profunda empatía y conexión directa de "tú", aterrizado a las situaciones reales, vivencias concretas y sensaciones que relató el paciente.
-   - Distribución de las 7 preguntas:
-     [0] Raíz Histórica: Conecta con su infancia, familia o vivencias pasadas específicas que originaron este patrón de supervivencia.
-     [1] Relaciones y Entorno Social: Cómo resuena en sus relaciones reales (pareja, familia, amistades) y qué teme que pase si no reacciona así.
-     [2] Sensaciones Corporales: Dónde en el cuerpo siente la tensión, nudo en garganta, opresión en pecho o agotamiento.
-     [3] Diálogo Interno y Creencias: Qué reproches o ideas se repite en silencio y qué valor importante siente que está en juego.
-     [4] Respuestas Automáticas y Hábitos: Qué acciones o maniobras de escape automáticas hace en ese instante para aliviar el malestar.
-     [5] Experimento Conductual Amable: Un micro-paso seguro, amable y concreto para probar esta semana.
-     [6] Integración y Compasión: Cómo resignificar la función protectora de esta vivencia y cómo tratarse con más cariño y calma.
-
-5. Conexiones (edges):
-   - Genera entre 20 y 30 conexiones funcionales dirigidas ("unidirectional" o "bidirectional") con weight (1, 2 o 3).
-   - Muestra cómo los eventos históricos y mediadores activan las conductas problema, cómo las conductas generan consecuencias, y cómo las consecuencias retroalimentan el bucle.
+4. Conexiones (edges):
+   - Genera entre 55 y 75 conexiones funcionales dirigidas ("unidirectional" o "bidirectional") con weight (1, 2 o 3).
+   - CRÍTICO PARA FORMAR MÚLTIPLES BUCLES (LOOPS): Conecta antecedentes históricos y mediadores hacia las conductas problema, estas hacia sus consecuencias, y FUNDAMENTAL: retroalimenta desde las consecuencias hacia los pensamientos ('cognitive'), mediadores y conductas motoras, cerrando entre 8 y 15 bucles clínicos interconectados.
 ${isAdditive ? `
 === MODO ACTUALIZACIÓN ADITIVA ===
 1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
@@ -3106,12 +3143,11 @@ ${isAdditive ? `
     // Cada nodo contiene:
     // - id: formato ultracorto: "n1", "n2", "n3"...
     // - type: "historical" | "motor" | "cognitive" | "physiological" | "biological" | "social" | "consequence"
-    // - label: nombre clínico descriptivo (2 a 4 palabras, fiel al paciente)
-    // - description: explicación clínica concisa (5 a 12 palabras)
+    // - label: nombre clínico descriptivo y cercano (2 a 4 palabras, fiel al paciente)
+    // - description: explicación concisa de lo que experimenta el paciente (5 a 12 palabras)
     // - source: cita textual corta del paciente entre comillas (3 a 8 palabras)
-    // - challenge: reto existencial terapéutico (3 a 7 palabras)
+    // - challenge: reto existencial reflexivo (3 a 7 palabras)
     // - reflection_question: pregunta reflexiva directa para el paciente (5 a 10 palabras)
-    // - questions: [q0, q1, q2, q3, q4, q5, q6] // 7 preguntas empáticas, profundas y sin comillas, dirigidas al paciente
     // - x: coordenada X sugerida (0 a 100)
     // - y: coordenada Y sugerida (0 a 100)
   ],
@@ -3138,7 +3174,7 @@ ${isAdditive ? `
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.2,
-                max_tokens: 4096
+                max_tokens: 8192
             };
 
             const res1 = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -3221,7 +3257,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 model: model,
                 messages: [
                     { role: 'system', content: systemPromptInsights },
-                    { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify(parsedTopology.nodes)}` }
+                    { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify((parsedTopology.nodes || []).map(n => ({ id: n.id, label: n.label, type: n.type })))}` }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.2,
@@ -6605,25 +6641,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                                             const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
                                                                             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                                            const isGenericQuestion = (content) => {
-                                                                                if (!content || typeof content !== 'string') return true;
-                                                                                if (content.length < 35) return true;
-                                                                                if (content.includes('¿Qué te hace sentir culpable?')) return true;
-                                                                                if (content.includes('¿Qué significado o aprendizaje extraes')) return true;
-                                                                                if (content.includes('¿En qué momento o circunstancias de tu vida comenzó')) return true;
-                                                                                if (content.includes('¿Cómo impacta "')) return true;
-                                                                                if (content.includes('el hecho de haber vivido "')) return true;
-                                                                                if (content.includes('¿Cómo ha influido en tu historia personal')) return true;
-                                                                                if (content.includes('este acontecimiento del pasado sigue resonando')) return true;
-                                                                                if (content.includes('¿Qué señales específicas notas en tu organismo vinculadas a "')) return true;
-                                                                                if (content.includes('¿Cuáles son los pensamientos, juicios o exigencias')) return true;
-                                                                                if (content.includes('¿Cuáles son las acciones, maniobras de escape')) return true;
-                                                                                if (content.includes('desarmar el bucle de "')) return true;
-                                                                                if (content.includes('Observando el bucle completo de "')) return true;
-                                                                                return false;
-                                                                            };
-
-                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isGenericQuestion(currentChat[0].content);
+                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
                                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
                                                                                 : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user, bioData, phenomData) }];
@@ -6647,7 +6665,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                                         const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
                                                                                                         setNodeChats(prev => ({
@@ -6672,7 +6690,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                                                     setChatExchangeIndices(prev => ({...prev, [`${node.id}_${nextIdx}`]: undefined}));
                                                                                                     const nextChat = getSafeCurrentChat(node.id, nextIdx);
                                                                                                     const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
+                                                                                                    const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                                                     if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                                         const initialQ = getNodePerspectiveQuestion(node, nextIdx, user, bioData, phenomData);
                                                                                                         setNodeChats(prev => ({
@@ -6981,25 +6999,7 @@ Por favor, analicemos:
                                                     const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                     const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
                                                     const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                    const isGenericQuestion = (content) => {
-                                                        if (!content || typeof content !== 'string') return true;
-                                                        if (content.length < 35) return true;
-                                                        if (content.includes('¿Qué te hace sentir culpable?')) return true;
-                                                        if (content.includes('¿Qué significado o aprendizaje extraes')) return true;
-                                                        if (content.includes('¿En qué momento o circunstancias de tu vida comenzó')) return true;
-                                                        if (content.includes('¿Cómo impacta "')) return true;
-                                                        if (content.includes('el hecho de haber vivido "')) return true;
-                                                        if (content.includes('¿Cómo ha influido en tu historia personal')) return true;
-                                                        if (content.includes('este acontecimiento del pasado sigue resonando')) return true;
-                                                        if (content.includes('¿Qué señales específicas notas en tu organismo vinculadas a "')) return true;
-                                                        if (content.includes('¿Cuáles son los pensamientos, juicios o exigencias')) return true;
-                                                        if (content.includes('¿Cuáles son las acciones, maniobras de escape')) return true;
-                                                        if (content.includes('desarmar el bucle de "')) return true;
-                                                        if (content.includes('Observando el bucle completo de "')) return true;
-                                                        return false;
-                                                    };
-
-                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isGenericQuestion(currentChat[0].content);
+                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
                                                     const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                         ? currentChat
                                                         : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData) }];
@@ -7022,7 +7022,7 @@ Por favor, analicemos:
                                                                             setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                             const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                 const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
                                                                                 setNodeChats(prev => ({
@@ -7047,7 +7047,7 @@ Por favor, analicemos:
                                                                             setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
                                                                             const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
                                                                             const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isGenericQuestion(nextChat[0].content);
+                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
                                                                             if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
                                                                                 const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData);
                                                                                 setNodeChats(prev => ({
