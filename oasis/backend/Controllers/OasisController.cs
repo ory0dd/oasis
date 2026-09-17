@@ -511,6 +511,36 @@ namespace Oasis.Backend.Controllers
             });
         }
 
+        [HttpPost("reload-state")]
+        public IActionResult ReloadState()
+        {
+            string caller = GetAuthenticatedUser();
+            bool isAuthorized = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase)
+            );
+            if (!isAuthorized) return Forbid();
+
+            var newState = LoadState();
+            lock (StateLock)
+            {
+                if (newState.Users != null)
+                {
+                    _state.Users.Clear();
+                    _state.Users.AddRange(newState.Users);
+                }
+                if (newState.WhatsAppPatients != null)
+                {
+                    _state.WhatsAppPatients.Clear();
+                    _state.WhatsAppPatients.AddRange(newState.WhatsAppPatients);
+                }
+                if (newState.GlobalBackground != null) _state.GlobalBackground = newState.GlobalBackground;
+            }
+            return Ok(new { msg = "Estado recargado exitosamente", usersCount = _state.Users.Count });
+        }
+
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
