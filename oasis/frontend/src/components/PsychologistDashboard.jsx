@@ -1043,6 +1043,29 @@ const PsychologistDashboard = ({ onClose }) => {
             name = name.replace(/_v\d+$/, '');
             return name.trim();
         };
+
+        const isRogueUser = (u) => {
+            if (!u) return true;
+            const low = u.toLowerCase().trim();
+            if (low === 'asdad' || low === 'sda' || low === 'p' || low === 'testuser' || low === 'clinical_test' || low === 'somn' || low === 'susurro111') return true;
+            if (low.startsWith('axel roben_') || low.startsWith('axel_')) return true;
+            if (low.endsWith('_cdi2') || low.endsWith('_cssrs') || low.endsWith('_ders_a') || low.endsWith('_scared') || low.endsWith('_sdq') || low.endsWith('_sdq_adolescente') || low.endsWith('_test1')) return true;
+            if (low.includes('_default_q') || low.includes('_blind_spot') || low.includes('_node_explore') || low.includes('_node_reflection') || low.includes('strategic_questions') || low.includes('_cronologico') || low.includes('_1_node') || low.includes('_vacio_')) return true;
+            return false;
+        };
+
+        const normalizePatientUsername = (rawUser) => {
+            if (!rawUser) return '';
+            let u = rawUser.trim();
+            const low = u.toLowerCase();
+            // All variations of Axel map to the single canonical profile "axel roben"
+            if (low === 'axel' || low === 'axel roben' || low.startsWith('axel roben') || low.startsWith('axel_') || low.startsWith('axel roben_')) {
+                return 'axel roben';
+            }
+            if (u.includes('__')) u = u.split('__')[0].trim();
+            u = u.replace(/_+(cdi2|cssrs|ders_a|ders16|scared|sdq|sdq_adolescente|test1|bai|bdi|phq9|gad7|cope28|aaq2|epds)$/i, '').trim();
+            return u;
+        };
         
         // 1. Initial list from local storage keys with all clinical prefixes
         const clinicalPrefixes = [
@@ -1070,9 +1093,10 @@ const PsychologistDashboard = ({ onClose }) => {
             for (const p of clinicalPrefixes) {
                 if (key.startsWith(p)) {
                     let rawUser = cleanUsername(key, p);
-                    if (rawUser.includes('__')) rawUser = rawUser.split('__')[0].trim();
-                    if (rawUser && !['ory11', 'observador1', 'observador', '2112'].includes(rawUser.toLowerCase())) {
-                        const isAxel = rawUser.toLowerCase() === 'axel roben' || rawUser.toLowerCase() === 'axel';
+                    rawUser = normalizePatientUsername(rawUser);
+
+                    if (rawUser && !isRogueUser(rawUser) && !['ory11', 'observador1', 'observador', '2112'].includes(rawUser.toLowerCase())) {
+                        const isAxel = rawUser.toLowerCase() === 'axel roben';
                         patientsMap[rawUser] = patientsMap[rawUser] || {
                             name: rawUser,
                             fullName: isAxel ? 'Axel Roben' : rawUser,
@@ -1100,10 +1124,13 @@ const PsychologistDashboard = ({ onClose }) => {
                 }
 
                 backendUsers.forEach(u => {
-                    const uname = u.username || u.Username;
+                    let uname = u.username || u.Username;
                     if (uname) {
+                        uname = normalizePatientUsername(uname);
+                        if (isRogueUser(uname)) return;
+
                         const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
-                        const isAxel = uname.toLowerCase() === 'axel roben' || uname.toLowerCase() === 'axel';
+                        const isAxel = uname.toLowerCase() === 'axel roben';
                         const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : isAxel ? 'Axel Roben' : '');
                         
                         patientsMap[uname] = {
@@ -1142,6 +1169,53 @@ const PsychologistDashboard = ({ onClose }) => {
                 patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser, fullName: currentUser };
             }
         }
+
+        // 3. Consolidate Axel Roben test results from all fragmented keys into the single canonical profile
+        const axelTests = ['test1', 'scared', 'ders_a', 'sdq', 'cdi2', 'cssrs', 'sdq_adolescente'];
+        axelTests.forEach(tid => {
+            const candidates = [
+                localStorage.getItem(`oasis_test_result_axel roben__${tid}`),
+                localStorage.getItem(`oasis_test_result_axel roben_${tid}`),
+                localStorage.getItem(`oasis_test_result_axel__${tid}`),
+                localStorage.getItem(`oasis_test_result_axel_${tid}`)
+            ];
+            const foundVal = candidates.find(c => c && c.length > 5);
+            if (foundVal) {
+                localStorage.setItem(`oasis_test_result_axel roben__${tid}`, foundVal);
+                localStorage.setItem(`oasis_test_result_axel roben_${tid}`, foundVal);
+            }
+        });
+
+        // 4. Clean up any rogue status or pseudo-user keys in localStorage so they don't linger
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (!k) continue;
+            if (k.startsWith('oasis_patient_status_')) {
+                const target = k.replace('oasis_patient_status_', '').trim();
+                if (isRogueUser(target) || target.toLowerCase() === 'axel') {
+                    localStorage.removeItem(k);
+                }
+            }
+        }
+
+        // 5. Merge "axel" into "axel roben" and purge rogue pseudo-users from patientsMap
+        if (patientsMap['axel']) {
+            patientsMap['axel roben'] = {
+                ...(patientsMap['axel roben'] || {}),
+                ...patientsMap['axel'],
+                name: 'axel roben',
+                fullName: 'Axel Roben',
+                age: 14,
+                role: 'patient'
+            };
+            delete patientsMap['axel'];
+        }
+
+        Object.keys(patientsMap).forEach(k => {
+            if (isRogueUser(k)) {
+                delete patientsMap[k];
+            }
+        });
         
         const list = Object.keys(patientsMap).map(username => {
             let bioTranscripts = null;
