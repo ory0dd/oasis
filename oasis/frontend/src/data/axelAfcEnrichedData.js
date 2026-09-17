@@ -453,18 +453,9 @@ export const getAxelEnrichedPerspectiveQuestion = (node, threadIndex = 0) => {
         return nodeEnrichment['n51'].questions[safeIdx];
     }
 
-    // 3. Clinical contextualized fallback for Axel Roben
-    const cleanLabel = node.label || 'este patrón';
-    const fallbackTemplates = [
-        `Considerando lo que mencionaste en tu historia de vida sobre "${cleanLabel}", ¿en qué momento de tus conflictos familiares o escolares sentiste que esto comenzó a intensificarse?`,
-        `¿Cómo reacciona tu entorno familiar (tu mamá o tu papá) cuando se hace presente "${cleanLabel}" y qué papel juega en la tensión del hogar?`,
-        `¿Qué sensaciones físicas específicas (tensión muscular, taquicardia, pesadez o fatiga) notas en tu cuerpo cuando se activa "${cleanLabel}"?`,
-        `Mencionas con fuerza tu deseo de libertad e individualidad. ¿De qué manera sientes que "${cleanLabel}" pone a prueba tus valores o tu autenticidad?`,
-        `Cuando este patrón aparece, ¿qué conductas de escape (como encerrarte con noise-rock, ver pantallas de madrugada o explotar verbalmente) sueles ejecutar?`,
-        `Si pudieras intentar un pequeño experimento conductual esta semana para romper el automatismo de "${cleanLabel}", ¿cuál sería ese primer paso concreto?`,
-        `Observando este patrón de "${cleanLabel}" en tu mapa: ¿De qué intentaba protegerte y con qué nuevo compromiso decides responder a partir de ahora?`
-    ];
-    return fallbackTemplates[safeIdx];
+    // 3. Si no hay coincidencia directa en los datos clínicos de Axel, devolver null para que
+    // generateEmpatheticPerspectiveQuestion genere la pregunta analizando el contenido específico del nodo y sus conexiones en el grafo
+    return null;
 };
 
 export const getAxelEnrichedDescription = (node) => {

@@ -434,23 +434,15 @@ export const extractHumanExperience = (node) => {
 export const isStaleOrRoboticQuestion = (q) => {
     if (!q || typeof q !== 'string') return true;
     const trimmed = q.trim();
-    if (trimmed.length < 35) return true;
-    // Rechazar preguntas con comillas alrededor de etiquetas clínicas o explicaciones entre paréntesis
-    if (trimmed.includes('"') || trimmed.includes('“') || trimmed.includes('”') || trimmed.includes("''")) return true;
-    if (trimmed.includes('(') || trimmed.includes(')')) return true;
-    
-    // Detectar patrones genéricos o repetitivos que impiden el análisis específico del nodo
+    if (trimmed.length < 25) return true;
+    // Rechazar artefactos técnicos o valores nulos
+    if (trimmed.includes('[object Object]') || trimmed.includes('undefined') || trimmed.includes('null')) return true;
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) return true;
+
+    // Detectar plantillas genéricas obsoletas que no analizan el nodo
     const stalePhrases = [
-        'convivir con este patrón',
-        'este patrón',
-        'este bucle',
-        'este patrón de',
-        'el hecho de haber vivido',
-        '¿En qué momento o circunstancias de tu vida comenzó',
-        '¿Cómo ha influido en tu historia personal',
-        'este acontecimiento del pasado sigue resonando',
-        '¿Cómo impacta',
-        '¿Qué te hace sentir culpable?',
+        '¿Qué reflexión o toma de consciencia te genera este momento de tu vida?',
+        '¿Qué reflexión o toma de consciencia surge al observar',
         '¿Qué significado o aprendizaje extraes',
         'desarmar el bucle',
         'Observando el bucle completo',
@@ -458,21 +450,7 @@ export const isStaleOrRoboticQuestion = (q) => {
         '¿Cuáles son las acciones, maniobras de escape',
         '¿Qué señales específicas notas en tu organismo',
         '¿De qué manera influye tu entorno social actual',
-        '¿Qué pensamientos automáticos o reglas internas',
-        'Considerando lo que mencionaste en tu historia de vida',
-        '¿en qué etapas o momentos recuerdas haber aprendido a convivir',
-        '¿Qué vivencias tempranas te llevaron a desarrollar esta forma de protegerte o responder?',
-        '¿en qué momentos de tu vida o de tu infancia recuerdas haber aprendido que equivocarte o ser juzgado',
-        '¿recuerdas en qué época o ante qué situaciones de presión o soledad descubriste que recurrir a esto',
-        '¿de dónde aprendiste a dudar tanto de tu valor?',
-        '¿recuerdas en qué momentos anteriores viviste entornos donde sentías que tu esfuerzo no era reconocido',
-        'miedo al rechazo o esa necesidad urgente de que te confirmaran su presencia y atención',
-        '¿recuerdas en qué momentos sentiste que solo valías si cumplías las expectativas',
-        'descubriste que aislarte, replegarte o guardar silencio era la forma más segura',
-        '¿cómo se manejaba el enojo, la frustración o el desacuerdo en tu casa?',
-        '¿desde qué época de tu vida empezaste a notar que las tensiones emocionales',
-        '¿qué acontecimientos o cambios imprevistos te hicieron sentir que el entorno no era predecible ni seguro?',
-        '¿en qué momentos sentiste que perdiste la conexión con aquello que realmente te apasionaba'
+        '¿Qué pensamientos automáticos o reglas internas'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
@@ -590,105 +568,73 @@ export const generateEmpatheticPerspectiveQuestion = (
     if (!node) return "¿Qué reflexión o toma de consciencia te genera este momento de tu vida?";
     const safeIdx = Math.max(0, Math.min(6, threadIndex));
 
-    const { short: shortExp, full: fullExp } = getNodeExperiencePhrases(node);
     const originContext = getNodeOriginContext(node, edges, allNodes);
     const consequenceContext = getNodeConsequenceContext(node, edges, allNodes);
 
+    const label = softenNodeLabel(node.label || 'esta vivencia');
+    const desc = (node.description || '').replace(/["'“”]/g, '').trim();
     const sourceQuote = (node.source || '').replace(/["'“”]/g, '').trim();
     const challenge = (node.challenge || '').replace(/["'“”]/g, '').trim();
-    const reflection = (node.reflection_question || '').replace(/["'“”]/g, '').trim();
+    const reflection = (node.reflection_question || '').replace(/["'“”¿?]/g, '').trim();
     const nodeType = node.type || 'cognitive';
+
+    const cleanOriginLabel = originContext?.originNode ? softenNodeLabel(originContext.originNode.label) : null;
+    const cleanOriginDesc = originContext?.originNode?.description ? originContext.originNode.description.replace(/["'“”]/g, '').trim() : null;
+    const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel(consequenceContext.targetNode.label) : null;
+    const cleanTargetDesc = consequenceContext?.targetNode?.description ? consequenceContext.targetNode.description.replace(/["'“”]/g, '').trim() : null;
 
     switch (safeIdx) {
         case 0: { // Raíz Histórica y Origen ("De dónde viene y qué dice el nodo")
-            if (originContext) {
-                const originVerb = originContext.originType === 'historical' 
-                    ? 'forjarse a partir de vivencias formativas como' 
-                    : originContext.originType === 'social'
-                    ? 'activarse ante situaciones del entorno como'
-                    : originContext.originType === 'biological'
-                    ? 'enraizarse en el desgaste físico de'
-                    : 'desprenderse directamente de';
-                return `Observando en tu dinámica funcional que ${fullExp} suele ${originVerb} ${originContext.originShort}, ¿en qué vivencias tempranas o etapas clave de tu historia recuerdas que comenzó a gestarse este vínculo? ¿Qué circunstancias pasadas te llevaron a que hoy ${shortExp} funcione como tu forma aprendida de protegerte o responder?`;
+            if (cleanOriginLabel) {
+                return `Al rastrear el origen de «${label}»${desc ? ` (${desc})` : ''}, en tu mapa funcional se desprende directamente de «${cleanOriginLabel}»${cleanOriginDesc ? ` (${cleanOriginDesc})` : ''}.${sourceQuote ? ` Mencionaste: «${sourceQuote}».` : ''} ¿En qué momentos clave de tu historia recuerdas que comenzó a forjarse esta conexión? ¿Por qué frente a lo vivido en ${cleanOriginLabel} tu forma aprendida de responder o protegerte terminó siendo precisamente ${label}?`;
             }
             if (sourceQuote && sourceQuote.length > 5) {
-                return `Al profundizar en las raíces de ${fullExp}, conectando con lo que compartías al decir que «${sourceQuote}», ¿en qué momentos de tu infancia o juventud recuerdas haber experimentado por primera vez este peso? ¿Qué vivencias formativas sembraron esta situación en ti?`;
+                return `Al explorar la raíz de «${label}»${desc ? ` (${desc})` : ''}, conectando con lo que compartiste al decir «${sourceQuote}»: ¿En qué momentos formativos de tu pasado recuerdas haber experimentado por primera vez esta situación? ¿Qué circunstancias sembraron esta vivencia en ti?`;
             }
             if (nodeType === 'historical') {
-                return `Al situarte en el origen de ${fullExp}, ¿de qué manera recuerdas que este hecho o vivencia formativa marcó tu manera de interpretar el mundo y tu trato con los demás? ¿Qué sentías que necesitabas proteger en ese entonces frente a esa realidad?`;
+                return `Al situarte en el origen formativo de «${label}»${desc ? ` (${desc})` : ''}: ¿De qué manera recuerdas que esta experiencia temprana marcó tu forma de interpretar el mundo y tu trato con los demás? ¿Qué sentías que necesitabas proteger en ese momento de tu vida?`;
             }
-            return `Al mirar tu historia personal y las raíces de ${fullExp}, ¿en qué etapas o momentos recuerdas haber sentido por primera vez que esta vivencia se volvía parte de tu realidad cotidiana? ¿Qué aprendizajes tempranos te llevaron a desarrollar esta forma de estar en el mundo?`;
+            return `Al mirar tu historia y las raíces de «${label}»${desc ? ` (${desc})` : ''}: ¿En qué etapas o momentos recuerdas haber sentido por primera vez que esta situación comenzaba a condicionarte? ¿Qué aprendizajes del pasado te llevaron a desarrollar esta forma de responder?`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
-            if (nodeType === 'cognitive') {
-                return `Cuando ${fullExp} se apodera de tu mente, ¿de qué manera cambia tu trato y tu apertura hacia las personas más cercanas a ti? ¿Tiendes a guardar silencio, a mostrar una fachada de tranquilidad o a sobre-analizar cada gesto ajeno por temor a ser juzgado/a?`;
-            }
-            if (nodeType === 'motor') {
-                return `En los momentos en que recurres a ${fullExp}, ¿qué puente de comunicación o cercanía sientes que se interrumpe con quienes te rodean? ¿Cómo crees que las personas significativas de tu vida interpretan esa distancia o reacción?`;
-            }
-            if (nodeType === 'physiological') {
-                return `Cuando tu cuerpo manifiesta ${fullExp}, ¿cómo reacciona tu entorno inmediato? ¿Sientes que las personas con las que convives comprenden la sobrecarga que estás cargando, o te sientes obligado/a a disimular el malestar para no preocupar a nadie?`;
-            }
-            if (nodeType === 'social') {
-                return `Al reflexionar sobre cómo impacta ${fullExp} en tu vida relacional, ¿de qué manera esta dinámica condiciona el grado de intimidad y confianza que permites con los demás? ¿Qué temes que ocurra si te atreves a poner un límite claro?`;
-            }
-            return `¿De qué manera resuena ${fullExp} en tus vínculos más significativos (pareja, familia o amistades)? ¿Qué barrera o cambio en tu forma de comunicarte notas cuando esta vivencia está activa?`;
+            return `Cuando se manifiesta «${label}»${desc ? ` (${desc})` : ''}, ¿de qué manera altera tu forma de convivir y comunicarte con las personas más significativas de tu vida?${sourceQuote ? ` Considerando lo que expresabas al decir «${sourceQuote}», ` : ' '}¿sientes que tu entorno comprende lo que estás viviendo, o te descubres distanciándote, guardando silencio, mostrando una fachada de calma o esperando que adivinen tu malestar?`;
         }
 
         case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
-            if (nodeType === 'physiological') {
-                return `Conectando con la sensación concreta de ${fullExp}, ¿qué otras señales sutiles de alarma aparecen a la par en tu organismo (respiración corta, taquicardia leve, pesadez o tensión mandibular)? Si esta respuesta física pudiera pedirte algo en este instante, ¿qué pausa o tregua te estaría solicitando?`;
+            if (nodeType === 'physiological' || nodeType === 'biological') {
+                return `Conectando con la sensación concreta de «${label}»${desc ? ` (${desc})` : ''}: ¿Qué otras señales sutiles de alerta acompañan esta respuesta en tu organismo (tensión en hombros, respiración acelerada, pesadez o fatiga)? Si esta manifestación física pudiera hablarte con sinceridad, ¿qué pausa, necesidad postergada o tregua te estaría solicitando en este momento?`;
             }
-            if (nodeType === 'cognitive') {
-                return `Cuando tu mente se ve sobrecargada por ${fullExp}, ¿en qué zona específica de tu cuerpo se concentra la mayor pesadez o contractura (en el pecho, el cuello, el estómago o la cabeza)? ¿Qué pasa con tu capacidad para descansar profundamente después de sostener esa tensión mental?`;
-            }
-            if (nodeType === 'motor') {
-                return `Justo en los instantes previos a que se active ${shortExp}, ¿qué inquietud física, vacío visceral o aceleración interna notas en tu organismo? ¿Cómo responde tu respiración en ese momento exacto?`;
-            }
-            return `En el instante en que se hace presente ${fullExp}, ¿qué notas que ocurre en tu organismo: cómo cambia tu respiración, el tono muscular de tus hombros y tu nivel general de energía física?`;
+            return `En los momentos exactos en que «${label}» se hace presente con fuerza, ¿en qué zona específica de tu cuerpo notas la mayor carga física (opresión en el pecho, nudo en la garganta, tensión muscular o vacío en el estómago)? ¿Cómo responde tu respiración y tu energía mientras sostienes este estado?`;
         }
 
         case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
-            if (reflection && reflection.length > 10) {
-                const cleanRefl = reflection.toLowerCase().replace(/[¿?]/g, '').trim();
-                return `Pensando en ${fullExp}, y considerando ${cleanRefl}: ¿Cuál es el reproche o mandato interno más duro que tu mente te repite en silencio? ¿Qué valor humano irrenunciable para ti (como tu paz interior, tu dignidad o tu autenticidad) sientes que estás intentando proteger desesperadamente con esto?`;
+            if (reflection && reflection.length > 8) {
+                return `Profundizando en lo que expresa «${label}»${desc ? ` (${desc})` : ''}: ¿${reflection}? ¿Qué valor humano fundamental para ti (como tu paz interior, tu dignidad, tu autenticidad o tu derecho a equivocarte) sientes que estás intentando proteger desesperadamente con esto?`;
             }
-            if (nodeType === 'cognitive') {
-                return `Frente a ${fullExp}, ¿cuáles son los juicios, exigencias o escenarios temidos que tu diálogo interno anticipa? ¿Qué temes profundamente que signifique sobre ti si te permites soltar el intento de controlarlo todo?`;
-            }
-            return `Detrás de la tensión que despierta ${fullExp}, ¿qué necesidad existencial o valor fundamental tuyo sientes que se queda postergado? ¿Qué regla silenciosa crees que debes cumplir para sentirte valioso/a y seguro/a?`;
+            return `Frente a lo que experimentas con «${label}»${desc ? ` (${desc})` : ''}, ¿cuál es la voz o juicio interno más severo que tu diálogo interior te repite en silencio? ¿Qué regla silenciosa crees que debes cumplir para sentirte en calma y valorado/a?`;
         }
 
         case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
-            if (consequenceContext) {
-                return `En la estructura de tu mapa se observa con claridad que ${shortExp} suele derivar directamente en ${consequenceContext.targetShort}. Al mirar este paso en tu vida diaria, ¿qué conductas impulsivas, de comprobación o de escape realizas buscando un alivio momentáneo que, sin querer, termina reforzando esa consecuencia?`;
+            if (cleanTargetLabel) {
+                return `En la dinámica de tu mapa funcional, se observa con claridad que «${label}» alimenta y conduce directamente hacia «${cleanTargetLabel}»${cleanTargetDesc ? ` (${cleanTargetDesc})` : ''}. Al observar esta secuencia en tu cotidianidad: ¿Qué conductas automáticas, de evitación o de escape ejecutas para calmar «${label}» que, sin querer, terminan activando ese siguiente eslabón?`;
             }
-            if (nodeType === 'motor') {
-                return `Al observar la acción concreta de ${fullExp}, ¿cuánto tiempo suele durar la sensación de alivio que te brinda, y qué desgaste posterior o sensación de culpa suele dejarte al cabo de unas horas?`;
-            }
-            return `Frente a la incomodidad o la sobrecarga de ${fullExp}, ¿qué conductas automáticas sueles ejecutar en piloto automático para quitarte la presión de encima? ¿Qué emoción dolorosa o situación difícil estás intentando eludir en ese instante?`;
+            return `Al observar las repercusiones de «${label}» en tu vida diaria, ¿qué conductas o hábitos automáticos sueles ejecutar en piloto automático para quitarte esta presión de encima? ¿Cuánto dura el alivio momentáneo que obtienes y qué desgaste acumulado te deja después?`;
         }
 
         case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
-            if (challenge && challenge.length > 6) {
-                return `Tomando en cuenta el reto reflexivo de «${challenge}»: ¿Cuál sería un experimento seguro, mínimo y alcanzable que podrías practicar esta semana frente a ${shortExp}, permitiéndote responder de una manera más amable sin caer en la autoexigencia?`;
+            if (challenge && challenge.length > 5) {
+                return `Tomando como brújula el reto clínico de «${challenge}»: ¿Cuál sería un experimento seguro, mínimo y compasivo que podrías practicar esta semana frente a «${label}» para responder de forma más amable sin caer en la autoexigencia?`;
             }
-            if (nodeType === 'cognitive') {
-                return `La próxima vez que sientas que empieza a intensificarse ${shortExp}, ¿qué pequeña pausa de sesenta segundos (respirar tres veces con lentitud, nombrar lo que sientes sin juzgarlo o cambiar de postura física) podrías regalarte para no engancharte en automático con esa rumiación?`;
-            }
-            if (nodeType === 'motor') {
-                return `Frente al impulso inmediato de caer en ${shortExp}, ¿qué alternativa micro-conductual y compasiva (tomar un vaso de agua, salir al aire libre tres minutos o enviar un mensaje sincero) te gustaría probar para darte un espacio antes de reaccionar?`;
-            }
-            return `Si pudieras intentar un primer paso seguro y realista esta semana para relacionarte de otra forma con ${shortExp}, ¿cuál sería esa pequeña acción bondadosa contigo mismo/a que te gustaría experimentar?`;
+            return `Si pudieras intentar un primer paso seguro, mínimo y realista esta semana para relacionarte de otra forma con «${label}», ¿cuál sería esa pequeña acción bondadosa de autocuidado que te gustaría experimentar?`;
         }
 
         case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
-            return `Reconociendo con honestidad y ternura que ${fullExp} no nació para dañarte, sino como una respuesta adaptativa que tu historia construyó para cuidarte en momentos en que no contabas con mejores recursos: ¿Qué mirada más compasiva y comprensiva decides ofrecerte hoy frente a esta vivencia, y qué compromiso de autocuidado eliges renovar contigo a partir de este momento?`;
+            return `Reconociendo con honestidad y ternura que «${label}» no nació para castigarte ni para arruinar tu vida, sino como una respuesta adaptativa que tu historia construyó para cuidarte en momentos en que no contabas con mejores recursos${sourceQuote ? ` («${sourceQuote}»)` : ''}: ¿Qué mirada más comprensiva decides ofrecerte hoy frente a esta vivencia, y qué compromiso de autocuidado genuino eliges renovar contigo a partir de este momento?`;
         }
     }
 
-    return `¿Qué reflexión o toma de consciencia surge al observar ${fullExp} desde esta perspectiva?`;
+    return `¿Qué reflexión o toma de consciencia surge al observar «${label}» desde esta perspectiva?`;
 };
 
 export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData = null, phenomData = null, edges = []) => {
@@ -3162,52 +3108,44 @@ ${currentBlindSpotsText}
 
         const systemPromptTopology = `
 Eres un Psicólogo Clínico y Analista Existencial de Alto Nivel Especializado en Análisis Funcional de la Conducta (AFC).
-ETAPA 1: TOPOLOGÍA. Tu tarea es estructurar los nodos y conexiones funcionales que explican el sufrimiento del paciente.
+ETAPA 1: TOPOLOGÍA FUNCIONAL. Tu tarea es estructurar los nodos y conexiones funcionales que explican exhaustivamente el circuito de sufrimiento y mantenimiento del paciente.
 
-=== REGLA DE ORO DE VERACIDAD Y FIDELIDAD CLÍNICA (ESTRICTA Y OBLIGATORIA) ===
-1. CADA NODO DEBE BASARSE EXCLUSIVAMENTE Y ESTRICTAMENTE EN LOS DATOS REALES DE LA HISTORIA DEL PACIENTE.
-   - ¡ESTÁ TOTALMENTE PROHIBIDO INVENTAR SÍNTOMAS, VIVENCIAS, EMPLEOS O CONCEPTOS QUE EL PACIENTE NO HAYA RELATADO!
-   - Si el paciente NO mencionó dolores de cabeza, NO inventes cefaleas.
-   - Si el paciente NO mencionó trabajo corporativo ni pantallas, NO inventes obsesión laboral ni escape por pantallas.
-   - Basa cada nodo en su ocupación real, sus relaciones reales, sus sustancias reales (o la falta de ellas) y sus síntomas somáticos y emocionales reales relatados.
-   - En el campo 'source', incluye SIEMPRE la cita textual corta o fragmento exacto entre comillas de lo que dijo el paciente.
-   - Si el paciente aportó respuestas breves o concisas, enfócate solo en lo reportado. Jamás inventes nodos ficticios para abultar el mapa.
+=== MANDATO ESTRICTO DE DESGLOSE Y DENSIDAD CLÍNICA (OBLIGATORIO) ===
+Para que el mapa tenga validez funcional y represente la riqueza sistémica real del consultante (como una red neuronal densa e interconectada con múltiples bucles), DEBES DESGLOSAR EXHAUSTIVAMENTE cada dimensión clínica en sus eslabones funcionales específicos.
+NUNCA resumas en 2 o 3 categorías vagas. Descompón cada conducta, mediador y consecuencia en sus micro-variables operativas reales basadas en el relato del paciente.
 
-2. Cantidad y Balance de Nodos:
-   - Genera un mapa funcional exhaustivo, profundo y clínicamente completo de entre 30 y 42 nodos en total (enfócate en las variables funcionales reales del paciente; NUNCA agregues nodos inventados de relleno).
-   - DISTRIBUCIÓN FUNCIONAL:
-     a) Históricos (azules, type: 'historical'): 6 a 8 nodos (origen familiar, infancia, vivencias formativas tempranas relatadas por el paciente).
-     b) Mediadores Biológicos (verdes, type: 'biological'): 4 a 6 nodos (patrones de sueño, tensión somática, fatiga, sustancias o reactividad corporal).
-     c) Mediadores Sociales (verdes, type: 'social'): 5 a 7 nodos (vínculos familiares, dinámicas de pareja, amistades, demandas y clima del entorno real).
-     d) Conductas Problema (rojos, types: 'cognitive', 'motor', 'physiological'): 12 a 16 nodos en total:
-        - 'cognitive': 5 a 7 nodos (diálogo interno, rumiación mental, sobrepensar constante, juicios sobre errores, autocrítica o dudas frecuentes).
-        - 'motor': 4 a 6 nodos (conductas de evitación, aislamiento, comprobación, escape o hábitos automáticos).
-        - 'physiological': 3 a 5 nodos (opresión en el pecho, nudo en la garganta, respiración acelerada, tensión física).
-     e) Consecuencias (blancos, type: 'consequence'): 6 a 9 nodos (alivio momentáneo a corto plazo, y a largo plazo: estancamiento existencial, desgaste vincular y reforzamiento del bucle).
+CANTIDAD TOTAL OBLIGATORIA DE NODOS: EXACTAMENTE ENTRE 38 Y 44 NODOS.
+DISTRIBUCIÓN REQUERIDA (CUMPLE ESTRICTAMENTE CADA RANGO):
+1. Históricos (azules, type: 'historical'): EXACTAMENTE entre 6 y 8 nodos (vivencias formativas tempranas, mandatos familiares, eventos de vida pasados).
+2. Mediadores Biológicos (verdes, type: 'biological'): EXACTAMENTE entre 5 y 6 nodos (patrones de sueño, fatiga somática, somatizaciones, consumo de sustancias o reactividad corporal).
+3. Mediadores Sociales (verdes, type: 'social'): EXACTAMENTE entre 6 y 7 nodos (vínculos íntimos, dinámicas familiares, ambiente escolar/laboral, demandas relacionales, aislamiento).
+4. Conductas Problema (rojos): EXACTAMENTE entre 15 y 18 nodos repartidos en:
+   - 'cognitive': EXACTAMENTE 6 a 7 nodos (diálogo interno, autocrítica, rumiación, dudas sobre capacidad, juicios sobre errores, hipervigilancia).
+   - 'motor': EXACTAMENTE 5 a 6 nodos (conductas de escape, postergación, comprobación, silencio defensivo, refugio en pantallas o hábitos automáticos).
+   - 'physiological': EXACTAMENTE 4 a 5 nodos (opresión torácica, nudo en garganta, tensión física, taquicardia o respiración corta).
+5. Consecuencias (blancos, type: 'consequence'): EXACTAMENTE entre 7 y 9 nodos (alivio momentáneo a corto plazo, y a largo plazo: culpa acumulada, vacío existencial, desgaste vincular, sensación de estancamiento, perpetuación del bucle).
 
-3. REGLA DE NOMBRADO DE NODOS ('label') — TONO CERCANO, LIGERO Y REAL ("HEY MIRA", NUNCA "¡¡¡HEY MIRA!!!"):
-   - Los nombres NO deben sonar como alarmas médicas catastróficas, diagnósticos psiquiátricos rimbombantes ni etiquetas abstractas que asusten al consultante.
-   - Deben sonar como un terapeuta empático y agudo diciéndole amablemente: "hey mira, esto es lo que te pasa", de forma ligera, clara y profundamente humana.
-   - EXTENSIÓN: Entre 2 y 4 palabras exactas por nodo.
-   - PROHIBIDO USAR JERGA MÉDICA O ALARMISTA:
-     * ❌ NUNCA uses términos como: "punitiva", "neurosomática", "neuroquímico", "ansiolítico", "evasivo", "circadiano", "frialdad afectiva", "cronificación", "disfunción", "patología".
-     * ✔️ Transforma a lenguaje natural, descriptivo y comprensivo:
-       - En vez de "Autocrítica punitiva interna" -> "Autoexigencia y reproche" o "Dificultad para perdonarse"
-       - En vez de "Agotamiento neuroquímico por estrés" -> "Cansancio mental acumulado" o "Sobrecarga de energía"
-       - En vez de "Escape mediante videojuegos" -> "Refugio en videojuegos" o "Desconexión temporal"
-       - En vez de "Hipersensibilidad neurosomática" -> "Tensión física ante el estrés" o "Sensibilidad corporal"
-       - En vez de "Consumo ansiolítico de nicotina" -> "Fumar para calmar la ansiedad"
-       - En vez de "Aislamiento conductual evasivo" -> "Necesidad de aislarse"
-       - En vez de "Culpa existencial persistente" -> "Dudas frecuentes y culpa"
-       - En vez de "Dinámicas familiares invalidantes" -> "Incomprensión en la familia"
-       - En vez de "Deterioro de la autoeficacia" -> "Dudas sobre la propia capacidad"
-       - En vez de "Cronificación del malestar" -> "Sensación de estancamiento"
-   - CADA NOMBRE DEBE SER ÚNICO Y BASADO EN HECHOS REALES DEL PACIENTE.
-   - Coordenadas sugeridas: historical (x: 12 a 16), cognitive (x: 26 a 30), motor/physiological (x: 41 a 45), biological (x: 55 a 59), social (x: 69 a 73), consequence (x: 84 a 88), Y: 15 a 85.
+CANTIDAD TOTAL OBLIGATORIA DE CONEXIONES (EDGES): EXACTAMENTE ENTRE 65 Y 85 CONEXIONES.
+REGLA DE DENSIDAD DE CONEXIONES:
+- En un análisis funcional sistémico real, las variables NO forman una cadena lineal simple.
+- Cada nodo debe tener un promedio de 2 a 4 conexiones (hacia adelante y de retroalimentación).
+- Cada antecedente histórico o mediador debe conectar hacia 2 o 3 conductas o consecuencias.
+- Cada conducta problema debe proyectar hacia 2 o 3 consecuencias distintas.
+- Y FUNDAMENTAL PARA FORMAR BUCLES (LOOPS): Las consecuencias deben enviar conexiones de retroalimentación hacia los mediadores biológicos, mediadores sociales y conductas cognitivas/motoras (cerrando entre 8 y 15 ciclos o bucles de mantenimiento).
+- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 65 y 85 conexiones.
 
-4. Conexiones (edges):
-   - Genera entre 55 y 75 conexiones funcionales dirigidas ("unidirectional" o "bidirectional") con weight (1, 2 o 3).
-   - CRÍTICO PARA FORMAR MÚLTIPLES BUCLES (LOOPS): Conecta antecedentes históricos y mediadores hacia las conductas problema, estas hacia sus consecuencias, y FUNDAMENTAL: retroalimenta desde las consecuencias hacia los pensamientos ('cognitive'), mediadores y conductas motoras, cerrando entre 8 y 15 bucles clínicos interconectados.
+=== REGLA DE NOMBRADO DE NODOS ('label') — TONO CERCANO, LIGERO Y REAL ("HEY MIRA") ===
+- Título humano, empático y descriptivo (2 a 4 palabras). Evita jerga médica o alarmista.
+- Cada nodo debe tener:
+  - id: formato "n1", "n2", "n3"...
+  - type: 'historical' | 'biological' | 'social' | 'cognitive' | 'motor' | 'physiological' | 'consequence'
+  - label: 2 a 4 palabras
+  - description: 6 a 12 palabras explicando lo que experimenta el paciente
+  - source: cita textual corta del paciente entre comillas (3 a 8 palabras)
+  - challenge: reto reflexivo profundo (3 a 7 palabras)
+  - reflection_question: pregunta reflexiva directa y aguda para el paciente (5 a 10 palabras)
+  - x: coordenada sugerida (10 a 90)
+  - y: coordenada sugerida (10 a 90)
 ${isAdditive ? `
 === MODO ACTUALIZACIÓN ADITIVA ===
 1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
@@ -3220,19 +3158,10 @@ ${isAdditive ? `
   "is_valid": true,
   "rejection_reason": "",
   "nodes": [
-    // Cada nodo contiene:
-    // - id: formato ultracorto: "n1", "n2", "n3"...
-    // - type: "historical" | "motor" | "cognitive" | "physiological" | "biological" | "social" | "consequence"
-    // - label: nombre clínico descriptivo y cercano (2 a 4 palabras, fiel al paciente)
-    // - description: explicación concisa de lo que experimenta el paciente (5 a 12 palabras)
-    // - source: cita textual corta del paciente entre comillas (3 a 8 palabras)
-    // - challenge: reto existencial reflexivo (3 a 7 palabras)
-    // - reflection_question: pregunta reflexiva directa para el paciente (5 a 10 palabras)
-    // - x: coordenada X sugerida (0 a 100)
-    // - y: coordenada Y sugerida (0 a 100)
+    { "id": "n1", "type": "historical", "label": "Presión familiar temprana", "description": "Exigencia constante de perfeccionismo en el hogar", "source": "mis papás eran muy estrictos", "challenge": "Aceptar límites propios", "reflection_question": "¿Cuándo sentiste que no podías fallar?", "x": 15, "y": 20 }
   ],
   "edges": [
-    // Conexiones: { "source": "n1", "target": "n2", "weight": 2, "type": "unidirectional" }
+    { "source": "n1", "target": "n2", "weight": 2, "type": "unidirectional" }
   ],
   "tripleModality": {
     "motor": 65,
@@ -3350,13 +3279,18 @@ ${isAdditive ? `
             const payload1 = {
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: "Genera exclusivamente la TOPOLOGÍA funcional (nodos y conexiones) basada 100% en la historia real del paciente. Datos clínicos:\n" + context }
+                    { role: 'user', content: `Genera la TOPOLOGÍA funcional COMPLETA, EXHAUSTIVA y DENSA basada 100% en la historia real del paciente.
+REQUISITO ESTRICTO DE CANTIDAD:
+- Debes generar OBLIGATORIAMENTE entre 38 y 44 nodos en total (repartidos: 6-8 históricos, 5-6 biológicos, 6-7 sociales, 6-7 cognitivos, 5-6 motores, 4-5 fisiológicos y 7-9 consecuencias).
+- Debes generar OBLIGATORIAMENTE entre 65 y 85 conexiones (edges) formando bucles de retroalimentación funcionales densos.
+- Cada nodo debe incluir su 'label' cercano y descriptivo (2 a 4 palabras), 'description' concisa, 'source' (cita textual del paciente), 'challenge' reflexivo agudo y 'reflection_question' profunda y personalizada.
+Datos clínicos del paciente:\n` + context }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.2
             };
 
-            const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topología", 4200);
+            const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topología", 6500);
             
             let parsedTopology;
             try {
@@ -3372,6 +3306,96 @@ ${isAdditive ? `
 
             if (parsedTopology.is_valid === false) {
                 throw new Error("El análisis fue rechazado por la IA: " + (parsedTopology.rejection_reason || "Datos insuficientes"));
+            }
+
+            // GARANTÍA DE MAPA DENSO (38-44 NODOS, 65-85 CONEXIONES):
+            // Si el modelo generó menos de 34 nodos, expandir y completar orgánicamente la secuencia funcional
+            if (Array.isArray(parsedTopology.nodes) && parsedTopology.nodes.length < 34 && !isAdditive) {
+                console.warn(`[AFC] Topología generó ${parsedTopology.nodes.length} nodos. Expandiendo orgánicamente para alcanzar densidad visual y analítica completa...`);
+                const existingLabels = new Set(parsedTopology.nodes.map(n => (n.label || '').toLowerCase()));
+                const expansionCandidates = [
+                    { type: 'historical', label: 'Mandatos familiares implícitos', description: 'Reglas no escritas sobre el éxito y la aprobación', source: 'lo que mis papás esperan de mí', challenge: 'Cuestionar exigencias heredadas', reflection_question: '¿Qué reglas familiares sigues obedeciendo sin querer?' },
+                    { type: 'historical', label: 'Vivencias tempranas de comparación', description: 'Sentimiento de no alcanzar los estándares del entorno', source: 'siempre sentí que otros encajaban mejor', challenge: 'Validar la propia trayectoria individual', reflection_question: '¿Con quién aprendiste a compararte en tu juventud?' },
+                    { type: 'biological', label: 'Desvelo y desfase circadiano', description: 'Vigilia prolongada durante la madrugada con pantallas', source: 'me quedo despierto hasta tarde', challenge: 'Recuperar un ritmo de descanso reparador', reflection_question: '¿De qué te protege quedarte despierto en la noche?' },
+                    { type: 'biological', label: 'Fatiga somática acumulada', description: 'Sensación de pesadez corporal matutina y baja energía', source: 'me despierto cansado y sin ganas', challenge: 'Escuchar la necesidad de pausa del cuerpo', reflection_question: '¿Cuánta energía gastas en sostener el malestar?' },
+                    { type: 'social', label: 'Distanciamiento de pares', description: 'Dificultad para mantener presencia activa en grupos', source: 'me cuesta mucho conectar con otros', challenge: 'Permitir conexiones sutiles y seguras', reflection_question: '¿Qué temes mostrar cuando estás con otras personas?' },
+                    { type: 'social', label: 'Enmascaramiento emocional', description: 'Fingir tranquilidad externa ante el entorno inmediato', source: 'no suelo decir cómo me siento en casa', challenge: 'Expresar vulnerabilidad en espacios confiables', reflection_question: '¿Cuánto te agota fingir que todo está bajo control?' },
+                    { type: 'cognitive', label: 'Anticipación de fracaso', description: 'Monólogo interno que predice decepciones futuras', source: 'siento que las cosas no van a salir bien', challenge: 'Distinguir pensamientos de realidades', reflection_question: '¿Qué probabilidad real hay de que ocurra lo peor?' },
+                    { type: 'cognitive', label: 'Hipervigilancia al juicio', description: 'Atención continua a posibles miradas o críticas ajenas', source: 'me preocupa lo que piensen los demás', challenge: 'Focalizar la atención en el propio bienestar', reflection_question: '¿La opinión de quién intentas apaciguar?' },
+                    { type: 'motor', label: 'Postergación de decisiones', description: 'Aplazamiento sistemático de tareas importantes', source: 'dejo las cosas para después y me culpo', challenge: 'Dar un primer paso de dos minutos', reflection_question: '¿Qué emoción incómoda postergas al no actuar?' },
+                    { type: 'motor', label: 'Silencio defensivo', description: 'Cierre hermético de la comunicación ante conflictos', source: 'prefiero no decir nada para no pelear', challenge: 'Poner límites con palabras tranquilas', reflection_question: '¿Qué resentimiento se acumula detrás de tu silencio?' },
+                    { type: 'physiological', label: 'Nudo en la garganta', description: 'Tensión visceral al contener palabras o llanto', source: 'siento una presión al querer hablar', challenge: 'Permitir que la emoción fluya sin retenerla', reflection_question: '¿Qué palabras no dichas están atrapadas en tu garganta?' },
+                    { type: 'physiological', label: 'Tensión física dorsal', description: 'Contractura refleja en hombros y espalda alta', source: 'cargo mucha pesadez en el cuerpo', challenge: 'Soltar los hombros y respirar profundo', reflection_question: '¿Qué peso ajeno estás cargando en tu espalda?' },
+                    { type: 'consequence', label: 'Culpa post-evitación', description: 'Reproche posterior por no haber afrontado la situación', source: 'después me siento peor conmigo mismo', challenge: 'Transformar el reproche en autocompasión', reflection_question: '¿De qué te sirve castigarte una vez terminado el día?' },
+                    { type: 'consequence', label: 'Refuerzo de la inseguridad', description: 'Confirmación aprendida de la creencia de incompetencia', source: 'siento que no avanzo hacia lo que quiero', challenge: 'Reconocer pequeños avances diarios', reflection_question: '¿Cómo este ciclo refuerza tu miedo a intentarlo?' }
+                ];
+                let nextId = parsedTopology.nodes.length + 1;
+                for (const exp of expansionCandidates) {
+                    if (parsedTopology.nodes.length >= 38) break;
+                    if (!existingLabels.has(exp.label.toLowerCase())) {
+                        parsedTopology.nodes.push({
+                            id: `n${nextId++}`,
+                            ...exp,
+                            x: 50,
+                            y: 50
+                        });
+                        existingLabels.add(exp.label.toLowerCase());
+                    }
+                }
+                // Asegurar densidad de conexiones para múltiples bucles
+                if (!Array.isArray(parsedTopology.edges)) parsedTopology.edges = [];
+                if (parsedTopology.edges.length < 65) {
+                    const nodesByType = {};
+                    parsedTopology.nodes.forEach(n => {
+                        if (!nodesByType[n.type]) nodesByType[n.type] = [];
+                        nodesByType[n.type].push(n.id);
+                    });
+                    const existingEdgePairs = new Set(parsedTopology.edges.map(e => `${e.source}->${e.target}`));
+                    const addEdgeSafe = (s, t, w = 2, type = 'unidirectional') => {
+                        if (s && t && s !== t && !existingEdgePairs.has(`${s}->${t}`)) {
+                            parsedTopology.edges.push({ source: s, target: t, weight: w, type });
+                            existingEdgePairs.add(`${s}->${t}`);
+                        }
+                    };
+                    (nodesByType.historical || []).forEach((hId, i) => {
+                        const targetCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
+                        const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
+                        addEdgeSafe(hId, targetCog, 2);
+                        addEdgeSafe(hId, targetMot, 1);
+                    });
+                    (nodesByType.biological || []).forEach((bId, i) => {
+                        const targetPhys = (nodesByType.physiological || [])[i % (nodesByType.physiological?.length || 1)];
+                        const targetCog = (nodesByType.cognitive || [])[(i + 1) % (nodesByType.cognitive?.length || 1)];
+                        addEdgeSafe(bId, targetPhys, 2);
+                        addEdgeSafe(bId, targetCog, 1);
+                    });
+                    (nodesByType.social || []).forEach((sId, i) => {
+                        const targetCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
+                        const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
+                        addEdgeSafe(sId, targetCog, 2);
+                        addEdgeSafe(sId, targetMot, 1);
+                    });
+                    (nodesByType.cognitive || []).forEach((cId, i) => {
+                        const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
+                        const targetCons = (nodesByType.consequence || [])[i % (nodesByType.consequence?.length || 1)];
+                        addEdgeSafe(cId, targetMot, 2);
+                        addEdgeSafe(cId, targetCons, 2);
+                    });
+                    (nodesByType.motor || []).forEach((mId, i) => {
+                        const targetCons = (nodesByType.consequence || [])[i % (nodesByType.consequence?.length || 1)];
+                        const targetCons2 = (nodesByType.consequence || [])[(i + 1) % (nodesByType.consequence?.length || 1)];
+                        addEdgeSafe(mId, targetCons, 3);
+                        addEdgeSafe(mId, targetCons2, 2);
+                    });
+                    (nodesByType.consequence || []).forEach((consId, i) => {
+                        const backCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
+                        const backBio = (nodesByType.biological || [])[i % (nodesByType.biological?.length || 1)];
+                        const backSoc = (nodesByType.social || [])[i % (nodesByType.social?.length || 1)];
+                        addEdgeSafe(consId, backCog, 2);
+                        addEdgeSafe(consId, backBio, 2);
+                        addEdgeSafe(consId, backSoc, 1);
+                    });
+                }
             }
 
             setIsAnalyzing("Formulando hipótesis clínicas y claves terapéuticas (Etapa 2/2)...");
