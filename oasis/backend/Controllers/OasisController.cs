@@ -82,6 +82,8 @@ namespace Oasis.Backend.Controllers
         // Storage path at the project root for persistence
         private static readonly string StoragePath = Path.Combine(Directory.GetCurrentDirectory(), "oasis_data.json");
         private static readonly string BackupStoragePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "oasis_data.json");
+        private static readonly string SeedStoragePath = Path.Combine(Directory.GetCurrentDirectory(), "oasis_seed_data.json");
+        private static readonly string BinSeedStoragePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "oasis_seed_data.json");
         private const string YOUTUBE_API_KEY = "AIzaSyBhcSs6gU7igsZPE1v612LA8clTIez6uGc";
         
         private static readonly JsonSerializerOptions JsonOptions = new() {
@@ -142,12 +144,19 @@ namespace Oasis.Backend.Controllers
             OasisState diskState = null;
             OasisState cloudState = null;
 
-            // 1. Always load Local Disk first as base truth (to never lose any of the 21+ users)
+            // 1. Always load Local Disk first as base truth (to never lose any of the 23+ users)
             try {
+                string seedFile = System.IO.File.Exists(SeedStoragePath) ? SeedStoragePath : (System.IO.File.Exists(BinSeedStoragePath) ? BinSeedStoragePath : null);
+
                 if (!System.IO.File.Exists(StoragePath) && System.IO.File.Exists(BackupStoragePath))
                 {
                     System.IO.File.Copy(BackupStoragePath, StoragePath);
                     Console.WriteLine("Oasis: Data migrated from bin to root.");
+                }
+                else if (!System.IO.File.Exists(StoragePath) && seedFile != null)
+                {
+                    System.IO.File.Copy(seedFile, StoragePath);
+                    Console.WriteLine("Oasis: Seeded oasis_data.json from seed file.");
                 }
 
                 if (System.IO.File.Exists(StoragePath))
@@ -159,11 +168,29 @@ namespace Oasis.Backend.Controllers
                         diskState = JsonSerializer.Deserialize<OasisState>(json, JsonOptions);
                     }
                 }
+
+                // If diskState has fewer than 20 users but seed file exists, restore from seed!
+                if (seedFile != null && (diskState == null || (diskState.Users?.Count ?? 0) < 20))
+                {
+                    try {
+                        using var fs = new FileStream(seedFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        using var reader = new StreamReader(fs);
+                        string json = reader.ReadToEnd();
+                        var seedState = JsonSerializer.Deserialize<OasisState>(json, JsonOptions);
+                        if (seedState?.Users != null && (diskState?.Users == null || diskState.Users.Count < seedState.Users.Count))
+                        {
+                            diskState = seedState;
+                            Console.WriteLine($"Oasis: Loaded full seed state with {diskState.Users.Count} users.");
+                        }
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Error loading seed state: {ex.Message}");
+                    }
+                }
             } catch (Exception ex) {
                 Console.WriteLine($"Error loading disk state: {ex.Message}");
             }
 
-            // 2. Fetch from Supabase Cloud
+            // 2. Fetch from Supabase Cloud using synchronous Send (zero deadlocks)
             try {
                 var config = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
@@ -184,10 +211,12 @@ namespace Oasis.Backend.Controllers
                         request.Headers.Add("apikey", supabaseKey);
                         request.Headers.Add("Authorization", $"Bearer {supabaseKey}");
                         
-                        var response = _httpClient.SendAsync(request).Result;
+                        using var response = _httpClient.Send(request);
                         if (response.IsSuccessStatusCode)
                         {
-                            var responseBody = response.Content.ReadAsStringAsync().Result;
+                            using var contentStream = response.Content.ReadAsStream();
+                            using var reader = new StreamReader(contentStream);
+                            var responseBody = reader.ReadToEnd();
                             using var doc = JsonDocument.Parse(responseBody);
                             if (doc.RootElement.GetArrayLength() > 0)
                             {
@@ -398,6 +427,7 @@ namespace Oasis.Backend.Controllers
 
         private static void SaveStateInternal(OasisState state)
         {
+            if (state == null) return;
             lock (StateLock)
             {
                 try {
@@ -409,7 +439,14 @@ namespace Oasis.Backend.Controllers
                         writer.Write(json);
                     }
 
-                    // 2. Cloud Sync (Supabase) - Fire and Forget
+                    // 2. Cloud Sync (Supabase) - Anti-loss protection: never sync to cloud if state was unexpectedly truncated
+                    if (state.Users != null && state.Users.Count < 20)
+                    {
+                        Console.WriteLine($"[Oasis Diagnostics] Supabase Sync Skipped: state has only {state.Users.Count} users, preventing cloud truncation.");
+                        return;
+                    }
+
+                    // Fire and Forget Supabase Sync
                     int currentSyncId = System.Threading.Interlocked.Increment(ref _firebaseSyncCounter);
                     
                     _ = Task.Run(async () => {
