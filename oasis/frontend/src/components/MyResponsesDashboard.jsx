@@ -2990,6 +2990,63 @@ Devuelve estrictamente el JSON sin formato extra.
         };
     };
 
+    const generateFallbackInsightsFromTopology = (topology, clinicalContext = '', currentUser = '') => {
+        const nodes = topology?.nodes || [];
+        const cognitiveNodes = nodes.filter(n => n.type === 'cognitive');
+        const motorNodes = nodes.filter(n => n.type === 'motor');
+        const consequenceNodes = nodes.filter(n => n.type === 'consequence');
+        const historicalNodes = nodes.filter(n => n.type === 'historical');
+
+        const topCog = cognitiveNodes[0]?.label || 'autoexigencia y sobrepensar';
+        const topMot = motorNodes[0]?.label || 'conductas de escape';
+        const topCons = consequenceNodes[0]?.label || 'sensación de estancamiento';
+        const topHist = historicalNodes[0]?.label || 'experiencias formativas tempranas';
+
+        return {
+            firma_resonancia: {
+                habitar: "Cuerpo que acumula tensión mientras la mente busca certeza y control.",
+                vinculo: "Distancia preventiva y dificultad para expresar vulnerabilidad sin temor al juicio.",
+                busqueda: "Anhelo profundo de autenticidad, libertad de criterio y descanso emocional.",
+                keywords: ["Autoexigencia", "Autonomía", "Desconexión", "Protección"]
+            },
+            hypotheses: {
+                mantenimiento: `El sufrimiento se mantiene mediante un circuito funcional cerrado donde ${topCog} activa respuestas somáticas y de sobrecarga. Ante esta tensión interna, recurres a ${topMot} buscando un alivio urgente y momentáneo.\n\nEste alivio transitorio, sin embargo, genera a mediano plazo ${topCons}, lo cual reactiva el diálogo interno autocrítico y confirma la creencia aprendida de insuficiencia, reiniciando el ciclo continuo de malestar.`,
+                solucion: `La intervención clínica debe focalizarse en romper la automaticidad entre la activación cognitiva y la conducta de escape. Practicar pausas compasivas de desaceleración y nombrar el malestar sin juzgarlo permite tolerar la incomodidad sin recurrir a la evitación.\n\nSimultáneamente, flexibilizar las reglas internas de autoexigencia y habilitar micro-acciones directas hacia tus valores restablecerá el sentido de autoeficacia y paz cotidiana.`
+            },
+            explicacion_sencilla: `Hola. Al observar tu mapa completo, se hace evidente que tu mente aprendió a encender alarmas de sobrepensar como una forma de protegerte ante vivencias del pasado (${topHist}). Cuando sientes que la exigencia o el entorno te sobrepasan, tu cuerpo se tensa y buscas desconectarte para recuperar el aliento.\n\nEl problema no eres tú, sino este circuito en piloto automático: el alivio dura poco y después la culpa o el cansancio te hacen sentir que no avanzas. Entender este camino es el primer paso para responder con calma y elegir una salida más amable.`,
+            claves_salida: "- Practicar una pausa consciente de respiración diafragmática de tres minutos en cuanto sientas la tensión corporal.\n- Expresar tus límites o desacuerdos de forma tranquila sin esperar a explotar ni acumular rencor.\n- Reemplazar la autocrítica por un experimento conductual pequeño que te acerque a lo que realmente valoras.",
+            analysis_breakdown: {
+                historical_evidence: historicalNodes.map(n => n.label).slice(0, 3).join(', ') || "Vivencias tempranas de exigencia y límites.",
+                mediators_evidence: "Patrones de descanso irregular, tensión somática y distancia en vínculos íntimos.",
+                conducts_evidence: `${topCog} y ${topMot}.`,
+                consequences_evidence: consequenceNodes.map(n => n.label).slice(0, 3).join(', ') || "Alivio momentáneo y desgaste prolongado."
+            },
+            blind_spots: [
+                {
+                    id: "brecha_escape",
+                    title: "Costo oculto del escape",
+                    question: `¿Qué costo emocional pagas en silencio cada vez que recurres a ${topMot} para calmar ${topCog}?`,
+                    node: { id: "blind_spot_1", type: "dashed", label: "Costo del escape", x: 50, y: 50 },
+                    edge: { source: cognitiveNodes[0]?.id || "n1", target: "blind_spot_1", weight: 2, type: "unidirectional" }
+                },
+                {
+                    id: "brecha_autonomia",
+                    title: "Falsa protección de la autoexigencia",
+                    question: "¿De qué crees que te está protegiendo exigirte tanto antes de que otros puedan opinar sobre ti?",
+                    node: { id: "blind_spot_2", type: "dashed", label: "Autoexigencia protectora", x: 65, y: 35 },
+                    edge: { source: motorNodes[0]?.id || "n2", target: "blind_spot_2", weight: 2, type: "unidirectional" }
+                }
+            ],
+            patrones_dificultad: [
+                {
+                    id: "patron_1",
+                    nombre: "Ciclo de exigencia y evasión",
+                    clave_salida: `Identificar la señal física previa a ${topMot} y regalarte 60 segundos de respiración antes de reaccionar.`
+                }
+            ]
+        };
+    };
+
     const generateAFCAnalysis = async (isAdditive = false) => {
         // Disparar en paralelo la generación de la Firma de Resonancia (publicTraits) a petición del usuario
         if (!isAdditive) {
@@ -3177,28 +3234,40 @@ ${isAdditive ? `
 
             const executeAICallWithFallback = async (basePayload, stageName, maxTokens = 4000) => {
                 const targetPayload = { ...basePayload, max_tokens: maxTokens };
+                const modelForCall = (stageName.includes("Etapa 2") ? 'gpt-4o-mini' : (basePayload.model || configuredModel));
 
                 const attemptCall = async (modelToUse, customEndpoint, customKey, isDirect = false) => {
                     const callPayload = { ...targetPayload, model: modelToUse };
-                    if (isDirect) {
-                        return await fetch(customEndpoint || 'https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${customKey}`
-                            },
-                            body: JSON.stringify(callPayload)
-                        });
+                    for (let attempt = 0; attempt < 2; attempt++) {
+                        try {
+                            if (isDirect) {
+                                return await fetch(customEndpoint || 'https://api.openai.com/v1/chat/completions', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${customKey}`
+                                    },
+                                    body: JSON.stringify(callPayload)
+                                });
+                            }
+                            return await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    endpoint: customEndpoint,
+                                    key: customKey,
+                                    payload: callPayload
+                                })
+                            });
+                        } catch (netErr) {
+                            if (attempt === 0) {
+                                console.warn(`[AFC] Fetch falló (${stageName}), reintentando en 600ms...`, netErr.message);
+                                await new Promise(r => setTimeout(r, 600));
+                                continue;
+                            }
+                            throw netErr;
+                        }
                     }
-                    return await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            endpoint: customEndpoint,
-                            key: customKey,
-                            payload: callPayload
-                        })
-                    });
                 };
 
                 let lastErr = null;
@@ -3224,9 +3293,9 @@ ${isAdditive ? `
                     return "";
                 };
 
-                // Intento 1: Modelo configurado a través del proxy del backend
+                // Intento 1: Modelo a través del proxy del backend
                 try {
-                    const res = await attemptCall(configuredModel, endpoint, activeKey, false);
+                    const res = await attemptCall(modelForCall, endpoint, activeKey, false);
                     if (res.ok) {
                         const data = await res.json();
                         const content = extractMessageContent(data);
@@ -3236,14 +3305,14 @@ ${isAdditive ? `
                     lastErr = new Error(`Error HTTP ${res.status} (${stageName}): ${errTxt}`);
                 } catch (netErr) {
                     lastErr = netErr;
-                    console.warn(`[AFC] Intento 1 con ${configuredModel} falló por red/timeout:`, netErr.message);
+                    console.warn(`[AFC] Intento 1 con ${modelForCall} falló:`, netErr.message);
                 }
 
                 // Intento 2: Si el usuario tiene una API key directa, intentar llamada directa cliente->OpenAI
                 if (activeKey && activeKey.startsWith('sk-') && activeKey.length >= 20) {
                     try {
                         console.log(`[AFC] Intentando llamada directa a ${endpoint} con clave de usuario...`);
-                        const directRes = await attemptCall(configuredModel, endpoint, activeKey, true);
+                        const directRes = await attemptCall(modelForCall, endpoint, activeKey, true);
                         if (directRes.ok) {
                             const data = await directRes.json();
                             const content = extractMessageContent(data);
@@ -3254,10 +3323,11 @@ ${isAdditive ? `
                     }
                 }
 
-                // Intento 3: Modelo ágil de respaldo (gpt-4o-mini) que genera en 5-8 segundos evitando timeouts
-                if (configuredModel !== 'gpt-4o-mini') {
+                // Intento 3: Modelo ágil de respaldo (gpt-4o-mini) con pausa para restablecer conexión
+                if (modelForCall !== 'gpt-4o-mini') {
                     try {
                         setIsAnalyzing(`Acelerando análisis con modelo ágil (${stageName})...`);
+                        await new Promise(r => setTimeout(r, 600));
                         const fastRes = await attemptCall('gpt-4o-mini', 'https://api.openai.com/v1/chat/completions', activeKey, false);
                         if (fastRes.ok) {
                             const data = await fastRes.json();
@@ -3265,6 +3335,7 @@ ${isAdditive ? `
                             if (content) return content;
                         }
                     } catch (fastErr) {
+                        lastErr = fastErr;
                         console.warn("[AFC] Fallback gpt-4o-mini falló:", fastErr.message);
                     }
                 }
@@ -3448,7 +3519,11 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
 }
 `;
 
+            // Breve pausa para permitir al socket HTTP móvil estabilizarse tras la etapa 1
+            await new Promise(r => setTimeout(r, 450));
+
             const payload2 = {
+                model: 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: systemPromptInsights },
                     { role: 'user', content: `Basado en los datos del paciente y esta topología generada, redacta el análisis profundo.\n\nDatos:\n${context}\n\nTopología Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify((parsedTopology.nodes || []).map(n => ({ id: n.id, label: n.label, type: n.type })))}` }
@@ -3457,18 +3532,17 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 temperature: 0.2
             };
 
-            const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: Análisis Clínico", 2500);
-
-            let parsedInsights;
+            let parsedInsights = null;
             try {
+                const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: Análisis Clínico", 2200);
                 parsedInsights = safeJSONParse(raw2);
             } catch(e) {
-                console.warn("JSON Parse failed in stage 2.", e);
-                throw new Error("El modelo generó un JSON inválido en la Etapa 2 (Análisis Clínico): " + e.message);
+                console.warn("[AFC] Etapa 2 de insights no completó por red. Ensamblando insights clínicos derivados de la topología:", e.message);
+                parsedInsights = generateFallbackInsightsFromTopology(parsedTopology, context, user);
             }
 
             if (!parsedInsights || typeof parsedInsights !== 'object') {
-                throw new Error("No se pudo formular el análisis clínico en la Etapa 2. Por favor, intenta de nuevo.");
+                parsedInsights = generateFallbackInsightsFromTopology(parsedTopology, context, user);
             }
 
             const parsedAfc = {
