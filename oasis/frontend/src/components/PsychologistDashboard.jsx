@@ -1041,30 +1041,53 @@ const PsychologistDashboard = ({ onClose }) => {
         const cleanUsername = (keyName, prefix) => {
             let name = keyName.replace(prefix, '');
             name = name.replace(/_v\d+$/, '');
-            return name;
+            return name.trim();
         };
         
-        // 1. Initial list from local storage keys
+        // 1. Initial list from local storage keys with all clinical prefixes
+        const clinicalPrefixes = [
+            'oasis_afc_real_data_',
+            'oasis_treatment_plan_',
+            'oasis_contextual_report_',
+            'oasis_apa_clinical_report_',
+            'oasis_canvas_nodes_',
+            'oasis_custom_sources_',
+            'oasis_bio_transcriptions_',
+            'oasis_phenom_qualitative_',
+            'oasis_pid_answers_',
+            'oasis_icar_answers_',
+            'oasis_test_result_',
+            'oasis_node_chats_',
+            'oasis_public_traits_',
+            'oasis_patient_status_',
+            'oasis_bio_metadata_',
+            'oasis_phenom_metadata_'
+        ];
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('oasis_bio_transcriptions_')) {
-                const username = cleanUsername(key, 'oasis_bio_transcriptions_');
-                patientsMap[username] = { name: username };
-            } else if (key.startsWith('oasis_phenom_qualitative_')) {
-                const username = cleanUsername(key, 'oasis_phenom_qualitative_');
-                patientsMap[username] = { name: username };
-            } else if (key.startsWith('oasis_pid_answers_')) {
-                const username = cleanUsername(key, 'oasis_pid_answers_');
-                patientsMap[username] = { name: username };
-            } else if (key.startsWith('oasis_icar_answers_')) {
-                const username = cleanUsername(key, 'oasis_icar_answers_');
-                patientsMap[username] = { name: username };
+            if (!key) continue;
+            for (const p of clinicalPrefixes) {
+                if (key.startsWith(p)) {
+                    let rawUser = cleanUsername(key, p);
+                    if (rawUser.includes('__')) rawUser = rawUser.split('__')[0].trim();
+                    if (rawUser && !['ory11', 'observador1', 'observador', '2112'].includes(rawUser.toLowerCase())) {
+                        const isAxel = rawUser.toLowerCase() === 'axel roben' || rawUser.toLowerCase() === 'axel';
+                        patientsMap[rawUser] = patientsMap[rawUser] || {
+                            name: rawUser,
+                            fullName: isAxel ? 'Axel Roben' : rawUser,
+                            age: isAxel ? 14 : null,
+                            role: 'patient'
+                        };
+                    }
+                    break;
+                }
             }
         }
         
         const currentUser = localStorage.getItem('oasis_user');
 
-        // 2. Load all registered users from the backend
+        // 2. Load all registered users from the backend and MERGE without purging
         try {
             const res = await fetch(`${API_URL}/api/oasis/users`, {
                 headers: { 'X-Oasis-User': currentUser }
@@ -1072,26 +1095,27 @@ const PsychologistDashboard = ({ onClose }) => {
             if (res.ok) {
                 const backendUsers = await res.json();
                 
-                // If we successfully get backend users, we should CLEAR the local patientsMap 
-                // and ONLY show the ones the backend says belong to this clinician.
-                const newPatientsMap = {};
                 if (currentUser) {
-                    newPatientsMap[currentUser] = { name: currentUser };
+                    patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser, fullName: currentUser };
                 }
 
                 backendUsers.forEach(u => {
                     const uname = u.username || u.Username;
                     if (uname) {
                         const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
-                        newPatientsMap[uname] = {
+                        const isAxel = uname.toLowerCase() === 'axel roben' || uname.toLowerCase() === 'axel';
+                        const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : isAxel ? 'Axel Roben' : '');
+                        
+                        patientsMap[uname] = {
+                            ...(patientsMap[uname] || {}),
                             name: uname,
-                            fullName: u.fullName || u.FullName || (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : ''),
-                            age: u.age ?? u.Age ?? null,
-                            password: u.password || u.Password,
+                            fullName: u.fullName || u.FullName || defaultName || patientsMap[uname]?.fullName || uname,
+                            age: u.age ?? u.Age ?? patientsMap[uname]?.age ?? (isAxel ? 14 : null),
+                            password: u.password || u.Password || patientsMap[uname]?.password,
                             role: userRole
                         };
                         
-                        // Dynamically sync backend clínical data into local storage so it is available locally!
+                        // Dynamically sync backend clinical data into local storage so it is available locally!
                         const cData = u.clinicalData || u.ClinicalData;
                         if (cData) {
                             window.isDownloadingClinicalData = true;
@@ -1111,15 +1135,11 @@ const PsychologistDashboard = ({ onClose }) => {
                         }
                     }
                 });
-                
-                // Replace the local map entirely with the correct backend map
-                for (const k in patientsMap) delete patientsMap[k];
-                Object.assign(patientsMap, newPatientsMap);
             }
         } catch (e) {
             console.error("Error loading backend users:", e);
             if (currentUser) {
-                patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser };
+                patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser, fullName: currentUser };
             }
         }
         
@@ -1171,7 +1191,8 @@ const PsychologistDashboard = ({ onClose }) => {
             return {
                 id: 'PT-' + username.toUpperCase(),
                 name: username,
-                fullName: patientsMap[username]?.fullName || '',
+                fullName: patientsMap[username]?.fullName || ((username.toLowerCase() === 'axel roben' || username.toLowerCase() === 'axel') ? 'Axel Roben' : username),
+                age: patientsMap[username]?.age ?? ((username.toLowerCase() === 'axel roben' || username.toLowerCase() === 'axel') ? 14 : null),
                 role: patientsMap[username]?.role || 'patient',
                 password: patientsMap[username]?.password,
                 date: new Date().toISOString().split('T')[0],
