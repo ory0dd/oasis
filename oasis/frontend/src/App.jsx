@@ -7934,7 +7934,7 @@ export default function App() {
             fetch(`${API_URL}/api/oasis/public-users`)
                 .then(res => res.json())
                 .then(data => {
-                    const clinicians = data.filter(u => u.role === 'clinician' || u.username === 'observador1' || u.username === 'observador');
+                    const clinicians = data.filter(u => u.role === 'clinician' || u.role === 'supervisor' || ['observador1', 'observador', 'YUL', 'yuli', '2112'].includes(u.username));
                     setCliniciansList(clinicians);
                 })
                 .catch(err => console.error("Failed to fetch clinicians:", err));
@@ -13614,7 +13614,7 @@ ${afcMapContext}
 
                                 {(() => {
                                     const role = localStorage.getItem('oasis_role_' + user) || 'patient';
-                                    const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
+                                    const isClinician = role === 'clinician' || role === 'supervisor' || ['observador1', 'observador', 'YUL', 'yuli', '2112'].includes(user);
                                     if (isClinician) {
                                         return <button onClick={() => { setView('clinical'); setIsSettingsOpen(false); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>;
                                     }

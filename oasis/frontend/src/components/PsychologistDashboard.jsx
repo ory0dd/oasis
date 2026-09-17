@@ -869,6 +869,7 @@ const PsychologistDashboard = ({ onClose }) => {
         }
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const [identityFilter, setIdentityFilter] = useState('ALL'); // 'ALL' | 'PATIENTS' | 'CLINICIANS'
     const [dashboardSubView, setDashboardSubView] = useState(() => {
         return localStorage.getItem('oasis_psych_dashboard_subview') || 'IDENTITIES';
     });
@@ -1081,11 +1082,13 @@ const PsychologistDashboard = ({ onClose }) => {
                 backendUsers.forEach(u => {
                     const uname = u.username || u.Username;
                     if (uname) {
+                        const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
                         newPatientsMap[uname] = {
                             name: uname,
-                            fullName: u.fullName || u.FullName || '',
+                            fullName: u.fullName || u.FullName || (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : ''),
                             age: u.age ?? u.Age ?? null,
-                            password: u.password || u.Password
+                            password: u.password || u.Password,
+                            role: userRole
                         };
                         
                         // Dynamically sync backend clínical data into local storage so it is available locally!
@@ -1168,6 +1171,8 @@ const PsychologistDashboard = ({ onClose }) => {
             return {
                 id: 'PT-' + username.toUpperCase(),
                 name: username,
+                fullName: patientsMap[username]?.fullName || '',
+                role: patientsMap[username]?.role || 'patient',
                 password: patientsMap[username]?.password,
                 date: new Date().toISOString().split('T')[0],
                 status: savedStatus,
@@ -1797,10 +1802,31 @@ const PsychologistDashboard = ({ onClose }) => {
     // --- Módulo 1: Centro de Mando ---
     // --- Módulo 1: Centro de Mando (2026 Modern Minimalist UI) ---
     const renderDashboard = () => {
-        const filtered = patients.filter(p => 
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (p.id && p.id.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
+        const isClinicianOrStaff = (p) => {
+            const r = (p.role || '').toLowerCase();
+            const n = (p.name || '').toLowerCase();
+            return r === 'clinician' || r === 'supervisor' || r === 'observador' || r === 'admin' ||
+                ['yul', 'yuli', '2112', 'observador1', 'observador', 'ory11'].includes(n);
+        };
+
+        const totalPatientsOnly = patients.filter(p => !isClinicianOrStaff(p)).length;
+        const totalCliniciansOnly = patients.length - totalPatientsOnly;
+
+        const filtered = patients.filter(p => {
+            const query = searchQuery.toLowerCase();
+            const matchesSearch = p.name.toLowerCase().includes(query) ||
+                (p.id && p.id.toLowerCase().includes(query)) ||
+                (p.fullName && p.fullName.toLowerCase().includes(query));
+
+            const isStaff = isClinicianOrStaff(p);
+            if (identityFilter === 'PATIENTS') {
+                return matchesSearch && !isStaff;
+            }
+            if (identityFilter === 'CLINICIANS') {
+                return matchesSearch && isStaff;
+            }
+            return matchesSearch;
+        });
 
         if (dashboardSubView === 'WHATSAPP_CRM') {
             return (
@@ -1935,6 +1961,41 @@ const PsychologistDashboard = ({ onClose }) => {
                     </button>
                 </div>
 
+                {/* 2026 IDENTITY FILTER PILLS */}
+                <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none">
+                    <button
+                        onClick={() => setIdentityFilter('ALL')}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all ${
+                            identityFilter === 'ALL'
+                                ? 'bg-white/10 text-white border border-white/20 shadow-sm'
+                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
+                        }`}
+                    >
+                        Todas las Identidades ({patients.length})
+                    </button>
+                    <button
+                        onClick={() => setIdentityFilter('PATIENTS')}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all ${
+                            identityFilter === 'PATIENTS'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
+                        }`}
+                    >
+                        Pacientes ({totalPatientsOnly})
+                    </button>
+                    <button
+                        onClick={() => setIdentityFilter('CLINICIANS')}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all flex items-center gap-1 ${
+                            identityFilter === 'CLINICIANS'
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
+                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
+                        }`}
+                    >
+                        <span>🩺</span>
+                        <span>Clínicos & Observador ({totalCliniciansOnly})</span>
+                    </button>
+                </div>
+
                 {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
                 <div className="mb-4">
                     <div className="relative flex items-center bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.05] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-3 py-1.5 sm:py-2 backdrop-blur-xl transition-all">
@@ -1980,7 +2041,24 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 {patient.name.slice(0, 2)}
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</div>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</span>
+                                                    {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-0.5">
+                                                            🩺 <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
+                                                        </span>
+                                                    )}
+                                                    {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+                                                            👁️ <span>Observador</span>
+                                                        </span>
+                                                    )}
+                                                    {patient.name.toLowerCase() === 'ory11' && (
+                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-0.5">
+                                                            ⚡ <span>Admin</span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="text-[8px] font-mono text-zinc-500 truncate">{patient.id}</div>
                                             </div>
                                         </div>
@@ -2067,7 +2145,27 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         {patient.name.slice(0, 2)}
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs font-black text-white italic">@{patient.name}</div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-xs font-black text-white italic">@{patient.name}</span>
+                                                            {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                                                                    <span>🩺</span>
+                                                                    <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
+                                                                </span>
+                                                            )}
+                                                            {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                                                    <span>👁️</span>
+                                                                    <span>Observador Clínico</span>
+                                                                </span>
+                                                            )}
+                                                            {patient.name.toLowerCase() === 'ory11' && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                                                                    <span>⚡</span>
+                                                                    <span>Admin</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-zinc-600 text-[10px] font-mono">{patient.id}</div>
                                                         {patient.password && (
                                                             <div className="flex items-center gap-1.5 mt-0.5">

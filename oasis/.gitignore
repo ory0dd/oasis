@@ -8,6 +8,8 @@ frontend/node_modules/
 frontend/dist/
 *.bak
 *.user
+backend/*_backup*.json
+backend/*_dump*.json
 .env
 .env.local
 .env.development.local
