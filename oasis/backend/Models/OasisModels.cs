@@ -175,11 +175,28 @@ namespace Oasis.Backend.Models
     }
 
 
+    public class WhatsAppPatient
+    {
+        public string Id { get; set; } = string.Empty;
+        public string ClinicianId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Status { get; set; } = "Constante"; // "Constante", "Nueva", "Por confirmar", "Inactivo"
+        public string NextSession { get; set; } = string.Empty; // e.g. "Jueves 6:00 PM"
+        public string SessionPrice { get; set; } = string.Empty; // e.g. "$350"
+        public string Frequency { get; set; } = "Semanal"; // "Semanal", "Quincenal", "Mensual"
+        public string PrivateNotes { get; set; } = string.Empty;
+        public string LinkedIdentityId { get; set; } = string.Empty; // optional link to PT-USERNAME
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+
     public class OasisState
     {
         public List<User> Users { get; set; } = new();
         public List<Resonance> Resonances { get; set; } = new();
         public List<Block> FeedItems { get; set; } = new();
+        public List<WhatsAppPatient> WhatsAppPatients { get; set; } = new();
         // Fallback or Shared
         public BackgroundConfig GlobalBackground { get; set; } = new();
         public List<BackgroundTemplate> BackgroundTemplates { get; set; } = new();

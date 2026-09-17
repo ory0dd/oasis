@@ -4,13 +4,14 @@ import { Aperture, Mic,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
 import { saveObservation, getObservations } from '../utils/db';
 import MyResponsesDashboard from './MyResponsesDashboard';
 import FloatingNotebook from './FloatingNotebook';
+import WhatsAppCRM from './WhatsAppCRM';
 import { TranscriptionsTab } from './TranscriptionsTab';
 import { LLMNotebookTab } from './LLMNotebookTab';
 import { CLINICAL_TESTS, recomendarPruebasPosteriores } from '../data/clinicalTestsBank';
@@ -868,6 +869,9 @@ const PsychologistDashboard = ({ onClose }) => {
         }
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const [dashboardSubView, setDashboardSubView] = useState(() => {
+        return localStorage.getItem('oasis_psych_dashboard_subview') || 'IDENTITIES';
+    });
     const [activeTab, setActiveTab] = useState(() => {
         return localStorage.getItem('oasis_psych_active_tab') || 'VISION_GENERAL';
     });
@@ -879,6 +883,12 @@ const PsychologistDashboard = ({ onClose }) => {
     const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
     const [lastSyncTime, setLastSyncTime] = useState(null);
     const [syncNotification, setSyncNotification] = useState(null);
+
+    useEffect(() => {
+        if (dashboardSubView) {
+            localStorage.setItem('oasis_psych_dashboard_subview', dashboardSubView);
+        }
+    }, [dashboardSubView]);
 
     // Persist selectedPatient, currentModule and activeTab to avoid losing state on reload
     useEffect(() => {
@@ -1064,28 +1074,32 @@ const PsychologistDashboard = ({ onClose }) => {
                 // If we successfully get backend users, we should CLEAR the local patientsMap 
                 // and ONLY show the ones the backend says belong to this clinician.
                 const newPatientsMap = {};
-                newPatientsMap[currentUser] = { name: currentUser };
+                if (currentUser) {
+                    newPatientsMap[currentUser] = { name: currentUser };
+                }
 
                 backendUsers.forEach(u => {
-                    if (u.username) {
-                        newPatientsMap[u.username] = {
-                            name: u.username,
-                            fullName: u.fullName || '',
-                            age: u.age || null,
-                            password: u.password
+                    const uname = u.username || u.Username;
+                    if (uname) {
+                        newPatientsMap[uname] = {
+                            name: uname,
+                            fullName: u.fullName || u.FullName || '',
+                            age: u.age ?? u.Age ?? null,
+                            password: u.password || u.Password
                         };
                         
                         // Dynamically sync backend clínical data into local storage so it is available locally!
-                        if (u.clinicalData) {
+                        const cData = u.clinicalData || u.ClinicalData;
+                        if (cData) {
                             window.isDownloadingClinicalData = true;
                             try {
-                                Object.keys(u.clinicalData).forEach(key => {
-                                    localStorage.setItem(key, u.clinicalData[key]);
+                                Object.keys(cData).forEach(key => {
+                                    localStorage.setItem(key, cData[key]);
                                     if (key.includes('__')) {
-                                        localStorage.setItem(key.replace('__', '_'), u.clinicalData[key]);
-                                    } else if (key.startsWith(`oasis_test_result_${u.username}_`)) {
-                                        const sub = key.replace(`oasis_test_result_${u.username}_`, '');
-                                        localStorage.setItem(`oasis_test_result_${u.username}__${sub}`, u.clinicalData[key]);
+                                        localStorage.setItem(key.replace('__', '_'), cData[key]);
+                                    } else if (key.startsWith(`oasis_test_result_${uname}_`)) {
+                                        const sub = key.replace(`oasis_test_result_${uname}_`, '');
+                                        localStorage.setItem(`oasis_test_result_${uname}__${sub}`, cData[key]);
                                     }
                                 });
                             } finally {
@@ -1788,6 +1802,18 @@ const PsychologistDashboard = ({ onClose }) => {
             (p.id && p.id.toLowerCase().includes(searchQuery.toLowerCase()))
         );
 
+        if (dashboardSubView === 'WHATSAPP_CRM') {
+            return (
+                <div className="w-full flex-1 min-h-0 flex flex-col bg-[#070709] relative">
+                    <WhatsAppCRM 
+                        clinicPatients={patients}
+                        currentUser={localStorage.getItem('oasis_user') || 'observador1'}
+                        onBackToClinical={() => setDashboardSubView('IDENTITIES')}
+                    />
+                </div>
+            );
+        }
+
         return (
             <div className="w-full flex-1 min-h-0 p-3 sm:p-6 md:p-10 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#070709] selection:bg-emerald-500/30">
                 {/* AMBIENT GLOW */}
@@ -1817,6 +1843,16 @@ const PsychologistDashboard = ({ onClose }) => {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                            onClick={() => setDashboardSubView('WHATSAPP_CRM')}
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:scale-105 active:scale-95 flex items-center gap-1.5 shrink-0"
+                            title="Abrir WhatsApp CRM y Contactos de Pacientes"
+                        >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">WhatsApp CRM</span>
+                            <span className="sm:hidden">CRM</span>
+                        </button>
+
                         <button 
                             onClick={async () => {
                                 const newUser = prompt("Nombre de usuario del nuevo sujeto:");
@@ -1875,6 +1911,28 @@ const PsychologistDashboard = ({ onClose }) => {
                             <LogOut size={12} />
                         </button>
                     </div>
+                </div>
+
+                {/* 2026 SEGMENTED VIEW SWITCHER: IDENTIDADES vs WHATSAPP CRM */}
+                <div className="flex items-center gap-1 p-1 bg-white/[0.02] border border-white/[0.06] rounded-2xl w-fit mb-4">
+                    <button
+                        onClick={() => setDashboardSubView('IDENTITIES')}
+                        className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold font-mono transition-all flex items-center gap-2 ${
+                            dashboardSubView === 'IDENTITIES'
+                                ? 'bg-white/10 text-white shadow-sm border border-white/10'
+                                : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                    >
+                        <Hexagon size={13} className="text-emerald-400" />
+                        <span>Identidades Clínicas ({patients.length})</span>
+                    </button>
+                    <button
+                        onClick={() => setDashboardSubView('WHATSAPP_CRM')}
+                        className="px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold font-mono transition-all flex items-center gap-2 text-zinc-400 hover:text-white"
+                    >
+                        <MessageCircle size={13} className="text-emerald-400" />
+                        <span>Pacientes & WhatsApp CRM</span>
+                    </button>
                 </div>
 
                 {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
@@ -1962,6 +2020,16 @@ const PsychologistDashboard = ({ onClose }) => {
 
                                         <div className="flex items-center gap-1">
                                             <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDashboardSubView('WHATSAPP_CRM');
+                                                }}
+                                                className="p-1 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                                title="Conectar vía WhatsApp"
+                                            >
+                                                <MessageCircle size={13} className="text-emerald-400" />
+                                            </button>
+                                            <button 
                                                 onClick={(e) => handleDeleteUser(e, patient.name)}
                                                 className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
                                                 title="Eliminar usuario"
@@ -2035,6 +2103,16 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-3.5 text-right">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDashboardSubView('WHATSAPP_CRM');
+                                                    }}
+                                                    className="p-1.5 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors mr-1"
+                                                    title="Conectar vía WhatsApp"
+                                                >
+                                                    <MessageCircle className="w-4 h-4 text-emerald-400" />
+                                                </button>
                                                 <button 
                                                     onClick={(e) => handleDeleteUser(e, patient.name)}
                                                     className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mr-1"

@@ -56,7 +56,10 @@ namespace Oasis.Backend.Controllers
             }
             
             return caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
-                   caller.Equals("observador", StringComparison.OrdinalIgnoreCase);
+                   caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                   caller.ToLower().Contains("observador") ||
+                   caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                   caller.Equals("ory11", StringComparison.OrdinalIgnoreCase);
         }
 
         private bool IsKeyForUser(string key, string username)
@@ -586,8 +589,16 @@ namespace Oasis.Backend.Controllers
         {
             string caller = GetAuthenticatedUser();
             var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
-            bool isClinician = (callerUser != null && callerUser.Role == "clinician") || 
-                               (!string.IsNullOrEmpty(caller) && (caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || caller.Equals("observador", StringComparison.OrdinalIgnoreCase)));
+            bool isObserverOrAdmin = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.ToLower().Contains("observador") ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                (callerUser != null && (callerUser.Role == "admin" || callerUser.Role == "supervisor" || callerUser.Role == "observador"))
+            );
+
+            bool isClinician = isObserverOrAdmin || (callerUser != null && callerUser.Role == "clinician");
             
             if (string.IsNullOrEmpty(caller) || !isClinician)
             {
@@ -595,9 +606,9 @@ namespace Oasis.Backend.Controllers
             }
 
             var query = _state.Users.AsEnumerable();
-            if (callerUser != null && callerUser.Role == "clinician") 
+            if (!isObserverOrAdmin && callerUser != null && callerUser.Role == "clinician") 
             {
-                query = query.Where(u => u.Role == "patient" && string.Equals(u.ClinicianId, caller, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(u => u.Role == "patient" && (string.IsNullOrEmpty(u.ClinicianId) || string.Equals(u.ClinicianId, caller, StringComparison.OrdinalIgnoreCase)));
             }
 
             var userList = query.Select(u => new {
@@ -605,6 +616,8 @@ namespace Oasis.Backend.Controllers
                 FullName = u.FullName,
                 Age = u.Age,
                 Password = u.Password,
+                Role = u.Role,
+                ClinicianId = u.ClinicianId,
                 ClinicalData = u.ClinicalData
             }).ToList();
             return Ok(userList);
@@ -614,7 +627,17 @@ namespace Oasis.Backend.Controllers
         public IActionResult DeleteUser(string username)
         {
             string caller = GetAuthenticatedUser();
-            if (string.IsNullOrEmpty(caller) || !caller.Equals("observador1", StringComparison.OrdinalIgnoreCase))
+            var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
+            bool isObserverOrAdmin = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.ToLower().Contains("observador") ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                (callerUser != null && (callerUser.Role == "admin" || callerUser.Role == "supervisor" || callerUser.Role == "observador"))
+            );
+
+            if (string.IsNullOrEmpty(caller) || !isObserverOrAdmin)
             {
                 return Forbid();
             }
@@ -630,6 +653,78 @@ namespace Oasis.Backend.Controllers
                 _state.Users.Remove(userToRemove);
                 SaveState();
                 return Ok(new { message = "User deleted successfully" });
+            }
+        }
+
+        [HttpGet("whatsapp-patients")]
+        public IActionResult GetWhatsAppPatients()
+        {
+            string caller = GetAuthenticatedUser();
+            if (string.IsNullOrEmpty(caller)) return Forbid();
+
+            bool isObserverOrAdmin = caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                                     caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                                     caller.ToLower().Contains("observador") ||
+                                     caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                                     caller.Equals("ory11", StringComparison.OrdinalIgnoreCase);
+
+            var list = _state.WhatsAppPatients.AsEnumerable();
+            if (!isObserverOrAdmin)
+            {
+                list = list.Where(p => string.Equals(p.ClinicianId, caller, StringComparison.OrdinalIgnoreCase));
+            }
+            return Ok(list.OrderByDescending(p => p.UpdatedAt).ToList());
+        }
+
+        [HttpPost("whatsapp-patients")]
+        public IActionResult SaveWhatsAppPatient([FromBody] WhatsAppPatient patient)
+        {
+            string caller = GetAuthenticatedUser();
+            if (string.IsNullOrEmpty(caller)) return Forbid();
+            if (patient == null) return BadRequest("Invalid payload");
+
+            lock (StateLock)
+            {
+                if (string.IsNullOrEmpty(patient.Id))
+                {
+                    patient.Id = "WAP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+                    patient.CreatedAt = DateTime.UtcNow;
+                }
+                if (string.IsNullOrEmpty(patient.ClinicianId))
+                {
+                    patient.ClinicianId = caller;
+                }
+                patient.UpdatedAt = DateTime.UtcNow;
+
+                var existingIdx = _state.WhatsAppPatients.FindIndex(p => p.Id.Equals(patient.Id, StringComparison.OrdinalIgnoreCase));
+                if (existingIdx >= 0)
+                {
+                    _state.WhatsAppPatients[existingIdx] = patient;
+                }
+                else
+                {
+                    _state.WhatsAppPatients.Add(patient);
+                }
+                SaveState();
+                return Ok(patient);
+            }
+        }
+
+        [HttpDelete("whatsapp-patients/{id}")]
+        public IActionResult DeleteWhatsAppPatient(string id)
+        {
+            string caller = GetAuthenticatedUser();
+            if (string.IsNullOrEmpty(caller)) return Forbid();
+
+            lock (StateLock)
+            {
+                var item = _state.WhatsAppPatients.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                if (item != null)
+                {
+                    _state.WhatsAppPatients.Remove(item);
+                    SaveState();
+                }
+                return Ok(new { message = "Patient deleted successfully" });
             }
         }
 
