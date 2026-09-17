@@ -434,12 +434,12 @@ export const extractHumanExperience = (node) => {
 export const isStaleOrRoboticQuestion = (q) => {
     if (!q || typeof q !== 'string') return true;
     const trimmed = q.trim();
-    if (trimmed.length < 25) return true;
+    if (trimmed.length < 20) return true;
     // Rechazar artefactos técnicos o valores nulos
     if (trimmed.includes('[object Object]') || trimmed.includes('undefined') || trimmed.includes('null')) return true;
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) return true;
 
-    // Detectar plantillas genéricas obsoletas que no analizan el nodo
+    // Detectar plantillas genéricas obsoletas o frases enredadas
     const stalePhrases = [
         '¿Qué reflexión o toma de consciencia te genera este momento de tu vida?',
         '¿Qué reflexión o toma de consciencia surge al observar',
@@ -450,11 +450,26 @@ export const isStaleOrRoboticQuestion = (q) => {
         '¿Cuáles son las acciones, maniobras de escape',
         '¿Qué señales específicas notas en tu organismo',
         '¿De qué manera influye tu entorno social actual',
-        '¿Qué pensamientos automáticos o reglas internas'
+        '¿Qué pensamientos automáticos o reglas internas',
+        'realidad cotidiana',
+        'forma de estar en el mundo',
+        'esta vivencia se volvía parte',
+        'de el esta vivencia',
+        'de el esta',
+        'de la esta',
+        'las raíces de el',
+        'raíces de el',
+        'aprendizajes tempranos te llevaron a desarrollar',
+        'aprendizajes del pasado te llevaron a desarrollar'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
     }
+
+    // Detectar repetición de "vivencia" en la misma pregunta
+    const matchesVivencia = (trimmed.toLowerCase().match(/vivencia/g) || []).length;
+    if (matchesVivencia >= 2) return true;
+
     return false;
 };
 
@@ -571,66 +586,65 @@ export const generateEmpatheticPerspectiveQuestion = (
     const originContext = getNodeOriginContext(node, edges, allNodes);
     const consequenceContext = getNodeConsequenceContext(node, edges, allNodes);
 
-    const label = softenNodeLabel(node.label || 'esta vivencia');
+    const rawLabel = (node.label || '').trim().replace(/["'“”]/g, '');
+    const label = softenNodeLabel(rawLabel || node.description || 'este patrón');
     const desc = (node.description || '').replace(/["'“”]/g, '').trim();
     const sourceQuote = (node.source || '').replace(/["'“”]/g, '').trim();
     const challenge = (node.challenge || '').replace(/["'“”]/g, '').trim();
     const reflection = (node.reflection_question || '').replace(/["'“”¿?]/g, '').trim();
     const nodeType = node.type || 'cognitive';
 
-    const cleanOriginLabel = originContext?.originNode ? softenNodeLabel(originContext.originNode.label) : null;
-    const cleanOriginDesc = originContext?.originNode?.description ? originContext.originNode.description.replace(/["'“”]/g, '').trim() : null;
-    const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel(consequenceContext.targetNode.label) : null;
-    const cleanTargetDesc = consequenceContext?.targetNode?.description ? consequenceContext.targetNode.description.replace(/["'“”]/g, '').trim() : null;
+    const cleanOriginLabel = originContext?.originNode ? softenNodeLabel((originContext.originNode.label || '').replace(/["'“”]/g, '').trim()) : null;
+    const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel((consequenceContext.targetNode.label || '').replace(/["'“”]/g, '').trim()) : null;
 
     switch (safeIdx) {
-        case 0: { // Raíz Histórica y Origen ("De dónde viene y qué dice el nodo")
-            if (cleanOriginLabel) {
-                return `Al rastrear el origen de «${label}»${desc ? ` (${desc})` : ''}, en tu mapa funcional se desprende directamente de «${cleanOriginLabel}»${cleanOriginDesc ? ` (${cleanOriginDesc})` : ''}.${sourceQuote ? ` Mencionaste: «${sourceQuote}».` : ''} ¿En qué momentos clave de tu historia recuerdas que comenzó a forjarse esta conexión? ¿Por qué frente a lo vivido en ${cleanOriginLabel} tu forma aprendida de responder o protegerte terminó siendo precisamente ${label}?`;
+        case 0: { // Raíz Histórica y Origen ("De dónde viene")
+            if (cleanOriginLabel && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
+                return `Al rastrear de dónde sale «${label}», en tu mapa se desprende directamente de «${cleanOriginLabel}».${sourceQuote ? ` En su momento compartiste: «${sourceQuote}».` : ''} Mirándolo hoy con calma: ¿recuerdas cuándo aprendiste que responder con ${label} era tu forma de protegerte frente a ${cleanOriginLabel}?`;
             }
             if (sourceQuote && sourceQuote.length > 5) {
-                return `Al explorar la raíz de «${label}»${desc ? ` (${desc})` : ''}, conectando con lo que compartiste al decir «${sourceQuote}»: ¿En qué momentos formativos de tu pasado recuerdas haber experimentado por primera vez esta situación? ¿Qué circunstancias sembraron esta vivencia en ti?`;
+                return `Pensando en lo que compartiste al decir «${sourceQuote}»: ¿en qué época de tu vida recuerdas haber sentido por primera vez el peso de «${label}»? ¿Qué situaciones de tu entorno hicieron que comenzaras a responder de esta forma?`;
             }
             if (nodeType === 'historical') {
-                return `Al situarte en el origen formativo de «${label}»${desc ? ` (${desc})` : ''}: ¿De qué manera recuerdas que esta experiencia temprana marcó tu forma de interpretar el mundo y tu trato con los demás? ¿Qué sentías que necesitabas proteger en ese momento de tu vida?`;
+                return `Al conectar con «${label}»${desc ? ` (${desc})` : ''}: ¿qué regla implícita o mandato familiar aprendiste en tu infancia o juventud que te hizo creer que tenías que funcionar así? ¿De qué intentaba protegerte esa regla?`;
             }
-            return `Al mirar tu historia y las raíces de «${label}»${desc ? ` (${desc})` : ''}: ¿En qué etapas o momentos recuerdas haber sentido por primera vez que esta situación comenzaba a condicionarte? ¿Qué aprendizajes del pasado te llevaron a desarrollar esta forma de responder?`;
+            return `Al poner la mirada sobre «${label}»${desc ? ` (${desc})` : ''}: ¿recuerdas en qué momento de tu vida comenzó a volverse habitual responder de esta forma? ¿Qué sentías que necesitabas asegurar o proteger cuando empezó a forjarse?`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
-            return `Cuando se manifiesta «${label}»${desc ? ` (${desc})` : ''}, ¿de qué manera altera tu forma de convivir y comunicarte con las personas más significativas de tu vida?${sourceQuote ? ` Considerando lo que expresabas al decir «${sourceQuote}», ` : ' '}¿sientes que tu entorno comprende lo que estás viviendo, o te descubres distanciándote, guardando silencio, mostrando una fachada de calma o esperando que adivinen tu malestar?`;
+            return `Cuando «${label}» toma fuerza${desc ? ` (${desc})` : ''}, ¿cómo cambia tu trato con las personas más cercanas? ¿Te descubres poniéndote una coraza, guardando silencio para no generar conflicto, o fingiendo que todo está bajo control para que no opinen de ti?`;
         }
 
         case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
             if (nodeType === 'physiological' || nodeType === 'biological') {
-                return `Conectando con la sensación concreta de «${label}»${desc ? ` (${desc})` : ''}: ¿Qué otras señales sutiles de alerta acompañan esta respuesta en tu organismo (tensión en hombros, respiración acelerada, pesadez o fatiga)? Si esta manifestación física pudiera hablarte con sinceridad, ¿qué pausa, necesidad postergada o tregua te estaría solicitando en este momento?`;
+                return `Al conectar con la sensación de «${label}»${desc ? ` (${desc})` : ''}: ¿en qué parte del cuerpo se concentra la mayor carga (pecho apretado, nudo en la garganta o pesadez en la espalda)? Si ese malestar físico pudiera pedirte una tregua honesta ahora mismo, ¿qué tipo de pausa o desahogo te pediría?`;
             }
-            return `En los momentos exactos en que «${label}» se hace presente con fuerza, ¿en qué zona específica de tu cuerpo notas la mayor carga física (opresión en el pecho, nudo en la garganta, tensión muscular o vacío en el estómago)? ¿Cómo responde tu respiración y tu energía mientras sostienes este estado?`;
+            return `En el instante exacto en que «${label}» se dispara en tu día, ¿cuál es el primer cambio físico que experimentas? ¿Notas que se corta tu respiración, se tensa la mandíbula o sientes una descarga de adrenalina?`;
         }
 
         case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
             if (reflection && reflection.length > 8) {
-                return `Profundizando en lo que expresa «${label}»${desc ? ` (${desc})` : ''}: ¿${reflection}? ¿Qué valor humano fundamental para ti (como tu paz interior, tu dignidad, tu autenticidad o tu derecho a equivocarte) sientes que estás intentando proteger desesperadamente con esto?`;
+                return `Pensando en lo que hay detrás de «${label}»: ¿${reflection}? ¿Qué valor tuyo que de verdad te importa (tu paz interior, tu dignidad o tu tranquilidad) sientes que estás intentando defender con esto?`;
             }
-            return `Frente a lo que experimentas con «${label}»${desc ? ` (${desc})` : ''}, ¿cuál es la voz o juicio interno más severo que tu diálogo interior te repite en silencio? ¿Qué regla silenciosa crees que debes cumplir para sentirte en calma y valorado/a?`;
+            return `Frente a lo que experimentas con «${label}»${desc ? ` (${desc})` : ''}, ¿cuál es la voz o reproche interno más duro que te repites en silencio? ¿Qué regla autoimpuesta sientes que debes cumplir sí o sí para poder estar en paz contigo?`;
         }
 
         case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
-            if (cleanTargetLabel) {
-                return `En la dinámica de tu mapa funcional, se observa con claridad que «${label}» alimenta y conduce directamente hacia «${cleanTargetLabel}»${cleanTargetDesc ? ` (${cleanTargetDesc})` : ''}. Al observar esta secuencia en tu cotidianidad: ¿Qué conductas automáticas, de evitación o de escape ejecutas para calmar «${label}» que, sin querer, terminan activando ese siguiente eslabón?`;
+            if (cleanTargetLabel && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
+                return `Tu mapa muestra con claridad que «${label}» termina detonando «${cleanTargetLabel}». Mirándolo con sinceridad: ¿qué maniobra de escape haces en automático frente a ${label} que, sin querer, termina empujándote directo hacia ${cleanTargetLabel}?`;
             }
-            return `Al observar las repercusiones de «${label}» en tu vida diaria, ¿qué conductas o hábitos automáticos sueles ejecutar en piloto automático para quitarte esta presión de encima? ¿Cuánto dura el alivio momentáneo que obtienes y qué desgaste acumulado te deja después?`;
+            return `Al sentir la presión de «${label}» en tu cotidianidad, ¿qué hábito o distractor sueles aplicar en automático para quitarte el malestar de encima? ¿Cuánto dura el alivio momentáneo que consigues y qué desgaste te deja después?`;
         }
 
         case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
             if (challenge && challenge.length > 5) {
-                return `Tomando como brújula el reto clínico de «${challenge}»: ¿Cuál sería un experimento seguro, mínimo y compasivo que podrías practicar esta semana frente a «${label}» para responder de forma más amable sin caer en la autoexigencia?`;
+                return `Tomando como brújula «${challenge}»: ¿cuál sería un pequeño experimento de dos minutos que podrías probar esta semana frente a «${label}» para responder con más calma y sin sobreexigirte?`;
             }
-            return `Si pudieras intentar un primer paso seguro, mínimo y realista esta semana para relacionarte de otra forma con «${label}», ¿cuál sería esa pequeña acción bondadosa de autocuidado que te gustaría experimentar?`;
+            return `Si pudieras intentar un primer paso mínimo, seguro y realista esta semana para relacionarte mejor con «${label}», ¿cuál sería esa pequeña acción amable de autocuidado que te gustaría probar?`;
         }
 
         case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
-            return `Reconociendo con honestidad y ternura que «${label}» no nació para castigarte ni para arruinar tu vida, sino como una respuesta adaptativa que tu historia construyó para cuidarte en momentos en que no contabas con mejores recursos${sourceQuote ? ` («${sourceQuote}»)` : ''}: ¿Qué mirada más comprensiva decides ofrecerte hoy frente a esta vivencia, y qué compromiso de autocuidado genuino eliges renovar contigo a partir de este momento?`;
+            return `Reconociendo que «${label}» no nació para castigarte ni para arruinarte, sino como una respuesta adaptativa que tu historia aprendió cuando no había mejores recursos a mano: hoy que lo ves con perspectiva, ¿qué mirada más comprensiva decides ofrecerte y qué cuidado genuino renuevas contigo a partir de hoy?`;
         }
     }
 
@@ -4648,11 +4662,10 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         }
         if (e.target.closest('.zoom-controls') || e.target.closest('.existential-focus-controls')) return;
         
-        // Clear selection, active pattern, exit tour and reset/zoom out to full fit
+        // Clear selection, active pattern, and tour without blowing away user zoom/pan
         setSelectedNode(null);
         setSelectedPatternId(null);
         setTourActiveIndex(null);
-        setTimeout(resetMapTransform, 15);
     };
 
     const handleMapTouchStart = (e) => {
@@ -4911,9 +4924,79 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
             const nextTransform = { x: newX, y: newY, scale: newScale };
             transformRef.current = nextTransform;
+            updateDOMTransform(newX, newY, newScale);
             return nextTransform;
         });
     };
+
+    // Soporte para Zoom fluido con Rueda del Mouse (Wheel) y Atajos de Teclado (+, -, 0)
+    useEffect(() => {
+        const container = mapContainerRef.current;
+        if (!container) return;
+
+        let wheelTimeout = null;
+
+        const onWheel = (e) => {
+            if (mapViewTab !== 'map') return;
+            e.preventDefault();
+
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const current = transformRef.current;
+            const prevScale = current.scale;
+
+            // Factor de zoom fluido según el giro de la rueda
+            const zoomDelta = -e.deltaY * 0.0018;
+            const minScale = window.innerWidth < 768 ? 0.08 : 0.15;
+            const maxScale = 4.0;
+            const newScale = Math.min(Math.max(minScale, prevScale * (1 + zoomDelta)), maxScale);
+
+            // Zoom centrado exactamente donde apunta el puntero del mouse
+            const canvasX = (mouseX - current.x) / prevScale;
+            const canvasY = (mouseY - current.y) / prevScale;
+
+            const newX = mouseX - canvasX * newScale;
+            const newY = mouseY - canvasY * newScale;
+
+            current.x = newX;
+            current.y = newY;
+            current.scale = newScale;
+
+            updateDOMTransform(newX, newY, newScale);
+
+            if (wheelTimeout) clearTimeout(wheelTimeout);
+            wheelTimeout = setTimeout(() => {
+                setMapTransform({ ...current });
+            }, 60);
+        };
+
+        const handleKeyDown = (e) => {
+            if (mapViewTab !== 'map') return;
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                handleZoom(0.25);
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                handleZoom(-0.25);
+            } else if (e.key === '0') {
+                e.preventDefault();
+                resetMapTransform();
+            }
+        };
+
+        container.addEventListener('wheel', onWheel, { passive: false });
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            container.removeEventListener('wheel', onWheel);
+            window.removeEventListener('keydown', handleKeyDown);
+            if (wheelTimeout) clearTimeout(wheelTimeout);
+        };
+    }, [mapViewTab, updateDOMTransform, resetMapTransform]);
 
     const renderRawData = () => {
         return (
@@ -6166,17 +6249,55 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
 
-                                {/* Zoom Controls Overlay - Compact Glass Toolbar */}
+                                {/* Zoom Controls Overlay - Modern Floating Glass Widget */}
                                 {mapViewTab === 'map' && (
                                     <div 
-                                        className={`zoom-controls absolute bottom-[90px] md:bottom-2.5 right-3 md:right-2.5 z-[60] flex-row items-center gap-0.5 bg-zinc-950/85 border border-white/10 sm:backdrop-blur-md p-0.5 rounded-xl shadow-2xl transition-all duration-300 ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}
+                                        className="zoom-controls fixed sm:absolute right-3 sm:right-6 top-20 sm:top-24 z-[160] flex flex-col items-center bg-zinc-950/90 border border-white/15 backdrop-blur-xl p-1 sm:p-1.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] gap-1 transition-all duration-200 pointer-events-auto select-none"
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
+                                        onTouchStart={e => e.stopPropagation()}
                                     >
-                                        <button onClick={reorganizeNodes} className="w-6 h-6 bg-emerald-950/60 border border-emerald-500/30 rounded-lg flex items-center justify-center text-emerald-400 hover:text-emerald-300 hover:bg-emerald-800/80 transition-all" title="Reorganizar Grafo"><Network size={11} /></button>
-                                        <button onClick={() => handleZoom(0.2)} className="w-6 h-6 bg-zinc-900/80 border border-white/5 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors" title="Acercar"><ZoomIn size={12} /></button>
-                                        <button onClick={() => handleZoom(-0.2)} className="w-6 h-6 bg-zinc-900/80 border border-white/5 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors" title="Alejar"><ZoomOut size={12} /></button>
-                                        <button onClick={resetMapTransform} className="w-6 h-6 bg-zinc-900/80 border border-white/5 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors" title="Centrar Mapa"><Maximize2 size={11} /></button>
+                                        <button 
+                                            onClick={() => handleZoom(0.25)} 
+                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
+                                            title="Acercar mapa (Zoom In)"
+                                        >
+                                            <ZoomIn size={15} />
+                                        </button>
+                                        
+                                        <button
+                                            onClick={resetMapTransform}
+                                            className="text-[9px] font-mono font-black text-zinc-400 hover:text-white px-1 py-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
+                                            title="Nivel de Zoom actual (clic para centrar y ajustar)"
+                                        >
+                                            {Math.round((mapTransform.scale || 1) * 100)}%
+                                        </button>
+
+                                        <button 
+                                            onClick={() => handleZoom(-0.25)} 
+                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
+                                            title="Alejar mapa (Zoom Out)"
+                                        >
+                                            <ZoomOut size={15} />
+                                        </button>
+
+                                        <div className="w-5 h-[1px] bg-white/10 my-0.5" />
+
+                                        <button 
+                                            onClick={resetMapTransform} 
+                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
+                                            title="Centrar y encuadrar todos los nodos"
+                                        >
+                                            <Maximize2 size={14} />
+                                        </button>
+
+                                        <button 
+                                            onClick={() => reorganizeNodes()} 
+                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-400 hover:text-emerald-200 border border-emerald-500/30 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
+                                            title="Reorganizar distribución de nodos"
+                                        >
+                                            <Network size={14} />
+                                        </button>
                                     </div>
                                 )}
 
@@ -6252,28 +6373,37 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
 
                                         <style>{`
+                                                    @keyframes edgeFlowAnim {
+                                                        from { stroke-dashoffset: 4; }
+                                                        to { stroke-dashoffset: 0; }
+                                                    }
                                                     .edge-flow-active {
-                                                        stroke-dasharray: 0.6, 0.4;
+                                                        stroke-dasharray: 0.7, 0.35;
+                                                        animation: edgeFlowAnim 1.4s linear infinite;
+                                                    }
+                                                    .edge-flow-feedback {
+                                                        stroke-dasharray: 0.5, 0.35;
+                                                        animation: edgeFlowAnim 2.2s linear infinite;
                                                     }
                                                 `}</style>
                                         <defs>
-                                            <marker id="arrowhead-default" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.36" fill="rgba(255,255,255,0.35)" />
+                                            <marker id="arrowhead-default" markerWidth="2.6" markerHeight="2.6" refX="2.0" refY="1.3" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.2 1.3 L 0.2 2.3 Q 0.7 1.3 0.2 0.3 Z" fill="rgba(255,255,255,0.45)" />
                                             </marker>
-                                            <marker id="arrowhead-incoming" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#a5b4fc" />
+                                            <marker id="arrowhead-incoming" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#818cf8" />
                                             </marker>
-                                            <marker id="arrowhead-outgoing" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#f472b6" />
+                                            <marker id="arrowhead-outgoing" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#fb7185" />
                                             </marker>
-                                            <marker id="arrowhead-both" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#c084fc" />
+                                            <marker id="arrowhead-both" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#c084fc" />
                                             </marker>
-                                            <marker id="arrowhead-blindspot" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#38bdf8" />
+                                            <marker id="arrowhead-blindspot" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#38bdf8" />
                                             </marker>
-                                            <marker id="arrowhead-feedback" markerWidth="1.2" markerHeight="1.2" refX="0.6" refY="0.6" orient="auto">
-                                                <circle cx="0.6" cy="0.6" r="0.45" fill="#f472b6" />
+                                            <marker id="arrowhead-feedback" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
+                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#c084fc" />
                                             </marker>
                                         </defs>
                                         {finalEdgesToRender.map((edge, i) => {
@@ -6322,11 +6452,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                             if (isFeedback) {
                                                 const midX = (x1 + x2) / 2;
                                                 const midY = (y1 + y2) / 2;
-                                                const bowFactor = midY < 50 ? -22 : 22;
-                                                pathData = `M ${x1} ${y1} C ${x1 - 14} ${y1 + bowFactor}, ${x2 + 14} ${y2 + bowFactor}, ${x2} ${y2}`;
+                                                const horizontalDist = Math.abs(x1 - x2);
+                                                const bowDir = midY < 50 ? -1 : 1;
+                                                const bowDepth = Math.min(13, Math.max(5, horizontalDist * 0.16));
+                                                const cpOffset = Math.min(horizontalDist * 0.35, 12);
+                                                pathData = `M ${x1} ${y1} C ${x1 - cpOffset} ${y1 + (bowDir * bowDepth * 0.85)}, ${x2 + cpOffset} ${y2 + (bowDir * bowDepth * 0.85)}, ${x2} ${y2}`;
                                             } else {
                                                 const deltaX = x2 - x1;
-                                                const curvature = Math.max(5, Math.min(Math.abs(deltaX) * 0.45, 18));
+                                                const curvature = Math.max(3.5, Math.min(Math.abs(deltaX) * 0.42, 14));
                                                 pathData = `M ${x1} ${y1} C ${x1 + curvature} ${y1}, ${x2 - curvature} ${y2}, ${x2} ${y2}`;
                                             }
 
@@ -7171,10 +7304,21 @@ Por favor, analicemos:
                                         onTouchMove={e => e.stopPropagation()}
                                         onTouchEnd={e => e.stopPropagation()}
                                     >
-                                        <div className="bg-zinc-950/90 border border-white/10 rounded-2xl p-3 shadow-2xl backdrop-blur-xl flex flex-col gap-2 w-[340px] max-w-[92vw] max-h-[80vh] md:max-h-[490px] overflow-hidden">
-                                            {/* Minimalist Header */}
+                                        <div 
+                                            className="bg-zinc-950/85 border border-white/15 rounded-[1.75rem] p-3.5 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-2.5 w-[350px] sm:w-[380px] max-w-[94vw] max-h-[82vh] md:max-h-[510px] overflow-hidden relative transition-all duration-300"
+                                            style={{
+                                                boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 35px ${currentTheme.color}15`
+                                            }}
+                                        >
+                                            {/* Glow decorativo sutil en la esquina */}
                                             <div 
-                                                className="flex items-center justify-between border-b border-white/5 pb-1.5 cursor-grab active:cursor-grabbing select-none shrink-0"
+                                                className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl pointer-events-none opacity-25"
+                                                style={{ backgroundColor: currentTheme.color }}
+                                            />
+
+                                            {/* Minimalist Fresh Header */}
+                                            <div 
+                                                className="flex items-center justify-between border-b border-white/10 pb-2 cursor-grab active:cursor-grabbing select-none shrink-0"
                                                 onMouseDown={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
@@ -7187,29 +7331,47 @@ Por favor, analicemos:
                                                     dragTourStartRef.current = { x: e.touches[0].clientX - tourModalPos.x, y: e.touches[0].clientY - tourModalPos.y };
                                                 }}
                                             >
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="flex items-center justify-center px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono font-bold">
-                                                        {tourActiveIndex + 1}/{sortedTourNodes.length}
-                                                    </span>
+                                                <div className="flex items-center gap-2">
                                                     <span 
-                                                        className="flex items-center gap-1 px-2 py-0.5 rounded-full border text-[8.5px] font-bold tracking-wide select-none"
+                                                        className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[9px] font-bold tracking-wider select-none shadow-sm"
                                                         style={{
                                                             backgroundColor: `${currentTheme.color}15`,
                                                             borderColor: `${currentTheme.color}35`,
                                                             color: currentTheme.color
                                                         }}
                                                     >
-                                                        <span className="text-[10px] leading-none">{currentTheme.icon}</span>
+                                                        <span className="text-[10.5px] leading-none">{currentTheme.icon}</span>
                                                         <span className="leading-none uppercase">{currentTheme.category}</span>
                                                     </span>
+
+                                                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[9.5px] font-mono font-bold text-zinc-400">
+                                                        {tourActiveIndex + 1}/{sortedTourNodes.length}
+                                                    </span>
                                                 </div>
+
                                                 <div className="flex items-center gap-1">
                                                     <button
+                                                        onClick={prevTourNode}
+                                                        disabled={tourActiveIndex === 0}
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 disabled:opacity-20 disabled:pointer-events-none"
+                                                        title="Nodo anterior"
+                                                    >
+                                                        <ChevronLeft size={13} />
+                                                    </button>
+                                                    <button
+                                                        onClick={nextTourNode}
+                                                        disabled={tourActiveIndex === sortedTourNodes.length - 1}
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 disabled:opacity-20 disabled:pointer-events-none"
+                                                        title="Nodo siguiente"
+                                                    >
+                                                        <ChevronRight size={13} />
+                                                    </button>
+                                                    <button
                                                         onClick={() => setIsTourMinimized(!isTourMinimized)}
-                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded hover:bg-white/10"
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
                                                         title={isTourMinimized ? "Maximizar" : "Minimizar"}
                                                     >
-                                                        {isTourMinimized ? <Maximize2 size={11} /> : <Minimize2 size={11} />}
+                                                        {isTourMinimized ? <Maximize2 size={12} /> : <Minimize2 size={12} />}
                                                     </button>
                                                     <button
                                                         onClick={() => {
@@ -7222,217 +7384,184 @@ Por favor, analicemos:
                                                                 setTimeout(() => zoomToPattern(activePattern), 15);
                                                             } else {
                                                                 setSelectedPatternId(null);
-                                                                setTimeout(resetMapTransform, 15);
                                                             }
                                                         }}
-                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded hover:bg-white/10"
-                                                        title="Cerrar tour"
+                                                        className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                                                        title="Cerrar panel"
                                                     >
-                                                        <X size={13} />
+                                                        <X size={14} />
                                                     </button>
                                                 </div>
                                             </div>
 
                                             {!isTourMinimized && (
                                                 <>
-                                            <div className="flex flex-col gap-1.5 pr-0.5 pb-0.5 flex-1 min-h-0 overflow-hidden">
-                                                {/* Node Label (Human, friendly & compact) */}
-                                                <h4 className="text-xs md:text-[13px] font-bold text-white leading-snug tracking-tight">
-                                                    {softenNodeLabel(currentNode.label)}
-                                                </h4>
-
-                                                {/* Description (Minimal Info) */}
-                                                {getFallbackDescription(currentNode, user) && (
-                                                    <div className="text-[10.5px] text-zinc-300 leading-snug bg-zinc-900/40 border border-white/5 rounded-xl p-2 max-h-[70px] overflow-y-auto custom-scroll shrink-0">
-                                                        <p className="text-zinc-300 whitespace-pre-line break-words leading-snug">{getFallbackDescription(currentNode, user)}</p>
-                                                    </div>
-                                                )}
-
-                                                {/* Wizard for Questions */}
-                                                {(() => {
-                                                    const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
-                                                    const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
-                                                    const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                    const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
-                                                    const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
-                                                        ? currentChat
-                                                        : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
-
-                                                    return (
-                                                        <div className="flex flex-col gap-1.5 mt-1 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
-                                                            {/* Header with arrows */}
-                                                            <div className="flex items-center justify-between bg-zinc-900/40 px-2 py-1 rounded-lg border border-white/5 shrink-0">
-                                                                <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                                                    <Sparkles size={10} className="text-sky-400" />
-                                                                    {safeThreadIndex === 6 ? '✨ Integración' : `Perspectiva ${safeThreadIndex + 1} de 6`}
-                                                                </span>
-                                                                <div className="flex gap-1">
-                                                                    <button 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
-                                                                            const nextIdx = safeThreadIndex === 6 ? 5 : (safeThreadIndex > 0 ? safeThreadIndex - 1 : (isAllAnswered ? 6 : 5));
-                                                                            setSelectedQuestionIndex(nextIdx);
-                                                                            setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
-                                                                            const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                            const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
-                                                                            if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                                                                                setNodeChats(prev => ({
-                                                                                    ...prev,
-                                                                                    [currentNode.id]: {
-                                                                                        ...(prev[currentNode.id] || {}),
-                                                                                        [nextIdx]: [{ role: 'assistant', content: initialQ }]
-                                                                                    }
-                                                                                }));
-                                                                            }
-                                                                        }}
-                                                                        className="p-1 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 rounded transition-colors border border-white/5"
-                                                                    >
-                                                                        <ChevronLeft size={12} />
-                                                                    </button>
-                                                                    <button 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            const isAllAnswered = hasAnsweredAllPerspectives(currentNode.id);
-                                                                            const nextIdx = safeThreadIndex === 6 ? 0 : (safeThreadIndex < 5 ? safeThreadIndex + 1 : (isAllAnswered ? 6 : 0));
-                                                                            setSelectedQuestionIndex(nextIdx);
-                                                                            setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${nextIdx}`]: undefined}));
-                                                                            const nextChat = getSafeCurrentChat(currentNode.id, nextIdx);
-                                                                            const userHasAnsweredNext = nextChat && nextChat.some(m => m.role === 'user');
-                                                                            const isGenericNext = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
-                                                                            if (!nextChat || nextChat.length === 0 || (!userHasAnsweredNext && isGenericNext)) {
-                                                                                const initialQ = getNodePerspectiveQuestion(currentNode, nextIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                                                                                setNodeChats(prev => ({
-                                                                                    ...prev,
-                                                                                    [currentNode.id]: {
-                                                                                        ...(prev[currentNode.id] || {}),
-                                                                                        [nextIdx]: [{ role: 'assistant', content: initialQ }]
-                                                                                    }
-                                                                                }));
-                                                                            }
-                                                                        }}
-                                                                        className="p-1 text-zinc-400 hover:text-white bg-black/40 hover:bg-white/10 rounded transition-colors border border-white/5"
-                                                                    >
-                                                                        <ChevronRight size={12} />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                            {/* Chat messages area */}
-                                                            <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col border border-white/5 bg-zinc-900/20 p-2 rounded-xl min-h-[70px] max-h-[140px]">
-                                                            <div className="flex flex-col gap-2 pb-1">
-                                                                {effectiveChat.map((msg, msgIdx) => {
-                                                                    if (msg.role === 'assistant') {
-                                                                        return (
-                                                                            <div key={msgIdx} className="flex flex-col gap-1 items-start">
-                                                                                <div className="p-2.5 rounded-xl text-[11px] leading-relaxed max-w-[95%] shadow-sm bg-sky-500/10 border border-sky-500/20 text-sky-100 rounded-tl-sm">
-                                                                                    {msg.content}
-                                                                                    {msg.newNodeAdded && (
-                                                                                        <div className="mt-2 pt-2 border-t border-sky-500/30">
-                                                                                            <span className="text-[9px] font-mono font-bold text-amber-300 flex items-center gap-1"><Sparkles size={10}/> Nuevo patrón: {softenNodeLabel(msg.newNodeAdded.label)}</span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    } else {
-                                                                        return (
-                                                                            <div key={msgIdx} className="flex flex-col gap-1 items-end">
-                                                                                <div className="p-2.5 rounded-xl text-[11px] leading-relaxed max-w-[95%] shadow-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-100 rounded-tr-sm">
-                                                                                    {msg.content}
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    }
-                                                                })}
-                                                                
-                                                                {isGeneratingExplorations && (
-                                                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 italic justify-center mt-2">
-                                                                        <Sparkles size={12} className="animate-spin text-sky-400" />
-                                                                        <span>Analizando...</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            </div>
-                                                            
-                                                            {/* Input area */}
-                                                            <div className="flex flex-col gap-1.5 shrink-0 pt-0.5">
-                                                                <textarea 
-                                                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-2 text-[11px] text-white placeholder-zinc-500 focus:border-sky-500/50 outline-none resize-none custom-scroll min-h-[44px] max-h-[58px]"
-                                                                    rows={2}
-                                                                    placeholder={isGeneratingExplorations ? "Esperando al terapeuta..." : "Escribe tu reflexión aquí..."}
-                                                                    value={explorationResponse}
-                                                                    disabled={isGeneratingExplorations}
-                                                                    onChange={(e) => {
-                                            const val = e.target.value;
-                                            setExplorationResponse(val);
-                                            let activeId = null;
-                                            if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
-                                                activeId = sortedTourNodes[tourActiveIndex].id;
-                                            } else if (selectedNode) {
-                                                activeId = selectedNode.id;
-                                            }
-                                            if (activeId) {
-                                                localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
-                                            }
-                                        }}
-                                                                    onMouseDown={e => e.stopPropagation()}
-                                                                    onClick={e => e.stopPropagation()}
-                                                                    onTouchStart={e => e.stopPropagation()}
-                                                                    onKeyDown={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                                                            e.preventDefault();
-                                                                            if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                <div className="flex justify-end">
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={isGeneratingExplorations || !explorationResponse.trim()}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
-                                                                            }
-                                                                        }}
-                                                                        className="flex items-center justify-center w-auto gap-1.5 py-1.5 px-3 rounded-lg text-[9px] font-bold tracking-wider uppercase bg-sky-500/20 border border-sky-500/30 text-sky-300 hover:bg-sky-500/30 hover:border-sky-400 transition-all disabled:opacity-50 disabled:grayscale"
-                                                                    >
-                                                                        {isGeneratingExplorations ? 'ENVIANDO...' : 'ENVIAR RESPUESTA'}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
+                                                    <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
+                                                        {/* Node Label & Description */}
+                                                        <div>
+                                                            <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
+                                                                {softenNodeLabel(currentNode.label)}
+                                                            </h4>
+                                                            {getFallbackDescription(currentNode, user) && (
+                                                                <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-2 mt-0.5">
+                                                                    {getFallbackDescription(currentNode, user)}
+                                                                </p>
+                                                            )}
                                                         </div>
-                                                    );
-                                                })()}
-                                                </div>
-                                                {/* Footer Navigation */}
-                                                <div className="flex items-center justify-between border-t border-white/5 pt-1.5 mt-0.5 shrink-0">
-                                                    <button
-                                                        onClick={prevTourNode}
-                                                        disabled={tourActiveIndex === 0}
-                                                        className="w-8 h-6 bg-zinc-900 border border-white/5 hover:border-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none"
-                                                        title="Atrás"
-                                                    >
-                                                        <ChevronLeft size={12} />
-                                                    </button>
-                                                    
-                                                    <button
-                                                        onClick={nextTourNode}
-                                                        disabled={tourActiveIndex === sortedTourNodes.length - 1}
-                                                        className="w-8 h-6 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-colors flex items-center justify-center shadow-md shadow-indigo-600/10 disabled:opacity-30 disabled:pointer-events-none"
-                                                        title="Siguiente"
-                                                    >
-                                                        <ChevronRight size={12} />
-                                                    </button>
-                                                </div>
-                                                    </>
-                                                )}
-                                            </div>
+
+                                                        {/* Sleek Minimalist Perspective Pills Switcher */}
+                                                        {(() => {
+                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
+                                                            const perspectivePills = [
+                                                                { id: 0, label: 'Raíz', icon: '🌱' },
+                                                                { id: 1, label: 'Vínculos', icon: '🫧' },
+                                                                { id: 2, label: 'Cuerpo', icon: '🫀' },
+                                                                { id: 3, label: 'Diálogo', icon: '💎' },
+                                                                { id: 4, label: 'Conductas', icon: '⚡' },
+                                                                { id: 5, label: 'Reto', icon: '🎯' },
+                                                                { id: 6, label: 'Cierre', icon: '✨' }
+                                                            ];
+
+                                                            const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+                                                            const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+                                                            const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
+                                                                ? currentChat
+                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
+
+                                                            return (
+                                                                <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
+                                                                    {/* Horizontal Perspective Pills */}
+                                                                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 pt-0.5 shrink-0">
+                                                                        {perspectivePills.map(p => {
+                                                                            const isActive = safeThreadIndex === p.id;
+                                                                            const pChat = getSafeCurrentChat(currentNode.id, p.id);
+                                                                            const isDone = pChat && pChat.some(m => m.role === 'user');
+                                                                            return (
+                                                                                <button
+                                                                                    key={p.id}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setSelectedQuestionIndex(p.id);
+                                                                                        setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${p.id}`]: undefined}));
+                                                                                        const nextChat = getSafeCurrentChat(currentNode.id, p.id);
+                                                                                        const userAns = nextChat && nextChat.some(m => m.role === 'user');
+                                                                                        const isStale = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
+                                                                                        if (!nextChat || nextChat.length === 0 || (!userAns && isStale)) {
+                                                                                            const initQ = getNodePerspectiveQuestion(currentNode, p.id, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
+                                                                                            setNodeChats(prev => ({
+                                                                                                ...prev,
+                                                                                                [currentNode.id]: {
+                                                                                                    ...(prev[currentNode.id] || {}),
+                                                                                                    [p.id]: [{ role: 'assistant', content: initQ }]
+                                                                                                }
+                                                                                            }));
+                                                                                        }
+                                                                                    }}
+                                                                                    className={`px-2.5 py-1 rounded-xl text-[9.5px] font-bold tracking-tight transition-all shrink-0 flex items-center gap-1 select-none ${isActive ? 'bg-white text-zinc-950 shadow-md scale-[1.02]' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 border border-white/5'}`}
+                                                                                >
+                                                                                    <span className="text-[10px] leading-none">{p.icon}</span>
+                                                                                    <span>{p.label}</span>
+                                                                                    {isDone && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-0.5" />}
+                                                                                </button>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+
+                                                                    {/* Chat / Question Display Area */}
+                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2 min-h-[90px] max-h-[160px]">
+                                                                        {effectiveChat.map((msg, msgIdx) => {
+                                                                            if (msg.role === 'assistant') {
+                                                                                return (
+                                                                                    <div key={msgIdx} className="p-3 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/10 shadow-inner flex flex-col gap-1.5">
+                                                                                        <div className="flex items-center gap-1.5 text-[8.5px] font-mono uppercase tracking-widest text-sky-400 font-bold">
+                                                                                            <Sparkles size={10} />
+                                                                                            <span>{perspectivePills[safeThreadIndex]?.icon} {perspectivePills[safeThreadIndex]?.label}</span>
+                                                                                        </div>
+                                                                                        <p className="text-[11px] leading-relaxed text-zinc-200 font-sans">
+                                                                                            {msg.content}
+                                                                                        </p>
+                                                                                        {msg.newNodeAdded && (
+                                                                                            <div className="mt-1 pt-1.5 border-t border-sky-500/20">
+                                                                                                <span className="text-[8.5px] font-mono font-bold text-amber-300 flex items-center gap-1"><Sparkles size={10}/> Nuevo patrón: {softenNodeLabel(msg.newNodeAdded.label)}</span>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            } else {
+                                                                                return (
+                                                                                    <div key={msgIdx} className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-100 text-[10.5px] leading-relaxed self-end max-w-[95%] shadow-sm">
+                                                                                        <span className="text-[8px] font-mono uppercase tracking-wider text-emerald-400 block mb-0.5 font-bold">Tu respuesta:</span>
+                                                                                        {msg.content}
+                                                                                    </div>
+                                                                                );
+                                                                            }
+                                                                        })}
+
+                                                                        {isGeneratingExplorations && (
+                                                                            <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 italic justify-center my-2">
+                                                                                <Sparkles size={12} className="animate-spin text-sky-400" />
+                                                                                <span>Reflexionando...</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Seamless Integrated Reflection Input */}
+                                                                    <div className="relative flex items-center bg-zinc-900/60 border border-white/10 focus-within:border-sky-400/50 rounded-2xl p-1 transition-all shadow-inner group shrink-0">
+                                                                        <textarea 
+                                                                            className="w-full bg-transparent text-[11px] text-white placeholder-zinc-500 outline-none resize-none custom-scroll px-2.5 py-1.5 pr-9 min-h-[38px] max-h-[58px]"
+                                                                            rows={2}
+                                                                            placeholder={isGeneratingExplorations ? "Esperando..." : "Tu reflexión sincera aquí..."}
+                                                                            value={explorationResponse}
+                                                                            disabled={isGeneratingExplorations}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                setExplorationResponse(val);
+                                                                                let activeId = null;
+                                                                                if (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) {
+                                                                                    activeId = sortedTourNodes[tourActiveIndex].id;
+                                                                                } else if (selectedNode) {
+                                                                                    activeId = selectedNode.id;
+                                                                                }
+                                                                                if (activeId) {
+                                                                                    localStorage.setItem('draft_' + activeId + '_' + (selectedQuestionIndex || 0), val);
+                                                                                }
+                                                                            }}
+                                                                            onMouseDown={e => e.stopPropagation()}
+                                                                            onClick={e => e.stopPropagation()}
+                                                                            onTouchStart={e => e.stopPropagation()}
+                                                                            onKeyDown={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                                    e.preventDefault();
+                                                                                    if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                        continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                                    }
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            disabled={isGeneratingExplorations || !explorationResponse.trim()}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (explorationResponse.trim() && !isGeneratingExplorations) {
+                                                                                    continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                                }
+                                                                            }}
+                                                                            className={`absolute right-2 bottom-2 w-7 h-7 rounded-xl flex items-center justify-center transition-all ${explorationResponse.trim() && !isGeneratingExplorations ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-md active:scale-95' : 'bg-white/5 text-zinc-600 cursor-not-allowed'}`}
+                                                                            title="Enviar reflexión (Enter)"
+                                                                        >
+                                                                            {isGeneratingExplorations ? <Sparkles size={11} className="animate-spin text-white" /> : <ArrowRight size={12} />}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                         </div>
                                 );
                             })()}
