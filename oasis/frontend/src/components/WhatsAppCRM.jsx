@@ -92,6 +92,10 @@ export default function WhatsAppCRM({
     const [copiedPhoneId, setCopiedPhoneId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Edición inline de notas al dar doble clic
+    const [editingNotePatientId, setEditingNotePatientId] = useState(null);
+    const [inlineNoteValue, setInlineNoteValue] = useState('');
+
     // Form state para crear/editar
     const [formData, setFormData] = useState({
         name: '',
@@ -194,6 +198,30 @@ export default function WhatsAppCRM({
         } catch (e) {
             console.error("Could not delete patient record from backend:", e);
         }
+    };
+
+    // Funciones para editar nota directamente con doble clic
+    const handleStartEditNote = (patient) => {
+        setEditingNotePatientId(patient.id);
+        setInlineNoteValue(patient.privateNotes || '');
+    };
+
+    const handleSaveInlineNote = (patient) => {
+        if (editingNotePatientId !== patient.id) return;
+        const trimmed = inlineNoteValue.trim();
+        if (trimmed !== (patient.privateNotes || '')) {
+            const updated = {
+                ...patient,
+                privateNotes: trimmed,
+                updatedAt: new Date().toISOString()
+            };
+            savePatientRecord(updated);
+        }
+        setEditingNotePatientId(null);
+    };
+
+    const handleCancelInlineNote = () => {
+        setEditingNotePatientId(null);
     };
 
     const handleOpenModal = (patient = null) => {
@@ -301,7 +329,7 @@ export default function WhatsAppCRM({
     }, [patients]);
 
     return (
-        <div className="w-full flex-1 min-h-0 flex flex-col bg-[#070709] text-white p-3 sm:p-6 md:p-8 overflow-y-auto custom-scroll relative selection:bg-emerald-500/30">
+        <div className="w-full h-full flex-1 min-h-0 crm-scroll p-3 sm:p-6 md:p-8 pb-48 sm:pb-40 relative bg-[#070709] text-white selection:bg-emerald-500/30">
             {/* AMBIENT GLOW */}
             <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/[0.04] rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -459,7 +487,7 @@ export default function WhatsAppCRM({
             ) : (
                 <>
                     {/* VISTA MÓVIL: TARJETAS COMPACTAS TÁCTILES */}
-                    <div className="block md:hidden space-y-2.5 w-full">
+                    <div className="block md:hidden space-y-2.5 w-full pb-16">
                         {filteredPatients.map(patient => (
                             <div 
                                 key={patient.id}
@@ -499,7 +527,7 @@ export default function WhatsAppCRM({
                                     </span>
                                 </div>
 
-                                {(patient.nextSession || patient.privateNotes) && (
+                                {(patient.nextSession || patient.privateNotes || editingNotePatientId === patient.id) && (
                                     <div className="text-[10px] bg-white/[0.02] border border-white/[0.04] p-2 rounded-xl flex flex-col gap-1">
                                         {patient.nextSession && (
                                             <div className="flex items-center gap-1.5 text-zinc-300 font-mono">
@@ -509,9 +537,35 @@ export default function WhatsAppCRM({
                                                 {patient.frequency && <span className="text-zinc-500">({patient.frequency})</span>}
                                             </div>
                                         )}
-                                        {patient.privateNotes && (
-                                            <div className="text-zinc-400 line-clamp-2 italic text-[9px]">
-                                                "{patient.privateNotes}"
+                                        {editingNotePatientId === patient.id ? (
+                                            <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                                                <input
+                                                    type="text"
+                                                    autoFocus
+                                                    value={inlineNoteValue}
+                                                    onChange={(e) => setInlineNoteValue(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleSaveInlineNote(patient);
+                                                        } else if (e.key === 'Escape') {
+                                                            handleCancelInlineNote();
+                                                        }
+                                                    }}
+                                                    onBlur={() => handleSaveInlineNote(patient)}
+                                                    placeholder="Nota rápida..."
+                                                    className="w-full bg-black/90 border border-emerald-500/70 rounded-lg px-2 py-1 text-[10px] text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 font-sans shadow-md"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div 
+                                                onDoubleClick={() => handleStartEditNote(patient)}
+                                                onClick={() => handleStartEditNote(patient)}
+                                                className="text-zinc-400 line-clamp-2 italic text-[9px] cursor-pointer hover:text-white flex items-center justify-between gap-1 mt-0.5"
+                                                title="Toca para editar nota directa"
+                                            >
+                                                <span>"{patient.privateNotes || 'Añadir nota rápida...'}"</span>
+                                                <Edit2 size={9} className="text-zinc-600 shrink-0" />
                                             </div>
                                         )}
                                     </div>
@@ -558,8 +612,8 @@ export default function WhatsAppCRM({
                     </div>
 
                     {/* VISTA ESCRITORIO: TABLA MODERNA GLASS */}
-                    <div className="hidden md:block bg-zinc-900/20 border border-white/[0.06] rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl">
-                        <table className="w-full text-left border-collapse">
+                    <div className="hidden md:block bg-zinc-900/20 border border-white/[0.06] rounded-3xl overflow-x-auto custom-sidebar-scroll backdrop-blur-sm shadow-xl mb-16">
+                        <table className="w-full text-left border-collapse min-w-[760px]">
                             <thead>
                                 <tr className="border-b border-white/[0.06] bg-white/[0.01]">
                                     <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Paciente</th>
@@ -636,13 +690,49 @@ export default function WhatsAppCRM({
                                             )}
                                         </td>
 
-                                        <td className="px-5 py-3.5 max-w-[200px]">
-                                            {patient.privateNotes ? (
-                                                <p className="text-zinc-400 text-xs truncate italic" title={patient.privateNotes}>
-                                                    {patient.privateNotes}
-                                                </p>
+                                        <td 
+                                            className="px-5 py-3.5 min-w-[180px] max-w-[260px]"
+                                            onDoubleClick={() => handleStartEditNote(patient)}
+                                        >
+                                            {editingNotePatientId === patient.id ? (
+                                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        type="text"
+                                                        autoFocus
+                                                        value={inlineNoteValue}
+                                                        onChange={(e) => setInlineNoteValue(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                handleSaveInlineNote(patient);
+                                                            } else if (e.key === 'Escape') {
+                                                                handleCancelInlineNote();
+                                                            }
+                                                        }}
+                                                        onBlur={() => handleSaveInlineNote(patient)}
+                                                        placeholder="Escribe nota y presiona Enter..."
+                                                        className="w-full bg-black/90 border border-emerald-500/70 rounded-xl px-2.5 py-1 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 font-sans shadow-[0_0_12px_rgba(16,185,129,0.25)]"
+                                                    />
+                                                </div>
                                             ) : (
-                                                <span className="text-zinc-600 text-xs">—</span>
+                                                <div 
+                                                    className="cursor-pointer group/note flex items-center justify-between gap-1.5 py-1 px-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-all"
+                                                    title="Doble clic para editar nota directamente"
+                                                >
+                                                    {patient.privateNotes ? (
+                                                        <p className="text-zinc-300 text-xs italic truncate group-hover/note:text-white transition-colors">
+                                                            {patient.privateNotes}
+                                                        </p>
+                                                    ) : (
+                                                        <span className="text-zinc-600 group-hover/note:text-zinc-400 text-xs italic flex items-center gap-1">
+                                                            <span>—</span>
+                                                            <span className="opacity-0 group-hover/note:opacity-100 text-[10px] text-emerald-400/80 font-mono transition-opacity">
+                                                                (doble clic)
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <Edit2 size={11} className="text-zinc-600 opacity-0 group-hover/note:opacity-100 group-hover/note:text-emerald-400 transition-all shrink-0 ml-1" />
+                                                </div>
                                             )}
                                         </td>
 
@@ -696,7 +786,7 @@ export default function WhatsAppCRM({
                 <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div 
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-[#0c0c0e] border border-emerald-500/30 rounded-3xl p-5 sm:p-7 max-w-lg w-full flex flex-col gap-4 shadow-2xl relative animate-in zoom-in-95 duration-200"
+                        className="bg-[#0c0c0e] border border-emerald-500/30 rounded-3xl p-5 sm:p-7 max-w-lg w-full max-h-[90vh] overflow-y-auto custom-sidebar-scroll flex flex-col gap-4 shadow-2xl relative animate-in zoom-in-95 duration-200"
                     >
                         <div className="flex items-center justify-between border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-white font-black text-sm uppercase tracking-wider">

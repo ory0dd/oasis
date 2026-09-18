@@ -1925,7 +1925,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
         if (dashboardSubView === 'WHATSAPP_CRM') {
             return (
-                <div className="w-full flex-1 min-h-0 flex flex-col bg-[#070709] relative">
+                <div className="w-full h-full flex-1 min-h-0 flex flex-col bg-[#070709] relative overflow-hidden">
                     <WhatsAppCRM 
                         clinicPatients={patients}
                         currentUser={localStorage.getItem('oasis_user') || 'observador1'}

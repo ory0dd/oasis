@@ -238,6 +238,25 @@ input, textarea, [contenteditable="true"] {
     background: var(--accent, #bef264); 
   }
 
+  /* HIGH VISIBILITY CRM SCROLLBAR */
+  .crm-scroll {
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  .crm-scroll::-webkit-scrollbar { width: 8px; }
+  .crm-scroll::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); border-radius: 10px; }
+  .crm-scroll::-webkit-scrollbar-thumb { 
+    background: rgba(16, 185, 129, 0.35); 
+    border-radius: 10px; 
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  .crm-scroll::-webkit-scrollbar-thumb:hover { 
+    background: rgba(16, 185, 129, 0.7); 
+  }
+
   /* CUT THE ROPE AESTHETIC */
   @keyframes node-float {
     0%, 100% { transform: translateY(0); }
@@ -342,5 +361,5 @@ input, textarea, [contenteditable="true"] {
 
 html, body { touch-action: auto; overscroll-behavior-y: none; }
 .touch-action-none { touch-action: none !important; }
-.overflow-y-auto, .custom-scroll, .no-scrollbar { touch-action: auto !important; overscroll-behavior-y: contain; }
+.overflow-y-auto, .custom-scroll, .crm-scroll, .no-scrollbar { touch-action: auto !important; overscroll-behavior-y: contain; }
 
