@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldCheck, ArrowRight, User, AlertCircle, Sparkles, X, Lock, Camera, RefreshCw, Trash2, Upload, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { ShieldCheck, ArrowRight, User, AlertCircle, Sparkles, X, Lock, Camera, RefreshCw, Trash2, Upload, CheckCircle2, Image as ImageIcon, Clock } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ||
     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
@@ -240,7 +240,8 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
             formattedDate: currentDate,
             practitioner: "Luis Esteban Briones Canizales",
             supervisor: "Psic. Ángela Sofía Martínez Salazar (Cédula Profesional N°: 14354378)",
-            version: "1.0"
+            version: "1.1",
+            cancellationPolicyAccepted: true
         };
 
         if (typeof window !== 'undefined' && user) {
@@ -455,6 +456,69 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                         </ul>
                     </div>
 
+                    {/* POLÍTICA DE ANTICIPO, CANCELACIÓN Y REAGENDAMIENTO DE CITAS */}
+                    <div className="space-y-3 bg-violet-500/[0.04] border border-violet-500/25 rounded-2xl p-4 sm:p-5">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2 text-violet-300 font-bold uppercase tracking-wider text-[11px] font-mono">
+                                <Clock size={14} className="text-violet-400" />
+                                POLÍTICA DE ANTICIPO, CANCELACIÓN Y REAGENDAMIENTO DE CITAS
+                            </div>
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-violet-300/90 bg-violet-500/15 px-2.5 py-0.5 rounded-full border border-violet-500/30 font-semibold">
+                                Anticipo 48h • Límite Estricto: 6h
+                            </span>
+                        </div>
+                        <p className="text-zinc-400 text-xs leading-relaxed">
+                            Con el fin de garantizar el compromiso mutuo, la formalidad del espacio clínico y otorgar el tiempo indispensable para el diseño técnico y preparación de cada sesión, se establecen los siguientes lineamientos:
+                        </p>
+                        <ul className="space-y-2.5 pl-1">
+                            <li className="flex items-start gap-2.5">
+                                <span className="text-violet-400 mt-0.5 font-bold">💳</span>
+                                <div>
+                                    <strong className="text-zinc-200 font-semibold">Pago de Anticipo Previo (Mínimo 48 Horas Antes):</strong>
+                                    <span className="text-zinc-400 ml-1">
+                                        Para apartar y asegurar la fecha y horario de cada sesión, el consultante deberá cubrir el anticipo correspondiente con al menos <strong>48 horas de anticipación</strong> a la cita acordada. El anticipo confirma la reserva del horario en agenda e inicia formalmente los preparativos clínicos correspondientes.
+                                    </span>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <span className="text-violet-400 mt-0.5 font-bold">⏱️</span>
+                                <div>
+                                    <strong className="text-zinc-200 font-semibold">Tiempo para la Construcción y Preparación de la Intervención:</strong>
+                                    <span className="text-zinc-400 ml-1">
+                                        Las intervenciones en Oasis no son genéricas ni improvisadas; implican un trabajo activo y previo por parte del terapeuta destinado al análisis del caso y a la <strong>construcción, adaptación clínica y modelado sonoro y conceptual personalizado</strong> de la sesión. Este tiempo de diseño se ejecuta antes de la cita, por lo que contar con el margen de 48 horas asegura una preparación rigurosa y a la medida de cada paciente.
+                                    </span>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <span className="text-violet-400 mt-0.5 font-bold">🔄</span>
+                                <div>
+                                    <strong className="text-zinc-200 font-semibold">Reagendamiento Oportuno (Con 24 a 48 Horas de Antelación):</strong>
+                                    <span className="text-zinc-400 ml-1">
+                                        Si surge algún imprevisto personal o laboral, el consultante podrá <strong>reagendar su cita sin costo ni penalización</strong> avisando con margen oportuno (preferentemente con <strong>24 a 48 horas de antelación</strong>). El anticipo cubierto se transferirá íntegramente a la nueva fecha y hora convenida.
+                                    </span>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <span className="text-rose-400 mt-0.5 font-bold">🛑</span>
+                                <div>
+                                    <strong className="text-rose-300 font-semibold">Regla de Menos de 6 Horas ("Con menos de 6 horas no se reagenda y se cobra"):</strong>
+                                    <span className="text-zinc-300 ml-1">
+                                        <strong>Queda terminantemente establecido que con menos de 6 horas de anticipación a la cita la sesión NO se reagenda bajo ninguna excepción y se cobra en su totalidad.</strong> Al solicitar cambios con menos de 6 horas de antelación o en el mero momento, esa hora ya fue pagada y apartada exclusivamente para el consultante, no es posible reasignarla a otro paciente en la agenda y el trabajo de construcción previa de la intervención ya fue realizado por el terapeuta.
+                                    </span>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2.5">
+                                <span className="text-rose-400 mt-0.5 font-bold">⚠️</span>
+                                <div>
+                                    <strong className="text-rose-300 font-semibold">Cancelaciones de Último Momento o Inasistencias:</strong>
+                                    <span className="text-zinc-400 ml-1">
+                                        <strong>No se admiten cancelaciones en el momento de la sesión.</strong> Si el consultante cancela de último momento, no asiste a la sesión o se presenta fuera del margen de tolerancia máximo de 15 minutos, la sesión se dará por tomada y cobrada sin derecho a reembolso ni reposición del anticipo.
+                                    </span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
                 </div>
 
                 {/* Signature, Name & Camera Photo Block */}
@@ -644,10 +708,10 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                         />
                         <div className="flex flex-col gap-0.5">
                             <span className="text-xs font-semibold text-purple-200">
-                                Declaro que he sido informado/a y acepto los términos
+                                Declaro que he sido informado/a y acepto los términos y políticas
                             </span>
                             <span className="text-[11px] text-zinc-400 leading-snug">
-                                Otorgo mi pleno consentimiento bajo supervisión clínica para dar inicio al proceso de intervención psicológica en Oasis.
+                                Otorgo mi pleno consentimiento bajo supervisión clínica y acepto las condiciones del proceso: anticipo previo (48h), reagendamiento oportuno y la regla estricta de que con menos de 6 horas de anticipación la cita no se reagenda y la sesión se cobra.
                             </span>
                         </div>
                     </label>

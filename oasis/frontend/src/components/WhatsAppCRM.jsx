@@ -73,6 +73,14 @@ const DEFAULT_TEMPLATES = [
         desc: 'Chequeo compasivo entre sesiones',
         generate: (name) => 
             `Hola, ${name || 'paciente'}. Paso a saludarte y saber cómo te has sentido estos días después de nuestra última sesión. Quedo atento a cómo vas.`
+    },
+    {
+        id: 'advance_policy',
+        title: 'Anticipo y Política 48h / 6h',
+        icon: '💳',
+        desc: 'Anticipo (48h antes) y regla: con menos de 6h no se reagenda y se cobra',
+        generate: (name, session) => 
+            `Hola, ${name || 'paciente'}. Te recordamos que para asegurar tu sesión ${session ? `programada para ${session}` : ''} solicitamos el anticipo con al menos 48 horas de anticipación para comenzar el diseño y preparación personalizada de tu intervención. Ten en cuenta que si requieres reagendar debes avisar con anticipación; con menos de 6 horas de antelación la sesión no puede reagendarse y se cobrará en su totalidad, ya que esa hora queda apartada. ¡Quedo atento!`
     }
 ];
 

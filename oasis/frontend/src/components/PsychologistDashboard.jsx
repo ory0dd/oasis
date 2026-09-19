@@ -5146,6 +5146,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <div className="text-[8px] font-mono text-zinc-400 truncate">
                                                     Firma: <strong className="text-zinc-200">{consentSigner || selectedPatient.name}</strong>
                                                 </div>
+                                                <div className="text-[7.5px] font-mono text-emerald-400/90 flex items-center gap-1">
+                                                    <span>✓ Términos clínicos & Política 48h / Límite 6h</span>
+                                                </div>
                                                 {consentPhoto && (
                                                     <div 
                                                         onClick={() => setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate })}
