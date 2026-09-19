@@ -456,67 +456,53 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                         </ul>
                     </div>
 
-                    {/* POLÍTICA DE ANTICIPO, CANCELACIÓN Y REAGENDAMIENTO DE CITAS */}
-                    <div className="space-y-3 bg-violet-500/[0.04] border border-violet-500/25 rounded-2xl p-4 sm:p-5">
+                    {/* POLÍTICA DE CITAS, ANTICIPO Y CANCELACIÓN (MINIMAL) */}
+                    <div className="space-y-3 bg-violet-500/[0.03] border border-violet-500/20 rounded-2xl p-3.5 sm:p-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-2 text-violet-300 font-bold uppercase tracking-wider text-[11px] font-mono">
-                                <Clock size={14} className="text-violet-400" />
-                                POLÍTICA DE ANTICIPO, CANCELACIÓN Y REAGENDAMIENTO DE CITAS
+                                <Clock size={13} className="text-violet-400" />
+                                POLÍTICA DE CITAS, ANTICIPO Y CANCELACIÓN
                             </div>
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-violet-300/90 bg-violet-500/15 px-2.5 py-0.5 rounded-full border border-violet-500/30 font-semibold">
-                                Anticipo 48h • Límite Estricto: 6h
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-violet-300/80 bg-violet-500/10 px-2 py-0.5 rounded-full border border-violet-500/20 font-semibold">
+                                Anticipo 48h • Límite 6h
                             </span>
                         </div>
-                        <p className="text-zinc-400 text-xs leading-relaxed">
-                            Con el fin de garantizar el compromiso mutuo, la formalidad del espacio clínico y otorgar el tiempo indispensable para el diseño técnico y preparación de cada sesión, se establecen los siguientes lineamientos:
-                        </p>
-                        <ul className="space-y-2.5 pl-1">
-                            <li className="flex items-start gap-2.5">
-                                <span className="text-violet-400 mt-0.5 font-bold">💳</span>
-                                <div>
-                                    <strong className="text-zinc-200 font-semibold">Pago de Anticipo Previo (Mínimo 48 Horas Antes):</strong>
-                                    <span className="text-zinc-400 ml-1">
-                                        Para apartar y asegurar la fecha y horario de cada sesión, el consultante deberá cubrir el anticipo correspondiente con al menos <strong>48 horas de anticipación</strong> a la cita acordada. El anticipo confirma la reserva del horario en agenda e inicia formalmente los preparativos clínicos correspondientes.
-                                    </span>
+
+                        {/* Grid de 3 pilares */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5 text-violet-300 font-bold text-[11px] uppercase tracking-wide">
+                                    <span>💳</span> Anticipo (48h)
                                 </div>
-                            </li>
-                            <li className="flex items-start gap-2.5">
-                                <span className="text-violet-400 mt-0.5 font-bold">⏱️</span>
-                                <div>
-                                    <strong className="text-zinc-200 font-semibold">Tiempo para la Construcción y Preparación de la Intervención:</strong>
-                                    <span className="text-zinc-400 ml-1">
-                                        Las intervenciones en Oasis no son genéricas ni improvisadas; implican un trabajo activo y previo por parte del terapeuta destinado al análisis del caso y a la <strong>construcción, adaptación clínica y modelado sonoro y conceptual personalizado</strong> de la sesión. Este tiempo de diseño se ejecuta antes de la cita, por lo que contar con el margen de 48 horas asegura una preparación rigurosa y a la medida de cada paciente.
-                                    </span>
+                                <p className="text-zinc-400 text-[11px] leading-relaxed">
+                                    Reserva con <strong className="text-zinc-200">48h de anticipación</strong> para apartar tu horario y permitir la preparación y construcción personalizada de tu sesión.
+                                </p>
+                            </div>
+
+                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5 text-emerald-300 font-bold text-[11px] uppercase tracking-wide">
+                                    <span>🔄</span> Reagendar (+24h)
                                 </div>
-                            </li>
-                            <li className="flex items-start gap-2.5">
-                                <span className="text-violet-400 mt-0.5 font-bold">🔄</span>
-                                <div>
-                                    <strong className="text-zinc-200 font-semibold">Reagendamiento Oportuno (Con 24 a 48 Horas de Antelación):</strong>
-                                    <span className="text-zinc-400 ml-1">
-                                        Si surge algún imprevisto personal o laboral, el consultante podrá <strong>reagendar su cita sin costo ni penalización</strong> avisando con margen oportuno (preferentemente con <strong>24 a 48 horas de antelación</strong>). El anticipo cubierto se transferirá íntegramente a la nueva fecha y hora convenida.
-                                    </span>
+                                <p className="text-zinc-400 text-[11px] leading-relaxed">
+                                    Puedes cambiar tu horario <strong className="text-zinc-200">sin costo</strong> avisando con tiempo (24 a 48h antes). Tu anticipo se transfiere a la nueva fecha.
+                                </p>
+                            </div>
+
+                            <div className="bg-rose-500/[0.07] border border-rose-500/25 rounded-xl p-3 flex flex-col gap-1">
+                                <div className="flex items-center gap-1.5 text-rose-300 font-bold text-[11px] uppercase tracking-wide">
+                                    <span>🛑</span> Menos de 6h
                                 </div>
-                            </li>
-                            <li className="flex items-start gap-2.5">
-                                <span className="text-rose-400 mt-0.5 font-bold">🛑</span>
-                                <div>
-                                    <strong className="text-rose-300 font-semibold">Regla de Menos de 6 Horas ("Con menos de 6 horas no se reagenda y se cobra"):</strong>
-                                    <span className="text-zinc-300 ml-1">
-                                        <strong>Queda terminantemente establecido que con menos de 6 horas de anticipación a la cita la sesión NO se reagenda bajo ninguna excepción y se cobra en su totalidad.</strong> Al solicitar cambios con menos de 6 horas de antelación o en el mero momento, esa hora ya fue pagada y apartada exclusivamente para el consultante, no es posible reasignarla a otro paciente en la agenda y el trabajo de construcción previa de la intervención ya fue realizado por el terapeuta.
-                                    </span>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2.5">
-                                <span className="text-rose-400 mt-0.5 font-bold">⚠️</span>
-                                <div>
-                                    <strong className="text-rose-300 font-semibold">Cancelaciones de Último Momento o Inasistencias:</strong>
-                                    <span className="text-zinc-400 ml-1">
-                                        <strong>No se admiten cancelaciones en el momento de la sesión.</strong> Si el consultante cancela de último momento, no asiste a la sesión o se presenta fuera del margen de tolerancia máximo de 15 minutos, la sesión se dará por tomada y cobrada sin derecho a reembolso ni reposición del anticipo.
-                                    </span>
-                                </div>
-                            </li>
-                        </ul>
+                                <p className="text-zinc-300 text-[11px] leading-relaxed">
+                                    <strong className="text-rose-200">No se reagenda y se cobra completa.</strong> Esa hora queda bloqueada y el trabajo previo de tu intervención ya fue realizado.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Detalle puntual */}
+                        <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5 px-1 border-t border-white/5">
+                            <span>* Sin cancelaciones al momento ni reembolsos por inasistencia (tolerancia: 15 min).</span>
+                            <span className="font-mono text-zinc-600 hidden sm:inline">Compromiso Oasis</span>
+                        </div>
                     </div>
 
                 </div>
