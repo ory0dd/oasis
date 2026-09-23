@@ -12,37 +12,47 @@ import {
 
 const MOCK_AFC_DATA = {
     is_mock: true,
+    layout_version: 2,
     nodes: [
-        // Capa 1: Históricos (Rombos) X: ~10-20%
-        { id: "h1", type: "historical", label: "Variable Histórica A", x: 15, y: 25 },
-        { id: "h2", type: "historical", label: "Variable Histórica B", x: 15, y: 75 },
+        // Columna 1: Contexto & Vulnerabilidad (x: 14)
+        { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfección y rendimiento para validar el propio valor.", x: 14, y: 35 },
+        { id: "s1", type: "social", clinical_role: "antecedent", label: "Expectativas del entorno", description: "Percepción de presión social o familiar respecto a los resultados y logros.", x: 14, y: 65 },
 
-        // Capa 2: Biológicos/Sociales (Círculos) X: ~45-55%
-        { id: "b1", type: "biological", label: "Mediador Biológico", x: 45, y: 35 },
-        { id: "s1", type: "social", label: "Mediador Social", x: 45, y: 65 },
+        // Columna 2: Barreras Internas (x: 32)
+        { id: "c1", type: "cognitive", clinical_role: "internal_barrier", label: "Miedo a defraudar", description: "Pensamiento anticipatorio recurrente de no estar a la altura o defraudar.", x: 32, y: 30 },
+        { id: "p1", type: "physiological", clinical_role: "internal_barrier", label: "Tensión corporal de estrés", description: "Respuesta somática de alerta y sobrecarga en el cuerpo frente a la presión.", x: 32, y: 55 },
+        { id: "c2", type: "cognitive", clinical_role: "internal_barrier", label: "Rumiación de control", description: "Bucle cognitivo que busca prever todos los escenarios para evitar la incertidumbre.", x: 32, y: 78 },
 
-        // Capa 3: Conductas y Mediadores (Rectángulos rojos) X: ~75%
-        { id: "c1", type: "motor", label: "Respuesta Motora", x: 75, y: 20 },
-        { id: "c2", type: "cognitive", label: "Respuesta Cognitiva", x: 75, y: 50 },
-        { id: "c3", type: "physiological", label: "Respuesta Fisiológica", x: 75, y: 80 },
+        // Columna 3: Evitación Experiencial (x: 50)
+        { id: "m1", type: "motor", clinical_role: "experiential_avoidance", label: "Hiperactividad continua", description: "Conducta de ocuparse constantemente para no conectar con el malestar interno.", x: 50, y: 38 },
+        { id: "m2", type: "motor", clinical_role: "experiential_avoidance", label: "Postergación del descanso", description: "Dificultad para detenerse o permitirse pausas sin sentir culpa.", x: 50, y: 68 },
 
-        // Capa 4: Consecuencias (Rectángulos con borde) X: ~90%
-        { id: "con1", type: "consequence", label: "Consecuencia General", x: 92, y: 50 }
+        // Columna 4: Trampa Funcional (x: 68)
+        { id: "con1", type: "consequence", clinical_role: "maintaining_trap", label: "Alivio breve del control", description: "Sensación transitoria de tranquilidad tras resolver o mantenerse ocupado.", x: 68, y: 35 },
+        { id: "con2", type: "consequence", clinical_role: "maintaining_trap", label: "Agotamiento persistente", description: "Costo acumulativo vital: pérdida de energía y desconexión personal sostenida.", x: 68, y: 68 },
+
+        // Columna 5: Valores & Flexibilidad (x: 86)
+        { id: "v1", type: "consequence", is_value: true, clinical_role: "values_flexibility", label: "Descanso y presencia", description: "Acción comprometida con el cuidado propio y estar presente sin juicio.", x: 86, y: 35 },
+        { id: "v2", type: "cognitive", is_value: true, clinical_role: "values_flexibility", label: "Autovalidación compasiva", description: "Pivote terapéutico: reconocer el valor inherente más allá de la productividad.", x: 86, y: 65 }
     ],
     edges: [
-        { source: "h1", target: "b1", weight: 1, type: "unidirectional" },
-        { source: "h2", target: "s1", weight: 1, type: "unidirectional" },
-        { source: "b1", target: "c2", weight: 1, type: "unidirectional" },
-        { source: "s1", target: "c1", weight: 1, type: "unidirectional" },
-        { source: "b1", target: "c3", weight: 1, type: "unidirectional" },
-        { source: "c1", target: "con1", weight: 1, type: "unidirectional" },
-        { source: "c2", target: "con1", weight: 1, type: "unidirectional" },
-        { source: "c3", target: "con1", weight: 1, type: "unidirectional" }
+        { source: "h1", target: "c1", weight: 2, type: "unidirectional" },
+        { source: "s1", target: "c1", weight: 2, type: "unidirectional" },
+        { source: "c1", target: "p1", weight: 2, type: "unidirectional" },
+        { source: "c1", target: "m1", weight: 2, type: "unidirectional" },
+        { source: "p1", target: "c2", weight: 1, type: "unidirectional" },
+        { source: "c2", target: "m2", weight: 2, type: "unidirectional" },
+        { source: "m1", target: "con1", weight: 2, type: "unidirectional" },
+        { source: "m2", target: "con2", weight: 2, type: "unidirectional" },
+        { source: "con1", target: "c1", weight: 1, type: "unidirectional" },
+        { source: "con2", target: "p1", weight: 2, type: "unidirectional" },
+        { source: "v1", target: "m2", weight: 2, type: "unidirectional" },
+        { source: "v2", target: "c1", weight: 2, type: "unidirectional" }
     ],
     tripleModality: {
-        motor: 0,
-        cognitive: 0,
-        physiological: 0
+        motor: 2,
+        cognitive: 3,
+        physiological: 1
     },
     hypotheses: {
         mantenimiento: "Los datos aún no han sido procesados. Presiona 'Ver Entrevistas Crudas' en la parte superior y genera tu análisis clínico con IA para obtener resultados precisos.",
@@ -295,13 +305,13 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 7.0; // Anisotropic padding: suave holgura horizontal
-    const paddingY = 8.5; // Espacio vertical suficiente para no solapar tarjetas
+    const paddingX = 8.0; // Anisotropic padding: suave holgura horizontal (156px)
+    const paddingY = 9.8; // Espacio vertical generoso para evitar cualquier solapamiento de tarjetas (112px)
 
     let adjusted = true;
     let iterations = 0;
-    const maxIterations = 50;
-    const damping = 0.35; // Factor de amortiguación para evitar oscilaciones
+    const maxIterations = 60;
+    const damping = 0.38; // Factor de amortiguación para evitar oscilaciones
 
     while (adjusted && iterations < maxIterations) {
         adjusted = false;
@@ -334,7 +344,7 @@ const resolveCollisions = (nodes) => {
                     // Si pertenecen a columnas sustancialmente diferentes (dx > 6.5), priorizar ajuste puramente vertical
                     // para no romper el orden columnar de la topología funcional
                     const sameColumn = Math.abs(dx) < 6.5;
-                    const moveX = sameColumn ? ux * overlap * damping * paddingX * 0.35 : 0;
+                    const moveX = sameColumn ? ux * overlap * damping * paddingX * 0.25 : 0;
                     const moveY = uy * overlap * damping * paddingY;
 
                     n1.x -= moveX;
@@ -345,8 +355,8 @@ const resolveCollisions = (nodes) => {
                     // Mantener dentro de los límites cómodos del lienzo virtual
                     n1.x = Math.max(9, Math.min(91, n1.x));
                     n2.x = Math.max(9, Math.min(91, n2.x));
-                    n1.y = Math.max(12, Math.min(88, n1.y));
-                    n2.y = Math.max(12, Math.min(88, n2.y));
+                    n1.y = Math.max(14, Math.min(88, n1.y));
+                    n2.y = Math.max(14, Math.min(88, n2.y));
                 }
             }
         }
@@ -753,6 +763,103 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
 
         return n;
     });
+};
+
+export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioData = null, phenomData = null) => {
+    if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) return [];
+
+    const newNodes = enrichAfcNodesWithPerspectiveMetadata(
+        rawNodes.map(n => ({ 
+            ...n, 
+            label: softenNodeLabel(n.label) 
+        })),
+        user,
+        bioData,
+        phenomData,
+        rawEdges
+    );
+
+    const getStaggeredSlots = (count, baseX) => {
+        if (count <= 0) return [];
+        if (count === 1) return [{ x: baseX, y: 52 }];
+
+        // Each node receives its own unique vertical level for optimal readability
+        let yStep;
+        if (count === 2) yStep = 24;
+        else if (count === 3) yStep = 18;
+        else if (count === 4) yStep = 15;
+        else if (count === 5) yStep = 13;
+        else if (count === 6) yStep = 11.2;
+        else if (count <= 8) yStep = 9.8;
+        else yStep = Math.max(7.8, 68 / (count - 1));
+
+        const totalHeight = (count - 1) * yStep;
+        const startY = 52 - (totalHeight / 2);
+        const slots = [];
+        for (let i = 0; i < count; i++) {
+            const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 0.8 : 0;
+            const altX = (i % 2 === 0 ? -0.8 : 0.8);
+            const x = Math.max(9, Math.min(91, baseX + altX + waveX));
+            const y = Math.max(16, Math.min(88, startY + (i * yStep)));
+            slots.push({ x, y });
+        }
+        return slots;
+    };
+
+    // Sugiyama Layered Layout with 5 Clinical Case Formulation Columns:
+    // 1. Contexto & Historia (14%)
+    // 2. Barreras Internas (32%)
+    // 3. Evitación Experiencial (50%)
+    // 4. Trampa Funcional (68%)
+    // 5. Valores & Integración (86%)
+    const layers = [
+        { id: 'antecedents', label: 'Contexto & Historia', baseX: 14 },
+        { id: 'internal_barriers', label: 'Barreras Internas', baseX: 32 },
+        { id: 'experiential_avoidance', label: 'Evitación Experiencial', baseX: 50 },
+        { id: 'maintaining_traps', label: 'Trampa Funcional', baseX: 68 },
+        { id: 'values_flexibility', label: 'Valores & Integración', baseX: 86 }
+    ];
+
+    const getLayerIndex = (n) => {
+        if (n.clinical_role === 'values_flexibility' || n.type === 'values' || Boolean(n.is_value)) return 4;
+        if (n.clinical_role === 'maintaining_trap') return 3;
+        if (n.clinical_role === 'experiential_avoidance') return 2;
+        if (n.clinical_role === 'internal_barrier') return 1;
+        if (n.clinical_role === 'antecedent') return 0;
+
+        // Fallback by legacy type if clinical_role is missing
+        if (n.type === 'historical' || n.type === 'social' || n.type === 'biological') return 0;
+        if (n.type === 'cognitive' || n.type === 'physiological') return 1;
+        if (n.type === 'motor') return 2;
+        if (n.type === 'consequence') return 3;
+
+        return 1;
+    };
+
+    const roleByLayer = ['antecedent', 'internal_barrier', 'experiential_avoidance', 'maintaining_trap', 'values_flexibility'];
+    const layerNodes = layers.map(() => []);
+
+    newNodes.forEach(n => {
+        const idx = getLayerIndex(n);
+        if (!n.clinical_role) {
+            n.clinical_role = roleByLayer[idx];
+        }
+        if (idx === 4) {
+            n.is_value = true;
+        }
+        layerNodes[idx].push(n);
+    });
+
+    layerNodes.forEach((nodesInLayer, layerIdx) => {
+        const layer = layers[layerIdx];
+        const slots = getStaggeredSlots(nodesInLayer.length, layer.baseX);
+        nodesInLayer.forEach((n, idx) => {
+            n.x = Math.max(9, Math.min(91, slots[idx].x));
+            n.y = Math.max(14, Math.min(88, slots[idx].y));
+        });
+    });
+
+    return resolveCollisions(newNodes);
 };
 
 export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null, edges = [], allNodes = []) => {
@@ -2509,7 +2616,7 @@ Devuelve estrictamente el JSON sin formato extra.
         }
     }, [selectedNode, tourActiveIndex, selectedQuestionIndex, mapViewTab, sortedTourNodes]);
 
-    const resetMapTransform = useCallback((requestedMode = null) => {
+    const resetMapTransform = useCallback((requestedMode = null, overrideNodes = null) => {
         if (!mapContainerRef.current) return;
         const rect = mapContainerRef.current.getBoundingClientRect();
         const viewportWidth = rect.width;
@@ -2517,11 +2624,11 @@ Devuelve estrictamente el JSON sin formato extra.
 
         // If the container width/height is 0 (not fully rendered or in background), retry after layout reflow
         if (viewportWidth === 0 || viewportHeight === 0) {
-            setTimeout(() => resetMapTransform(requestedMode), 100);
+            setTimeout(() => resetMapTransform(requestedMode, overrideNodes), 100);
             return;
         }
 
-        const nodes = afcData?.nodes || [];
+        const nodes = (overrideNodes && overrideNodes.length > 0) ? overrideNodes : (afcData?.nodes || []);
         if (nodes.length === 0) {
             triggerProgrammaticTransition();
             transformRef.current = { x: 0, y: 0, scale: 0.55 };
@@ -2567,16 +2674,16 @@ Devuelve estrictamente el JSON sin formato extra.
             ty = (viewportHeight * 0.48) - py * fitScale;
         } else {
             // VISTA COMPLETA (Overview / Desktop):
-            const paddingPercentX = isMobile ? 0.10 : 0.16;
-            const paddingPercentY = isMobile ? 0.12 : 0.16;
+            const paddingPercentX = isMobile ? 0.08 : 0.12;
+            const paddingPercentY = isMobile ? 0.10 : 0.14;
             const graphWidthRange = (boundedMaxX - boundedMinX) || 80;
             const graphHeightRange = (boundedMaxY - boundedMinY) || 80;
 
             const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
             const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-            // Factor de encuadre seguro (0.88 desktop, 0.86 móvil)
-            fitScale = Math.min(scaleX, scaleY) * (isMobile ? 0.86 : 0.88);
+            // Factor de encuadre seguro (0.90 desktop, 0.88 móvil)
+            fitScale = Math.min(scaleX, scaleY) * (isMobile ? 0.88 : 0.90);
             const minScaleLimit = isMobile ? 0.16 : 0.20;
             fitScale = Math.min(Math.max(minScaleLimit, fitScale), 2.5);
 
@@ -2587,7 +2694,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
 
             tx = viewportWidth / 2 - px * fitScale;
-            ty = (viewportHeight * (isMobile ? 0.50 : 0.50)) - py * fitScale;
+            ty = (viewportHeight * 0.50) - py * fitScale;
         }
 
         triggerProgrammaticTransition();
@@ -2741,7 +2848,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
         if (tabChangedToMap || nodeDeselected || isFirstDataLoad) {
             hasInitializedAfcDataRef.current = true;
-            const timer = setTimeout(resetMapTransform, 150);
+            const timer = setTimeout(() => resetMapTransform(null, afcData?.nodes), 150);
             prevMapStateRef.current = { tab: mapViewTab, node: selectedNode };
             return () => clearTimeout(timer);
         }
@@ -2979,27 +3086,36 @@ Devuelve estrictamente el JSON sin formato extra.
         const storedAfc = getLocalItemCaseInsensitive('oasis_afc_real_data', user);
         if (storedAfc) {
             try {
-                const parsed = JSON.parse(storedAfc);
+                let parsed = JSON.parse(storedAfc);
                 if (parsed && parsed.nodes) {
-                    parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData, parsed.edges || [])));
+                    const needsReorg = parsed.layout_version !== 2 || !parsed.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+                    if (needsReorg) {
+                        parsed.nodes = layoutClinicalNodes(parsed.nodes, parsed.edges || [], user, bioData, phenomData);
+                        parsed.layout_version = 2;
+                        try {
+                            localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(parsed));
+                        } catch (e) {}
+                    } else {
+                        parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData, parsed.edges || [])));
+                    }
                     console.log("🟢 afcData loaded successfully (softened & enriched):", parsed);
                     setAfcData(parsed);
                 } else {
                     console.warn("⚠️ afcData parsed but invalid format, using mock.");
                     const mock = { ...MOCK_AFC_DATA };
-                    mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
+                    mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
                     setAfcData(mock);
                 }
             } catch (e) { 
                 console.error("🔴 Error parsing afcData, using mock:", e); 
                 const mock = { ...MOCK_AFC_DATA };
-                mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
+                mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
                 setAfcData(mock);
             }
         } else {
             console.log("ℹ️ No afcData found, using mock.");
             const mock = { ...MOCK_AFC_DATA };
-            mock.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(mock.nodes, user, bioData, phenomData, mock.edges || [])));
+            mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
             setAfcData(mock);
         }
 
@@ -3045,8 +3161,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`] ||
                                      (isAxel ? (cloudData[`oasis_afc_real_data_Axel Roben`] || cloudData[`oasis_afc_real_data_axel roben`]) : null);
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const enrichedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
-                        const resolved = { ...cloudAfc, nodes: enrichedNodes };
+                        const needsReorg = cloudAfc.layout_version !== 2 || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+                        let updatedNodes;
+                        if (needsReorg) {
+                            updatedNodes = layoutClinicalNodes(cloudAfc.nodes, cloudAfc.edges || [], user, bioData, phenomData);
+                        } else {
+                            updatedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
+                        }
+                        const resolved = { ...cloudAfc, nodes: updatedNodes, layout_version: 2 };
                         setAfcData(resolved);
                         try {
                             localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
@@ -3766,11 +3888,12 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             
 
             if (parsedAfc.is_valid && parsedAfc.nodes) {
-                parsedAfc.nodes = enrichAfcNodesWithPerspectiveMetadata(parsedAfc.nodes, user, bioData, phenomData, parsedAfc.edges || []);
                 if (!isAdditive) {
-                    parsedAfc.nodes = reorganizeNodes(parsedAfc.nodes, true);
+                    parsedAfc.nodes = layoutClinicalNodes(parsedAfc.nodes, parsedAfc.edges || [], user, bioData, phenomData);
+                    parsedAfc.layout_version = 2;
                 } else {
                     parsedAfc.nodes = resolveCollisions(parsedAfc.nodes);
+                    parsedAfc.layout_version = 2;
                 }
             }
 
@@ -4964,147 +5087,26 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
     /* Removed old resetMapTransform */
 
-    const reorganizeNodes = (inputNodes = null, isInitial = false) => {
+    const reorganizeNodes = useCallback((inputNodes = null) => {
         const isArray = Array.isArray(inputNodes);
         const currentNodes = isArray ? inputNodes : (afcData ? afcData.nodes : null);
+        const edges = (afcData && afcData.edges) || [];
         if (!currentNodes || currentNodes.length === 0) return isArray ? inputNodes : [];
 
-        const newNodes = enrichAfcNodesWithPerspectiveMetadata(
-            [...currentNodes].map(n => ({ 
-                ...n, 
-                label: softenNodeLabel(n.label) 
-            })),
-            user,
-            bioData,
-            phenomData,
-            afcData?.edges || []
-        );
-
-        const getStaggeredSlots = (count, baseX, customYStep) => {
-            if (count <= 0) return [];
-            if (count === 1) return [{ x: baseX, y: 52 }];
-
-            // Each node receives its own unique vertical level for optimal readability and soft constellation flow
-            let yStep = customYStep;
-            if (!yStep) {
-                if (count === 2) yStep = 24;
-                else if (count === 3) yStep = 18;
-                else if (count === 4) yStep = 15;
-                else if (count === 5) yStep = 13;
-                else if (count === 6) yStep = 11.2;
-                else if (count <= 8) yStep = 9.5;
-                else yStep = Math.max(7.5, 68 / (count - 1));
-            }
-
-            const totalHeight = (count - 1) * yStep;
-            const startY = 52 - (totalHeight / 2);
-            const slots = [];
-            for (let i = 0; i < count; i++) {
-                // Organic floating wave offset (alternating + subtle sine wave)
-                const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 1.5 : 0;
-                const altX = (i % 2 === 0 ? -1.2 : 1.2);
-                const x = Math.max(8, Math.min(92, baseX + altX + waveX));
-                const y = Math.max(16, Math.min(88, startY + (i * yStep)));
-                slots.push({ x, y });
-            }
-            return slots;
-        };
-
-        const edges = (afcData && afcData.edges) || [];
-        const getBarycenter = (node) => {
-            let sumY = 0;
-            let count = 0;
-            edges.forEach(edge => {
-                if (edge.source === node.id) {
-                    const targetNode = newNodes.find(xn => xn.id === edge.target);
-                    if (targetNode) {
-                        sumY += targetNode.y;
-                        count++;
-                    }
-                } else if (edge.target === node.id) {
-                    const sourceNode = newNodes.find(xn => xn.id === edge.source);
-                    if (sourceNode) {
-                        sumY += sourceNode.y;
-                        count++;
-                    }
-                }
-            });
-            return count > 0 ? sumY / count : node.y;
-        };
-
-        // Sugiyama Layered Layout with 5 Clinical Case Formulation Columns (ACT / FAP / Contextual CBT):
-        // 1. Contexto & Vulnerabilidad (14%) -> 2. Barreras Internas (32%) -> 3. Evitación Experiencial (50%) -> 4. Trampa Funcional (68%) -> 5. Valores & Flexibilidad (86%)
-        const layers = [
-            { id: 'antecedents', label: 'Contexto & Vulnerabilidad', baseX: 14, customYStep: null },
-            { id: 'internal_barriers', label: 'Barreras Internas', baseX: 32, customYStep: null },
-            { id: 'experiential_avoidance', label: 'Evitación Experiencial', baseX: 50, customYStep: null },
-            { id: 'maintaining_traps', label: 'Trampa Funcional', baseX: 68, customYStep: null },
-            { id: 'values_flexibility', label: 'Valores & Flexibilidad', baseX: 86, customYStep: null }
-        ];
-
-        const getLayerIndex = (n) => {
-            if (n.clinical_role === 'values_flexibility' || n.type === 'values' || Boolean(n.is_value)) return 4;
-            if (n.clinical_role === 'maintaining_trap') return 3;
-            if (n.clinical_role === 'experiential_avoidance') return 2;
-            if (n.clinical_role === 'internal_barrier') return 1;
-            if (n.clinical_role === 'antecedent') return 0;
-
-            // Fallback by legacy type if clinical_role is missing
-            if (n.type === 'historical' || n.type === 'social' || n.type === 'biological') return 0;
-            if (n.type === 'cognitive' || n.type === 'physiological') return 1;
-            if (n.type === 'motor') return 2;
-            if (n.type === 'consequence') return 3;
-
-            return 1; // default to column 2 (internal barrier/cognitive)
-        };
-
-        const layerNodes = layers.map(() => []);
-        newNodes.forEach(n => {
-            const idx = getLayerIndex(n);
-            layerNodes[idx].push(n);
-        });
-
-        // Initialize all nodes to staggered slots in their layers
-        // We DO NOT sort alphabetically or by barycenter anymore.
-        // This guarantees that the original Array order returned by the AI (which is sorted by relevance)
-        // determines the vertical position, placing the most important nodes at the top.
-        layerNodes.forEach((nodes, layerIdx) => {
-            const layer = layers[layerIdx];
-            const slots = getStaggeredSlots(nodes.length, layer.baseX, layer.customYStep);
-            nodes.forEach((n, idx) => {
-                n.x = Math.max(9, Math.min(91, slots[idx].x));
-                n.y = Math.max(12, Math.min(88, slots[idx].y));
-            });
-        });
-
-        // Phase 3: Apply the stretching transformation to all nodes to push them outwards
-        const scaleX = 1.0;
-        const scaleY = 1.0;
-        const centerX = 50;
-        const centerY = 50;
-
-        newNodes.forEach((n, idx) => {
-            n.x = centerX + (n.x - centerX) * scaleX;
-            n.y = centerY + (n.y - centerY) * scaleY;
-
-            // Apply a subtle wavy S-curve offset to the columns to give it an organic, hand-placed look
-            // curve removed
-            // curve removed
-        });
-
-        const resolvedNodes = resolveCollisions(newNodes);
+        const resolvedNodes = layoutClinicalNodes(currentNodes, edges, user, bioData, phenomData);
 
         if (!isArray) {
-            const updated = { ...afcData, nodes: resolvedNodes };
+            const updated = { ...afcData, nodes: resolvedNodes, layout_version: 2 };
             setAfcData(updated);
             if (user) {
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
             }
-            setTimeout(resetMapTransform, 50);
+            triggerProgrammaticTransition();
+            setTimeout(() => resetMapTransform(isMobileDevice ? 'readable' : 'overview', resolvedNodes), 60);
         }
 
         return resolvedNodes;
-    };
+    }, [afcData, user, bioData, phenomData, triggerProgrammaticTransition, resetMapTransform, isMobileDevice]);
 
     const handleZoom = (amount) => {
         if (!mapContainerRef.current) return;
@@ -6391,7 +6393,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                    title="Reorganizar distribución de nodos"
+                                    title="Ajustar y alinear nodos (5 columnas)"
+                                    aria-label="Ajustar y alinear nodos"
                                 >
                                     <Network size={11} className="text-emerald-400" />
                                 </button>
@@ -6526,7 +6529,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <button 
                                             onClick={() => reorganizeNodes()} 
                                             className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-400 hover:text-emerald-200 border border-emerald-500/30 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title="Reorganizar distribución de nodos"
+                                            title="Ajustar y alinear nodos (5 columnas)"
+                                            aria-label="Ajustar y alinear nodos"
                                         >
                                             <Network size={14} />
                                         </button>
