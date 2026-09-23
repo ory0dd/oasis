@@ -644,48 +644,48 @@ export const generateEmpatheticPerspectiveQuestion = (
     switch (safeIdx) {
         case 0: { // Raíz Histórica y Origen ("De dónde viene")
             if (reflection && reflection.length > 10 && !isStaleOrRoboticQuestion(reflection)) {
-                return `Pensando en «${label}»: ¿${reflection}?`;
+                return `Pensando en "${label}": ¿${reflection}?`;
             }
             if (cleanOriginLabel && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
-                return `Al observar cómo surge «${label}», en tu mapa se desprende de «${cleanOriginLabel}». Mirándolo hoy con perspectiva: ¿recuerdas cuándo aprendiste que responder con ${label} era tu manera de protegerte frente a ${cleanOriginLabel}?`;
+                return `El mapa muestra que "${label}" nació como un escudo frente a "${cleanOriginLabel}". Hoy, a la distancia: ¿te has dado cuenta de que estás luchando una guerra que ya terminó?`;
             }
-            return `Al poner la mirada sobre «${label}»${desc ? ` (${desc})` : ''}: ¿en qué momento o etapa de tu vida recuerdas haber comenzado a responder de esta manera? ¿De qué situación o exigencia de tu entorno intentabas protegerte cuando empezó a forjarse?`;
+            return `Si te detienes a observar "${label}"${desc ? ` (${desc})` : ''}: ¿reconoces a la persona que eras cuando tuviste que aprender a responder así para sobrevivir? ¿Qué te diría ese tú del pasado si viera que aún usas esa armadura?`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
-            return `Cuando notas la presencia de «${label}», ¿de qué manera influye en cómo te relacionas con las personas significativas en tu vida? ¿Tiendes a aislarte, a guardar silencio para evitar fricciones, o a sobreexigirte?`;
+            return `Cuando "${label}" toma el control de tus reacciones, ¿cuál es el precio invisible que están pagando tus relaciones más valiosas? ¿Estás eligiendo el aislamiento por miedo a mostrarte vulnerable?`;
         }
 
         case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
             if (nodeType === 'physiological' || nodeType === 'biological') {
-                return `Al conectar con «${label}»${desc ? ` (${desc})` : ''}: ¿en qué sensaciones físicas de tu cuerpo notas con mayor claridad esta carga? Si ese malestar corporal pudiera pedirte una tregua honesta ahora mismo, ¿qué tipo de descanso o pausa te pediría?`;
+                return `Tu cuerpo te está gritando a través de "${label}"${desc ? ` (${desc})` : ''}. Si pudieras traducir esa tensión en palabras honestas, ¿qué es lo que tu cuerpo ya no está dispuesto a seguir tolerando en silencio?`;
             }
-            return `Cuando se activa «${label}» en tu cotidianidad, ¿notas alguna señal física o cambio en tu cuerpo (como tensión, cansancio o cambios en tu ritmo), o sientes que es una vivencia que ocurre principalmente en tu mente?`;
+            return `Más allá de lo que tu mente te diga sobre "${label}", ¿dónde se aloja ese peso en tu cuerpo? ¿Qué pasaría si hoy decides dejar de ignorar esa alerta corporal?`;
         }
 
         case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
             if (reflection && reflection.length > 8 && !isStaleOrRoboticQuestion(reflection)) {
-                return `Reflexionando sobre «${label}»: ¿${reflection}? ¿Qué valor genuino que de verdad te importa (tu tranquilidad, tu autenticidad o tu bienestar) sientes que intentas defender?`;
+                return `Reflexionando sobre "${label}": ¿${reflection}? ¿Es esta la voz de lo que tú realmente valoras, o es el eco de exigencias que nunca fueron tuyas?`;
             }
-            return `Frente a lo que experimentas con «${label}»${desc ? ` (${desc})` : ''}, ¿cuál es el pensamiento o reproche interno que más suele repetirse? ¿Qué regla autoimpuesta sientes que te exiges cumplir para estar en paz contigo?`;
+            return `Detrás de "${label}"${desc ? ` (${desc})` : ''} hay un mandato interno muy severo. Si le hablaras a alguien que amas con la misma dureza con la que te exiges a ti mismo, ¿crees que esa persona seguiría a tu lado?`;
         }
 
         case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
             if (cleanTargetLabel && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
-                return `En tu mapa se observa una conexión directa entre «${label}» y «${cleanTargetLabel}». Mirándolo con sinceridad: ¿qué reacción automática sueles tener frente a ${label} que, sin planearlo, termina llevándote hacia ${cleanTargetLabel}?`;
+                return `Tus acciones automáticas ante "${label}" te arrastran irremediablemente hacia "${cleanTargetLabel}". ¿Hasta cuándo vas a permitir que el miedo al malestar momentáneo te condene a un dolor permanente?`;
             }
-            return `Al experimentar la presión de «${label}» en tu día a día, ¿qué sueles hacer en automático para sobrellevar el malestar, y cómo sientes que impacta en tu calma a largo plazo?`;
+            return `Cada vez que cedes ante "${label}", encuentras un alivio falso que se desvanece rápido. ¿Qué estás evadiendo hoy que sabes que mañana te costará el doble enfrentar?`;
         }
 
         case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
             if (challenge && challenge.length > 5) {
-                return `Tomando como guía «${challenge}»: ¿cuál sería un pequeño paso realista y amable que podrías intentar esta semana frente a «${label}» para responder con mayor serenidad?`;
+                return `Tu reto es: ${challenge}. No mañana, ni cuando "estés listo". ¿Qué acción minúscula e imperfecta puedes hacer HOY para demostrarte que ya no eres esclavo de "${label}"?`;
             }
-            return `Si pudieras intentar un primer paso mínimo, realista y compasivo esta semana para relacionarte mejor con «${label}», ¿cuál sería esa pequeña acción de cuidado hacia ti que te gustaría probar?`;
+            return `Si hoy decidieras romper el guion que "${label}" te impone, aunque sea solo un 1%, ¿cuál sería ese pequeñísimo acto de rebeldía a favor de tu propia paz mental?`;
         }
 
         case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
-            return `Reconociendo que «${label}» no nació para castigarte ni dañarte, sino como una respuesta adaptativa que tu historia aprendió ante situaciones difíciles: hoy que lo observas con distancia, ¿qué mirada más comprensiva y respetuosa decides ofrecerte a partir de ahora?`;
+            return `"${label}" no es un error en tu sistema, es una cicatriz de algo que dolió mucho. Mirándola de frente, sin juzgarla ni querer borrarla: ¿cómo decides abrazar esa parte de tu historia para poder, por fin, avanzar ligero?`;
         }
     }
 
@@ -3271,6 +3271,15 @@ Devuelve estrictamente el JSON sin formato extra.
             return clean.substring(0, maxLen).trim() + "...";
         };
 
+        const getDynamicLabel = (txt, defaultLabel) => {
+            if (!txt || typeof txt !== 'string') return defaultLabel;
+            const words = txt.trim().split(/\s+/);
+            if (words.length === 0) return defaultLabel;
+            const slice = words.slice(0, 4).join(" ").replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]/g, '');
+            if (slice.length < 4) return defaultLabel;
+            return '"' + slice.charAt(0).toUpperCase() + slice.slice(1).toLowerCase() + '..."';
+        };
+
         const motivo = getBioAnswer(2);
         const repercusiones = getBioAnswer(3);
         const temporalidad = getBioAnswer(4);
@@ -3289,7 +3298,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n1",
                 type: "historical",
                 clinical_role: "antecedent",
-                label: "Normas y Dinámicas Familiares",
+                label: familia ? getDynamicLabel(familia, "Dinámicas Familiares") : "Dinámicas Familiares",
                 description: familia ? `Pautas de exigencia o reglas tempranas aprendidas en el núcleo familiar: "${cleanSnippet(familia, 85)}"` : "Expectativas y reglas implícitas aprendidas en el entorno familiar primario.",
                 source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Entrevista de Vida: Historia Familiar)` : "Entrevista de Vida: Dinámica y antecedentes familiares.",
                 challenge: "Diferenciar entre lo que te exigieron de niño y lo que tú decides hoy",
@@ -3301,7 +3310,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n2",
                 type: "social",
                 clinical_role: "antecedent",
-                label: "Demandas del Entorno Social",
+                label: academica ? getDynamicLabel(academica, "Demandas del Entorno") : "Demandas del Entorno",
                 description: academica ? `Presión contextual formativa o laboral: "${cleanSnippet(academica, 85)}"` : "Exigencias cotidianas de rendimiento y validación social en el entorno actual.",
                 source: academica ? `Mencionaste: "${cleanSnippet(academica, 110)}" (en Entrevista de Vida)` : (atribucion ? `Mencionaste: "${cleanSnippet(atribucion, 110)}"` : "Entrevista de Vida: Entorno actual y demandas."),
                 challenge: "Poner límites saludables a las demandas externas",
@@ -3313,7 +3322,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n3",
                 type: "historical",
                 clinical_role: "antecedent",
-                label: "Disparadores del Malestar Actual",
+                label: motivo ? getDynamicLabel(motivo, "Disparador del Malestar") : "Disparador del Malestar",
                 description: motivo ? `Situaciones que activan la consulta: "${cleanSnippet(motivo, 85)}"` : "Detonantes específicos que desencadenan el episodio de malestar o sobrecarga.",
                 source: motivo ? `Mencionaste: "${cleanSnippet(motivo, 110)}" (en Motivo de Consulta)` : "Entrevista de Vida: Motivo de consulta.",
                 challenge: "Identificar la primera señal ambiental antes de que el malestar escale",
@@ -3325,7 +3334,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n4",
                 type: "social",
                 clinical_role: "antecedent",
-                label: "Fricción en Vínculos Interpersonales",
+                label: soledad ? getDynamicLabel(soledad, "Incomodidad Interpersonal") : "Incomodidad Interpersonal",
                 description: soledad ? `Dinámica vincular sensible al juicio: "${cleanSnippet(soledad, 85)}"` : "Interacciones interpersonales donde surge temor al desacuerdo o al rechazo.",
                 source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Diagnóstico Existencial: Soledad)` : "Diagnóstico Existencial: Relaciones y Soledad.",
                 challenge: "Comunicar tu incomodidad de forma serena en lugar de callar",
@@ -3341,7 +3350,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n5",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: "Autoexigencia y Juicio Punitivo",
+                label: vacio ? getDynamicLabel(vacio, "Presión Interna") : "Presión Interna",
                 description: "Creencia nuclear de que el propio valor depende de un rendimiento sin fallas ni errores.",
                 source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagnóstico Existencial)` : "Evaluación de Esquemas Cognitivos: Diálogo autocrítico.",
                 challenge: "Practicar la autocompasión frente al error humano",
@@ -3353,7 +3362,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n6",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: "Temor a la Desaprobación",
+                label: soledad ? getDynamicLabel(soledad, "Temor al Juicio") : "Temor al Juicio",
                 description: "Pensamiento anticipatorio de ser juzgado negativamente o quedar excluido.",
                 source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "Diagnóstico Existencial: Vínculos y validación externa.",
                 challenge: "Sostener tu propia opinión aunque no haya aplauso unánime",
@@ -3365,7 +3374,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n7",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: "Rumiación Mental Continua",
+                label: repercusiones ? getDynamicLabel(repercusiones, "Bucle Mental") : "Bucle Mental",
                 description: "Bucle cognitivo de sobrepensar decisiones pasadas o anticipar escenarios adversos.",
                 source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Entrevista de Vida: Repercusiones cognitivas del estrés.",
                 challenge: "Notar cuando estás rumiando y anclarte al presente",
@@ -3377,7 +3386,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n8",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: "Incertidumbre sobre el Propósito",
+                label: vacio ? getDynamicLabel(vacio, "Incertidumbre Vital") : "Incertidumbre Vital",
                 description: vacio ? `Cuestionamiento del sentido vital: "${cleanSnippet(vacio, 85)}"` : "Duda constante sobre la dirección personal y la autenticidad de los objetivos propios.",
                 source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagnóstico Existencial: Vacío)` : "Diagnóstico Existencial: Propósito y Sentido.",
                 challenge: "Elegir tus valores del día de hoy sin exigir certezas absolutas",
@@ -3389,7 +3398,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n9",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: "Culpa Punitiva Posterior",
+                label: libertad ? getDynamicLabel(libertad, "Sentimiento de Culpa") : "Sentimiento de Culpa",
                 description: "Diálogo interno de reproche tras haber reaccionado con evasión, frialdad o impulsividad.",
                 source: libertad ? `Mencionaste: "${cleanSnippet(libertad, 110)}" (en Decisiones y Libertad)` : "Diagnóstico Existencial: Diálogo interno sobre decisiones pasadas.",
                 challenge: "Reconocer que la culpa sin acción reparadora solo perpetúa el ciclo",
@@ -3481,7 +3490,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n16",
                 type: "motor",
                 clinical_role: "motor",
-                label: "Sobreadaptación o Complacencia",
+                label: familia ? getDynamicLabel(familia, "Ceder y Callar") : "Ceder y Callar",
                 description: "Ceder en las propias necesidades o adoptar un rol complaciente para evitar el conflicto directo.",
                 source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Historia Familiar)` : "Entrevista Biográfica: Pautas de respuesta ante la discrepancia.",
                 challenge: "Decir un «no» sereno y firme cuando algo no resuene contigo",
@@ -3497,7 +3506,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n17",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: "Alivio Inmediato Transitorio",
+                label: "Alivio Pasajero",
                 description: "Reducción momentánea de la angustia al postergar o evadir el conflicto (refuerzo negativo).",
                 source: "Análisis Funcional: Efecto a corto plazo de la evitación operante.",
                 challenge: "Advertir que el alivio de hoy es la deuda emocional de mañana",
@@ -3509,7 +3518,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n18",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: "Reactivación de la Autocrítica",
+                label: repercusiones ? getDynamicLabel(repercusiones, "Regreso del Reproche") : "Regreso del Reproche",
                 description: "Al pasar el alivio inicial, la mente castiga la evasión con más reproches y sensación de fracaso.",
                 source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Análisis Funcional: Bucle de retroalimentación cognitiva.",
                 challenge: "Frenar la espiral de reproches con una respiración profunda y foco en el presente",
@@ -3521,7 +3530,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n19",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: "Distanciamiento Vincular y Soledad",
+                label: soledad ? getDynamicLabel(soledad, "Desconexión") : "Desconexión",
                 description: "El aislamiento continuo erosiona la cercanía con otros y consolida una soledad no deseada.",
                 source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "Diagnóstico Existencial: Costo acumulativo en los vínculos significativos.",
                 challenge: "Abrir una pequeña rendija de vulnerabilidad con quien te aprecie",
@@ -3533,7 +3542,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n20",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: "Estancamiento en Proyectos Vitales",
+                label: vacio ? getDynamicLabel(vacio, "Sensación de Pausa") : "Sensación de Pausa",
                 description: vacio ? `Pérdida de tracción personal: "${cleanSnippet(vacio, 85)}"` : "Postergación de metas auténticas y sensación de que el tiempo pasa sin avances reales.",
                 source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagnóstico Existencial: Vacío)` : "Diagnóstico Existencial: Pérdida de vitalidad y estancamiento.",
                 challenge: "Dedicarle 15 minutos diarios a un proyecto tuyo sin importar el resultado",
@@ -3545,7 +3554,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 id: "n21",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: "Bucle Perpetuador del Sufrimiento",
+                label: temporalidad ? getDynamicLabel(temporalidad, "Bucle sin Fin") : "Bucle sin Fin",
                 description: "El circuito cerrado donde los costos a largo plazo confirman las creencias de insuficiencia.",
                 source: temporalidad ? `Mencionaste: "${cleanSnippet(temporalidad, 110)}" (en Temporalidad)` : "Análisis Funcional: Mantenimiento del circuito de sufrimiento.",
                 challenge: "Reconocer el bucle completo para poder elegir una respuesta diferente",
@@ -3806,13 +3815,13 @@ Eres un Psicólogo Clínico Especialista en Análisis Funcional de la Conducta (
 ETAPA 1: FORMULACIÓN CLÍNICA DE CASO EN MODO GRAFO (ANÁLISIS FUNCIONAL DE LA CONDUCTA).
 Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 20 Y 24 NODOS CLÍNICOS REALES y EXACTAMENTE ENTRE 32 Y 48 CONEXIONES FUNCIONALES DIRECTAS.
 
-=== PRINCIPIO FUNDAMENTAL: ANÁLISIS FUNCIONAL CIENTÍFICO (CERO INVENTOS, CERO PIVOTES FICTICIOS) ===
+=== PRINCIPIO FUNDAMENTAL: ANÁLISIS FUNCIONAL CIENTÍFICO Y AUTÉNTICO (CERO INVENTOS) ===
 - NUNCA inventes nodos con etiquetas artificiales de coaching o autoayuda como "Pivote:", "Pivote de", "Valor: ...", "Consejo", etc. 
-- PROHIBIDO inventar soluciones, consejos o metas hipotéticas dentro del mapa del problema. El Análisis Funcional diagrama la REALIDAD CLÍNICA de lo que el paciente vive, piensa, siente somáticamente, hace para escapar y las consecuencias mantenedoras.
-- CERO ALUCINACIONES BIOGRÁFICAS O MÉDICAS:
-  * NUNCA inventes eventos biográficos no dichos (PROHIBIDO inventar maltrato materno/paterno, violencia familiar, abusos, divorcios, ni orfandad si no constan en sus datos).
-  * NUNCA inventes diagnósticos médicos ni clichés somáticos de ansiedad inventados (PROHIBIDO terminantemente: "opresión torácica", "nudo en la garganta", "respiración corta", "alimentación emocional", "inactividad física", "trastornos somáticos").
-  * Si el consultante reportó sensaciones físicas explícitas (ej. insomnio, desvelo a las 2-3 am, taquicardia o calor antes de explotar, cansancio extremo), úsalas con fidelidad a sus palabras. Si no, prescinde de inventar patologías.
+- PROHIBIDO inventar soluciones, consejos o metas hipotéticas dentro del mapa del problema.
+- CERO ALUCINACIONES BIOGRÁFICAS O MÉDICAS: NUNCA inventes eventos ni síntomas médicos que el usuario no haya dicho explícitamente.
+- *** REGLA DE ORO DE LOS NOMBRES DE NODOS ***: ESTÁ ESTRICTAMENTE PROHIBIDO usar abstracciones clínicas genéricas para los "label" de los nodos si el usuario no usó esas palabras.
+  - PROHIBIDO USAR: "Estancamiento", "Rumiación", "Evitación", "Fricción", "Sobreadaptación", "Autocrítica", "Aislamiento Defensivo", "Reactivación de la Autocrítica", a menos que el usuario lo haya escrito tal cual.
+  - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, úsalo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual clínico".
 
 === LOS 5 PILARES DEL ANÁLISIS FUNCIONAL (E-O-R-C) (DISTRIBUCIÓN DE 20 A 24 NODOS EN TOTAL) ===
 Distribuye los nodos rigurosamente en las 5 columnas funcionales del caso:
