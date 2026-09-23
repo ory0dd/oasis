@@ -489,3 +489,312 @@ export const getAxelEnrichedSource = (node) => {
     if (label.includes('são paulo') || label.includes('discográfica')) return nodeEnrichment['n52'].src;
     return node.source || '';
 };
+
+export const AXEL_CANONICAL_AFC_DATA = {
+    is_mock: false,
+    layout_version: 4,
+    nodes: [
+        // Columna 1: Contexto & Detonantes (Antecedentes E)
+        { 
+            id: 'n1', 
+            type: 'historical', 
+            clinical_role: 'antecedent', 
+            label: 'Conflicto con normas familiares', 
+            description: 'Desacuerdo severo con las reglas del hogar sobre su apariencia, límites y corte de cabello.',
+            source: 'Mencionaste: "vengo porque mi mamá no respeta eso que es lo que quiero... mis papás y la escuela son muy estrictos" (Historia de Vida)',
+            challenge: 'Negociar límites de autonomía sin recurrir a la agresión ni a amenazas.',
+            reflection_question: '¿En qué momento específico sentiste que las reglas de tu casa ya no encajaban con quien tú estás empezando a ser?'
+        },
+        { 
+            id: 'n3', 
+            type: 'historical', 
+            clinical_role: 'antecedent', 
+            label: 'Desaprobación paterna encubierta', 
+            description: 'Percepción dolorosa de desaprobación y falta de orgullo por parte de la figura paterna.',
+            source: 'Mencionaste: "mi papá no se siente muy orgulloso de mí, he escuchado que habla mal de mí a mis espaldas... nunca se lo he dicho" (Historia de Vida)',
+            challenge: 'Validar el valor personal desvinculándolo de la necesidad imperiosa de aprobación paterna.',
+            reflection_question: '¿Qué sentiste en el momento en que escuchaste a tu papá hablar a tus espaldas diciendo que no hacías mucho?'
+        },
+        { 
+            id: 'n4', 
+            type: 'historical', 
+            clinical_role: 'antecedent', 
+            label: 'Desarraigo por mudanza', 
+            description: 'Dificultad para reconstruir vínculos sociales tras mudarse de residencia hace un año.',
+            source: 'Mencionaste: "antes vivíamos en otro lugar, y ahora me cuesta hacer amigos" (Historia de Vida)',
+            challenge: 'Elaborar el duelo por la mudanza y abrirse gradualmente a nuevos vínculos en su entorno.',
+            reflection_question: '¿Qué personas o lugares de tu vida anterior sientes que dejaste atrás y que hoy te hacen más falta?'
+        },
+        { 
+            id: 'n5', 
+            type: 'historical', 
+            clinical_role: 'antecedent', 
+            label: 'Imposición de corte y vestimenta', 
+            description: 'Imposición del corte de cabello contra su voluntad y censura familiar a usar pantalones holgados.',
+            source: 'Mencionaste: "no quería cortarme el pelo, lo tenía largo... no le gusta que compre pantalones grandes para ir tumbado" (Historia de Vida)',
+            challenge: 'Separar el valor de la identidad personal de la imposición externa sobre la apariencia.',
+            reflection_question: '¿Por qué ese corte de pelo forzado y tu ropa ancha representaban tanto para ti en este momento?'
+        },
+        { 
+            id: 'n7', 
+            type: 'historical', 
+            clinical_role: 'antecedent', 
+            label: 'Exigencias disciplinarias escolares', 
+            description: 'Tensiones en el entorno escolar por su estilo visual, ropa y normas disciplinarias de la secundaria vespertina.',
+            source: 'Mencionaste: "a que mis papás y la escuela son muy estrictos, no sé qué es lo que buscan" (Historia de Vida)',
+            challenge: 'Aprender a convivir con las reglas institucionales sin sentir que anulan la autenticidad interna.',
+            reflection_question: '¿En qué momentos dentro del colegio sientes más fuerte esa presión por encajar en un molde?'
+        },
+        { 
+            id: 'n40', 
+            type: 'social', 
+            clinical_role: 'antecedent', 
+            label: 'Dinámicas familiares invalidantes', 
+            description: 'Descalificación sistemática en el hogar hacia sus gustos musicales y decisiones personales.',
+            source: 'Mencionaste: "no me gusta que mi familia no lo acepten o no comprendan mis gustos" (Historia de Vida)',
+            challenge: 'Desarrollar una autovalidación sólida que no dependa de la aprobación estética familiar.',
+            reflection_question: '¿Qué es lo que más te duele de que tu familia no comprenda ni acepte tus gustos?'
+        },
+
+        // Columna 2: Pensamientos & Creencias (Diálogo Interno Rc)
+        { 
+            id: 'n16', 
+            type: 'cognitive', 
+            clinical_role: 'cognitive', 
+            label: 'Rumiación y culpa nocturna', 
+            description: 'Rumiación nocturna de 30-45 minutos tras apagar el celular a las 2-3 AM, repasando peleas y mensajes.',
+            source: 'Mencionaste: "apago el cel y es cuando me voy a pensar un rato una media hora o así... le dije cosas feas a mi mamá por msj" (Historia de Vida)',
+            challenge: 'Romper el ciclo de autocrítica nocturna mediante defusión cognitiva y descanso consciente.',
+            reflection_question: '¿Qué reproches sobre lo que dijiste en los mensajes a tu mamá regresan a tu mente en esa media hora a oscuras?'
+        },
+        { 
+            id: 'n17', 
+            type: 'cognitive', 
+            clinical_role: 'cognitive', 
+            label: 'Autocrítica punitiva interna', 
+            description: 'Severo juicio interno al percibirse incontrolable y no llenar las expectativas paternas.',
+            source: 'Mencionaste: "mi papá no se siente muy orgulloso de mí... siento que he estado muy incontrolable con lo que digo" (Historia de Vida)',
+            challenge: 'Desarrollar autocompasión y reencuadrar los errores como parte del crecimiento.',
+            reflection_question: 'Cuando estás a solas, ¿qué voz interna es más dura: la que te dice incontrolable o la que siente no ser suficiente?'
+        },
+        { 
+            id: 'n19', 
+            type: 'cognitive', 
+            clinical_role: 'cognitive', 
+            label: 'Creencia de no ser comprendido', 
+            description: 'Creencias rígidas: "Nadie me entiende", "No respetan mis decisiones" y "Solo peleando respetan mi espacio".',
+            source: 'Mencionaste: "mi mamá no respeta eso que es lo que quiero... me siento como si no pudieran respetar mis decisiones" (Historia de Vida)',
+            challenge: 'Flexibilizar las creencias dicotómicas hacia alternativas asertivas de comunicación.',
+            reflection_question: '¿Qué creencia sobre ti mismo se activa cuando sientes que tus papás no respetan lo que quieres?'
+        },
+        { 
+            id: 'n8', 
+            type: 'cognitive', 
+            clinical_role: 'cognitive', 
+            label: 'Silencio y rencor con el padre', 
+            description: 'Distanciamiento afectivo y silencio comunicativo con el padre, evitando expresar el dolor por sus comentarios.',
+            source: 'Mencionaste: "he escuchado que habla mal de mí a mis espaldas... pero nunca se lo he dicho tal cual" (Historia de Vida)',
+            challenge: 'Abrir un espacio de comunicación honesto expresando la necesidad de afecto y presencia.',
+            reflection_question: '¿Qué es lo que más te detiene de hablar con tu papá directamente y preguntarle qué piensa de ti?'
+        },
+
+        // Columna 3: Activación Somática (Cuerpo & Emoción Rf)
+        { 
+            id: 'n28', 
+            type: 'physiological', 
+            clinical_role: 'physiological', 
+            label: 'Insomnio de conciliación', 
+            description: 'Dificultad severa para conciliar el sueño antes de las 2-3 AM tras sobreactivación digital y mental.',
+            source: 'Mencionaste: "duermo como a las 2 o 3 y despierto a las 12... me voy a pensar un rato" (Historia de Vida)',
+            challenge: 'Restaurar progresivamente el ciclo sueño-vigilia para fortalecer el umbral de autorregulación.',
+            reflection_question: '¿Qué sensaciones de pesadez o inquietud notas en tu cuerpo en esa media hora nocturna dando vueltas a los problemas?'
+        },
+        { 
+            id: 'n31', 
+            type: 'physiological', 
+            clinical_role: 'physiological', 
+            label: 'Taquicardia y sobrecarga física', 
+            description: 'Activación simpática aguda, calor y opresión torácica involuntaria al detonarse discusiones en casa.',
+            source: 'Mencionaste: "siento que he estado muy incontrolable con lo que digo, como que exploto... cosas que siento muy fuerte" (Historia de Vida)',
+            challenge: 'Implementar pausas somáticas de modulación autonómica antes de que la activación bloquee la claridad.',
+            reflection_question: '¿Cómo se siente en el pecho y en la respiración ese momento justo antes de explotar y gritar?'
+        },
+        { 
+            id: 'n34', 
+            type: 'biological', 
+            clinical_role: 'physiological', 
+            label: 'Desajuste de ritmo circadiano', 
+            description: 'Alteración del ciclo sueño-vigilia por exposición nocturna a pantallas y ritmo escolar vespertino.',
+            source: 'Mencionaste: "duermo como a las 2 o 3 y despierto a las 12... entro a las 12:50 y despierto muy cansado" (Historia de Vida)',
+            challenge: 'Sincronizar los ritmos circadianos para recuperar energía vital y claridad diurna.',
+            reflection_question: '¿Cómo crees que influye en tu estado de ánimo diario el despertar a las 12 del día corriendo para la escuela?'
+        },
+
+        // Columna 4: Conductas de Evitación (Respuestas Operantes Rm)
+        { 
+            id: 'n22', 
+            type: 'motor', 
+            clinical_role: 'motor', 
+            label: 'Encierro prolongado en cuarto', 
+            description: 'Encierro en su habitación con la puerta cerrada y música a alto volumen como escape a las demandas familiares.',
+            source: 'Mencionaste: "me gusta la música me ayuda a desestresarme... escuchar música" (Historia de Vida)',
+            challenge: 'Diferenciar el aislamiento defensivo del espacio de descanso creativo y nutridor.',
+            reflection_question: 'Cuando cierras la puerta de tu cuarto y subes el volumen, ¿qué es lo que estás intentando dejar afuera?'
+        },
+        { 
+            id: 'n24', 
+            type: 'motor', 
+            clinical_role: 'motor', 
+            label: 'Escape mediante pantallas', 
+            description: 'Uso continuado del celular (TikTok y YouTube) hasta las 2:00 o 3:00 AM como anestésico para evitar el silencio.',
+            source: 'Mencionaste: "en la noche me duermo viendo videos de tiktok o youtube, luego apago el cel" (Historia de Vida)',
+            challenge: 'Establecer una rutina de desconexión gradual para reducir la hiperactivación neurológica.',
+            reflection_question: '¿Qué es lo que temes que aparezca en tu cabeza si apagas el teléfono una hora antes y te quedas en silencio?'
+        },
+        { 
+            id: 'n27', 
+            type: 'motor', 
+            clinical_role: 'motor', 
+            label: 'Evitación mediante noise-rock', 
+            description: 'Uso de la estridencia del noise-rock y sonidos viscerales como coraza para no contactar con la tristeza.',
+            source: 'Mencionaste: "me gusta el noise y cosas gore... me ayuda a desestresarme" (Historia de Vida)',
+            challenge: 'Hacer contacto seguro con la tristeza o soledad sin necesidad de taparlas con estridencia.',
+            reflection_question: '¿Qué dolor o tristeza profunda se esconde detrás de la música más ruidosa que escuchas?'
+        },
+        { 
+            id: 'n9', 
+            type: 'motor', 
+            clinical_role: 'motor', 
+            label: 'Confrontación y explosiones', 
+            description: 'Escalada de discusiones familiares a gritos, portazos y expresiones hirientes al sentirse acorralado.',
+            source: 'Mencionaste: "siento que he estado muy incontrolable con lo que digo, como que exploto" (Historia de Vida)',
+            challenge: 'Reconocer el patrón de escalada familiar y aplicar una pausa antes del desborde mutuo.',
+            reflection_question: '¿Cómo empieza típicamente una discusión en tu casa y en qué segundo sientes que el diálogo ya se perdió?'
+        },
+        { 
+            id: 'n10', 
+            type: 'motor', 
+            clinical_role: 'motor', 
+            label: 'Amenazas de huida del hogar', 
+            description: 'Expresiones impulsivas de querer irse de la casa o atentar contra sí mismo para forzar el cese del control.',
+            source: 'Mencionaste: "le dije a mi mamá que me iría de la casa, y también que quería suicidarme... cosas que siento muy fuerte" (Historia de Vida)',
+            challenge: 'Aprender a poner límites firmes sin recurrir a amenazas extremas que destruyan la convivencia.',
+            reflection_question: 'Amenazar con irte de la casa es un grito para frenar el control: ¿De qué otra forma podrías decir: "Mamá, me siento ahogado"?'
+        },
+
+        // Columna 5: Trampa de Mantenimiento & Costos (Consecuencias C)
+        { 
+            id: 'n47', 
+            type: 'consequence', 
+            clinical_role: 'consequence', 
+            label: 'Alivio transitorio de la tensión', 
+            description: 'Alivio temporal inmediato tras explotar, amenazar con huir o aislarse (refuerzo negativo que mantiene el ciclo).',
+            source: 'Mencionaste: "le dije a mi mamá que me iría de la casa... me gusta la música me ayuda a desestresarme" (Historia de Vida)',
+            challenge: 'Identificar que el alivio a corto plazo compra un costo devastador a largo plazo.',
+            reflection_question: 'Cuando amenazas con irte o te encierras con música, ¿qué alivio inmediato sientes en los primeros 5 minutos?'
+        },
+        { 
+            id: 'n48', 
+            type: 'consequence', 
+            clinical_role: 'consequence', 
+            label: 'Deterioro de la autoeficacia', 
+            description: 'Pérdida de confianza en la propia capacidad de autocontrol y diálogo al verse atrapado en conductas impulsivas.',
+            source: 'Mencionaste: "siento que he estado muy incontrolable con lo que digo... no sé cómo expresarlas" (Historia de Vida)',
+            challenge: 'Aprender habilidades de comunicación asertiva para recuperar la confianza en la capacidad de diálogo.',
+            reflection_question: '¿Cómo te hace sentir contigo mismo el darte cuenta de que no sabes cómo expresar lo que sientes sin explotar?'
+        },
+        { 
+            id: 'n50', 
+            type: 'consequence', 
+            clinical_role: 'consequence', 
+            label: 'Cronificación del conflicto', 
+            description: 'Persistencia del bucle de hostilidad, vigilancia materna, culpa y aislamiento acumulado a lo largo de un año.',
+            source: 'Mencionaste: "desde hace un año más o menos empezó como a los 13... no sé qué sea exactamente" (Historia de Vida)',
+            challenge: 'Desactivar el bucle de mantenimiento mediante pautas de autorregulación y acuerdos claros.',
+            reflection_question: '¿Por qué crees que este conflicto lleva ya un año repitiéndose casi todas las semanas sin resolverse?'
+        },
+        { 
+            id: 'n51', 
+            type: 'consequence', 
+            clinical_role: 'consequence', 
+            label: 'Soledad existencial profunda', 
+            description: 'Sensación persistente de aislamiento e incomprensión en su forma de ver el mundo y sus aspiraciones.',
+            source: 'Mencionaste: "creo que muchas de las cosas que siento es más porque estoy entrando en una forma distinta de ver las cosas" (Historia de Vida)',
+            challenge: 'Reencuadrar la soledad como el inicio de la individuación y buscar comunidad en proyectos afines.',
+            reflection_question: '¿Cómo se siente por dentro esa soledad de estar entrando en una forma distinta de ver las cosas sin con quién compartirla?'
+        },
+        { 
+            id: 'n52', 
+            type: 'consequence', 
+            clinical_role: 'consequence', 
+            label: 'Estancamiento de proyectos vitales', 
+            description: 'Proyectos en pausa (sello discográfico en São Paulo, estudios de ingeniería o derecho) ante la parálisis cotidiana.',
+            source: 'Mencionaste: "me gustaría tener una discográfica, vivir en são paulo brasil, vender playeras... o ser ingeniero o abogado" (Diagnóstico Existencial)',
+            challenge: 'Conectar las aspiraciones futuras con pequeñas acciones conductuales sostenibles en el presente.',
+            reflection_question: '¿Cómo choca ese futuro tan prometedor que sueñas con la frustración y los pleitos cotidianos de tu casa hoy?'
+        }
+    ],
+    edges: [
+        // Antecedentes -> Creencias/Cognitivo
+        { source: "n1", target: "n19", weight: 2, type: "unidirectional" },
+        { source: "n3", target: "n17", weight: 2, type: "unidirectional" },
+        { source: "n3", target: "n8", weight: 2, type: "unidirectional" },
+        { source: "n4", target: "n19", weight: 2, type: "unidirectional" },
+        { source: "n5", target: "n19", weight: 2, type: "unidirectional" },
+        { source: "n7", target: "n19", weight: 1, type: "unidirectional" },
+        { source: "n40", target: "n17", weight: 2, type: "unidirectional" },
+        { source: "n40", target: "n19", weight: 2, type: "unidirectional" },
+
+        // Antecedentes -> Somático
+        { source: "n1", target: "n31", weight: 2, type: "unidirectional" },
+        { source: "n5", target: "n31", weight: 2, type: "unidirectional" },
+
+        // Cognitivo -> Somático
+        { source: "n16", target: "n28", weight: 2, type: "unidirectional" },
+        { source: "n17", target: "n31", weight: 2, type: "unidirectional" },
+        { source: "n19", target: "n31", weight: 2, type: "unidirectional" },
+        { source: "n16", target: "n34", weight: 2, type: "unidirectional" },
+
+        // Cognitivo -> Motor/Evitación
+        { source: "n19", target: "n9", weight: 2, type: "unidirectional" },
+        { source: "n17", target: "n22", weight: 2, type: "unidirectional" },
+        { source: "n16", target: "n24", weight: 2, type: "unidirectional" },
+        { source: "n8", target: "n22", weight: 2, type: "unidirectional" },
+
+        // Somático -> Motor/Evitación
+        { source: "n31", target: "n9", weight: 2, type: "unidirectional" },
+        { source: "n31", target: "n10", weight: 2, type: "unidirectional" },
+        { source: "n28", target: "n24", weight: 2, type: "unidirectional" },
+        { source: "n34", target: "n24", weight: 2, type: "unidirectional" },
+
+        // Motor -> Consecuencias (Alivio inmediato y Costos a largo plazo)
+        { source: "n22", target: "n47", weight: 2, type: "unidirectional" },
+        { source: "n24", target: "n47", weight: 2, type: "unidirectional" },
+        { source: "n27", target: "n47", weight: 2, type: "unidirectional" },
+        { source: "n9", target: "n47", weight: 2, type: "unidirectional" },
+        { source: "n10", target: "n47", weight: 2, type: "unidirectional" },
+
+        { source: "n22", target: "n51", weight: 2, type: "unidirectional" },
+        { source: "n24", target: "n48", weight: 2, type: "unidirectional" },
+        { source: "n9", target: "n50", weight: 2, type: "unidirectional" },
+        { source: "n10", target: "n50", weight: 2, type: "unidirectional" },
+        { source: "n27", target: "n52", weight: 2, type: "unidirectional" },
+
+        // Retroalimentación de la Trampa de Mantenimiento (Cierre de Bucles)
+        { source: "n47", target: "n16", weight: 2, type: "unidirectional" },
+        { source: "n48", target: "n17", weight: 2, type: "unidirectional" },
+        { source: "n50", target: "n1", weight: 2, type: "unidirectional" },
+        { source: "n50", target: "n40", weight: 2, type: "unidirectional" },
+        { source: "n51", target: "n4", weight: 2, type: "unidirectional" },
+        { source: "n52", target: "n19", weight: 2, type: "unidirectional" }
+    ],
+    tripleModality: {
+        motor: 68,
+        cognitive: 75,
+        physiological: 58
+    },
+    hypotheses: {
+        mantenimiento: "El conflicto se cronifica porque la conducta impulsiva (amenazas, portazos) y el aislamiento con música/pantallas ofrecen un alivio fisiológico transitorio inmediato (refuerzo negativo), pero generan culpa, distanciamiento relacional y aumento de la vigilancia materna, lo que intensifica la creencia de no ser comprendido y reactiva el ciclo.",
+        solucion: "La intervención requiere desactivar el reforzamiento negativo mediante técnicas de modulación simpática antes de explotar, desarticular la rumiación nocturna y entrenar habilidades de asertividad (DEAR MAN) para negociar autonomía con sus padres sin recurrir a amenazas."
+    }
+};
