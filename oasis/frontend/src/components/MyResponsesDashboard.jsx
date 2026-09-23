@@ -55,6 +55,21 @@ export const softenNodeLabel = (label) => {
     let s = label.trim();
 
     const transformations = [
+        [/\bopresi[oó]n\s+tor[aá]cica\b/gi, "Tensión por estrés"],
+        [/\bsensaci[oó]n\s+de\s+peso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
+        [/\bpeso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
+        [/\bnudo\s+en\s+la\s+garganta\b/gi, "Incomodidad al expresarse"],
+        [/\brespiraci[oó]n\s+corta\b/gi, "Inquietud y prisa"],
+        [/\binactividad\s+f[ií]sica\b/gi, "Pausa en las actividades"],
+        [/\balimentaci[oó]n\s+emocional\b/gi, "Comer por ansiedad"],
+        [/\bmaltrato\s+materno\b/gi, "Exigencia familiar del pasado"],
+        [/\bmaltrato\s+paterno\b/gi, "Distancia familiar del pasado"],
+        [/\bviolencia\s+familiar\b/gi, "Tensión familiar en la infancia"],
+        [/\bviolencia\s+intrafamiliar\b/gi, "Tensión familiar en la infancia"],
+        [/\bdivorcio\s+de\s+los\s+padres\b/gi, "Separaciones en el pasado"],
+        [/\bdivorcio\s+de\s+padres\b/gi, "Separaciones en el pasado"],
+        [/\btrastorno\s+som[aá]tico\b/gi, "Desgaste del cuerpo"],
+        [/\bhipervigilancia\s+som[aá]tica\b/gi, "Atención al cansancio"],
         [/\bautocrítica\s+punitiva\s+interna\b/gi, "Autoexigencia y reproche"],
         [/\bautocrítica\s+punitiva\b/gi, "Autoexigencia y reproche"],
         [/\bpunitiva\b/gi, "severa"],
@@ -439,7 +454,7 @@ export const isStaleOrRoboticQuestion = (q) => {
     if (trimmed.includes('[object Object]') || trimmed.includes('undefined') || trimmed.includes('null')) return true;
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) return true;
 
-    // Detectar plantillas genéricas obsoletas o frases enredadas
+    // Detectar plantillas genéricas obsoletas, citas artificiales o clichés clínicos inventados
     const stalePhrases = [
         '¿Qué reflexión o toma de consciencia te genera este momento de tu vida?',
         '¿Qué reflexión o toma de consciencia surge al observar',
@@ -460,7 +475,25 @@ export const isStaleOrRoboticQuestion = (q) => {
         'las raíces de el',
         'raíces de el',
         'aprendizajes tempranos te llevaron a desarrollar',
-        'aprendizajes del pasado te llevaron a desarrollar'
+        'aprendizajes del pasado te llevaron a desarrollar',
+        'Pensando en lo que compartiste al decir',
+        'lo que compartiste al decir',
+        'en qué época de tu vida recuerdas haber sentido',
+        'por primera vez el peso de',
+        'comenzaras a responder de esta forma',
+        'opresión torácica',
+        'opresion toracica',
+        'nudo en la garganta',
+        'respiración corta',
+        'respiracion corta',
+        'alimentación emocional',
+        'alimentacion emocional',
+        'inactividad física',
+        'inactividad fisica',
+        'maltrato materno',
+        'maltrato paterno',
+        'violencia familiar',
+        'divorcio de padres'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
@@ -653,6 +686,14 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
 
     return nodes.map(node => {
         let n = { ...node, label: softenNodeLabel(node.label) };
+        if (n.description && typeof n.description === 'string') {
+            n.description = n.description
+                .replace(/opresi[oó]n\s+tor[aá]cica/gi, "tensión física")
+                .replace(/nudo\s+en\s+la\s+garganta/gi, "incomodidad al expresarse")
+                .replace(/respiraci[oó]n\s+corta/gi, "sensación de prisa")
+                .replace(/alimentaci[oó]n\s+emocional/gi, "buscar alivio en la comida")
+                .replace(/inactividad\s+f[ií]sica/gi, "quedarse quieto sin avanzar");
+        }
 
         // Si NO es Axel Roben, limpiar datos residuales hardcodeados de Axel en caso de que persistieran
         if (!isAxel && AXEL_NODE_ENRICHMENT && AXEL_NODE_ENRICHMENT[n.id]) {
@@ -2297,7 +2338,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         if (threads && typeof threads === 'object') {
                             Object.keys(threads).forEach(tIdx => {
                                 const thread = threads[tIdx];
-                                if (Array.isArray(thread) && thread.length === 1 && thread[0].role === 'assistant') {
+                                if (Array.isArray(thread) && thread.length >= 1 && thread[0].role === 'assistant') {
                                     const c = thread[0].content || '';
                                     if (isStaleOrRoboticQuestion(c)) {
                                         const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
@@ -2385,7 +2426,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const tIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
             const currentChat = getSafeCurrentChat(activeNode.id, tIdx);
             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-            const isGenericAssistant = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+            const isGenericAssistant = currentChat && currentChat[0]?.role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0]?.content);
             if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
                 const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                 setNodeChats(prev => {
@@ -3061,6 +3102,11 @@ Devuelve estrictamente el JSON sin formato extra.
         // Disparar en paralelo la generación de la Firma de Resonancia (publicTraits) a petición del usuario
         if (!isAdditive) {
             generateDynamicTraits();
+            setNodeChats({});
+            try {
+                localStorage.removeItem(`oasis_node_chats_${user}`);
+                localStorage.removeItem(`oasis_node_chats_${(user || '').toLowerCase()}`);
+            } catch (e) {}
         }
 
         let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
@@ -3178,34 +3224,43 @@ Eres un Psicólogo Clínico y Analista Existencial de Alto Nivel Especializado e
 ETAPA 1: TOPOLOGÍA FUNCIONAL DEL MAPA DE BUCLES.
 Tu misión es construir el mapa funcional completo del consultante: EXACTAMENTE ENTRE 38 Y 44 NODOS y EXACTAMENTE ENTRE 65 Y 85 CONEXIONES, organizando a fondo CÓMO SE CONECTAN LAS COSAS Y CÓMO SE PERPETÚAN LOS BUCLES DE SUFRIMIENTO.
 
-=== REGLA DE ORO: REALIDAD CLÍNICA RIGUROSA (CERO INVENTOS DE TRAUMAS O DIAGNÓSTICOS EXTRAÑOS) ===
-- NUNCA inventes eventos biográficos que el paciente no relató (NO inventes maltrato materno/paterno, violencia familiar, divorcios, ni pérdidas si no constan en sus datos).
-- NUNCA inventes diagnósticos médicos ni etiquetas ajenas (NO pongas "opresión torácica", "alimentación emocional", "trastornos somáticos" ni etiquetas clínicas rimbombantes).
+=== REGLA DE ORO: REALIDAD CLÍNICA RIGUROSA (CERO ALUCINACIONES, CERO INVENTOS DE TRAUMAS O DIAGNÓSTICOS EXTRAÑOS) ===
+- NUNCA inventes eventos biográficos que el paciente no relató (PROHIBIDO inventar maltrato materno/paterno, violencia familiar, divorcios, ni pérdidas si no constan en sus datos).
+- PROHIBICIÓN ESTRICTA DE CLICHÉS SOMÁTICOS O MÉDICOS: Queda TERMINANTEMENTE PROHIBIDO generar los siguientes términos o conceptos similares:
+  * "Opresión torácica"
+  * "Nudo en la garganta"
+  * "Respiración corta"
+  * "Alimentación emocional"
+  * "Inactividad física"
+  * "Fatiga diurna"
+  * "Trastornos somáticos" o diagnósticos médicos alarmistas.
 - CÓMO LOGRAR LOS 38 A 44 NODOS DE FORMA 100% REAL Y HUMANA:
   * Toda vivencia de malestar, duda o estrés es un circuito psicológico sistémico completo.
   * Para alcanzar la densidad requerida (38 a 44 nodos) sin inventar cosas falsas, DESGLOSA minuciosamente la experiencia del consultante en sus micro-variables operativas y cotidianas reales:
-    - ¿Qué reglas o aprendizajes personales internalizó? (autoexigencia de rendir, temor a fallar o defraudar, aprendizaje de autosuficiencia, callar para evitar roces).
-    - ¿Qué pensamientos y monólogos internos específicos tiene? (rumiación nocturna, anticipación de problemas, autocrítica ante errores, dudar de si decidió bien, comparación silenciosa).
-    - ¿Cómo se manifiesta corporalmente el desgaste de forma natural? (tensión física en hombros y cuello, cansancio al despertar, bajón de energía vespertino, respiración superficial ante la prisa, pesadez corporal acumulada). Lenguaje cotidiano y real, JAMÁS alarmismos médicos.
-    - ¿Qué dinámicas relacionales y del entorno se activan? (dificultad para poner límites, fingir que todo está bajo control, evitar conversaciones difíciles, exigencia por cumplir expectativas).
-    - ¿Qué conductas y maniobras de escape automáticas realiza? (posponer tareas clave, refugiarse en distracciones inmediatas, chequear detalles repetitivamente, trabajar de más para no pensar).
-    - ¿Qué consecuencias a corto y largo plazo cierran el circuito? (alivio momentáneo al evadir, culpa posterior, acumulación de pendientes, sensación de estancamiento, reactivación del reproche interno).
+    - ¿Qué reglas o aprendizajes personales internalizó? (autoexigencia de rendir, temor a fallar o defraudar, aprendizaje de autosuficiencia, callar para evitar roces, exigirse perfección antes de mostrarse).
+    - ¿Qué pensamientos y monólogos internos específicos tiene? (rumiación nocturna, anticipación de problemas, autocrítica ante errores, dudar de si decidió bien, comparación silenciosa, atención hiperfijada en fallas).
+    - ¿Qué dinámicas relacionales y del entorno se activan? (dificultad para poner límites, fingir que todo está bajo control ante otros, evitar conversaciones difíciles, exigencia por cumplir expectativas, distanciamiento preventivo).
+    - ¿Qué conductas y maniobras de escape automáticas realiza? (posponer tareas clave por sobreanálisis, refugiarse en distracciones inmediatas o teléfono, chequear detalles repetitivamente, trabajar de más para no pensar, postergar el descanso).
+    - ¿Qué consecuencias a corto y largo plazo cierran el circuito? (alivio momentáneo al evadir, culpa posterior por el tiempo perdido, acumulación de pendientes, sensación de estancamiento, reactivación del reproche interno).
+    - ¿Cómo se manifiesta orgánicamente el ritmo cotidiano? Solo estados generales reales (cansancio mental acumulado, dificultad para desconectar al dormir, bajón de energía al final de la tarde). JAMÁS patologías somáticas extremas.
 
 === CANTIDAD TOTAL OBLIGATORIA DE NODOS: EXACTAMENTE ENTRE 38 Y 44 NODOS ===
-DISTRIBUCIÓN REQUERIDA (CUMPLE ESTRICTAMENTE CADA RANGO):
-1. Históricos / Aprendizajes de vida (azules, type: 'historical'): EXACTAMENTE entre 6 y 8 nodos.
-   - Esquemas aprendidos y reglas personales (ej. "Regla de autoexigencia", "Temor a fallar o defraudar", "Aprendizaje de autosuficiencia", "Comparación con otros", "Hábito de guardarse emociones", "Miedo al juicio externo").
-2. Mediadores Biológicos / Estado del organismo (verdes, type: 'biological'): EXACTAMENTE entre 5 y 6 nodos.
-   - Manifestaciones orgánicas del ritmo cotidiano (ej. "Desgaste por sobrecarga mental", "Dificultad para desconectar al dormir", "Cansancio al despertar", "Bajón de energía vespertino", "Pesadez física acumulada").
-3. Mediadores Sociales / Vínculos y entorno (verdes, type: 'social'): EXACTAMENTE entre 6 y 7 nodos.
-   - Situaciones vinculares reales (ej. "Fingir que todo está bien", "Dificultad para decir que no", "Guardar silencio ante desacuerdos", "Presión por cumplir expectativas", "Distanciamiento preventivo").
-4. Conductas Problema (rojos): EXACTAMENTE entre 15 y 18 nodos repartidos en:
-   - 'cognitive': EXACTAMENTE 6 a 7 nodos (diálogo interno autocrítico, rumiación mental, anticipación de errores, dudas al decidir, hipervigilancia al juicio, exigencia de perfección).
-   - 'motor': EXACTAMENTE 5 a 6 nodos (posponer pendientes importantes, refugio en distracciones inmediatas, trabajar de más para no pensar, postergar el descanso, comprobación repetitiva).
-   - 'physiological': EXACTAMENTE 4 a 5 nodos (tensión somática en cuello y hombros, respiración superficial ante la prisa, inquietud corporal al estar quieto, fatiga física difusa). Sensaciones cotidianas naturales, NUNCA etiquetas médicas extremas.
-5. Consecuencias (blancos, type: 'consequence'): EXACTAMENTE entre 7 y 9 nodos.
+DISTRIBUCIÓN EQUILIBRADA Y REALISTA (CUMPLE ESTRICTAMENTE CADA RANGO):
+1. Históricos / Aprendizajes de vida (azules, type: 'historical'): EXACTAMENTE entre 7 y 9 nodos.
+   - Esquemas aprendidos y reglas personales (ej. "Regla de autoexigencia", "Temor a fallar o defraudar", "Aprendizaje de autosuficiencia", "Comparación silenciosa", "Hábito de guardarse emociones", "Miedo al juicio externo", "Exigencia de no mostrar debilidad").
+2. Mediadores Sociales / Vínculos y entorno (verdes, type: 'social'): EXACTAMENTE entre 7 y 8 nodos.
+   - Situaciones vinculares cotidianas reales (ej. "Fingir que todo está bien", "Dificultad para decir que no", "Guardar silencio ante desacuerdos", "Presión por cumplir expectativas", "Distanciamiento preventivo", "Evitar pedir ayuda para no molestar").
+3. Conductas Problema (rojos): EXACTAMENTE entre 18 y 22 nodos repartidos en:
+   - 'cognitive': EXACTAMENTE 10 a 12 nodos (diálogo interno autocrítico, rumiación mental continua, anticipación de errores, dudas al decidir, hipervigilancia al juicio, exigencia de certeza, descalificar logros propios, atención centrada en pendientes).
+   - 'motor': EXACTAMENTE 7 a 9 nodos (posponer pendientes importantes, refugio en distracciones cotidianas, sobretrabajar para evadir pensamientos, postergar el descanso, comprobación repetitiva, quedarse quieto sobrepensando).
+   - 'physiological': EXACTAMENTE 1 a 2 nodos suaves y cotidianos (ej. "Tensión acumulada en hombros", "Inquietud al estar quieto"). NUNCA más de 2 nodos somáticos, y NUNCA términos alarmistas ni opresiones torácicas.
+4. Mediadores Biológicos / Estado general del organismo (verdes, type: 'biological'): EXACTAMENTE entre 2 y 3 nodos.
+   - Solo ritmo y energía diaria (ej. "Desgaste por sobrecarga mental", "Dificultad para desconectar al dormir", "Cansancio al despertar"). NUNCA enfermedades inventadas.
+5. Consecuencias (blancos, type: 'consequence'): EXACTAMENTE entre 8 y 10 nodos.
    - A corto plazo: alivio efímero al evadir, desconexión momentánea, sensación temporal de calma.
-   - A largo plazo: culpa posterior, acumulación de pendientes, sensación de estancamiento, confirmación de inseguridad, desgaste vincular.
+   - A largo plazo: culpa posterior por procrastinar, acumulación de pendientes, sensación de estancamiento, confirmación de inseguridad, reactivación del reproche interno.
+
+TOTAL DE NODOS SUMADOS: (7 a 9) + (7 a 8) + (10 a 12) + (7 a 9) + (1 a 2) + (2 a 3) + (8 a 10) = EXACTAMENTE ENTRE 38 Y 44 NODOS.
 
 === CANTIDAD TOTAL OBLIGATORIA DE CONEXIONES (EDGES): EXACTAMENTE ENTRE 65 Y 85 CONEXIONES ===
 REGLA CLÍNICA DE BUCLES ("VER CÓMO SE CONECTAN LAS COSAS"):
@@ -3377,10 +3432,10 @@ ${isAdditive ? `
                     { role: 'system', content: systemPromptTopology },
                     { role: 'user', content: `Genera la TOPOLOGÍA funcional del Mapa de Bucles (EXACTAMENTE entre 38 y 44 nodos y entre 65 y 85 conexiones) organizando con precisión cómo se conectan las cosas en la experiencia del paciente.
 REGLAS CRÍTICAS:
-- EXACTAMENTE entre 38 y 44 nodos en total (6-8 históricos, 5-6 biológicos, 6-7 sociales, 6-7 cognitivos, 5-6 motores, 4-5 fisiológicos y 7-9 consecuencias).
-- EXACTAMENTE entre 65 y 85 conexiones formando bucles de retroalimentación funcionales.
-- CERO ALUCINACIONES: NUNCA inventes eventos biográficos no dichos (maltrato materno/paterno, violencia, divorcio) ni diagnósticos médicos extraños (opresión torácica, alimentación emocional). Desglosa su circuito real en micro-variables humanas, comprensibles y cotidianas.
-- Cada nodo debe incluir su 'label' cercano (2 a 4 palabras), 'description' concisa, 'source' (referencia real), 'challenge' reflexivo y 'reflection_question' profunda.
+- EXACTAMENTE entre 38 y 44 nodos en total (7-9 históricos, 2-3 biológicos, 7-8 sociales, 10-12 cognitivos, 7-9 motores, 1-2 fisiológicos leves, 8-10 consecuencias).
+- EXACTAMENTE entre 65 y 85 conexiones formando bucles de retroalimentación funcionales cerrados.
+- CERO ALUCINACIONES NI MAMADAS: NUNCA inventes eventos biográficos no dichos (maltrato materno/paterno, violencia familiar, divorcios) ni diagnósticos médicos o somáticos extraños (PROHIBIDO: opresión torácica, nudo en la garganta, respiración corta, alimentación emocional, inactividad física). Desglosa su circuito real en micro-variables humanas, comprensibles y cotidianas de pensamientos, dudas, hábitos de escape, relaciones y consecuencias.
+- Cada nodo debe incluir su 'label' cercano (2 a 4 palabras cotidianas), 'description' concisa, 'source' (referencia real), 'challenge' reflexivo y 'reflection_question' profunda.
 Datos clínicos del paciente:\n` + context }
                 ],
                 response_format: { type: "json_object" },
@@ -3409,6 +3464,32 @@ Datos clínicos del paciente:\n` + context }
             if (!Array.isArray(parsedTopology.nodes)) parsedTopology.nodes = [];
             if (!Array.isArray(parsedTopology.edges)) parsedTopology.edges = [];
             
+            // Sanitizar de inmediato los nodos para desinfectar cualquier etiqueta o síntoma alucinado
+            parsedTopology.nodes = parsedTopology.nodes.map(node => {
+                let cleanLabel = softenNodeLabel(node.label || '');
+                if (/opresi[oó]n\s+tor[aá]cica/i.test(cleanLabel)) cleanLabel = "Tensión por estrés";
+                if (/nudo\s+en\s+la\s+garganta/i.test(cleanLabel)) cleanLabel = "Incomodidad al expresarse";
+                if (/respiraci[oó]n\s+corta/i.test(cleanLabel)) cleanLabel = "Inquietud y prisa";
+                if (/inactividad\s+f[ií]sica/i.test(cleanLabel)) cleanLabel = "Pausa en las actividades";
+                if (/alimentaci[oó]n\s+emocional/i.test(cleanLabel)) cleanLabel = "Comer por ansiedad";
+                if (/maltrato\s+materno|maltrato\s+paterno/i.test(cleanLabel)) cleanLabel = "Exigencia familiar del pasado";
+                if (/violencia\s+familiar|violencia\s+intrafamiliar/i.test(cleanLabel)) cleanLabel = "Tensión familiar en la infancia";
+                if (/divorcio\s+de\s+padres/i.test(cleanLabel)) cleanLabel = "Separaciones del pasado";
+
+                let cleanDesc = (node.description || '');
+                cleanDesc = cleanDesc.replace(/opresi[oó]n\s+tor[aá]cica/gi, "tensión física");
+                cleanDesc = cleanDesc.replace(/nudo\s+en\s+la\s+garganta/gi, "incomodidad al expresarse");
+                cleanDesc = cleanDesc.replace(/respiraci[oó]n\s+corta/gi, "sensación de prisa");
+                cleanDesc = cleanDesc.replace(/alimentaci[oó]n\s+emocional/gi, "buscar alivio en la comida");
+                cleanDesc = cleanDesc.replace(/inactividad\s+f[ií]sica/gi, "quedarse quieto sin avanzar");
+
+                return {
+                    ...node,
+                    label: cleanLabel,
+                    description: cleanDesc
+                };
+            });
+
             // Filtrar edges que referencien nodos inexistentes o auto-conexiones
             const validNodeIds = new Set(parsedTopology.nodes.map(n => n.id));
             parsedTopology.edges = parsedTopology.edges.filter(e => e.source && e.target && e.source !== e.target && validNodeIds.has(e.source) && validNodeIds.has(e.target));
@@ -3438,7 +3519,7 @@ Datos clínicos del paciente:\n` + context }
                 (nodesByType.biological || []).forEach((bId, i) => {
                     const targetPhys = (nodesByType.physiological || [])[i % (nodesByType.physiological?.length || 1)];
                     const targetCog = (nodesByType.cognitive || [])[(i + 1) % (nodesByType.cognitive?.length || 1)];
-                    addEdgeSafe(bId, targetPhys, 2);
+                    if (targetPhys) addEdgeSafe(bId, targetPhys, 2);
                     addEdgeSafe(bId, targetCog, 1);
                 });
                 (nodesByType.social || []).forEach((sId, i) => {
