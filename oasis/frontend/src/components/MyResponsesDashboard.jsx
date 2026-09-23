@@ -202,6 +202,14 @@ export const CUTE_NODE_THEMES = {
     }
 };
 
+export const CLINICAL_COLUMNS = [
+    { id: 'antecedents', num: '1', title: 'Contexto & Historia', subtitle: 'Reglas & Disparadores', icon: '🌱', baseX: 14, color: '#a5b4fc' },
+    { id: 'internal_barriers', num: '2', title: 'Barreras Internas', subtitle: 'Fusión & Malestar Aversivo', icon: '💭', baseX: 32, color: '#f472b6' },
+    { id: 'experiential_avoidance', num: '3', title: 'Evitación Experiencial', subtitle: 'Conductas de Escape (CRB1)', icon: '🐾', baseX: 50, color: '#fbbf24' },
+    { id: 'maintaining_traps', num: '4', title: 'Trampa Funcional', subtitle: 'Alivio & Costos Vitales', icon: '🪄', baseX: 68, color: '#c084fc' },
+    { id: 'values_flexibility', num: '5', title: 'Valores & Integración', subtitle: 'Pivotes de Cambio (CRB2)', icon: '🧭', baseX: 86, color: '#38bdf8' }
+];
+
 const BLIND_SPOTS_CONFIG = [
     {
         id: "cronologico",
@@ -996,9 +1004,17 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
         return () => clearTimeout(timer);
     }, []);
 
-    const isMobileDevice = window.innerWidth < 768;
-    const VIRTUAL_WIDTH = isMobileDevice ? 1100 : 1950;
-    const VIRTUAL_HEIGHT = isMobileDevice ? 2600 : 1150;
+    const [isMobileDevice, setIsMobileDevice] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+    useEffect(() => {
+        const handleResize = () => setIsMobileDevice(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const VIRTUAL_WIDTH = 1950;
+    const VIRTUAL_HEIGHT = 1150;
+    const [mobileViewMode, setMobileViewMode] = useState('readable');
+    const [activeColumnIndex, setActiveColumnIndex] = useState(0);
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -2493,7 +2509,7 @@ Devuelve estrictamente el JSON sin formato extra.
         }
     }, [selectedNode, tourActiveIndex, selectedQuestionIndex, mapViewTab, sortedTourNodes]);
 
-    const resetMapTransform = useCallback(() => {
+    const resetMapTransform = useCallback((requestedMode = null) => {
         if (!mapContainerRef.current) return;
         const rect = mapContainerRef.current.getBoundingClientRect();
         const viewportWidth = rect.width;
@@ -2501,7 +2517,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
         // If the container width/height is 0 (not fully rendered or in background), retry after layout reflow
         if (viewportWidth === 0 || viewportHeight === 0) {
-            setTimeout(resetMapTransform, 100);
+            setTimeout(() => resetMapTransform(requestedMode), 100);
             return;
         }
 
@@ -2533,33 +2549,87 @@ Devuelve estrictamente el JSON sin formato extra.
         const boundedMinY = Math.max(0, minY - nodeHalfHeightPct);
         const boundedMaxY = Math.min(100, maxY + nodeHalfHeightPct);
 
-        const paddingPercentX = isMobileDevice ? 0.22 : 0.16;
-        const paddingPercentY = isMobileDevice ? 0.25 : 0.16;
-        const graphWidthRange = (boundedMaxX - boundedMinX) || 80;
-        const graphHeightRange = (boundedMaxY - boundedMinY) || 80;
+        const isMobile = window.innerWidth < 768;
+        const mode = requestedMode || (isMobile ? mobileViewMode : 'overview');
 
-        const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
-        const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
+        let fitScale;
+        let tx, ty;
 
-        // Safe breathing zoom factor: 0.86 desktop, 0.70 mobile (NEVER > 1.0 to avoid cutting off edges)
-        let fitScale = Math.min(scaleX, scaleY) * (isMobileDevice ? 0.70 : 0.86);
-        const minScaleLimit = isMobileDevice ? 0.08 : 0.12;
-        fitScale = Math.min(Math.max(minScaleLimit, fitScale), 2.5);
+        if (isMobile && mode === 'readable') {
+            // VISTA LECTURA ENFOCADA (Móvil):
+            // Escala legible (0.75x) centrada en el flujo inicial (Columna 1: Contexto y Columna 2: Barreras)
+            fitScale = 0.75;
+            const targetX = 26; // Punto medio equilibrado entre Col 1 (14%) y Col 2 (32%)
+            const targetY = 52;
+            const px = VIRTUAL_WIDTH * (targetX / 100);
+            const py = VIRTUAL_HEIGHT * (targetY / 100);
+            tx = viewportWidth / 2 - px * fitScale;
+            ty = (viewportHeight * 0.48) - py * fitScale;
+        } else {
+            // VISTA COMPLETA (Overview / Desktop):
+            const paddingPercentX = isMobile ? 0.10 : 0.16;
+            const paddingPercentY = isMobile ? 0.12 : 0.16;
+            const graphWidthRange = (boundedMaxX - boundedMinX) || 80;
+            const graphHeightRange = (boundedMaxY - boundedMinY) || 80;
 
-        const graphCenterX = (boundedMinX + boundedMaxX) / 2;
-        const graphCenterY = (boundedMinY + boundedMaxY) / 2;
+            const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
+            const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-        const px = VIRTUAL_WIDTH * (graphCenterX / 100);
-        const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
+            // Factor de encuadre seguro (0.88 desktop, 0.86 móvil)
+            fitScale = Math.min(scaleX, scaleY) * (isMobile ? 0.86 : 0.88);
+            const minScaleLimit = isMobile ? 0.16 : 0.20;
+            fitScale = Math.min(Math.max(minScaleLimit, fitScale), 2.5);
 
-        // Correct top-left origin mathematical centering formula: tx = center - px * fitScale
-        const tx = viewportWidth / 2 - px * fitScale;
-        const ty = (viewportHeight * (isMobileDevice ? 0.52 : 0.50)) - py * fitScale;
+            const graphCenterX = (boundedMinX + boundedMaxX) / 2;
+            const graphCenterY = (boundedMinY + boundedMaxY) / 2;
+
+            const px = VIRTUAL_WIDTH * (graphCenterX / 100);
+            const py = VIRTUAL_HEIGHT * (graphCenterY / 100);
+
+            tx = viewportWidth / 2 - px * fitScale;
+            ty = (viewportHeight * (isMobile ? 0.50 : 0.50)) - py * fitScale;
+        }
 
         triggerProgrammaticTransition();
         transformRef.current = { x: tx, y: ty, scale: fitScale };
         setMapTransform({ x: tx, y: ty, scale: fitScale });
-    }, [afcData, triggerProgrammaticTransition]);
+    }, [afcData, triggerProgrammaticTransition, mobileViewMode]);
+
+    const toggleMobileFitOrReset = useCallback(() => {
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+            const nextMode = mobileViewMode === 'readable' ? 'overview' : 'readable';
+            setMobileViewMode(nextMode);
+            resetMapTransform(nextMode);
+        } else {
+            resetMapTransform('overview');
+        }
+    }, [mobileViewMode, resetMapTransform]);
+
+    const panToColumn = useCallback((colIndex) => {
+        if (!mapContainerRef.current) return;
+        const rect = mapContainerRef.current.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const col = CLINICAL_COLUMNS[colIndex];
+        if (!col) return;
+
+        const isMobile = window.innerWidth < 768;
+        const targetScale = isMobile ? 0.75 : 0.85;
+        const px = VIRTUAL_WIDTH * (col.baseX / 100);
+        const py = VIRTUAL_HEIGHT * 0.52;
+
+        const tx = width / 2 - px * targetScale;
+        const ty = (height * 0.48) - py * targetScale;
+
+        triggerProgrammaticTransition();
+        transformRef.current = { x: tx, y: ty, scale: targetScale };
+        setMapTransform({ x: tx, y: ty, scale: targetScale });
+        setActiveColumnIndex(colIndex);
+        if (isMobile) {
+            setMobileViewMode('readable');
+        }
+    }, [triggerProgrammaticTransition]);
 
     const zoomToNode = useCallback((targetNode) => {
         if (targetNode && mapContainerRef.current) {
@@ -2570,10 +2640,10 @@ Devuelve estrictamente el JSON sin formato extra.
             const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
             const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
             const isMobile = window.innerWidth < 768;
-            let targetScale = isMobile ? Math.min(0.55, (width / VIRTUAL_WIDTH) * 2.5) : (width / VIRTUAL_WIDTH) * 1.3;
-            targetScale = Math.min(Math.max(isMobile ? 0.08 : 0.20, targetScale), 2.5);
+            let targetScale = isMobile ? 0.85 : 0.95;
+            targetScale = Math.min(Math.max(0.20, targetScale), 2.5);
             const tx = width / 2 - px * targetScale;
-            const ty = (height * (isMobile ? 0.22 : 0.35)) - py * targetScale;
+            const ty = (height * (isMobile ? 0.32 : 0.40)) - py * targetScale;
             triggerProgrammaticTransition();
             transformRef.current = { x: tx, y: ty, scale: targetScale };
             setMapTransform({ x: tx, y: ty, scale: targetScale });
@@ -4912,29 +4982,29 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
         const getStaggeredSlots = (count, baseX, customYStep) => {
             if (count <= 0) return [];
-            if (count === 1) return [{ x: baseX, y: 50 }];
+            if (count === 1) return [{ x: baseX, y: 52 }];
 
             // Each node receives its own unique vertical level for optimal readability and soft constellation flow
             let yStep = customYStep;
             if (!yStep) {
                 if (count === 2) yStep = 24;
                 else if (count === 3) yStep = 18;
-                else if (count === 4) yStep = 14;
-                else if (count === 5) yStep = 11.5;
-                else if (count === 6) yStep = 9.8;
-                else if (count <= 8) yStep = 8.5;
-                else yStep = Math.max(6.5, 66 / (count - 1));
+                else if (count === 4) yStep = 15;
+                else if (count === 5) yStep = 13;
+                else if (count === 6) yStep = 11.2;
+                else if (count <= 8) yStep = 9.5;
+                else yStep = Math.max(7.5, 68 / (count - 1));
             }
 
             const totalHeight = (count - 1) * yStep;
-            const startY = 50 - (totalHeight / 2);
+            const startY = 52 - (totalHeight / 2);
             const slots = [];
             for (let i = 0; i < count; i++) {
                 // Organic floating wave offset (alternating + subtle sine wave)
                 const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 1.5 : 0;
                 const altX = (i % 2 === 0 ? -1.2 : 1.2);
                 const x = Math.max(8, Math.min(92, baseX + altX + waveX));
-                const y = Math.max(14, Math.min(86, startY + (i * yStep)));
+                const y = Math.max(16, Math.min(88, startY + (i * yStep)));
                 slots.push({ x, y });
             }
             return slots;
@@ -6273,8 +6343,9 @@ Devuelve estrictamente el JSON sin formato extra.
 
                         {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
-                            <div className="absolute top-[80px] md:top-6 left-4 md:left-6 z-[120] hidden md:flex items-center gap-2 pointer-events-none">
-                                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-zinc-950/70 border border-pink-400/20 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+                            {/* Top Header Badge */}
+                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-none">
+                                <div className="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-zinc-950/80 border border-pink-400/25 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                                     <span className="text-xs">✨</span>
                                     <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
                                         Mapa de Bucles
@@ -6283,70 +6354,90 @@ Devuelve estrictamente el JSON sin formato extra.
                                     {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
                                 </div>
                             </div>
-                                <div className={`absolute bottom-[90px] md:bottom-6 left-3 md:left-6 z-[120] flex-col items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
 
-
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => generateAFCAnalysis(false)}
-                                            className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
-                                            title="Generar Análisis Clínico"
-                                        >
-                                            <Sparkles size={11} />
-                                        </button>
-                                        <button
-                                            onClick={() => reorganizeNodes()}
-                                            className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                            title="Reorganizar nodos del grafo"
-                                        >
-                                            <Network size={11} className="text-emerald-400" />
-                                        </button>
-                                        <button
-                                            onClick={startTour}
-                                            className="p-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-white transition-all flex items-center justify-center active:scale-95"
-                                            title="Iniciar recorrido clínico guiado"
-                                        >
-                                            <Compass size={11} />
-                                        </button>
-                                        {isEmbedded && (
+                            {/* Mobile Quick Column Navigation Pills */}
+                            {isMobileDevice && mapViewTab === 'map' && (
+                                <div className="absolute top-[48px] left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto">
+                                    {CLINICAL_COLUMNS.map((col, idx) => {
+                                        const isActive = activeColumnIndex === idx;
+                                        return (
                                             <button
-                                                onClick={() => setViewMode(viewMode === 'dashboard' ? 'raw_data' : 'dashboard')}
-                                                className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-white flex items-center justify-center active:scale-95"
-                                                title={viewMode === 'dashboard' ? 'Ver informe completo escrito' : 'Ver mapa interactivo de bucles'}
+                                                key={col.id}
+                                                onClick={() => panToColumn(idx)}
+                                                className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
+                                                    isActive 
+                                                        ? 'bg-white/15 text-white shadow-sm border border-white/20' 
+                                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                                                }`}
+                                                style={isActive ? { borderColor: `${col.color}60`, color: col.color } : {}}
                                             >
-                                                <FileText size={11} />
+                                                <span className="text-[10px]">{col.icon}</span>
+                                                <span>{col.num}. {col.title.split(' ')[0]}</span>
                                             </button>
-                                        )}
-                                        {isEmbedded && (
-                                            <>
-                                                <button
-                                                    onClick={() => importFileInputRef.current?.click()}
-                                                    className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-emerald-400 hover:text-white flex items-center justify-center active:scale-95"
-                                                    title="Importar Informe Clínico (.doc)"
-                                                >
-                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                                </button>
-                                                <input 
-                                                    type="file" 
-                                                    accept=".doc,.html" 
-                                                    ref={importFileInputRef} 
-                                                    onChange={handleImportDoc} 
-                                                    style={{ display: 'none' }} 
-                                                />
-                                                <button
-                                                    onClick={handleExportDoc}
-                                                    className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/30 transition-colors text-indigo-400 hover:text-white flex items-center justify-center active:scale-95"
-                                                    title="Exportar Informe Clínico a Documento Word"
-                                                >
-                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
+                                        );
+                                    })}
                                 </div>
+                            )}
 
-                            
+                            {/* Action Buttons Toolbar (Top right on mobile, Bottom left on desktop) */}
+                            <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
+                                <button
+                                    onClick={() => generateAFCAnalysis(false)}
+                                    className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
+                                    title="Generar Análisis Clínico"
+                                >
+                                    <Sparkles size={11} />
+                                </button>
+                                <button
+                                    onClick={() => reorganizeNodes()}
+                                    className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
+                                    title="Reorganizar distribución de nodos"
+                                >
+                                    <Network size={11} className="text-emerald-400" />
+                                </button>
+                                <button
+                                    onClick={startTour}
+                                    className="p-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-white transition-all flex items-center justify-center active:scale-95"
+                                    title="Iniciar recorrido clínico guiado"
+                                >
+                                    <Compass size={11} />
+                                </button>
+                                {isEmbedded && (
+                                    <button
+                                        onClick={() => setViewMode(viewMode === 'dashboard' ? 'raw_data' : 'dashboard')}
+                                        className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-white flex items-center justify-center active:scale-95"
+                                        title={viewMode === 'dashboard' ? 'Ver informe completo escrito' : 'Ver mapa interactivo de bucles'}
+                                    >
+                                        <FileText size={11} />
+                                    </button>
+                                )}
+                                {isEmbedded && (
+                                    <>
+                                        <button
+                                            onClick={() => importFileInputRef.current?.click()}
+                                            className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-emerald-400 hover:text-white flex items-center justify-center active:scale-95"
+                                            title="Importar Informe Clínico (.doc)"
+                                        >
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            accept=".doc,.html" 
+                                            ref={importFileInputRef} 
+                                            onChange={handleImportDoc} 
+                                            style={{ display: 'none' }} 
+                                        />
+                                        <button
+                                            onClick={handleExportDoc}
+                                            className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/30 transition-colors text-indigo-400 hover:text-white flex items-center justify-center active:scale-95"
+                                            title="Exportar Informe Clínico a Documento Word"
+                                        >
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
                             {/* Segmented Control Tabs (Bottom NavBar) */}
                             <div className={`absolute bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] md:bottom-6 left-1/2 transform -translate-x-1/2 z-[200] bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 w-max max-w-[95vw] gap-1 sm:gap-2 shadow-2xl pointer-events-auto overflow-x-auto no-scrollbar scale-90 md:scale-100 origin-bottom ${((selectedNode || tourActiveIndex !== null) && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden md:flex' : 'flex'}`}>
                                 <button onClick={() => setMapViewTab('map')} title="El Mapa" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
@@ -6393,7 +6484,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Zoom Controls Overlay - Modern Floating Glass Widget */}
                                 {mapViewTab === 'map' && (
                                     <div 
-                                        className="zoom-controls fixed sm:absolute right-3 sm:right-6 top-20 sm:top-24 z-[160] flex flex-col items-center bg-zinc-950/90 border border-white/15 backdrop-blur-xl p-1 sm:p-1.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] gap-1 transition-all duration-200 pointer-events-auto select-none"
+                                        className="zoom-controls fixed sm:absolute right-3 sm:right-6 top-24 sm:top-24 z-[160] flex flex-col items-center bg-zinc-950/90 border border-white/15 backdrop-blur-xl p-1 sm:p-1.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] gap-1 transition-all duration-200 pointer-events-auto select-none"
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                         onTouchStart={e => e.stopPropagation()}
@@ -6407,9 +6498,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                         </button>
                                         
                                         <button
-                                            onClick={resetMapTransform}
+                                            onClick={toggleMobileFitOrReset}
                                             className="text-[9px] font-mono font-black text-zinc-400 hover:text-white px-1 py-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
-                                            title="Nivel de Zoom actual (clic para centrar y ajustar)"
+                                            title="Nivel de Zoom (clic para alternar Vista Lectura / Vista Completa)"
                                         >
                                             {Math.round((mapTransform.scale || 1) * 100)}%
                                         </button>
@@ -6425,9 +6516,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <div className="w-5 h-[1px] bg-white/10 my-0.5" />
 
                                         <button 
-                                            onClick={resetMapTransform} 
+                                            onClick={toggleMobileFitOrReset} 
                                             className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title="Centrar y encuadrar todos los nodos"
+                                            title={isMobileDevice && mobileViewMode === 'readable' ? "Ver Todo el Grafo (Overview)" : "Vista Lectura Legible"}
                                         >
                                             <Maximize2 size={14} />
                                         </button>
@@ -6448,6 +6539,45 @@ Devuelve estrictamente el JSON sin formato extra.
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
                                     style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
                                 >
+                                    {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
+                                    <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+                                        {CLINICAL_COLUMNS.map((col) => (
+                                            <div
+                                                key={col.id}
+                                                className="absolute top-0 bottom-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+                                                style={{ left: `${col.baseX}%`, width: '280px' }}
+                                            >
+                                                {/* Subtle luminous vertical lane guide */}
+                                                <div 
+                                                    className="absolute top-14 bottom-8 w-[1px] pointer-events-none opacity-40" 
+                                                    style={{
+                                                        background: `linear-gradient(to bottom, ${col.color}40, ${col.color}10 20%, rgba(255,255,255,0.03) 60%, transparent)`
+                                                    }}
+                                                />
+
+                                                {/* Column Header Card */}
+                                                <div 
+                                                    className="mt-3.5 px-3.5 py-1.5 rounded-2xl border backdrop-blur-xl shadow-lg flex flex-col items-center gap-0.5 pointer-events-auto"
+                                                    style={{
+                                                        backgroundColor: 'rgba(10, 11, 18, 0.75)',
+                                                        borderColor: `${col.color}35`,
+                                                        boxShadow: `0 8px 24px -4px ${col.color}20`
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-xs leading-none">{col.icon}</span>
+                                                        <span className="text-[10.5px] font-black tracking-wider uppercase font-mono" style={{ color: col.color }}>
+                                                            {col.title}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[8px] text-zinc-400 font-medium tracking-tight">
+                                                        {col.subtitle}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
                                     {/* SVG Edges */}
                                     
                                     {/* --- INJECTION FOR MINI NODES --- */}
