@@ -189,6 +189,16 @@ export const CUTE_NODE_THEMES = {
         glow: "hover:shadow-[0_0_20px_rgba(192,132,252,0.3)]",
         selected: "border-purple-300 bg-purple-950/40 shadow-[0_0_28px_rgba(192,132,252,0.45)]",
         textColor: "text-purple-100"
+    },
+    values: {
+        icon: "🧭",
+        category: "Valores",
+        color: "#38bdf8",
+        badge: "bg-sky-500/15 text-sky-300 border-sky-400/30",
+        border: "border-sky-400/30 hover:border-sky-300",
+        glow: "hover:shadow-[0_0_20px_rgba(56,189,248,0.3)]",
+        selected: "border-sky-300 bg-sky-950/40 shadow-[0_0_28px_rgba(56,189,248,0.45)]",
+        textColor: "text-sky-100"
     }
 };
 
@@ -2389,6 +2399,13 @@ Devuelve estrictamente el JSON sin formato extra.
             }
         }
 
+        const clinicalRoleOrder = {
+            antecedent: 0,
+            internal_barrier: 1,
+            experiential_avoidance: 2,
+            maintaining_trap: 3,
+            values_flexibility: 4
+        };
         const typeOrder = {
             historical: 0,
             biological: 1,
@@ -2396,9 +2413,15 @@ Devuelve estrictamente el JSON sin formato extra.
             cognitive: 3,
             motor: 4,
             physiological: 5,
-            consequence: 6
+            consequence: 6,
+            values: 7
         };
         return [...rawNodes].sort((a, b) => {
+            const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
+            const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
+            if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
+                return roleA - roleB;
+            }
             const orderA = typeOrder[a.type] ?? 99;
             const orderB = typeOrder[b.type] ?? 99;
             if (orderA !== orderB) return orderA - orderB;
@@ -3220,69 +3243,79 @@ ${currentBlindSpotsText}
         `;
 
         const systemPromptTopology = `
-Eres un Psicólogo Clínico y Analista Existencial de Alto Nivel Especializado en Análisis Funcional de la Conducta (AFC).
-ETAPA 1: TOPOLOGÍA FUNCIONAL DEL MAPA DE BUCLES.
-Tu misión es construir el mapa funcional completo del consultante: EXACTAMENTE ENTRE 38 Y 44 NODOS y EXACTAMENTE ENTRE 65 Y 85 CONEXIONES, organizando a fondo CÓMO SE CONECTAN LAS COSAS Y CÓMO SE PERPETÚAN LOS BUCLES DE SUFRIMIENTO.
+Eres un Psicólogo Clínico Experto en Psicoterapias de Tercera Generación (Terapia de Aceptación y Compromiso [ACT], Psicoterapia Analítico Funcional [FAP] y Ciencias Conductuales Contextuales).
+ETAPA 1: FORMULACIÓN CLÍNICA DE CASO EN MODO GRAFO (ANÁLISIS FUNCIONAL DE LA CONDUCTA).
+Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en forma de red funcional interactiva: EXACTAMENTE ENTRE 20 Y 24 NODOS CLÍNICOS NUCLEARES y EXACTAMENTE ENTRE 32 Y 48 CONEXIONES FUNCIONALES DIRECTAS.
 
-=== REGLA DE ORO: REALIDAD CLÍNICA RIGUROSA (CERO ALUCINACIONES, CERO INVENTOS DE TRAUMAS O DIAGNÓSTICOS EXTRAÑOS) ===
-- NUNCA inventes eventos biográficos que el paciente no relató (PROHIBIDO inventar maltrato materno/paterno, violencia familiar, divorcios, ni pérdidas si no constan en sus datos).
-- PROHIBICIÓN ESTRICTA DE CLICHÉS SOMÁTICOS O MÉDICOS: Queda TERMINANTEMENTE PROHIBIDO generar los siguientes términos o conceptos similares:
-  * "Opresión torácica"
-  * "Nudo en la garganta"
-  * "Respiración corta"
-  * "Alimentación emocional"
-  * "Inactividad física"
-  * "Fatiga diurna"
-  * "Trastornos somáticos" o diagnósticos médicos alarmistas.
-- CÓMO LOGRAR LOS 38 A 44 NODOS DE FORMA 100% REAL Y HUMANA:
-  * Toda vivencia de malestar, duda o estrés es un circuito psicológico sistémico completo.
-  * Para alcanzar la densidad requerida (38 a 44 nodos) sin inventar cosas falsas, DESGLOSA minuciosamente la experiencia del consultante en sus micro-variables operativas y cotidianas reales:
-    - ¿Qué reglas o aprendizajes personales internalizó? (autoexigencia de rendir, temor a fallar o defraudar, aprendizaje de autosuficiencia, callar para evitar roces, exigirse perfección antes de mostrarse).
-    - ¿Qué pensamientos y monólogos internos específicos tiene? (rumiación nocturna, anticipación de problemas, autocrítica ante errores, dudar de si decidió bien, comparación silenciosa, atención hiperfijada en fallas).
-    - ¿Qué dinámicas relacionales y del entorno se activan? (dificultad para poner límites, fingir que todo está bajo control ante otros, evitar conversaciones difíciles, exigencia por cumplir expectativas, distanciamiento preventivo).
-    - ¿Qué conductas y maniobras de escape automáticas realiza? (posponer tareas clave por sobreanálisis, refugiarse en distracciones inmediatas o teléfono, chequear detalles repetitivamente, trabajar de más para no pensar, postergar el descanso).
-    - ¿Qué consecuencias a corto y largo plazo cierran el circuito? (alivio momentáneo al evadir, culpa posterior por el tiempo perdido, acumulación de pendientes, sensación de estancamiento, reactivación del reproche interno).
-    - ¿Cómo se manifiesta orgánicamente el ritmo cotidiano? Solo estados generales reales (cansancio mental acumulado, dificultad para desconectar al dormir, bajón de energía al final de la tarde). JAMÁS patologías somáticas extremas.
+=== PRINCIPIO FUNDAMENTAL: FORMULACIÓN DE CASO CONTEXTUAL (CERO RELLENO, CERO SÍNTOMAS INVENTADOS) ===
+- No hagas un inventario disperso ni una lista infinita de quejas triviales. Una verdadera formulación de caso articula CÓMO SE MANTIENE EL SUFRIMIENTO y DÓNDE ENTRA LA FLEXIBILIDAD PSICOLÓGICA.
+- REGLA DE ORO: CERO ALUCINACIONES BIOGRÁFICAS O MÉDICAS.
+  * NUNCA inventes eventos biográficos no dichos (PROHIBIDO inventar maltrato materno/paterno, violencia familiar, abusos, divorcios, ni orfandad si no constan en sus datos).
+  * NUNCA inventes diagnósticos médicos ni clichés somáticos de ansiedad (PROHIBIDO terminantemente: "opresión torácica", "nudo en la garganta", "respiración corta", "alimentación emocional", "inactividad física", "trastornos somáticos").
+  * Si el consultante no reportó dolor o sensaciones físicas explícitas, el eje corporal se limita a estados naturales cotidianos (ej. "Tensión por estrés") o se prescinde de él.
 
-=== CANTIDAD TOTAL OBLIGATORIA DE NODOS: EXACTAMENTE ENTRE 38 Y 44 NODOS ===
-DISTRIBUCIÓN EQUILIBRADA Y REALISTA (CUMPLE ESTRICTAMENTE CADA RANGO):
-1. Históricos / Aprendizajes de vida (azules, type: 'historical'): EXACTAMENTE entre 7 y 9 nodos.
-   - Esquemas aprendidos y reglas personales (ej. "Regla de autoexigencia", "Temor a fallar o defraudar", "Aprendizaje de autosuficiencia", "Comparación silenciosa", "Hábito de guardarse emociones", "Miedo al juicio externo", "Exigencia de no mostrar debilidad").
-2. Mediadores Sociales / Vínculos y entorno (verdes, type: 'social'): EXACTAMENTE entre 7 y 8 nodos.
-   - Situaciones vinculares cotidianas reales (ej. "Fingir que todo está bien", "Dificultad para decir que no", "Guardar silencio ante desacuerdos", "Presión por cumplir expectativas", "Distanciamiento preventivo", "Evitar pedir ayuda para no molestar").
-3. Conductas Problema (rojos): EXACTAMENTE entre 18 y 22 nodos repartidos en:
-   - 'cognitive': EXACTAMENTE 10 a 12 nodos (diálogo interno autocrítico, rumiación mental continua, anticipación de errores, dudas al decidir, hipervigilancia al juicio, exigencia de certeza, descalificar logros propios, atención centrada en pendientes).
-   - 'motor': EXACTAMENTE 7 a 9 nodos (posponer pendientes importantes, refugio en distracciones cotidianas, sobretrabajar para evadir pensamientos, postergar el descanso, comprobación repetitiva, quedarse quieto sobrepensando).
-   - 'physiological': EXACTAMENTE 1 a 2 nodos suaves y cotidianos (ej. "Tensión acumulada en hombros", "Inquietud al estar quieto"). NUNCA más de 2 nodos somáticos, y NUNCA términos alarmistas ni opresiones torácicas.
-4. Mediadores Biológicos / Estado general del organismo (verdes, type: 'biological'): EXACTAMENTE entre 2 y 3 nodos.
-   - Solo ritmo y energía diaria (ej. "Desgaste por sobrecarga mental", "Dificultad para desconectar al dormir", "Cansancio al despertar"). NUNCA enfermedades inventadas.
-5. Consecuencias (blancos, type: 'consequence'): EXACTAMENTE entre 8 y 10 nodos.
-   - A corto plazo: alivio efímero al evadir, desconexión momentánea, sensación temporal de calma.
-   - A largo plazo: culpa posterior por procrastinar, acumulación de pendientes, sensación de estancamiento, confirmación de inseguridad, reactivación del reproche interno.
+=== LOS 5 PILARES DE LA FORMULACIÓN CLÍNICA (DISTRIBUCIÓN ESTRICTA DE 20 A 24 NODOS EN TOTAL) ===
+Distribuye los nodos en los 5 ejes funcionales del caso:
 
-TOTAL DE NODOS SUMADOS: (7 a 9) + (7 a 8) + (10 a 12) + (7 a 9) + (1 a 2) + (2 a 3) + (8 a 10) = EXACTAMENTE ENTRE 38 Y 44 NODOS.
+1. CONTEXTO & VULNERABILIDAD HISTÓRICA (4 a 5 nodos en total):
+   - Tipos: 'historical' (3-4 nodos), 'social' (1-2 nodos), 'biological' (0-1 nodo solo si el paciente refirió datos físicos de sueño/energía).
+   - clinical_role: 'antecedent'
+   - Qué representa:
+     * Reglas verbales tempranas aprendidas (ej. "Regla de autosuficiencia obligada", "Creencia de que fallar es inaceptable", "Miedo al rechazo si pongo límites").
+     * Disparadores contextuales actuales (estímulos discriminativos S^D: demandas laborales, momentos de soledad/silencio, conflictos interpersonales, incertidumbre).
 
-=== CANTIDAD TOTAL OBLIGATORIA DE CONEXIONES (EDGES): EXACTAMENTE ENTRE 65 Y 85 CONEXIONES ===
-REGLA CLÍNICA DE BUCLES ("VER CÓMO SE CONECTAN LAS COSAS"):
-- En un mapa de bucles real, cada nodo conecta en promedio con 2 a 4 nodos para mostrar la red viva.
-- Cada antecedente conecta con 2 o 3 mediadores o pensamientos.
-- Cada pensamiento conecta con respuestas corporales y conductas de escape.
-- Cada conducta conduce a consecuencias de alivio a corto plazo y consecuencias de desgaste a largo plazo.
-- Y ESENCIAL PARA CERRAR LOS BUCLES: Las consecuencias envían conexiones de retroalimentación hacia los mediadores biológicos, mediadores sociales y pensamientos cognitivos (cerrando entre 8 y 15 ciclos funcionales).
-- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 65 y 85 conexiones con 'source' y 'target' válidos.
+2. BARRERAS INTERNAS / MALESTAR AVERSIVO (5 a 6 nodos en total):
+   - Tipos: 'cognitive' (4-5 nodos), 'physiological' (0-1 nodo solo si hay tensión cotidiana real).
+   - clinical_role: 'internal_barrier'
+   - Qué representa:
+     * Fusión Cognitiva (diálogos internos autocríticos categóricos, rumiaciones sobre el futuro, dudas sobre la propia valía, hipervigilancia al juicio externo).
+     * Vulnerabilidad Afectiva Temida (la experiencia emocional dolorosa que el paciente intenta no sentir: sensación de vacío, miedo a la insuficiencia, culpa profunda, angustia de desconexión).
 
-=== REGLA DE NOMBRADO DE NODOS ('label') — TONO CERCANO, NATURAL Y HUMANO ("HEY MIRA") ===
-- Título humano, empático y descriptivo (2 a 4 palabras cotidianas). Cero dramatismo o jerga médica.
-- Cada nodo debe tener:
-  - id: formato "n1", "n2", "n3"...
-  - type: 'historical' | 'biological' | 'social' | 'cognitive' | 'motor' | 'physiological' | 'consequence'
-  - label: 2 a 4 palabras
-  - description: 6 a 12 palabras explicando lo que experimenta el paciente
-  - source: referencia honesta a lo que el consultante compartió (o contexto de la reflexión)
-  - challenge: reto reflexivo profundo (3 a 7 palabras)
-  - reflection_question: pregunta reflexiva auténtica, empática y directa (5 a 12 palabras)
-  - x: coordenada sugerida (10 a 90)
-  - y: coordenada sugerida (10 a 90)
+3. REPERTORIO INFLEXIBLE / EVITACIÓN EXPERIENCIAL (4 a 5 nodos en total):
+   - Tipos: 'motor'
+   - clinical_role: 'experiential_avoidance'
+   - Qué representa:
+     * Conductas Clínicamente Relevantes (CRB1) y Maniobras de Control/Escape: Lo que el consultante hace en su cotidianidad para amortiguar o huir del malestar interno (ej. "Procrastinar por sobreanálisis", "Aislamiento defensivo", "Refugio en distracciones inmediatas", "Sobretrabajo para no pensar", "Complacencia pasiva para evitar roces").
+
+4. TRAMPA FUNCIONAL DE MANTENIMIENTO (4 a 5 nodos en total):
+   - Tipos: 'consequence'
+   - clinical_role: 'maintaining_trap'
+   - Qué representa:
+     * Alivio a Corto Plazo (Refuerzo Negativo): La función inmediata que sostiene la conducta (ej. "Alivio transitorio de la ansiedad", "Falsa sensación de control").
+     * Costo Vital y Erosión a Largo Plazo: Las consecuencias acumuladas que cierran la trampa (ej. "Sensación de estancamiento vital", "Culpa acumulada por postergar", "Desgaste vincular silencioso", "Confirmación de la creencia de insuficiencia").
+
+5. PUNTOS DE INFLEXIÓN, VALORES E INTEGRACIÓN (3 a 4 nodos en total):
+   - Tipos: 'consequence' (o 'cognitive' con rol de valores)
+   - clinical_role: 'values_flexibility'
+   - Qué representa:
+     * Brújula de Valores: Lo que realmente importa al consultante (ej. "Valor: Autenticidad y Voz Propia", "Valor: Serenidad y Cuidado Personal", "Valor: Conexión Honesta").
+     * Pivote de Acción Comprometida (CRB2): La acción alternativa de flexibilidad psicológica donde se rompe el bucle (ej. "Pivote: Expresar límites con calma", "Pivote: Tolerar la duda y dar un micro-paso").
+
+TOTAL EXACTO DE NODOS: (4 a 5) + (5 a 6) + (4 a 5) + (4 a 5) + (3 a 4) = EXACTAMENTE ENTRE 20 Y 24 NODOS.
+
+=== CONEXIONES E INTEGRACIONES FUNCIONALES (EDGES): EXACTAMENTE ENTRE 32 Y 48 CONEXIONES ===
+Reglas clínicas de conexión:
+1. El Bucle de Inflexibilidad:
+   - Cada nodo de Contexto conecta con 1 o 2 Barreras Internas.
+   - Cada Barrera Interna conecta con 1 o 2 Conductas de Evitación Experiencial.
+   - Cada Evitación conecta con su Alivio a Corto Plazo Y con sus Costos a Largo Plazo.
+   - CRÍTICO: Los Costos a Largo Plazo envían conexiones de retroalimentación hacia las Barreras Internas y el Contexto (cerrando los bucles de sufrimiento).
+2. Las Integraciones Terapéuticas:
+   - Los Valores conectan con los Pivotes de Acción Comprometida.
+   - Los Pivotes de Acción Comprometida conectan como alternativa a los nodos de Evitación Experiencial (mostrando con precisión clínica DÓNDE y CÓMO se interrumpe el ciclo disfuncional).
+- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 32 y 48 conexiones con 'source' y 'target' válidos.
+
+=== FORMATO DE CADA NODO ===
+- id: formato "n1", "n2", "n3"...
+- type: 'historical' | 'social' | 'cognitive' | 'motor' | 'physiological' | 'biological' | 'consequence'
+- clinical_role: 'antecedent' | 'internal_barrier' | 'experiential_avoidance' | 'maintaining_trap' | 'values_flexibility'
+- label: 2 a 4 palabras precisas, humanas y clínicamente significativas (ej. "Regla de Autoexigencia", "Fusión con la Insuficiencia", "Procrastinar por Sobreanálisis", "Alivio Efímero al Evadir", "Costo: Culpa y Parálisis", "Valor: Serenidad y Autonomía", "Pivote: Acción Amable")
+- description: 8 a 15 palabras explicando el rol funcional específico en la vida de este paciente
+- source: referencia honesta a lo que el consultante compartió
+- challenge: pivote de flexibilidad psicológica o reto compasivo (3 a 7 palabras)
+- reflection_question: pregunta socrática reflexiva y empática (6 a 12 palabras)
+- x: coordenada sugerida (10 a 90)
+- y: coordenada sugerida (10 a 90)
 ${isAdditive ? `
 === MODO ACTUALIZACIÓN ADITIVA ===
 1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
@@ -3295,15 +3328,26 @@ ${isAdditive ? `
   "is_valid": true,
   "rejection_reason": "",
   "nodes": [
-    { "id": "n1", "type": "cognitive", "label": "Sobrepensar constante", "description": "Rumiación continua ante la incertidumbre cotidiana", "source": "me cuesta dejar de pensar", "challenge": "Aprender a soltar el control mental", "reflection_question": "¿Qué intentas prevenir cuando tu mente no para?", "x": 30, "y": 40 }
+    {
+      "id": "n1",
+      "type": "historical",
+      "clinical_role": "antecedent",
+      "label": "Regla de Autoexigencia",
+      "description": "Aprendizaje de que solo rindiendo al máximo se obtiene seguridad y aprobación",
+      "source": "expresado en historia de vida",
+      "challenge": "Reconocer que tu valor no depende de rendir siempre",
+      "reflection_question": "¿Cuándo aprendiste que tenías que exigirte tanto para estar tranquilo?",
+      "x": 14,
+      "y": 30
+    }
   ],
   "edges": [
     { "source": "n1", "target": "n2", "weight": 2, "type": "unidirectional" }
   ],
   "tripleModality": {
-    "motor": 60,
-    "cognitive": 80,
-    "physiological": 45
+    "motor": 65,
+    "cognitive": 75,
+    "physiological": 40
   }
 }
 `;
@@ -3430,12 +3474,17 @@ ${isAdditive ? `
             const payload1 = {
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: `Genera la TOPOLOGÍA funcional del Mapa de Bucles (EXACTAMENTE entre 38 y 44 nodos y entre 65 y 85 conexiones) organizando con precisión cómo se conectan las cosas en la experiencia del paciente.
-REGLAS CRÍTICAS:
-- EXACTAMENTE entre 38 y 44 nodos en total (7-9 históricos, 2-3 biológicos, 7-8 sociales, 10-12 cognitivos, 7-9 motores, 1-2 fisiológicos leves, 8-10 consecuencias).
-- EXACTAMENTE entre 65 y 85 conexiones formando bucles de retroalimentación funcionales cerrados.
-- CERO ALUCINACIONES NI MAMADAS: NUNCA inventes eventos biográficos no dichos (maltrato materno/paterno, violencia familiar, divorcios) ni diagnósticos médicos o somáticos extraños (PROHIBIDO: opresión torácica, nudo en la garganta, respiración corta, alimentación emocional, inactividad física). Desglosa su circuito real en micro-variables humanas, comprensibles y cotidianas de pensamientos, dudas, hábitos de escape, relaciones y consecuencias.
-- Cada nodo debe incluir su 'label' cercano (2 a 4 palabras cotidianas), 'description' concisa, 'source' (referencia real), 'challenge' reflexivo y 'reflection_question' profunda.
+                    { role: 'user', content: `Genera la FORMULACIÓN CLÍNICA DE CASO en Modo Grafo Funcional (EXACTAMENTE entre 20 y 24 nodos nucleares y entre 32 y 48 conexiones) basada en el Análisis Funcional de Tercera Generación (ACT/Contextual CBT).
+REGLAS ESENCIALES:
+- EXACTAMENTE entre 20 y 24 nodos nucleares estructurados en los 5 pilares:
+  1. Contexto & Vulnerabilidad Histórica (4-5 nodos: historical/social/biological, clinical_role: 'antecedent')
+  2. Barreras Internas / Malestar Aversivo (5-6 nodos: cognitive/physiological, clinical_role: 'internal_barrier')
+  3. Evitación Experiencial / Repertorio Inflexible (4-5 nodos: motor, clinical_role: 'experiential_avoidance')
+  4. Trampa Funcional de Mantenimiento (4-5 nodos: consequence, clinical_role: 'maintaining_trap')
+  5. Puntos de Inflexión, Valores e Integración (3-4 nodos: consequence/cognitive, clinical_role: 'values_flexibility')
+- EXACTAMENTE entre 32 y 48 conexiones funcionales formando bucles cerrados y rutas de flexibilidad.
+- CERO ALUCINACIONES: NUNCA inventes eventos biográficos no dichos (maltrato, violencia, divorcio) ni diagnósticos médicos o somáticos extraños (PROHIBIDO: opresión torácica, nudo en la garganta, respiración corta, alimentación emocional, inactividad física). Desglosa su circuito real en micro-variables humanas, comprensibles y cotidianas de pensamientos, dudas, hábitos de escape, relaciones y consecuencias.
+- Cada nodo con su 'clinical_role', 'label' certero (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
 Datos clínicos del paciente:\n` + context }
                 ],
                 response_format: { type: "json_object" },
@@ -3494,14 +3543,27 @@ Datos clínicos del paciente:\n` + context }
             const validNodeIds = new Set(parsedTopology.nodes.map(n => n.id));
             parsedTopology.edges = parsedTopology.edges.filter(e => e.source && e.target && e.source !== e.target && validNodeIds.has(e.source) && validNodeIds.has(e.target));
 
-            // Asegurar que se cierren los bucles funcionales entre los nodos reales si la densidad de edges es baja
-            if (parsedTopology.nodes.length >= 15 && parsedTopology.edges.length < 65) {
-                const nodesByType = {};
+            // Asegurar que se cierren los bucles funcionales de la formulación si la densidad de edges es baja (< 32)
+            if (parsedTopology.nodes.length >= 10 && parsedTopology.edges.length < 32) {
+                const nodesByRole = {
+                    antecedent: [],
+                    internal_barrier: [],
+                    experiential_avoidance: [],
+                    maintaining_trap: [],
+                    values_flexibility: []
+                };
                 parsedTopology.nodes.forEach(n => {
-                    const t = n.type || 'cognitive';
-                    if (!nodesByType[t]) nodesByType[t] = [];
-                    nodesByType[t].push(n.id);
+                    let role = n.clinical_role;
+                    if (!role) {
+                        if (n.type === 'historical' || n.type === 'social' || n.type === 'biological') role = 'antecedent';
+                        else if (n.type === 'cognitive' || n.type === 'physiological') role = 'internal_barrier';
+                        else if (n.type === 'motor') role = 'experiential_avoidance';
+                        else if (n.type === 'consequence') role = n.is_value ? 'values_flexibility' : 'maintaining_trap';
+                        else role = 'internal_barrier';
+                    }
+                    if (nodesByRole[role]) nodesByRole[role].push(n.id);
                 });
+
                 const existingEdgePairs = new Set(parsedTopology.edges.map(e => `${e.source}->${e.target}`));
                 const addEdgeSafe = (s, t, w = 2, type = 'unidirectional') => {
                     if (s && t && s !== t && validNodeIds.has(s) && validNodeIds.has(t) && !existingEdgePairs.has(`${s}->${t}`)) {
@@ -3510,44 +3572,43 @@ Datos clínicos del paciente:\n` + context }
                     }
                 };
 
-                (nodesByType.historical || []).forEach((hId, i) => {
-                    const targetCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
-                    const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
-                    addEdgeSafe(hId, targetCog, 2);
-                    addEdgeSafe(hId, targetMot, 1);
+                // 1. Antecedentes activan Barreras Internas
+                (nodesByRole.antecedent || []).forEach((antId, i) => {
+                    const targetBarrier = (nodesByRole.internal_barrier || [])[i % (nodesByRole.internal_barrier?.length || 1)];
+                    if (targetBarrier) addEdgeSafe(antId, targetBarrier, 2);
                 });
-                (nodesByType.biological || []).forEach((bId, i) => {
-                    const targetPhys = (nodesByType.physiological || [])[i % (nodesByType.physiological?.length || 1)];
-                    const targetCog = (nodesByType.cognitive || [])[(i + 1) % (nodesByType.cognitive?.length || 1)];
-                    if (targetPhys) addEdgeSafe(bId, targetPhys, 2);
-                    addEdgeSafe(bId, targetCog, 1);
+
+                // 2. Barreras Internas disparan Conductas de Evitación Experiencial
+                (nodesByRole.internal_barrier || []).forEach((barId, i) => {
+                    const targetAvoid = (nodesByRole.experiential_avoidance || [])[i % (nodesByRole.experiential_avoidance?.length || 1)];
+                    if (targetAvoid) addEdgeSafe(barId, targetAvoid, 2);
                 });
-                (nodesByType.social || []).forEach((sId, i) => {
-                    const targetCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
-                    const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
-                    addEdgeSafe(sId, targetCog, 2);
-                    addEdgeSafe(sId, targetMot, 1);
+
+                // 3. Evitación Experiencial conduce a Consecuencias (Alivio inmediato y Costos a largo plazo)
+                (nodesByRole.experiential_avoidance || []).forEach((avoidId, i) => {
+                    const traps = nodesByRole.maintaining_trap || [];
+                    if (traps.length > 0) {
+                        addEdgeSafe(avoidId, traps[i % traps.length], 2);
+                        if (traps.length > 1) {
+                            addEdgeSafe(avoidId, traps[(i + 1) % traps.length], 1);
+                        }
+                    }
                 });
-                (nodesByType.cognitive || []).forEach((cId, i) => {
-                    const targetMot = (nodesByType.motor || [])[i % (nodesByType.motor?.length || 1)];
-                    const targetCons = (nodesByType.consequence || [])[i % (nodesByType.consequence?.length || 1)];
-                    addEdgeSafe(cId, targetMot, 2);
-                    addEdgeSafe(cId, targetCons, 2);
+
+                // 4. Retroalimentación de la Trampa (Cierre de Bucles Funcionales)
+                (nodesByRole.maintaining_trap || []).forEach((trapId, i) => {
+                    const barriers = nodesByRole.internal_barrier || [];
+                    const antecedents = nodesByRole.antecedent || [];
+                    if (barriers.length > 0) addEdgeSafe(trapId, barriers[i % barriers.length], 2);
+                    if (antecedents.length > 0) addEdgeSafe(trapId, antecedents[i % antecedents.length], 1);
                 });
-                (nodesByType.motor || []).forEach((mId, i) => {
-                    const targetCons = (nodesByType.consequence || [])[i % (nodesByType.consequence?.length || 1)];
-                    const targetCons2 = (nodesByType.consequence || [])[(i + 1) % (nodesByType.consequence?.length || 1)];
-                    addEdgeSafe(mId, targetCons, 3);
-                    addEdgeSafe(mId, targetCons2, 2);
-                });
-                // Retroalimentación de consecuencias (cierre de bucles)
-                (nodesByType.consequence || []).forEach((consId, i) => {
-                    const backCog = (nodesByType.cognitive || [])[i % (nodesByType.cognitive?.length || 1)];
-                    const backBio = (nodesByType.biological || [])[i % (nodesByType.biological?.length || 1)];
-                    const backSoc = (nodesByType.social || [])[i % (nodesByType.social?.length || 1)];
-                    addEdgeSafe(consId, backCog, 2);
-                    addEdgeSafe(consId, backBio, 2);
-                    addEdgeSafe(consId, backSoc, 1);
+
+                // 5. Integración de Valores y Flexibilidad Psicológica hacia puntos de cambio
+                (nodesByRole.values_flexibility || []).forEach((valId, i) => {
+                    const avoids = nodesByRole.experiential_avoidance || [];
+                    const traps = nodesByRole.maintaining_trap || [];
+                    if (avoids.length > 0) addEdgeSafe(valId, avoids[i % avoids.length], 2);
+                    if (traps.length > 0) addEdgeSafe(valId, traps[i % traps.length], 1);
                 });
             }
 
@@ -4901,25 +4962,37 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return count > 0 ? sumY / count : node.y;
         };
 
-        // Sugiyama Layered Layout with 6 Granular Columns (Balanced node distribution with safe margins):
-        // Históricos (13%) -> Cognitivos (28%) -> Motores/Somáticos (43%) -> Biológicos (58%) -> Sociales (72%) -> Consecuencias (87%)
+        // Sugiyama Layered Layout with 5 Clinical Case Formulation Columns (ACT / FAP / Contextual CBT):
+        // 1. Contexto & Vulnerabilidad (14%) -> 2. Barreras Internas (32%) -> 3. Evitación Experiencial (50%) -> 4. Trampa Funcional (68%) -> 5. Valores & Flexibilidad (86%)
         const layers = [
-            { filter: n => n.type === 'historical', baseX: 13, customYStep: null },
-            { filter: n => n.type === 'cognitive', baseX: 28, customYStep: null },
-            { filter: n => n.type === 'motor' || n.type === 'physiological', baseX: 43, customYStep: null },
-            { filter: n => n.type === 'biological', baseX: 58, customYStep: null },
-            { filter: n => n.type === 'social', baseX: 72, customYStep: null },
-            { filter: n => n.type === 'consequence', baseX: 87, customYStep: null }
+            { id: 'antecedents', label: 'Contexto & Vulnerabilidad', baseX: 14, customYStep: null },
+            { id: 'internal_barriers', label: 'Barreras Internas', baseX: 32, customYStep: null },
+            { id: 'experiential_avoidance', label: 'Evitación Experiencial', baseX: 50, customYStep: null },
+            { id: 'maintaining_traps', label: 'Trampa Funcional', baseX: 68, customYStep: null },
+            { id: 'values_flexibility', label: 'Valores & Flexibilidad', baseX: 86, customYStep: null }
         ];
 
-        const layerNodes = layers.map(l => newNodes.filter(l.filter));
+        const getLayerIndex = (n) => {
+            if (n.clinical_role === 'values_flexibility' || n.type === 'values' || Boolean(n.is_value)) return 4;
+            if (n.clinical_role === 'maintaining_trap') return 3;
+            if (n.clinical_role === 'experiential_avoidance') return 2;
+            if (n.clinical_role === 'internal_barrier') return 1;
+            if (n.clinical_role === 'antecedent') return 0;
 
-        // Safety fallback: if any node didn't match the 6 layer filters, assign it to column 2
-        const matchedIds = new Set(layerNodes.flat().map(n => n.id));
-        const unmatchedNodes = newNodes.filter(n => !matchedIds.has(n.id));
-        if (unmatchedNodes.length > 0) {
-            layerNodes[1].push(...unmatchedNodes);
-        }
+            // Fallback by legacy type if clinical_role is missing
+            if (n.type === 'historical' || n.type === 'social' || n.type === 'biological') return 0;
+            if (n.type === 'cognitive' || n.type === 'physiological') return 1;
+            if (n.type === 'motor') return 2;
+            if (n.type === 'consequence') return 3;
+
+            return 1; // default to column 2 (internal barrier/cognitive)
+        };
+
+        const layerNodes = layers.map(() => []);
+        newNodes.forEach(n => {
+            const idx = getLayerIndex(n);
+            layerNodes[idx].push(n);
+        });
 
         // Initialize all nodes to staggered slots in their layers
         // We DO NOT sort alphabetically or by barycenter anymore.
@@ -6717,6 +6790,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     setSelectedPatternId(foundPat.id);
                                                     // We filter and sort the nodes of this pattern to determine the correct active index
                                                     const filtered = (nodesToRender || []).filter(n => foundPat.node_ids.includes(n.id));
+                                                    const clinicalRoleOrder = {
+                                                        antecedent: 0,
+                                                        internal_barrier: 1,
+                                                        experiential_avoidance: 2,
+                                                        maintaining_trap: 3,
+                                                        values_flexibility: 4
+                                                    };
                                                     const typeOrder = {
                                                         historical: 0,
                                                         biological: 1,
@@ -6724,9 +6804,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         cognitive: 3,
                                                         motor: 4,
                                                         physiological: 5,
-                                                        consequence: 6
+                                                        consequence: 6,
+                                                        values: 7
                                                     };
                                                     const sorted = [...filtered].sort((a, b) => {
+                                                        const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
+                                                        const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
+                                                        if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
+                                                            return roleA - roleB;
+                                                        }
                                                         const orderA = typeOrder[a.type] ?? 99;
                                                         const orderB = typeOrder[b.type] ?? 99;
                                                         if (orderA !== orderB) return orderA - orderB;
@@ -6795,7 +6881,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         </div>
                                                     </div>
                                                 ) : (() => {
-                                                    const theme = CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
+                                                    const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
+                                                    const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
                                                     const isIntegrated = node.status === 'integrated';
                                                     const isDashed = Boolean(node.dashed);
 
@@ -7358,7 +7445,8 @@ Por favor, analicemos:
                                 const { incoming, outgoing } = currentTourNodeEdges;
                                 const totalConnections = incoming.length + outgoing.length;
 
-                                const currentTheme = CUTE_NODE_THEMES[currentNode.type] || CUTE_NODE_THEMES.cognitive;
+                                const currentThemeKey = (currentNode.clinical_role === 'values_flexibility' || currentNode.is_value) ? 'values' : currentNode.type;
+                                const currentTheme = CUTE_NODE_THEMES[currentThemeKey] || CUTE_NODE_THEMES[currentNode.type] || CUTE_NODE_THEMES.cognitive;
 
                                 return (
                                     <div
