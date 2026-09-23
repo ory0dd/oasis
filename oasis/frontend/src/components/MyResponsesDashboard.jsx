@@ -3888,7 +3888,7 @@ Reglas clínicas de conexión de contingencia funcional:
 - description: 8 a 15 palabras explicando el rol funcional concreto en la vida de este paciente
 - source: cita o referencia fiel a lo expresado en la entrevista
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
-- reflection_question: pregunta socrática reflexiva y empática (6 a 14 palabras)
+- reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
 - x: coordenada porcentual sugerida (10 a 90)
 - y: coordenada porcentual sugerida (15 a 85)
 ${isAdditive ? `
@@ -3911,7 +3911,7 @@ ${isAdditive ? `
       "description": "Aprendizaje de que solo rindiendo al máximo se obtiene seguridad y aprobación",
       "source": "expresado en historia de vida",
       "challenge": "Reconocer que tu valor no depende de rendir siempre",
-      "reflection_question": "¿Cuándo aprendiste que tenías que exigirte tanto para estar tranquilo?",
+      "reflection_question": "¿Qué dolor estás tapando al obligarte a rendir al máximo, y qué pasaría si hoy decides que ya es suficiente?",
       "x": 14,
       "y": 30
     }
