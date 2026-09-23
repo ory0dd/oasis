@@ -643,9 +643,6 @@ export const generateEmpatheticPerspectiveQuestion = (
 
     switch (safeIdx) {
         case 0: { // Raíz Histórica y Origen ("De dónde viene")
-            if (reflection && reflection.length > 10 && !isStaleOrRoboticQuestion(reflection)) {
-                return `Pensando en "${label}": ¿${reflection}?`;
-            }
             if (cleanOriginLabel && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
                 return `El mapa muestra que "${label}" nació como un escudo frente a "${cleanOriginLabel}". Hoy, a la distancia: ¿te has dado cuenta de que estás luchando una guerra que ya terminó?`;
             }
@@ -664,9 +661,6 @@ export const generateEmpatheticPerspectiveQuestion = (
         }
 
         case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
-            if (reflection && reflection.length > 8 && !isStaleOrRoboticQuestion(reflection)) {
-                return `Reflexionando sobre "${label}": ¿${reflection}? ¿Es esta la voz de lo que tú realmente valoras, o es el eco de exigencias que nunca fueron tuyas?`;
-            }
             return `Detrás de "${label}"${desc ? ` (${desc})` : ''} hay un mandato interno muy severo. Si le hablaras a alguien que amas con la misma dureza con la que te exiges a ti mismo, ¿crees que esa persona seguiría a tu lado?`;
         }
 
@@ -3829,43 +3823,27 @@ Distribuye los nodos rigurosamente en las 5 columnas funcionales del caso:
 1. COLUMNA 1: CONTEXTO & DETONANTES (Estímulos Antecedentes, E) (4 a 5 nodos):
    - Tipos: 'historical' (3 nodos), 'social' (1-2 nodos).
    - clinical_role: 'antecedent'
-   - Qué representa:
-     * Reglas y normas impuestas en el hogar o entorno escolar (ej. imposiciones de apariencia, normas estrictas).
-     * Disparadores contextuales e interpersonales (ej. desaprobación o silencios familiares, mudanza reciente, exigencias del entorno).
+   - Qué representa: Todo lo que viene del exterior o del pasado. (Usa palabras del usuario: ej. "Mi mamá me gritaba", "Discusión con mi pareja", "Mucho trabajo").
 
 2. COLUMNA 2: PENSAMIENTOS & CREENCIAS NUCLEARES (Respuesta Cognitiva, Rc) (4 a 5 nodos):
    - Tipos: 'cognitive'
    - clinical_role: 'cognitive'
-   - Qué representa:
-     * Creencias nucleares de invalidación ("Nadie respeta lo que quiero", "No encajo").
-     * Diálogo interno autocrítico y juicio punitivo tras las discusiones.
-     * Rumiación obsesiva y culpa nocturna (repasar reproches o mensajes hirientes).
+   - Qué representa: Lo que el paciente se dice a sí mismo en su cabeza. (Usa palabras del usuario: ej. "Soy un inútil", "No puedo fallar", "Me van a abandonar").
 
 3. COLUMNA 3: ACTIVACIÓN SOMÁTICA & EMOCIONAL (Respuesta Fisiológica / Somática, Rf) (3 a 4 nodos):
    - Tipos: 'physiological' (o 'biological')
    - clinical_role: 'physiological'
-   - Qué representa:
-     * Activación autonómica simpática (taquicardia, tensión física previa a explotar).
-     * Desregulación biológica real reportada (insomnio de conciliación, quedarse despierto hasta las 2-3 am, despertar fatigado a mediodía).
-     * Sensaciones físicas directas vinculadas al estrés cotidiano.
+   - Qué representa: Cómo reacciona el cuerpo o las emociones puras. (Usa palabras del usuario: ej. "Cansancio extremo", "Insomnio a las 3am", "Ganas de llorar").
 
 4. COLUMNA 4: CONDUCTAS DE EVITACIÓN & ESCAPE (Respuesta Motora / Operante, Rm) (4 a 5 nodos):
    - Tipos: 'motor'
    - clinical_role: 'motor'
-   - Qué representa:
-     * Maniobras de escape y evitación experiencial operante:
-       - Actividades de distracción o postergación de tareas difíciles para no conectar con el malestar.
-       - Aislamiento o repliegue interpersonal defensivo ante la tensión.
-       - Bloqueo o demora en la toma de decisiones personales.
-       - Sobreadaptación, complacencia o respuestas reactivas para frenar la demanda.
+   - Qué representa: Lo que hace para huir del malestar. (Usa palabras del usuario: ej. "Encerrarme en mi cuarto", "Ver TikTok horas", "Quedarme callado").
 
-5. COLUMNA 5: CONSECUENCIAS & TRAMPA DE MANTENIMIENTO (Consecuencias Funcionales, C) (4 a 5 nodos):
+5. COLUMNA 5: TRAMPA DE MANTENIMIENTO (Consecuencias a Corto y Largo Plazo, C) (4 a 5 nodos):
    - Tipos: 'consequence'
    - clinical_role: 'consequence'
-   - Qué representa:
-     * Refuerzo Negativo Inmediato (C_cp): Alivio momentáneo transitorio de la tensión o cese de la discusión al gritar, encerrarse o evadir.
-     * Costos Vitales a Largo Plazo (C_lp): Deterioro de la autoeficacia, intensificación de la culpa, cronificación del conflicto familiar, soledad existencial y estancamiento o parálisis de proyectos personales.
-     * Bucle Mantenedor: Cómo estas consecuencias retroalimentan el contexto y confirman las creencias negativas.
+   - Qué representa: El resultado final que mantiene el bucle. (Usa palabras del usuario: ej. "Me siento peor después", "Alejo a la gente", "Siento que no avanzo").
 
 TOTAL EXACTO DE NODOS: (4-5) + (4-5) + (3-4) + (4-5) + (4-5) = ENTRE 20 Y 24 NODOS.
 
