@@ -3862,8 +3862,8 @@ Reglas clínicas de conexión de contingencia funcional:
 - id: formato "n1", "n2", "n3"...
 - type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence'
 - clinical_role: 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence'
-- label: 2 a 4 palabras precisas, humanas y clínicamente certeras (ej. "Reglas Estrictas del Hogar", "Rumiación Nocturna", "Taquicardia por Tensión", "Escape en Pantallas", "Alivio Breve al Aislarse", "Culpa y Deterioro Personal")
-- description: 8 a 15 palabras explicando el rol funcional concreto en la vida de este paciente
+- label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni clínico (ej. "Dificultades al relacionarse", "Sensación de no estar bien", "Presión de la familia", "Cansancio acumulado", "Necesidad de distancia").
+- description: 10 a 20 palabras. OBLIGATORIO: No uses análisis clínicos fríos ni invasivos (prohibido usar "Creencia de...", "Experiencia de maltrato..."). Redáctalo como una exploración delicada y empática, empezando SIEMPRE con frases como "Comentaste que...", "Mencionaste que...", "Sientes que...". (Ej. "Comentaste que antes era difícil tener una relación por las situaciones que pasaron", en lugar de "Creencia de no estar bien").
 - source: cita o referencia fiel a lo expresado en la entrevista
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
 - reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
