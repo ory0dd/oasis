@@ -4155,34 +4155,73 @@ const ProfileView = ({
                                     const dateStr = new Date().toLocaleDateString('es-MX');
                                     const content = `
                                         <!DOCTYPE html>
-                                        <html>
-                                            <head>
-                                                <title>Consentimiento Informado - ${fullName}</title>
-                                                <style>
-                                                    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; margin: 1in; color: #000; }
-                                                    h1 { font-size: 12pt; text-align: center; font-weight: bold; margin-bottom: 24pt; }
-                                                    p { margin-bottom: 12pt; text-indent: 0.5in; text-align: left; margin-top: 0; }
-                                                    .no-indent { text-indent: 0; }
-                                                    .signature-section { margin-top: 48pt; text-align: left; }
-                                                    .signature-line { border-top: 1px solid #000; width: 300px; padding-top: 5px; margin-bottom: 12pt; }
-                                                </style>
-                                            </head>
-                                            <body>
-                                                <h1>Consentimiento Informado y Encuadre Clínico</h1>
-                                                <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapéutico y uso de la plataforma clínica provista.</p>
-                                                <p>El tratamiento se basa en la psicoterapia clínica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podrá romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad ética y legal vigente.</p>
-                                                <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipación. Para reprogramar una sesión sin costo, notificaré con un mínimo de 24 horas de antelación. Comprendo y acepto que cualquier cancelación o solicitud de reagendamiento con menos de 6 horas de anticipación no procederá; la sesión se considerará como impartida y el monto se cobrará en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
-                                                <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesión. Si no me presento en este tiempo, la sesión se dará por cancelada y se aplicará la misma política de cobro por inasistencia tardía. Las sesiones tienen una duración aproximada de 50 minutos.</p>
-                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los límites establecidos en el encuadre clínico. Otorgué mi consentimiento electrónicamente a través de la plataforma de manera voluntaria y consciente.</p>
-                                                
-                                                <div class="signature-section no-indent">
-                                                    <p class="signature-line no-indent">Firma de Consentimiento y Aceptación</p>
-                                                    <p class="no-indent"><strong>Nombre registrado:</strong> ${fullName}</p>
-                                                    <p class="no-indent"><strong>Fecha de aceptación:</strong> ${dateStr}</p>
-                                                    <p class="no-indent"><strong>Estatus:</strong> Firmado electrónicamente</p>
-                                                </div>
-                                            </body>
-                                        </html>
+                                                            <html>
+                                                                <head>
+                                                                    <title>Consentimiento Informado - ${fullName}</title>
+                                                                    <style>
+                                                                        body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; margin: 1in; color: #000; }
+                                                                        h1 { font-size: 14pt; text-align: center; font-weight: bold; margin-bottom: 12pt; }
+                                                                        h2 { font-size: 12pt; text-align: center; font-style: italic; font-weight: normal; margin-bottom: 24pt; margin-top: -12pt; }
+                                                                        h3 { font-size: 12pt; font-weight: bold; margin-top: 18pt; margin-bottom: 6pt; text-align: left; }
+                                                                        p { margin-bottom: 12pt; text-indent: 0.5in; text-align: justify; margin-top: 0; }
+                                                                        ul { margin-top: 0; margin-bottom: 12pt; padding-left: 0.5in; }
+                                                                        li { text-align: justify; margin-bottom: 6pt; }
+                                                                        .no-indent { text-indent: 0; }
+                                                                        .signature-section { margin-top: 60pt; text-align: center; width: 350px; margin-left: auto; margin-right: auto; }
+                                                                        .signature-line { border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 6pt; height: 60px; display: flex; align-items: flex-end; justify-content: center; }
+                                                                        .signature-text { font-family: "Brush Script MT", "Lucida Handwriting", "Monotype Corsiva", cursive; font-size: 24pt; color: #1a365d; line-height: 0.8; }
+                                                                    </style>
+                                                                </head>
+                                                                <body>
+                                                                    <h1>CONSENTIMIENTO INFORMADO PARA LA REALIZACI�N DE PROCESOS DE INTERVENCI�N PSICOL�GICA</h1>
+                                                                    <h2>Constancia formal de informaci�n, voluntariedad y confidencialidad para el inicio del proceso de acompa�amiento e investigaci�n cl�nica.</h2>
+                                                                    
+                                                                    <p>Yo <strong>${fullName}</strong>, por medio de la presente constancia, en pleno uso de mis facultades mentales, otorgo en forma libre y voluntaria mi consentimiento a Luis Esteban Briones Canizales, en su car�cter de estudiante de psicolog�a en pr�ctica cl�nica, bajo la supervisi�n directa de la Psic. �ngela Sof�a Mart�nez Salazar (C�dula Profesional N�: 14354378), para el desarrollo de las sesiones de Intervenci�n Psicol�gica, as� como la aplicaci�n de los procedimientos y herramientas indicadas para el proceso.</p>
+                                                                    
+                                                                    <p>Entiendo que este enfoque est� dise�ado para el abordaje de pensamientos, emociones y conductas, as� como para el desarrollo de estrategias de afrontamiento, regulaci�n emocional, aceptaci�n y flexibilidad psicol�gica. Tambi�n entiendo y fui notificado/a de las consideraciones y beneficios de este proceso, los cuales se describen a continuaci�n:</p>
+                                                                    
+                                                                    <h3>Consideraciones</h3>
+                                                                    <p class="no-indent">Existen ciertos factores inherentes al proceso de intervenci�n psicol�gica y al trabajo introspectivo que deben tomarse en cuenta durante las sesiones:</p>
+                                                                    <ul>
+                                                                        <li><strong>Activaci�n Emocional:</strong> Durante las sesiones o posterior a ellas, es posible experimentar respuestas emocionales intensas tales como tristeza, ansiedad, enojo, frustraci�n o vulnerabilidad, derivadas de la exploraci�n de situaciones dif�ciles, recuerdos o pensamientos asociados a las dificultades abordadas.</li>
+                                                                        <li><strong>Confrontaci�n de Pensamientos y Conductas:</strong> El proceso puede implicar la revisi�n de creencias arraigadas, patrones de comportamiento autom�ticos o estilos de afrontamiento que resulten inc�modos de reconocer o modificar, lo que puede generar cierta resistencia o duda temporal.</li>
+                                                                        <li><strong>Aparici�n de Malestar Subjetivo:</strong> Es com�n que en ciertas etapas del proceso, particularmente al inicio o durante el abordaje de temas complejos, se perciba un aumento transitorio del malestar emocional antes de alcanzar mejoras sostenidas.</li>
+                                                                    </ul>
+                                                                    
+                                                                    <h3>Beneficios</h3>
+                                                                    <p class="no-indent">El proceso de intervenci�n basado en evidencia busca generar cambios significativos y positivos:</p>
+                                                                    <ul>
+                                                                        <li>Identificaci�n, comprensi�n y modificaci�n de patrones de pensamiento desadaptativos o limitantes.</li>
+                                                                        <li>Desarrollo de repertorios conductuales m�s flexibles y orientados a valores personales.</li>
+                                                                        <li>Adquisici�n de herramientas pr�cticas para la regulaci�n emocional y la tolerancia al malestar.</li>
+                                                                        <li>Desarrollo de habilidades para la resoluci�n de problemas, toma de decisiones y manejo de situaciones generadoras de malestar.</li>
+                                                                        <li>Fomento de la autoeficacia, el autocontrol y el autoconocimiento.</li>
+                                                                        <li>Promoci�n de estrategias psicol�gicas que favorezcan el bienestar y una mejor adaptaci�n a las diferentes situaciones de la vida cotidiana.</li>
+                                                                    </ul>
+                                                                    
+                                                                    <h3>Protecci�n de Informaci�n, Rigor Cient�fico y Privacidad</h3>
+                                                                    <p class="no-indent">Con el fin de garantizar el rigor cl�nico, el seguimiento �ptimo del proceso y el posible an�lisis de datos con fines estrictamente cient�ficos, acad�micos o de desarrollo de herramientas de intervenci�n psicol�gica, el participante acepta las siguientes condiciones sobre su informaci�n:</p>
+                                                                    <ul>
+                                                                        <li><strong>Registro de Entrevistas:</strong> Se autoriza el registro escrito y digital de las respuestas, declaraciones y fragmentos de las sesiones. Esta recopilaci�n de datos textuales se mantendr� bajo estricto anonimato, desvinculando cualquier dato de identidad directa del participante desde el momento de su captura.</li>
+                                                                        <li><strong>Uso Cient�fico y de Intervenci�n:</strong> La informaci�n recolectada se utilizar� exclusivamente para el dise�o de la intervenci�n sonora y el an�lisis cl�nico supervisado dentro de la plataforma del proyecto.</li>
+                                                                        <li><strong>Pol�tica de Borrado Definitivo:</strong> Se garantiza que, una vez finalizado el periodo de intervenci�n o el seguimiento del caso, todos los registros de texto, notas digitales y archivos documentales generados ser�n eliminados de forma permanente y definitiva de cualquier dispositivo o sistema de almacenamiento para asegurar la total privacidad del participante.</li>
+                                                                    </ul>
+                                                                    
+                                                                    <h3>Pol�tica de Citas, Anticipo y Cancelaci�n</h3>
+                                                                    <ul>
+                                                                        <li><strong>Anticipo (48h):</strong> Reserva con 48h de anticipaci�n para apartar el horario y permitir la preparaci�n y construcci�n personalizada de la sesi�n.</li>
+                                                                        <li><strong>Reagendar (+24h):</strong> Posibilidad de cambiar el horario sin costo avisando con tiempo (24 a 48h antes). El anticipo se transfiere a la nueva fecha.</li>
+                                                                        <li><strong>Menos de 6h:</strong> No se reagenda y se cobra completa. Esa hora queda bloqueada y el trabajo previo de intervenci�n ya fue realizado. Sin cancelaciones al momento ni reembolsos por inasistencia (tolerancia m�xima de 15 minutos).</li>
+                                                                    </ul>
+                                                                    
+                                                                    <div class="signature-section no-indent">
+                                                                        <div class="signature-line"><span class="signature-text">${fullName}</span></div>
+                                                                        <p class="no-indent" style="text-align: center; margin-bottom: 0;"><strong>${fullName}</strong></p>
+                                                                        <p class="no-indent" style="text-align: center; font-size: 10pt; color: #555;">Firma de Consentimiento y Aceptaci�n</p>
+                                                                        <p class="no-indent" style="text-align: center; font-size: 10pt; color: #555; margin-top: 6pt;">Firmado electr�nicamente el: ${dateStr}</p>
+                                                                    </div>
+                                                                </body>
+                                                            </html>
                                     `;
                                     docWindow.document.write(content);
                                     docWindow.document.close();
