@@ -505,7 +505,19 @@ export const isStaleOrRoboticQuestion = (q) => {
         'maltrato materno',
         'maltrato paterno',
         'violencia familiar',
-        'divorcio de padres'
+        'divorcio de padres',
+        'armadura',
+        'guerra que ya terminó',
+        'precio invisible',
+        'gritando a través de',
+        'esclavo de',
+        'cicatriz de algo',
+        'si te detienes a observar',
+        'mandato interno muy severo',
+        'arrastran irremediablemente',
+        'al pensar en',
+        'qué te diría ese tú del pasado',
+        'qué pasaría si hoy decides dejar de ignorar'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
