@@ -641,45 +641,65 @@ export const generateEmpatheticPerspectiveQuestion = (
     const cleanOriginLabel = originContext?.originNode ? softenNodeLabel((originContext.originNode.label || '').replace(/["'“”]/g, '').trim()) : null;
     const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel((consequenceContext.targetNode.label || '').replace(/["'“”]/g, '').trim()) : null;
 
+    const getConversationalPhrase = (text) => {
+        if (!text) return "esto que te pasa";
+        let lower = text.toLowerCase().trim();
+        
+        if (lower.startsWith('dificultad para ')) {
+            const action = lower.replace('dificultad para ', '');
+            return `lo difícil que te resulta ${action}`;
+        }
+        if (lower.startsWith('miedo a ')) return `ese miedo a ${lower.replace('miedo a ', '')} que sientes`;
+        if (lower.startsWith('miedo al ')) return `ese miedo al ${lower.replace('miedo al ', '')} que sientes`;
+        if (lower.startsWith('necesidad de ')) return `esa necesidad de ${lower.replace('necesidad de ', '')} que tienes`;
+        
+        const { short } = getNodeExperiencePhrases({ label: text });
+        return short; 
+    };
+
+    const convLabel = getConversationalPhrase(label);
+    const convOrigin = originContext?.originNode ? getConversationalPhrase(cleanOriginLabel) : null;
+    const convTarget = consequenceContext?.targetNode ? getConversationalPhrase(cleanTargetLabel) : null;
+
     switch (safeIdx) {
         case 0: { // Raíz Histórica y Origen ("De dónde viene")
-            if (cleanOriginLabel && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
-                return `El mapa muestra que "${label}" nació como un escudo frente a "${cleanOriginLabel}". Hoy, a la distancia: ¿te has dado cuenta de que estás luchando una guerra que ya terminó?`;
+            if (convOrigin && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
+                return `Me cuentas un poco sobre ${convLabel}, y pareciera que empezó por ${convOrigin}. ¿Crees que hoy en día podrías intentar manejarlo de otra forma?`;
             }
-            return `Si te detienes a observar "${label}"${desc ? ` (${desc})` : ''}: ¿reconoces a la persona que eras cuando tuviste que aprender a responder así para sobrevivir? ¿Qué te diría ese tú del pasado si viera que aún usas esa armadura?`;
+            return `Me cuentas un poco sobre ${convLabel}... ¿cómo te hace sentir esto en tu día a día? ¿Te gustaría intentar algo distinto ahora?`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
-            return `Cuando "${label}" toma el control de tus reacciones, ¿cuál es el precio invisible que están pagando tus relaciones más valiosas? ¿Estás eligiendo el aislamiento por miedo a mostrarte vulnerable?`;
+            return `Cuando notas ${convLabel}, ¿cómo crees que afecta a la gente cercana a ti? ¿Sientes que a veces te alejas sin querer?`;
         }
 
         case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
             if (nodeType === 'physiological' || nodeType === 'biological') {
-                return `Tu cuerpo te está gritando a través de "${label}"${desc ? ` (${desc})` : ''}. Si pudieras traducir esa tensión en palabras honestas, ¿qué es lo que tu cuerpo ya no está dispuesto a seguir tolerando en silencio?`;
+                return `Me mencionas ${convLabel}. Si tu cuerpo pudiera hablar a través de esa sensación, ¿qué crees que te estaría pidiendo?`;
             }
-            return `Más allá de lo que tu mente te diga sobre "${label}", ¿dónde se aloja ese peso en tu cuerpo? ¿Qué pasaría si hoy decides dejar de ignorar esa alerta corporal?`;
+            return `Al experimentar ${convLabel}, ¿en qué parte del cuerpo lo notas más? ¿Qué pasaría si te detienes un momento a escuchar esa sensación?`;
         }
 
         case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
-            return `Detrás de "${label}"${desc ? ` (${desc})` : ''} hay un mandato interno muy severo. Si le hablaras a alguien que amas con la misma dureza con la que te exiges a ti mismo, ¿crees que esa persona seguiría a tu lado?`;
+            return `A veces, con ${convLabel}, somos muy duros con nosotros mismos. Si un buen amigo estuviera pasando por lo mismo, ¿qué consejo le darías?`;
         }
 
         case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
-            if (cleanTargetLabel && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
-                return `Tus acciones automáticas ante "${label}" te arrastran irremediablemente hacia "${cleanTargetLabel}". ¿Hasta cuándo vas a permitir que el miedo al malestar momentáneo te condene a un dolor permanente?`;
+            if (convTarget && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
+                return `Veo que ${convLabel} a veces te lleva hacia ${convTarget}. ¿Sientes que lo que haces para aliviarte rápido te termina costando caro después?`;
             }
-            return `Cada vez que cedes ante "${label}", encuentras un alivio falso que se desvanece rápido. ¿Qué estás evadiendo hoy que sabes que mañana te costará el doble enfrentar?`;
+            return `A veces ${convLabel} trae un alivio rápido que no dura mucho. ¿Qué crees que estás evitando sentir ahora mismo?`;
         }
 
         case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
             if (challenge && challenge.length > 5) {
-                return `Tu reto es: ${challenge}. No mañana, ni cuando "estés listo". ¿Qué acción minúscula e imperfecta puedes hacer HOY para demostrarte que ya no eres esclavo de "${label}"?`;
+                return `Te propongo algo súper sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¿Te animas a intentarlo hoy para manejar ${convLabel} de otra manera?`;
             }
-            return `Si hoy decidieras romper el guion que "${label}" te impone, aunque sea solo un 1%, ¿cuál sería ese pequeñísimo acto de rebeldía a favor de tu propia paz mental?`;
+            return `Si pudieras cambiar solo un poquitito tu forma de responder ante ${convLabel}, ¿cuál sería el primer paso? Por más pequeño que sea.`;
         }
 
         case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
-            return `"${label}" no es un error en tu sistema, es una cicatriz de algo que dolió mucho. Mirándola de frente, sin juzgarla ni querer borrarla: ¿cómo decides abrazar esa parte de tu historia para poder, por fin, avanzar ligero?`;
+            return `Entiendo que ${convLabel} es parte de lo que has vivido. Viéndolo con calma y sin juzgarte, ¿cómo podrías aceptarlo para seguir adelante un poco más tranquilo?`;
         }
     }
 
