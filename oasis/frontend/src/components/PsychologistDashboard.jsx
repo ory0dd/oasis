@@ -5149,6 +5149,56 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <div className="text-[7.5px] font-mono text-emerald-400/90 flex items-center gap-1">
                                                     <span>✓ Términos clínicos & Política 48h / Límite 6h</span>
                                                 </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const docWindow = window.open('', '_blank');
+                                                        if (!docWindow) { alert("Permite las ventanas emergentes para generar el PDF."); return; }
+                                                        const dateStr = new Date(consentDate || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+                                                        const fullName = consentSigner || selectedPatient.name;
+                                                        const content = `
+                                                            <!DOCTYPE html>
+                                                            <html>
+                                                                <head>
+                                                                    <title>Consentimiento Informado - ${fullName}</title>
+                                                                    <style>
+                                                                        body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; margin: 1in; color: #000; }
+                                                                        h1 { font-size: 12pt; text-align: center; font-weight: bold; margin-bottom: 24pt; }
+                                                                        p { margin-bottom: 12pt; text-indent: 0.5in; text-align: left; margin-top: 0; }
+                                                                        .no-indent { text-indent: 0; }
+                                                                        .signature-section { margin-top: 48pt; text-align: left; }
+                                                                        .signature-line { border-top: 1px solid #000; width: 300px; padding-top: 5px; margin-bottom: 12pt; }
+                                                                    </style>
+                                                                </head>
+                                                                <body>
+                                                                    <h1>Consentimiento Informado y Encuadre Clínico</h1>
+                                                                    <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapéutico y uso de la plataforma clínica provista.</p>
+                                                                    <p>El tratamiento se basa en la psicoterapia clínica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podrá romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad ética y legal vigente.</p>
+                                                                    <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipación. Para reprogramar una sesión sin costo, notificaré con un mínimo de 24 horas de antelación. Comprendo y acepto que cualquier cancelación o solicitud de reagendamiento con menos de 6 horas de anticipación no procederá; la sesión se considerará como impartida y el monto se cobrará en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
+                                                                    <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesión. Si no me presento en este tiempo, la sesión se dará por cancelada y se aplicará la misma política de cobro por inasistencia tardía. Las sesiones tienen una duración aproximada de 50 minutos.</p>
+                                                                    <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los límites establecidos en el encuadre clínico. Otorgué mi consentimiento electrónicamente a través de la plataforma de manera voluntaria y consciente.</p>
+                                                                    
+                                                                    <div class="signature-section no-indent">
+                                                                        <p class="signature-line no-indent">Firma de Consentimiento y Aceptación</p>
+                                                                        <p class="no-indent"><strong>Nombre registrado:</strong> ${fullName}</p>
+                                                                        <p class="no-indent"><strong>Fecha de aceptación:</strong> ${dateStr}</p>
+                                                                        <p class="no-indent"><strong>Estatus:</strong> Firmado electrónicamente</p>
+                                                                    </div>
+                                                                </body>
+                                                            </html>
+                                                        `;
+                                                        docWindow.document.write(content);
+                                                        docWindow.document.close();
+                                                        docWindow.focus();
+                                                        setTimeout(() => {
+                                                            docWindow.print();
+                                                        }, 500);
+                                                    }}
+                                                    className="mt-1 flex items-center justify-center gap-1.5 w-full bg-white/5 hover:bg-white/10 text-zinc-300 py-1 rounded text-[9px] font-mono font-bold uppercase transition-colors"
+                                                >
+                                                    <FileText size={10} />
+                                                    Generar PDF (Formato APA)
+                                                </button>
                                                 {consentPhoto && (
                                                     <div 
                                                         onClick={() => setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate })}

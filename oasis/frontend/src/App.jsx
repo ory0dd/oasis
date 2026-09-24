@@ -4154,40 +4154,32 @@ const ProfileView = ({
                                     const docWindow = window.open('', '_blank');
                                     const dateStr = new Date().toLocaleDateString('es-MX');
                                     const content = `
+                                        <!DOCTYPE html>
                                         <html>
                                             <head>
                                                 <title>Consentimiento Informado - ${fullName}</title>
                                                 <style>
-                                                    body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; }
-                                                    h1 { font-size: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
-                                                    h2 { font-size: 16px; margin-top: 20px; color: #555; }
-                                                    p { font-size: 14px; text-align: justify; }
-                                                    .signature-section { margin-top: 50px; }
-                                                    .signature-line { border-top: 1px solid #000; width: 300px; padding-top: 5px; font-weight: bold; }
+                                                    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 2; margin: 1in; color: #000; }
+                                                    h1 { font-size: 12pt; text-align: center; font-weight: bold; margin-bottom: 24pt; }
+                                                    p { margin-bottom: 12pt; text-indent: 0.5in; text-align: left; margin-top: 0; }
+                                                    .no-indent { text-indent: 0; }
+                                                    .signature-section { margin-top: 48pt; text-align: left; }
+                                                    .signature-line { border-top: 1px solid #000; width: 300px; padding-top: 5px; margin-bottom: 12pt; }
                                                 </style>
                                             </head>
                                             <body>
-                                                <h1>CONSENTIMIENTO INFORMADO Y ENCUADRE CL√çNICO</h1>
-                                                <p>Por la presente, <strong>${fullName}</strong>, con usuario registrado <strong>${user}</strong>, declaro y consiento libremente las condiciones del encuadre terap√©utico y uso de la plataforma.</p>
+                                                <h1>Consentimiento Informado y Encuadre ClÌnico</h1>
+                                                <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapÈutico y uso de la plataforma clÌnica provista.</p>
+                                                <p>El tratamiento se basa en la psicoterapia clÌnica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podr· romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad Ètica y legal vigente.</p>
+                                                <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipaciÛn. Para reprogramar una sesiÛn sin costo, notificarÈ con un mÌnimo de 24 horas de antelaciÛn. Comprendo y acepto que cualquier cancelaciÛn o solicitud de reagendamiento con menos de 6 horas de anticipaciÛn no proceder·; la sesiÛn se considerar· como impartida y el monto se cobrar· en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
+                                                <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesiÛn. Si no me presento en este tiempo, la sesiÛn se dar· por cancelada y se aplicar· la misma polÌtica de cobro por inasistencia tardÌa. Las sesiones tienen una duraciÛn aproximada de 50 minutos.</p>
+                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los lÌmites establecidos en el encuadre clÌnico. OtorguÈ mi consentimiento electrÛnicamente a travÈs de la plataforma de manera voluntaria y consciente.</p>
                                                 
-                                                <h2>1. NATURALEZA DEL SERVICIO Y CONFIDENCIALIDAD</h2>
-                                                <p>El tratamiento se basa en la psicoterapia cl√≠nica y relacional. Todo lo discutido es estrictamente confidencial. La confidencialidad solo podr√° romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad √©tica y legal vigente.</p>
-
-                                                <h2>2. PAGOS Y POL√çTICA DE CANCELACIONES</h2>
-                                                <p>Las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipaci√≥n. Para reprogramar una sesi√≥n sin costo, deber√° notificar con <strong>un m√≠nimo de 24 horas de antelaci√≥n</strong>.</p>
-                                                <p><strong>Cualquier cancelaci√≥n o solicitud de reagendamiento con menos de 6 horas de anticipaci√≥n no proceder√°. La sesi√≥n se considerar√° como impartida y el monto se cobrar√° en su totalidad (100% de la tarifa).</strong> Esto aplica independientemente del motivo, resguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
-                                                
-                                                <h2>3. HORARIOS Y TOLERANCIA</h2>
-                                                <p>Se otorga una tolerancia de 15 minutos al inicio de la sesi√≥n. Si el consultante no se presenta en este tiempo, la sesi√≥n se dar√° por cancelada y se aplicar√° la misma pol√≠tica de cobro por inasistencia tard√≠a. Las sesiones tienen una duraci√≥n aproximada de 50 minutos.</p>
-
-                                                <h2>4. ACEPTACI√ìN Y COMPROMISO</h2>
-                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los l√≠mites establecidos en el encuadre cl√≠nico. Otorgu√© mi consentimiento electr√≥nicamente a trav√©s de la plataforma de manera voluntaria y consciente.</p>
-                                                
-                                                <div class="signature-section">
-                                                    <p class="signature-line">Firma de Consentimiento y Aceptaci√≥n</p>
-                                                    <p>Nombre registrado: ${fullName}</p>
-                                                    <p>Usuario: ${user}</p>
-                                                    <p>Fecha de impresi√≥n: ${dateStr}</p>
+                                                <div class="signature-section no-indent">
+                                                    <p class="signature-line no-indent">Firma de Consentimiento y AceptaciÛn</p>
+                                                    <p class="no-indent"><strong>Nombre registrado:</strong> ${fullName}</p>
+                                                    <p class="no-indent"><strong>Fecha de aceptaciÛn:</strong> ${dateStr}</p>
+                                                    <p class="no-indent"><strong>Estatus:</strong> Firmado electrÛnicamente</p>
                                                 </div>
                                             </body>
                                         </html>
@@ -16351,6 +16343,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
         </div>
     );
 }
+
 
 
 
