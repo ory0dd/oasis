@@ -2162,6 +2162,109 @@ Devuelve estrictamente el JSON sin formato extra.
     const [explorationModalOpen, setExplorationModalOpen] = useState(false);
     const [explorationQuestions, setExplorationQuestions] = useState([]);
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
+
+    useEffect(() => {
+        if (!selectedNode || selectedQuestionIndex === null) return;
+        const node = afcData?.nodes?.find(n => n.id === selectedNode.id);
+        if (!node) return;
+        
+        const apiKey = localStorage.getItem('oasis_deepseek_key') || '';
+        if (!apiKey) return; // Si no hay IA configurada, usa el generador modular
+
+        const currentChat = nodeChats[node.id]?.[selectedQuestionIndex];
+        const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
+        const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+        
+        // Check if we need to fetch
+        const needsFetch = !currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericOnly);
+        
+        if (needsFetch) {
+            // Set loading state
+            setNodeChats(prev => ({
+                ...prev,
+                [node.id]: {
+                    ...(prev[node.id] || {}),
+                    [selectedQuestionIndex]: [{ role: 'assistant', content: 'Pensando la mejor pregunta...', isLoading: true }]
+                }
+            }));
+            
+            // Llama a la API
+            const API_URL = import.meta.env.VITE_API_URL ||
+                ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
+                    ? `http://${window.location.hostname}:5046`
+                    : 'https://oasis-production-6303.up.railway.app');
+                    
+            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
+            const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
+            
+            const perspectives = [
+                "Raíz Histórica y Origen (de dónde viene este patrón)",
+                "Relaciones Actuales y Entorno Social (cómo impacta a sus vínculos)",
+                "Cuerpo y Fisiología Somática (cómo se siente físicamente y emocionalmente)",
+                "Valores y Diálogo Interno (qué se dice a sí mismo y autocrítica)",
+                "Conductas y Patrones Automáticos (a dónde lo lleva o qué evita)",
+                "Reto Conductual Amable (un pequeñísimo experimento o paso a dar)",
+                "Integración y Cierre Compasivo (aceptación y soltar el ciclo)"
+            ];
+            
+            let prompt = `Actúa como un psicoterapeuta humano, empático y MUY directo. 
+El paciente está explorando su mapa mental y se detuvo en el nodo: "${node.label}" (Descripción: ${node.description || 'N/A'}).
+Queremos que le hagas una pregunta o comentario conversacional explorando este nodo desde la perspectiva: ${perspectives[selectedQuestionIndex]}.`;
+
+            if (originContext?.originNode) {
+                prompt += `\nNota: Este patrón parece originarse o detonarse por: "${originContext.originNode.label}".`;
+            }
+            if (consequenceContext?.targetNode) {
+                prompt += `\nNota: Este patrón suele desembocar en: "${consequenceContext.targetNode.label}".`;
+            }
+
+            prompt += `\n\nREGLAS IMPORTANTES:
+1. NO uses lenguaje robótico, ni clichés clínicos (evita palabras como "toma de consciencia", "armadura", "patrón", "ciclo").
+2. Escribe SOLO la pregunta directa que le dirías al paciente. Nada de saludos ni introducciones tuyas.
+3. Hazlo sentir como una charla genuina. Empieza natural (ej. "Sabes, me quedaba pensando en...", "Es curioso cómo...", "Oye, y cuando te pasa esto...").
+4. Sé breve, máximo 2 oraciones.`;
+
+            fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: 'deepseek', endpoint: null,
+                    key: apiKey,
+                    payload: {
+                        model: model,
+                        messages: [{ role: 'user', content: prompt }]
+                    }
+                })
+            }).then(res => res.json()).then(data => {
+                if (data && data.choices && data.choices[0]) {
+                    let aiText = data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+                    setNodeChats(prev => ({
+                        ...prev,
+                        [node.id]: {
+                            ...(prev[node.id] || {}),
+                            [selectedQuestionIndex]: [{ role: 'assistant', content: aiText }]
+                        }
+                    }));
+                } else {
+                    throw new Error("Invalid LLM response");
+                }
+            }).catch(e => {
+                console.error("AI Error:", e);
+                // Fallback to local
+                const fallbackQ = getNodePerspectiveQuestion(node, selectedQuestionIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
+                setNodeChats(prev => ({
+                    ...prev,
+                    [node.id]: {
+                        ...(prev[node.id] || {}),
+                        [selectedQuestionIndex]: [{ role: 'assistant', content: fallbackQ }]
+                    }
+                }));
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedNode?.id, selectedQuestionIndex, afcData]);
+
     const chatContainerRef = useRef(null);
 
     const getSafeCurrentChat = useCallback((nodeId, threadIndex = 0) => {
