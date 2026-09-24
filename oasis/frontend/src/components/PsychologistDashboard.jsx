@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Aperture, Mic,  
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
@@ -23,13 +23,13 @@ import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult, getComple
 class ViewErrorBoundary extends React.Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
     static getDerivedStateFromError(error) { return { hasError: true, error }; }
-    componentDidCatch(error, info) { console.error('ðŸ”´ ViewErrorBoundary:', error, info); }
+    componentDidCatch(error, info) { console.error('🔴 ViewErrorBoundary:', error, info); }
     render() {
         if (this.state.hasError) {
             return (
                 <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
                     <AlertTriangle size={40} className="text-red-500 opacity-50" />
-                    <h3 className="text-zinc-200 text-sm font-bold m-0">Error al cargar el mÃ³dulo</h3>
+                    <h3 className="text-zinc-200 text-sm font-bold m-0">Error al cargar el módulo</h3>
                     <code className="text-red-500 text-[10px] font-mono bg-red-500/10 p-2 rounded-lg max-w-md break-all">
                         {this.state.error?.message || 'Error desconocido'}
                     </code>
@@ -38,7 +38,7 @@ class ViewErrorBoundary extends React.Component {
                             onClick={() => window.location.reload()}
                             className="px-5 py-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all"
                         >
-                            Recargar pÃ¡gina
+                            Recargar página
                         </button>
                         <button
                             onClick={() => this.setState({ hasError: false, error: null })}
@@ -58,28 +58,28 @@ const PHENOM_PART_B = [
     { id: 1, domain: "Reactividad Emocional", text: "Me preocupo por casi todo." },
     { id: 2, domain: "Reactividad Emocional", text: "Me asusto o me alarmo con mucha facilidad." },
     { id: 3, domain: "Reactividad Emocional", text: "Me pongo muy ansioso/a cuando las cosas son inciertas o impredecibles." },
-    { id: 4, domain: "Reactividad Emocional", text: "Me irrito fÃ¡cilmente por todo tipo de cosas." },
+    { id: 4, domain: "Reactividad Emocional", text: "Me irrito fácilmente por todo tipo de cosas." },
     { id: 5, domain: "Reactividad Emocional", text: "Mis emociones a veces cambian de un momento a otro sin motivo aparente." },
-    { id: 6, domain: "Estilo de ConexiÃ³n", text: "Prefiero estar solo/a que acompaÃ±ado/a." },
-    { id: 7, domain: "Estilo de ConexiÃ³n", text: "Mantengo mi distancia emocional de la gente." },
-    { id: 8, domain: "Estilo de ConexiÃ³n", text: "Me cuesta mucho disfrutar de las cosas de la vida." },
-    { id: 9, domain: "Estilo de ConexiÃ³n", text: "Rara vez me involucro emocionalmente con los demÃ¡s." },
-    { id: 10, domain: "Estilo de ConexiÃ³n", text: "Evito hacer nuevos amigos o conocer gente nueva." },
-    { id: 11, domain: "GestiÃ³n de la Asertividad", text: "A menudo tengo que manipular a la gente para conseguir lo que quiero." },
-    { id: 12, domain: "GestiÃ³n de la Asertividad", text: "Siento que soy mejor o mÃ¡s importante que casi todo el mundo." },
-    { id: 13, domain: "GestiÃ³n de la Asertividad", text: "Disfruto aprovechÃ¡ndome de los demÃ¡s si se presenta la oportunidad." },
-    { id: 14, domain: "GestiÃ³n de la Asertividad", text: "No me importa herir los sentimientos de otros si eso me beneficia." },
-    { id: 15, domain: "GestiÃ³n de la Asertividad", text: "Creo que para salir adelante, a veces tienes que engaÃ±ar a la gente." },
-    { id: 16, domain: "Impulso y PlanificaciÃ³n", text: "A menudo actÃºo de inmediato sin pensar en las consecuencias." },
-    { id: 17, domain: "Impulso y PlanificaciÃ³n", text: "Hago las cosas en el momento sin planearlas en absoluto." },
-    { id: 18, domain: "Impulso y PlanificaciÃ³n", text: "A menudo rompo mis promesas o no cumplo con mis acuerdos." },
-    { id: 19, domain: "Impulso y PlanificaciÃ³n", text: "Me aburro rÃ¡pidamente de las tareas y pierdo el interÃ©s." },
-    { id: 20, domain: "Impulso y PlanificaciÃ³n", text: "Tomo decisiones precipitadas en el calor del momento." },
-    { id: 21, domain: "Singularidad Cognitiva", text: "A menudo tengo pensamientos que no tienen sentido para los demÃ¡s." },
-    { id: 22, domain: "Singularidad Cognitiva", text: "He tenido experiencias extraÃ±as que son muy difÃ­ciles de explicar." },
+    { id: 6, domain: "Estilo de Conexión", text: "Prefiero estar solo/a que acompañado/a." },
+    { id: 7, domain: "Estilo de Conexión", text: "Mantengo mi distancia emocional de la gente." },
+    { id: 8, domain: "Estilo de Conexión", text: "Me cuesta mucho disfrutar de las cosas de la vida." },
+    { id: 9, domain: "Estilo de Conexión", text: "Rara vez me involucro emocionalmente con los demás." },
+    { id: 10, domain: "Estilo de Conexión", text: "Evito hacer nuevos amigos o conocer gente nueva." },
+    { id: 11, domain: "Gestión de la Asertividad", text: "A menudo tengo que manipular a la gente para conseguir lo que quiero." },
+    { id: 12, domain: "Gestión de la Asertividad", text: "Siento que soy mejor o más importante que casi todo el mundo." },
+    { id: 13, domain: "Gestión de la Asertividad", text: "Disfruto aprovechándome de los demás si se presenta la oportunidad." },
+    { id: 14, domain: "Gestión de la Asertividad", text: "No me importa herir los sentimientos de otros si eso me beneficia." },
+    { id: 15, domain: "Gestión de la Asertividad", text: "Creo que para salir adelante, a veces tienes que engañar a la gente." },
+    { id: 16, domain: "Impulso y Planificación", text: "A menudo actúo de inmediato sin pensar en las consecuencias." },
+    { id: 17, domain: "Impulso y Planificación", text: "Hago las cosas en el momento sin planearlas en absoluto." },
+    { id: 18, domain: "Impulso y Planificación", text: "A menudo rompo mis promesas o no cumplo con mis acuerdos." },
+    { id: 19, domain: "Impulso y Planificación", text: "Me aburro rápidamente de las tareas y pierdo el interés." },
+    { id: 20, domain: "Impulso y Planificación", text: "Tomo decisiones precipitadas en el calor del momento." },
+    { id: 21, domain: "Singularidad Cognitiva", text: "A menudo tengo pensamientos que no tienen sentido para los demás." },
+    { id: 22, domain: "Singularidad Cognitiva", text: "He tenido experiencias extrañas que son muy difíciles de explicar." },
     { id: 23, domain: "Singularidad Cognitiva", text: "A veces siento que las cosas a mi alrededor no son reales." },
-    { id: 24, domain: "Singularidad Cognitiva", text: "La gente suele pensar que mi forma de ser o hablar es excÃ©ntrica o rara." },
-    { id: 25, domain: "Singularidad Cognitiva", text: "A veces escuchar o ver cosas que los demÃ¡s no pueden percibir." }
+    { id: 24, domain: "Singularidad Cognitiva", text: "La gente suele pensar que mi forma de ser o hablar es excéntrica o rara." },
+    { id: 25, domain: "Singularidad Cognitiva", text: "A veces escuchar o ver cosas que los demás no pueden percibir." }
 ];
 
 // Helper to calculate PID-5 Domain scores
@@ -209,8 +209,8 @@ const getIcarAlerts = (icarDwellTimes, icarChanges) => {
     Object.entries(icarDwellTimes).forEach(([qNum, time]) => {
         if (time > 95) {
             alerts.push({
-                name: `Alta InversiÃ³n Cognitiva (Q${qNum})`,
-                tooltip: `El paciente dedicÃ³ ${Math.round(time)}s a la resoluciÃ³n del reactivo, sugiriendo procesamiento detallado de variables.`
+                name: `Alta Inversión Cognitiva (Q${qNum})`,
+                tooltip: `El paciente dedicó ${Math.round(time)}s a la resolución del reactivo, sugiriendo procesamiento detallado de variables.`
             });
         }
     });
@@ -219,8 +219,8 @@ const getIcarAlerts = (icarDwellTimes, icarChanges) => {
         Object.entries(icarChanges).forEach(([qNum, count]) => {
             if (count >= 3) {
                 alerts.push({
-                    name: `ReevaluaciÃ³n Decisional (Q${qNum})`,
-                    tooltip: `Se registraron ${count} cambios de opciÃ³n, sugiriendo revisiÃ³n y reformulaciÃ³n de la hipÃ³tesis.`
+                    name: `Reevaluación Decisional (Q${qNum})`,
+                    tooltip: `Se registraron ${count} cambios de opción, sugiriendo revisión y reformulación de la hipótesis.`
                 });
             }
         });
@@ -229,7 +229,7 @@ const getIcarAlerts = (icarDwellTimes, icarChanges) => {
     return alerts;
 };
 
-// Helper to compute ICAR Z-Scores and clÃ­nical interpretations on the fly
+// Helper to compute ICAR Z-Scores and clínical interpretations on the fly
 const computeIcarReferenceIndices = (icarAnswers, icarDwellTimes, icarChanges) => {
     const dimensions = {
         verbal: { qs: [1, 6, 14, 16], correct: 0, mean: 3.2, sd: 0.8, name: "Verbal" },
@@ -285,17 +285,17 @@ const computeIcarReferenceIndices = (icarAnswers, icarDwellTimes, icarChanges) =
     const getClinicalInterpretation = (z, avgDwell) => {
         if (avgDwell === 0) return "Sin datos suficientes";
         if (z >= 0 && avgDwell > 45) {
-            return "Capacidad Compensatoria: El rendimiento estÃ¡ conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabÃ³lica secundaria.";
+            return "Capacidad Compensatoria: El rendimiento está conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabólica secundaria.";
         }
         if (z < 0 && avgDwell < 15) {
-            return "Baja InversiÃ³n en la Tarea: DesconexiÃ³n atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analÃ­tico.";
+            return "Baja Inversión en la Tarea: Desconexión atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analítico.";
         }
         if (z < 0 && avgDwell > 90) {
-            return "SaturaciÃ³n Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resoluciÃ³n exitosa.";
+            return "Saturación Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resolución exitosa.";
         }
-        if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisiÃ³n.";
-        if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio especÃ­fico.";
-        return "Rendimiento EstÃ¡ndar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
+        if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisión.";
+        if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio específico.";
+        return "Rendimiento Estándar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
     };
 
     const getEfficiencyStatus = (z, avgDwell) => {
@@ -385,7 +385,7 @@ const computeIcarEstadoCognitivo = (icarAnswers, icarDwellTimes, icarChanges, sc
     } else if (totalDwellAvg < 45 && score < 11) {
         estilo_ejecucion = "impulsivo";
     } else if (totalDwellAvg >= 45 && score >= 11) {
-        estilo_ejecucion = "analÃ­tico_sostenido";
+        estilo_ejecucion = "analítico_sostenido";
     } else {
         estilo_ejecucion = "sobrecargado";
     }
@@ -492,27 +492,27 @@ const computePid5ClinicalState = (pidAnswers) => {
         return { label: "Enfoque Destacado", color: "text-violet-400 bg-violet-500/10 border-violet-500/20 font-bold" };
     };
 
-    // Calculate system dynamics and discrepancies (DinÃ¡micas de Afrontamiento)
+    // Calculate system dynamics and discrepancies (Dinámicas de Afrontamiento)
     const dynamicInsights = [];
     
-    // Dynamic 1: Reactividad vs ConexiÃ³n
+    // Dynamic 1: Reactividad vs Conexión
     const dist1 = parseFloat(Math.abs(indices.reactividadEmocional - indices.estiloConexion).toFixed(3));
     if (dist1 >= 0.5) {
         if (indices.reactividadEmocional >= indices.estiloConexion) {
             dynamicInsights.push({
-                type: "Reactividad vs ConexiÃ³n",
+                type: "Reactividad vs Conexión",
                 discrepancy: dist1,
-                title: "BÃºsqueda de RegulaciÃ³n Externa",
+                title: "Búsqueda de Regulación Externa",
                 consequence: "Cuando las emociones se intensifican, buscas activamente el apoyo de otros para encontrar equilibrio. Es tu forma de no cargar todo solo.",
-                reflection: "Â¿QuÃ© personas o entornos de confianza son los que mejor te ayudan a recuperar la calma en esos momentos?"
+                reflection: "¿Qué personas o entornos de confianza son los que mejor te ayudan a recuperar la calma en esos momentos?"
             });
         } else {
             dynamicInsights.push({
-                type: "Reactividad vs ConexiÃ³n",
+                type: "Reactividad vs Conexión",
                 discrepancy: dist1,
                 title: "Aislamiento Defensivo",
-                consequence: "Ante la sobrecarga del entorno, prefieres retirarte a tu propio espacio. Es tu mÃ©todo para recuperar energÃ­a y procesar tus ideas sin ruido externo.",
-                reflection: "Â¿CÃ³mo logras que tus seres queridos entiendan que tu retiro temporal es solo tu manera de restaurar tu equilibrio?"
+                consequence: "Ante la sobrecarga del entorno, prefieres retirarte a tu propio espacio. Es tu método para recuperar energía y procesar tus ideas sin ruido externo.",
+                reflection: "¿Cómo logras que tus seres queridos entiendan que tu retiro temporal es solo tu manera de restaurar tu equilibrio?"
             });
         }
     }
@@ -524,61 +524,61 @@ const computePid5ClinicalState = (pidAnswers) => {
             dynamicInsights.push({
                 type: "Singularidad vs Ritmo",
                 discrepancy: dist2,
-                title: "ElaboraciÃ³n Compleja sobre AcciÃ³n",
-                consequence: "Tienes una forma muy particular de ver el mundo, lo cual normalmente tomarÃ­a mucho tiempo procesar. Sin embargo, logras tomar decisiones con mucha agilidad. Esto sugiere que no necesitas detenerte para ser creativo; tu mente ha aprendido a integrar tus ideas abstractas directamente en la acciÃ³n.",
-                reflection: "Â¿CÃ³mo logras que esa fluidez pase del pensamiento a la acciÃ³n sin sentir que pierdes la profundidad de tus ideas originales?"
+                title: "Elaboración Compleja sobre Acción",
+                consequence: "Tienes una forma muy particular de ver el mundo, lo cual normalmente tomaría mucho tiempo procesar. Sin embargo, logras tomar decisiones con mucha agilidad. Esto sugiere que no necesitas detenerte para ser creativo; tu mente ha aprendido a integrar tus ideas abstractas directamente en la acción.",
+                reflection: "¿Cómo logras que esa fluidez pase del pensamiento a la acción sin sentir que pierdes la profundidad de tus ideas originales?"
             });
         } else {
             dynamicInsights.push({
                 type: "Singularidad vs Ritmo",
                 discrepancy: dist2,
-                title: "AcciÃ³n Ejecutiva sobre AbstracciÃ³n",
-                consequence: "Prefieres resolver y actuar de manera rÃ¡pida y directa. Valoras la aplicaciÃ³n prÃ¡ctica y la toma de decisiones inmediata sobre las teorizaciones.",
-                reflection: "Â¿CÃ³mo logras equilibrar tu agilidad para tomar decisiones con la necesidad de detenerte a reflexionar sobre alternativas menos convencionales cuando el reto lo exige?"
+                title: "Acción Ejecutiva sobre Abstracción",
+                consequence: "Prefieres resolver y actuar de manera rápida y directa. Valoras la aplicación práctica y la toma de decisiones inmediata sobre las teorizaciones.",
+                reflection: "¿Cómo logras equilibrar tu agilidad para tomar decisiones con la necesidad de detenerte a reflexionar sobre alternativas menos convencionales cuando el reto lo exige?"
             });
         }
     }
     
-    // Dynamic 3: Asertividad vs ConexiÃ³n
+    // Dynamic 3: Asertividad vs Conexión
     const dist3 = parseFloat(Math.abs(indices.gestionAsertividad - indices.estiloConexion).toFixed(3));
     if (dist3 >= 0.5) {
         if (indices.gestionAsertividad >= indices.estiloConexion) {
             dynamicInsights.push({
-                type: "Asertividad vs ConexiÃ³n",
+                type: "Asertividad vs Conexión",
                 discrepancy: dist3,
                 title: "Asertividad Relacional Activa",
-                consequence: "Defiendes con firmeza tus lÃ­mites y decisiones personales, pero buscando mantener un diÃ¡logo y conexiÃ³n fluida con tu entorno.",
-                reflection: "Â¿CÃ³mo logras equilibrar tu asertividad firme con la empatÃ­a hacia las necesidades de los demÃ¡s en una conversaciÃ³n?"
+                consequence: "Defiendes con firmeza tus límites y decisiones personales, pero buscando mantener un diálogo y conexión fluida con tu entorno.",
+                reflection: "¿Cómo logras equilibrar tu asertividad firme con la empatía hacia las necesidades de los demás en una conversación?"
             });
         } else {
             dynamicInsights.push({
-                type: "Asertividad vs ConexiÃ³n",
+                type: "Asertividad vs Conexión",
                 discrepancy: dist3,
                 title: "Distanciamiento Independiente",
                 consequence: "Mantienes tu independencia y control personal marcando una distancia clara en tus relaciones. Es tu manera de proteger tu libertad.",
-                reflection: "Â¿De quÃ© manera te aseguras de que esa distancia protectora no se convierta en una barrera que dificulte una cercanÃ­a mÃ¡s profunda cuando la deseas?"
+                reflection: "¿De qué manera te aseguras de que esa distancia protectora no se convierta en una barrera que dificulte una cercanía más profunda cuando la deseas?"
             });
         }
     }
 
-    // Dynamic 4: Reactividad vs Ritmo de EjecuciÃ³n
+    // Dynamic 4: Reactividad vs Ritmo de Ejecución
     const dist4 = parseFloat(Math.abs(indices.reactividadEmocional - indices.ritmoEjecucion).toFixed(3));
     if (dist4 >= 0.5) {
         if (indices.reactividadEmocional >= indices.ritmoEjecucion) {
             dynamicInsights.push({
                 type: "Reactividad vs Ritmo",
                 discrepancy: dist4,
-                title: "BÃºsqueda de GratificaciÃ³n Impulsiva",
-                consequence: "Cuando necesitas aliviar tensiones, tiendes a actuar de forma espontÃ¡nea, priorizando la acciÃ³n rÃ¡pida sobre la estrategia a largo plazo.",
-                reflection: "Â¿De quÃ© manera te ha ayudado esta espontaneidad a aliviar tensiones de forma inmediata, y cÃ³mo podrÃ­as equilibrarla con una perspectiva a largo plazo?"
+                title: "Búsqueda de Gratificación Impulsiva",
+                consequence: "Cuando necesitas aliviar tensiones, tiendes a actuar de forma espontánea, priorizando la acción rápida sobre la estrategia a largo plazo.",
+                reflection: "¿De qué manera te ha ayudado esta espontaneidad a aliviar tensiones de forma inmediata, y cómo podrías equilibrarla con una perspectiva a largo plazo?"
             });
         } else {
             dynamicInsights.push({
                 type: "Reactividad vs Ritmo",
                 discrepancy: dist4,
-                title: "Estructura y AutorregulaciÃ³n Deliberada",
-                consequence: "Ante la tensiÃ³n o los retos, mantienes la disciplina y el enfoque metÃ³dico por encima de cualquier reacciÃ³n impulsiva inmediata.",
-                reflection: "Â¿CÃ³mo manejas tus emociones internas cuando la necesidad de estructura choca con situaciones que requieren improvisaciÃ³n absoluta?"
+                title: "Estructura y Autorregulación Deliberada",
+                consequence: "Ante la tensión o los retos, mantienes la disciplina y el enfoque metódico por encima de cualquier reacción impulsiva inmediata.",
+                reflection: "¿Cómo manejas tus emociones internas cuando la necesidad de estructura choca con situaciones que requieren improvisación absoluta?"
             });
         }
     }
@@ -590,95 +590,95 @@ const computePid5ClinicalState = (pidAnswers) => {
     if (indices.reactividadEmocional >= 0.65) {
         analysisNotes.push({
             label: "Reactividad Emocional",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Destacado",
-            consequence: "Vives y sientes los cambios a tu alrededor con gran empatÃ­a y sensibilidad. Esto te permite conectar profundamente con las emociones de los demÃ¡s y responder de forma autÃ©ntica.",
-            reflection: "Â¿De quÃ© manera canalizas esta intensidad para que sea tu guÃ­a al relacionarte con otros, protegiendo al mismo tiempo tu paz mental?"
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Vives y sientes los cambios a tu alrededor con gran empatía y sensibilidad. Esto te permite conectar profundamente con las emociones de los demás y responder de forma auténtica.",
+            reflection: "¿De qué manera canalizas esta intensidad para que sea tu guía al relacionarte con otros, protegiendo al mismo tiempo tu paz mental?"
         });
     } else if (indices.reactividadEmocional >= 0.35) {
         analysisNotes.push({
             label: "Reactividad Emocional",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Moderado",
-            consequence: "Mantienes una relaciÃ³n armoniosa con tu mundo emocional, respondiendo con empatÃ­a cuando la situaciÃ³n lo amerita sin abrumarte fÃ¡cilmente.",
-            reflection: "Â¿Sientes que este equilibrio te ayuda a conservar la claridad mental ante los retos cotidianos?"
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Mantienes una relación armoniosa con tu mundo emocional, respondiendo con empatía cuando la situación lo amerita sin abrumarte fácilmente.",
+            reflection: "¿Sientes que este equilibrio te ayuda a conservar la claridad mental ante los retos cotidianos?"
         });
     } else {
         analysisNotes.push({
             label: "Reactividad Emocional",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Atenuado",
-            consequence: "Frente a las presiones del entorno, prefieres actuar con serenidad y cabeza frÃ­a. Esto te ayuda a tomar decisiones objetivas sin el ruido de reacciones apresuradas.",
-            reflection: "Â¿En quÃ© momentos sientes que esta calma te permite ser el cable a tierra de las personas que te rodean?"
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Frente a las presiones del entorno, prefieres actuar con serenidad y cabeza fría. Esto te ayuda a tomar decisiones objetivas sin el ruido de reacciones apresuradas.",
+            reflection: "¿En qué momentos sientes que esta calma te permite ser el cable a tierra de las personas que te rodean?"
         });
     }
 
-    // 2. Estilo de ConexiÃ³n
+    // 2. Estilo de Conexión
     if (indices.estiloConexion >= 0.65) {
         analysisNotes.push({
-            label: "Estilo de ConexiÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Destacado",
-            consequence: "Valoras profundamente tu espacio y tiempo personal para recargar tus energÃ­as. Disfrutas de momentos a solas para reflexionar sin la sobrecarga del entorno social.",
-            reflection: "Â¿CÃ³mo logras mantener el equilibrio entre tus momentos de retiro voluntario y las relaciones que te importan?"
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Valoras profundamente tu espacio y tiempo personal para recargar tus energías. Disfrutas de momentos a solas para reflexionar sin la sobrecarga del entorno social.",
+            reflection: "¿Cómo logras mantener el equilibrio entre tus momentos de retiro voluntario y las relaciones que te importan?"
         });
     } else if (indices.estiloConexion >= 0.35) {
         analysisNotes.push({
-            label: "Estilo de ConexiÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Moderado",
-            consequence: "Alternas de forma natural entre la interacciÃ³n social y tus periodos de introspecciÃ³n, sintiÃ©ndote cÃ³modo en ambos mundos.",
-            reflection: "Â¿Sientes que logras nutrir tus relaciones sin perder tu propio espacio de reflexiÃ³n?"
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Alternas de forma natural entre la interacción social y tus periodos de introspección, sintiéndote cómodo en ambos mundos.",
+            reflection: "¿Sientes que logras nutrir tus relaciones sin perder tu propio espacio de reflexión?"
         });
     } else {
         analysisNotes.push({
-            label: "Estilo de ConexiÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Atenuado",
-            consequence: "Te resulta muy natural y de fÃ¡cil disposiciÃ³n interactuar continuamente con otras personas. Sientes disponibilidad interpersonal sin requerir periodos de aislamiento voluntario.",
-            reflection: "Â¿Sientes que participar de forma continua en interacciones sociales te resulta natural y no te drena la energÃ­a?"
+            label: "Estilo de Conexión",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Te resulta muy natural y de fácil disposición interactuar continuamente con otras personas. Sientes disponibilidad interpersonal sin requerir periodos de aislamiento voluntario.",
+            reflection: "¿Sientes que participar de forma continua en interacciones sociales te resulta natural y no te drena la energía?"
         });
     }
 
-    // 3. GestiÃ³n de la Asertividad
+    // 3. Gestión de la Asertividad
     if (indices.gestionAsertividad >= 0.65) {
         analysisNotes.push({
-            label: "GestiÃ³n de la Asertividad",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Destacado",
-            consequence: "Estableces lÃ­mites sumamente claros y defiendes tus convicciones con firmeza, priorizando tu soberanÃ­a e independencia frente a la opiniÃ³n del grupo.",
-            reflection: "Â¿CÃ³mo decides cuÃ¡ndo ser firme para resguardar tus metas y cuÃ¡ndo ser flexible para colaborar con otros?"
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Estableces límites sumamente claros y defiendes tus convicciones con firmeza, priorizando tu soberanía e independencia frente a la opinión del grupo.",
+            reflection: "¿Cómo decides cuándo ser firme para resguardar tus metas y cuándo ser flexible para colaborar con otros?"
         });
     } else if (indices.gestionAsertividad >= 0.35) {
         analysisNotes.push({
-            label: "GestiÃ³n de la Asertividad",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Moderado",
-            consequence: "Defiendes tus posturas con naturalidad pero con tacto, buscando acuerdos y prefiriendo la colaboraciÃ³n sin ceder en tus valores fundamentales.",
-            reflection: "Â¿Te resulta fÃ¡cil encontrar un punto medio donde tus necesidades y las de los demÃ¡s se respeten?"
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Defiendes tus posturas con naturalidad pero con tacto, buscando acuerdos y prefiriendo la colaboración sin ceder en tus valores fundamentales.",
+            reflection: "¿Te resulta fácil encontrar un punto medio donde tus necesidades y las de los demás se respeten?"
         });
     } else {
         analysisNotes.push({
-            label: "GestiÃ³n de la Asertividad",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Atenuado",
-            consequence: "Prefieres el consenso y la armonÃ­a sobre el conflicto. Buscas que todos se sientan cÃ³modos y evitas generar tensiones innecesarias con los demÃ¡s.",
-            reflection: "Â¿CÃ³mo logras equilibrar tu deseo de mantener la paz con la expresiÃ³n honesta de tus propias necesidades?"
+            label: "Gestión de la Asertividad",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres el consenso y la armonía sobre el conflicto. Buscas que todos se sientan cómodos y evitas generar tensiones innecesarias con los demás.",
+            reflection: "¿Cómo logras equilibrar tu deseo de mantener la paz con la expresión honesta de tus propias necesidades?"
         });
     }
 
-    // 4. Ritmo de EjecuciÃ³n
+    // 4. Ritmo de Ejecución
     if (indices.ritmoEjecucion >= 0.65) {
         analysisNotes.push({
-            label: "Ritmo de EjecuciÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Destacado",
-            consequence: "Te adaptas muy bien a los imprevistos y prefieres actuar de manera flexible sobre la marcha, encontrando soluciones rÃ¡pidas e intuitivas.",
-            reflection: "Â¿QuÃ© rutinas sencillas te ayudan a mantener el rumbo en tus metas largas cuando la novedad te invita a cambiar?"
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Te adaptas muy bien a los imprevistos y prefieres actuar de manera flexible sobre la marcha, encontrando soluciones rápidas e intuitivas.",
+            reflection: "¿Qué rutinas sencillas te ayudan a mantener el rumbo en tus metas largas cuando la novedad te invita a cambiar?"
         });
     } else if (indices.ritmoEjecucion >= 0.35) {
         analysisNotes.push({
-            label: "Ritmo de EjecuciÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Moderado",
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
             consequence: "Planificas tus pasos principales pero mantienes la flexibilidad suficiente para improvisar o cambiar el rumbo cuando es necesario.",
-            reflection: "Â¿CÃ³mo decides cuÃ¡ndo seguir el plan original y cuÃ¡ndo es mejor dejarte llevar por las circunstancias?"
+            reflection: "¿Cómo decides cuándo seguir el plan original y cuándo es mejor dejarte llevar por las circunstancias?"
         });
     } else {
         analysisNotes.push({
-            label: "Ritmo de EjecuciÃ³n",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Atenuado",
-            consequence: "Prefieres la organizaciÃ³n, el anÃ¡lisis minucioso y dar pasos seguros. Esto te ayuda a evitar decisiones impulsivas y a garantizar resultados ordenados.",
-            reflection: "Â¿CÃ³mo manejas la frustraciÃ³n cuando situaciones externas o personas imprevistas cambian tu planificaciÃ³n?"
+            label: "Ritmo de Ejecución",
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres la organización, el análisis minucioso y dar pasos seguros. Esto te ayuda a evitar decisiones impulsivas y a garantizar resultados ordenados.",
+            reflection: "¿Cómo manejas la frustración cuando situaciones externas o personas imprevistas cambian tu planificación?"
         });
     }
 
@@ -686,23 +686,23 @@ const computePid5ClinicalState = (pidAnswers) => {
     if (indices.singularidadCognitiva >= 0.65) {
         analysisNotes.push({
             label: "Singularidad Cognitiva",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Destacado",
-            consequence: "Tu mente conecta ideas de formas inusuales, originales y abstractas. Tienes una forma muy particular de ver el mundo, priorizando la imaginaciÃ³n y la creatividad.",
-            reflection: "Â¿CÃ³mo logras que esta forma tan rica de ver el mundo te ayude a resolver problemas prÃ¡cticos del dÃ­a a dÃ­a?"
+            styleType: "Estilo de gestión personal - Enfoque Destacado",
+            consequence: "Tu mente conecta ideas de formas inusuales, originales y abstractas. Tienes una forma muy particular de ver el mundo, priorizando la imaginación y la creatividad.",
+            reflection: "¿Cómo logras que esta forma tan rica de ver el mundo te ayude a resolver problemas prácticos del día a día?"
         });
     } else if (indices.singularidadCognitiva >= 0.35) {
         analysisNotes.push({
             label: "Singularidad Cognitiva",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Moderado",
-            consequence: "Logras combinar un sentido prÃ¡ctico y convencional con visiones creativas y originales ante los desafÃ­os.",
-            reflection: "Â¿CÃ³mo equilibras tu lado realista con tus destellos de originalidad para resolver problemas?"
+            styleType: "Estilo de gestión personal - Enfoque Moderado",
+            consequence: "Logras combinar un sentido práctico y convencional con visiones creativas y originales ante los desafíos.",
+            reflection: "¿Cómo equilibras tu lado realista con tus destellos de originalidad para resolver problemas?"
         });
     } else {
         analysisNotes.push({
             label: "Singularidad Cognitiva",
-            styleType: "Estilo de gestiÃ³n personal - Enfoque Atenuado",
-            consequence: "Prefieres centrarte en hechos reales, datos tangibles y soluciones directas. Tu comunicaciÃ³n y decisiones se caracterizan por ser claras y funcionales.",
-            reflection: "Â¿CÃ³mo te ayuda este enfoque prÃ¡ctico a resolver situaciones complejas con rapidez y sencillez?"
+            styleType: "Estilo de gestión personal - Enfoque Atenuado",
+            consequence: "Prefieres centrarte en hechos reales, datos tangibles y soluciones directas. Tu comunicación y decisiones se caracterizan por ser claras y funcionales.",
+            reflection: "¿Cómo te ayuda este enfoque práctico a resolver situaciones complejas con rapidez y sencillez?"
         });
     }
 
@@ -1131,7 +1131,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
                         const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
                         const isAxel = uname.toLowerCase() === 'axel roben';
-                        const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'PsicÃ³loga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador ClÃ­nico' : isAxel ? 'Axel Roben' : '');
+                        const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : isAxel ? 'Axel Roben' : '');
                         
                         patientsMap[uname] = {
                             ...(patientsMap[uname] || {}),
@@ -1260,7 +1260,7 @@ const PsychologistDashboard = ({ onClose }) => {
             }
             
             const pid5Data = getPid5Domains(pidAnswers);
-            const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisiÃ³n';
+            const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisión';
             
             return {
                 id: 'PT-' + username.toUpperCase(),
@@ -1279,7 +1279,7 @@ const PsychologistDashboard = ({ onClose }) => {
                         "Premisa de Realidad": phenomQual.premisa_realidad || ""
                     }
                 } : null,
-                clÃ­nicalInterview: bioTranscripts ? {
+                clínicalInterview: bioTranscripts ? {
                     transcripts: bioTranscripts
                 } : null,
                 pid5: pid5Data,
@@ -1303,7 +1303,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
     const handleDeleteUser = async (e, username) => {
         e.stopPropagation();
-        if (!window.confirm(`Â¿EstÃ¡s seguro de que quieres eliminar al usuario ${username}? Esta acciÃ³n no se puede deshacer.`)) {
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
             return;
         }
 
@@ -1379,7 +1379,7 @@ const PsychologistDashboard = ({ onClose }) => {
         }
         
         const pid5Data = getPid5Domains(pidAnswers);
-        const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisiÃ³n';
+        const savedStatus = localStorage.getItem(`oasis_patient_status_${username}`) || 'Pendiente de revisión';
         
         return {
             id: 'PT-' + username.toUpperCase(),
@@ -1394,7 +1394,7 @@ const PsychologistDashboard = ({ onClose }) => {
                     "Premisa de Realidad": phenomQual.premisa_realidad || ""
                 }
             } : null,
-            clÃ­nicalInterview: bioTranscripts ? {
+            clínicalInterview: bioTranscripts ? {
                 transcripts: bioTranscripts
             } : null,
             pid5: pid5Data,
@@ -1444,7 +1444,7 @@ const PsychologistDashboard = ({ onClose }) => {
                             if (data.key && data.key.length > 5) {
                                 setDeepseekKeyStatus('Activa');
                             } else {
-                                setDeepseekKeyStatus('Faltante / InvÃ¡lida');
+                                setDeepseekKeyStatus('Faltante / Inválida');
                             }
                         } else {
                             setDeepseekKeyStatus(`Error ${keyRes.status}`);
@@ -1483,7 +1483,7 @@ const PsychologistDashboard = ({ onClose }) => {
                     // Auto-sync any existing local tests for this patient up to cloud
                     syncAllLocalPatientTestsToCloud(selectedPatient.name);
                 } catch (e) {
-                    console.error("Error fetching latest patient clÃ­nical data from backend:", e);
+                    console.error("Error fetching latest patient clínical data from backend:", e);
                 }
 
                 try {
@@ -1773,7 +1773,7 @@ const PsychologistDashboard = ({ onClose }) => {
             'CONTEXT': 'CONTEXTO INICIAL',
             'INTERNAL_STATE': 'ESTADO INTERNO',
             'MACRO_MECHANISM': 'MACRO MECANISMO',
-            'CRITICAL_SYMPTOM': 'SÃNTOMA CRÃTICO',
+            'CRITICAL_SYMPTOM': 'SÍNTOMA CRÍTICO',
             'IMPACT_CHAIN': 'CADENA DE IMPACTO'
         };
 
@@ -1885,17 +1885,17 @@ const PsychologistDashboard = ({ onClose }) => {
         try {
             await saveObservation(formulationSession);
             localStorage.setItem(`oasis_patient_status_${selectedPatient.name}`, 'Publicado');
-            alert("FormulaciÃ³n clÃ­nica guardada y firmada en el registro del paciente.");
+            alert("Formulación clínica guardada y firmada en el registro del paciente.");
             setCurrentModule('DASHBOARD');
             setSelectedPatient(null);
         } catch(err) {
-            console.error("Error saving clÃ­nical formulation:", err);
-            alert("Fallo al guardar formulaciÃ³n: " + err.message);
+            console.error("Error saving clínical formulation:", err);
+            alert("Fallo al guardar formulación: " + err.message);
         }
     };
 
-    // --- MÃ³dulo 1: Centro de Mando ---
-    // --- MÃ³dulo 1: Centro de Mando (2026 Modern Minimalist UI) ---
+    // --- Módulo 1: Centro de Mando ---
+    // --- Módulo 1: Centro de Mando (2026 Modern Minimalist UI) ---
     const renderDashboard = () => {
         const isClinicianOrStaff = (p) => {
             const r = (p.role || '').toLowerCase();
@@ -1952,12 +1952,12 @@ const PsychologistDashboard = ({ onClose }) => {
                                     Centro de Mando
                                 </h1>
                                 <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    CLÃNICO
+                                    CLÍNICO
                                 </span>
                             </div>
                             <p className="text-zinc-500 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest flex items-center gap-1 mt-0.5 truncate">
-                                <span>ObservaciÃ³n</span>
-                                <span>â€¢</span>
+                                <span>Observación</span>
+                                <span>•</span>
                                 <span className="text-zinc-400">{patients.length} identidades</span>
                             </p>
                         </div>
@@ -1996,13 +1996,13 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 id: 'PT-' + newUser.trim().toUpperCase(),
                                                 name: newUser.trim(),
                                                 date: new Date().toISOString().split('T')[0],
-                                                status: 'Pendiente de revisiÃ³n',
+                                                status: 'Pendiente de revisión',
                                                 phenomenology: null,
-                                                clÃ­nicalInterview: null,
+                                                clínicalInterview: null,
                                                 pid5: null,
                                                 icar16: null
                                             };
-                                            localStorage.setItem(`oasis_patient_status_${newUser.trim()}`, 'Pendiente de revisiÃ³n');
+                                            localStorage.setItem(`oasis_patient_status_${newUser.trim()}`, 'Pendiente de revisión');
                                             setSelectedPatient(newPatient);
                                             setCurrentModule('PROFILE');
                                             setActiveTab('CLINICAL_REPORT');
@@ -2011,7 +2011,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                             alert("Error creando paciente.");
                                         }
                                     } catch (e) {
-                                        alert("Error de conexiÃ³n con el servidor.");
+                                        alert("Error de conexión con el servidor.");
                                     }
                                 }
                             }}
@@ -2027,7 +2027,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                 window.location.reload();
                             }}
                             className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/[0.03] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0"
-                            title="Cerrar SesiÃ³n"
+                            title="Cerrar Sesión"
                         >
                             <LogOut size={12} />
                         </button>
@@ -2045,7 +2045,7 @@ const PsychologistDashboard = ({ onClose }) => {
                         }`}
                     >
                         <Hexagon size={13} className="text-emerald-400" />
-                        <span>Identidades ClÃ­nicas ({patients.length})</span>
+                        <span>Identidades Clínicas ({patients.length})</span>
                     </button>
                     <button
                         onClick={() => setDashboardSubView('WHATSAPP_CRM')}
@@ -2086,8 +2086,8 @@ const PsychologistDashboard = ({ onClose }) => {
                                 : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
                         }`}
                     >
-                        <span>ðŸ©º</span>
-                        <span>ClÃ­nicos & Observador ({totalCliniciansOnly})</span>
+                        <span>🩺</span>
+                        <span>Clínicos & Observador ({totalCliniciansOnly})</span>
                     </button>
                 </div>
 
@@ -2116,12 +2116,12 @@ const PsychologistDashboard = ({ onClose }) => {
                         <Activity className="w-7 h-7 text-zinc-700 animate-pulse" />
                         <div>
                             <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Sin Coincidencias</h4>
-                            <p className="text-[10px] text-zinc-600 mt-0.5">No se encontraron identidades con los criterios de bÃºsqueda.</p>
+                            <p className="text-[10px] text-zinc-600 mt-0.5">No se encontraron identidades con los criterios de búsqueda.</p>
                         </div>
                     </div>
                 ) : (
                     <>
-                        {/* â”€â”€ MOBILE: 2026 MODERN DENSE CARDS (ZERO HORIZONTAL SCROLL) â”€â”€ */}
+                        {/* ── MOBILE: 2026 MODERN DENSE CARDS (ZERO HORIZONTAL SCROLL) ── */}
                         <div className="block md:hidden space-y-2 w-full max-w-full">
                             {filtered.map(patient => (
                                 <div 
@@ -2140,17 +2140,17 @@ const PsychologistDashboard = ({ onClose }) => {
                                                     <span className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</span>
                                                     {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
                                                         <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-0.5">
-                                                            ðŸ©º <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'PsicÃ³loga / ClÃ­nico'}</span>
+                                                            🩺 <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
                                                         </span>
                                                     )}
                                                     {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
                                                         <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
-                                                            ðŸ‘ï¸ <span>Observador</span>
+                                                            👁️ <span>Observador</span>
                                                         </span>
                                                     )}
                                                     {patient.name.toLowerCase() === 'ory11' && (
                                                         <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-0.5">
-                                                            âš¡ <span>Admin</span>
+                                                            ⚡ <span>Admin</span>
                                                         </span>
                                                     )}
                                                 </div>
@@ -2166,7 +2166,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                         }`}>
                                             <span className="w-1 h-1 rounded-full bg-current" />
-                                            {patient.status === 'Pendiente de revisiÃ³n' ? 'Pendiente' : patient.status}
+                                            {patient.status === 'Pendiente de revisión' ? 'Pendiente' : patient.status}
                                         </span>
                                     </div>
 
@@ -2181,9 +2181,9 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         if (navigator.vibrate) navigator.vibrate(25);
                                                     }}
                                                     className="inline-flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/20 transition-all active:scale-95"
-                                                    title="Copiar contraseÃ±a"
+                                                    title="Copiar contraseña"
                                                 >
-                                                    <span>ðŸ”‘</span>
+                                                    <span>🔑</span>
                                                     <span>{patient.password}</span>
                                                     <Copy size={8} className="opacity-50" />
                                                 </button>
@@ -2198,7 +2198,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                     setDashboardSubView('WHATSAPP_CRM');
                                                 }}
                                                 className="p-1 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                                                title="Conectar vÃ­a WhatsApp"
+                                                title="Conectar vía WhatsApp"
                                             >
                                                 <MessageCircle size={13} className="text-emerald-400" />
                                             </button>
@@ -2216,14 +2216,14 @@ const PsychologistDashboard = ({ onClose }) => {
                             ))}
                         </div>
 
-                        {/* â”€â”€ DESKTOP: CLEAN GLASS TABLE â”€â”€ */}
+                        {/* ── DESKTOP: CLEAN GLASS TABLE ── */}
                         <div className="hidden md:block bg-zinc-900/20 border border-white/[0.06] rounded-3xl overflow-hidden backdrop-blur-sm">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-white/[0.06] bg-white/[0.01]">
                                         <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Identidad / Aura</th>
                                         <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Fecha Registro</th>
-                                        <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Estado ClÃ­nico</th>
+                                        <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Estado Clínico</th>
                                         <th className="px-6 py-3.5 text-right"></th>
                                     </tr>
                                 </thead>
@@ -2244,19 +2244,19 @@ const PsychologistDashboard = ({ onClose }) => {
                                                             <span className="text-xs font-black text-white italic">@{patient.name}</span>
                                                             {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
                                                                 <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
-                                                                    <span>ðŸ©º</span>
-                                                                    <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'PsicÃ³loga / ClÃ­nico'}</span>
+                                                                    <span>🩺</span>
+                                                                    <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
                                                                 </span>
                                                             )}
                                                             {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
                                                                 <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                                                                    <span>ðŸ‘ï¸</span>
-                                                                    <span>Observador ClÃ­nico</span>
+                                                                    <span>👁️</span>
+                                                                    <span>Observador Clínico</span>
                                                                 </span>
                                                             )}
                                                             {patient.name.toLowerCase() === 'ory11' && (
                                                                 <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
-                                                                    <span>âš¡</span>
+                                                                    <span>⚡</span>
                                                                     <span>Admin</span>
                                                                 </span>
                                                             )}
@@ -2265,7 +2265,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         {patient.password && (
                                                             <div className="flex items-center gap-1.5 mt-0.5">
                                                                 <div className="text-emerald-500/80 text-[10px] font-mono font-bold">
-                                                                    ðŸ”‘ {patient.password}
+                                                                    🔑 {patient.password}
                                                                 </div>
                                                                 <button 
                                                                     onClick={(e) => {
@@ -2273,7 +2273,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                                         navigator.clipboard.writeText(patient.password);
                                                                     }}
                                                                     className="text-zinc-500 hover:text-emerald-400 transition-colors p-0.5"
-                                                                    title="Copiar contraseÃ±a"
+                                                                    title="Copiar contraseña"
                                                                 >
                                                                     <Copy className="w-2.5 h-2.5" />
                                                                 </button>
@@ -2302,7 +2302,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         setDashboardSubView('WHATSAPP_CRM');
                                                     }}
                                                     className="p-1.5 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors mr-1"
-                                                    title="Conectar vÃ­a WhatsApp"
+                                                    title="Conectar vía WhatsApp"
                                                 >
                                                     <MessageCircle className="w-4 h-4 text-emerald-400" />
                                                 </button>
@@ -2328,29 +2328,29 @@ const PsychologistDashboard = ({ onClose }) => {
 
     // --- Tab Renderers ---
     const renderBiographicTab = () => {
-        const transcripts = activePatientData?.clÃ­nicalInterview?.transcripts || {};
+        const transcripts = activePatientData?.clínicalInterview?.transcripts || {};
         const qKeys = Object.keys(transcripts);
         
         const bioQuestionsList = [
-            { id: "0", title: "Motivo de Consulta (El Presente)", question: "Para empezar, vamos a situarnos: Â¿QuÃ© es eso que hoy sientes que merece ser observado? CuÃ©ntame sobre esa situaciÃ³n o estado que, al pensar en Ã©l, sientes que es el eje central de tu consulta en este momento." },
-            { id: "1", title: "Impacto FenomenolÃ³gico (El Cuerpo)", question: "Cuando este problema aparece, Â¿cÃ³mo se siente en tu cuerpo? Â¿QuÃ© pensamientos suelen acompaÃ±arlo?" },
-            { id: "2", title: "EvitaciÃ³n Experiencial (El Costo)", question: "Â¿QuÃ© has intentado hacer hasta ahora para evitar o dejar de sentir esto? Â¿Sientes que esta lucha te estÃ¡ quitando tiempo o energÃ­a?" },
-            { id: "3", title: "Contexto Vital (Relaciones)", question: "Â¿Con quiÃ©n vives? Â¿CÃ³mo describirÃ­as la relaciÃ³n con las personas mÃ¡s significativas en tu vida actualmente?" },
-            { id: "4", title: "Contexto Vital (Esfera Productiva)", question: "Â¿A quÃ© te dedicas y cÃ³mo te sientes en tu entorno acadÃ©mico o laboral?" },
-            { id: "5", title: "Direcciones Vitales (El Futuro)", question: "Si este problema desapareciera maÃ±ana por arte de magia... Â¿quÃ© harÃ­as diferente? Â¿QuÃ© Ã¡reas de tu vida has dejado en pausa?" },
-            { id: "6", title: "Identidad de Afrontamiento (El Ser)", question: "Â¿QuÃ© tipo de persona te gustarÃ­a ser frente a las dificultades que estÃ¡s atravesando?" }
+            { id: "0", title: "Motivo de Consulta (El Presente)", question: "Para empezar, vamos a situarnos: ¿Qué es eso que hoy sientes que merece ser observado? Cuéntame sobre esa situación o estado que, al pensar en él, sientes que es el eje central de tu consulta en este momento." },
+            { id: "1", title: "Impacto Fenomenológico (El Cuerpo)", question: "Cuando este problema aparece, ¿cómo se siente en tu cuerpo? ¿Qué pensamientos suelen acompañarlo?" },
+            { id: "2", title: "Evitación Experiencial (El Costo)", question: "¿Qué has intentado hacer hasta ahora para evitar o dejar de sentir esto? ¿Sientes que esta lucha te está quitando tiempo o energía?" },
+            { id: "3", title: "Contexto Vital (Relaciones)", question: "¿Con quién vives? ¿Cómo describirías la relación con las personas más significativas en tu vida actualmente?" },
+            { id: "4", title: "Contexto Vital (Esfera Productiva)", question: "¿A qué te dedicas y cómo te sientes en tu entorno académico o laboral?" },
+            { id: "5", title: "Direcciones Vitales (El Futuro)", question: "Si este problema desapareciera mañana por arte de magia... ¿qué harías diferente? ¿Qué áreas de tu vida has dejado en pausa?" },
+            { id: "6", title: "Identidad de Afrontamiento (El Ser)", question: "¿Qué tipo de persona te gustaría ser frente a las dificultades que estás atravesando?" }
         ];
 
         return (
             <div className="space-y-6">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">Narrativa BiogrÃ¡fica (Parte I)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Historial discursivo estructurado extraÃ­do de la entrevista verbal</p>
+                    <h3 className="text-lg font-black text-white italic">Narrativa Biográfica (Parte I)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Historial discursivo estructurado extraído de la entrevista verbal</p>
                 </div>
                 
                 {qKeys.length === 0 ? (
                     <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
-                        Sin transcripciÃ³n disponible. El usuario no ha completado la entrevista.
+                        Sin transcripción disponible. El usuario no ha completado la entrevista.
                     </div>
                 ) : (
                     <div className="space-y-8">
@@ -2381,7 +2381,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={videoUrl} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
                                             </div>
                                             <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center space-y-2">
-                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">ParÃ¡metros de Captura</h4>
+                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">Parámetros de Captura</h4>
                                                 {meta ? (
                                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                                         <div>
@@ -2401,12 +2401,12 @@ const PsychologistDashboard = ({ onClose }) => {
                                                             <span className="text-white font-mono font-black">
                                                                 {meta.dwellTime > 0 
                                                                     ? `${Math.round((meta.words / meta.dwellTime) * 60)} ppm` 
-                                                                    : 'â€”'}
+                                                                    : '—'}
                                                             </span>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin datos de telemetrÃ­a disponibles.</div>
+                                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin datos de telemetría disponibles.</div>
                                                 )}
                                             </div>
                                         </div>
@@ -2428,11 +2428,11 @@ const PsychologistDashboard = ({ onClose }) => {
                                     ) : null}
 
                                     <div className="space-y-2 pt-2">
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Perspectiva ClÃ­nica / ObservaciÃ³n</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Perspectiva Clínica / Observación</label>
                                         <textarea
                                             value={clinicianNotes[`bio_${q.id}`] || ''}
                                             onChange={(e) => handleSaveClinicianNote(`bio_${q.id}`, e.target.value)}
-                                            placeholder="Escribe el anÃ¡lisis clÃ­nico sobre marcadores de lenguaje, pausas u otros sÃ­ntomas vitales..."
+                                            placeholder="Escribe el análisis clínico sobre marcadores de lenguaje, pausas u otros síntomas vitales..."
                                             className="w-full h-20 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                                         />
                                     </div>
@@ -2447,7 +2447,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
     const renderPosteriorTestsTab = () => {
         const patientName = selectedPatient?.name || 'Paciente';
-        const bioTranscripts = activePatientData?.clÃ­nicalInterview?.transcripts || 
+        const bioTranscripts = activePatientData?.clínicalInterview?.transcripts || 
             (() => {
                 try {
                     return JSON.parse(localStorage.getItem(`oasis_bio_transcriptions_${patientName}`)) || null;
@@ -2474,7 +2474,7 @@ const PsychologistDashboard = ({ onClose }) => {
             if (selectedPatient?.age) return selectedPatient.age;
             if (bioTranscripts) {
                 const text = typeof bioTranscripts === 'string' ? bioTranscripts : JSON.stringify(bioTranscripts);
-                const m = text.match(/(\b1[0-7]|\b[6-9])\s*(?:aÃ±os|anos)?/i);
+                const m = text.match(/(\b1[0-7]|\b[6-9])\s*(?:años|anos)?/i);
                 if (m) return parseInt(m[1], 10);
             }
             return null;
@@ -2527,8 +2527,8 @@ const PsychologistDashboard = ({ onClose }) => {
                     count: updatedCount,
                     time: timeFormatted,
                     message: updatedCount > 0 
-                        ? `Se han respaldado ${updatedCount} prueba${updatedCount !== 1 ? 's' : ''} psicomÃ©trica${updatedCount !== 1 ? 's' : ''} en la base de datos de la nube. Ya estÃ¡n disponibles en tu PC, celular y cualquier dispositivo.`
-                        : `El expediente de @${patientName} estÃ¡ sincronizado con la nube. Cualquier prueba nueva se guardarÃ¡ automÃ¡ticamente en tiempo real.`
+                        ? `Se han respaldado ${updatedCount} prueba${updatedCount !== 1 ? 's' : ''} psicométrica${updatedCount !== 1 ? 's' : ''} en la base de datos de la nube. Ya están disponibles en tu PC, celular y cualquier dispositivo.`
+                        : `El expediente de @${patientName} está sincronizado con la nube. Cualquier prueba nueva se guardará automáticamente en tiempo real.`
                 });
                 setReloadTrigger(prev => prev + 1);
             } catch (e) {
@@ -2545,14 +2545,14 @@ const PsychologistDashboard = ({ onClose }) => {
                         <div className="flex items-center gap-2 mb-1">
                             <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
                             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-purple-400">
-                                FASE II â€¢ EVALUACIÃ“N PSICOMÃ‰TRICA POSTERIOR
+                                FASE II • EVALUACIÓN PSICOMÉTRICA POSTERIOR
                             </span>
                         </div>
                         <h3 className="text-xl font-black text-white italic">
-                            Pruebas de Cribaje y EvaluaciÃ³n Posterior
+                            Pruebas de Cribaje y Evaluación Posterior
                         </h3>
                         <p className="text-zinc-400 text-xs mt-1 font-sans">
-                            Instrumentos estandarizados con alto Alfa de Cronbach (Î± &gt; 0.80) seleccionados algorÃ­tmicamente para @{patientName}.
+                            Instrumentos estandarizados con alto Alfa de Cronbach (α &gt; 0.80) seleccionados algorítmicamente para @{patientName}.
                         </p>
                     </div>
 
@@ -2580,12 +2580,12 @@ const PsychologistDashboard = ({ onClose }) => {
                             ) : cloudSyncStatus === 'synced' ? (
                                 <>
                                     <CheckCircle2 size={13} className="text-emerald-400" />
-                                    <span>Nube Sincronizada â€¢ {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'} ({lastSyncTime})</span>
+                                    <span>Nube Sincronizada • {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'} ({lastSyncTime})</span>
                                 </>
                             ) : currentCompletedCount > 0 ? (
                                 <>
                                     <Cloud size={13} className="text-emerald-400" />
-                                    <span>En la Nube â€¢ {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'}</span>
+                                    <span>En la Nube • {currentCompletedCount} {currentCompletedCount === 1 ? 'prueba' : 'pruebas'}</span>
                                 </>
                             ) : (
                                 <>
@@ -2598,12 +2598,12 @@ const PsychologistDashboard = ({ onClose }) => {
                         {analysis.unlocked ? (
                             <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
                                 <ShieldCheck size={13} />
-                                <span>Desbloqueado por Historia ClÃ­nica</span>
+                                <span>Desbloqueado por Historia Clínica</span>
                             </div>
                         ) : (
                             <div className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10px] font-bold flex items-center gap-1.5">
                                 <Lock size={13} />
-                                <span>Bloqueado (Requiere Entrevista BiogrÃ¡fica)</span>
+                                <span>Bloqueado (Requiere Entrevista Biográfica)</span>
                             </div>
                         )}
                     </div>
@@ -2619,13 +2619,13 @@ const PsychologistDashboard = ({ onClose }) => {
                             <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-xs font-bold text-white">
-                                        SincronizaciÃ³n en la Nube Completada
+                                        Sincronización en la Nube Completada
                                     </span>
                                     <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
                                         {syncNotification.count} prueba{syncNotification.count !== 1 ? 's' : ''} disponible{syncNotification.count !== 1 ? 's' : ''}
                                     </span>
                                     <span className="text-[10px] font-mono text-zinc-400">
-                                        â€¢ {syncNotification.time}
+                                        • {syncNotification.time}
                                     </span>
                                 </div>
                                 <p className="text-[11px] text-zinc-300 font-sans mt-0.5 leading-snug">
@@ -2653,14 +2653,14 @@ const PsychologistDashboard = ({ onClose }) => {
                             Evaluaciones Posteriores Bloqueadas
                         </h4>
                         <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-                            Estas pruebas de cribaje se desbloquean automÃ¡ticamente en cuanto el consultante responde su <strong>Entrevista BiogrÃ¡fica Inicial</strong>. Esto asegura que el algoritmo detecte sus sÃ­ntomas especÃ­ficos y no aplique pruebas innecesarias o redundantes.
+                            Estas pruebas de cribaje se desbloquean automáticamente en cuanto el consultante responde su <strong>Entrevista Biográfica Inicial</strong>. Esto asegura que el algoritmo detecte sus síntomas específicos y no aplique pruebas innecesarias o redundantes.
                         </p>
                         <div className="pt-2">
                             <button
                                 onClick={() => setActiveTab('VISION_GENERAL')}
                                 className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 text-xs font-mono font-bold uppercase tracking-wider transition-all"
                             >
-                                Ir a Entrevista BiogrÃ¡fica
+                                Ir a Entrevista Biográfica
                             </button>
                         </div>
                     </div>
@@ -2671,10 +2671,10 @@ const PsychologistDashboard = ({ onClose }) => {
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-mono font-black uppercase tracking-wider text-purple-300 flex items-center gap-2">
                                     <Sparkles size={14} className="text-purple-400" />
-                                    Top 3 Pruebas Recomendadas por el Algoritmo ClÃ­nico
+                                    Top 3 Pruebas Recomendadas por el Algoritmo Clínico
                                 </span>
                                 <span className="text-[10px] font-mono text-zinc-500">
-                                    Dimensiones clÃ­nicas diferenciadas
+                                    Dimensiones clínicas diferenciadas
                                 </span>
                             </div>
 
@@ -2722,7 +2722,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                             </span>
                                                         )}
                                                         <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                                                            Î± = {t.alphaCronbach}
+                                                            α = {t.alphaCronbach}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -2738,7 +2738,7 @@ const PsychologistDashboard = ({ onClose }) => {
 
                                                 <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 text-[11px] text-zinc-300 leading-relaxed font-sans">
                                                     <strong className="text-[9px] font-mono uppercase text-purple-300 block mb-0.5">
-                                                        JustificaciÃ³n ClÃ­nica del Algoritmo:
+                                                        Justificación Clínica del Algoritmo:
                                                     </strong>
                                                     {rec.justificacion}
                                                 </div>
@@ -2748,7 +2748,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         <span className="text-[10px] font-mono text-zinc-400">Resultado Actual:</span>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-mono font-bold text-purple-300">
-                                                                {saved.totalScore} pts â€¢ {saved.nivel}
+                                                                {saved.totalScore} pts • {saved.nivel}
                                                             </span>
                                                             <span className="text-[8px] font-mono text-emerald-400 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20" title="Sincronizado en la nube">
                                                                 <Cloud size={9} />
@@ -2792,7 +2792,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <span className="text-[11px] font-mono font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
                                             <BookOpen size={14} />
-                                            CatÃ¡logo de Pruebas de Cribaje ({filteredCatalog.length} de {Object.keys(CLINICAL_TESTS).length} Disponibles)
+                                            Catálogo de Pruebas de Cribaje ({filteredCatalog.length} de {Object.keys(CLINICAL_TESTS).length} Disponibles)
                                         </span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             {[
@@ -2828,7 +2828,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         <div className="flex items-center justify-between mb-1.5">
                                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                                 <span className="text-[9px] font-mono font-bold uppercase text-purple-400">
-                                                                    {t.siglas} â€¢ {t.duracionAprox}
+                                                                    {t.siglas} • {t.duracionAprox}
                                                                 </span>
                                                                 {t.poblacion === 'adolescente' && (
                                                                     <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold">
@@ -2847,7 +2847,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                                 )}
                                                             </div>
                                                             <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">
-                                                                Î± = {t.alphaCronbach}
+                                                                α = {t.alphaCronbach}
                                                             </span>
                                                         </div>
                                                         <h5 className="text-xs font-bold text-white leading-snug">
@@ -2862,7 +2862,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         {saved ? (
                                                             <div className="flex items-center gap-1.5">
                                                                 <span className="text-[9px] font-mono text-emerald-400 font-bold">
-                                                                    âœ“ {saved.totalScore} pts ({saved.nivel})
+                                                                    ✓ {saved.totalScore} pts ({saved.nivel})
                                                                 </span>
                                                                 <span className="text-[8px] font-mono text-emerald-400 flex items-center gap-0.5 px-1 rounded bg-emerald-500/10 border border-emerald-500/20" title="Respaldado en la nube">
                                                                     <Cloud size={9} />
@@ -2900,22 +2900,22 @@ const PsychologistDashboard = ({ onClose }) => {
         const hasData = Object.values(transcripts).some(x => x && x.trim().length > 0);
 
         const phenomQuestions = [
-            { key: "Antecedentes de Origen", title: "Antecedentes de Origen", desc: "Â¿QuÃ© estaba pasando en tu vida cuando apareciÃ³ este problema por primera vez?", id: "0" },
-            { key: "La Sombra de la Autoexigencia", title: "La Sombra de la Autoexigencia", desc: "Â¿En quÃ© momentos sientes que corres tras una meta que siempre se aleja? Â¿CuÃ¡ndo y dÃ³nde te susurra la mente que no eres o no haces suficiente?", id: "1" },
-            { key: "Temporalidad Vivida", title: "Temporalidad Vivida", desc: "Â¿CÃ³mo se siente el paso del tiempo cuando te encuentras abrumado?", id: "2" },
-            { key: "Premisa de Realidad", title: "Premisa de Realidad", desc: "Â¿QuÃ© ideas o certezas cambian en ti cuando estÃ¡s en crisis?", id: "3" }
+            { key: "Antecedentes de Origen", title: "Antecedentes de Origen", desc: "¿Qué estaba pasando en tu vida cuando apareció este problema por primera vez?", id: "0" },
+            { key: "La Sombra de la Autoexigencia", title: "La Sombra de la Autoexigencia", desc: "¿En qué momentos sientes que corres tras una meta que siempre se aleja? ¿Cuándo y dónde te susurra la mente que no eres o no haces suficiente?", id: "1" },
+            { key: "Temporalidad Vivida", title: "Temporalidad Vivida", desc: "¿Cómo se siente el paso del tiempo cuando te encuentras abrumado?", id: "2" },
+            { key: "Premisa de Realidad", title: "Premisa de Realidad", desc: "¿Qué ideas o certezas cambian en ti cuando estás en crisis?", id: "3" }
         ];
 
         return (
             <div className="space-y-6">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">DiagnÃ³stico FenomenolÃ³gico (Parte II)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">EstructuraciÃ³n existencial cualitativa del self</p>
+                    <h3 className="text-lg font-black text-white italic">Diagnóstico Fenomenológico (Parte II)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Estructuración existencial cualitativa del self</p>
                 </div>
                 
                 {!hasData ? (
                     <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
-                        Sin diagnÃ³stico fenomenolÃ³gico disponible.
+                        Sin diagnóstico fenomenológico disponible.
                     </div>
                 ) : (
                     <div className="space-y-8">
@@ -2942,7 +2942,7 @@ const PsychologistDashboard = ({ onClose }) => {
                                                 <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={videoUrl} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
                                             </div>
                                             <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center space-y-2">
-                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">ParÃ¡metros de Captura</h4>
+                                                <h4 className="text-[9px] font-black uppercase text-zinc-500 tracking-wider font-mono">Parámetros de Captura</h4>
                                                 {meta ? (
                                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                                         <div>
@@ -2959,18 +2959,18 @@ const PsychologistDashboard = ({ onClose }) => {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-[10px] font-mono text-zinc-600">Cargando telemetrÃ­a...</span>
+                                                    <span className="text-[10px] font-mono text-zinc-600">Cargando telemetría...</span>
                                                 )}
                                             </div>
                                         </div>
                                     ) : null}
 
                                     <div className="space-y-2 pt-2">
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Notas OntolÃ³gico-Subjetivas</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Notas Ontológico-Subjetivas</label>
                                         <textarea
                                             value={clinicianNotes[`phenom_${q.key}`] || ''}
                                             onChange={(e) => handleSaveClinicianNote(`phenom_${q.key}`, e.target.value)}
-                                            placeholder="Observaciones sobre la construcciÃ³n del tiempo, espacio existencial y realidad del paciente..."
+                                            placeholder="Observaciones sobre la construcción del tiempo, espacio existencial y realidad del paciente..."
                                             className="w-full h-20 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                                         />
                                     </div>
@@ -2992,7 +2992,7 @@ const PsychologistDashboard = ({ onClose }) => {
             <div className="space-y-6">
                 <div>
                     <h3 className="text-lg font-black text-white italic">Inventario PID-5 Breve (Parte III)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cribado de dominios y rasgos patolÃ³gicos de personalidad (DSM-5)</p>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cribado de dominios y rasgos patológicos de personalidad (DSM-5)</p>
                 </div>
                 
                 {!hasPid5 ? (
@@ -3008,13 +3008,13 @@ const PsychologistDashboard = ({ onClose }) => {
 
                             const nameMap = {
                                 reactividadEmocional: "Reactividad Emocional",
-                                estiloConexion: "Estilo de ConexiÃ³n",
-                                gestionAsertividad: "GestiÃ³n de la Asertividad",
-                                ritmoEjecucion: "Ritmo de EjecuciÃ³n",
+                                estiloConexion: "Estilo de Conexión",
+                                gestionAsertividad: "Gestión de la Asertividad",
+                                ritmoEjecucion: "Ritmo de Ejecución",
                                 singularidadCognitiva: "Singularidad Cognitiva"
                             };
 
-                            // Generate the clÃ­nical JSON object structure requested
+                            // Generate the clínical JSON object structure requested
                             const clinJson = {
                                 metadatos: {
                                     fecha: new Date().toISOString().split('T')[0],
@@ -3036,37 +3036,37 @@ const PsychologistDashboard = ({ onClose }) => {
                                     ritmo_ejecucion: pidState.clasificaciones.ritmoEjecucion.label,
                                     singularidad_cognitiva: pidState.clasificaciones.singularidadCognitiva.label
                                 },
-                                dinÃ¡micas_activas: pidState.dynamicInsights.map(d => ({
+                                dinámicas_activas: pidState.dynamicInsights.map(d => ({
                                     nombre: d.title,
                                     discrepancia: d.discrepancy,
                                     consecuencia: d.consequence
                                 }))
                             };
 
-                            const promptMaestroText = `ActÃºa como un psicÃ³logo clÃ­nico observador. Tu tarea es describir el estilo de vida y de toma de decisiones del individuo basÃ¡ndote en estos 5 vectores.
+                            const promptMaestroText = `Actúa como un psicólogo clínico observador. Tu tarea es describir el estilo de vida y de toma de decisiones del individuo basándote en estos 5 vectores.
 
 Valores de los vectores:
 V1 (Reactividad Emocional): ${pidState.indices.reactividadEmocional}
-V2 (Estilo de ConexiÃ³n): ${pidState.indices.estiloConexion}
-V3 (GestiÃ³n de la Asertividad): ${pidState.indices.gestionAsertividad}
-V4 (Ritmo de EjecuciÃ³n): ${pidState.indices.ritmoEjecucion}
+V2 (Estilo de Conexión): ${pidState.indices.estiloConexion}
+V3 (Gestión de la Asertividad): ${pidState.indices.gestionAsertividad}
+V4 (Ritmo de Ejecución): ${pidState.indices.ritmoEjecucion}
 V5 (Singularidad Cognitiva): ${pidState.indices.singularidadCognitiva}
 
 Varianza Interna Global: ${pidState.globalVariance}
 
-**Reglas para el anÃ¡lisis:**
-1. **Lenguaje Humano:** Prohibido usar palabras como 'sistema', 'procesamiento', 'consumo', 'vector' o 'errÃ¡tico'. Usa palabras como 'persona', 'decisiones', 'estilo', 'forma de ser'.
-2. **AnÃ¡lisis de mezcla:** No analices los elementos por separado. Describe cÃ³mo la mezcla de los 5 elementos crea una persona Ãºnica.
-3. **Humildad tÃ©cnica:** Si detectas discrepancias en las respuestas, no las llames 'errores' o 'baja fiabilidad'. LlÃ¡malo 'complejidad' o 'flexibilidad'.
-4. **Preguntas reales:** Las preguntas de reflexiÃ³n deben ser preguntas que le harÃ­as a un amigo en una conversaciÃ³n profunda, no preguntas de test psicomÃ©trico. Ej: 'Â¿CÃ³mo manejas X situaciÃ³n?' en lugar de 'Â¿Tu sistema prioriza X?'.
-5. **Sin juicios absolutos (HipÃ³tesis):** No emitas verdades absolutas ni diagnÃ³sticos determinantes. Expresa todo como una hipÃ³tesis de observaciÃ³n clÃ­nica (ej. "parece inclinarse por", "se nota una tendencia a").
-6. **Confidencialidad Total:** Nunca menciones nombres de personas en tus deducciones. Si necesitas un referente, utiliza el seudÃ³nimo del usuario o simplemente "el/la paciente".
+**Reglas para el análisis:**
+1. **Lenguaje Humano:** Prohibido usar palabras como 'sistema', 'procesamiento', 'consumo', 'vector' o 'errático'. Usa palabras como 'persona', 'decisiones', 'estilo', 'forma de ser'.
+2. **Análisis de mezcla:** No analices los elementos por separado. Describe cómo la mezcla de los 5 elementos crea una persona única.
+3. **Humildad técnica:** Si detectas discrepancias en las respuestas, no las llames 'errores' o 'baja fiabilidad'. Llámalo 'complejidad' o 'flexibilidad'.
+4. **Preguntas reales:** Las preguntas de reflexión deben ser preguntas que le harías a un amigo en una conversación profunda, no preguntas de test psicométrico. Ej: '¿Cómo manejas X situación?' en lugar de '¿Tu sistema prioriza X?'.
+5. **Sin juicios absolutos (Hipótesis):** No emitas verdades absolutas ni diagnósticos determinantes. Expresa todo como una hipótesis de observación clínica (ej. "parece inclinarse por", "se nota una tendencia a").
+6. **Confidencialidad Total:** Nunca menciones nombres de personas en tus deducciones. Si necesitas un referente, utiliza el seudónimo del usuario o simplemente "el/la paciente".
 
-**Reglas para la secciÃ³n de DinÃ¡micas de Afrontamiento:**
-- Identifica las 4 dinÃ¡micas: EvalÃºa quÃ© tanto se inclina la persona hacia cada una.
-- Tono clÃ­nico-humano: Explica la dinÃ¡mica como una elecciÃ³n de vida, no como un fallo.
-- ConexiÃ³n profunda: No solo digas 'es asÃ­'. Explica el porquÃ© basado en la mezcla de todos sus vectores (ej: 'Como tienes una alta Singularidad y una baja Reactividad, tu aislamiento no es por miedo, sino por el deseo de no interrumpir tu propio proceso mental').
-- Pregunta de reflexiÃ³n: Termina con una pregunta que invite a pensar profundamente, no a responder un formulario.`;
+**Reglas para la sección de Dinámicas de Afrontamiento:**
+- Identifica las 4 dinámicas: Evalúa qué tanto se inclina la persona hacia cada una.
+- Tono clínico-humano: Explica la dinámica como una elección de vida, no como un fallo.
+- Conexión profunda: No solo digas 'es así'. Explica el porqué basado en la mezcla de todos sus vectores (ej: 'Como tienes una alta Singularidad y una baja Reactividad, tu aislamiento no es por miedo, sino por el deseo de no interrumpir tu propio proceso mental').
+- Pregunta de reflexión: Termina con una pregunta que invite a pensar profundamente, no a responder un formulario.`;
 
                             return (
                                 <div className="space-y-6">
@@ -3115,12 +3115,12 @@ Varianza Interna Global: ${pidState.globalVariance}
                                             </div>
                                         </div>
 
-                                        {/* Capa 2: DinÃ¡micas de Afrontamiento */}
+                                        {/* Capa 2: Dinámicas de Afrontamiento */}
                                         <div className="md:col-span-6 bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4 flex flex-col justify-between">
                                             <div className="space-y-4">
                                                 <div>
-                                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 2: DinÃ¡micas de Afrontamiento</h4>
-                                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estrategias y recursos relacionales basados en la mezcla de perfiles (Î” â‰¥ 0.5)</p>
+                                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 2: Dinámicas de Afrontamiento</h4>
+                                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estrategias y recursos relacionales basados en la mezcla de perfiles (Δ ≥ 0.5)</p>
                                                 </div>
 
                                                 {/* Tensiones Estructurales del Sistema */}
@@ -3128,10 +3128,10 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     <span className="text-[8px] font-mono font-black uppercase text-purple-400 tracking-[0.25em] block mb-2">Tensiones Estructurales (Fuerzas del Sistema)</span>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         {[
-                                                            { name: "TensiÃ³n de RegulaciÃ³n (Reactividad vs ConexiÃ³n)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.estiloConexion).toFixed(3)), label: "RegulaciÃ³n vs ConexiÃ³n" },
-                                                            { name: "TensiÃ³n de Procesamiento (Singularidad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.singularidadCognitiva - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Singularidad vs Ritmo" },
-                                                            { name: "TensiÃ³n de LÃ­mites (Asertividad vs ConexiÃ³n)", val: parseFloat(Math.abs(pidState.indices.gestionAsertividad - pidState.indices.estiloConexion).toFixed(3)), label: "Asertividad vs ConexiÃ³n" },
-                                                            { name: "TensiÃ³n de EstructuraciÃ³n (Reactividad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Reactividad vs Ritmo" }
+                                                            { name: "Tensión de Regulación (Reactividad vs Conexión)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.estiloConexion).toFixed(3)), label: "Regulación vs Conexión" },
+                                                            { name: "Tensión de Procesamiento (Singularidad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.singularidadCognitiva - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Singularidad vs Ritmo" },
+                                                            { name: "Tensión de Límites (Asertividad vs Conexión)", val: parseFloat(Math.abs(pidState.indices.gestionAsertividad - pidState.indices.estiloConexion).toFixed(3)), label: "Asertividad vs Conexión" },
+                                                            { name: "Tensión de Estructuración (Reactividad vs Ritmo)", val: parseFloat(Math.abs(pidState.indices.reactividadEmocional - pidState.indices.ritmoEjecucion).toFixed(3)), label: "Reactividad vs Ritmo" }
                                                         ].map((t, idx) => {
                                                             let status = "Leve";
                                                             let color = "text-emerald-400 border-emerald-500/20 bg-emerald-500/5";
@@ -3157,7 +3157,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                                         <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
                                                                             <div className={`h-full ${barColor} transition-all duration-500`} style={{ width: `${t.val * 100}%` }} />
                                                                         </div>
-                                                                        <span className="text-[8px] font-mono font-black text-white shrink-0">Î” {t.val.toFixed(2)}</span>
+                                                                        <span className="text-[8px] font-mono font-black text-white shrink-0">Δ {t.val.toFixed(2)}</span>
                                                                     </div>
                                                                 </div>
                                                             );
@@ -3168,18 +3168,18 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                 <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1 no-scrollbar">
                                                     {pidState.dynamicInsights.length === 0 ? (
                                                         <div className="p-8 text-center border border-white/5 rounded-2xl bg-zinc-950/20 text-zinc-500 text-[9px] font-mono uppercase">
-                                                            No se registran dinÃ¡micas divergentes significativas en este perfil.
+                                                            No se registran dinámicas divergentes significativas en este perfil.
                                                         </div>
                                                     ) : (
                                                         pidState.dynamicInsights.map((insight, idx) => (
                                                             <div key={idx} className="p-4 rounded-2xl border border-purple-500/25 bg-purple-500/5 text-purple-200 space-y-2">
                                                                 <div className="flex justify-between items-center">
                                                                     <span className="text-[10px] font-black uppercase text-purple-400 font-mono">{insight.title}</span>
-                                                                    <span className="text-[8px] font-mono bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 font-black">DISCREPANCIA Î” {insight.discrepancy.toFixed(2)}</span>
+                                                                    <span className="text-[8px] font-mono bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 font-black">DISCREPANCIA Δ {insight.discrepancy.toFixed(2)}</span>
                                                                 </div>
                                                                 <p className="text-[9px] text-zinc-300 leading-relaxed font-sans">{insight.consequence}</p>
                                                                 <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-white/5 text-[9px] text-purple-300 font-mono italic">
-                                                                    <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">ReflexiÃ³n sugerida:</span>
+                                                                    <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">Reflexión sugerida:</span>
                                                                     "{insight.reflection}"
                                                                 </div>
                                                             </div>
@@ -3195,7 +3195,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     <button
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(JSON.stringify(clinJson, null, 2));
-                                                            alert("Â¡JSON multidimensional copiado!");
+                                                            alert("¡JSON multidimensional copiado!");
                                                         }}
                                                         className="text-[8px] font-mono font-black uppercase bg-purple-500/15 border border-purple-500/25 text-purple-400 px-2 py-0.5 rounded hover:bg-purple-500 hover:text-black transition-all font-bold"
                                                     >
@@ -3213,7 +3213,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                     <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-3">
                                         <div>
                                             <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Capa 3: Fluidez Adaptativa (Variabilidad del Perfil)</h4>
-                                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">ComprensiÃ³n de la flexibilidad y matices en las respuestas del perfil</p>
+                                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Comprensión de la flexibilidad y matices en las respuestas del perfil</p>
                                         </div>
 
                                         <div className={`p-4 rounded-2xl border transition-all ${
@@ -3225,26 +3225,26 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${pidState.globalVariance > 0.85 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                                                     <span className="text-[10px] font-mono font-bold uppercase">
-                                                        {pidState.globalVariance > 0.85 ? 'Perfil con Alta Flexibilidad' : 'Consistencia ArmÃ³nica'}
+                                                        {pidState.globalVariance > 0.85 ? 'Perfil con Alta Flexibilidad' : 'Consistencia Armónica'}
                                                     </span>
                                                 </div>
                                                 <span className="text-[9px] font-mono">VARIANZA GLOBAL DE SISTEMA: {pidState.globalVariance.toFixed(3)}</span>
                                             </div>
                                             <p className="text-[9px] mt-1.5 leading-relaxed text-zinc-400 font-sans">
                                                 {pidState.globalVariance > 0.85
-                                                    ? 'Tus respuestas reflejan una gran flexibilidad, lo que hace que tu perfil sea dinÃ¡mico y difÃ­cil de encasillar en una sola categorÃ­a rÃ­gida.'
-                                                    : 'Tus respuestas siguen una lÃ­nea constante y homogÃ©nea en cada uno de tus estilos de gestiÃ³n personal.'
+                                                    ? 'Tus respuestas reflejan una gran flexibilidad, lo que hace que tu perfil sea dinámico y difícil de encasillar en una sola categoría rígida.'
+                                                    : 'Tus respuestas siguen una línea constante y homogénea en cada uno de tus estilos de gestión personal.'
                                                 }
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Capa 4: Tu Enfoque de GestiÃ³n Personal */}
+                                    {/* Capa 4: Tu Enfoque de Gestión Personal */}
                                     {pidState.analysisNotes.length > 0 && (
                                         <div className="bg-violet-950/10 border border-violet-500/15 p-6 rounded-3xl space-y-4">
                                             <div>
-                                                <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest font-mono">Capa 4: Tu Enfoque de GestiÃ³n Personal</h4>
-                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">AnÃ¡lisis integrado de tus 5 estilos (sin umbrales de exclusiÃ³n)</p>
+                                                <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest font-mono">Capa 4: Tu Enfoque de Gestión Personal</h4>
+                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Análisis integrado de tus 5 estilos (sin umbrales de exclusión)</p>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {pidState.analysisNotes.map((note, idx) => (
@@ -3255,7 +3255,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                         </div>
                                                         <p className="text-[9px] text-zinc-300 leading-relaxed font-sans">{note.consequence}</p>
                                                         <div className="bg-violet-500/[0.02] p-3 rounded-xl border border-violet-500/10 text-[9px] text-violet-300 font-mono italic">
-                                                            <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">ReflexiÃ³n sugerida:</span>
+                                                            <span className="text-[7px] text-zinc-600 block uppercase font-black not-italic mb-1">Reflexión sugerida:</span>
                                                             "{note.reflection}"
                                                         </div>
                                                     </div>
@@ -3268,13 +3268,13 @@ Varianza Interna Global: ${pidState.globalVariance}
                                     <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-3">
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Prompt Maestro para AnÃ¡lisis de Procesos (IA)</h4>
-                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Copia esta configuraciÃ³n matemÃ¡tica directa para alimentar y guiar la interpretaciÃ³n de la IA</p>
+                                                <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Prompt Maestro para Análisis de Procesos (IA)</h4>
+                                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Copia esta configuración matemática directa para alimentar y guiar la interpretación de la IA</p>
                                             </div>
                                             <button
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(promptMaestroText);
-                                                    alert("Â¡Prompt Maestro copiado al portapapeles!");
+                                                    alert("¡Prompt Maestro copiado al portapapeles!");
                                                 }}
                                                 className="text-[8px] font-mono font-black uppercase bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 px-3 py-1 rounded hover:bg-emerald-500 hover:text-black transition-all"
                                             >
@@ -3307,7 +3307,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                 <p className="text-xs text-zinc-300 font-sans">"{q.text}"</p>
                                             </div>
                                             <div className="shrink-0 text-right">
-                                                <div className="text-xs font-mono font-black text-emerald-400">{rating !== undefined ? rating : 'â€”'}</div>
+                                                <div className="text-xs font-mono font-black text-emerald-400">{rating !== undefined ? rating : '—'}</div>
                                                 <div className="text-[8px] text-zinc-500 font-semibold uppercase">{rating !== undefined ? ratingLabels[rating] : 'Sin Respuesta'}</div>
                                             </div>
                                         </div>
@@ -3317,11 +3317,11 @@ Varianza Interna Global: ${pidState.globalVariance}
                         </div>
 
                         <div className="space-y-3 pt-2">
-                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Implicaciones ClÃ­nicas Generales</label>
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Implicaciones Clínicas Generales</label>
                             <textarea
                                 value={clinicianNotes['pid5_general'] || ''}
                                 onChange={(e) => handleSaveClinicianNote('pid5_general', e.target.value)}
-                                placeholder="AÃ±ade tus conclusiones sobre la estructura de personalidad, defensas y rasgos desadaptativos..."
+                                placeholder="Añade tus conclusiones sobre la estructura de personalidad, defensas y rasgos desadaptativos..."
                                 className="w-full h-28 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                             />
                         </div>
@@ -3373,12 +3373,12 @@ Varianza Interna Global: ${pidState.globalVariance}
                                     <div className="flex flex-wrap gap-2">
                                         {activePatientData.icar16.alerts.map((alert, idx) => (
                                             <span key={idx} className="px-2 py-1 rounded bg-amber-500/5 border border-amber-500/10 text-[9px] font-mono text-amber-400/90" title={alert.tooltip}>
-                                                âš ï¸ {alert.name}
+                                                ⚠️ {alert.name}
                                             </span>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin anomalÃ­as ni alertas de proctoring detectadas.</div>
+                                    <div className="text-[10px] text-zinc-600 font-mono uppercase">Sin anomalías ni alertas de proctoring detectadas.</div>
                                 )}
                             </div>
                         </div>
@@ -3390,14 +3390,14 @@ Varianza Interna Global: ${pidState.globalVariance}
                             return (
                                 <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
                                     <div>
-                                        <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Reporte de EjecuciÃ³n Cognitiva (ICAR-16)</h4>
-                                        <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Comparativa estÃ¡ndarizada contra norma poblacional de referencia (18-30 aÃ±os, nivel universitario)</p>
+                                        <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Reporte de Ejecución Cognitiva (ICAR-16)</h4>
+                                        <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Comparativa estándarizada contra norma poblacional de referencia (18-30 años, nivel universitario)</p>
                                     </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                         {Object.entries(refIndices.dimensions).map(([key, data]) => {
                                             const nameMap = {
-                                                verbal: "LÃ³gico-Verbal",
+                                                verbal: "Lógico-Verbal",
                                                 visuospatial: "Visoespacial",
                                                 sequential: "Secuencial",
                                                 inductive: "Inductiva"
@@ -3421,8 +3421,8 @@ Varianza Interna Global: ${pidState.globalVariance}
 
                                             const statusLabelMap = {
                                                 capacidad_compensatoria: "Capacidad Compensatoria",
-                                                saturacion_cognitiva: "SaturaciÃ³n Cognitiva",
-                                                baja_inversion: "Baja InversiÃ³n",
+                                                saturacion_cognitiva: "Saturación Cognitiva",
+                                                baja_inversion: "Baja Inversión",
                                                 normal: "Rendimiento Normal",
                                                 sin_datos: "Sin Datos"
                                             };
@@ -3447,7 +3447,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     <div className="space-y-1 text-[8px] font-mono text-zinc-500 border-t border-white/5 pt-2">
                                                         <div className="flex justify-between"><span>Aciertos:</span> <span className="text-zinc-300 font-bold">{data.correct}/4</span></div>
                                                         <div className="flex justify-between"><span>Latencia Promedio:</span> <span className="text-zinc-300 font-bold">{data.average_dwell}s</span></div>
-                                                        <div className="flex justify-between"><span>Cambios de OpciÃ³n:</span> <span className="text-zinc-300 font-bold">{data.total_changes}</span></div>
+                                                        <div className="flex justify-between"><span>Cambios de Opción:</span> <span className="text-zinc-300 font-bold">{data.total_changes}</span></div>
                                                     </div>
                                                     
                                                     <div className="text-[9px] text-zinc-400 bg-white/[0.01] border border-white/5 rounded-lg p-2 font-sans leading-relaxed">
@@ -3465,10 +3465,10 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         
                                         const isOk = estadoCognitivo.metadatos.validez === "ok";
                                         const validezText = estadoCognitivo.metadatos.validez === "INVALIDA_DESATENCION"
-                                            ? "INVALIDA (Tiempo total menor a 350 segundos - Sesgo de desatenciÃ³n)"
+                                            ? "INVALIDA (Tiempo total menor a 350 segundos - Sesgo de desatención)"
                                             : estadoCognitivo.metadatos.validez === "INVALIDA_AZAR"
                                             ? "INVALIDA (Tasa de aciertos menor al 30% - Respuestas al azar / impulsivas)"
-                                            : "Aprobada (Ã“ptima persistencia y consistencia lÃ³gica)";
+                                            : "Aprobada (Óptima persistencia y consistencia lógica)";
 
                                         const validezBg = isOk
                                             ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
@@ -3486,7 +3486,7 @@ Varianza Interna Global: ${pidState.globalVariance}
 
                                                     <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                                                         <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
-                                                            <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Estilo de EjecuciÃ³n</span>
+                                                            <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Estilo de Ejecución</span>
                                                             <span className="text-white font-black text-xs mt-1 block uppercase tracking-widest">{estadoCognitivo.estilo_ejecucion.replace('_', ' ')}</span>
                                                         </div>
                                                         <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
@@ -3508,11 +3508,11 @@ Varianza Interna Global: ${pidState.globalVariance}
 
                                                 <div className="md:col-span-6 space-y-2 flex flex-col">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Objeto de Estado Cognitivo (JSON de Nivel ClÃ­nico)</span>
+                                                        <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Objeto de Estado Cognitivo (JSON de Nivel Clínico)</span>
                                                         <button
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText(JSON.stringify(estadoCognitivo, null, 2));
-                                                                alert("Â¡JSON copiado al portapapeles!");
+                                                                alert("¡JSON copiado al portapapeles!");
                                                             }}
                                                             className="text-[8px] font-mono font-black uppercase bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 px-2 py-0.5 rounded hover:bg-emerald-500 hover:text-black transition-all font-bold"
                                                         >
@@ -3596,7 +3596,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                                         }`}>{opt.label}</span>
                                                                         <span className="text-xs truncate font-medium">{opt.value}</span>
                                                                         {isCorrectAnswer && <span className="ml-auto text-[7px] font-mono font-black uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">Correcto</span>}
-                                                                        {!isCorrectAnswer && isUserChoice && <span className="ml-auto text-[7px] font-mono font-black uppercase text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/10">Tu SelecciÃ³n</span>}
+                                                                        {!isCorrectAnswer && isUserChoice && <span className="ml-auto text-[7px] font-mono font-black uppercase text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/10">Tu Selección</span>}
                                                                     </div>
                                                                 );
                                                             })}
@@ -3606,58 +3606,58 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     {/* Telemetry & Video Proctoring Section for this specific question */}
                                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6 border-t border-white/5">
                                                         <div className="md:col-span-6 space-y-4">
-                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">TelemetrÃ­a de la Respuesta</span>
+                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Telemetría de la Respuesta</span>
                                                             <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                                                                 <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
-                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">DuraciÃ³n de AtenciÃ³n (Dwell)</span>
+                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Duración de Atención (Dwell)</span>
                                                                     <span className="text-white font-black text-sm mt-1 block">{latency.toFixed(1)}s</span>
                                                                 </div>
                                                                 <div className="bg-zinc-950/40 p-4 border border-white/5 rounded-2xl">
-                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Cambios de OpciÃ³n</span>
+                                                                    <span className="text-zinc-500 block text-[8px] uppercase tracking-wider">Cambios de Opción</span>
                                                                     <span className="text-white font-black text-sm mt-1 block">{changes} veces</span>
                                                                 </div>
                                                             </div>
 
                                                             {/* Behavioral Alerts */}
                                                             <div className="space-y-2">
-                                                                <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">AnÃ¡lisis de Alertas Conductuales</span>
+                                                                <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Análisis de Alertas Conductuales</span>
                                                                 {latency > 95 ? (
                                                                      <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âš ï¸ <strong>Alta InversiÃ³n Cognitiva:</strong> El paciente dedicÃ³ {latency.toFixed(1)}s (mayor a la media). Sugiere un procesamiento detallado de variables complejas.
+                                                                         ⚠️ <strong>Alta Inversión Cognitiva:</strong> El paciente dedicó {latency.toFixed(1)}s (mayor a la media). Sugiere un procesamiento detallado de variables complejas.
                                                                      </div>
                                                                  ) : latency > 45 ? (
                                                                      <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âœ“ <strong>Procesamiento AnalÃ­tico:</strong> El usuario dedicÃ³ {latency.toFixed(1)}s a analizar profundamente el reactivo. Tiempo normal para tareas de alta demanda.
+                                                                         ✓ <strong>Procesamiento Analítico:</strong> El usuario dedicó {latency.toFixed(1)}s a analizar profundamente el reactivo. Tiempo normal para tareas de alta demanda.
                                                                      </div>
                                                                  ) : (
                                                                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-400/90 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âœ“ <strong>Procesamiento Eficiente:</strong> Tiempo de dwell dentro del rango esperado para este nivel de complejidad.
+                                                                         ✓ <strong>Procesamiento Eficiente:</strong> Tiempo de dwell dentro del rango esperado para este nivel de complejidad.
                                                                      </div>
                                                                  )}
 
                                                                  {changes >= 3 ? (
                                                                      <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âš ï¸ <strong>ReevaluaciÃ³n Decisional:</strong> Se registraron {changes} cambios de opciÃ³n. Sugiere que el hilo lÃ³gico requiriÃ³ revisiÃ³n continua.
+                                                                         ⚠️ <strong>Reevaluación Decisional:</strong> Se registraron {changes} cambios de opción. Sugiere que el hilo lógico requirió revisión continua.
                                                                      </div>
                                                                  ) : changes > 0 ? (
                                                                      <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âœ“ <strong>ReevaluaciÃ³n Cauta:</strong> El paciente revisÃ³ su hipÃ³tesis inicial ({changes} cambio(s)), mostrando una decisiÃ³n deliberada.
+                                                                         ✓ <strong>Reevaluación Cauta:</strong> El paciente revisó su hipótesis inicial ({changes} cambio(s)), mostrando una decisión deliberada.
                                                                      </div>
                                                                  ) : (
                                                                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 text-emerald-400/90 rounded-xl text-[10px] font-mono leading-relaxed">
-                                                                         âœ“ <strong>Firmeza Decisional:</strong> SelecciÃ³n directa de la respuesta sin alternar opciones.
+                                                                         ✓ <strong>Firmeza Decisional:</strong> Selección directa de la respuesta sin alternar opciones.
                                                                      </div>
                                                                  )}
                                                             </div>
                                                         </div>
 
                                                         <div className="md:col-span-6 space-y-2">
-                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Micro-grabaciÃ³n de Comportamiento</span>
+                                                            <span className="text-[8px] font-mono font-black uppercase text-zinc-500 tracking-[0.2em] block">Micro-grabación de Comportamiento</span>
                                                             {icarVideos[q.question_number] ? (
                                                                 <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={icarVideos[q.question_number]} controls className="w-full rounded-2xl border border-white/5 bg-zinc-950 aspect-video shadow-lg" />
                                                             ) : (
                                                                 <div className="h-44 rounded-2xl border border-dashed border-white/5 flex items-center justify-center text-zinc-600 text-xs font-mono uppercase bg-zinc-950/20">
-                                                                    Sin grabaciÃ³n de video en esta versiÃ³n
+                                                                    Sin grabación de video en esta versión
                                                                 </div>
                                                             )}
                                                         </div>
@@ -3669,7 +3669,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                         return (
                                                             <div className="lg:col-span-12 mt-6 pt-6 border-t border-white/5 space-y-4">
                                                                 <div className="space-y-1">
-                                                                    <span className="text-[8px] font-mono font-black uppercase text-emerald-400 tracking-[0.2em] block">Base LÃ³gica de ResoluciÃ³n</span>
+                                                                    <span className="text-[8px] font-mono font-black uppercase text-emerald-400 tracking-[0.2em] block">Base Lógica de Resolución</span>
                                                                     <p className="text-[11px] text-zinc-300 font-sans italic leading-relaxed">{rationaleData.rationale}</p>
                                                                 </div>
                                                             </div>
@@ -3684,11 +3684,11 @@ Varianza Interna Global: ${pidState.globalVariance}
                         </div>
 
                         <div className="space-y-3 pt-2">
-                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">ObservaciÃ³n del Rendimiento Ejecutivo</label>
+                            <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">Observación del Rendimiento Ejecutivo</label>
                             <textarea
                                 value={clinicianNotes['icar_general'] || ''}
                                 onChange={(e) => handleSaveClinicianNote('icar_general', e.target.value)}
-                                placeholder="Registra anomalÃ­as en tiempos de respuesta, titubeo lÃ³gico o patrones especÃ­ficos de error visoespacial..."
+                                placeholder="Registra anomalías en tiempos de respuesta, titubeo lógico o patrones específicos de error visoespacial..."
                                 className="w-full h-28 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                             />
                         </div>
@@ -3715,7 +3715,7 @@ Varianza Interna Global: ${pidState.globalVariance}
             'CONTEXT': 'CONTEXTO INICIAL',
             'INTERNAL_STATE': 'ESTADO INTERNO',
             'MACRO_MECHANISM': 'MACRO MECANISMO',
-            'CRITICAL_SYMPTOM': 'SÃNTOMA CRÃTICO',
+            'CRITICAL_SYMPTOM': 'SÍNTOMA CRÍTICO',
             'IMPACT_CHAIN': 'CADENA DE IMPACTO'
         };
 
@@ -3795,7 +3795,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                             <button onClick={() => spawnNode(node.id, 'MACRO_MECHANISM')} className="w-10 h-10 rounded-full bg-emerald-600/20 border border-emerald-500 hover:bg-emerald-600/40 -mt-1" title="Mecanismo" />
                                         </div>
                                         <div className="flex gap-2">
-                                            <button onClick={() => spawnNode(node.id, 'CRITICAL_SYMPTOM')} className="w-10 h-6 rounded bg-red-500/20 border border-red-500 hover:bg-red-500/40" title="SÃ­ntoma" />
+                                            <button onClick={() => spawnNode(node.id, 'CRITICAL_SYMPTOM')} className="w-10 h-6 rounded bg-red-500/20 border border-red-500 hover:bg-red-500/40" title="Síntoma" />
                                             <button onClick={() => spawnNode(node.id, 'IMPACT_CHAIN')} className="w-10 h-6 rounded-[100%] bg-zinc-800 border border-zinc-500 hover:bg-zinc-700" title="Impacto" />
                                         </div>
                                         <div className="flex justify-between items-center mt-1 pt-1 border-t border-white/10">
@@ -3852,7 +3852,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 <textarea
                                     value={activeNode.observations || ''}
                                     onChange={e => setNodes(nodes.map(n => n.id === selectedNode ? {...n, observations: e.target.value} : n))}
-                                    placeholder="Escribe la justificaciÃ³n clÃ­nica para este elemento..."
+                                    placeholder="Escribe la justificación clínica para este elemento..."
                                     className="w-full h-32 bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-zinc-300 resize-none focus:outline-none focus:border-emerald-500/40 transition-colors leading-relaxed font-sans"
                                     onKeyDown={(e) => e.stopPropagation()}
                                 />
@@ -3868,48 +3868,48 @@ Varianza Interna Global: ${pidState.globalVariance}
         return (
             <div className="space-y-6">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">AnÃ¡lisis Funcional del Caso (Parte VI)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">IdentificaciÃ³n y delimitaciÃ³n de contextos, detonantes, respuestas y consecuencias para explicar los bucles de mantenimiento</p>
+                    <h3 className="text-lg font-black text-white italic">Análisis Funcional del Caso (Parte VI)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Identificación y delimitación de contextos, detonantes, respuestas y consecuencias para explicar los bucles de mantenimiento</p>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
                     {/* Left Form: Col-span 7 */}
                     <div className="xl:col-span-7 space-y-6">
                         <div className="grid grid-cols-1 gap-6">
-                            {/* SecciÃ³n 1: EstÃ­mulos Antecedentes */}
+                            {/* Sección 1: Estímulos Antecedentes */}
                             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-sky-400 tracking-widest font-mono">1. EstÃ­mulos Antecedentes (Contextos / Detonantes)</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">QuÃ© ocurre inmediatamente antes de la conducta problema</p>
+                                    <h4 className="text-[10px] font-black uppercase text-sky-400 tracking-widest font-mono">1. Estímulos Antecedentes (Contextos / Detonantes)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Qué ocurre inmediatamente antes de la conducta problema</p>
                                 </div>
                                 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">EstÃ­mulos Externos (Situaciones / Ambientes)</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Externos (Situaciones / Ambientes)</label>
                                         <textarea
                                             value={clinicianNotes['func_antecedents_external'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_antecedents_external', e.target.value)}
-                                            placeholder="Â¿En quÃ© situaciones, lugares, momentos del dÃ­a o frente a quÃ© personas o eventos se inicia el bucle?..."
+                                            placeholder="¿En qué situaciones, lugares, momentos del día o frente a qué personas o eventos se inicia el bucle?..."
                                             className="w-full h-24 bg-zinc-950 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-900/40"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">EstÃ­mulos Internos (Sensaciones / CogniciÃ³n)</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Estímulos Internos (Sensaciones / Cognición)</label>
                                         <textarea
                                             value={clinicianNotes['func_antecedents_internal'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_antecedents_internal', e.target.value)}
-                                            placeholder="Â¿QuÃ© pensamientos automÃ¡ticos, emociones previas, recuerdos o sensaciones corporales actÃºan como detonante interno?..."
+                                            placeholder="¿Qué pensamientos automáticos, emociones previas, recuerdos o sensaciones corporales actúan como detonante interno?..."
                                             className="w-full h-24 bg-zinc-950 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-900/40"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SecciÃ³n 2: Variables del Organismo */}
+                            {/* Sección 2: Variables del Organismo */}
                             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
                                     <h4 className="text-[10px] font-black uppercase text-violet-400 tracking-widest font-mono">2. Variables del Organismo (El Individuo)</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Factores biolÃ³gicos y cognitivos previos del paciente</p>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Factores biológicos y cognitivos previos del paciente</p>
                                 </div>
 
                                 <div className="space-y-3">
@@ -3918,18 +3918,18 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         <textarea
                                             value={clinicianNotes['func_organism_history'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_organism_history', e.target.value)}
-                                            placeholder="Esquemas de pensamiento arraigados, rasgos de personalidad (como se evidencian en el PID-5) o condiciones biolÃ³gicas y fisiolÃ³gicas que modulan la respuesta..."
+                                            placeholder="Esquemas de pensamiento arraigados, rasgos de personalidad (como se evidencian en el PID-5) o condiciones biológicas y fisiológicas que modulan la respuesta..."
                                             className="w-full h-36 bg-zinc-950 border border-violet-500/20 rounded-xl p-3 text-xs text-violet-100/90 resize-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-all font-sans outline-none placeholder:text-violet-900/40"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SecciÃ³n 3: Respuesta Triple */}
+                            {/* Sección 3: Respuesta Triple */}
                             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-widest font-mono">3. Sistema de Respuesta Triple (El Bucle de ReacciÃ³n)</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">CÃ³mo procesa y reacciona el individuo ante el detonante</p>
+                                    <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-widest font-mono">3. Sistema de Respuesta Triple (El Bucle de Reacción)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Cómo procesa y reacciona el individuo ante el detonante</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -3943,11 +3943,11 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta FisiolÃ³gica</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Respuesta Fisiológica</label>
                                         <textarea
                                             value={clinicianNotes['func_response_physiological'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_response_physiological', e.target.value)}
-                                            placeholder="Respuestas somÃ¡ticas, taquicardia, tensiÃ³n muscular..."
+                                            placeholder="Respuestas somáticas, taquicardia, tensión muscular..."
                                             className="w-full h-28 bg-zinc-950 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-900/40"
                                         />
                                     </div>
@@ -3956,14 +3956,14 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         <textarea
                                             value={clinicianNotes['func_response_motor'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_response_motor', e.target.value)}
-                                            placeholder="Acciones, conductas de evitaciÃ³n, escape, ritos obsesivos..."
+                                            placeholder="Acciones, conductas de evitación, escape, ritos obsesivos..."
                                             className="w-full h-28 bg-zinc-950 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-100/90 resize-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all font-sans outline-none placeholder:text-amber-900/40"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SecciÃ³n 4: Consecuencias */}
+                            {/* Sección 4: Consecuencias */}
                             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
                                     <h4 className="text-[10px] font-black uppercase text-rose-400 tracking-widest font-mono">4. Consecuencias del Comportamiento</h4>
@@ -3976,45 +3976,45 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         <textarea
                                             value={clinicianNotes['func_consequences_short'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_consequences_short', e.target.value)}
-                                            placeholder="Alivio momentÃ¡neo o ganancia secundaria..."
+                                            placeholder="Alivio momentáneo o ganancia secundaria..."
                                             className="w-full h-24 bg-zinc-950 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-900/40"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Largo Plazo (PÃ©rdidas / PerpetuaciÃ³n)</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">A Largo Plazo (Pérdidas / Perpetuación)</label>
                                         <textarea
                                             value={clinicianNotes['func_consequences_long'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_consequences_long', e.target.value)}
-                                            placeholder="Costo existencial y cÃ³mo perpetÃºa el bucle original..."
+                                            placeholder="Costo existencial y cómo perpetúa el bucle original..."
                                             className="w-full h-24 bg-zinc-950 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-900/40"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SecciÃ³n 5: HipÃ³tesis de Mantenimiento */}
+                            {/* Sección 5: Hipótesis de Mantenimiento */}
                             <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">5. HipÃ³tesis Integradora y Ciclo de Mantenimiento</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">IntegraciÃ³n clÃ­nica final del bucle recurrente</p>
+                                    <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest font-mono">5. Hipótesis Integradora y Ciclo de Mantenimiento</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Integración clínica final del bucle recurrente</p>
                                 </div>
 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">DescripciÃ³n del Bucle del Caso</label>
+                                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono mb-1.5">Descripción del Bucle del Caso</label>
                                         <textarea
                                             value={clinicianNotes['func_maintenance_hypothesis'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_maintenance_hypothesis', e.target.value)}
-                                            placeholder="Redacta cÃ³mo interactÃºan los detonantes, esquemas organÃ­smicos y respuestas en un bucle cerrado..."
+                                            placeholder="Redacta cómo interactúan los detonantes, esquemas organísmicos y respuestas en un bucle cerrado..."
                                             className="w-full h-36 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-900/40"
                                         />
                                     </div>
                                     <div className="mt-4">
-                                        <label className="text-[9px] font-black uppercase text-emerald-400 tracking-widest block font-mono mb-1.5">Claves para salir de aquÃ­ (Ruta de Escape)</label>
+                                        <label className="text-[9px] font-black uppercase text-emerald-400 tracking-widest block font-mono mb-1.5">Claves para salir de aquí (Ruta de Escape)</label>
                                         <textarea
                                             value={clinicianNotes['func_exit_keys'] || ''}
                                             onChange={(e) => handleSaveClinicianNote('func_exit_keys', e.target.value)}
-                                            placeholder="Define las claves especÃ­ficas de salida o micro-desafÃ­os. SepÃ¡ralas por saltos de lÃ­nea..."
+                                            placeholder="Define las claves específicas de salida o micro-desafíos. Sepáralas por saltos de línea..."
                                             className="w-full h-36 bg-zinc-950 border border-emerald-500/50 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all font-sans outline-none placeholder:text-emerald-900/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                                         />
                                     </div>
@@ -4026,9 +4026,9 @@ Varianza Interna Global: ${pidState.globalVariance}
                     {/* Right Panel: Evidence and Gathered Info Panel (Col-span 5) */}
                     <div className="xl:col-span-5 bg-zinc-950/40 border border-white/5 rounded-3xl p-6 space-y-6 max-h-[85vh] overflow-y-auto no-scrollbar sticky top-4">
                         <div className="space-y-2">
-                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Panel de Evidencia y Datos ClÃ­nicos</h4>
+                            <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Panel de Evidencia y Datos Clínicos</h4>
                             <p className="text-zinc-500 text-[8px] font-mono uppercase leading-relaxed">
-                                Palabras clave sugeridas y coloreadas para facilitar el mapeo al formulario de anÃ¡lisis funcional
+                                Palabras clave sugeridas y coloreadas para facilitar el mapeo al formulario de análisis funcional
                             </p>
                             
                             {/* Legend */}
@@ -4048,21 +4048,21 @@ Varianza Interna Global: ${pidState.globalVariance}
                             </div>
                         </div>
 
-                        {/* 1. Entrevista BiogrÃ¡fica */}
+                        {/* 1. Entrevista Biográfica */}
                         <div className="space-y-3">
-                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">I. Entrevista BiogrÃ¡fica</span>
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">I. Entrevista Biográfica</span>
                             {(() => {
-                                const transcripts = activePatientData?.clÃ­nicalInterview?.transcripts || {};
+                                const transcripts = activePatientData?.clínicalInterview?.transcripts || {};
                                 const keys = Object.keys(transcripts);
                                 if (keys.length === 0) {
-                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin respuestas de entrevista biogrÃ¡fica</div>;
+                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin respuestas de entrevista biográfica</div>;
                                 }
                                 const bioQuestionsList = [
                                     { id: "0", title: "Motivo de Consulta" },
-                                    { id: "1", title: "Impacto FenomenolÃ³gico" },
-                                    { id: "2", title: "EvitaciÃ³n Experiencial" },
+                                    { id: "1", title: "Impacto Fenomenológico" },
+                                    { id: "2", title: "Evitación Experiencial" },
                                     { id: "3", title: "Relaciones Significativas" },
-                                    { id: "4", title: "Esfera Laboral/AcadÃ©mica" },
+                                    { id: "4", title: "Esfera Laboral/Académica" },
                                     { id: "5", title: "Direcciones Futuras" },
                                     { id: "6", title: "Identidad frente a dificultad" }
                                 ];
@@ -4085,14 +4085,14 @@ Varianza Interna Global: ${pidState.globalVariance}
                             })()}
                         </div>
 
-                        {/* 2. DimensiÃ³n OntolÃ³gica */}
+                        {/* 2. Dimensión Ontológica */}
                         <div className="space-y-3 border-t border-white/5 pt-4">
-                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">II. DimensiÃ³n OntolÃ³gica (Rasgos Existenciales)</span>
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">II. Dimensión Ontológica (Rasgos Existenciales)</span>
                             {(() => {
                                 const rawAnswers = activePatientData?.phenomAnswers || {};
                                 const keys = Object.keys(rawAnswers);
                                 if (keys.length === 0) {
-                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin datos de dimensiÃ³n ontolÃ³gica</div>;
+                                    return <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin datos de dimensión ontológica</div>;
                                 }
                                 return (
                                     <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-2xl space-y-2">
@@ -4126,7 +4126,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     afectividadNegativa: "Afectividad Negativa",
                                                     desapego: "Desapego",
                                                     antagonismo: "Antagonismo",
-                                                    desinhibicion: "DesinhibiciÃ³n",
+                                                    desinhibicion: "Desinhibición",
                                                     psicoticismo: "Psicoticismo"
                                                 };
                                                 return (
@@ -4143,10 +4143,10 @@ Varianza Interna Global: ${pidState.globalVariance}
                         </div>
 
                         
-                        {/* CONCEPTUALIZACIÃ“N DINÃMICA (Auto-generada) */}
+                        {/* CONCEPTUALIZACIÓN DINÁMICA (Auto-generada) */}
                         <div className="space-y-3 border-t border-white/5 pt-4 mb-8 mt-6">
                             <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider block font-mono">ConceptualizaciÃ³n DinÃ¡mica y AnÃ¡lisis Funcional Integrado</span>
+                                <span className="text-[9px] font-black uppercase text-indigo-400 tracking-wider block font-mono">Conceptualización Dinámica y Análisis Funcional Integrado</span>
                                 <button
                                     onClick={generateConceptualization}
                                     disabled={isGeneratingConceptualization}
@@ -4163,14 +4163,14 @@ Varianza Interna Global: ${pidState.globalVariance}
                             <textarea
                                 value={treatmentPlan?.dynamicConceptualization || ''}
                                 onChange={(e) => handleTreatmentPlanChange('dynamicConceptualization', e.target.value)}
-                                placeholder="Haz clic en 'Auto-Generar' para redactar el anÃ¡lisis funcional basado en la triple modalidad y los rasgos PID-5 del paciente..."
+                                placeholder="Haz clic en 'Auto-Generar' para redactar el análisis funcional basado en la triple modalidad y los rasgos PID-5 del paciente..."
                                 className="w-full h-[400px] bg-zinc-950 border border-indigo-500/20 rounded-xl p-4 text-xs md:text-sm text-zinc-300 leading-relaxed resize-y focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-sans outline-none placeholder:text-zinc-700 custom-sidebar-scroll"
                             />
                         </div>
 
                         {/* 4. ICAR-16 */}
                         <div className="space-y-3 border-t border-white/5 pt-4">
-                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">IV. DesempeÃ±o Cognitivo (ICAR-16)</span>
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">IV. Desempeño Cognitivo (ICAR-16)</span>
                             {activePatientData?.icar16 ? (
                                 <div className="bg-zinc-900/40 border border-white/5 p-4 rounded-2xl flex justify-between items-center">
                                     <div>
@@ -4191,7 +4191,7 @@ Varianza Interna Global: ${pidState.globalVariance}
 
                         {/* 5. Nodos Canvas */}
                         <div className="space-y-3 border-t border-white/5 pt-4">
-                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">V. Elementos del Canvas de FormulaciÃ³n</span>
+                            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block font-mono">V. Elementos del Canvas de Formulación</span>
                             {nodes.length === 0 ? (
                                 <div className="text-[10px] text-zinc-600 font-mono uppercase italic">Sin nodos creados en el Canvas</div>
                             ) : (
@@ -4201,7 +4201,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                             'CONTEXT': 'Contexto',
                                             'INTERNAL_STATE': 'Estado Interno',
                                             'MACRO_MECHANISM': 'Macro Mecanismo',
-                                            'CRITICAL_SYMPTOM': 'SÃ­ntoma CrÃ­tico',
+                                            'CRITICAL_SYMPTOM': 'Síntoma Crítico',
                                             'IMPACT_CHAIN': 'Cadena de Impacto'
                                         };
                                         return (
@@ -4231,8 +4231,8 @@ Varianza Interna Global: ${pidState.globalVariance}
         return (
             <div className="space-y-8">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">FormulaciÃ³n y Firma de Caso (Parte VII)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cierre y publicaciÃ³n oficial del registro clÃ­nico</p>
+                    <h3 className="text-lg font-black text-white italic">Formulación y Firma de Caso (Parte VII)</h3>
+                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Cierre y publicación oficial del registro clínico</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -4240,11 +4240,11 @@ Varianza Interna Global: ${pidState.globalVariance}
                         <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Resumen de Evidencia Enlazada</h4>
                         <div className="space-y-3 text-xs">
                             <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                <span className="text-zinc-500">Nodos de FormulaciÃ³n (Canvas):</span>
+                                <span className="text-zinc-500">Nodos de Formulación (Canvas):</span>
                                 <span className="text-white font-mono font-black">{nodes.length}</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                <span className="text-zinc-500">Enlaces ClÃ­nicos (Bucle):</span>
+                                <span className="text-zinc-500">Enlaces Clínicos (Bucle):</span>
                                 <span className="text-white font-mono font-black">{edges.length}</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-white/5">
@@ -4255,7 +4255,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">Conclusiones del DiagnÃ³stico General</label>
+                        <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono font-black">Conclusiones del Diagnóstico General</label>
                         <textarea
                             value={privateNotes}
                             onChange={(e) => {
@@ -4264,7 +4264,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                     localStorage.setItem(`oasis_private_notes_${selectedPatient.name}`, e.target.value);
                                 }
                             }}
-                            placeholder="Redacta la formulaciÃ³n existencial definitiva y notas generales..."
+                            placeholder="Redacta la formulación existencial definitiva y notas generales..."
                             className="w-full h-40 bg-zinc-950 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                         />
                     </div>
@@ -4272,8 +4272,8 @@ Varianza Interna Global: ${pidState.globalVariance}
 
                 <div className="p-6 bg-zinc-950/40 border border-white/5 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="space-y-1">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-white">PublicaciÃ³n Oficial e Integridad de Registro</h4>
-                        <p className="text-[10px] text-zinc-500 font-mono uppercase">Esta firma bloquearÃ¡ la ediciÃ³n y actualizarÃ¡ el estado de la formulaciÃ³n.</p>
+                        <h4 className="text-xs font-black uppercase tracking-wider text-white">Publicación Oficial e Integridad de Registro</h4>
+                        <p className="text-[10px] text-zinc-500 font-mono uppercase">Esta firma bloqueará la edición y actualizará el estado de la formulación.</p>
                     </div>
                     <button 
                         onClick={handlePublishFormulation}
@@ -4301,7 +4301,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                 body: JSON.stringify(patientBlocks)
             });
             if (res.ok) {
-                alert("Procesamiento encolado en el backend exitosamente. El servidor analizarÃ¡ los bloques en segundo plano. Recarga la pÃ¡gina en un par de minutos.");
+                alert("Procesamiento encolado en el backend exitosamente. El servidor analizará los bloques en segundo plano. Recarga la página en un par de minutos.");
             } else {
                 throw new Error("Respuesta de error del servidor.");
             }
@@ -4322,9 +4322,9 @@ Varianza Interna Global: ${pidState.globalVariance}
         const pendingBlocks = patientBlocks.filter(b => !(b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis));
 
         // Count Spheres
-        const sphereCounts = { Umwelt: 0, Mitwelt: 0, Eigenwelt: 0, Ãœberwelt: 0 };
+        const sphereCounts = { Umwelt: 0, Mitwelt: 0, Eigenwelt: 0, Überwelt: 0 };
         // Count Lentes
-        const lensCounts = { Sensorial: 0, AnalÃ­tico: 0, SimbÃ³lico: 0 };
+        const lensCounts = { Sensorial: 0, Analítico: 0, Simbólico: 0 };
         
         blocksWithAnalysis.forEach(b => {
             const analysis = b.metadata?.psychologicalAnalysis || b.Metadata?.psychologicalAnalysis;
@@ -4388,16 +4388,16 @@ Varianza Interna Global: ${pidState.globalVariance}
         };
 
         const sphereStyles = {
-            Umwelt: { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.15)]', name: 'Umwelt (FÃ­sico / Entorno)' },
+            Umwelt: { color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', glow: 'shadow-[0_0_15px_rgba(52,211,153,0.15)]', name: 'Umwelt (Físico / Entorno)' },
             Mitwelt: { color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20', glow: 'shadow-[0_0_15px_rgba(56,189,248,0.15)]', name: 'Mitwelt (Social / Relaciones)' },
-            Eigenwelt: { color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', glow: 'shadow-[0_0_15px_rgba(167,139,250,0.15)]', name: 'Eigenwelt (DiÃ¡logo Interno / Identidad)' },
-            Ãœberwelt: { color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', glow: 'shadow-[0_0_15px_rgba(251,191,36,0.15)]', name: 'Ãœberwelt (Espiritual / Sentido)' }
+            Eigenwelt: { color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', glow: 'shadow-[0_0_15px_rgba(167,139,250,0.15)]', name: 'Eigenwelt (Diálogo Interno / Identidad)' },
+            Überwelt: { color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', glow: 'shadow-[0_0_15px_rgba(251,191,36,0.15)]', name: 'Überwelt (Espiritual / Sentido)' }
         };
 
         const lensStyles = {
             Sensorial: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-            AnalÃ­tico: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
-            SimbÃ³lico: 'bg-violet-500/10 border-violet-500/20 text-violet-400'
+            Analítico: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+            Simbólico: 'bg-violet-500/10 border-violet-500/20 text-violet-400'
         };
 
         return (
@@ -4405,17 +4405,17 @@ Varianza Interna Global: ${pidState.globalVariance}
                 <div>
                     <h3 className="text-lg font-black text-white italic">VIII. Esencia y Feed AI (Deepseek & Hugging Face)</h3>
                     <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
-                        Monitoreo de esferas ontolÃ³gicas, lentes fenomenolÃ³gicos y embeddings de vectores latentes del paciente
+                        Monitoreo de esferas ontológicas, lentes fenomenológicos y embeddings de vectores latentes del paciente
                     </p>
                 </div>
 
-                {/* ðŸ©º Panel de DiagnÃ³stico y Conectividad */}
+                {/* 🩺 Panel de Diagnóstico y Conectividad */}
                 <div className="bg-zinc-950/60 border border-white/5 rounded-3xl p-6 space-y-4">
                     <div className="flex items-center gap-3">
                         <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
                         <div>
-                            <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Consola de DiagnÃ³stico e IntegraciÃ³n IA</h4>
-                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estado de conectividad y logs de sincronizaciÃ³n de datos existenciales</p>
+                            <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Consola de Diagnóstico e Integración IA</h4>
+                            <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Estado de conectividad y logs de sincronización de datos existenciales</p>
                         </div>
                     </div>
                     
@@ -4437,7 +4437,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 <span className={`w-2 h-2 rounded-full ${deepseekKeyStatus === 'Activa' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
                                 <span className="text-[10px] font-mono font-black text-white">{deepseekKeyStatus}</span>
                             </div>
-                            <span className="text-[8px] font-mono text-zinc-600 mt-1">AnÃ¡lisis de Esfera/Lente</span>
+                            <span className="text-[8px] font-mono text-zinc-600 mt-1">Análisis de Esfera/Lente</span>
                         </div>
 
                         {/* Ingesta de Escritos */}
@@ -4470,7 +4470,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                         <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-2xl text-[10px] font-mono uppercase tracking-wide flex items-start gap-3">
                             <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
                             <div className="space-y-1">
-                                <span className="font-black text-rose-500">Error de ConexiÃ³n o Consulta de Ingesta:</span>
+                                <span className="font-black text-rose-500">Error de Conexión o Consulta de Ingesta:</span>
                                 <p className="text-zinc-400 font-sans normal-case select-text">{blocksError}</p>
                             </div>
                         </div>
@@ -4493,7 +4493,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 </button>
                             </div>
                             <p className="text-zinc-400 text-[9px] font-sans normal-case">
-                                Los siguientes escritos se guardaron en la base de datos pero aÃºn no cuentan con anÃ¡lisis cualitativo o embeddings (ej. retraso en API de Deepseek o fallo temporal de Hugging Face):
+                                Los siguientes escritos se guardaron en la base de datos pero aún no cuentan con análisis cualitativo o embeddings (ej. retraso en API de Deepseek o fallo temporal de Hugging Face):
                             </p>
                             <div className="max-h-24 overflow-y-auto space-y-1.5 pr-2 no-scrollbar">
                                 {pendingBlocks.map((b, idx) => (
@@ -4530,7 +4530,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                     </div>
                 ) : patientBlocks.length === 0 ? (
                     <div className="bg-zinc-900/20 border border-white/5 p-12 rounded-3xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
-                        El paciente aÃºn no ha redactado ni publicado fragmentos en Ruido Interior.
+                        El paciente aún no ha redactado ni publicado fragmentos en Ruido Interior.
                     </div>
                 ) : (
                     <div className="space-y-8">
@@ -4540,8 +4540,8 @@ Varianza Interna Global: ${pidState.globalVariance}
                             {/* Card 1: Esferas Dasein */}
                             <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">DistribuciÃ³n Existencial (Dasein)</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">DimensiÃ³n donde habita el discurso cualitativo</p>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Distribución Existencial (Dasein)</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Dimensión donde habita el discurso cualitativo</p>
                                 </div>
                                 <div className="space-y-3">
                                     {Object.entries(sphereCounts).map(([sphere, count]) => {
@@ -4567,11 +4567,11 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 </div>
                             </div>
 
-                            {/* Card 2: Lentes de PercepciÃ³n */}
+                            {/* Card 2: Lentes de Percepción */}
                             <div className="bg-zinc-900/20 border border-white/5 p-6 rounded-3xl space-y-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Lentes de PercepciÃ³n</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">CÃ³mo se estructuran cognitivamente las vivencias</p>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Lentes de Percepción</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Cómo se estructuran cognitivamente las vivencias</p>
                                 </div>
                                 <div className="space-y-3">
                                     {Object.entries(lensCounts).map(([lens, count]) => {
@@ -4580,8 +4580,8 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         let colorClass = 'bg-zinc-500';
                                         let textClass = 'text-zinc-400';
                                         if (lens === 'Sensorial') { colorClass = 'bg-rose-500'; textClass = 'text-rose-400'; }
-                                        else if (lens === 'AnalÃ­tico') { colorClass = 'bg-indigo-500'; textClass = 'text-indigo-400'; }
-                                        else if (lens === 'SimbÃ³lico') { colorClass = 'bg-violet-500'; textClass = 'text-violet-400'; }
+                                        else if (lens === 'Analítico') { colorClass = 'bg-indigo-500'; textClass = 'text-indigo-400'; }
+                                        else if (lens === 'Simbólico') { colorClass = 'bg-violet-500'; textClass = 'text-violet-400'; }
 
                                         return (
                                             <div key={lens} className="space-y-1">
@@ -4616,7 +4616,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                     key={idx} 
                                                     style={{ backgroundColor: getVectorCellColor(val) }} 
                                                     className="aspect-square w-full rounded border border-white/5 cursor-help transition-all hover:scale-110"
-                                                    title={`DimensiÃ³n ${idx + 1}: ${val.toFixed(4)}`}
+                                                    title={`Dimensión ${idx + 1}: ${val.toFixed(4)}`}
                                                 />
                                             ))}
                                         </div>
@@ -4637,8 +4637,8 @@ Varianza Interna Global: ${pidState.globalVariance}
                         <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6 space-y-4">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Registro de Conciencia HistÃ³rico</h4>
-                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">ExploraciÃ³n de fragmentos biogrÃ¡ficos, notas e insights filtrables</p>
+                                    <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest font-mono">Registro de Conciencia Histórico</h4>
+                                    <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Exploración de fragmentos biográficos, notas e insights filtrables</p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                                     {/* Search Bar */}
@@ -4659,8 +4659,8 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         className="h-9 px-3 bg-zinc-950/70 border border-white/5 rounded-xl text-xs text-zinc-400 focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
                                     >
                                         <option value="ALL">TODAS LAS NOTAS</option>
-                                        <option value="PUBLIC">SÃ“LO FEED PÃšBLICO</option>
-                                        <option value="PRIVATE">SÃ“LO NOTAS PRIVADAS</option>
+                                        <option value="PUBLIC">SÓLO FEED PÚBLICO</option>
+                                        <option value="PRIVATE">SÓLO NOTAS PRIVADAS</option>
                                     </select>
                                 </div>
                             </div>
@@ -4670,7 +4670,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 <div className="flex items-center gap-2">
                                     <span className="text-[9px] font-mono text-zinc-500 uppercase">Esfera:</span>
                                     <div className="flex gap-1.5">
-                                        {['ALL', 'Umwelt', 'Mitwelt', 'Eigenwelt', 'Ãœberwelt'].map(sph => (
+                                        {['ALL', 'Umwelt', 'Mitwelt', 'Eigenwelt', 'Überwelt'].map(sph => (
                                             <button
                                                 key={sph}
                                                 onClick={() => setLogSphere(sph)}
@@ -4689,7 +4689,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                 <div className="flex items-center gap-2 ml-auto">
                                     <span className="text-[9px] font-mono text-zinc-500 uppercase">Lente:</span>
                                     <div className="flex gap-1.5">
-                                        {['ALL', 'Sensorial', 'AnalÃ­tico', 'SimbÃ³lico'].map(lens => (
+                                        {['ALL', 'Sensorial', 'Analítico', 'Simbólico'].map(lens => (
                                             <button
                                                 key={lens}
                                                 onClick={() => setLogLens(lens)}
@@ -4711,7 +4711,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                         <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 no-scrollbar">
                             {filteredBlocks.length === 0 ? (
                                 <div className="p-8 text-center border border-dashed border-white/5 rounded-3xl bg-zinc-950/10 text-zinc-500 text-[10px] font-mono uppercase">
-                                    NingÃºn fragmento coincide con los criterios de filtro seleccionados.
+                                    Ningún fragmento coincide con los criterios de filtro seleccionados.
                                 </div>
                             ) : (
                                 filteredBlocks.map(block => {
@@ -4740,7 +4740,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                 <div className="flex items-center gap-2.5 text-[9px] font-mono">
                                                     {(block.isPublic || block.IsPublic) ? (
                                                         <span className="px-2 py-0.5 rounded-[0.25rem] text-[7px] font-black uppercase border border-emerald-500/20 text-emerald-400 bg-emerald-500/5 shadow-[0_0_8px_rgba(52,211,153,0.2)] animate-pulse">
-                                                            PÃºblico
+                                                            Público
                                                         </span>
                                                     ) : (
                                                         <span className="px-2 py-0.5 rounded-[0.25rem] text-[7px] font-black uppercase border border-zinc-500/20 text-zinc-500 bg-zinc-950/40">
@@ -4769,7 +4769,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                                 key={idx}
                                                                 style={{ borderBottom: `2px solid ${val > 0 ? 'rgb(52, 211, 153)' : 'rgb(167, 139, 250)'}` }} 
                                                                 className="text-[9px] font-mono text-zinc-400 bg-zinc-900/50 px-1.5 py-0.5 rounded border border-white/5 shrink-0"
-                                                                title={`DimensiÃ³n ${idx + 1}`}
+                                                                title={`Dimensión ${idx + 1}`}
                                                             >
                                                                 {val > 0 ? '+' : ''}{val.toFixed(3)}
                                                             </span>
@@ -4826,43 +4826,43 @@ Varianza Interna Global: ${pidState.globalVariance}
             }
 
             const prompt = `
-Eres un analista clÃ­nico conductual experto de nivel mundial.
-Tu tarea es escribir una **ConceptualizaciÃ³n DinÃ¡mica y AnÃ¡lisis Conductual Integrado** para el paciente basada en su Historia de Vida y sus resultados psicomÃ©tricos.
+Eres un analista clínico conductual experto de nivel mundial.
+Tu tarea es escribir una **Conceptualización Dinámica y Análisis Conductual Integrado** para el paciente basada en su Historia de Vida y sus resultados psicométricos.
 
-MÃ‰TODOLOGIA DE REFERENCIA (DEBES REDACTAR CON ESTA CALIDAD, ESTRUCTURA, PROFUNDIDAD Y TONO):
+MÉTODOLOGIA DE REFERENCIA (DEBES REDACTAR CON ESTA CALIDAD, ESTRUCTURA, PROFUNDIDAD Y TONO):
 \"\"\"
-II. CONCEPTUALIZACIÃ“N DINÃMICA Y ANÃLISIS CONDUCTUAL INTEGRADO
-1. Mapeo PsicomÃ©trico de la Triple Modalidad Conductual
-El anÃ¡lisis transdiagnÃ³stico del caso arroja una severa desconexiÃ³n entre la activaciÃ³n fisiolÃ³gica y el procesamiento cognitivo, manifestado en los siguientes niveles de afectaciÃ³n:
-Malestar Cognitivo (85% de Predominio): Representa el nÃºcleo del estancamiento. Se manifiesta a travÃ©s de dudas obsesivas, rumiaciÃ³n rÃ­gida sobre el pasado, autocrÃ­tica destructiva y una tendencia constante a la metacogniciÃ³n patolÃ³gica.
-Malestar Motor (65% de Frecuencia): Expresado en respuestas motoras de evitaciÃ³n, aislamiento social defensivo, procrastinaciÃ³n de proyectos y dependencia.
-Malestar FisiolÃ³gico (40% de ActivaciÃ³n): Expresado de forma somÃ¡tica mediante opresiÃ³n en el pecho, cierre involuntario de puÃ±os, insomnio y una inquietud fÃ­sica generalizada.
+II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO
+1. Mapeo Psicométrico de la Triple Modalidad Conductual
+El análisis transdiagnóstico del caso arroja una severa desconexión entre la activación fisiológica y el procesamiento cognitivo, manifestado en los siguientes niveles de afectación:
+Malestar Cognitivo (85% de Predominio): Representa el núcleo del estancamiento. Se manifiesta a través de dudas obsesivas, rumiación rígida sobre el pasado, autocrítica destructiva y una tendencia constante a la metacognición patológica.
+Malestar Motor (65% de Frecuencia): Expresado en respuestas motoras de evitación, aislamiento social defensivo, procrastinación de proyectos y dependencia.
+Malestar Fisiológico (40% de Activación): Expresado de forma somática mediante opresión en el pecho, cierre involuntario de puños, insomnio y una inquietud física generalizada.
 
-2. AnÃ¡lisis del Rasgo PID-5 Central: El Ritmo (53% - Nivel Moderado)
-La mente neurodivergente del paciente opera a travÃ©s de procesos secuenciales encadenados de forma rÃ­gida...
-En DisfunciÃ³n: El ritmo genera bucles de memoria cerrados...
-En Estabilidad (El Hackeo ClÃ­nico): Debido a su necesidad interna de orden y secuencia, el paciente encuentra un estabilizador natural cuando interactÃºa con estructuras externas predecibles.
+2. Análisis del Rasgo PID-5 Central: El Ritmo (53% - Nivel Moderado)
+La mente neurodivergente del paciente opera a través de procesos secuenciales encadenados de forma rígida...
+En Disfunción: El ritmo genera bucles de memoria cerrados...
+En Estabilidad (El Hackeo Clínico): Debido a su necesidad interna de orden y secuencia, el paciente encuentra un estabilizador natural cuando interactúa con estructuras externas predecibles.
 
-3. El NÃºcleo de la Vulnerabilidad Existencial: La Identidad Privatizada por el "Otro"
-El anÃ¡lisis funcional profundo revela que el paciente padece de una ausencia de anclaje interno...
+3. El Núcleo de la Vulnerabilidad Existencial: La Identidad Privatizada por el "Otro"
+El análisis funcional profundo revela que el paciente padece de una ausencia de anclaje interno...
 \"\"\"
 
 DATOS DEL PACIENTE:
 - Malestar Motor Bruto: ${rawM}
 - Malestar Cognitivo Bruto: ${rawC}
-- Malestar FisiolÃ³gico/SomÃ¡tico Bruto: ${rawS}
+- Malestar Fisiológico/Somático Bruto: ${rawS}
 - Rasgos PID-5 en bruto: ${JSON.stringify(rawPID)}
 
 RESPUESTAS EXISTENCIALES:
 ${userResponsesText}
 
 Instrucciones Estrictas:
-1. Adapta los porcentajes y el orden de la 'Triple Modalidad' segÃºn los valores brutos provistos.
-2. Identifica su rasgo dominante en el PID-5 a partir de los datos y analiza cÃ³mo funciona 'En DisfunciÃ³n' y 'En Estabilidad'.
-3. Redacta 'El NÃºcleo de la Vulnerabilidad Existencial' descubriendo el porquÃ© de sus heridas principales basÃ¡ndote en la historia que relata en sus respuestas existenciales.
-4. CRÃTICO - TONO: Emplea un lenguaje de hipÃ³tesis, hallazgos o percepciones (ej. "parece sugerir", "podrÃ­a indicar", "se observa una tendencia"). NO emitas juicios como verdades absolutas, sentencias o diagnÃ³sticos psiquiÃ¡tricos inamovibles.
-5. CRÃTICO - CONFIDENCIALIDAD: Nunca utilices el nombre propio ni los apellidos de la persona. Si aparecen en sus respuestas, ignÃ³ralos y refiÃ©rete a Ã©l/ella exclusivamente como "el paciente", "la paciente" o usa su usuario de sistema: "${selectedPatient.name}".
-6. Devuelve ÃšNICAMENTE el texto markdown del anÃ¡lisis (sin tÃ­tulo de presentaciÃ³n, solo a partir de 'II. CONCEPTUALIZACIÃ“N DINÃMICA Y ANÃLISIS CONDUCTUAL INTEGRADO' o el tÃ­tulo principal equivalente).
+1. Adapta los porcentajes y el orden de la 'Triple Modalidad' según los valores brutos provistos.
+2. Identifica su rasgo dominante en el PID-5 a partir de los datos y analiza cómo funciona 'En Disfunción' y 'En Estabilidad'.
+3. Redacta 'El Núcleo de la Vulnerabilidad Existencial' descubriendo el porqué de sus heridas principales basándote en la historia que relata en sus respuestas existenciales.
+4. CRÍTICO - TONO: Emplea un lenguaje de hipótesis, hallazgos o percepciones (ej. "parece sugerir", "podría indicar", "se observa una tendencia"). NO emitas juicios como verdades absolutas, sentencias o diagnósticos psiquiátricos inamovibles.
+5. CRÍTICO - CONFIDENCIALIDAD: Nunca utilices el nombre propio ni los apellidos de la persona. Si aparecen en sus respuestas, ignóralos y refiérete a él/ella exclusivamente como "el paciente", "la paciente" o usa su usuario de sistema: "${selectedPatient.name}".
+6. Devuelve ÚNICAMENTE el texto markdown del análisis (sin título de presentación, solo a partir de 'II. CONCEPTUALIZACIÓN DINÁMICA Y ANÁLISIS CONDUCTUAL INTEGRADO' o el título principal equivalente).
 `;
 
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
@@ -4889,7 +4889,7 @@ Instrucciones Estrictas:
             handleTreatmentPlanChange('dynamicConceptualization', aiContent.trim());
         } catch (e) {
             console.error(e);
-            alert("Error al generar conceptualizaciÃ³n dinÃ¡mica: " + e.message);
+            alert("Error al generar conceptualización dinámica: " + e.message);
         } finally {
             setIsGeneratingConceptualization(false);
         }
@@ -4909,25 +4909,25 @@ Instrucciones Estrictas:
             const patientDataStr = patientBlocks.map(b => b.content || b.Content).join('. ');
 
             const prompt = `
-Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento ClÃ­nico.
-Con base en TODO EL INFORME PSICOLÃ“GICO del paciente, genera una visiÃ³n clÃ­nica completa.
+Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Clínico.
+Con base en TODO EL INFORME PSICOLÓGICO del paciente, genera una visión clínica completa.
 
-CRÃTICO - TONO: Redacta tus interpretaciones como hipÃ³tesis clÃ­nicas (ej. "los datos sugieren", "se observa una tendencia a"). Evita emitir sentencias absolutas o juicios definitivos sobre la realidad del paciente.
-CRÃTICO - CONFIDENCIALIDAD: Nunca incluyas nombres propios en el informe. Si las notas incluyen nombres reales, censÃºralos y utiliza Ãºnicamente el ID del sistema: "${selectedPatient.name}" o el tÃ©rmino "el paciente".
+CRÍTICO - TONO: Redacta tus interpretaciones como hipótesis clínicas (ej. "los datos sugieren", "se observa una tendencia a"). Evita emitir sentencias absolutas o juicios definitivos sobre la realidad del paciente.
+CRÍTICO - CONFIDENCIALIDAD: Nunca incluyas nombres propios en el informe. Si las notas incluyen nombres reales, censúralos y utiliza únicamente el ID del sistema: "${selectedPatient.name}" o el término "el paciente".
 
-InformaciÃ³n extraÃ­da:
-- Respuestas FenomenolÃ³gicas: ${JSON.stringify(phenomData)}
-- Entrevista BiogrÃ¡fica: ${JSON.stringify(bioData)}
+Información extraída:
+- Respuestas Fenomenológicas: ${JSON.stringify(phenomData)}
+- Entrevista Biográfica: ${JSON.stringify(bioData)}
 - Notas Recientes: ${patientDataStr || "Sin notas recientes."}
 
 Genera un JSON con los siguientes campos:
-1. "sessionAnalysis": InterpretaciÃ³n clÃ­nica general y de evidencias observadas.
-2. "strategicQuestions": Preguntas estratÃ©gicas para corroboraciÃ³n y redirecciÃ³n de significado.
-3. "specificObjectives": Objetivos estructurados en un formato gamificado basado en "Ãrboles de Habilidades" y "Misiones Diarias (Daily Quests)" para fomentar el progreso visual de la autoeficacia y sustituir la gratificaciÃ³n dopaminÃ©rgica.
-4. "backwardChaining": Encadenamiento hacia atrÃ¡s (pasos incrementales desde la meta).
-5. "exposureDesign": DiseÃ±o de jerarquÃ­a de exposiciÃ³n y procesos de adaptaciÃ³n.
-6. "psychoeducation": Conceptos y analogÃ­as psicoeducativas para explicar al paciente y estructurar su autoconocimiento.
-7. "fourSessionRoute": Ruta guiada y detallada de 4 sesiones de terapia, marcando los procesos clÃ­nicos, metas y exploraciones recomendadas para cada sesiÃ³n.
+1. "sessionAnalysis": Interpretación clínica general y de evidencias observadas.
+2. "strategicQuestions": Preguntas estratégicas para corroboración y redirección de significado.
+3. "specificObjectives": Objetivos estructurados en un formato gamificado basado en "Árboles de Habilidades" y "Misiones Diarias (Daily Quests)" para fomentar el progreso visual de la autoeficacia y sustituir la gratificación dopaminérgica.
+4. "backwardChaining": Encadenamiento hacia atrás (pasos incrementales desde la meta).
+5. "exposureDesign": Diseño de jerarquía de exposición y procesos de adaptación.
+6. "psychoeducation": Conceptos y analogías psicoeducativas para explicar al paciente y estructurar su autoconocimiento.
+7. "fourSessionRoute": Ruta guiada y detallada de 4 sesiones de terapia, marcando los procesos clínicos, metas y exploraciones recomendadas para cada sesión.
 
 Devuelve estrictamente el JSON sin formato extra.
             `;
@@ -4960,7 +4960,7 @@ Devuelve estrictamente el JSON sin formato extra.
             
         } catch (err) {
             console.error(err);
-            alert("OcurriÃ³ un error al generar el plan de tratamiento con IA.");
+            alert("Ocurrió un error al generar el plan de tratamiento con IA.");
         } finally {
             setIsGeneratingTreatmentPlan(false);
         }
@@ -4970,40 +4970,40 @@ Devuelve estrictamente el JSON sin formato extra.
         return (
             <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                    <h3 className="text-lg font-black text-white italic">IV. VisiÃ³n ClÃ­nica y Plan de Tratamiento</h3>
+                    <h3 className="text-lg font-black text-white italic">IV. Visión Clínica y Plan de Tratamiento</h3>
                     <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
-                        EstructuraciÃ³n de objetivos, retroalimentaciÃ³n y encadenamiento hacia atrÃ¡s
+                        Estructuración de objetivos, retroalimentación y encadenamiento hacia atrás
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* VisiÃ³n ClÃ­nica y AnÃ¡lisis de SesiÃ³n */}
+                    {/* Visión Clínica y Análisis de Sesión */}
                     <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6 space-y-6">
                         <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                             <Activity className="w-5 h-5 text-emerald-400" />
                             <div>
-                                <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">VisiÃ³n ClÃ­nica y Sesiones</h4>
-                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">InterpretaciÃ³n, corroboraciÃ³n y preguntas profundas</p>
+                                <h4 className="text-[10px] font-black uppercase text-zinc-300 tracking-widest font-mono">Visión Clínica y Sesiones</h4>
+                                <p className="text-zinc-500 text-[8px] font-mono uppercase mt-0.5">Interpretación, corroboración y preguntas profundas</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">AnÃ¡lisis de la SesiÃ³n Actual</label>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Análisis de la Sesión Actual</label>
                                 <textarea
                                     value={treatmentPlan.sessionAnalysis || ''}
                                     onChange={e => handleTreatmentPlanChange('sessionAnalysis', e.target.value)}
-                                    placeholder="InterpretaciÃ³n de las evidencias observadas en esta sesiÃ³n..."
+                                    placeholder="Interpretación de las evidencias observadas en esta sesión..."
                                     className="w-full h-24 bg-zinc-950/70 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950"
                                 />
                             </div>
                             
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Preguntas EstratÃ©gicas (CorroboraciÃ³n)</label>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Preguntas Estratégicas (Corroboración)</label>
                                 <textarea
                                     value={treatmentPlan.strategicQuestions || ''}
                                     onChange={e => handleTreatmentPlanChange('strategicQuestions', e.target.value)}
-                                    placeholder="Ej: Â¿QuÃ© significa esta evidencia para el paciente? Preguntas para redireccionar el significado..."
+                                    placeholder="Ej: ¿Qué significa esta evidencia para el paciente? Preguntas para redireccionar el significado..."
                                     className="w-full h-24 bg-zinc-950/70 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-100/90 resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all font-sans outline-none placeholder:text-sky-950"
                                 />
                             </div>
@@ -5034,17 +5034,17 @@ Devuelve estrictamente el JSON sin formato extra.
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Objetivos EspecÃ­ficos y Medibles</label>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Objetivos Específicos y Medibles</label>
                                 <textarea
                                     value={treatmentPlan.specificObjectives || ''}
                                     onChange={e => handleTreatmentPlanChange('specificObjectives', e.target.value)}
-                                    placeholder="DefiniciÃ³n objetiva para reducir frecuencia e intensidad de conductas meta..."
+                                    placeholder="Definición objetiva para reducir frecuencia e intensidad de conductas meta..."
                                     className="w-full h-20 bg-zinc-950/70 border border-purple-500/20 rounded-xl p-3 text-xs text-purple-100/90 resize-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all font-sans outline-none placeholder:text-purple-950"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Encadenamiento Hacia AtrÃ¡s</label>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Encadenamiento Hacia Atrás</label>
                                 <textarea
                                     value={treatmentPlan.backwardChaining || ''}
                                     onChange={e => handleTreatmentPlanChange('backwardChaining', e.target.value)}
@@ -5054,11 +5054,11 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">DiseÃ±o de Procesos de ExposiciÃ³n</label>
+                                <label className="text-[9px] font-black uppercase text-zinc-400 tracking-widest block font-mono">Diseño de Procesos de Exposición</label>
                                 <textarea
                                     value={treatmentPlan.exposureDesign || ''}
                                     onChange={e => handleTreatmentPlanChange('exposureDesign', e.target.value)}
-                                    placeholder="JerarquÃ­a de exposiciÃ³n, procesos de adaptaciÃ³n..."
+                                    placeholder="Jerarquía de exposición, procesos de adaptación..."
                                     className="w-full h-20 bg-zinc-950/70 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-100/90 resize-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 transition-all font-sans outline-none placeholder:text-rose-950"
                                 />
                             </div>
@@ -5136,9 +5136,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         ? 'bg-sky-500/10 text-sky-400 border border-sky-500/25' 
                                                         : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
                                                 }`}
-                                                title={hasConsent && consentSigner ? `Firmado por: ${consentSigner} (${consentDate ? new Date(consentDate).toLocaleDateString() : ''})` : 'Pendiente de suscripciÃ³n'}
+                                                title={hasConsent && consentSigner ? `Firmado por: ${consentSigner} (${consentDate ? new Date(consentDate).toLocaleDateString() : ''})` : 'Pendiente de suscripción'}
                                             >
-                                                {hasConsent ? 'âœ“ Firmado' : 'Pendiente'}
+                                                {hasConsent ? '✓ Firmado' : 'Pendiente'}
                                             </span>
                                         </div>
                                         {hasConsent && (
@@ -5147,7 +5147,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     Firma: <strong className="text-zinc-200">{consentSigner || selectedPatient.name}</strong>
                                                 </div>
                                                 <div className="text-[7.5px] font-mono text-emerald-400/90 flex items-center gap-1">
-                                                    <span>âœ“ TÃ©rminos clÃ­nicos & PolÃ­tica 48h / LÃ­mite 6h</span>
+                                                    <span>✓ Términos clínicos & Política 48h / Límite 6h</span>
                                                 </div>
                                                 <button
                                                     onClick={(e) => {
@@ -5171,18 +5171,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     </style>
                                                                 </head>
                                                                 <body>
-                                                                    <h1>Consentimiento Informado y Encuadre ClÃ­nico</h1>
-                                                                    <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapÃ©utico y uso de la plataforma clÃ­nica provista.</p>
-                                                                    <p>El tratamiento se basa en la psicoterapia clÃ­nica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podrÃ¡ romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad Ã©tica y legal vigente.</p>
-                                                                    <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipaciÃ³n. Para reprogramar una sesiÃ³n sin costo, notificarÃ© con un mÃ­nimo de 24 horas de antelaciÃ³n. Comprendo y acepto que cualquier cancelaciÃ³n o solicitud de reagendamiento con menos de 6 horas de anticipaciÃ³n no procederÃ¡; la sesiÃ³n se considerarÃ¡ como impartida y el monto se cobrarÃ¡ en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
-                                                                    <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesiÃ³n. Si no me presento en este tiempo, la sesiÃ³n se darÃ¡ por cancelada y se aplicarÃ¡ la misma polÃ­tica de cobro por inasistencia tardÃ­a. Las sesiones tienen una duraciÃ³n aproximada de 50 minutos.</p>
-                                                                    <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los lÃ­mites establecidos en el encuadre clÃ­nico. OtorguÃ© mi consentimiento electrÃ³nicamente a travÃ©s de la plataforma de manera voluntaria y consciente.</p>
+                                                                    <h1>Consentimiento Informado y Encuadre Clínico</h1>
+                                                                    <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapéutico y uso de la plataforma clínica provista.</p>
+                                                                    <p>El tratamiento se basa en la psicoterapia clínica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podrá romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad ética y legal vigente.</p>
+                                                                    <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipación. Para reprogramar una sesión sin costo, notificaré con un mínimo de 24 horas de antelación. Comprendo y acepto que cualquier cancelación o solicitud de reagendamiento con menos de 6 horas de anticipación no procederá; la sesión se considerará como impartida y el monto se cobrará en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
+                                                                    <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesión. Si no me presento en este tiempo, la sesión se dará por cancelada y se aplicará la misma política de cobro por inasistencia tardía. Las sesiones tienen una duración aproximada de 50 minutos.</p>
+                                                                    <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los límites establecidos en el encuadre clínico. Otorgué mi consentimiento electrónicamente a través de la plataforma de manera voluntaria y consciente.</p>
                                                                     
                                                                     <div class="signature-section no-indent">
-                                                                        <p class="signature-line no-indent">Firma de Consentimiento y AceptaciÃ³n</p>
+                                                                        <p class="signature-line no-indent">Firma de Consentimiento y Aceptación</p>
                                                                         <p class="no-indent"><strong>Nombre registrado:</strong> ${fullName}</p>
-                                                                        <p class="no-indent"><strong>Fecha de aceptaciÃ³n:</strong> ${dateStr}</p>
-                                                                        <p class="no-indent"><strong>Estatus:</strong> Firmado electrÃ³nicamente</p>
+                                                                        <p class="no-indent"><strong>Fecha de aceptación:</strong> ${dateStr}</p>
+                                                                        <p class="no-indent"><strong>Estatus:</strong> Firmado electrónicamente</p>
                                                                     </div>
                                                                 </body>
                                                             </html>
@@ -5203,13 +5203,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     <div 
                                                         onClick={() => setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate })}
                                                         className="group relative w-full h-14 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 cursor-pointer transition-all bg-black/40 mt-0.5"
-                                                        title="Clic para ver fotografÃ­a de firma ampliada"
+                                                        title="Clic para ver fotografía de firma ampliada"
                                                     >
                                                         <img src={consentPhoto} alt="Foto de firma" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
                                                             <span className="text-[8px] font-mono text-purple-300 font-semibold flex items-center gap-1">
                                                                 <Camera size={9} />
-                                                                <span>Ver Selfie de Firma âœ¨</span>
+                                                                <span>Ver Selfie de Firma ✨</span>
                                                             </span>
                                                         </div>
                                                     </div>
@@ -5223,13 +5223,13 @@ Devuelve estrictamente el JSON sin formato extra.
 
                         {/* Navigation Structure */}
                         <nav className={`flex-col pb-1 md:pb-0 w-full transition-all ${!isSidebarOpen ? 'hidden md:flex items-center space-y-8' : 'flex space-y-6 mt-6 md:mt-0'}`}>
-                            {/* SECCIÃ“N: CASO CLÃNICO */}
+                            {/* SECCIÓN: CASO CLÍNICO */}
                             <div className="space-y-2 w-full">
-                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Caso ClÃ­nico</span>}
+                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Caso Clínico</span>}
                                 <div className="space-y-1">
                                     <button onClick={() => { setActiveTab('VISION_GENERAL'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <FileText className="w-4.5 h-4.5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">VisiÃ³n General</span>}
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Visión General</span>}
                                     </button>
                                     <button onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <Activity className="w-4.5 h-4.5 shrink-0 text-purple-400" />
@@ -5238,9 +5238,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                 </div>
                             </div>
 
-                            {/* SECCIÃ“N: ESPACIO DE EXPLORACIÃ“N */}
+                            {/* SECCIÓN: ESPACIO DE EXPLORACIÓN */}
                             <div className="space-y-2 w-full">
-                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Espacio de ExploraciÃ³n</span>}
+                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Espacio de Exploración</span>}
                                 <div className="space-y-1">
                                     <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <Folder className="w-4.5 h-4.5 shrink-0" />
@@ -5248,12 +5248,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </button>
                                     <button onClick={() => { setActiveTab('REFLEXION'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
                                         <Eye className="w-4.5 h-4.5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">ReflexiÃ³n Privada</span>}
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Privada</span>}
                                     </button>
                                 </div>
                             </div>
 
-                            {/* SECCIÃ“N: SESIONES Y AUDIOS */}
+                            {/* SECCIÓN: SESIONES Y AUDIOS */}
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && (
                                     <div className="flex items-center justify-between pl-2 pr-1">
@@ -5278,7 +5278,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 } transition-all`}
                                             >
                                                 <Mic className="w-4.5 h-4.5 shrink-0" />
-                                                {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">SesiÃ³n {v}</span>}
+                                                {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Sesión {v}</span>}
                                             </button>
                                         );
                                     })}
@@ -5332,9 +5332,9 @@ Devuelve estrictamente el JSON sin formato extra.
                         {activeTab.startsWith('SESION_') && (
                             <div className="space-y-8 animate-in fade-in duration-300">
                                 <div>
-                                    <h3 className="text-lg font-black text-white italic">Registro de SesiÃ³n</h3>
+                                    <h3 className="text-lg font-black text-white italic">Registro de Sesión</h3>
                                     <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
-                                        Audios, transcripciones y anÃ¡lisis de la sesiÃ³n actual
+                                        Audios, transcripciones y análisis de la sesión actual
                                     </p>
                                 </div>
                                 <TranscriptionsTab patientName={selectedPatient?.name} />
@@ -5344,9 +5344,9 @@ Devuelve estrictamente el JSON sin formato extra.
                         {(activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS') && (
                             <div className="space-y-8 animate-in fade-in duration-300 h-full">
                                 <div>
-                                    <h3 className="text-lg font-black text-white italic">ReflexiÃ³n Privada</h3>
+                                    <h3 className="text-lg font-black text-white italic">Reflexión Privada</h3>
                                     <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
-                                        HipÃ³tesis, observaciones privadas y apuntes
+                                        Hipótesis, observaciones privadas y apuntes
                                     </p>
                                 </div>
                                 <textarea
@@ -5357,7 +5357,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                             localStorage.setItem(`oasis_private_notes_${selectedPatient.name}`, e.target.value);
                                         }
                                     }}
-                                    placeholder="Escribe tus observaciones y hallazgos clÃ­nicos aquÃ­. Estos apuntes son estrictamente privados..."
+                                    placeholder="Escribe tus observaciones y hallazgos clínicos aquí. Estos apuntes son estrictamente privados..."
                                     className="w-full h-[60vh] bg-zinc-950/70 border border-emerald-500/20 rounded-3xl p-6 text-sm text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950/50"
                                 />
                             </div>
@@ -5415,18 +5415,18 @@ Devuelve estrictamente el JSON sin formato extra.
                             <button
                                 key={conv.id}
                                 onClick={() => setSelectedKioChatId(conv.id)}
-                                title={conv.title || 'ConversaciÃ³n'}
+                                title={conv.title || 'Conversación'}
                                 className={`text-left p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-2 overflow-hidden ${selectedKioChatId === conv.id ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-950/40 border-white/5 hover:border-white/10'} ${kioSidebarWidth < 150 ? 'items-center justify-center p-3' : ''}`}
                             >
                                 <div className={`flex items-center w-full ${kioSidebarWidth < 150 ? 'justify-center' : 'justify-between'}`}>
                                     {kioSidebarWidth >= 150 && (
-                                        <span className={`text-xs font-bold truncate pr-2 ${selectedKioChatId === conv.id ? 'text-emerald-400' : 'text-white'}`}>{conv.title || 'ConversaciÃ³n'}</span>
+                                        <span className={`text-xs font-bold truncate pr-2 ${selectedKioChatId === conv.id ? 'text-emerald-400' : 'text-white'}`}>{conv.title || 'Conversación'}</span>
                                     )}
                                     <MessageSquare size={14} className={`shrink-0 ${selectedKioChatId === conv.id ? 'text-emerald-400' : 'text-zinc-600'}`} />
                                 </div>
                                 {kioSidebarWidth >= 150 && (
                                     <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wide truncate">
-                                        {new Date(conv.updatedAt || conv.createdAt || Date.now()).toLocaleDateString()} â€¢ {conv.messages?.length || 0} msgs
+                                        {new Date(conv.updatedAt || conv.createdAt || Date.now()).toLocaleDateString()} • {conv.messages?.length || 0} msgs
                                     </span>
                                 )}
                             </button>
@@ -5478,7 +5478,7 @@ Devuelve estrictamente el JSON sin formato extra.
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-3">
                             <Compass size={40} className="opacity-20" />
-                            <p className="text-[10px] font-mono uppercase tracking-widest">Selecciona una conversaciÃ³n</p>
+                            <p className="text-[10px] font-mono uppercase tracking-widest">Selecciona una conversación</p>
                         </div>
                     )}
                 </div>
@@ -5527,7 +5527,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         <div className="flex items-center justify-between border-b border-white/10 pb-3">
                             <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase tracking-wider">
                                 <Camera size={16} className="text-purple-400" />
-                                <span>Selfie para Recordar el Momento âœ¨ (Firma Digital)</span>
+                                <span>Selfie para Recordar el Momento ✨ (Firma Digital)</span>
                             </div>
                             <button 
                                 onClick={() => setViewingConsentPhoto(null)}
@@ -5539,7 +5539,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-black aspect-[4/3] flex items-center justify-center shadow-lg">
                             <img 
                                 src={viewingConsentPhoto.photo} 
-                                alt="FotografÃ­a de consentimiento" 
+                                alt="Fotografía de consentimiento" 
                                 className="w-full h-full object-contain" 
                             />
                         </div>
@@ -5553,8 +5553,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <span className="text-zinc-300 font-mono text-[11px]">{viewingConsentPhoto.date ? new Date(viewingConsentPhoto.date).toLocaleString('es-MX') : 'Registrada'}</span>
                             </div>
                             <div className="flex justify-between items-center border-t border-white/5 pt-1.5 mt-0.5">
-                                <span className="text-zinc-500 font-mono text-[10px] uppercase">SupervisiÃ³n:</span>
-                                <span className="text-purple-300 text-[10px]">Psic. Ãngela SofÃ­a MartÃ­nez Salazar (CÃ©d. 14354378)</span>
+                                <span className="text-zinc-500 font-mono text-[10px] uppercase">Supervisión:</span>
+                                <span className="text-purple-300 text-[10px]">Psic. Ángela Sofía Martínez Salazar (Céd. 14354378)</span>
                             </div>
                         </div>
                     </div>
