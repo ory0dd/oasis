@@ -2168,12 +2168,12 @@ Devuelve estrictamente el JSON sin formato extra.
         const node = afcData?.nodes?.find(n => n.id === selectedNode.id);
         if (!node) return;
         
-        const apiKey = localStorage.getItem('oasis_deepseek_key') || '';
-        if (!apiKey) return; // Si no hay IA configurada, usa el generador modular
+        const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
+        // Removed return so the backend default key can be used.
 
         const currentChat = nodeChats[node.id]?.[selectedQuestionIndex];
         const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-        const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+        const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === "assistant" && !currentChat[0].isAIGenerated && !currentChat[0].isLoading;
         
         // Check if we need to fetch
         const needsFetch = !currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericOnly);
@@ -2243,7 +2243,7 @@ Queremos que le hagas una pregunta o comentario conversacional explorando este n
                         ...prev,
                         [node.id]: {
                             ...(prev[node.id] || {}),
-                            [selectedQuestionIndex]: [{ role: 'assistant', content: aiText }]
+                            [selectedQuestionIndex]: [{ role: "assistant", content: aiText, isAIGenerated: true }]
                         }
                     }));
                 } else {
@@ -2257,7 +2257,7 @@ Queremos que le hagas una pregunta o comentario conversacional explorando este n
                     ...prev,
                     [node.id]: {
                         ...(prev[node.id] || {}),
-                        [selectedQuestionIndex]: [{ role: 'assistant', content: fallbackQ }]
+                        [selectedQuestionIndex]: [{ role: "assistant", content: fallbackQ, isAIGenerated: true }]
                     }
                 }));
             });
@@ -7928,7 +7928,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0; 
                                                                             const currentChat = getSafeCurrentChat(node.id, safeThreadIndex);
                                                                             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+                                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === "assistant" && !currentChat[0].isAIGenerated;
                                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                                 ? currentChat
                                                                                 : [{ role: 'assistant', content: getNodePerspectiveQuestion(node, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
@@ -8325,7 +8325,7 @@ Por favor, analicemos:
 
                                                             const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
                                                             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0].content);
+                                                            const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === "assistant" && !currentChat[0].isAIGenerated;
                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                 ? currentChat
                                                                 : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
