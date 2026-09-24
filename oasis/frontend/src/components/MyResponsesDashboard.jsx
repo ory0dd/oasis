@@ -674,90 +674,125 @@ export const generateEmpatheticPerspectiveQuestion = (
     const convTarget = consequenceContext?.targetNode ? getConversationalPhrase(cleanTargetLabel) : null;
 
     const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const intros = [
+        `Ehm, estaba pensando en ${convLabel}...`,
+        `Es curioso cómo se da esto de ${convLabel}.`,
+        `Sabes, me quedé pensando en ${convLabel}.`,
+        `Fíjate que al observar ${convLabel}...`,
+        `Hmm, escuchando sobre ${convLabel},`,
+        `Cuando mencionas ${convLabel},`
+    ];
 
     switch (safeIdx) {
         case 0: { // Raíz Histórica y Origen
             if (convOrigin && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
-                return pickRandom([
-                    `Me cuentas un poco sobre ${convLabel}, y pareciera que empezó por ${convOrigin}. ¿Crees que hoy en día podrías intentar manejarlo de otra forma?`,
-                    `Mencionas ${convLabel}, algo que parece venir desde ${convOrigin}. ¿Te has puesto a pensar cómo sería soltar eso un poquito hoy?`,
-                    `Es súper interesante cómo ${convOrigin} terminó convirtiéndose en ${convLabel}. Si pudieras viajar al pasado, ¿qué te dirías a ti mismo?`
-                ]);
+                const bridges = [
+                    `pareciera tener raíces muy claras en ${convOrigin}.`,
+                    `es súper interesante cómo parece venir desde ${convOrigin}.`,
+                    `parece que todo empezó por ${convOrigin}.`,
+                    `se nota la conexión directa con ${convOrigin}.`
+                ];
+                const questions = [
+                    `¿Te has puesto a pensar cómo sería intentar manejarlo distinto hoy?`,
+                    `¿Qué crees que pasaría si hoy decides soltar un poquito de eso?`,
+                    `Si pudieras viajar al pasado a ese momento, ¿qué te dirías a ti mismo?`,
+                    `¿Crees que esa vieja forma de responder te sigue sirviendo hoy en día?`
+                ];
+                return `${pickRandom(intros)} ${pickRandom(bridges)} ${pickRandom(questions)}`;
             }
-            return pickRandom([
-                `Me cuentas un poco sobre ${convLabel}... ¿cómo te hace sentir esto en tu día a día? ¿Te gustaría intentar algo distinto ahora?`,
-                `Oye, mencionabas ${convLabel}. ¿Qué es lo que más te cuesta de vivir con esto?`,
-                `Al pensar en ${convLabel}, ¿qué es lo primero que se te viene a la mente?`
-            ]);
+            const questions = [
+                `¿cómo lo vives realmente en tu día a día?`,
+                `¿qué es lo que más te cuesta o te agota de esto?`,
+                `¿qué es lo primerito que se te viene a la mente cuando te pasa?`,
+                `¿te gustaría que intentemos buscar hacer algo distinto?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social
-            return pickRandom([
-                `Cuando notas ${convLabel}, ¿cómo crees que afecta a la gente cercana a ti? ¿Sientes que a veces te alejas sin querer?`,
-                `Oye, y cuando estás lidiando con ${convLabel}, ¿cómo cambia tu forma de tratar a los demás?`,
-                `A veces ${convLabel} hace que nos encerremos. ¿Te ha pasado que alguien importante para ti lo nota?`
-            ]);
+            const questions = [
+                `¿cómo crees que esto termina afectando a la gente cercana a ti?`,
+                `¿sientes que a veces te alejas o te aíslas sin querer?`,
+                `¿cómo cambia tu forma de tratar a los demás cuando estás pasando por esto?`,
+                `¿te ha pasado que alguien importante para ti lo nota y te lo dice?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 2: { // Cuerpo y Fisiología Somática
             if (nodeType === 'physiological' || nodeType === 'biological') {
-                return pickRandom([
-                    `Me mencionas ${convLabel}. Si tu cuerpo pudiera hablar a través de esa sensación, ¿qué crees que te estaría pidiendo?`,
-                    `Cuando sientes ${convLabel}, ¿hay algo que te dé alivio físico inmediato?`,
-                    `Ese malestar de ${convLabel}... si le pusieras atención un minuto en silencio, ¿qué crees que pasaría?`
-                ]);
+                const questions = [
+                    `si tu cuerpo pudiera hablar a través de esa sensación, ¿qué crees que te estaría pidiendo?`,
+                    `¿hay algo que te dé alivio físico inmediato cuando estás así?`,
+                    `si le pusieras atención a ese malestar en silencio por un minuto, ¿qué crees que pasaría?`
+                ];
+                return `${pickRandom(intros)} ${pickRandom(questions)}`;
             }
-            return pickRandom([
-                `Al experimentar ${convLabel}, ¿en qué parte del cuerpo lo notas más? ¿Qué pasaría si te detienes un momento a escuchar esa sensación?`,
-                `A veces ${convLabel} se siente pesadísimo físicamente. ¿Dónde sientes más tensión cuando pasa esto?`,
-                `¿Has notado cómo tu cuerpo reacciona antes, durante y después de ${convLabel}?`
-            ]);
+            const questions = [
+                `¿en qué parte del cuerpo crees que lo notas más?`,
+                `a veces esto se siente pesadísimo físicamente. ¿Dónde sientes más tensión?`,
+                `¿has notado cómo reacciona tu cuerpo antes y después de que pasa?`,
+                `¿qué pasaría si te detienes un momento a respirar y escuchar esa sensación?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 3: { // Valores y Diálogo Interno
-            return pickRandom([
-                `A veces, con ${convLabel}, somos muy duros con nosotros mismos. Si un buen amigo estuviera pasando por lo mismo, ¿qué consejo le darías?`,
-                `Oye, cuando estás en medio de ${convLabel}, ¿qué tipo de cosas te dices en tu cabeza? ¿Eres amable contigo?`,
-                `Imagínate que alguien que quieres mucho te cuenta que sufre de ${convLabel}. ¿Cómo lo consolarías?`
-            ]);
+            const questions = [
+                `a veces somos súper duros con nosotros mismos. Si un buen amigo pasara por esto, ¿qué le dirías?`,
+                `¿qué tipo de cosas te dices en tu cabeza cuando estás ahí? ¿Eres amable contigo?`,
+                `imagínate que alguien que quieres mucho te cuenta que sufre de esto. ¿Cómo lo consolarías?`,
+                `¿crees que te estás exigiendo de más en esta situación?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 4: { // Conductas y Patrones Automáticos
             if (convTarget && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
-                return pickRandom([
-                    `Veo que ${convLabel} a veces te lleva hacia ${convTarget}. ¿Sientes que lo que haces para aliviarte rápido te termina costando caro después?`,
-                    `Es curioso cómo ${convLabel} termina causando ${convTarget}. ¿Alguna vez has intentado romper ese ciclo haciendo algo completamente distinto?`,
-                    `Cuando notas que ${convLabel} te está empujando hacia ${convTarget}, ¿hay algo que te ayude a frenar a tiempo?`
-                ]);
+                const bridges = [
+                    `a veces pareciera que te empuja directo hacia ${convTarget}.`,
+                    `es loco cómo casi siempre termina causando ${convTarget}.`,
+                    `se nota que es como un puente directo a ${convTarget}.`
+                ];
+                const questions = [
+                    `¿Sientes que lo que haces para aliviarte rápido te termina costando caro después?`,
+                    `¿Alguna vez has intentado romper ese ciclo haciendo algo completamente distinto?`,
+                    `¿Hay algo que te ayude a frenar a tiempo antes de llegar ahí?`
+                ];
+                return `${pickRandom(intros)} ${pickRandom(bridges)} ${pickRandom(questions)}`;
             }
-            return pickRandom([
-                `A veces ${convLabel} trae un alivio rápido que no dura mucho. ¿Qué crees que estás evitando sentir ahora mismo?`,
-                `Oye, después de que pasa ${convLabel}, ¿cómo te sientes contigo mismo? ¿Te arrepientes o sientes culpa?`,
-                `Si dejaras de responder de forma automática ante ${convLabel}, ¿qué es lo peor que crees que podría pasar?`
-            ]);
+            const questions = [
+                `a veces esto trae un alivio rápido que no dura mucho. ¿Qué crees que estás evitando sentir realmente?`,
+                `después de que pasa la tormenta, ¿cómo te sientes contigo mismo?`,
+                `si dejaras de responder de forma automática a esto, ¿qué es lo peor que crees que podría pasar?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 5: { // Reto Conductual Amable
             if (challenge && challenge.length > 5) {
-                return pickRandom([
-                    `Te propongo algo súper sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¿Te animas a intentarlo hoy para manejar ${convLabel} de otra manera?`,
-                    `Oye, y si intentamos algo pequeñito: ${challenge.toLowerCase()}. ¿Crees que podrías hacerlo esta semana solo para ver qué pasa?`,
-                    `Sé que ${convLabel} es difícil, pero ¿qué tal si pruebas ${challenge.toLowerCase()}? Sin presión, solo como un experimento.`
-                ]);
+                const questions = [
+                    `te propongo algo súper sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¿Te animas a intentarlo hoy?`,
+                    `¿y si intentamos algo pequeñito como ${challenge.toLowerCase()}? ¿Crees que podrías hacerlo esta semana solo para ver qué pasa?`,
+                    `sé que es difícil, pero ¿qué tal si pruebas ${challenge.toLowerCase()}? Sin presión, solo como un experimento.`
+                ];
+                return `${pickRandom(intros)} ${pickRandom(questions)}`;
             }
-            return pickRandom([
-                `Si pudieras cambiar solo un poquitito tu forma de responder ante ${convLabel}, ¿cuál sería el primer paso? Por más pequeño que sea.`,
-                `¿Qué es lo más fácil y pequeñito que podrías hacer hoy mismo para que ${convLabel} no te afecte tanto?`,
-                `Si tuvieras una varita mágica y pudieras cambiar una sola cosa sobre cómo manejas ${convLabel}, ¿qué sería?`
-            ]);
+            const questions = [
+                `si pudieras cambiar solo un poquitito tu forma de responder a esto, ¿cuál sería el primer paso?`,
+                `¿qué es lo más fácil y pequeñito que podrías hacer hoy mismo para que esto no te afecte tanto?`,
+                `si tuvieras una varita mágica y pudieras cambiar una sola cosa sobre cómo manejas esto, ¿qué sería?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 6: { // Integración y Cierre Compasivo
-            return pickRandom([
-                `Entiendo que ${convLabel} es parte de lo que has vivido. Viéndolo con calma y sin juzgarte, ¿cómo podrías aceptarlo para seguir adelante un poco más tranquilo?`,
-                `Oye, después de todo lo que platicamos sobre ${convLabel}, ¿hay algo nuevo de lo que te hayas dado cuenta?`,
-                `Si tuvieras que escribirle una carta de despedida a ${convLabel}, ¿qué le dirías para por fin dejarlo ir?`
-            ]);
+            const questions = [
+                `viéndolo con calma y sin juzgarte, ¿cómo podrías aceptarlo para seguir adelante un poco más tranquilo?`,
+                `después de todo lo que platicamos sobre esto, ¿hay algo nuevo de lo que te hayas dado cuenta?`,
+                `si tuvieras que escribirle una carta de despedida a esto, ¿qué le dirías para por fin dejarlo ir?`
+            ];
+            return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
     }
 
