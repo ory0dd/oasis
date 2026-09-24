@@ -4149,6 +4149,63 @@ const ProfileView = ({
                                 {isEditingProfile ? 'Guardar Cambios' : 'Editar perfil'}
                             </button>
 
+                            <button
+                                onClick={() => {
+                                    const docWindow = window.open('', '_blank');
+                                    const dateStr = new Date().toLocaleDateString('es-MX');
+                                    const content = `
+                                        <html>
+                                            <head>
+                                                <title>Consentimiento Informado - ${fullName}</title>
+                                                <style>
+                                                    body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+                                                    h1 { font-size: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+                                                    h2 { font-size: 16px; margin-top: 20px; color: #555; }
+                                                    p { font-size: 14px; text-align: justify; }
+                                                    .signature-section { margin-top: 50px; }
+                                                    .signature-line { border-top: 1px solid #000; width: 300px; padding-top: 5px; font-weight: bold; }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <h1>CONSENTIMIENTO INFORMADO Y ENCUADRE CLÍNICO</h1>
+                                                <p>Por la presente, <strong>${fullName}</strong>, con usuario registrado <strong>${user}</strong>, declaro y consiento libremente las condiciones del encuadre terapéutico y uso de la plataforma.</p>
+                                                
+                                                <h2>1. NATURALEZA DEL SERVICIO Y CONFIDENCIALIDAD</h2>
+                                                <p>El tratamiento se basa en la psicoterapia clínica y relacional. Todo lo discutido es estrictamente confidencial. La confidencialidad solo podrá romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad ética y legal vigente.</p>
+
+                                                <h2>2. PAGOS Y POLÍTICA DE CANCELACIONES</h2>
+                                                <p>Las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipación. Para reprogramar una sesión sin costo, deberá notificar con <strong>un mínimo de 24 horas de antelación</strong>.</p>
+                                                <p><strong>Cualquier cancelación o solicitud de reagendamiento con menos de 6 horas de anticipación no procederá. La sesión se considerará como impartida y el monto se cobrará en su totalidad (100% de la tarifa).</strong> Esto aplica independientemente del motivo, resguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
+                                                
+                                                <h2>3. HORARIOS Y TOLERANCIA</h2>
+                                                <p>Se otorga una tolerancia de 15 minutos al inicio de la sesión. Si el consultante no se presenta en este tiempo, la sesión se dará por cancelada y se aplicará la misma política de cobro por inasistencia tardía. Las sesiones tienen una duración aproximada de 50 minutos.</p>
+
+                                                <h2>4. ACEPTACIÓN Y COMPROMISO</h2>
+                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los límites establecidos en el encuadre clínico. Otorgué mi consentimiento electrónicamente a través de la plataforma de manera voluntaria y consciente.</p>
+                                                
+                                                <div class="signature-section">
+                                                    <p class="signature-line">Firma de Consentimiento y Aceptación</p>
+                                                    <p>Nombre registrado: ${fullName}</p>
+                                                    <p>Usuario: ${user}</p>
+                                                    <p>Fecha de impresión: ${dateStr}</p>
+                                                </div>
+                                            </body>
+                                        </html>
+                                    `;
+                                    docWindow.document.write(content);
+                                    docWindow.document.close();
+                                    docWindow.focus();
+                                    setTimeout(() => {
+                                        docWindow.print();
+                                    }, 500);
+                                }}
+                                title="Descargar Consentimiento Informado (PDF)"
+                                className="px-2.5 sm:px-4 bg-white/10 hover:bg-white/15 py-0.5 sm:py-1.5 rounded-lg text-[10px] sm:text-sm font-bold transition-colors flex items-center justify-center gap-2 text-purple-400"
+                            >
+                                <FileText size={16} />
+                                <span className="hidden sm:inline">PDF</span>
+                            </button>
+
                             <button onClick={() => setIsSettingsOpen(true)} className="px-2.5 bg-white/10 hover:bg-white/15 py-0.5 sm:py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center justify-center">
                                 <Settings size={16} />
                             </button>
