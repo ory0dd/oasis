@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import BitacoraExistencial from './components/BitacoraExistencial';
 import { createPortal } from 'react-dom';
 import {
@@ -42,7 +42,7 @@ class ErrorBoundary extends React.Component {
     }
     componentDidCatch(error, errorInfo) {
         this.setState({ errorInfo });
-        console.error('🔴 ErrorBoundary caught:', error, errorInfo);
+        console.error('ðŸ”´ ErrorBoundary caught:', error, errorInfo);
     }
     render() {
         if (this.state.hasError) {
@@ -53,11 +53,11 @@ class ErrorBoundary extends React.Component {
                     flexDirection: 'column', gap: '24px', padding: '32px', fontFamily: 'Inter, system-ui, sans-serif'
                 }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '20px' }}>⚠</span>
+                        <span style={{ fontSize: '20px' }}>âš </span>
                     </div>
-                    <h2 style={{ color: '#e4e4e7', fontSize: '16px', fontWeight: 600, margin: 0 }}>Algo salió mal</h2>
+                    <h2 style={{ color: '#e4e4e7', fontSize: '16px', fontWeight: 600, margin: 0 }}>Algo saliÃ³ mal</h2>
                     <p style={{ color: '#71717a', fontSize: '12px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', margin: 0 }}>
-                        Se detectó un error de renderizado. Tu información está segura.
+                        Se detectÃ³ un error de renderizado. Tu informaciÃ³n estÃ¡ segura.
                     </p>
                     <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', maxWidth: '500px', width: '100%', maxHeight: '120px', overflow: 'auto' }}>
                         <code style={{ color: '#ef4444', fontSize: '10px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
@@ -83,7 +83,7 @@ class ErrorBoundary extends React.Component {
                                 textTransform: 'uppercase', letterSpacing: '0.1em'
                             }}
                         >
-                            Cerrar Sesión
+                            Cerrar SesiÃ³n
                         </button>
                     </div>
                 </div>
@@ -452,8 +452,8 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
     return { p1, p2, cp1, cp2 };
 };
 
-// --- CONFIGURACIÓN ---
-// --- CONFIGURACIÓN DE AURAS (THEMES) ---
+// --- CONFIGURACIÃ“N ---
+// --- CONFIGURACIÃ“N DE AURAS (THEMES) ---
 const AURAS = {
     'oasis': {
         name: 'Oasis Classic',
@@ -727,7 +727,7 @@ const ChatSidebar = ({
                 <button
                     onClick={onClose}
                     className="p-2 mr-1 rounded-lg hover:bg-white/5 text-white/20 hover:text-white transition-all transition-all"
-                    title="Ocultar Menú"
+                    title="Ocultar MenÃº"
                 >
                     <PanelLeftClose size={16} />
                 </button>
@@ -752,7 +752,7 @@ const ChatSidebar = ({
                     className="w-full h-12 rounded-2xl border border-accent/20 bg-accent/5 hover:bg-accent/10 transition-all flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-accent group"
                 >
                     <Plus size={16} className="group-hover:rotate-90 transition-transform" />
-                    Nueva Conversación
+                    Nueva ConversaciÃ³n
                 </button>
 
 
@@ -796,7 +796,7 @@ const ChatSidebar = ({
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || '#bef264', boxShadow: `0 0 10px ${c.color || '#bef264'}44` }} />
-                                                    <span className="text-[10px] font-bold text-white/80 truncate">{c.title || 'Conversación'}</span>
+                                                    <span className="text-[10px] font-bold text-white/80 truncate">{c.title || 'ConversaciÃ³n'}</span>
                                                 </div>
                                                 <Pin size={10} className="text-accent opacity-60" />
                                             </button>
@@ -822,7 +822,7 @@ const ChatSidebar = ({
                                             className={`w-full px-4 py-2 rounded-xl flex items-center gap-3 transition-all ${activeConversationId === c.id ? 'bg-white/5 text-white' : 'text-white/40 hover:text-white/80'}`}
                                         >
                                             <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: c.color || '#bef264' }} />
-                                            <span className="text-[9px] font-bold truncate">{c.title || 'Sin Título'}</span>
+                                            <span className="text-[9px] font-bold truncate">{c.title || 'Sin TÃ­tulo'}</span>
                                         </button>
                                     ))}
                                     {/* Notes in Folder (HIDDEN IN CHATS TAB) */}
@@ -879,7 +879,7 @@ const ChatSidebar = ({
                                                 >
                                                     <div className="flex items-center gap-3 min-w-0">
                                                         <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: c.color || '#555' }} />
-                                                        <span className="text-[9px] font-bold truncate pr-8">{c.title || 'Sin Título'}</span>
+                                                        <span className="text-[9px] font-bold truncate pr-8">{c.title || 'Sin TÃ­tulo'}</span>
                                                     </div>
                                                 </button>
                                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity bg-[#080809] pl-2">
@@ -966,7 +966,7 @@ const ChatSidebar = ({
                     <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-6">
                         <div className="space-y-2">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent/60 flex items-center gap-2">
-                                <Zap size={12} /> Núcleo de Memoria
+                                <Zap size={12} /> NÃºcleo de Memoria
                             </h3>
                             <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Hechos destilados de tu conciencia digital.</p>
                         </div>
@@ -1014,9 +1014,9 @@ const ChatSidebar = ({
 
                         <div className="space-y-4 pt-6 border-t border-white/5">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400/60 flex items-center gap-2">
-                                <Aperture size={12} /> Reflexiones del Espíritu
+                                <Aperture size={12} /> Reflexiones del EspÃ­ritu
                             </h3>
-                            <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Análisis profundos generados en tus diálogos.</p>
+                            <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">AnÃ¡lisis profundos generados en tus diÃ¡logos.</p>
 
                             <div className="space-y-3">
                                 {blocks.filter(b => b.type === 'insight').length > 0 ? blocks.filter(b => b.type === 'insight').map((insight, idx) => (
@@ -1049,7 +1049,7 @@ const ChatSidebar = ({
                                 )) : (
                                     <div className="py-10 flex flex-col items-center justify-center text-center opacity-10">
                                         <Aperture size={24} className="mb-3" />
-                                        <span className="text-[8px] font-black uppercase tracking-[0.4em]">Sin reflexiones aún</span>
+                                        <span className="text-[8px] font-black uppercase tracking-[0.4em]">Sin reflexiones aÃºn</span>
                                     </div>
                                 )}
                             </div>
@@ -1127,7 +1127,7 @@ const INITIAL_SOUL_PIECES = [
 
 const GENERATED_FEED = Array.from({ length: 40 }).map((_, i) => ({
     id: `f-${i}`,
-    user: `Sincronía_${i + 102}`,
+    user: `SincronÃ­a_${i + 102}`,
     text: "El glitch es la nueva verdad.",
     img: `https://picsum.photos/seed/${i + 40}/400/600`,
     color: PALETTES[i % 4].color,
@@ -1309,7 +1309,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     };
 
     const handleTouchEnd = () => {
-        if (!touchIsHorizontal.current) return; // vertical swipe → let feed handle it
+        if (!touchIsHorizontal.current) return; // vertical swipe â†’ let feed handle it
         const diffX = touchStartX.current - touchEndX.current;
         if (diffX > 50) {
             setCurrentSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0));
@@ -1406,7 +1406,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
             } else {
-                console.log("No se encontró en el feed. Enfocando en el pizarrón.");
+                console.log("No se encontrÃ³ en el feed. Enfocando en el pizarrÃ³n.");
                 if (setView) setView('canvas');
                 setTimeout(() => {
                     const canvasBlock = blocks.find(b => b.id === targetId);
@@ -1478,7 +1478,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     const isPortraitVideo = isPureVideo && videoAspect === 'portrait';
     const isLandscapeVideo = isPureVideo && videoAspect === 'landscape';
 
-    // ── PORTRAIT VIDEO: full-bleed card, overlay UI ──────────────────────────
+    // â”€â”€ PORTRAIT VIDEO: full-bleed card, overlay UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (isPortraitVideo) {
         return (
             <div id={`feed-item-${f.id}`} ref={itemRef} className="w-full h-screen snap-center snap-always flex items-center justify-center px-4 pt-16 pb-20 md:py-20">
@@ -1510,7 +1510,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setConfirmAction({ message: "¿Seguro que quieres eliminar esta publicación del Feed Público?", onConfirm: handleDeleteFeedItem });
+                                    setConfirmAction({ message: "Â¿Seguro que quieres eliminar esta publicaciÃ³n del Feed PÃºblico?", onConfirm: handleDeleteFeedItem });
                                 }}
                                 className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all pointer-events-auto"
                             >
@@ -1559,7 +1559,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                                     </a>
                                 )}
                                 <p className="text-[8px] font-medium italic text-white/50 truncate max-w-[100px] text-right">
-                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'Publicación'}
+                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'PublicaciÃ³n'}
                                 </p>
                             </div>
                         </div>
@@ -1596,7 +1596,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
         );
     }
 
-    // ── LANDSCAPE VIDEO: contained, card adapts ───────────────────────────────
+    // â”€â”€ LANDSCAPE VIDEO: contained, card adapts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (isLandscapeVideo) {
         return (
             <div id={`feed-item-${f.id}`} ref={itemRef} className="w-full h-screen snap-center snap-always flex items-center justify-center px-4 pt-16 pb-20 md:py-20">
@@ -1617,7 +1617,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setConfirmAction({ message: "¿Eliminar esta publicación del Feed?", onConfirm: handleDeleteFeedItem });
+                                    setConfirmAction({ message: "Â¿Eliminar esta publicaciÃ³n del Feed?", onConfirm: handleDeleteFeedItem });
                                 }}
                                 className="w-7 h-7 rounded-full bg-black/60 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all pointer-events-auto"
                             >
@@ -1671,7 +1671,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                                     </a>
                                 )}
                                 <p className="text-[8px] italic text-zinc-500 truncate max-w-[100px] text-right">
-                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'Publicación'}
+                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'PublicaciÃ³n'}
                                 </p>
                             </div>
                         </div>
@@ -1786,7 +1786,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                setConfirmAction({ message: "¿Eliminar esta publicación del Feed Público?", onConfirm: handleDeleteFeedItem });
+                                setConfirmAction({ message: "Â¿Eliminar esta publicaciÃ³n del Feed PÃºblico?", onConfirm: handleDeleteFeedItem });
                             }}
                             className="w-8 h-8 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-black transition-all pointer-events-auto"
                         >
@@ -2150,7 +2150,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/mural-prev:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-1.5 backdrop-blur-[1px]">
                 <Pencil size={isLarge ? 18 : 12} className="text-accent animate-pulse" style={{ color: accent }} />
                 <span className={`font-black uppercase tracking-[0.2em] text-accent`} style={{ color: accent, fontSize: isLarge ? '11px' : '8px' }}>
-                    {onClick ? 'Editar Pizarrón' : 'Ver Pizarrón'} ({muralBlocks.length})
+                    {onClick ? 'Editar PizarrÃ³n' : 'Ver PizarrÃ³n'} ({muralBlocks.length})
                 </span>
             </div>
         </div>
@@ -2619,7 +2619,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsMobileResizing(prev => !prev); }}
                                 className={`${isChildNote ? 'p-0.5' : 'p-1.5'} hover:bg-white/10 rounded transition-all ${isMobileResizing ? 'text-accent' : 'text-zinc-500 hover:text-white'}`}
-                                title="Ajustar Tamaño"
+                                title="Ajustar TamaÃ±o"
                             >
                                 <Maximize2 size={isChildNote ? 7 : 10} />
                             </button>
@@ -2653,14 +2653,14 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             <div className="relative flex-1 flex flex-col min-h-0">
                                 {/* TITULO DE LA CONVERSACION */}
                                 <h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-3 text-purple-400 truncate shrink-0">
-                                    {block.caption || 'Diálogo Kio'}
+                                    {block.caption || 'DiÃ¡logo Kio'}
                                 </h3>
 
                                 <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-1 py-1 min-h-0">
                                     {parsedMsgs.slice(-2).map((msg, idx) => (
                                         <div key={idx} className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                             <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">
-                                                {msg.role === 'user' ? 'Tú' : 'Kio'}
+                                                {msg.role === 'user' ? 'TÃº' : 'Kio'}
                                             </span>
                                             <p className={`text-[10px] leading-snug rounded-2xl px-3 py-1.5 font-sans ${msg.role === 'user'
                                                 ? 'bg-purple-950/45 border border-purple-800/40 text-purple-300 text-right rounded-tr-none'
@@ -2673,7 +2673,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     {parsedMsgs.length === 0 && (
                                         <div className="flex-1 flex flex-col items-center justify-center opacity-25 py-8">
                                             <Sparkles size={16} className="animate-pulse mb-1 text-purple-400" />
-                                            <span className="text-[7px] font-black uppercase tracking-widest">Conversación Vacía</span>
+                                            <span className="text-[7px] font-black uppercase tracking-widest">ConversaciÃ³n VacÃ­a</span>
                                         </div>
                                     )}
                                 </div>
@@ -2687,7 +2687,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                         }}
                                         className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 rounded-xl text-[7px] font-black uppercase tracking-[0.3em] text-purple-400 transition-all flex items-center justify-center gap-1.5 pointer-events-auto"
                                     >
-                                        <MessageSquare size={10} /> Abrir Diálogo
+                                        <MessageSquare size={10} /> Abrir DiÃ¡logo
                                     </button>
                                 </div>
                             </div>
@@ -2696,7 +2696,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         <div className="relative group/text flex-1 flex flex-col min-h-0">
                             {/* TITULO DE LA NOTA (GRANDE) */}
                             <h3 className={`${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'} truncate shrink-0`}>
-                                {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || 'Fragmento Interior')}
+                                {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'DiÃ¡logos Recientes') : (block.caption || 'Fragmento Interior')}
                             </h3>
 
                             {block.muralBlocks && block.muralBlocks.length > 0 && (
@@ -2761,7 +2761,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             onClick={(e) => { e.stopPropagation(); onSelect(block); }}
                                             className="w-full py-2 bg-accent/5 hover:bg-accent/10 border border-accent/10 rounded-xl text-[7px] font-black uppercase tracking-[0.3em] text-accent transition-all flex items-center justify-center gap-2"
                                         >
-                                            <Plus size={10} /> Añadir Entrada
+                                            <Plus size={10} /> AÃ±adir Entrada
                                         </button>
                                     </div>
                                 </div>
@@ -2834,7 +2834,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                     if (recentConversations.length === 0) return (
                                                         <div className="flex flex-col items-center justify-center h-full w-full opacity-50 pt-8">
                                                             <MessageSquare size={24} className="text-purple-500 mb-2" />
-                                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-500">Sin Diálogos</span>
+                                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-500">Sin DiÃ¡logos</span>
                                                         </div>
                                                     );
                                                     return recentConversations.slice(0, 10).map(c => (
@@ -2848,11 +2848,11 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: c.color || '#d946ef' }} />
-                                                                <div className="text-purple-400 text-[10px] font-black uppercase truncate flex-1">{c.title || 'Diálogo'}</div>
+                                                                <div className="text-purple-400 text-[10px] font-black uppercase truncate flex-1">{c.title || 'DiÃ¡logo'}</div>
                                                             </div>
                                                             <div className="text-[8px] text-purple-500/50 font-mono mt-1 pl-3.5">
                                                                 {c.messages && c.messages.length > 0 ? `${c.messages.length} mensajes` : 'Sin mensajes'}
-                                                                {c.startTime && ` • ${new Date(c.startTime).toLocaleDateString()}`}
+                                                                {c.startTime && ` â€¢ ${new Date(c.startTime).toLocaleDateString()}`}
                                                             </div>
                                                         </div>
                                                     ));
@@ -2866,7 +2866,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                     }}
                                                     className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl text-[8px] font-black uppercase tracking-[0.3em] text-purple-400 transition-all flex items-center justify-center gap-2"
                                                 >
-                                                    <Plus size={12} /> Nuevo Diálogo
+                                                    <Plus size={12} /> Nuevo DiÃ¡logo
                                                 </button>
                                             </div>
                                         </div>
@@ -2958,7 +2958,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                                         strokeColor = '#ef4444';
                                                                         bgColor = 'rgba(185, 28, 28, 0.2)';
                                                                         textColor = '#fecaca';
-                                                                        title = 'SÍNTOMA CRÍTICO';
+                                                                        title = 'SÃNTOMA CRÃTICO';
                                                                     } else if (isChain) {
                                                                         strokeColor = '#71717a';
                                                                         bgColor = 'rgba(63, 63, 70, 0.2)';
@@ -3032,10 +3032,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #06b6d4 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
                                                         <Compass size={48} className="text-zinc-600 mb-6 animate-pulse" />
                                                         <h3 className="text-2xl font-black italic uppercase text-white/40 tracking-widest text-center mb-4">
-                                                            Sin Cartografía Asignada
+                                                            Sin CartografÃ­a Asignada
                                                         </h3>
                                                         <p className="text-[10px] font-mono text-zinc-500 max-w-[80%] leading-relaxed">
-                                                            AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
+                                                            AÃšN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÃNICO DESDE TU PERFIL APARECERÃ AQUÃ.
                                                         </p>
                                                     </div>
                                                 )}
@@ -3044,7 +3044,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                         onClick={(e) => { e.stopPropagation(); setView('soul'); }}
                                                         className="w-full py-4 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <Aperture size={14} /> Abrir Pruebas Clínicas
+                                                        <Aperture size={14} /> Abrir Pruebas ClÃ­nicas
                                                     </button>
                                                 </div>
                                             </div>
@@ -3066,10 +3066,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[8px] font-mono font-black uppercase tracking-[0.1em] text-accent shrink-0">
                                         <div className="flex items-center gap-1">
                                             <FileText size={10} className="animate-pulse" style={{ color: displayColor }} />
-                                            <span style={{ color: displayColor }}>{childNotes.length} {childNotes.length === 1 ? 'Subpágina' : 'Subpáginas'}</span>
+                                            <span style={{ color: displayColor }}>{childNotes.length} {childNotes.length === 1 ? 'SubpÃ¡gina' : 'SubpÃ¡ginas'}</span>
                                         </div>
                                         <div className="flex gap-1 max-w-[150px] overflow-hidden text-zinc-500 truncate normal-case font-sans italic opacity-75">
-                                            {childNotes.map(c => c.caption || 'Sin título').join(', ')}
+                                            {childNotes.map(c => c.caption || 'Sin tÃ­tulo').join(', ')}
                                         </div>
                                     </div>
                                 );
@@ -3085,7 +3085,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         </div>
                     ) : null}
                 </div>
-                {/* NÚCLEO DE SINCRONÍA (PORT) - CONDITIONAL */}
+                {/* NÃšCLEO DE SINCRONÃA (PORT) - CONDITIONAL */}
                 {showConnections && (
                     <div className={`${isChildNote ? 'py-1' : 'py-3'} flex justify-center items-center border-t border-white/5 bg-black/40 mt-auto shrink-0`}>
                         <div
@@ -3102,7 +3102,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             </div>
                             <span className="text-[5px] font-black tracking-[0.3em] text-zinc-600 group-hover/port:text-accent uppercase select-none">Relacionar</span>
 
-                            {/* Feedback visual de conexión activa */}
+                            {/* Feedback visual de conexiÃ³n activa */}
                             {isLinking && draggingId === block.id && (
                                 <div className="absolute inset-0 -m-1 rounded-full border border-accent animate-ping opacity-30" />
                             )}
@@ -3180,7 +3180,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         onTouchStart={(e) => e.stopPropagation()}
                     >
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-4" style={{ color: displayColor }}>
-                            Ajustar Tamaño
+                            Ajustar TamaÃ±o
                         </span>
 
                         <div className="flex gap-4 items-center mb-6 z-10">
@@ -3266,7 +3266,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     >
                         <div className="text-center space-y-4 max-w-[240px] px-2">
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 leading-relaxed">
-                                ¿Eliminar esta nota del mural?
+                                Â¿Eliminar esta nota del mural?
                             </p>
                             <div className="flex gap-2 justify-center pt-2">
                                 <button
@@ -3300,26 +3300,26 @@ const PHENOM_PART_A = [
     {
         key: "antecedentes_origen",
         title: "Origen y Reglas Invisibles",
-        question: "¿Qué ecos del pasado guían tus pasos en silencio? Si miras hacia tu origen, ¿cuál es esa ley no escrita que te enseñaron a seguir?",
-        placeholder: "Describe las expectativas ajenas, el miedo a equivocarte o los lazos familiares que aún condicionan tus decisiones hoy..."
+        question: "Â¿QuÃ© ecos del pasado guÃ­an tus pasos en silencio? Si miras hacia tu origen, Â¿cuÃ¡l es esa ley no escrita que te enseÃ±aron a seguir?",
+        placeholder: "Describe las expectativas ajenas, el miedo a equivocarte o los lazos familiares que aÃºn condicionan tus decisiones hoy..."
     },
     {
         key: "experiencia_insuficiencia",
         title: "La Sombra de la Autoexigencia",
-        question: "¿En qué momentos sientes que corres tras una meta que siempre se aleja? ¿Cuándo y dónde te susurra la mente que no eres o no haces suficiente?",
-        placeholder: "Piensa en la exigencia diaria, el trabajo o los vínculos donde el cansancio te paraliza..."
+        question: "Â¿En quÃ© momentos sientes que corres tras una meta que siempre se aleja? Â¿CuÃ¡ndo y dÃ³nde te susurra la mente que no eres o no haces suficiente?",
+        placeholder: "Piensa en la exigencia diaria, el trabajo o los vÃ­nculos donde el cansancio te paraliza..."
     },
     {
         key: "temporalidad_vivida",
         title: "Temporalidad Vivida",
-        question: "¿Cómo transcurre el tiempo en tu interior? ¿Sientes que el reloj es una sombra que te persigue, una corriente que te arrastra, o un río estancado?",
-        placeholder: "Explora si vives en la prisa del mañana, en el peso del ayer, o si logras habitar el presente..."
+        question: "Â¿CÃ³mo transcurre el tiempo en tu interior? Â¿Sientes que el reloj es una sombra que te persigue, una corriente que te arrastra, o un rÃ­o estancado?",
+        placeholder: "Explora si vives en la prisa del maÃ±ana, en el peso del ayer, o si logras habitar el presente..."
     },
     {
         key: "premisa_realidad",
         title: "Premisa de Realidad",
-        question: "Si tuvieras que desnudar tu motor más íntimo... ¿qué certeza sostiene tu día a día? ¿Cuál es el pulso que te hace despertar cada mañana?",
-        placeholder: "Tu verdadera motivación, o si sientes que simplemente avanzas en automático sin un rumbo claro..."
+        question: "Si tuvieras que desnudar tu motor mÃ¡s Ã­ntimo... Â¿quÃ© certeza sostiene tu dÃ­a a dÃ­a? Â¿CuÃ¡l es el pulso que te hace despertar cada maÃ±ana?",
+        placeholder: "Tu verdadera motivaciÃ³n, o si sientes que simplemente avanzas en automÃ¡tico sin un rumbo claro..."
     }
 ];
 
@@ -3327,60 +3327,60 @@ const PHENOM_PART_B = [
     { id: 1, domain: "Afectividad Negativa", text: "Me preocupo por casi todo." },
     { id: 2, domain: "Afectividad Negativa", text: "Me asusto o me alarmo con mucha facilidad." },
     { id: 3, domain: "Afectividad Negativa", text: "Me pongo muy ansioso/a cuando las cosas son inciertas o impredecibles." },
-    { id: 4, domain: "Afectividad Negativa", text: "Me irrito fácilmente por todo tipo de cosas." },
+    { id: 4, domain: "Afectividad Negativa", text: "Me irrito fÃ¡cilmente por todo tipo de cosas." },
     { id: 5, domain: "Afectividad Negativa", text: "Mis emociones a veces cambian de un momento a otro sin motivo aparente." },
-    { id: 6, domain: "Desapego", text: "Prefiero estar solo/a que acompañado/a." },
+    { id: 6, domain: "Desapego", text: "Prefiero estar solo/a que acompaÃ±ado/a." },
     { id: 7, domain: "Desapego", text: "Mantengo mi distancia emocional de la gente." },
     { id: 8, domain: "Desapego", text: "Me cuesta mucho disfrutar de las cosas de la vida." },
-    { id: 9, domain: "Desapego", text: "Rara vez me involucro emocionalmente con los demás." },
+    { id: 9, domain: "Desapego", text: "Rara vez me involucro emocionalmente con los demÃ¡s." },
     { id: 10, domain: "Desapego", text: "Evito hacer nuevos amigos o conocer gente nueva." },
     { id: 11, domain: "Antagonismo", text: "A menudo tengo que manipular a la gente para conseguir lo que quiero." },
-    { id: 12, domain: "Antagonismo", text: "Siento que soy mejor o más importante que casi todo el mundo." },
-    { id: 13, domain: "Antagonismo", text: "Disfruto aprovechándome de los demás si se presenta la oportunidad." },
+    { id: 12, domain: "Antagonismo", text: "Siento que soy mejor o mÃ¡s importante que casi todo el mundo." },
+    { id: 13, domain: "Antagonismo", text: "Disfruto aprovechÃ¡ndome de los demÃ¡s si se presenta la oportunidad." },
     { id: 14, domain: "Antagonismo", text: "No me importa herir los sentimientos de otros si eso me beneficia." },
-    { id: 15, domain: "Antagonismo", text: "Creo que para salir adelante, a veces tienes que engañar a la gente." },
-    { id: 16, domain: "Desinhibición", text: "A menudo actúo de inmediato sin pensar en las consecuencias." },
-    { id: 17, domain: "Desinhibición", text: "Hago las cosas en el momento sin planearlas en absoluto." },
-    { id: 18, domain: "Desinhibición", text: "A menudo rompo mis promesas o no cumplo con mis acuerdos." },
-    { id: 19, domain: "Desinhibición", text: "Me aburro rápidamente de las tareas y pierdo el interés." },
-    { id: 20, domain: "Desinhibición", text: "Tomo decisiones precipitadas en el calor del momento." },
-    { id: 21, domain: "Psicoticismo", text: "A menudo tengo pensamientos que no tienen sentido para los demás." },
-    { id: 22, domain: "Psicoticismo", text: "He tenido experiencias extrañas que son muy difíciles de explicar." },
+    { id: 15, domain: "Antagonismo", text: "Creo que para salir adelante, a veces tienes que engaÃ±ar a la gente." },
+    { id: 16, domain: "DesinhibiciÃ³n", text: "A menudo actÃºo de inmediato sin pensar en las consecuencias." },
+    { id: 17, domain: "DesinhibiciÃ³n", text: "Hago las cosas en el momento sin planearlas en absoluto." },
+    { id: 18, domain: "DesinhibiciÃ³n", text: "A menudo rompo mis promesas o no cumplo con mis acuerdos." },
+    { id: 19, domain: "DesinhibiciÃ³n", text: "Me aburro rÃ¡pidamente de las tareas y pierdo el interÃ©s." },
+    { id: 20, domain: "DesinhibiciÃ³n", text: "Tomo decisiones precipitadas en el calor del momento." },
+    { id: 21, domain: "Psicoticismo", text: "A menudo tengo pensamientos que no tienen sentido para los demÃ¡s." },
+    { id: 22, domain: "Psicoticismo", text: "He tenido experiencias extraÃ±as que son muy difÃ­ciles de explicar." },
     { id: 23, domain: "Psicoticismo", text: "A veces siento que las cosas a mi alrededor no son reales." },
-    { id: 24, domain: "Psicoticismo", text: "La gente suele pensar que mi forma de ser o hablar es excéntrica o rara." },
-    { id: 25, domain: "Psicoticismo", text: "A veces escucho o veo cosas que los demás no pueden percibir." }
+    { id: 24, domain: "Psicoticismo", text: "La gente suele pensar que mi forma de ser o hablar es excÃ©ntrica o rara." },
+    { id: 25, domain: "Psicoticismo", text: "A veces escucho o veo cosas que los demÃ¡s no pueden percibir." }
 ];
 
 const PHENOM_QUESTIONS = [
     {
         id: 1,
         title: "Mecanismo Existencial",
-        text: "¿Cómo experimentas la mayor parte del tiempo tu presencia individual en el flujo cotidiano?",
+        text: "Â¿CÃ³mo experimentas la mayor parte del tiempo tu presencia individual en el flujo cotidiano?",
         options: [
             { key: "A", text: "Como un observador desapegado que analiza los acontecimientos desde fuera." },
-            { key: "B", text: "Como una tensión constante entre el deseo de fusión con otros y el miedo a perderme." },
-            { key: "C", text: "Como una lucha activa por imponer orden y control sobre un entorno caótico." },
-            { key: "D", text: "Como un flujo de impulsos creativos que a veces colapsa ante la falta de dirección." }
+            { key: "B", text: "Como una tensiÃ³n constante entre el deseo de fusiÃ³n con otros y el miedo a perderme." },
+            { key: "C", text: "Como una lucha activa por imponer orden y control sobre un entorno caÃ³tico." },
+            { key: "D", text: "Como un flujo de impulsos creativos que a veces colapsa ante la falta de direcciÃ³n." }
         ]
     },
     {
         id: 2,
-        title: "Dinámica de Parálisis",
-        text: "Cuando te encuentras ante un bloqueo o parálisis emocional, ¿cuál suele ser la raíz primaria?",
+        title: "DinÃ¡mica de ParÃ¡lisis",
+        text: "Cuando te encuentras ante un bloqueo o parÃ¡lisis emocional, Â¿cuÃ¡l suele ser la raÃ­z primaria?",
         options: [
-            { key: "A", text: "El miedo a la imperfección o a fallar ante mis propios estándares implacables." },
-            { key: "B", text: "La sensación de vacío o de que mis esfuerzos carecen de un propósito trascendental." },
-            { key: "C", text: "La sobrecarga atencional al intentar sostener demasiadas posibilidades simultáneamente." },
-            { key: "D", text: "El repliegue automático hacia fantasías internas para evadir el peso del mundo físico." }
+            { key: "A", text: "El miedo a la imperfecciÃ³n o a fallar ante mis propios estÃ¡ndares implacables." },
+            { key: "B", text: "La sensaciÃ³n de vacÃ­o o de que mis esfuerzos carecen de un propÃ³sito trascendental." },
+            { key: "C", text: "La sobrecarga atencional al intentar sostener demasiadas posibilidades simultÃ¡neamente." },
+            { key: "D", text: "El repliegue automÃ¡tico hacia fantasÃ­as internas para evadir el peso del mundo fÃ­sico." }
         ]
     },
     {
         id: 3,
-        title: "Modulación del Tiempo",
-        text: "¿Cómo modula el tiempo tu experiencia psicológica actual?",
+        title: "ModulaciÃ³n del Tiempo",
+        text: "Â¿CÃ³mo modula el tiempo tu experiencia psicolÃ³gica actual?",
         options: [
-            { key: "A", text: "Vivo en anticipación ansiosa del futuro, planificando bucles infinitos para evitar sorpresas." },
-            { key: "B", text: "Quedo atrapado en la nostalgia o el análisis retrospectivo de decisiones pasadas." },
+            { key: "A", text: "Vivo en anticipaciÃ³n ansiosa del futuro, planificando bucles infinitos para evitar sorpresas." },
+            { key: "B", text: "Quedo atrapado en la nostalgia o el anÃ¡lisis retrospectivo de decisiones pasadas." },
             { key: "C", text: "Siento que el presente transcurre con excesiva rapidez y sin tiempo para integrar mis vivencias." },
             { key: "D", text: "Experimento el tiempo de forma fragmentada, alternando entre hiperactividad y estancamiento." }
         ]
@@ -3388,23 +3388,23 @@ const PHENOM_QUESTIONS = [
     {
         id: 4,
         title: "La Mirada del Otro",
-        text: "¿De qué manera influye la mirada del otro en tus bloqueos internos?",
+        text: "Â¿De quÃ© manera influye la mirada del otro en tus bloqueos internos?",
         options: [
             { key: "A", text: "Como un juez implacable que activa mi necesidad de autosuficiencia radical." },
             { key: "B", text: "Como un ancla necesaria de la que dependo para validar mi existencia." },
-            { key: "C", text: "Como una perturbación de mi espacio mental de la cual prefiero retirarme físicamente." },
+            { key: "C", text: "Como una perturbaciÃ³n de mi espacio mental de la cual prefiero retirarme fÃ­sicamente." },
             { key: "D", text: "Como un juego de espejos donde tiendo a proyectar mis propias inseguridades reprimidas." }
         ]
     },
     {
         id: 5,
-        title: "Anhelo de Armonía",
-        text: "¿Qué describe mejor tu idea de armonía o liberación mental?",
+        title: "Anhelo de ArmonÃ­a",
+        text: "Â¿QuÃ© describe mejor tu idea de armonÃ­a o liberaciÃ³n mental?",
         options: [
-            { key: "A", text: "La quietud analítica, donde puedo silenciar el ruido del pensamiento racional." },
-            { key: "B", text: "La conexión profunda e incondicional con el arte, la naturaleza o un alma afín." },
-            { key: "C", text: "La auto-realización soberana, actuando con total autonomía sin miedo al rechazo." },
-            { key: "D", text: "La integración fluida de mis contradicciones internas sin juzgarlas como defectos." }
+            { key: "A", text: "La quietud analÃ­tica, donde puedo silenciar el ruido del pensamiento racional." },
+            { key: "B", text: "La conexiÃ³n profunda e incondicional con el arte, la naturaleza o un alma afÃ­n." },
+            { key: "C", text: "La auto-realizaciÃ³n soberana, actuando con total autonomÃ­a sin miedo al rechazo." },
+            { key: "D", text: "La integraciÃ³n fluida de mis contradicciones internas sin juzgarlas como defectos." }
         ]
     }
 ];
@@ -3430,7 +3430,7 @@ const ProfileView = ({
     const user24hStories = (feed || []).filter(b => b.username === user && b.type === 'story' && b.timestamp > twentyFourHoursAgo);
     const hasActiveStories = user24hStories.length > 0;
 
-    const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
+    const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el Ã©ter digital.');
     const [profileLink, setProfileLink] = useState(() => localStorage.getItem('oasis_profilelink_' + user) || '');
     const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
     const [coverImage, setCoverImage] = useState(() => localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
@@ -3476,7 +3476,7 @@ const ProfileView = ({
             }
         }
 
-        setBio(localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
+        setBio(localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el Ã©ter digital.');
         setFullName(localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
         setCoverImage(localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
         setProfileLink(localStorage.getItem('oasis_profilelink_' + user) || '');
@@ -3713,7 +3713,7 @@ const ProfileView = ({
             .map(c => ({
                 id: c.id,
                 type: 'conversation',
-                caption: c.title || 'Diálogo AI',
+                caption: c.title || 'DiÃ¡logo AI',
                 content: JSON.stringify(c.messages || []),
                 isPublic: false,
                 color: c.color || '#d946ef',
@@ -3770,37 +3770,37 @@ const ProfileView = ({
         const noteKws = noteKeywords;
         const score = calculatedResults.score;
 
-        let triggersHtml = "El sistema psíquico detecta tu susceptibilidad atencional y reactividad emocional cuando enfrentas ";
+        let triggersHtml = "El sistema psÃ­quico detecta tu susceptibilidad atencional y reactividad emocional cuando enfrentas ";
         if (noteKws.length > 0) {
             triggersHtml += `conceptos de alta densidad existencial identificados en tus notas, como *"${noteKws.slice(0, 3).join(', ')}"*`;
         } else {
-            triggersHtml += "situaciones de caos y desorganización conceptual en tu entorno de trabajo diario.";
+            triggersHtml += "situaciones de caos y desorganizaciÃ³n conceptual en tu entorno de trabajo diario.";
         }
 
-        let dynamicFormulation = `### 1. Formulación de Caso Clínico Funcional (${arch?.name || 'Explorador'})
+        let dynamicFormulation = `### 1. FormulaciÃ³n de Caso ClÃ­nico Funcional (${arch?.name || 'Explorador'})
         
-        **A. Estímulo Antecedente / Disparador (A):**
+        **A. EstÃ­mulo Antecedente / Disparador (A):**
         ${triggersHtml}. Tu cerebro experimenta esto como una amenaza directa a tu coherencia interna.
         
         **B. Estructura de Vulnerabilidad Nuclear (B):**
-        Tu perfil fenomenológico revela una vulnerabilidad arraigada en: *"${arch?.vulnerability || 'Búsqueda del orden.'}"*. Esto actúa como una lente cognitiva que distorsiona la neutralidad del lienzo.
+        Tu perfil fenomenolÃ³gico revela una vulnerabilidad arraigada en: *"${arch?.vulnerability || 'BÃºsqueda del orden.'}"*. Esto actÃºa como una lente cognitiva que distorsiona la neutralidad del lienzo.
         
-        **C. Respuesta de Evitación y Bloqueo (C):**
-        Ante la sobrecarga, activas el bucle protector de **${arch?.subtitle || 'Evitación'}**, provocando un bloqueo manifiesto como *"${arch?.blockage || 'Parálisis por análisis'}"*.
+        **C. Respuesta de EvitaciÃ³n y Bloqueo (C):**
+        Ante la sobrecarga, activas el bucle protector de **${arch?.subtitle || 'EvitaciÃ³n'}**, provocando un bloqueo manifiesto como *"${arch?.blockage || 'ParÃ¡lisis por anÃ¡lisis'}"*.
         
         **D. Consecuencias Autoperpetuantes (D):**
-        El repliegue analítico disminuye la ansiedad inmediata, pero a largo plazo refuerza la vulnerabilidad de base, consolidando un bucle psicológico recurrente que paraliza tu flujo creativo de notas en el canvas.`;
+        El repliegue analÃ­tico disminuye la ansiedad inmediata, pero a largo plazo refuerza la vulnerabilidad de base, consolidando un bucle psicolÃ³gico recurrente que paraliza tu flujo creativo de notas en el canvas.`;
 
-        let cognitiveCapacityAnalysis = `### 2. Análisis del Procesamiento Cognitivo (ICAR16)
+        let cognitiveCapacityAnalysis = `### 2. AnÃ¡lisis del Procesamiento Cognitivo (ICAR16)
         
-        * **Índice de Acierto Cognitivo**: **${score}/16**
-        * **Tiempo Promedio de Reacción (Dwell Time)**: **${calculatedResults.dwellAvg} segundos**
+        * **Ãndice de Acierto Cognitivo**: **${score}/16**
+        * **Tiempo Promedio de ReacciÃ³n (Dwell Time)**: **${calculatedResults.dwellAvg} segundos**
         * **Titubeo (Cambios de Respuesta)**: **${calculatedResults.totalChanges} vacilaciones registradas.**
         
-        **Interpretación Cualitativa:**
+        **InterpretaciÃ³n Cualitativa:**
         ${score >= 12
-                ? "Muestras un rendimiento visomental y de inferencia altamente desarrollado, permitiéndote resolver jerarquías espaciales y verbales complejas. Sin embargo, este alto procesamiento analítico te predispone a bucles obsesivos de perfeccionismo intelectual."
-                : "Se observa sobrecarga del ejecutivo central en el córtex prefrontal ante tareas de retención visoespacial simultáneas. Esto desencadena mecanismos rápidos de fatiga atencional, provocando respuestas impulsivas para liberar la tensión cognitiva."}`;
+                ? "Muestras un rendimiento visomental y de inferencia altamente desarrollado, permitiÃ©ndote resolver jerarquÃ­as espaciales y verbales complejas. Sin embargo, este alto procesamiento analÃ­tico te predispone a bucles obsesivos de perfeccionismo intelectual."
+                : "Se observa sobrecarga del ejecutivo central en el cÃ³rtex prefrontal ante tareas de retenciÃ³n visoespacial simultÃ¡neas. Esto desencadena mecanismos rÃ¡pidos de fatiga atencional, provocando respuestas impulsivas para liberar la tensiÃ³n cognitiva."}`;
 
         return {
             triggers: triggersHtml,
@@ -4035,7 +4035,7 @@ const ProfileView = ({
                                                 value={bio}
                                                 onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[8px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[40px]"
-                                                placeholder="Descripción o biografía..."
+                                                placeholder="DescripciÃ³n o biografÃ­a..."
                                             />
                                             <div className="flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden focus-within:border-white/30 transition-all">
                                                 <div className="pl-1.5 pr-1 text-zinc-500"><LinkIcon size={8} /></div>
@@ -4088,15 +4088,15 @@ const ProfileView = ({
                                                         ) : (
                                                             <>
                                                                 <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">⊙</span> Habitar</span>
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">âŠ™</span> Habitar</span>
                                                                     <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.habitar}"</p>
                                                                 </div>
                                                                 <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">☍</span> Vínculo</span>
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">â˜</span> VÃ­nculo</span>
                                                                     <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.vinculo}"</p>
                                                                 </div>
                                                                 <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">⌖</span> Búsqueda</span>
+                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">âŒ–</span> BÃºsqueda</span>
                                                                     <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.busqueda}"</p>
                                                                 </div>
                                                             </>
@@ -4168,18 +4168,18 @@ const ProfileView = ({
                                                 </style>
                                             </head>
                                             <body>
-                                                <h1>Consentimiento Informado y Encuadre Cl�nico</h1>
-                                                <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terap�utico y uso de la plataforma cl�nica provista.</p>
-                                                <p>El tratamiento se basa en la psicoterapia cl�nica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podr� romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad �tica y legal vigente.</p>
-                                                <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipaci�n. Para reprogramar una sesi�n sin costo, notificar� con un m�nimo de 24 horas de antelaci�n. Comprendo y acepto que cualquier cancelaci�n o solicitud de reagendamiento con menos de 6 horas de anticipaci�n no proceder�; la sesi�n se considerar� como impartida y el monto se cobrar� en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
-                                                <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesi�n. Si no me presento en este tiempo, la sesi�n se dar� por cancelada y se aplicar� la misma pol�tica de cobro por inasistencia tard�a. Las sesiones tienen una duraci�n aproximada de 50 minutos.</p>
-                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los l�mites establecidos en el encuadre cl�nico. Otorgu� mi consentimiento electr�nicamente a trav�s de la plataforma de manera voluntaria y consciente.</p>
+                                                <h1>Consentimiento Informado y Encuadre Clínico</h1>
+                                                <p>Por la presente, ${fullName}, declaro y consiento libremente las condiciones del encuadre terapéutico y uso de la plataforma clínica provista.</p>
+                                                <p>El tratamiento se basa en la psicoterapia clínica y relacional. Comprendo que todo lo discutido es estrictamente confidencial, y que la confidencialidad solo podrá romperse en caso de riesgo inminente para la vida del consultante o terceros, o mediante orden judicial, de acuerdo con la normatividad ética y legal vigente.</p>
+                                                <p>Reconozco que las sesiones se agendan previo comprobante de pago con al menos 48 horas de anticipación. Para reprogramar una sesión sin costo, notificaré con un mínimo de 24 horas de antelación. Comprendo y acepto que cualquier cancelación o solicitud de reagendamiento con menos de 6 horas de anticipación no procederá; la sesión se considerará como impartida y el monto se cobrará en su totalidad (100% de la tarifa), salvaguardando el encuadre profesional y el tiempo bloqueado por el especialista.</p>
+                                                <p>Estoy de acuerdo en que se otorga una tolerancia de 15 minutos al inicio de la sesión. Si no me presento en este tiempo, la sesión se dará por cancelada y se aplicará la misma política de cobro por inasistencia tardía. Las sesiones tienen una duración aproximada de 50 minutos.</p>
+                                                <p>Acepto que la psicoterapia es un proceso de trabajo conjunto, por lo que me comprometo a participar activamente, honrar mis horarios y respetar los límites establecidos en el encuadre clínico. Otorgué mi consentimiento electrónicamente a través de la plataforma de manera voluntaria y consciente.</p>
                                                 
                                                 <div class="signature-section no-indent">
-                                                    <p class="signature-line no-indent">Firma de Consentimiento y Aceptaci�n</p>
+                                                    <p class="signature-line no-indent">Firma de Consentimiento y Aceptación</p>
                                                     <p class="no-indent"><strong>Nombre registrado:</strong> ${fullName}</p>
-                                                    <p class="no-indent"><strong>Fecha de aceptaci�n:</strong> ${dateStr}</p>
-                                                    <p class="no-indent"><strong>Estatus:</strong> Firmado electr�nicamente</p>
+                                                    <p class="no-indent"><strong>Fecha de aceptación:</strong> ${dateStr}</p>
+                                                    <p class="no-indent"><strong>Estatus:</strong> Firmado electrónicamente</p>
                                                 </div>
                                             </body>
                                         </html>
@@ -4352,7 +4352,7 @@ const ProfileView = ({
                                 if (tabFilteredPosts.length === 0) {
                                     return (
                                         <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[9px] uppercase tracking-widest gap-2 py-16">
-                                            <span>Sin publicaciones en esta categoría</span>
+                                            <span>Sin publicaciones en esta categorÃ­a</span>
                                         </div>
                                     );
                                 }
@@ -4429,7 +4429,7 @@ const ProfileView = ({
                         setView('canvas');
                     }}
                 >
-                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para abrir el pizarrón</span>
+                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para abrir el pizarrÃ³n</span>
                     <ChevronDown size={12} className="text-zinc-500" />
                 </div>
             </div>
@@ -4447,7 +4447,7 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
                 const to = blocks.find(b => b.id === link.to);
                 if (!from || !to) return null;
 
-                // Evitar dibujar enlaces a bloques de sistema, inválidos o ubicados en el infinito (ej. profile_settings o user_settings)
+                // Evitar dibujar enlaces a bloques de sistema, invÃ¡lidos o ubicados en el infinito (ej. profile_settings o user_settings)
                 if (from.x === 99999 || from.y === 99999 || to.x === 99999 || to.y === 99999) return null;
                 if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined) return null;
                 if (from.id === to.id) return null;
@@ -4681,7 +4681,7 @@ export default function App() {
     const [isSplitViewEnabled, setIsSplitViewEnabled] = useState(false);
     const [isUnifiedCreatorOpen, setIsUnifiedCreatorOpen] = useState(initialStartupScreen === 'diary');
 
-    // Reactive viewport height — updates when mobile keyboard opens/closes
+    // Reactive viewport height â€” updates when mobile keyboard opens/closes
     const [viewportStats, setViewportStats] = useState(() => ({
         visualHeight: window.visualViewport?.height || window.innerHeight,
         innerHeight: window.innerHeight,
@@ -4740,7 +4740,7 @@ export default function App() {
 
     const handleBackgroundVideoError = (e) => {
         const vid = e.currentTarget;
-        console.warn("Fallo de reproducción en video de fondo, reintentando...", vid.src);
+        console.warn("Fallo de reproducciÃ³n en video de fondo, reintentando...", vid.src);
         setTimeout(() => {
             if (vid) {
                 const currentSrc = vid.src;
@@ -5097,7 +5097,7 @@ export default function App() {
     // --- MEDITATION & CONTEMPLATION SPACE ---
     const [isMeditationMode, setIsMeditationMode] = useState(false);
     const [isAudioActive, setIsAudioActive] = useState(false);
-    const [breathPhase, setBreathPhase] = useState(0); // 0: Inhala, 1: Retén, 2: Exhala, 3: Vacío
+    const [breathPhase, setBreathPhase] = useState(0); // 0: Inhala, 1: RetÃ©n, 2: Exhala, 3: VacÃ­o
     const [selectedContemplationFact, setSelectedContemplationFact] = useState(null);
     const [reinterpretationText, setReinterpretationText] = useState("");
     const [activeMemoryIndex, setActiveMemoryIndex] = useState(0);
@@ -5495,7 +5495,7 @@ export default function App() {
 
     const resetActiveVersionTests = async () => {
         setAppConfirmAction({
-            message: `¿Seguro que deseas reiniciar los datos de la Sesión ${activeVersion}? Esto eliminará permanentemente las respuestas y grabaciones asociadas.`, onConfirm: async () => {
+            message: `Â¿Seguro que deseas reiniciar los datos de la SesiÃ³n ${activeVersion}? Esto eliminarÃ¡ permanentemente las respuestas y grabaciones asociadas.`, onConfirm: async () => {
                 const suffix = activeVersion > 1 ? `_v${activeVersion}` : '';
 
                 setPhenomAnswers({});
@@ -5608,14 +5608,14 @@ export default function App() {
         } else {
             setPhenomTextValue("");
             const catPhenom = [
-                { title: "Origen y Raíces", text: `Contexto base:\n\n${updated.antecedentes_origen || ''}` },
-                { title: "Dinámicas Invisibles", text: `Reglas de hogar y expectativas familiares.` },
-                { title: "Sombra de Autoexigencia", text: `Escenarios críticos:\n\n${updated.experiencia_insuficiencia || ''}` },
-                { title: "Parálisis", text: `Zonas donde aparece la autoexigencia y el bloqueo.` },
-                { title: "Relación Temporal", text: `Experiencia del tiempo:\n\n${updated.temporalidad_vivida || ''}` },
-                { title: "Ritmo y Presión", text: `Efecto de la presión del reloj en las decisiones de hoy.` },
+                { title: "Origen y RaÃ­ces", text: `Contexto base:\n\n${updated.antecedentes_origen || ''}` },
+                { title: "DinÃ¡micas Invisibles", text: `Reglas de hogar y expectativas familiares.` },
+                { title: "Sombra de Autoexigencia", text: `Escenarios crÃ­ticos:\n\n${updated.experiencia_insuficiencia || ''}` },
+                { title: "ParÃ¡lisis", text: `Zonas donde aparece la autoexigencia y el bloqueo.` },
+                { title: "RelaciÃ³n Temporal", text: `Experiencia del tiempo:\n\n${updated.temporalidad_vivida || ''}` },
+                { title: "Ritmo y PresiÃ³n", text: `Efecto de la presiÃ³n del reloj en las decisiones de hoy.` },
                 { title: "Premisa de Realidad", text: `Motor existencial:\n\n${updated.premisa_realidad || ''}` },
-                { title: "Certeza Íntima", text: `El propósito que empuja la actividad cotidiana.` }
+                { title: "Certeza Ãntima", text: `El propÃ³sito que empuja la actividad cotidiana.` }
             ];
 
             const newNotes = catPhenom.map((cat, i) => {
@@ -5741,18 +5741,18 @@ export default function App() {
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             setInteractionLogs([
-                `${hh} hora :${mm} minutos :${ss} segundos - Sistema: Inicio del test ICAR16 y de la grabación clínica por reactivo.`
+                `${hh} hora :${mm} minutos :${ss} segundos - Sistema: Inicio del test ICAR16 y de la grabaciÃ³n clÃ­nica por reactivo.`
             ]);
 
             startIcarQuestionRecording(0, stream);
         } catch (err) {
-            console.error("Error al iniciar cámara web:", err);
+            console.error("Error al iniciar cÃ¡mara web:", err);
             const now = new Date();
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             setInteractionLogs([
-                `${hh} hora :${mm} minutos :${ss} segundos - Sistema: Error al activar cámara web (${err.message})`
+                `${hh} hora :${mm} minutos :${ss} segundos - Sistema: Error al activar cÃ¡mara web (${err.message})`
             ]);
         }
     };
@@ -5799,16 +5799,16 @@ export default function App() {
             const changes = icarChanges[i] || 0;
 
             if (dTime > 0 && dTime < CONST_MIN_TIME_S && !isCorrect) {
-                alerts.push(`⚠️ [PROCESAMIENTO_RAPIDO] Q${i}: Tiempo de resolución de ${Math.round(dTime)}s con respuesta incorrecta. Posible procesamiento rápido con baja inhibición.`);
+                alerts.push(`âš ï¸ [PROCESAMIENTO_RAPIDO] Q${i}: Tiempo de resoluciÃ³n de ${Math.round(dTime)}s con respuesta incorrecta. Posible procesamiento rÃ¡pido con baja inhibiciÃ³n.`);
             }
             if (dTime > CONST_MAX_TIME_S && !isCorrect) {
-                alerts.push(`⚠️ [ALTA_INVERSION_COGNITIVA] Q${i}: Alta inversión cognitiva (${Math.round(dTime)}s) con respuesta incorrecta. Sugiere sobrecarga en memoria de trabajo o procesamiento detallado de variables.`);
+                alerts.push(`âš ï¸ [ALTA_INVERSION_COGNITIVA] Q${i}: Alta inversiÃ³n cognitiva (${Math.round(dTime)}s) con respuesta incorrecta. Sugiere sobrecarga en memoria de trabajo o procesamiento detallado de variables.`);
             }
             if (changes >= CONST_MAX_CHANGES) {
-                alerts.push(`⚠️ [REEVALUACION_DECISIONAL] Q${i}: Se registraron ${changes} reevaluaciones decisionales. Sugiere revisión y reformulación continua de la hipótesis.`);
+                alerts.push(`âš ï¸ [REEVALUACION_DECISIONAL] Q${i}: Se registraron ${changes} reevaluaciones decisionales. Sugiere revisiÃ³n y reformulaciÃ³n continua de la hipÃ³tesis.`);
             }
             if (dTime > CONST_MAX_TIME_S && isCorrect) {
-                alerts.push(`✅ [PROCESAMIENTO_EFICIENTE] Q${i}: Resolución correcta lograda tras una alta inversión cognitiva (${Math.round(dTime)}s), mostrando persistencia analítica.`);
+                alerts.push(`âœ… [PROCESAMIENTO_EFICIENTE] Q${i}: ResoluciÃ³n correcta lograda tras una alta inversiÃ³n cognitiva (${Math.round(dTime)}s), mostrando persistencia analÃ­tica.`);
             }
         }
 
@@ -5866,17 +5866,17 @@ export default function App() {
         const getClinicalInterpretation = (z, avgDwell) => {
             if (avgDwell === 0) return "Sin datos suficientes";
             if (z >= 0 && avgDwell > 45) {
-                return "Capacidad Compensatoria: El rendimiento está conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabólica secundaria.";
+                return "Capacidad Compensatoria: El rendimiento estÃ¡ conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabÃ³lica secundaria.";
             }
             if (z < 0 && avgDwell < 15) {
-                return "Baja Inversión en la Tarea: Desconexión atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analítico.";
+                return "Baja InversiÃ³n en la Tarea: DesconexiÃ³n atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analÃ­tico.";
             }
             if (z < 0 && avgDwell > 90) {
-                return "Saturación Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resolución exitosa.";
+                return "SaturaciÃ³n Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resoluciÃ³n exitosa.";
             }
-            if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisión.";
-            if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio específico.";
-            return "Rendimiento Estándar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
+            if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisiÃ³n.";
+            if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio especÃ­fico.";
+            return "Rendimiento EstÃ¡ndar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
         };
 
         const getEfficiencyStatus = (z, avgDwell) => {
@@ -5953,7 +5953,7 @@ export default function App() {
             }
         };
 
-        // Estilo de ejecución
+        // Estilo de ejecuciÃ³n
         let estilo_ejecucion = "normal";
         const totalChanges = Object.values(icarChanges).reduce((a, b) => a + b, 0);
         if (totalDwellAvg < 45 && correctCount >= 11) {
@@ -5961,7 +5961,7 @@ export default function App() {
         } else if (totalDwellAvg < 45 && correctCount < 11) {
             estilo_ejecucion = "impulsivo";
         } else if (totalDwellAvg >= 45 && correctCount >= 11) {
-            estilo_ejecucion = "analítico_sostenido";
+            estilo_ejecucion = "analÃ­tico_sostenido";
         } else {
             estilo_ejecucion = "sobrecargado";
         }
@@ -6038,7 +6038,7 @@ export default function App() {
             icarDwellTimes: icarDwellTimes,
             icarChanges: icarChanges,
             icarAnalytics: icarAnalytics,
-            logs: [...interactionLogs, `Fin de la sesión. Respuestas correctas: ${correctCount}`]
+            logs: [...interactionLogs, `Fin de la sesiÃ³n. Respuestas correctas: ${correctCount}`]
         };
 
         const suffix = activeVersion > 1 ? '_v' + activeVersion : '';
@@ -6051,9 +6051,9 @@ export default function App() {
         try {
             await saveObservation(newSession);
             await saveObservation(videoRecord);
-            console.log("Sesión clínica y videos guardados con éxito en IndexedDB!");
+            console.log("SesiÃ³n clÃ­nica y videos guardados con Ã©xito en IndexedDB!");
         } catch (err) {
-            console.error("Error al guardar la sesión clínica:", err);
+            console.error("Error al guardar la sesiÃ³n clÃ­nica:", err);
         }
     };
 
@@ -6081,12 +6081,12 @@ export default function App() {
 
     const handleDeleteSession = async (id) => {
         setAppConfirmAction({
-            message: "¿Está seguro de eliminar este registro clínico?", onConfirm: async () => {
+            message: "Â¿EstÃ¡ seguro de eliminar este registro clÃ­nico?", onConfirm: async () => {
                 try {
                     await deleteObservation(id);
                     loadClinicalSessions();
                 } catch (err) {
-                    console.error("Error al eliminar la sesión clínica:", err);
+                    console.error("Error al eliminar la sesiÃ³n clÃ­nica:", err);
                 }
             }
         });
@@ -6122,7 +6122,7 @@ export default function App() {
                 if (timeSec > 25) {
                     alerts.push({
                         type: 'dwell',
-                        text: `Reactivo ${qNum}: Latencia crítica de respuesta (${timeSec}s)`,
+                        text: `Reactivo ${qNum}: Latencia crÃ­tica de respuesta (${timeSec}s)`,
                         severity: 'critical'
                     });
                 }
@@ -6153,7 +6153,7 @@ export default function App() {
             if (defocusCount > 0) {
                 alerts.push({
                     type: 'focus',
-                    text: `Foco interrumpido: El paciente cambió de pestaña/aplicación ${defocusCount} veces`,
+                    text: `Foco interrumpido: El paciente cambiÃ³ de pestaÃ±a/aplicaciÃ³n ${defocusCount} veces`,
                     severity: 'critical'
                 });
             }
@@ -6180,27 +6180,27 @@ export default function App() {
             AfectividadNegativa: {
                 name: 'El Procesador Sensible',
                 subtitle: 'Reactividad Emocional Intensa',
-                liberation: 'Exposición guiada: Describir el pánico en el Mural y conectar con recuerdos de calma.'
+                liberation: 'ExposiciÃ³n guiada: Describir el pÃ¡nico en el Mural y conectar con recuerdos de calma.'
             },
             Desapego: {
                 name: 'El Observador Reservado',
-                subtitle: 'Estilo de Conexión Introspectivo',
+                subtitle: 'Estilo de ConexiÃ³n Introspectivo',
                 liberation: 'Puente relacional: Enlazar notas de recuerdos de infancia con figuras significativas actuales.'
             },
             Antagonismo: {
                 name: 'El Defensor Enfocado',
-                subtitle: 'Gestión de Asertividad Firme',
-                liberation: 'Exposición al caos: Crear composiciones libres imperfectas en el Mural sin planificar.'
+                subtitle: 'GestiÃ³n de Asertividad Firme',
+                liberation: 'ExposiciÃ³n al caos: Crear composiciones libres imperfectas en el Mural sin planificar.'
             },
             Desinhibicion: {
-                name: 'El Creador Espontáneo',
-                subtitle: 'Impulso y Planificación Flexibles',
-                liberation: 'Focalización secuencial: Organizar notas en carpetas jerárquicas estrictas y sintetizar enlaces simples.'
+                name: 'El Creador EspontÃ¡neo',
+                subtitle: 'Impulso y PlanificaciÃ³n Flexibles',
+                liberation: 'FocalizaciÃ³n secuencial: Organizar notas en carpetas jerÃ¡rquicas estrictas y sintetizar enlaces simples.'
             },
             Psicoticismo: {
                 name: 'El Pensador Divergente',
                 subtitle: 'Alta Singularidad Cognitiva',
-                liberation: 'Anclaje de realidad: Escribir 5 hechos empíricos inmutables y conectarlos al nodo central.'
+                liberation: 'Anclaje de realidad: Escribir 5 hechos empÃ­ricos inmutables y conectarlos al nodo central.'
             }
         };
 
@@ -6209,7 +6209,7 @@ export default function App() {
         const alerts = getSessionBehavioralAlerts(session);
         const alertSummary = alerts.length > 0
             ? alerts.map(a => `- ${a.text}`).join('\n')
-            : 'Sin alertas críticas en el patrón atencional.';
+            : 'Sin alertas crÃ­ticas en el patrÃ³n atencional.';
 
         const idBase = Date.now();
         const id1 = `node_${idBase}_1`;
@@ -6224,17 +6224,17 @@ export default function App() {
                 type: 'text',
                 x: -350,
                 y: -150,
-                content: `### PACIENTE: ${session.user}\n\n**Fecha de Sesión:** ${session.date}\n**Estilo de Conciencia:**\n*${arch.name}*\n(${arch.subtitle})`,
+                content: `### PACIENTE: ${session.user}\n\n**Fecha de SesiÃ³n:** ${session.date}\n**Estilo de Conciencia:**\n*${arch.name}*\n(${arch.subtitle})`,
                 rotation: -2,
                 color: '#bef264',
-                caption: 'Ficha de Identificación'
+                caption: 'Ficha de IdentificaciÃ³n'
             },
             {
                 id: id2,
                 type: 'text',
                 x: 0,
                 y: -220,
-                content: `### PERFIL DE PERSONALIDAD (PID-5-BF)\n\n**Estilo Dominante:** ${dominantDomain === 'AfectividadNegativa' ? 'Reactividad Emocional' : dominantDomain === 'Desapego' ? 'Estilo de Conexión' : dominantDomain === 'Antagonismo' ? 'Gestión de la Asertividad' : dominantDomain === 'Desinhibicion' ? 'Impulso y Planificación' : 'Singularidad Cognitiva'}\n\n**Puntuaciones de Estilos:**\n- Reactividad Emocional: ${scores.AfectividadNegativa}/15\n- Estilo de Conexión: ${scores.Desapego}/15\n- Gestión de la Asertividad: ${scores.Antagonismo}/15\n- Impulso y Planificación: ${scores.Desinhibicion}/15\n- Singularidad Cognitiva: ${scores.Psicoticismo}/15`,
+                content: `### PERFIL DE PERSONALIDAD (PID-5-BF)\n\n**Estilo Dominante:** ${dominantDomain === 'AfectividadNegativa' ? 'Reactividad Emocional' : dominantDomain === 'Desapego' ? 'Estilo de ConexiÃ³n' : dominantDomain === 'Antagonismo' ? 'GestiÃ³n de la Asertividad' : dominantDomain === 'Desinhibicion' ? 'Impulso y PlanificaciÃ³n' : 'Singularidad Cognitiva'}\n\n**Puntuaciones de Estilos:**\n- Reactividad Emocional: ${scores.AfectividadNegativa}/15\n- Estilo de ConexiÃ³n: ${scores.Desapego}/15\n- GestiÃ³n de la Asertividad: ${scores.Antagonismo}/15\n- Impulso y PlanificaciÃ³n: ${scores.Desinhibicion}/15\n- Singularidad Cognitiva: ${scores.Psicoticismo}/15`,
                 rotation: 2,
                 color: '#ec4899',
                 caption: 'Estilos Adaptativos DSM-5'
@@ -6244,30 +6244,30 @@ export default function App() {
                 type: 'text',
                 x: 350,
                 y: -150,
-                content: `### PATRÓN COGNITIVO (ICAR16)\n\n**Aciertos:** ${session.score}\n\n**Alertas Registradas:**\n${alertSummary}`,
+                content: `### PATRÃ“N COGNITIVO (ICAR16)\n\n**Aciertos:** ${session.score}\n\n**Alertas Registradas:**\n${alertSummary}`,
                 rotation: -1,
                 color: '#22d3ee',
-                caption: 'Métricas de Ejecución'
+                caption: 'MÃ©tricas de EjecuciÃ³n'
             },
             {
                 id: id4,
                 type: 'text',
                 x: -180,
                 y: 150,
-                content: `### DIAGNÓSTICO CUALITATIVO\n\n- **Mecanismo/Origen:** ${session.phenomQualitative?.antecedentes_origen || 'No registrado'}\n- **Insuficiencia:** ${session.phenomQualitative?.experiencia_insuficiencia || 'No registrado'}\n- **Temporalidad:** ${session.phenomQualitative?.temporalidad_vivida || 'No registrado'}\n- **Realidad:** ${session.phenomQualitative?.premisa_realidad || 'No registrado'}`,
+                content: `### DIAGNÃ“STICO CUALITATIVO\n\n- **Mecanismo/Origen:** ${session.phenomQualitative?.antecedentes_origen || 'No registrado'}\n- **Insuficiencia:** ${session.phenomQualitative?.experiencia_insuficiencia || 'No registrado'}\n- **Temporalidad:** ${session.phenomQualitative?.temporalidad_vivida || 'No registrado'}\n- **Realidad:** ${session.phenomQualitative?.premisa_realidad || 'No registrado'}`,
                 rotation: 3,
                 color: '#eab308',
-                caption: 'Fenomenología'
+                caption: 'FenomenologÃ­a'
             },
             {
                 id: id5,
                 type: 'text',
                 x: 180,
                 y: 150,
-                content: `### RUTA DE LIBERACIÓN TERAPÉUTICA\n\n**Estrategia Recomendada:**\n${arch.liberation}\n\n*Nota: Editar en tiempo real en el lienzo para ajustar los nodos de intervención con el paciente.*`,
+                content: `### RUTA DE LIBERACIÃ“N TERAPÃ‰UTICA\n\n**Estrategia Recomendada:**\n${arch.liberation}\n\n*Nota: Editar en tiempo real en el lienzo para ajustar los nodos de intervenciÃ³n con el paciente.*`,
                 rotation: -3,
                 color: '#a855f7',
-                caption: 'Plan de Intervención'
+                caption: 'Plan de IntervenciÃ³n'
             }
         ];
 
@@ -6323,7 +6323,7 @@ export default function App() {
         localStorage.setItem('oasis_icar_answers_' + user + suffix, JSON.stringify(updatedAnswers));
         localStorage.setItem('oasis_icar_dwell_' + user + suffix, JSON.stringify(updatedDwell));
 
-        logInteraction("Selección", `El individuo clickeó la opción ${answerKey} de la pregunta ${currentIcarIndex + 1}`);
+        logInteraction("SelecciÃ³n", `El individuo clickeÃ³ la opciÃ³n ${answerKey} de la pregunta ${currentIcarIndex + 1}`);
 
         // Stop current question video recorder
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -6353,11 +6353,11 @@ export default function App() {
         };
 
         const handleFocus = () => {
-            logInteraction("Foco", "El individuo regresó a la pestaña del test (Ventana enfocada)");
+            logInteraction("Foco", "El individuo regresÃ³ a la pestaÃ±a del test (Ventana enfocada)");
         };
 
         const handleBlur = () => {
-            logInteraction("Foco", "El individuo salió o cambió de pestaña (Ventana desenfocada - Alerta clínica!)");
+            logInteraction("Foco", "El individuo saliÃ³ o cambiÃ³ de pestaÃ±a (Ventana desenfocada - Alerta clÃ­nica!)");
         };
 
         let lastLoggedMove = 0;
@@ -6413,7 +6413,7 @@ export default function App() {
     };
 
     const noteKeywords = useMemo(() => {
-        const list = ['glitch', 'caos', 'orden', 'miedo', 'bloqueo', 'amor', 'conciencia', 'vacío', 'perfecto', 'control', 'soledad', 'vacío', 'atención'];
+        const list = ['glitch', 'caos', 'orden', 'miedo', 'bloqueo', 'amor', 'conciencia', 'vacÃ­o', 'perfecto', 'control', 'soledad', 'vacÃ­o', 'atenciÃ³n'];
         const found = [];
         (blocks || []).forEach(b => {
             const text = ((b.caption || '') + ' ' + (b.content || '')).toLowerCase();
@@ -6472,32 +6472,32 @@ export default function App() {
 
         const existentialArchetypes = {
             'A': {
-                name: 'El Observador Analítico',
-                subtitle: 'Racionalización y Distanciamiento Cognitivo',
+                name: 'El Observador AnalÃ­tico',
+                subtitle: 'RacionalizaciÃ³n y Distanciamiento Cognitivo',
                 vulnerability: 'Aislamiento relacional y resistencia a encarnar las emociones en el cuerpo.',
-                blockage: 'Parálisis analítica inducida por hiper-racionalización, diluyendo la experiencia directa.',
-                liberation: 'Integración somática: Escribir sin conceptualizar o dibujar trazos abstractos directos en el Mural Studio.'
+                blockage: 'ParÃ¡lisis analÃ­tica inducida por hiper-racionalizaciÃ³n, diluyendo la experiencia directa.',
+                liberation: 'IntegraciÃ³n somÃ¡tica: Escribir sin conceptualizar o dibujar trazos abstractos directos en el Mural Studio.'
             },
             'B': {
-                name: 'El Buscador de Fusión',
-                subtitle: 'Vulnerabilidad Existencial y Búsqueda de Sentido',
-                vulnerability: 'Miedo al vacío existencial y tendencia a disolver la propia voz en la mirada ajena.',
+                name: 'El Buscador de FusiÃ³n',
+                subtitle: 'Vulnerabilidad Existencial y BÃºsqueda de Sentido',
+                vulnerability: 'Miedo al vacÃ­o existencial y tendencia a disolver la propia voz en la mirada ajena.',
                 blockage: 'Inestabilidad atencional al alternar obsesivamente entre el anhelo de pertenecer y la huida.',
                 liberation: 'Centramiento soberano: Registrar en notas afirmaciones solitarias y auto-contenidas.'
             },
             'C': {
                 name: 'El Arquitecto del Control',
                 subtitle: 'Rigidez y Bucle de Perfeccionismo Implacable',
-                vulnerability: 'Pánico ante el caos, la imperfección y la falta de predictibilidad lógica.',
+                vulnerability: 'PÃ¡nico ante el caos, la imperfecciÃ³n y la falta de predictibilidad lÃ³gica.',
                 blockage: 'Bloqueo severo en la flexibilidad atencional ante la disonancia y la incertidumbre del lienzo.',
-                liberation: 'Exposición al caos: Crear composiciones libres imperfectas en el Mural sin planificar.'
+                liberation: 'ExposiciÃ³n al caos: Crear composiciones libres imperfectas en el Mural sin planificar.'
             },
             'D': {
                 name: 'El Creador Errante',
-                subtitle: 'Fragmentación e Impulsividad Expresiva',
-                vulnerability: 'Sensación crónica de desorganización y dispersión de las facultades atencionales.',
-                blockage: 'Sobrecarga en la memoria de trabajo visoespacial por acumulación masiva de bucles inconclusos.',
-                liberation: 'Focalización secuencial: Organizar notas en carpetas jerárquicas estrictas y sintetizar enlaces simples.'
+                subtitle: 'FragmentaciÃ³n e Impulsividad Expresiva',
+                vulnerability: 'SensaciÃ³n crÃ³nica de desorganizaciÃ³n y dispersiÃ³n de las facultades atencionales.',
+                blockage: 'Sobrecarga en la memoria de trabajo visoespacial por acumulaciÃ³n masiva de bucles inconclusos.',
+                liberation: 'FocalizaciÃ³n secuencial: Organizar notas en carpetas jerÃ¡rquicas estrictas y sintetizar enlaces simples.'
             }
         };
 
@@ -6560,17 +6560,17 @@ export default function App() {
         const getClinicalInterpretation = (z, avgDwell) => {
             if (avgDwell === 0) return "Sin datos suficientes";
             if (z >= 0 && avgDwell > 45) {
-                return "Capacidad Compensatoria: El rendimiento está conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabólica secundaria.";
+                return "Capacidad Compensatoria: El rendimiento estÃ¡ conservado a expensas de un elevado esfuerzo de procesamiento y fatiga metabÃ³lica secundaria.";
             }
             if (z < 0 && avgDwell < 15) {
-                return "Baja Inversión en la Tarea: Desconexión atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analítico.";
+                return "Baja InversiÃ³n en la Tarea: DesconexiÃ³n atencional o respuesta impulsiva sin suficiente persistencia de razonamiento analÃ­tico.";
             }
             if (z < 0 && avgDwell > 90) {
-                return "Saturación Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resolución exitosa.";
+                return "SaturaciÃ³n Cognitiva: Sobrecarga atencional severa y agotamiento de la memoria de trabajo sin resoluciÃ³n exitosa.";
             }
-            if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisión.";
-            if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio específico.";
-            return "Rendimiento Estándar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
+            if (z >= 1) return "Rendimiento Superior: Procesamiento altamente eficiente y automatizado con excelente precisiÃ³n.";
+            if (z <= -1) return "Rendimiento Inferior al Promedio: Dificultades o limitaciones en el procesamiento del dominio especÃ­fico.";
+            return "Rendimiento EstÃ¡ndar: Procesamiento adaptativo dentro del rango normal de referencia poblacional.";
         };
 
         const getEfficiencyStatus = (z, avgDwell) => {
@@ -6647,7 +6647,7 @@ export default function App() {
             }
         };
 
-        // Estilo de ejecución
+        // Estilo de ejecuciÃ³n
         let liveEstiloEjecucion = "normal";
         const liveTotalChanges = Object.values(icarChanges).reduce((a, b) => a + b, 0);
         if (liveTotalDwellAvg < 45 && score >= 11) {
@@ -6655,7 +6655,7 @@ export default function App() {
         } else if (liveTotalDwellAvg < 45 && score < 11) {
             liveEstiloEjecucion = "impulsivo";
         } else if (liveTotalDwellAvg >= 45 && score >= 11) {
-            liveEstiloEjecucion = "analítico_sostenido";
+            liveEstiloEjecucion = "analÃ­tico_sostenido";
         } else {
             liveEstiloEjecucion = "sobrecargado";
         }
@@ -6728,32 +6728,32 @@ export default function App() {
         const noteKws = noteKeywords;
         const score = calculatedResults.score;
 
-        let triggersHtml = "El sistema psíquico detecta tu susceptibilidad atencional y reactividad emocional cuando enfrentas ";
+        let triggersHtml = "El sistema psÃ­quico detecta tu susceptibilidad atencional y reactividad emocional cuando enfrentas ";
         if (noteKws.length > 0) {
             triggersHtml += `conceptos de alta densidad existencial identificados en tus notas, como *"${noteKws.slice(0, 3).join(', ')}"*`;
         } else {
-            triggersHtml += "situaciones de caos y desorganización conceptual en tu entorno de trabajo diario.";
+            triggersHtml += "situaciones de caos y desorganizaciÃ³n conceptual en tu entorno de trabajo diario.";
         }
 
-        let dynamicFormulation = `### 1. Formulación de Caso Clínico Funcional (${arch?.name || 'Explorador'})
+        let dynamicFormulation = `### 1. FormulaciÃ³n de Caso ClÃ­nico Funcional (${arch?.name || 'Explorador'})
         
-        **A. Estímulo Antecedente / Disparador (A):**
+        **A. EstÃ­mulo Antecedente / Disparador (A):**
         ${triggersHtml}. Tu cerebro experimenta esto como una amenaza directa a tu coherencia interna.
         
         **B. Estructura de Vulnerabilidad Nuclear (B):**
-        Tu perfil fenomenológico revela una vulnerabilidad arraigada en: *"${arch?.vulnerability || 'Búsqueda del orden.'}"*. Esto actúa como una lente cognitiva que distorsiona la neutralidad del lienzo.
+        Tu perfil fenomenolÃ³gico revela una vulnerabilidad arraigada en: *"${arch?.vulnerability || 'BÃºsqueda del orden.'}"*. Esto actÃºa como una lente cognitiva que distorsiona la neutralidad del lienzo.
         
-        **C. Respuesta de Evitación y Bloqueo (C):**
-        Ante la sobrecarga, activas el bucle protector de **${arch?.subtitle || 'Evitación'}**, provocando un bloqueo manifiesto como *"${arch?.blockage || 'Parálisis por análisis'}"*.
+        **C. Respuesta de EvitaciÃ³n y Bloqueo (C):**
+        Ante la sobrecarga, activas el bucle protector de **${arch?.subtitle || 'EvitaciÃ³n'}**, provocando un bloqueo manifiesto como *"${arch?.blockage || 'ParÃ¡lisis por anÃ¡lisis'}"*.
         
         **D. Consecuencias Autoperpetuantes (D):**
-        El repliegue analítico disminuye la ansiedad inmediata, pero a largo plazo refuerza la vulnerabilidad de base, consolidando un bucle psicológico recurrente que paraliza tu flujo creativo de notas en el canvas.`;
+        El repliegue analÃ­tico disminuye la ansiedad inmediata, pero a largo plazo refuerza la vulnerabilidad de base, consolidando un bucle psicolÃ³gico recurrente que paraliza tu flujo creativo de notas en el canvas.`;
 
         const ref = calculatedResults.indices_referencia;
         let dimensionsBreakdown = "";
         if (ref && ref.dimensions) {
             const nameMap = {
-                verbal: "Lógico-Verbal",
+                verbal: "LÃ³gico-Verbal",
                 visuospatial: "Visoespacial",
                 sequential: "Secuencial",
                 inductive: "Inductiva"
@@ -6762,23 +6762,23 @@ export default function App() {
             Object.entries(ref.dimensions).forEach(([key, data]) => {
                 const name = nameMap[key] || key;
                 const statusLabel = data.efficiency_status === 'capacidad_compensatoria' ? 'Capacidad Compensatoria' :
-                    data.efficiency_status === 'saturacion_cognitiva' ? 'Saturación Cognitiva' :
-                        data.efficiency_status === 'baja_inversion' ? 'Baja Inversión' : 'Rendimiento Normal';
-                dimensionsBreakdown += `* **${name}** (Aciertos: ${data.correct}/4 | Z-Score: ${data.z_score > 0 ? '+' : ''}${data.z_score} | Dwell medio: ${data.average_dwell}s)\n  - *Categorización:* ${statusLabel}\n  - *Demostración objetiva:* ${data.interpretation}\n`;
+                    data.efficiency_status === 'saturacion_cognitiva' ? 'SaturaciÃ³n Cognitiva' :
+                        data.efficiency_status === 'baja_inversion' ? 'Baja InversiÃ³n' : 'Rendimiento Normal';
+                dimensionsBreakdown += `* **${name}** (Aciertos: ${data.correct}/4 | Z-Score: ${data.z_score > 0 ? '+' : ''}${data.z_score} | Dwell medio: ${data.average_dwell}s)\n  - *CategorizaciÃ³n:* ${statusLabel}\n  - *DemostraciÃ³n objetiva:* ${data.interpretation}\n`;
             }
             );
         }
 
-        let cognitiveCapacityAnalysis = `### 2. Análisis del Procesamiento Cognitivo (ICAR16)
+        let cognitiveCapacityAnalysis = `### 2. AnÃ¡lisis del Procesamiento Cognitivo (ICAR16)
         
-        * **Índice de Acierto Cognitivo**: **${score}/16**
-        * **Tiempo Promedio de Reacción (Dwell Time)**: **${calculatedResults.dwellAvg} segundos**
+        * **Ãndice de Acierto Cognitivo**: **${score}/16**
+        * **Tiempo Promedio de ReacciÃ³n (Dwell Time)**: **${calculatedResults.dwellAvg} segundos**
         * **Titubeo (Cambios de Respuesta)**: **${calculatedResults.totalChanges} vacilaciones registradas.**${dimensionsBreakdown}
         
-        **Interpretación Cualitativa:**
+        **InterpretaciÃ³n Cualitativa:**
         ${score >= 12
-                ? "Muestras un rendimiento visomental y de inferencia altamente desarrollado, permitiéndote resolver jerarquías espaciales y verbales complejas. Sin embargo, este alto procesamiento analítico te predispone a bucles obsesivos de perfeccionismo intelectual."
-                : "Se observa sobrecarga del ejecutivo central en el córtex prefrontal ante tareas de retención visoespacial simultáneas. Esto desencadena mecanismos rápidos de fatiga atencional, provocando respuestas impulsivas para liberar la tensión cognitiva."}`;
+                ? "Muestras un rendimiento visomental y de inferencia altamente desarrollado, permitiÃ©ndote resolver jerarquÃ­as espaciales y verbales complejas. Sin embargo, este alto procesamiento analÃ­tico te predispone a bucles obsesivos de perfeccionismo intelectual."
+                : "Se observa sobrecarga del ejecutivo central en el cÃ³rtex prefrontal ante tareas de retenciÃ³n visoespacial simultÃ¡neas. Esto desencadena mecanismos rÃ¡pidos de fatiga atencional, provocando respuestas impulsivas para liberar la tensiÃ³n cognitiva."}`;
 
         return {
             triggers: triggersHtml,
@@ -6931,8 +6931,8 @@ export default function App() {
     // Swipe navigation logic for navbar
     const TABS = [
         { id: 'profile', label: 'Perfil' },
-        { id: 'composer', label: 'Notas Rápidas' },
-        { id: 'chat', label: 'Diálogos AI' },
+        { id: 'composer', label: 'Notas RÃ¡pidas' },
+        { id: 'chat', label: 'DiÃ¡logos AI' },
         { id: 'diary', label: 'Diario' },
         { id: 'resonance', label: 'Resonancia' },
         { id: 'canvas', label: 'Lienzo' }
@@ -7085,7 +7085,7 @@ export default function App() {
 
                 updated = [{
                     id: targetId,
-                    title: targetIsAnalyzing ? `Análisis: ${cleanTitle}` : cleanTitle,
+                    title: targetIsAnalyzing ? `AnÃ¡lisis: ${cleanTitle}` : cleanTitle,
                     messages: chatMessagesRef.current,
                     startTime: new Date().toISOString(),
                     noteId: targetNoteId,
@@ -7115,7 +7115,7 @@ export default function App() {
                         const existsInUpdated = updated.find(c => c.id === targetId);
                         const firstMsg = chatMessagesRef.current[0]?.content || '';
                         const cleanTitle = firstMsg.slice(0, 35).trim() + (firstMsg.length > 35 ? '...' : '');
-                        const finalTitle = targetIsAnalyzing ? `Análisis: ${cleanTitle}` : cleanTitle;
+                        const finalTitle = targetIsAnalyzing ? `AnÃ¡lisis: ${cleanTitle}` : cleanTitle;
 
                         const updatedBlocks = prevBlocks.map(b => blockIdMatch(b.id) ? {
                             ...b,
@@ -7137,7 +7137,7 @@ export default function App() {
 
 
     const generateChatTitle = useCallback(async (convId, firstMessage) => {
-        const prompt = `Eres Kio, el núcleo digital de Ruido Interior. Genera un título corto, elegante y profesional (máximo 4 palabras) para una conversación que comienza con este mensaje: "${firstMessage}". Responde ÚNICAMENTE con el título, sin comillas ni puntos finales.`;
+        const prompt = `Eres Kio, el nÃºcleo digital de Ruido Interior. Genera un tÃ­tulo corto, elegante y profesional (mÃ¡ximo 4 palabras) para una conversaciÃ³n que comienza con este mensaje: "${firstMessage}". Responde ÃšNICAMENTE con el tÃ­tulo, sin comillas ni puntos finales.`;
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
@@ -7162,17 +7162,17 @@ export default function App() {
                 let title = data.choices?.[0]?.message?.content?.trim();
                 if (title) {
                     title = title.replace(/^["']|["']$|[\.]$/g, '');
-                    console.log(`Kio - Título generado con éxito: "${title}"`);
+                    console.log(`Kio - TÃ­tulo generado con Ã©xito: "${title}"`);
 
                     const updateState = (attempts = 0) => {
                         setConversations(prev => {
                             const exists = prev.find(c => c.id === convId);
                             if (!exists) {
                                 if (attempts < 5) {
-                                    console.warn(`Kio - Intento ${attempts + 1}: Conversación [${convId}] no encontrada. Reintentando en 500ms...`);
+                                    console.warn(`Kio - Intento ${attempts + 1}: ConversaciÃ³n [${convId}] no encontrada. Reintentando en 500ms...`);
                                     setTimeout(() => updateState(attempts + 1), 500);
                                 } else {
-                                    console.error(`Kio - Error: No se pudo actualizar el título tras 5 intentos.`);
+                                    console.error(`Kio - Error: No se pudo actualizar el tÃ­tulo tras 5 intentos.`);
                                 }
                                 return prev;
                             }
@@ -7203,19 +7203,19 @@ export default function App() {
 
                     updateState();
                 } else {
-                    console.warn("Kio - El modelo no devolvió un título válido.");
+                    console.warn("Kio - El modelo no devolviÃ³ un tÃ­tulo vÃ¡lido.");
                 }
             } else {
                 const errData = await res.json().catch(() => ({}));
-                console.error("Kio - Error en API de títulos:", errData?.error?.message || res.statusText);
+                console.error("Kio - Error en API de tÃ­tulos:", errData?.error?.message || res.statusText);
             }
         } catch (e) {
-            console.error("Kio - Excepción generando título AI:", e);
+            console.error("Kio - ExcepciÃ³n generando tÃ­tulo AI:", e);
         }
     }, [deepseekKey, user]);
 
     const handleNewChat = useCallback(() => {
-        console.log("Kio - Iniciando nueva línea temporal...");
+        console.log("Kio - Iniciando nueva lÃ­nea temporal...");
         if (chatMessagesRef.current && chatMessagesRef.current.length > 0) saveCurrentChat();
         setActiveConversationId(null);
         setChatMessages([]);
@@ -7287,7 +7287,7 @@ export default function App() {
         setCurrentIcarIndex(0);
     };
 
-    // --- SINCRONIZACIÓN DE AURA Y DATOS ---
+    // --- SINCRONIZACIÃ“N DE AURA Y DATOS ---
     useEffect(() => {
         if (isLoggedIn && user && !isDataLoaded) {
             const loadUserResonances = async () => {
@@ -7525,8 +7525,8 @@ export default function App() {
     }, [isLoggedIn, user, isDataLoaded]);
 
 
-    // ── SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO ──────────────────────
-    // Ref para saber cuándo fue el último guardado local.
+    // â”€â”€ SINCRONIZACIÃ“N EN TIEMPO REAL MULTI-DISPOSITIVO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Ref para saber cuÃ¡ndo fue el Ãºltimo guardado local.
     // Si guardamos localmente hace menos de 30s, NO traemos datos del servidor
     // (el servidor puede estar dormido en Render y devolver data antigua).
     const lastLocalSaveRef = React.useRef(0);
@@ -7534,15 +7534,15 @@ export default function App() {
     useEffect(() => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
 
-        // Función de MERGE: preferimos los datos del servidor, pero
-        // conservamos cualquier bloque LOCAL que no esté en el servidor
-        // (puede ser un guardado pendiente mientras el servidor dormía).
+        // FunciÃ³n de MERGE: preferimos los datos del servidor, pero
+        // conservamos cualquier bloque LOCAL que no estÃ© en el servidor
+        // (puede ser un guardado pendiente mientras el servidor dormÃ­a).
         const mergeWithServer = (serverData) => {
             try {
                 // Inyectar logica de Pizarrones
                 let hasCanvas = serverData.some(b => b.type === 'canvas');
                 if (!hasCanvas && user) {
-                    serverData.push({ id: 'canvas_default', type: 'canvas', text: 'Pizarrón 1', timestamp: Date.now(), user: user });
+                    serverData.push({ id: 'canvas_default', type: 'canvas', text: 'PizarrÃ³n 1', timestamp: Date.now(), user: user });
                 }
                 const mappedServerData = serverData.map(b => {
                     if (b.type !== 'canvas' && b.id !== 'user_settings' && b.id !== 'profile_settings' && !b.canvasId && b.type !== 'insight') {
@@ -7556,7 +7556,7 @@ export default function App() {
                 localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(merged));
                 setBlocks(merged);
 
-                // Respect user's saved cam position in localStorage — never override their zoom/pan
+                // Respect user's saved cam position in localStorage â€” never override their zoom/pan
                 const savedCamRaw = localStorage.getItem('oasis_cam_' + user);
                 const savedCam = savedCamRaw ? (() => { try { return JSON.parse(savedCamRaw); } catch (_) { return null; } })() : null;
 
@@ -7593,7 +7593,7 @@ export default function App() {
                     }
                 }
 
-                // Si detectamos cambios locales más nuevos o entradas que no están en el servidor, subir
+                // Si detectamos cambios locales mÃ¡s nuevos o entradas que no estÃ¡n en el servidor, subir
                 if (hasChanges) {
                     console.log(`[Oasis] Sincronizando cambios locales pendientes detectados al volver a la app.`);
                     fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
@@ -7628,7 +7628,7 @@ export default function App() {
                         localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(data));
                     }
                 }
-            } catch (_) { /* offline — ignorar */ }
+            } catch (_) { /* offline â€” ignorar */ }
         };
 
         const handleVisibility = () => {
@@ -7646,7 +7646,7 @@ export default function App() {
             clearInterval(syncInterval);
         };
     }, [isLoggedIn, user, isDataLoaded]);
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const syncPlaylists = useCallback((newPlaylists) => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
@@ -7692,7 +7692,7 @@ export default function App() {
         });
     };
 
-    // Asegurar que los elementos centrales estén siempre en el pizarrón
+    // Asegurar que los elementos centrales estÃ©n siempre en el pizarrÃ³n
     useEffect(() => {
         if (!isLoggedIn || !isDataLoaded || blocks === INITIAL_BLOCKS) return;
         let changed = false;
@@ -7714,8 +7714,8 @@ export default function App() {
     }, [blocks, isLoggedIn, isDataLoaded, activeCanvasId]);
 
     const syncBlocks = (newBlocks) => {
-        // Registrar timestamp del último guardado local para proteger contra
-        // el re-fetch del servidor que podría sobreescribir datos recientes.
+        // Registrar timestamp del Ãºltimo guardado local para proteger contra
+        // el re-fetch del servidor que podrÃ­a sobreescribir datos recientes.
         lastLocalSaveRef.current = Date.now();
 
         const performSync = (resolvedBlocks) => {
@@ -7853,7 +7853,7 @@ export default function App() {
     const syncLinks = (newLinks) => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
         localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(newLinks));
-        console.log(`[Oasis] Sincronizando ${newLinks.length} vínculos para ${user}...`);
+        console.log(`[Oasis] Sincronizando ${newLinks.length} vÃ­nculos para ${user}...`);
         if (window.syncLinksTimeout) clearTimeout(window.syncLinksTimeout);
         window.syncLinksTimeout = setTimeout(() => {
             fetch(`${API_URL}/api/oasis/links?user=${user}`, {
@@ -7861,8 +7861,8 @@ export default function App() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newLinks)
             }).then(res => {
-                if (res.ok) console.log(`[Oasis] Sincronización de vínculos exitosa.`);
-                else console.error(`[Oasis] Error de sincronización: ${res.status}`);
+                if (res.ok) console.log(`[Oasis] SincronizaciÃ³n de vÃ­nculos exitosa.`);
+                else console.error(`[Oasis] Error de sincronizaciÃ³n: ${res.status}`);
             });
         }, 2500);
     };
@@ -7964,7 +7964,7 @@ export default function App() {
 
     useEffect(() => {
         fetchFeed();
-        const interval = setInterval(fetchFeed, 10000); // Sincronía constante cada 10s
+        const interval = setInterval(fetchFeed, 10000); // SincronÃ­a constante cada 10s
         return () => clearInterval(interval);
     }, [fetchFeed]);
 
@@ -8112,10 +8112,10 @@ export default function App() {
                     setView('canvas');
                 }
             } else {
-                setAuthError(`${data.msg || 'Fallo de Conexión'} (${res.status})`);
+                setAuthError(`${data.msg || 'Fallo de ConexiÃ³n'} (${res.status})`);
             }
         } catch (e) {
-            setAuthError('FALLO TÉCNICO: ' + e.message);
+            setAuthError('FALLO TÃ‰CNICO: ' + e.message);
         }
     };
 
@@ -8141,7 +8141,7 @@ export default function App() {
             syncAura(type, data.url, isTiled);
         } catch (err) {
             console.error("Error al subir fondo: ", err);
-            alert("Error al subir imagen. Por favor, intenta con otra imagen o revisa tu conexión.");
+            alert("Error al subir imagen. Por favor, intenta con otra imagen o revisa tu conexiÃ³n.");
         }
     };
 
@@ -8159,7 +8159,7 @@ export default function App() {
 
     const handleSaveAsTemplate = async (templateName) => {
         if (!bgValue) return;
-        const name = templateName || `Aura de ${user || 'Anónimo'}`;
+        const name = templateName || `Aura de ${user || 'AnÃ³nimo'}`;
         try {
             const res = await fetch(`${API_URL}/api/oasis/backgrounds/templates`, {
                 method: 'POST',
@@ -8169,7 +8169,7 @@ export default function App() {
                     type: bgType,
                     value: bgValue,
                     isTiled: isTiled,
-                    creator: user || 'Anónimo'
+                    creator: user || 'AnÃ³nimo'
                 })
             });
             if (res.ok) {
@@ -8382,7 +8382,7 @@ export default function App() {
                 setCanvasIsRecording(true);
             } catch (err) {
                 console.error("Error starting canvas audio recording:", err);
-                alert("No se pudo acceder al micrófono.");
+                alert("No se pudo acceder al micrÃ³fono.");
             }
         }
     };
@@ -8558,7 +8558,7 @@ export default function App() {
             x: baseParent.x + (baseParent.width || 400) + 150,
             y: baseParent.y + (existingChildren.length * 150),
             content: '',
-            caption: cleanTitle || `Subpágina ${existingChildren.length + 1}`,
+            caption: cleanTitle || `SubpÃ¡gina ${existingChildren.length + 1}`,
             isPublic: false,
             color: accent,
             rotation: (Math.random() - 0.5) * 10,
@@ -8719,7 +8719,7 @@ export default function App() {
         if (view === 'canvas' && isDataLoaded && !hasCenteredCanvasRef.current) {
             hasCenteredCanvasRef.current = true;
 
-            // Check if user has a saved cam position in localStorage — if so, DON'T override it
+            // Check if user has a saved cam position in localStorage â€” if so, DON'T override it
             const savedCam = (() => {
                 try {
                     const currentUser = localStorage.getItem('oasis_user');
@@ -8734,7 +8734,7 @@ export default function App() {
                 return;
             }
 
-            // No saved position — center on the most recently created block
+            // No saved position â€” center on the most recently created block
             const renderedBlocks = blocks.filter(b =>
                 b.type !== 'insight' && b.type !== 'settings' && b.type !== 'canvas' &&
                 !b.isPublic && b.x !== undefined && b.y !== undefined
@@ -8771,7 +8771,7 @@ export default function App() {
     const [volume, setVolume] = useState(0.5);
     const [playerPos, setPlayerPos] = useState({ x: 0, y: 0 });
     const [playerTracks, setPlayerTracks] = useState([
-        { title: 'Sincronía Profunda', artist: 'Oasis Core', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        { title: 'SincronÃ­a Profunda', artist: 'Oasis Core', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
         { title: 'Glitch Astral', artist: 'Flux', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
         { title: 'Memoria RAM', artist: 'Holo', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
     ]);
@@ -8880,7 +8880,7 @@ export default function App() {
     const prevIsChatOpen = useRef(isChatOpen);
 
     const generateIntelligenceBloom = useCallback(async () => {
-        // Deshabilitado por petición del usuario
+        // Deshabilitado por peticiÃ³n del usuario
         return;
 
         const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
@@ -8891,26 +8891,26 @@ export default function App() {
 
         const chatHistory = chatMessages
             .filter(m => m.role !== 'assistant' || m.content !== chatMessages[0].content)
-            .map(m => `${m.role === 'user' ? 'Usuario' : 'Espíritu'}: ${m.content}`)
+            .map(m => `${m.role === 'user' ? 'Usuario' : 'EspÃ­ritu'}: ${m.content}`)
             .join('\n');
 
         const systemPrompt = `
-        Actúa como un Asistente de Síntesis Creativa para el usuario ${user || localStorage.getItem('oasis_user') || 'user'}. 
-        Tu meta es resumir los puntos más importantes de la conversación actual de manera útil y reflexiva.
+        ActÃºa como un Asistente de SÃ­ntesis Creativa para el usuario ${user || localStorage.getItem('oasis_user') || 'user'}. 
+        Tu meta es resumir los puntos mÃ¡s importantes de la conversaciÃ³n actual de manera Ãºtil y reflexiva.
         
-        - TAREA: Proporciona una síntesis clara del progreso intelectual o creativo de la sesión.
+        - TAREA: Proporciona una sÃ­ntesis clara del progreso intelectual o creativo de la sesiÃ³n.
         - REGLAS:
-            1. Escribe una reflexión concreta y de valor (máximo 30 palabras).
+            1. Escribe una reflexiÃ³n concreta y de valor (mÃ¡ximo 30 palabras).
             2. Usa un lenguaje natural, directo y alentador.
-            3. Puedes usar emojis funcionales (💡, ✅, ✨) si añaden valor.
+            3. Puedes usar emojis funcionales (ðŸ’¡, âœ…, âœ¨) si aÃ±aden valor.
             4. Usa **negritas** para conceptos clave.
         - IMPORTANTE: Termina con UNA sola PREGUNTA funcional que invite al usuario a seguir explorando o ejecutando sus ideas.
-        - TONO: Kio (Profesional, útil y perspicaz). Evita el misterio o la mística innecesaria.
-        - IDENTIDAD: Eres Kio, el núcleo de síntesis de Ruido Interior.
+        - TONO: Kio (Profesional, Ãºtil y perspicaz). Evita el misterio o la mÃ­stica innecesaria.
+        - IDENTIDAD: Eres Kio, el nÃºcleo de sÃ­ntesis de Ruido Interior.
         
-        Formato: [insight] {Síntesis concreta}. \n\n{Pregunta para avanzar}
+        Formato: [insight] {SÃ­ntesis concreta}. \n\n{Pregunta para avanzar}
         
-        Conversación:
+        ConversaciÃ³n:
         ${chatHistory}
     `;
 
@@ -8945,7 +8945,7 @@ export default function App() {
                             y: (Math.random() - 0.5) * 400,
                             rotation: (Math.random() - 0.5) * 10,
                             color: '#a855f7',
-                            caption: 'Revelación del Lienzo',
+                            caption: 'RevelaciÃ³n del Lienzo',
                             username: user || 'anon',
                             metadata: { origin: 'intelligence_bloom', timestamp: new Date().toISOString() },
                             canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
@@ -8978,32 +8978,32 @@ export default function App() {
     const harvestMemory = async () => {
         if (chatMessages.length < 4 || !isLoggedIn) return;
 
-        console.log("Núcleo de Memoria - Cosechando nuevos hechos...");
+        console.log("NÃºcleo de Memoria - Cosechando nuevos hechos...");
         const chatHistory = chatMessages
-            .map(m => `${m.role === 'user' ? 'Usuario' : 'Espíritu'}: ${m.content}`)
+            .map(m => `${m.role === 'user' ? 'Usuario' : 'EspÃ­ritu'}: ${m.content}`)
             .join('\n');
 
         const existingFacts = userMemory.map(f => f.text).join('\n');
 
         const harvestPrompt = `
-        Actúa como el Núcleo de Memoria de Kio. Tu tarea es extraer NUEVOS hechos importantes, intereses, intenciones o proyectos del usuario de la conversación actual que NO estén ya en su memoria.
+        ActÃºa como el NÃºcleo de Memoria de Kio. Tu tarea es extraer NUEVOS hechos importantes, intereses, intenciones o proyectos del usuario de la conversaciÃ³n actual que NO estÃ©n ya en su memoria.
 
         - MEMORIA ACTUAL:
-        ${existingFacts || 'Vacía'}
+        ${existingFacts || 'VacÃ­a'}
 
-        - CONVERSACIÓN RECIENTE:
+        - CONVERSACIÃ“N RECIENTE:
         ${chatHistory}
 
-        - INSTRUCCIONES CRÍTICAS:
-            1. ENFOQUE EXCLUSIVO EN EL USUARIO: Extrae hechos e insights sobre el mundo interno y externo del USUARIO basándote en lo que el *Usuario* expresa en sus mensajes. NO extraigas ni recicles las metáforas, filosofías o reflexiones poéticas que tú (el "Espíritu") le dijiste al usuario. El archivo debe reflejar la mente del usuario, no un eco de tus propias respuestas.
-            2. Piensa en lo que el usuario piensa al decirte algo: analiza la intención detrás de sus palabras, sus proyectos reales y sus sentimientos auténticos.
-            3. NO repitas hechos que ya están en la memoria actual.
+        - INSTRUCCIONES CRÃTICAS:
+            1. ENFOQUE EXCLUSIVO EN EL USUARIO: Extrae hechos e insights sobre el mundo interno y externo del USUARIO basÃ¡ndote en lo que el *Usuario* expresa en sus mensajes. NO extraigas ni recicles las metÃ¡foras, filosofÃ­as o reflexiones poÃ©ticas que tÃº (el "EspÃ­ritu") le dijiste al usuario. El archivo debe reflejar la mente del usuario, no un eco de tus propias respuestas.
+            2. Piensa en lo que el usuario piensa al decirte algo: analiza la intenciÃ³n detrÃ¡s de sus palabras, sus proyectos reales y sus sentimientos autÃ©nticos.
+            3. NO repitas hechos que ya estÃ¡n en la memoria actual.
             4. Si no hay nada nuevo de valor o si solo hay respuestas tuyas sin nuevos aportes del usuario, responde con "SIN CAMBIOS".
-            5. Si hay hechos nuevos, devuélvelos en formato JSON: [{"text": "hecho", "category": "Categoría", "timestamp": "ISO Date"}]
-            6. Categorías sugeridas: Proyectos, Intereses, Personal, Preferencias.
-            7. REDACCIÓN EN SEGUNDA PERSONA: Redacta los hechos (campo "text") de forma muy íntima y subjetiva, dirigiéndote directamente al usuario (ej: "Cuando hablas de tus proyectos, buscas un orden...", "Tiendes a refugiarte en...", "Expresas que sientes..."). Evita descripciones objetivas o en tercera persona.
+            5. Si hay hechos nuevos, devuÃ©lvelos en formato JSON: [{"text": "hecho", "category": "CategorÃ­a", "timestamp": "ISO Date"}]
+            6. CategorÃ­as sugeridas: Proyectos, Intereses, Personal, Preferencias.
+            7. REDACCIÃ“N EN SEGUNDA PERSONA: Redacta los hechos (campo "text") de forma muy Ã­ntima y subjetiva, dirigiÃ©ndote directamente al usuario (ej: "Cuando hablas de tus proyectos, buscas un orden...", "Tiendes a refugiarte en...", "Expresas que sientes..."). Evita descripciones objetivas o en tercera persona.
         
-        Responde ÚNICAMENTE con el JSON o "SIN CAMBIOS".`;
+        Responde ÃšNICAMENTE con el JSON o "SIN CAMBIOS".`;
 
         const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
@@ -9039,7 +9039,7 @@ export default function App() {
                                     syncMemory(updated);
                                     return updated;
                                 });
-                                console.log("Kio - Núcleo de Memoria sincronizado con éxito.");
+                                console.log("Kio - NÃºcleo de Memoria sincronizado con Ã©xito.");
                             }
                         } catch (e) { console.error("Kio - Error al parsear cosecha:", e); }
                     }
@@ -9048,16 +9048,16 @@ export default function App() {
                     // Run a secondary prompt to detect user's tone only if we have at least 2 user messages
                     const userMsgs = messages.filter(m => m.role === 'user');
                     if (userMsgs.length >= 2) {
-                        const stylePrompt = `Analiza el estilo comunicativo del usuario en esta conversación y actualiza su perfil de tono.
-Conversación:
+                        const stylePrompt = `Analiza el estilo comunicativo del usuario en esta conversaciÃ³n y actualiza su perfil de tono.
+ConversaciÃ³n:
 ${chatHistory}
 
 Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuelve "SIN CAMBIOS"):
 {
-  "style": "Descripción del estilo (ej. directo, conversacional, académico, sarcástico, etc.)",
-  "tone": "Tono emocional o actitud (ej. amigable, distante, analítico, coloquial)",
+  "style": "DescripciÃ³n del estilo (ej. directo, conversacional, acadÃ©mico, sarcÃ¡stico, etc.)",
+  "tone": "Tono emocional o actitud (ej. amigable, distante, analÃ­tico, coloquial)",
   "examples": ["ejemplo corto 1", "ejemplo corto 2"],
-  "informalityScore": 5 // Número del 0 (extremadamente formal) al 10 (extremadamente coloquial/argot callejero)
+  "informalityScore": 5 // NÃºmero del 0 (extremadamente formal) al 10 (extremadamente coloquial/argot callejero)
 }`;
                         const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                         const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
@@ -9131,7 +9131,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                 x: Math.round(spawnX / 20) * 20,
                 y: Math.round(spawnY / 20) * 20,
                 content: noteText,
-                caption: caption || 'Sin título',
+                caption: caption || 'Sin tÃ­tulo',
                 isPublic: false,
                 color: accent,
                 rotation: (Math.random() - 0.5) * 6,
@@ -9167,7 +9167,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
             const data = await res.json();
             setPlayerSearchResults(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("Error en búsqueda de música:", err);
+            console.error("Error en bÃºsqueda de mÃºsica:", err);
         } finally {
             setIsPlayerSearching(false);
         }
@@ -9191,7 +9191,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                 setPlayQueue(updatedTracks);
             }
         } catch (err) {
-            console.error("Error al añadir track:", err);
+            console.error("Error al aÃ±adir track:", err);
         }
     };
 
@@ -9334,12 +9334,12 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         setIsChatLoading(true);
         const prompt = `Analiza este conjunto de ideas como Kio, el punto de convergencia de Ruido Interior. 
         Busca la "Arquitectura Invisible" que une estos fragmentos. 
-        ¿Cuál es el proyecto del alma que emerge de esta colección?
+        Â¿CuÃ¡l es el proyecto del alma que emerge de esta colecciÃ³n?
 
-        FORMATO: CATEGORÍA | INSIGHT (2-3 frases profundas, sintéticas, altamente subjetivas y reveladoras. Evita listas.)
-        Categorías sugeridas: Constelación, Mapa del Deseo, Convergencia, Raíz Colectiva, Geometría del Propósito.
+        FORMATO: CATEGORÃA | INSIGHT (2-3 frases profundas, sintÃ©ticas, altamente subjetivas y reveladoras. Evita listas.)
+        CategorÃ­as sugeridas: ConstelaciÃ³n, Mapa del Deseo, Convergencia, RaÃ­z Colectiva, GeometrÃ­a del PropÃ³sito.
         
-        CRÍTICO: Redacta el INSIGHT en SEGUNDA PERSONA, de forma sumamente íntima y subjetiva, hablándole directamente al usuario (ej: "Sueles buscar...", "Tiendes a conectar...", "Presientes que tu camino...", "Sientes la necesidad de..."). Varía las estructuras y expresiones para darle máxima diversidad y fluidez poética.
+        CRÃTICO: Redacta el INSIGHT en SEGUNDA PERSONA, de forma sumamente Ã­ntima y subjetiva, hablÃ¡ndole directamente al usuario (ej: "Sueles buscar...", "Tiendes a conectar...", "Presientes que tu camino...", "Sientes la necesidad de..."). VarÃ­a las estructuras y expresiones para darle mÃ¡xima diversidad y fluidez poÃ©tica.
 
         NOTAS:
         ${combinedContent}`;
@@ -9354,7 +9354,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                 return updated;
             });
         } else {
-            console.warn('Kio - El análisis de grupo no devolvió un insight válido.');
+            console.warn('Kio - El anÃ¡lisis de grupo no devolviÃ³ un insight vÃ¡lido.');
             // We don't add fallbacks to userMemory anymore to avoid cluttering, 
             // but we can show a temporary notification if we had a system for it.
         }
@@ -9372,14 +9372,14 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: block.content })
             });
-            if (!res.ok) throw new Error("Error en la transcripción");
+            if (!res.ok) throw new Error("Error en la transcripciÃ³n");
             const data = await res.json();
             
             // Create a new text block with the transcription
             const newBlock = {
                 id: `text-${Date.now()}`,
                 type: 'text',
-                content: `**Transcripción de Audio**\n\n${data.transcription}`,
+                content: `**TranscripciÃ³n de Audio**\n\n${data.transcription}`,
                 x: block.x + 350,
                 y: block.y,
                 width: 450,
@@ -9405,20 +9405,20 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         if (!block) return;
 
         setIsChatLoading(true);
-        const prompt = `Analiza esta nota de Ruido Interior como Kio, el núcleo de síntesis. 
-        No resumas; busca la intención latente, el patrón psicológico o la semilla creativa detrás de las palabras. 
-        ¿Qué dice esto sobre el alma de quien lo escribió? 
+        const prompt = `Analiza esta nota de Ruido Interior como Kio, el nÃºcleo de sÃ­ntesis. 
+        No resumas; busca la intenciÃ³n latente, el patrÃ³n psicolÃ³gico o la semilla creativa detrÃ¡s de las palabras. 
+        Â¿QuÃ© dice esto sobre el alma de quien lo escribiÃ³? 
 
-        FORMATO: CATEGORÍA | INSIGHT (1-2 frases fluidas, poéticas, profundamente subjetivas y en segunda persona)
-        Categorías sugeridas: Sombra, Eco, Evolución, Geometría Humana, Núcleo de Intención.
+        FORMATO: CATEGORÃA | INSIGHT (1-2 frases fluidas, poÃ©ticas, profundamente subjetivas y en segunda persona)
+        CategorÃ­as sugeridas: Sombra, Eco, EvoluciÃ³n, GeometrÃ­a Humana, NÃºcleo de IntenciÃ³n.
         
-        CRÍTICO: Redacta el INSIGHT en SEGUNDA PERSONA, de forma sumamente íntima y subjetiva, hablándole directamente al usuario (ej: "Sueles pensar...", "Tiendes a sentir...", "Supones que...", "Te refugias en..."). Evita afirmaciones fácticas o en tercera persona.
+        CRÃTICO: Redacta el INSIGHT en SEGUNDA PERSONA, de forma sumamente Ã­ntima y subjetiva, hablÃ¡ndole directamente al usuario (ej: "Sueles pensar...", "Tiendes a sentir...", "Supones que...", "Te refugias en..."). Evita afirmaciones fÃ¡cticas o en tercera persona.
 
         NOTE: "${block.caption || 'Fragmento'}: ${block.content}"`;
 
         const result = await backgroundAnalyzeContent(prompt);
         if (result && result.length > 5) {
-            const [category, text] = result.includes('|') ? result.split('|').map(s => s.trim()) : ['Reflexión', result];
+            const [category, text] = result.includes('|') ? result.split('|').map(s => s.trim()) : ['ReflexiÃ³n', result];
             const newFact = { category, text, timestamp: new Date().toISOString() };
             setUserMemory(prev => {
                 const updated = [newFact, ...prev].slice(0, 50);
@@ -9426,7 +9426,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                 return updated;
             });
         } else {
-            console.warn('Kio - El análisis de nota no devolvió un insight válido.');
+            console.warn('Kio - El anÃ¡lisis de nota no devolviÃ³ un insight vÃ¡lido.');
         }
         setIsChatLoading(false);
     };
@@ -9443,7 +9443,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
 
         for (const modelName of modelsToTry) {
             try {
-                console.log(`[Oasis AI] Intentando análisis invisible (Protocolo Streaming) con ${modelName}...`);
+                console.log(`[Oasis AI] Intentando anÃ¡lisis invisible (Protocolo Streaming) con ${modelName}...`);
 
                 const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const response = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -9483,21 +9483,21 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
 
                     if (fullText) {
                         lastSuccessModel.current = modelName;
-                        console.log(`Kio - Análisis Invisible Completo con ${modelName}`);
+                        console.log(`Kio - AnÃ¡lisis Invisible Completo con ${modelName}`);
                         return fullText.replace(/<thought>[\s\S]*?<\/thought>/, '').replace(/```.*?```/gs, '').trim();
                     } else {
-                        console.warn(`Kio - Stream vacío con ${modelName}.`);
+                        console.warn(`Kio - Stream vacÃ­o con ${modelName}.`);
                     }
                 } else {
                     const errData = await response.json().catch(() => ({}));
                     console.warn(`Kio - Fallo en Stream con ${modelName}:`, errData.error?.message || response.statusText);
                 }
             } catch (e) {
-                console.error(`Kio - Error técnico en Stream con ${modelName}:`, e);
+                console.error(`Kio - Error tÃ©cnico en Stream con ${modelName}:`, e);
             }
         }
 
-        setAnalysisError("Fallo crítico: No se pudo sintonizar el canal de IA. Revisa tu API Key.");
+        setAnalysisError("Fallo crÃ­tico: No se pudo sintonizar el canal de IA. Revisa tu API Key.");
         return null;
     };
 
@@ -9541,7 +9541,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         });
     };
 
-    // ── Bottom-bar chat helpers ──
+    // â”€â”€ Bottom-bar chat helpers â”€â”€
     const handleChatBarSend = () => {
         const text = chatInputBar.trim();
         if (!text) return;
@@ -9616,7 +9616,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
         // Generate AI title for new chats or if it's the very first message
         const isFirstMessage = newMessages.length === 1;
         if ((isNewChat || isFirstMessage) && !analysisContent) {
-            console.log("Kio - Detectado inicio de chat. Disparando generación de título...");
+            console.log("Kio - Detectado inicio de chat. Disparando generaciÃ³n de tÃ­tulo...");
             generateChatTitle(effectiveConvId, inputToProcess);
         }
 
@@ -9691,14 +9691,14 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                         const incoming = parsed.edges?.filter(e => e.target === linkedNodeId).map(e => parsed.nodes?.find(n => n.id === e.source)?.label).filter(Boolean) || [];
                         const outgoing = parsed.edges?.filter(e => e.source === linkedNodeId).map(e => parsed.nodes?.find(n => n.id === e.target)?.label).filter(Boolean) || [];
 
-                        return `\n=== CONTEXTO DEL NODO BAJO EXPLORACIÓN DIRECTA ===
-El usuario está enfocado específicamente en explorar este nodo de su Mapa Conductual:
+                        return `\n=== CONTEXTO DEL NODO BAJO EXPLORACIÃ“N DIRECTA ===
+El usuario estÃ¡ enfocado especÃ­ficamente en explorar este nodo de su Mapa Conductual:
 - NOMBRE DEL NODO: "${node.label}" (Tipo: ${node.type})
-- DESCRIPCIÓN: "${node.description || 'Sin descripción'}"
-- INTENSIDAD ACTUAL: ${nodeIntensity}/10 (Una intensidad >5 significa que el patrón es sumamente disruptivo y está muy activo)
-- ¿ES EL NODO DOMINÓ (PUNTO DE QUIEBRE SYSTEMICO)?: ${isDomino ? 'SÍ (Esta conducta sostiene gran parte de la red de evitación/malestar. Resolverla tiene un efecto multiplicador en su vida)' : 'NO'}
+- DESCRIPCIÃ“N: "${node.description || 'Sin descripciÃ³n'}"
+- INTENSIDAD ACTUAL: ${nodeIntensity}/10 (Una intensidad >5 significa que el patrÃ³n es sumamente disruptivo y estÃ¡ muy activo)
+- Â¿ES EL NODO DOMINÃ“ (PUNTO DE QUIEBRE SYSTEMICO)?: ${isDomino ? 'SÃ (Esta conducta sostiene gran parte de la red de evitaciÃ³n/malestar. Resolverla tiene un efecto multiplicador en su vida)' : 'NO'}
 - CONEXIONES EN EL GRAFO:
-  * Orígenes/Disparadores: [${incoming.join(', ') || 'Ninguno'}]
+  * OrÃ­genes/Disparadores: [${incoming.join(', ') || 'Ninguno'}]
   * Consecuencias/Efectos: [${outgoing.join(', ') || 'Ninguno'}]
 - COMPROMISOS (MICRO-RETOS):
   * Pendientes/Activos: ${activeChallenges.map(c => `"${c.text}"`).join(', ') || 'Ninguno'}
@@ -9712,14 +9712,14 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
             return '';
         })();
 
-        // Dosímetro IA / Socratic Rules
+        // DosÃ­metro IA / Socratic Rules
         const socraticDosimeterInstructions = linkedNodeId ? `
-- INSTRUCCIONES CLÍNICAS DE DOSIFICACIÓN (DOSÍMETRO IA - CRÍTICO):
-  1. ADOPTA EL ROL DE TRADUCTOR HUMANISTA/FRATERNAL: No uses jerga psicológica compleja ni hables como un terapeuta distante. Sé un espejo empático, fraternal y curioso que ayuda al usuario a traducir sus conductas evasivas en significados existenciales.
-  2. INDAGACIÓN SOCRÁTICA SISTÉMICA: Pregunta sobre la función del nodo en su vida. ¿Qué busca evitar al hacer esto? ¿Cómo se conecta con sus disparadores o sus consecuencias en su mapa conductual?
-  3. SUSURRO CREATIVO (MANDATORIO): Al final de tu respuesta, debes proponer EXACTAMENTE UNA idea muy suave, estética y sutil como un "susurro" (por ejemplo: crear algo liminal, un calendario kawaii, un dibujo rápido, etc.) dependiendo del estilo y vibra del usuario, para que tome una pequeña acción sin sentirse presionado ni juzgado. Debe empezar obligatoriamente con "✨ Oye bro, estaría cool que...".
-     * Formato requerido: Debes incluirlo estrictamente en la última línea con el formato literal: [COMPROMISO: <escribir aquí el susurro creativo, máximo 2 líneas>]. Ejemplo: [COMPROMISO: ✨ Oye bro, estaría cool que hoy dibujaras un calendario kawaii para mapear tus ratos libres].
-     * Nota: No uses más de un bloque [COMPROMISO: ...]. Debe ser solo uno, súper concreto y con una vibra relajada.
+- INSTRUCCIONES CLÃNICAS DE DOSIFICACIÃ“N (DOSÃMETRO IA - CRÃTICO):
+  1. ADOPTA EL ROL DE TRADUCTOR HUMANISTA/FRATERNAL: No uses jerga psicolÃ³gica compleja ni hables como un terapeuta distante. SÃ© un espejo empÃ¡tico, fraternal y curioso que ayuda al usuario a traducir sus conductas evasivas en significados existenciales.
+  2. INDAGACIÃ“N SOCRÃTICA SISTÃ‰MICA: Pregunta sobre la funciÃ³n del nodo en su vida. Â¿QuÃ© busca evitar al hacer esto? Â¿CÃ³mo se conecta con sus disparadores o sus consecuencias en su mapa conductual?
+  3. SUSURRO CREATIVO (MANDATORIO): Al final de tu respuesta, debes proponer EXACTAMENTE UNA idea muy suave, estÃ©tica y sutil como un "susurro" (por ejemplo: crear algo liminal, un calendario kawaii, un dibujo rÃ¡pido, etc.) dependiendo del estilo y vibra del usuario, para que tome una pequeÃ±a acciÃ³n sin sentirse presionado ni juzgado. Debe empezar obligatoriamente con "âœ¨ Oye bro, estarÃ­a cool que...".
+     * Formato requerido: Debes incluirlo estrictamente en la Ãºltima lÃ­nea con el formato literal: [COMPROMISO: <escribir aquÃ­ el susurro creativo, mÃ¡ximo 2 lÃ­neas>]. Ejemplo: [COMPROMISO: âœ¨ Oye bro, estarÃ­a cool que hoy dibujaras un calendario kawaii para mapear tus ratos libres].
+     * Nota: No uses mÃ¡s de un bloque [COMPROMISO: ...]. Debe ser solo uno, sÃºper concreto y con una vibra relajada.
 ` : '';
 
         const memoryContext = userMemory.length > 0
@@ -9731,8 +9731,8 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
             const text = inputToProcess;
             if (!text) return null;
 
-            // INTENT ROUTING: Solo buscar si hay una intención explícita de consulta externa
-            const searchIntentRegex = /^(busca|qué pasó|que paso|investiga|quién es|quien es|clima|noticias|dime sobre|información de|busca en internet)/i;
+            // INTENT ROUTING: Solo buscar si hay una intenciÃ³n explÃ­cita de consulta externa
+            const searchIntentRegex = /^(busca|quÃ© pasÃ³|que paso|investiga|quiÃ©n es|quien es|clima|noticias|dime sobre|informaciÃ³n de|busca en internet)/i;
 
             if (searchIntentRegex.test(text.trim())) {
                 return text.trim();
@@ -9761,11 +9761,11 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
                     const searchData = await searchRes.json();
                     if (searchData && searchData.length > 0) {
                         searchContext = `\n- DATOS REALES DE INTERNET EN TIEMPO REAL (Usa esto para entender memes/contexto/actualidad):\n${searchData.map((s, idx) => `  * [Referencia ${idx + 1}]: ${s}`).join('\n')}`;
-                        console.log("Kio - Búsqueda web inyectada exitosamente.");
+                        console.log("Kio - BÃºsqueda web inyectada exitosamente.");
                     }
                 }
             } catch (err) {
-                console.warn("Kio - Búsqueda cancelada o fallida:", err.name === 'AbortError' ? 'Timeout' : err.message);
+                console.warn("Kio - BÃºsqueda cancelada o fallida:", err.name === 'AbortError' ? 'Timeout' : err.message);
             }
         }
 
@@ -9777,22 +9777,22 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
                 .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0))
                 .slice(0, 5);
             if (recents.length === 0) return '';
-            return `\n- CONTEXTO DE CONVERSACIONES PREVIAS (Usa esto para recordar quién es la persona y de qué han hablado recientemente):\n` +
+            return `\n- CONTEXTO DE CONVERSACIONES PREVIAS (Usa esto para recordar quiÃ©n es la persona y de quÃ© han hablado recientemente):\n` +
                 recents.map(c => {
                     const firstUserMsg = c.messages.find(m => m.role === 'user');
                     const lastMsg = c.messages[c.messages.length - 1];
                     const intro = firstUserMsg ? firstUserMsg.content.slice(0, 150) : '';
                     const outro = lastMsg ? lastMsg.content.slice(0, 150) : '';
-                    return `  * [${c.title || 'Sin título'}]: El usuario inició diciendo "${intro}..." y la charla concluyó con "${outro}..."`;
+                    return `  * [${c.title || 'Sin tÃ­tulo'}]: El usuario iniciÃ³ diciendo "${intro}..." y la charla concluyÃ³ con "${outro}..."`;
                 }).join('\n');
         })();
 
         // --- CANVAS NOTES CONTEXT ---
-        const canvasNotesContext = ''; // Desactivado temporalmente hasta implementar algoritmo de interpretación
+        const canvasNotesContext = ''; // Desactivado temporalmente hasta implementar algoritmo de interpretaciÃ³n
 
         // --- ADAPTIVE STYLE PROFILE ---
         const styleContext = userStyleProfile
-            ? `\n- PERFIL DE COMUNICACIÓN DEL USUARIO (CRÍTICO — adapta tu tono exactamente a esto):\n  * Estilo: ${userStyleProfile.style}\n  * Tono: ${userStyleProfile.tone}\n  * Ejemplos de su forma de hablar: ${userStyleProfile.examples?.join(', ') || 'N/A'}\n  * Nivel de informalidad (0=formal, 10=muy casual/argot): ${userStyleProfile.informalityScore}/10`
+            ? `\n- PERFIL DE COMUNICACIÃ“N DEL USUARIO (CRÃTICO â€” adapta tu tono exactamente a esto):\n  * Estilo: ${userStyleProfile.style}\n  * Tono: ${userStyleProfile.tone}\n  * Ejemplos de su forma de hablar: ${userStyleProfile.examples?.join(', ') || 'N/A'}\n  * Nivel de informalidad (0=formal, 10=muy casual/argot): ${userStyleProfile.informalityScore}/10`
             : '';
 
         // --- BEHAVIORAL MAP (AFC) CONTEXT ---
@@ -9802,14 +9802,14 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed && parsed.is_valid && parsed.nodes) {
-                        const nodesSummary = parsed.nodes.map(n => `- Nodo [${n.type}]: "${n.label}" (${n.description || ''}). Percepción Existencial: ${n.challenge || 'N/A'}`).join('\n');
+                        const nodesSummary = parsed.nodes.map(n => `- Nodo [${n.type}]: "${n.label}" (${n.description || ''}). PercepciÃ³n Existencial: ${n.challenge || 'N/A'}`).join('\n');
                         const maintHyp = parsed.hypotheses?.mantenimiento || 'N/A';
                         const solHyp = parsed.hypotheses?.solucion || 'N/A';
                         const simpleExplanation = parsed.explicacion_sencilla || 'N/A';
-                        return `\n- MAPA CONDUCTUAL Y ANÁLISIS FUNCIONAL (AFC) ACTIVO DEL USUARIO:\n` +
-                            `  * Hipótesis de Mantenimiento: "${maintHyp}"\n` +
-                            `  * Hipótesis de Solución (Claves): "${solHyp}"\n` +
-                            `  * Explicación de su Bucle: "${simpleExplanation}"\n` +
+                        return `\n- MAPA CONDUCTUAL Y ANÃLISIS FUNCIONAL (AFC) ACTIVO DEL USUARIO:\n` +
+                            `  * HipÃ³tesis de Mantenimiento: "${maintHyp}"\n` +
+                            `  * HipÃ³tesis de SoluciÃ³n (Claves): "${solHyp}"\n` +
+                            `  * ExplicaciÃ³n de su Bucle: "${simpleExplanation}"\n` +
                             `  * Nodos Clave en su Conducta:\n${nodesSummary}`;
                     }
                 }
@@ -9819,7 +9819,7 @@ El usuario está enfocado específicamente en explorar este nodo de su Mapa Cond
             return '';
         })();
 
-        const systemInstruction = isAnalyzingNote ? `Eres Kio, el núcleo digital de Ruido Interior. 
+        const systemInstruction = isAnalyzingNote ? `Eres Kio, el nÃºcleo digital de Ruido Interior. 
 Tu objetivo es ayudar al usuario a profundizar, refinar y conectar el contenido de su nota: "${activeNoteContent}".
 ${memoryContext}
 ${recentConvSummary}
@@ -9827,13 +9827,13 @@ ${canvasNotesContext}
 ${searchContext}
 ${afcMapContext}
 
-- OBJETIVO: Proporciona un análisis profundo, psicológico y existencial con conexiones conceptuales de gran valor.
-- IDIOMA (CRÍTICO): Habla SIEMPRE en español latino neutro (México). NUNCA uses voseo argentino ("vos", "tenés", "mirá", "dale", "che", "boludo", "re", "piola", "laburar", "posta", "copado", "bancarse", "garpa"). Usa "tú" y conjugaciones estándar mexicanas. Tu español debe sonar natural para un hablante de México.
-- TONO Y LENGUAJE: Escribe en un lenguaje limpio, neutral, maduro y profesional, conservando una profunda empatía humana pero sin modismos informales o palabras de jerga callejera.
-- ESTÉTICA ESCRITA (CRÍTICO): Organiza tu respuesta de forma sumamente limpia, utilizando títulos claros en markdown (ej. ### Título de Sección) para separar las distintas vertientes de tu análisis.
-- FORMATO: Usa negritas para conceptos clave y cursivas para reflexiones íntimas. Limita las viñetas, prefiere párrafos fluidos y bien espaciados.
-- REGLA DE ORO: Ve directo al grano. Mantén el análisis conciso y evita monólogos filosóficos largos, introducciones vacías o presentaciones.`
-            : `Eres Kio, una inteligencia y núcleo de síntesis de Ruido Interior. Eres un asistente funcional, empático y directo. Tu objetivo es ser un compañero útil, escuchando y apoyando al usuario en su proceso de desahogo o trabajo diario.
+- OBJETIVO: Proporciona un anÃ¡lisis profundo, psicolÃ³gico y existencial con conexiones conceptuales de gran valor.
+- IDIOMA (CRÃTICO): Habla SIEMPRE en espaÃ±ol latino neutro (MÃ©xico). NUNCA uses voseo argentino ("vos", "tenÃ©s", "mirÃ¡", "dale", "che", "boludo", "re", "piola", "laburar", "posta", "copado", "bancarse", "garpa"). Usa "tÃº" y conjugaciones estÃ¡ndar mexicanas. Tu espaÃ±ol debe sonar natural para un hablante de MÃ©xico.
+- TONO Y LENGUAJE: Escribe en un lenguaje limpio, neutral, maduro y profesional, conservando una profunda empatÃ­a humana pero sin modismos informales o palabras de jerga callejera.
+- ESTÃ‰TICA ESCRITA (CRÃTICO): Organiza tu respuesta de forma sumamente limpia, utilizando tÃ­tulos claros en markdown (ej. ### TÃ­tulo de SecciÃ³n) para separar las distintas vertientes de tu anÃ¡lisis.
+- FORMATO: Usa negritas para conceptos clave y cursivas para reflexiones Ã­ntimas. Limita las viÃ±etas, prefiere pÃ¡rrafos fluidos y bien espaciados.
+- REGLA DE ORO: Ve directo al grano. MantÃ©n el anÃ¡lisis conciso y evita monÃ³logos filosÃ³ficos largos, introducciones vacÃ­as o presentaciones.`
+            : `Eres Kio, una inteligencia y nÃºcleo de sÃ­ntesis de Ruido Interior. Eres un asistente funcional, empÃ¡tico y directo. Tu objetivo es ser un compaÃ±ero Ãºtil, escuchando y apoyando al usuario en su proceso de desahogo o trabajo diario.
 ${memoryContext}
 ${recentConvSummary}
 ${canvasNotesContext}
@@ -9841,20 +9841,20 @@ ${styleContext}
 ${searchContext}
 ${afcMapContext}
 
-- IDIOMA (CRÍTICO - OBLIGATORIO): Habla SIEMPRE en español latino neutro (México). NUNCA uses voseo argentino ni modismos rioplatenses. Está PROHIBIDO usar: "vos", "tenés", "mirá", "dale", "che", "boludo/a", "re" (como intensificador), "piola", "laburar", "posta", "copado", "bancarse", "garpa", "flashear", "morfar", "afanar". Usa SIEMPRE "tú" y conjugaciones estándar mexicanas (tienes, miras, puedes). Tu español debe sonar completamente natural para un hablante de México.
-- MENTALIDAD E INTUICIÓN (CRÍTICO): Tienes una mente altamente analítica, aguda y sumamente intuitiva. Capta rápidamente la esencia de lo que el usuario quiere decir. Evita dar sermones morales, monólogos existencialistas densos o discursos "filosóficos" largos y aburridos. Ve al punto con brillantez. Sé un espejo intelectual rápido, perspicaz y genial. Sigue la onda del usuario de manera fluida y muy cool.
+- IDIOMA (CRÃTICO - OBLIGATORIO): Habla SIEMPRE en espaÃ±ol latino neutro (MÃ©xico). NUNCA uses voseo argentino ni modismos rioplatenses. EstÃ¡ PROHIBIDO usar: "vos", "tenÃ©s", "mirÃ¡", "dale", "che", "boludo/a", "re" (como intensificador), "piola", "laburar", "posta", "copado", "bancarse", "garpa", "flashear", "morfar", "afanar". Usa SIEMPRE "tÃº" y conjugaciones estÃ¡ndar mexicanas (tienes, miras, puedes). Tu espaÃ±ol debe sonar completamente natural para un hablante de MÃ©xico.
+- MENTALIDAD E INTUICIÃ“N (CRÃTICO): Tienes una mente altamente analÃ­tica, aguda y sumamente intuitiva. Capta rÃ¡pidamente la esencia de lo que el usuario quiere decir. Evita dar sermones morales, monÃ³logos existencialistas densos o discursos "filosÃ³ficos" largos y aburridos. Ve al punto con brillantez. SÃ© un espejo intelectual rÃ¡pido, perspicaz y genial. Sigue la onda del usuario de manera fluida y muy cool.
 - IDENTIDAD Y TONO ADAPTATIVO:
-  Tu lenguaje se adapta al usuario pero manteniéndose neutral, empático y funcional. Si el usuario escribe informal, puedes ser informal pero usando español mexicano neutro. NUNCA fuerces la informalidad.
-  LONGITUD ADAPTATIVA: Responde con la misma extensión y profundidad que requiera el prompt del usuario. Si el usuario se desahoga con un bloque largo, responde con un análisis completo. Si es breve, sé conciso.
+  Tu lenguaje se adapta al usuario pero manteniÃ©ndose neutral, empÃ¡tico y funcional. Si el usuario escribe informal, puedes ser informal pero usando espaÃ±ol mexicano neutro. NUNCA fuerces la informalidad.
+  LONGITUD ADAPTATIVA: Responde con la misma extensiÃ³n y profundidad que requiera el prompt del usuario. Si el usuario se desahoga con un bloque largo, responde con un anÃ¡lisis completo. Si es breve, sÃ© conciso.
 - EL ROL (ESPEJO FUNCIONAL):
-  Si el usuario está confundido o caótico, tu trabajo no es ser caótico ni "psicoanalizarlo" con teoría de manual. Tu trabajo es ayudar a estructurar ese caos mediante preguntas directas e inteligentes que le permitan reflexionar por sí mismo. NUNCA lo diagnostiques en la conversación. Simplemente escúchalo y acompáñalo como un asistente excepcionalmente brillante.
-- HONESTIDAD RADICAL SOBRE EL PIZARRÓN:
-  Tienes acceso a los datos del Pizarrón / Canvas del usuario y a su información pasada. NO finjas ser telepático. Si conectas algo del chat con una nota suya, dilo abiertamente: "Oye, conectando esto con la nota que tienes en tu pizarrón sobre X, noto este patrón...". Eso genera una percepción de alta inteligencia real.
-- ESTÉTICA ESCRITA:
+  Si el usuario estÃ¡ confundido o caÃ³tico, tu trabajo no es ser caÃ³tico ni "psicoanalizarlo" con teorÃ­a de manual. Tu trabajo es ayudar a estructurar ese caos mediante preguntas directas e inteligentes que le permitan reflexionar por sÃ­ mismo. NUNCA lo diagnostiques en la conversaciÃ³n. Simplemente escÃºchalo y acompÃ¡Ã±alo como un asistente excepcionalmente brillante.
+- HONESTIDAD RADICAL SOBRE EL PIZARRÃ“N:
+  Tienes acceso a los datos del PizarrÃ³n / Canvas del usuario y a su informaciÃ³n pasada. NO finjas ser telepÃ¡tico. Si conectas algo del chat con una nota suya, dilo abiertamente: "Oye, conectando esto con la nota que tienes en tu pizarrÃ³n sobre X, noto este patrÃ³n...". Eso genera una percepciÃ³n de alta inteligencia real.
+- ESTÃ‰TICA ESCRITA:
   Para respuestas cortas: formato fluido.
-  Para análisis profundos: usa estructura limpia, negritas para ideas clave. Sin introducciones robóticas ni despedidas cliché.
-- COMPROMISOS (CRÍTICO):
-  Si a lo largo de la conversación logras establecer o proponer una acción concreta, un compromiso o un ejercicio práctico para el usuario, DEBES incluirlo al final de tu mensaje usando EXACTAMENTE este formato: [COMPROMISO: texto del compromiso]. Ejemplo: [COMPROMISO: Escribir una carta sin enviar a mi padre explicando cómo me siento]. NUNCA uses este formato en el primer mensaje, sólo cuando surja orgánicamente.`;
+  Para anÃ¡lisis profundos: usa estructura limpia, negritas para ideas clave. Sin introducciones robÃ³ticas ni despedidas clichÃ©.
+- COMPROMISOS (CRÃTICO):
+  Si a lo largo de la conversaciÃ³n logras establecer o proponer una acciÃ³n concreta, un compromiso o un ejercicio prÃ¡ctico para el usuario, DEBES incluirlo al final de tu mensaje usando EXACTAMENTE este formato: [COMPROMISO: texto del compromiso]. Ejemplo: [COMPROMISO: Escribir una carta sin enviar a mi padre explicando cÃ³mo me siento]. NUNCA uses este formato en el primer mensaje, sÃ³lo cuando surja orgÃ¡nicamente.`;
 
 
         const apiMessages = [
@@ -9974,9 +9974,9 @@ ${afcMapContext}
                     } catch (e) {
                         try {
                             const rawText = await response.text();
-                            errMsg = rawText || `Código HTTP ${response.status}`;
+                            errMsg = rawText || `CÃ³digo HTTP ${response.status}`;
                         } catch (inner) {
-                            errMsg = `Código HTTP ${response.status}`;
+                            errMsg = `CÃ³digo HTTP ${response.status}`;
                         }
                     }
                     lastError = errMsg;
@@ -9984,7 +9984,7 @@ ${afcMapContext}
             } catch (e) {
                 clearTimeout(timeoutId);
                 if (e.name === 'AbortError') {
-                    lastError = "Límite de tiempo agotado (timeout de 45 segundos). Revisa tu conexión a internet o la estabilidad del endpoint de DeepSeek.";
+                    lastError = "LÃ­mite de tiempo agotado (timeout de 45 segundos). Revisa tu conexiÃ³n a internet o la estabilidad del endpoint de DeepSeek.";
                 } else {
                     lastError = e.message;
                 }
@@ -9992,7 +9992,7 @@ ${afcMapContext}
         }
 
         setIsChatLoading(false);
-        const assistantFinalMsg = { role: 'assistant', content: fullText || `Sincronía fallida: ${lastError}`, id: Date.now() };
+        const assistantFinalMsg = { role: 'assistant', content: fullText || `SincronÃ­a fallida: ${lastError}`, id: Date.now() };
 
         // Final Sync to Conversations using the consolidated helper
         chatMessagesRef.current = [...newMessages, assistantFinalMsg];
@@ -10029,7 +10029,7 @@ ${afcMapContext}
             if (res.ok) {
                 const data = await res.json();
                 const reply = data.choices?.[0]?.message?.content || 'Sin respuesta';
-                setApiTestResult(`Éxito (200 OK): La IA respondió "${reply}"`);
+                setApiTestResult(`Ã‰xito (200 OK): La IA respondiÃ³ "${reply}"`);
             } else {
                 let errMsg = '';
                 try {
@@ -10038,9 +10038,9 @@ ${afcMapContext}
                 } catch (e) {
                     try {
                         const rawText = await res.text();
-                        errMsg = rawText || `Código HTTP ${res.status}`;
+                        errMsg = rawText || `CÃ³digo HTTP ${res.status}`;
                     } catch (inner) {
-                        errMsg = `Código HTTP ${res.status}`;
+                        errMsg = `CÃ³digo HTTP ${res.status}`;
                     }
                 }
                 setApiTestResult(`Fallo (HTTP ${res.status}): ${errMsg}`);
@@ -10055,7 +10055,7 @@ ${afcMapContext}
     const handleOpenNodeChat = useCallback((nodeId, nodeLabel, customPrompt) => {
         setActiveExplorationNodeId(nodeId);
         setIsChatOpen(true);
-        const promptText = customPrompt || `Quiero explorar y analizar mi nodo conductual: "${nodeLabel}". ¿Qué reflexiones me sugieres y qué compromiso concreto podemos establecer?`;
+        const promptText = customPrompt || `Quiero explorar y analizar mi nodo conductual: "${nodeLabel}". Â¿QuÃ© reflexiones me sugieres y quÃ© compromiso concreto podemos establecer?`;
         handleSendChatMessage(promptText);
     }, [handleSendChatMessage]);
 
@@ -10194,7 +10194,7 @@ ${afcMapContext}
                     type: composerStep === 'note' ? 'text' : composerStep,
                     x: spawnX, y: spawnY,
                     content: (composerStep === 'note' && !isDiaryMode) ? finalContent : mediaFile,
-                    caption: caption || (isResonanceMode ? 'Resonancia' : 'Sin título'),
+                    caption: caption || (isResonanceMode ? 'Resonancia' : 'Sin tÃ­tulo'),
                     isPublic: false, // Save as private first if publicizing
                     color: isDiaryMode ? '#f59e0b' : (isResonanceMode ? '#a855f7' : accent),
                     rotation: (Math.random() - 0.5) * 6,
@@ -10274,7 +10274,7 @@ ${afcMapContext}
                     content: imageUrl,
                     rotation: (Math.random() - 0.5) * 10,
                     color: accent,
-                    caption: 'Esbozo de Sincronía',
+                    caption: 'Esbozo de SincronÃ­a',
                     username: user,
                     timestamp: new Date().toISOString(),
                     canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
@@ -10429,7 +10429,7 @@ ${afcMapContext}
             return;
         }
 
-        // Seguimiento para Vínculos (Draft Line)
+        // Seguimiento para VÃ­nculos (Draft Line)
         if (isLinking || linkSource) {
             const currentCam = (view === 'profile' ? profileCam : cam);
             const nx = (clientX - window.innerWidth / 2 - currentCam.x) / currentCam.scale;
@@ -10452,7 +10452,7 @@ ${afcMapContext}
             let nx = (clientX - window.innerWidth / 2 - currentCam.x) / currentCam.scale - dragStart.current.x;
             let ny = (clientY - window.innerHeight / 2 - currentCam.y) / currentCam.scale - dragStart.current.y;
 
-            // --- MAGNETISMO "BORDES" DINÁMICO (LIENZO) ---
+            // --- MAGNETISMO "BORDES" DINÃMICO (LIENZO) ---
             const SNAP_THRESHOLD = 50;
             const selfNode = blocks.find(b => b.id === draggingId);
             const isSelfMedia = selfNode?.content?.includes('[img]') || selfNode?.content?.includes('[vid]') || selfNode?.content?.includes('[aud]');
@@ -10482,7 +10482,7 @@ ${afcMapContext}
                 const dx = baseNX - other.x;
                 const dy = baseNY - other.y;
 
-                // Alineación Lateral (Dinámica)
+                // AlineaciÃ³n Lateral (DinÃ¡mica)
                 const idealGX = (selfW / 2 + otherW / 2) + 10; // 10px de respiro (antes 8)
                 if (Math.abs(dy) < 60 && Math.abs(Math.abs(dx) - idealGX) < SNAP_THRESHOLD) {
                     bestSnapX = other.x + (dx > 0 ? idealGX : -idealGX);
@@ -10491,7 +10491,7 @@ ${afcMapContext}
                     break;
                 }
 
-                // Alineación Vertical (Dinámica)
+                // AlineaciÃ³n Vertical (DinÃ¡mica)
                 const idealGY = (selfH / 2 + otherH / 2) + 15; // 15px de respiro (antes 8)
                 if (Math.abs(dx) < 60 && Math.abs(Math.abs(dy) - idealGY) < SNAP_THRESHOLD) {
                     bestSnapY = other.y + (dy > 0 ? idealGY : -idealGY);
@@ -10557,7 +10557,7 @@ ${afcMapContext}
         if (draggingId && draggingId !== 'canvas' && draggingId !== 'universe' && draggingId !== 'feed' && draggingId !== 'player') {
             // Snapping is only visual; do not auto-connect or auto-group nodes on release.
 
-            // Guardar posición final con garantía de estado actual
+            // Guardar posiciÃ³n final con garantÃ­a de estado actual
             syncBlocks(prev => prev);
         }
         setDraggingId(null);
@@ -10595,7 +10595,7 @@ ${afcMapContext}
     };
 
     const synthesizeLinks = async () => {
-        if (links.length === 0) { console.log('No hay vínculos para sintetizar.'); return; }
+        if (links.length === 0) { console.log('No hay vÃ­nculos para sintetizar.'); return; }
 
         // Identificar bloques involucrados
         const linkedIds = new Set();
@@ -10603,7 +10603,7 @@ ${afcMapContext}
         const involvedBlocks = blocks.filter(b => linkedIds.has(b.id));
         const contents = involvedBlocks.map(b => b.content).join('\n---\n');
 
-        console.log(`Sintetizando ${involvedBlocks.length} fragmentos con el Núcleo Cognitivo...`);
+        console.log(`Sintetizando ${involvedBlocks.length} fragmentos con el NÃºcleo Cognitivo...`);
 
         const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
         const MODELS_TO_TRY = lastSuccessModel.current
@@ -10611,7 +10611,7 @@ ${afcMapContext}
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
         let lastError = '';
 
-        const prompt = `Analiza estos fragmentos de alma y crea un nuevo fragmento (máximo 50 palabras) que sintetice la relación entre ellos de manera poética pero profunda. \n\nFragmentos:\n${contents}`;
+        const prompt = `Analiza estos fragmentos de alma y crea un nuevo fragmento (mÃ¡ximo 50 palabras) que sintetice la relaciÃ³n entre ellos de manera poÃ©tica pero profunda. \n\nFragmentos:\n${contents}`;
 
         for (const modelName of MODELS_TO_TRY) {
             try {
@@ -10635,19 +10635,19 @@ ${afcMapContext}
                     const data = await res.json();
                     const synthesis = data.choices?.[0]?.message?.content;
                     if (synthesis) {
-                        // ÉXITO: Crear nueva nota en el centro de los vínculos
+                        // Ã‰XITO: Crear nueva nota en el centro de los vÃ­nculos
                         const centerX = involvedBlocks.reduce((sum, b) => sum + b.x, 0) / involvedBlocks.length;
                         const centerY = involvedBlocks.reduce((sum, b) => sum + b.y, 0) / involvedBlocks.length;
 
                         const newBlock = {
                             id: `synth-${Date.now()}`,
                             type: 'text',
-                            content: `[SÍNTESIS AI] ${synthesis}`,
+                            content: `[SÃNTESIS AI] ${synthesis}`,
                             x: centerX,
                             y: centerY + 200,
                             rotation: 0,
                             color: '#a855f7',
-                            caption: 'Nueva Conciencia Sintética',
+                            caption: 'Nueva Conciencia SintÃ©tica',
                             username: user,
                             metadata: { origin: 'synthesis', timestamp: new Date().toISOString() },
                             canvasId: activeCanvasId || 'canvas_default'
@@ -10655,9 +10655,9 @@ ${afcMapContext}
 
                         syncBlocks(prev => [...prev, newBlock]);
 
-                        // Si estamos en perfil, notificar que se creó en el lienzo
+                        // Si estamos en perfil, notificar que se creÃ³ en el lienzo
                         if (view === 'profile') {
-                            console.log('Síntesis Creada en tu Lienzo Privado');
+                            console.log('SÃ­ntesis Creada en tu Lienzo Privado');
                         }
                         return;
                     }
@@ -10667,11 +10667,11 @@ ${afcMapContext}
                 }
             } catch (e) {
                 lastError = e.message;
-                console.warn(`Síntesis fallida con ${modelName}:`, e);
+                console.warn(`SÃ­ntesis fallida con ${modelName}:`, e);
             }
         }
 
-        console.error(`Fallo en el Núcleo Cognitivo. Último error: ${lastError}`);
+        console.error(`Fallo en el NÃºcleo Cognitivo. Ãšltimo error: ${lastError}`);
     };
 
     const renderCanvasView = () => (
@@ -10700,7 +10700,7 @@ ${afcMapContext}
             }}
 
         >
-            {/* CUADRICULA TÉCNICA (TOUCHDESIGNER STYLE) */}
+            {/* CUADRICULA TÃ‰CNICA (TOUCHDESIGNER STYLE) */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.15]" style={{
                 backgroundImage: `
             linear-gradient(to right, #444 1px, transparent 1px),
@@ -10803,7 +10803,7 @@ ${afcMapContext}
                 })}
             </div>
 
-            {/* El botón de Resonancia fue removido a petición del usuario por redundancia */}
+            {/* El botÃ³n de Resonancia fue removido a peticiÃ³n del usuario por redundancia */}
 
 
 
@@ -10849,7 +10849,7 @@ ${afcMapContext}
                     onTouchStart={e => e.stopPropagation()}
                     onWheel={e => e.stopPropagation()}
                 >
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
+                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="BitÃ¡cora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
                     <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={15} className="sm:scale-110" /></button>
                     <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={15} className="sm:scale-110" /></button>
                     <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={15} className="sm:scale-110" /></button>
@@ -10919,7 +10919,7 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="AÃ±adir Imagen al Lienzo">
                         <Paperclip size={16} className="sm:scale-110" />
                     </button>
                     <button onClick={() => {
@@ -10964,13 +10964,13 @@ ${afcMapContext}
                             xhr.send(formData);
                         };
                         fileInput.click();
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="AÃ±adir Audio al Lienzo">
                         <Headphones size={16} className="sm:scale-110" />
                     </button>
                     <button
                         onClick={toggleCanvasRecording}
                         className={`w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
-                        title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
+                        title={canvasIsRecording ? 'Detener GrabaciÃ³n' : 'Grabar Audio'}
                     >
                         <Mic size={16} className="sm:scale-110" />
                     </button>
@@ -10996,7 +10996,7 @@ ${afcMapContext}
                                 });
                             }
                         });
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
+                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="AÃ±adir Texto al PizarrÃ³n">
                         <Type size={16} className="sm:scale-110" />
                     </button>
                 </div>
@@ -11006,7 +11006,7 @@ ${afcMapContext}
             {canvasIsRecording && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[100] bg-red-950/85 backdrop-blur-sm border border-red-500/20 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] select-none">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-red-200">Grabando audio para el pizarrón...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-red-200">Grabando audio para el pizarrÃ³n...</span>
                 </div>
             )}
         </div>
@@ -11029,7 +11029,7 @@ ${afcMapContext}
                 >
                     <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
                         src={imageUrl}
-                        alt={`Reactivo ${qNum} - Estímulo ICAR16`}
+                        alt={`Reactivo ${qNum} - EstÃ­mulo ICAR16`}
                         className="max-h-full max-w-full object-contain opacity-95 group-hover:scale-[1.03] transition-all duration-300"
                         style={{ filter: 'invert(1)' }}
                     />
@@ -11075,7 +11075,7 @@ ${afcMapContext}
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
                             <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.25em] text-purple-400 font-mono">
-                                EXPLORACIÓN FENOMENOLÓGICA
+                                EXPLORACIÃ“N FENOMENOLÃ“GICA
                             </span>
                         </div>
                         {!isFresh && (
@@ -11097,10 +11097,10 @@ ${afcMapContext}
 
                                     <div className="relative z-10 space-y-4 py-4">
                                         <h2 className="text-xl sm:text-2xl md:text-3xl font-sans font-black text-white leading-snug tracking-tight uppercase">
-                                            Exploración Fenomenológica
+                                            ExploraciÃ³n FenomenolÃ³gica
                                         </h2>
                                         <p className="text-base sm:text-lg md:text-xl font-serif italic text-zinc-300 leading-relaxed max-w-2xl mx-auto">
-                                            "Responde a las siguientes premisas de manera libre, profunda y completa. Tómate tu tiempo; este es un espacio seguro para volcar tu mundo interior."
+                                            "Responde a las siguientes premisas de manera libre, profunda y completa. TÃ³mate tu tiempo; este es un espacio seguro para volcar tu mundo interior."
                                         </p>
                                     </div>
 
@@ -11109,7 +11109,7 @@ ${afcMapContext}
                                             onClick={() => setShowPhenomIntro(false)}
                                             className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 transition-all border bg-purple-600 border-purple-500 text-black shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:bg-purple-500"
                                         >
-                                            <span className="text-[11px] font-black uppercase tracking-widest">Comenzar Exploración</span>
+                                            <span className="text-[11px] font-black uppercase tracking-widest">Comenzar ExploraciÃ³n</span>
                                             <ArrowRight size={16} />
                                         </button>
                                     </div>
@@ -11119,7 +11119,7 @@ ${afcMapContext}
                             <div className="space-y-6 sm:space-y-10 animate-in fade-in duration-500">
                                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                                     <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.3em] text-purple-500/60 block">
-                                        ESTÍMULO SUBJETIVO {safeIndex + 1} de 4
+                                        ESTÃMULO SUBJETIVO {safeIndex + 1} de 4
                                     </span>
                                 </div>
 
@@ -11142,7 +11142,7 @@ ${afcMapContext}
                                                 onChange={(e) => {
                                                     setPhenomTextValue(e.target.value);
                                                 }}
-                                                placeholder={PHENOM_PART_A[safeIndex].placeholder || "Escribe tu respuesta aquí..."}
+                                                placeholder={PHENOM_PART_A[safeIndex].placeholder || "Escribe tu respuesta aquÃ­..."}
                                                 className="w-full h-full bg-transparent text-sm md:text-base text-zinc-200 font-sans leading-relaxed resize-none focus:outline-none placeholder:text-zinc-600 min-h-[150px]"
                                             />
                                         </div>
@@ -11163,7 +11163,7 @@ ${afcMapContext}
                                                     : 'bg-white/5 border-white/10 text-zinc-600 opacity-50'
                                                     }`}
                                             >
-                                                <span className="text-[11px] font-black uppercase tracking-widest">{safeIndex === 3 ? 'Finalizar Sección' : 'Siguiente'}</span>
+                                                <span className="text-[11px] font-black uppercase tracking-widest">{safeIndex === 3 ? 'Finalizar SecciÃ³n' : 'Siguiente'}</span>
                                                 {safeIndex === 3 ? <Check size={16} /> : <ArrowRight size={16} />}
                                             </button>
                                         </div>
@@ -11248,7 +11248,7 @@ ${afcMapContext}
                                     disabled={currentPidIndex === 0}
                                     className="px-6 py-2.5 sm:px-8 sm:py-3.5 rounded-full border border-white/5 bg-white/[0.02] text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
                                 >
-                                    ← Anterior
+                                    â† Anterior
                                 </button>
                                 <div className="w-24 sm:w-32 bg-white/5 h-1.5 rounded-full overflow-hidden self-center">
                                     <div className="bg-purple-500 h-full transition-all duration-300" style={{ width: `${((currentPidIndex + 1) / 25) * 100}%` }} />
@@ -11260,7 +11260,7 @@ ${afcMapContext}
                     {/* Bottom Progress bar */}
                     <div className="w-full max-w-4xl mx-auto pt-4 sm:pt-6 border-t border-white/5 flex flex-col gap-2 relative z-10">
                         <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-500 font-mono">
-                            <span>INVENTARIO PSICOMÉTRICO PID-5-BF</span>
+                            <span>INVENTARIO PSICOMÃ‰TRICO PID-5-BF</span>
                             <span>{Math.round(((currentPidIndex + 1) / 25) * 100)}%</span>
                         </div>
                         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
@@ -11289,14 +11289,14 @@ ${afcMapContext}
         if (activeTest === 'icar16') {
             const currentQuestion = icarQuestions[currentIcarIndex];
             const categoryColor =
-                currentQuestion.category === "Lógico-Verbal" ? "#f59e0b" :
+                currentQuestion.category === "LÃ³gico-Verbal" ? "#f59e0b" :
                     currentQuestion.category === "Razonamiento Espacial" ? "#06b6d4" :
-                        currentQuestion.category === "Progresión Secuencial" ? "#a855f7" :
+                        currentQuestion.category === "ProgresiÃ³n Secuencial" ? "#a855f7" :
                             "#bef264"; // Razonamiento Matricial
             const categoryGlow =
-                currentQuestion.category === "Lógico-Verbal" ? "rgba(245,158,11,0.03)" :
+                currentQuestion.category === "LÃ³gico-Verbal" ? "rgba(245,158,11,0.03)" :
                     currentQuestion.category === "Razonamiento Espacial" ? "rgba(6,182,212,0.03)" :
-                        currentQuestion.category === "Progresión Secuencial" ? "rgba(168,85,247,0.03)" :
+                        currentQuestion.category === "ProgresiÃ³n Secuencial" ? "rgba(168,85,247,0.03)" :
                             "rgba(190,242,100,0.03)";
 
             return (
@@ -11320,7 +11320,7 @@ ${afcMapContext}
                             />
                             <div className="flex flex-col">
                                 <span className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-400 font-mono">
-                                    Pruebas Clínicas // Evaluaciones
+                                    Pruebas ClÃ­nicas // Evaluaciones
                                 </span>
                                 <span className="text-[8px] font-bold text-zinc-600 uppercase font-mono mt-0.5">
                                     Reactivo {currentIcarIndex + 1} de 16
@@ -11417,7 +11417,7 @@ ${afcMapContext}
                                         disabled={currentIcarIndex === 0}
                                         className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border border-white/5 bg-white/[0.01] text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:border-white/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
                                     >
-                                        ← Anterior
+                                        â† Anterior
                                     </button>
 
                                     <span className="text-[8px] font-mono uppercase text-zinc-600 hidden xs:inline">
@@ -11428,7 +11428,7 @@ ${afcMapContext}
                                         onClick={() => currentIcarIndex < 15 ? setCurrentIcarIndex(prev => prev + 1) : setActiveTest(null)}
                                         className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border border-accent/20 bg-accent/5 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-accent hover:bg-accent hover:text-black hover:border-accent transition-all font-mono"
                                     >
-                                        {currentIcarIndex === 15 ? 'Finalizar ✓' : 'Siguiente →'}
+                                        {currentIcarIndex === 15 ? 'Finalizar âœ“' : 'Siguiente â†’'}
                                     </button>
                                 </div>
                             </div>
@@ -11438,7 +11438,7 @@ ${afcMapContext}
                     {/* Bottom Progress Bar */}
                     <div className="w-full max-w-5xl mx-auto pt-6 border-t border-white/5 flex flex-col gap-2 relative z-10">
                         <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-500 font-mono">
-                            <span>Cartografía Cognitiva ICAR16</span>
+                            <span>CartografÃ­a Cognitiva ICAR16</span>
                             <span>{Math.round(((currentIcarIndex + 1) / 16) * 100)}%</span>
                         </div>
                         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
@@ -11487,7 +11487,7 @@ ${afcMapContext}
                                 ) : '[ Activar Sonido Ambiente ]'}
                             </button>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 font-mono">Espacio de Meditación</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 font-mono">Espacio de MeditaciÃ³n</span>
                         <button
                             onClick={() => { setIsMeditationMode(false); setIsAudioActive(false); }}
                             className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5"
@@ -11521,9 +11521,9 @@ ${afcMapContext}
                             {/* Tiny center hub */}
                             <div className="relative z-10 text-center font-mono text-xs font-black uppercase tracking-[0.35em] text-white">
                                 {breathPhase === 0 && <span className="animate-pulse text-accent">Inhala</span>}
-                                {breathPhase === 1 && <span className="text-white">Retén</span>}
+                                {breathPhase === 1 && <span className="text-white">RetÃ©n</span>}
                                 {breathPhase === 2 && <span className="animate-pulse text-zinc-400">Exhala</span>}
-                                {breathPhase === 3 && <span className="text-zinc-600">Vacío</span>}
+                                {breathPhase === 3 && <span className="text-zinc-600">VacÃ­o</span>}
                             </div>
                         </div>
 
@@ -11540,7 +11540,7 @@ ${afcMapContext}
                                     </p>
                                     <div className="flex justify-center items-center gap-4 text-zinc-500 text-[8px] font-mono uppercase tracking-widest pt-2">
                                         <span>{activeMedFact.category || 'General'}</span>
-                                        <span className="text-zinc-800">•</span>
+                                        <span className="text-zinc-800">â€¢</span>
                                         <span>{new Date(activeMedFact.timestamp).toLocaleDateString()}</span>
                                     </div>
                                 </div>
@@ -11557,12 +11557,12 @@ ${afcMapContext}
                     <div className="w-full max-w-4xl mx-auto border-t border-white/5 pt-6 flex justify-between items-center text-[9px] font-mono text-zinc-600 uppercase tracking-widest relative z-10">
                         <div className="flex gap-4">
                             <span className={breathPhase === 0 ? 'text-accent font-bold' : ''}>1. Inhala (4s)</span>
-                            <span className="text-zinc-800">→</span>
-                            <span className={breathPhase === 1 ? 'text-accent font-bold' : ''}>2. Retén (4s)</span>
-                            <span className="text-zinc-800">→</span>
+                            <span className="text-zinc-800">â†’</span>
+                            <span className={breathPhase === 1 ? 'text-accent font-bold' : ''}>2. RetÃ©n (4s)</span>
+                            <span className="text-zinc-800">â†’</span>
                             <span className={breathPhase === 2 ? 'text-accent font-bold' : ''}>3. Exhala (4s)</span>
-                            <span className="text-zinc-800">→</span>
-                            <span className={breathPhase === 3 ? 'text-accent font-bold' : ''}>4. Vacío (4s)</span>
+                            <span className="text-zinc-800">â†’</span>
+                            <span className={breathPhase === 3 ? 'text-accent font-bold' : ''}>4. VacÃ­o (4s)</span>
                         </div>
                         <div>
                             <span>Box Breathing Cycle</span>
@@ -11602,7 +11602,7 @@ ${afcMapContext}
                                 <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                                     <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
                                     <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent font-mono">
-                                        Contemplación y Reinterpretación del Eco
+                                        ContemplaciÃ³n y ReinterpretaciÃ³n del Eco
                                     </span>
                                 </div>
                                 <button
@@ -11625,7 +11625,7 @@ ${afcMapContext}
                                     </h3>
                                     <div className="space-y-2 border-t border-white/5 pt-6 text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
                                         <div className="flex justify-between">
-                                            <span>Categoría de Conciencia:</span>
+                                            <span>CategorÃ­a de Conciencia:</span>
                                             <span className="text-zinc-300 font-bold">{selectedContemplationFact.category || 'General'}</span>
                                         </div>
                                         <div className="flex justify-between">
@@ -11638,13 +11638,13 @@ ${afcMapContext}
                                 {/* Reinterpretation section */}
                                 <div className="p-8 rounded-[3rem] bg-zinc-900/40 border border-white/5 shadow-2xl flex flex-col justify-between gap-8 backdrop-blur-md">
                                     <div className="space-y-4">
-                                        <h4 className="text-sm font-black uppercase text-accent tracking-widest font-mono">Transmutación Cognitiva</h4>
+                                        <h4 className="text-sm font-black uppercase text-accent tracking-widest font-mono">TransmutaciÃ³n Cognitiva</h4>
                                         <p className="text-xs leading-relaxed text-zinc-400 font-sans">
-                                            Los ecos no son dogmas inmutables de tu historia. Al contemplar este recuerdo en el presente, tienes la facultad de reformularlo e integrarlo bajo un entendimiento más maduro y libre de juicios.
+                                            Los ecos no son dogmas inmutables de tu historia. Al contemplar este recuerdo en el presente, tienes la facultad de reformularlo e integrarlo bajo un entendimiento mÃ¡s maduro y libre de juicios.
                                         </p>
                                     </div>
                                     <div className="space-y-2 flex-1">
-                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 block font-mono">Escribe tu Reinterpretación actual:</span>
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 block font-mono">Escribe tu ReinterpretaciÃ³n actual:</span>
                                         <textarea
                                             value={reinterpretationText}
                                             onChange={(e) => setReinterpretationText(e.target.value)}
@@ -11656,7 +11656,7 @@ ${afcMapContext}
                                         onClick={handleSaveReinterpretation}
                                         className="w-full py-4 bg-accent text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl hover:bg-lime-400 active:scale-[0.98] transition-all shadow-lg shadow-accent/10"
                                     >
-                                        Sincronizar Reinterpretación
+                                        Sincronizar ReinterpretaciÃ³n
                                     </button>
                                 </div>
                             </div>
@@ -11673,7 +11673,7 @@ ${afcMapContext}
                         <div className="flex items-center justify-between pt-6 pb-4 border-b border-white/5 mb-8 animate-in slide-in-from-top duration-500 w-full gap-3 relative">
                             <div className="flex items-center gap-2">
                                 <Aperture size={16} className="text-accent animate-spin-slow" style={{ color: accent }} />
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Pruebas Clínicas</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Pruebas ClÃ­nicas</span>
                             </div>
 
                             {/* Mini Session History Button & Dropdown */}
@@ -11711,7 +11711,7 @@ ${afcMapContext}
                                                             : 'bg-transparent text-zinc-500 hover:bg-white/5 hover:text-white'
                                                             }`}
                                                     >
-                                                        Sesión {v}
+                                                        SesiÃ³n {v}
                                                     </button>
                                                 );
                                             })}
@@ -11724,7 +11724,7 @@ ${afcMapContext}
                                                 }}
                                                 className="w-full py-1.5 rounded-xl border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 text-[8px] font-black uppercase tracking-wider font-mono transition-all flex items-center justify-center gap-1"
                                             >
-                                                <Plus size={10} /> Nueva Sesión
+                                                <Plus size={10} /> Nueva SesiÃ³n
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -11733,7 +11733,7 @@ ${afcMapContext}
                                                 }}
                                                 className="w-full py-1.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/20 hover:text-white text-[8px] font-black uppercase tracking-widest font-mono transition-all flex items-center justify-center gap-1"
                                             >
-                                                <Trash2 size={10} /> Borrar Sesión {activeVersion}
+                                                <Trash2 size={10} /> Borrar SesiÃ³n {activeVersion}
                                             </button>
                                         </div>
                                     </div>
@@ -11859,7 +11859,7 @@ ${afcMapContext}
                                                                         <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl opacity-15 pointer-events-none"
                                                                             style={{
                                                                                 backgroundColor: fact.category === 'Afecto' ? '#ef4444' :
-                                                                                    fact.category === 'Cognición' ? '#06b6d4' :
+                                                                                    fact.category === 'CogniciÃ³n' ? '#06b6d4' :
                                                                                         fact.category === 'Racional' ? '#bef264' : '#a855f7'
                                                                             }}
                                                                         />
@@ -11868,7 +11868,7 @@ ${afcMapContext}
                                                                             <div className="flex justify-between items-center border-b border-white/5 pb-4">
                                                                                 <div className="flex items-center gap-2">
                                                                                     {fact.category === 'Afecto' && <Heart size={16} className="text-red-400" />}
-                                                                                    {fact.category === 'Cognición' && <Zap size={16} className="text-cyan-400" />}
+                                                                                    {fact.category === 'CogniciÃ³n' && <Zap size={16} className="text-cyan-400" />}
                                                                                     {fact.category === 'Racional' && <Sparkles size={16} className="text-lime-400" />}
                                                                                     {(!fact.category || fact.category === 'Conciencia') && <Aperture size={16} className="text-purple-400 animate-spin-slow" />}
                                                                                     <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 font-mono">
@@ -11907,7 +11907,7 @@ ${afcMapContext}
                                                                                 >
                                                                                     <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${fact.isPinned ? 'bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.6)]' : 'bg-white/20'}`} />
                                                                                     <span>{fact.isPinned ? 'Conservado' : 'Conservar'}</span>
-                                                                                    <span className="hidden sm:inline">{fact.isPinned ? ' en Núcleo' : ' / Pin'}</span>
+                                                                                    <span className="hidden sm:inline">{fact.isPinned ? ' en NÃºcleo' : ' / Pin'}</span>
                                                                                 </button>
 
                                                                                 {/* BOTON PUBLICAR DESHABILITADO
@@ -11990,8 +11990,8 @@ ${afcMapContext}
                                                     num: '01',
                                                     type: 'Contextual',
                                                     icon: <Camera size={22} className="text-emerald-400" />,
-                                                    title: 'Entrevista Biográfica',
-                                                    description: 'Grabación de video/audio y transcripción en vivo para explorar tu mundo, tu historia de vida y tu día a día.',
+                                                    title: 'Entrevista BiogrÃ¡fica',
+                                                    description: 'GrabaciÃ³n de video/audio y transcripciÃ³n en vivo para explorar tu mundo, tu historia de vida y tu dÃ­a a dÃ­a.',
                                                     focus: 'Narrativa',
                                                     duration: '10-15m',
                                                     color: 'emerald',
@@ -12008,9 +12008,9 @@ ${afcMapContext}
                                                     num: '02',
                                                     type: 'Cognitiva',
                                                     icon: <Zap size={22} className="text-accent" />,
-                                                    title: 'Cartografía ICAR16',
-                                                    description: 'Evaluación cognitiva estructurada de 16 ítems lógico-verbales, espaciales de cubos 3D y matrices.',
-                                                    focus: 'Lógica/3D',
+                                                    title: 'CartografÃ­a ICAR16',
+                                                    description: 'EvaluaciÃ³n cognitiva estructurada de 16 Ã­tems lÃ³gico-verbales, espaciales de cubos 3D y matrices.',
+                                                    focus: 'LÃ³gica/3D',
                                                     duration: '15-20m',
                                                     color: 'accent',
                                                     glowColor: 'shadow-[0_0_20px_rgba(251,191,36,0.3)] border-accent/40 text-accent',
@@ -12025,8 +12025,8 @@ ${afcMapContext}
                                                     num: '03',
                                                     type: 'Existencial',
                                                     icon: <Heart size={22} className="text-purple-400" />,
-                                                    title: 'Diagnóstico Existencial',
-                                                    description: 'Mapea tu forma de existir, tus mecanismos de autoprotección y tu relación con el tiempo.',
+                                                    title: 'DiagnÃ³stico Existencial',
+                                                    description: 'Mapea tu forma de existir, tus mecanismos de autoprotecciÃ³n y tu relaciÃ³n con el tiempo.',
                                                     focus: 'Existencial',
                                                     duration: '5-10m',
                                                     color: 'purple',
@@ -12042,7 +12042,7 @@ ${afcMapContext}
                                                     type: 'Personalidad',
                                                     icon: <Sparkles size={22} className="text-pink-400" />,
                                                     title: 'Inventario PID-5-BF',
-                                                    description: '25 reactivos de autoinforme clínico estructurados para mapear tus rasgos dominantes de personalidad.',
+                                                    description: '25 reactivos de autoinforme clÃ­nico estructurados para mapear tus rasgos dominantes de personalidad.',
                                                     focus: 'Rasgos',
                                                     duration: '5-8m',
                                                     color: 'pink',
@@ -12094,7 +12094,7 @@ ${afcMapContext}
                                                                         <div className="space-y-3 md:space-y-6 my-auto">
                                                                             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                                                                                 <span className="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] bg-white/5 border border-white/10 text-zinc-300">
-                                                                                    Módulo {card.num} // {card.type}
+                                                                                    MÃ³dulo {card.num} // {card.type}
                                                                                 </span>
                                                                                 {card.isComplete && (
                                                                                     <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:px-3 md:py-1 rounded-full">
@@ -12112,11 +12112,11 @@ ${afcMapContext}
                                                                             {/* Immersive Focus & Duration Badges */}
                                                                             <div className="hidden md:flex flex-wrap gap-8 border-t border-white/10 pt-6 mt-6 max-w-xl">
                                                                                 <div className="space-y-1">
-                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Enfoque Analítico</span>
+                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Enfoque AnalÃ­tico</span>
                                                                                     <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.focus}</span>
                                                                                 </div>
                                                                                 <div className="space-y-1">
-                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">Duración Estimada</span>
+                                                                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 font-mono block">DuraciÃ³n Estimada</span>
                                                                                     <span className="text-xs md:text-sm font-bold text-white block uppercase tracking-wider">{card.duration}</span>
                                                                                 </div>
                                                                             </div>
@@ -12127,7 +12127,7 @@ ${afcMapContext}
                                                                                 onClick={card.action}
                                                                                 className={`w-full max-w-md py-3.5 md:py-5 px-6 md:px-8 rounded-xl md:rounded-2xl border font-black uppercase text-[10px] md:text-[11px] tracking-[0.25em] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${card.btnBg}`}
                                                                             >
-                                                                                {card.isComplete ? 'Reiniciar Prueba' : 'Iniciar Diagnóstico'}
+                                                                                {card.isComplete ? 'Reiniciar Prueba' : 'Iniciar DiagnÃ³stico'}
                                                                             </button>
                                                                         </div>
                                                                     </div>
@@ -12147,7 +12147,7 @@ ${afcMapContext}
                                                                             <div className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-white shadow-md">
                                                                                 {card.icon}
                                                                             </div>
-                                                                            <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">Módulo</span>
+                                                                            <span className="text-[6px] md:text-[7px] font-black uppercase tracking-wider text-zinc-500">MÃ³dulo</span>
                                                                         </div>
 
                                                                         {/* Duration badge */}
@@ -12228,7 +12228,7 @@ ${afcMapContext}
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 font-mono">
-                                                    EXPLORACIÓN FENOMENOLÓGICA
+                                                    EXPLORACIÃ“N FENOMENOLÃ“GICA
                                                 </span>
                                             </div>
                                             <button onClick={() => setActiveTest(null)} className="text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-xl">Salir</button>
@@ -12240,10 +12240,10 @@ ${afcMapContext}
 
                                                 <div className="relative z-10 space-y-4 py-4">
                                                     <h2 className="text-xl sm:text-2xl md:text-3xl font-sans font-black text-white leading-snug tracking-tight uppercase">
-                                                        Exploración Fenomenológica
+                                                        ExploraciÃ³n FenomenolÃ³gica
                                                     </h2>
                                                     <p className="text-base sm:text-lg md:text-xl font-serif italic text-zinc-300 leading-relaxed max-w-2xl mx-auto">
-                                                        "Responde a las siguientes premisas de manera libre, profunda y completa. Tómate tu tiempo; este es un espacio seguro para volcar tu mundo interior."
+                                                        "Responde a las siguientes premisas de manera libre, profunda y completa. TÃ³mate tu tiempo; este es un espacio seguro para volcar tu mundo interior."
                                                     </p>
                                                 </div>
 
@@ -12252,7 +12252,7 @@ ${afcMapContext}
                                                         onClick={() => setShowPhenomIntro(false)}
                                                         className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 transition-all border bg-purple-600 border-purple-500 text-black shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:bg-purple-500"
                                                     >
-                                                        <span className="text-[11px] font-black uppercase tracking-widest">Comenzar Exploración</span>
+                                                        <span className="text-[11px] font-black uppercase tracking-widest">Comenzar ExploraciÃ³n</span>
                                                         <ArrowRight size={16} />
                                                     </button>
                                                 </div>
@@ -12263,7 +12263,7 @@ ${afcMapContext}
 
                                                 <div className="relative z-10 flex items-center justify-between border-b border-white/5 pb-3">
                                                     <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-purple-500/60 block">
-                                                        ESTÍMULO SUBJETIVO {currentPhenomIndex + 1} de 4
+                                                        ESTÃMULO SUBJETIVO {currentPhenomIndex + 1} de 4
                                                     </span>
                                                 </div>
 
@@ -12281,7 +12281,7 @@ ${afcMapContext}
                                                         <textarea
                                                             value={phenomTextValue || ''}
                                                             onChange={(e) => setPhenomTextValue(e.target.value)}
-                                                            placeholder={PHENOM_PART_A[currentPhenomIndex < 4 ? currentPhenomIndex : 3].placeholder || "Escribe tu respuesta aquí..."}
+                                                            placeholder={PHENOM_PART_A[currentPhenomIndex < 4 ? currentPhenomIndex : 3].placeholder || "Escribe tu respuesta aquÃ­..."}
                                                             className="w-full h-full bg-transparent text-base text-zinc-200 font-sans leading-relaxed resize-none focus:outline-none placeholder:text-zinc-600 min-h-[150px]"
                                                         />
                                                     </div>
@@ -12302,7 +12302,7 @@ ${afcMapContext}
                                                                 : 'bg-white/5 border-white/10 text-zinc-600 opacity-50'
                                                                 }`}
                                                         >
-                                                            <span className="text-[11px] font-black uppercase tracking-widest">{currentPhenomIndex >= 3 ? 'Finalizar Sección' : 'Siguiente'}</span>
+                                                            <span className="text-[11px] font-black uppercase tracking-widest">{currentPhenomIndex >= 3 ? 'Finalizar SecciÃ³n' : 'Siguiente'}</span>
                                                             {currentPhenomIndex >= 3 ? <Check size={16} /> : <ArrowRight size={16} />}
                                                         </button>
                                                     </div>
@@ -12407,7 +12407,7 @@ ${afcMapContext}
                                                         strokeColor = '#ef4444';
                                                         bgColor = 'rgba(185, 28, 28, 0.2)';
                                                         textColor = '#fecaca';
-                                                        title = 'SÍNTOMA CRÍTICO';
+                                                        title = 'SÃNTOMA CRÃTICO';
                                                     } else if (isChain) {
                                                         strokeColor = '#71717a';
                                                         bgColor = 'rgba(63, 63, 70, 0.2)';
@@ -12480,10 +12480,10 @@ ${afcMapContext}
                                     <>
                                         <Compass size={48} className="text-zinc-800 mb-6 animate-pulse" />
                                         <h3 className="text-2xl md:text-4xl font-black italic uppercase text-white/40 tracking-widest text-center">
-                                            Sin Cartografía Asignada
+                                            Sin CartografÃ­a Asignada
                                         </h3>
                                         <p className="text-[10px] md:text-xs font-mono text-zinc-500 mt-6 max-w-lg text-center leading-relaxed">
-                                            AÚN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÍNICO DESDE TU PERFIL APARECERÁ AQUÍ.
+                                            AÃšN NO HAY UN MAPA DE BUCLES DISPONIBLE PARA TU IDENTIDAD. EL MAPA GENERADO Y PUBLICADO POR EL ESPECIALISTA CLÃNICO DESDE TU PERFIL APARECERÃ AQUÃ.
                                         </p>
                                     </>
                                 )}
@@ -12728,7 +12728,7 @@ ${afcMapContext}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide">Carta de Vibración</span>
+                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide">Carta de VibraciÃ³n</span>
                                         </div>
                                         {matchScore && (
                                             <span className="text-[9px] font-mono text-accent">Afinidad: {matchScore}%</span>
@@ -12740,15 +12740,15 @@ ${afcMapContext}
                                         ) : (
                                             <>
                                                 <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌌</span> Habitar</span>
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">ðŸŒŒ</span> Habitar</span>
                                                     <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">🌿</span> Vínculo</span>
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">ðŸŒ¿</span> VÃ­nculo</span>
                                                     <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">✨</span> Búsqueda</span>
+                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">âœ¨</span> BÃºsqueda</span>
                                                     <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
                                                 </div>
                                             </>
@@ -12980,7 +12980,7 @@ ${afcMapContext}
                     {/* Introspective Question */}
                     <div className="space-y-4 text-center">
                         <h2 className="text-xl sm:text-2xl font-light tracking-wide text-zinc-300 italic font-serif leading-relaxed px-2">
-                            "¿Cuánto ruido hay en tu silencio?"
+                            "Â¿CuÃ¡nto ruido hay en tu silencio?"
                         </h2>
                         <div className="h-[1px] w-8 bg-zinc-800 mx-auto" />
                         <p className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">
@@ -13017,7 +13017,7 @@ ${afcMapContext}
                                 <input
                                     type={showPass ? "text" : "password"}
                                     id="oasis_key_input"
-                                    placeholder="••••••••"
+                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                     onKeyDown={handleKeyPress}
                                     className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
                                 />
@@ -13046,7 +13046,7 @@ ${afcMapContext}
                                 </div>
                                 <div className="space-y-1 text-left mt-4">
                                     <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                        Selecciona tu Psicólogo (Opcional)
+                                        Selecciona tu PsicÃ³logo (Opcional)
                                     </label>
                                     <select
                                         id="oasis_clinician_code_input"
@@ -13063,7 +13063,7 @@ ${afcMapContext}
                                 <div className="flex items-center gap-2 mt-4 ml-1">
                                     <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
                                     <label htmlFor="oasis_is_clinician" className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-                                        Soy Profesional Clínico
+                                        Soy Profesional ClÃ­nico
                                     </label>
                                 </div>
                             </>
@@ -13092,7 +13092,7 @@ ${afcMapContext}
                                     onClick={() => { setIsRegisterMode(!isRegisterMode); setAuthError(''); }}
                                     className="text-[7px] font-bold uppercase tracking-[0.2em] text-zinc-650 hover:text-zinc-400 transition-colors"
                                 >
-                                    {isRegisterMode ? 'Ya tengo un alma sintonizada' : '¿No tienes cuenta? Sintoniza una'}
+                                    {isRegisterMode ? 'Ya tengo un alma sintonizada' : 'Â¿No tienes cuenta? Sintoniza una'}
                                 </button>
                             </div>
                         </div>
@@ -13161,7 +13161,7 @@ ${afcMapContext}
                     );
                 })()}
 
-                {/* SUTILEZAS COSMÉTICAS (GRAIN & GLOW) */}
+                {/* SUTILEZAS COSMÃ‰TICAS (GRAIN & GLOW) */}
                 <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
             </div>
 
@@ -13341,13 +13341,13 @@ ${afcMapContext}
                         {/* SETTINGS HEADER */}
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col">
-                                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-accent">Configuración</span>
-                                <h3 className="text-2xl font-black italic text-white tracking-tighter">Núcleo de Kio</h3>
+                                <span className="text-[8px] font-black uppercase tracking-[0.4em] text-accent">ConfiguraciÃ³n</span>
+                                <h3 className="text-2xl font-black italic text-white tracking-tighter">NÃºcleo de Kio</h3>
                             </div>
                             <button onClick={() => setIsSettingsOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all"><X size={20} /></button>
                         </div>
 
-                        {/* ATMÓSFERA AMBIENTAL (PERSISTENTE) */}
+                        {/* ATMÃ“SFERA AMBIENTAL (PERSISTENTE) */}
                         <div className="space-y-6">
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Aura del Entorno</span>
@@ -13405,7 +13405,7 @@ ${afcMapContext}
                                     ))}
                                     {bgTemplates.length === 0 && (
                                         <div className="col-span-2 text-center py-4 text-[10px] font-mono text-zinc-600">
-                                            No hay plantillas públicas aún.
+                                            No hay plantillas pÃºblicas aÃºn.
                                         </div>
                                     )}
                                 </div>
@@ -13417,7 +13417,7 @@ ${afcMapContext}
                                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform"><Plus size={20} className="text-accent" /></div>
                                     <div className="text-center">
                                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white block mb-1">Cargar Aura Nueva</span>
-                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">Imagen o Video Cinético</span>
+                                        <span className="text-[6px] font-black uppercase tracking-widest text-zinc-500">Imagen o Video CinÃ©tico</span>
                                     </div>
                                     <input type="file" className="hidden" accept="image/*,video/*" onChange={handleBgUpload} />
                                 </label>
@@ -13455,7 +13455,7 @@ ${afcMapContext}
                                                 <Maximize2 size={16} />
                                                 <div className="text-center">
                                                     <span className="text-[9px] font-black uppercase block">Relleno</span>
-                                                    <span className="text-[6px] font-black opacity-40 uppercase tracking-tighter">Cinético</span>
+                                                    <span className="text-[6px] font-black opacity-40 uppercase tracking-tighter">CinÃ©tico</span>
                                                 </div>
                                             </button>
                                             <button
@@ -13502,7 +13502,7 @@ ${afcMapContext}
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-wider text-zinc-500">
                                                     <span>Matiz (Hue)</span>
-                                                    <span>{hsl.h}°</span>
+                                                    <span>{hsl.h}Â°</span>
                                                 </div>
                                                 <input
                                                     type="range"
@@ -13518,7 +13518,7 @@ ${afcMapContext}
                                             {/* SATURATION */}
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-wider text-zinc-500">
-                                                    <span>Saturación</span>
+                                                    <span>SaturaciÃ³n</span>
                                                     <span>{hsl.s}%</span>
                                                 </div>
                                                 <input
@@ -13554,9 +13554,9 @@ ${afcMapContext}
                             );
                         })()}
 
-                        {/* CONFIGURACIÓN DE INTELIGENCIA (KIO / CHATGPT / DEEPSEEK) */}
+                        {/* CONFIGURACIÃ“N DE INTELIGENCIA (KIO / CHATGPT / DEEPSEEK) */}
                         <div className="space-y-4 pt-2 border-t border-white/5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Configuración de Inteligencia (ChatGPT / DeepSeek)</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">ConfiguraciÃ³n de Inteligencia (ChatGPT / DeepSeek)</span>
                             <div className="space-y-4 bg-white/5 p-5 rounded-3xl border border-white/5">
                                 {/* API KEY */}
                                 <div className="space-y-1.5 text-left">
@@ -13570,7 +13570,7 @@ ${afcMapContext}
                                             setDeepseekKey(e.target.value);
                                             localStorage.setItem('oasis_deepseek_key', e.target.value);
                                         }}
-                                        placeholder={deepseekKey ? "••••••••••••••••" : "sk-proj-..."}
+                                        placeholder={deepseekKey ? "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" : "sk-proj-..."}
                                         className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-mono text-white placeholder:text-zinc-500 focus:border-accent/40 outline-none transition-all"
                                     />
                                 </div>
@@ -13610,7 +13610,7 @@ ${afcMapContext}
                                     />
                                 </div>
 
-                                {/* PROBAR CONEXIÓN */}
+                                {/* PROBAR CONEXIÃ“N */}
                                 <div className="pt-2">
                                     <button
                                         type="button"
@@ -13618,10 +13618,10 @@ ${afcMapContext}
                                         disabled={apiTestLoading}
                                         className="w-full bg-accent/10 border border-accent/20 hover:bg-accent/20 text-accent font-black uppercase text-[9px] tracking-wider py-2 rounded-xl transition-all disabled:opacity-50"
                                     >
-                                        {apiTestLoading ? 'Probando...' : 'Probar Conexión con IA'}
+                                        {apiTestLoading ? 'Probando...' : 'Probar ConexiÃ³n con IA'}
                                     </button>
                                     {apiTestResult && (
-                                        <div className={`mt-2 p-3 rounded-xl border text-[9px] font-mono leading-relaxed break-all ${apiTestResult.startsWith('Éxito')
+                                        <div className={`mt-2 p-3 rounded-xl border text-[9px] font-mono leading-relaxed break-all ${apiTestResult.startsWith('Ã‰xito')
                                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                                             : 'bg-red-500/10 border-red-500/20 text-red-400'
                                             }`}>
@@ -13638,11 +13638,11 @@ ${afcMapContext}
                                 <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Pantalla de Inicio</span>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                                     {[
-                                        { id: 'bitacora', label: 'Bitácora', icon: <Aperture size={16} /> },
-                                        { id: 'chat', label: 'Conversación', icon: <MessageSquare size={16} /> },
+                                        { id: 'bitacora', label: 'BitÃ¡cora', icon: <Aperture size={16} /> },
+                                        { id: 'chat', label: 'ConversaciÃ³n', icon: <MessageSquare size={16} /> },
                                         { id: 'diary', label: 'Diario', icon: <Layers size={16} /> },
                                         { id: 'notes', label: 'Notas', icon: <StickyNote size={16} /> },
-                                        { id: 'canvas', label: 'Pizarrón', icon: <LayoutGrid size={16} /> }
+                                        { id: 'canvas', label: 'PizarrÃ³n', icon: <LayoutGrid size={16} /> }
                                     ].map(opt => (
                                         <button
                                             key={opt.id}
@@ -13665,17 +13665,17 @@ ${afcMapContext}
                                     const role = localStorage.getItem('oasis_role_' + user) || 'patient';
                                     const isClinician = role === 'clinician' || role === 'supervisor' || ['observador1', 'observador', 'YUL', 'yuli', '2112'].includes(user);
                                     if (isClinician) {
-                                        return <button onClick={() => { setView('clinical'); setIsSettingsOpen(false); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de Observación Clínica</button>;
+                                        return <button onClick={() => { setView('clinical'); setIsSettingsOpen(false); }} className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Panel de ObservaciÃ³n ClÃ­nica</button>;
                                     }
                                     return null;
                                 })()}
-                                <button onClick={() => { setView('soul'); setIsSettingsOpen(false); }} className="w-full py-4 bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Entrevista Biográfica</button>
+                                <button onClick={() => { setView('soul'); setIsSettingsOpen(false); }} className="w-full py-4 bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Entrevista BiogrÃ¡fica</button>
                             </div>
                         </div>
 
                         {/* FOOTER */}
                         <div className="pt-8 border-t border-white/5">
-                            <span className="text-[7px] font-black uppercase tracking-[1em] text-zinc-800">Versión 1.3.0_Stable</span>
+                            <span className="text-[7px] font-black uppercase tracking-[1em] text-zinc-800">VersiÃ³n 1.3.0_Stable</span>
                             <div className="space-y-4 pt-10 border-t border-white/5 mt-auto">
                                 <button
                                     onClick={() => {
@@ -13689,7 +13689,7 @@ ${afcMapContext}
                                             }
                                             const jsonStr = JSON.stringify(data, null, 2);
                                             navigator.clipboard.writeText(jsonStr).then(() => {
-                                                alert("¡Datos exportados y copiados al portapapeles! Pégalo en el chat para sincronizar.");
+                                                alert("Â¡Datos exportados y copiados al portapapeles! PÃ©galo en el chat para sincronizar.");
                                             }).catch(err => {
                                                 alert("Error copiando al portapapeles. Muestra esto al desarrollador:\n\n" + jsonStr.substring(0, 100) + "...");
                                             });
@@ -13704,7 +13704,7 @@ ${afcMapContext}
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const jsonStr = prompt("Pega aquí el texto que copiaste al exportar los datos:");
+                                        const jsonStr = prompt("Pega aquÃ­ el texto que copiaste al exportar los datos:");
                                         if (jsonStr) {
                                             try {
                                                 const data = JSON.parse(jsonStr);
@@ -13715,10 +13715,10 @@ ${afcMapContext}
                                                         count++;
                                                     }
                                                 }
-                                                alert(`¡Éxito! Se han restaurado ${count} registros. La aplicación se recargará ahora para aplicar los cambios.`);
+                                                alert(`Â¡Ã‰xito! Se han restaurado ${count} registros. La aplicaciÃ³n se recargarÃ¡ ahora para aplicar los cambios.`);
                                                 window.location.reload();
                                             } catch (e) {
-                                                alert("Error: El texto pegado no es válido. Asegúrate de copiarlo completo.");
+                                                alert("Error: El texto pegado no es vÃ¡lido. AsegÃºrate de copiarlo completo.");
                                             }
                                         }
                                     }}
@@ -13732,7 +13732,7 @@ ${afcMapContext}
                                     className="w-full py-5 bg-red-500/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-red-500 hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
                                 >
                                     <ArrowLeft size={16} />
-                                    Libre / Cerrar Sesión
+                                    Libre / Cerrar SesiÃ³n
                                 </button>
                                 <div className="text-center">
                                     <span className="text-[6px] font-black uppercase tracking-[0.4em] text-zinc-500">Ruido Interior v2.0 - Acceso Seguro</span>
@@ -13743,7 +13743,7 @@ ${afcMapContext}
                 </div>
             )}
 
-            {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
+            {/* BOTÃ“N DE ACCIÃ“N ÃšNICO (LA REFINERÃA & CHAT) */}
             {(view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && !publicProfileUser && (
                 <div
                     onTouchStart={handleNavbarTouchStart}
@@ -13818,7 +13818,7 @@ ${afcMapContext}
                         <Pencil size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
 
-                    {/* 7. Feed Público */}
+                    {/* 7. Feed PÃºblico */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -13835,7 +13835,7 @@ ${afcMapContext}
                         }}
                         className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
                         style={view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
-                        title="Feed Público"
+                        title="Feed PÃºblico"
                     >
                         <Home size={16} className="sm:scale-110 hover-float-icon" />
                     </button>
@@ -13852,7 +13852,7 @@ ${afcMapContext}
                     user={user}
                     onClose={() => setIsPublishSelectorOpen(false)}
                     onPublished={(newBlock) => {
-                        // Refresh feed from server — the block is already saved
+                        // Refresh feed from server â€” the block is already saved
                         fetchFeed();
                         setView('feed');
                     }}
@@ -14102,12 +14102,12 @@ ${afcMapContext}
             {titlePrompt && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setTitlePrompt(null)}>
                     <div className="bg-[#121214] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-white text-lg font-black uppercase tracking-widest mb-4">{titlePrompt.defaultValue ? 'Editar Título' : 'Añadir Título'}</h3>
+                        <h3 className="text-white text-lg font-black uppercase tracking-widest mb-4">{titlePrompt.defaultValue ? 'Editar TÃ­tulo' : 'AÃ±adir TÃ­tulo'}</h3>
                         <input
                             type="text"
                             autoFocus
                             defaultValue={titlePrompt.defaultValue}
-                            placeholder="Escribe el texto aquí..."
+                            placeholder="Escribe el texto aquÃ­..."
                             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-accent transition-colors mb-6"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
@@ -14185,7 +14185,7 @@ ${afcMapContext}
 
                         <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
                             src={zoomedImage}
-                            alt="Estímulo ampliado"
+                            alt="EstÃ­mulo ampliado"
                             className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-white/5 shadow-2xl transition-transform duration-300"
                             style={{ filter: 'invert(1)' }}
                         />
@@ -14211,7 +14211,7 @@ ${afcMapContext}
                         className="w-full h-full object-cover scale-x-[-1]"
                     />
                     <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-1 py-0.5 rounded bg-red-500 text-[6px] sm:text-[8px] font-mono font-bold text-white uppercase tracking-wider animate-pulse">
-                        <span className="w-1 h-1 rounded-full bg-white" /> REC CLÍNICO
+                        <span className="w-1 h-1 rounded-full bg-white" /> REC CLÃNICO
                     </div>
                 </div>
             )}
@@ -14221,8 +14221,8 @@ ${afcMapContext}
                     <div className="w-full max-w-sm bg-[#0c0c0d] border border-white/10 rounded-[2.5rem] shadow-2xl p-8 space-y-6">
                         <div className="text-center space-y-2">
                             <span className="text-[8px] font-black uppercase tracking-[0.4em] text-red-500">Acceso Restringido</span>
-                            <h4 className="text-xl font-black italic text-white tracking-tight">Verificación Clínica</h4>
-                            <p className="text-[10px] text-zinc-500 font-sans">Introduce la contraseña de acceso al panel de observaciones y diagnóstico.</p>
+                            <h4 className="text-xl font-black italic text-white tracking-tight">VerificaciÃ³n ClÃ­nica</h4>
+                            <p className="text-[10px] text-zinc-500 font-sans">Introduce la contraseÃ±a de acceso al panel de observaciones y diagnÃ³stico.</p>
                         </div>
 
                         <div className="space-y-4">
@@ -14236,13 +14236,13 @@ ${afcMapContext}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleVerifyClinicalPassword();
                                 }}
-                                placeholder="CONTRASEÑA MÁSTER"
+                                placeholder="CONTRASEÃ‘A MÃSTER"
                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-center text-xs font-mono tracking-[0.2em] text-white focus:border-red-500/50 outline-none transition-all placeholder:text-zinc-700"
                             />
 
                             {passwordError && (
                                 <p className="text-red-500 text-[9px] text-center font-bold uppercase tracking-wider animate-pulse">
-                                    Contraseña inválida o rechazada
+                                    ContraseÃ±a invÃ¡lida o rechazada
                                 </p>
                             )}
 
@@ -14267,7 +14267,7 @@ ${afcMapContext}
 
 
 
-            {/* ── UNIFIED BOTTOM CONTEXT BAR ── [switcher │ mode tools] */}
+            {/* â”€â”€ UNIFIED BOTTOM CONTEXT BAR â”€â”€ [switcher â”‚ mode tools] */}
             {(isComposerOpen || isChatOpen || activeNotebook || isPublishSelectorOpen) && !isUnifiedCreatorOpen && !activeTest && (() => {
                 const isKeyboardOpen = window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150;
                 const isAnyContextOpen = isComposerOpen || isChatOpen || activeNotebook || isPublishSelectorOpen;
@@ -14505,7 +14505,7 @@ ${afcMapContext}
                                                     ref={titleRef}
                                                     autoFocus
                                                     className="w-full bg-transparent border-none focus:ring-0 text-2xl md:text-4xl font-bold text-zinc-100 placeholder:text-zinc-800 transition-all p-0 tracking-tight"
-                                                    placeholder={isDiaryMode ? new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : (isResonanceMode ? "Nombra tu Resonancia" : "Sin título")}
+                                                    placeholder={isDiaryMode ? new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : (isResonanceMode ? "Nombra tu Resonancia" : "Sin tÃ­tulo")}
                                                     value={caption}
                                                     onChange={e => setCaption(e.target.value)}
                                                     onKeyDown={(e) => {
@@ -14532,7 +14532,7 @@ ${afcMapContext}
                                                 <div className="w-full flex items-center flex-wrap gap-2 pb-6 border-b border-white/5 mb-6 animate-in fade-in duration-300">
                                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mr-2 flex items-center gap-1" style={{ color: accent }}>
                                                         <FileText size={12} />
-                                                        Subpáginas:
+                                                        SubpÃ¡ginas:
                                                     </span>
 
                                                     {childNotes.map((child, idx) => (
@@ -14541,7 +14541,7 @@ ${afcMapContext}
                                                                 onClick={() => editBlock(child)}
                                                                 className="text-[10px] font-bold text-white cursor-pointer mr-2 truncate max-w-[120px] hover:text-accent transition-colors"
                                                             >
-                                                                {child.caption || `Subpágina ${idx + 1}`}
+                                                                {child.caption || `SubpÃ¡gina ${idx + 1}`}
                                                             </span>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleDeleteAttribute(child.id); }}
@@ -14563,7 +14563,7 @@ ${afcMapContext}
                                                     <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 blur-2xl rounded-full" />
                                                     <div className="flex items-center gap-2 mb-3 relative z-10">
                                                         <Grid size={12} className="text-accent animate-pulse" style={{ color: accent }} />
-                                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-accent" style={{ color: accent }}>Pizarrón Adjunto ({currentMuralBlocks.length} Capas)</span>
+                                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-accent" style={{ color: accent }}>PizarrÃ³n Adjunto ({currentMuralBlocks.length} Capas)</span>
                                                     </div>
                                                     <MiniMuralPreview
                                                         muralBlocks={currentMuralBlocks}
@@ -14648,7 +14648,7 @@ ${afcMapContext}
                                                                     <Radio size={16} className={focusedResonanceField === 'resonance' ? 'animate-pulse' : 'animate-spin-slow'} />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-accent leading-tight uppercase tracking-tight">¿Qué resuena hoy en ti?</span>
+                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-accent leading-tight uppercase tracking-tight">Â¿QuÃ© resuena hoy en ti?</span>
                                                                     <span className="text-[6px] font-bold text-zinc-500 uppercase tracking-[0.4em] opacity-80">Resonancia Primal</span>
                                                                 </div>
                                                             </div>
@@ -14657,7 +14657,7 @@ ${afcMapContext}
                                                                     value={resResonance}
                                                                     onChange={e => setResResonance(e.target.value)}
                                                                     onFocus={() => setFocusedResonanceField('resonance')}
-                                                                    placeholder="Describe la vibración actual..."
+                                                                    placeholder="Describe la vibraciÃ³n actual..."
                                                                     className={`w-full h-full bg-transparent border-none focus:ring-0 p-0 font-serif italic text-white/90 placeholder:text-zinc-600 resize-none overflow-hidden col-[1] row-[1] typing-aura ${focusedResonanceField === 'resonance' ? 'text-xl md:text-xl' : 'text-base md:text-base'}`}
                                                                     onKeyDown={(e) => {
                                                                         if (e.key === 'Tab') {
@@ -14692,7 +14692,7 @@ ${afcMapContext}
                                                                     <Zap size={16} className={focusedResonanceField === 'impact' ? 'animate-pulse' : ''} />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-rose-400 leading-tight uppercase tracking-tight">¿Qué impacto genera esto?</span>
+                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-rose-400 leading-tight uppercase tracking-tight">Â¿QuÃ© impacto genera esto?</span>
                                                                     <span className="text-[6px] font-bold text-zinc-500 uppercase tracking-[0.4em] opacity-80">Impacto Profundo</span>
                                                                 </div>
                                                             </div>
@@ -14731,7 +14731,7 @@ ${afcMapContext}
                                                                     <Focus size={16} className={focusedResonanceField === 'strange' ? 'animate-pulse' : ''} />
                                                                 </div>
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-cyan-400 leading-tight uppercase tracking-tight">¿Qué es lo extraño de este proceso?</span>
+                                                                    <span className="text-[11px] md:text-[13px] font-black italic text-cyan-400 leading-tight uppercase tracking-tight">Â¿QuÃ© es lo extraÃ±o de este proceso?</span>
                                                                     <span className="text-[6px] font-bold text-zinc-500 uppercase tracking-[0.4em] opacity-80">Atipicidad / Rareza</span>
                                                                 </div>
                                                             </div>
@@ -14739,7 +14739,7 @@ ${afcMapContext}
                                                                 value={resStrange}
                                                                 onChange={e => setResStrange(e.target.value)}
                                                                 onFocus={() => setFocusedResonanceField('strange')}
-                                                                placeholder="Capta la anomalía en el sistema..."
+                                                                placeholder="Capta la anomalÃ­a en el sistema..."
                                                                 className={`w-full bg-transparent border-none focus:ring-0 p-0 font-black italic text-white/95 placeholder:text-zinc-600 resize-none typing-aura tracking-tight custom-scroll ${focusedResonanceField === 'strange' ? 'text-2xl md:text-3xl flex-1' : 'text-lg md:text-xl min-h-[80px]'}`}
                                                             />
                                                             {focusedResonanceField === 'strange' && (
@@ -14747,7 +14747,7 @@ ${afcMapContext}
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); setFocusedResonanceField(null); }}
                                                                         className="px-6 py-3 rounded-full bg-cyan-500 text-black font-black uppercase tracking-[0.2em] text-[10px] hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] flex items-center gap-2"
-                                                                    ><Check size={14} /> Guardar Anomalía</button>
+                                                                    ><Check size={14} /> Guardar AnomalÃ­a</button>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -14813,7 +14813,7 @@ ${afcMapContext}
                                                                                 const newText = e.target.value;
                                                                                 setSecondaryPanels(prev => prev.map(p => p.id === panel.id ? { ...p, text: newText } : p));
                                                                             }}
-                                                                            placeholder="Panel secundario para referencias y apuntes rápidos..."
+                                                                            placeholder="Panel secundario para referencias y apuntes rÃ¡pidos..."
                                                                             className="w-full min-h-[150px] bg-transparent border-none focus:ring-0 p-0 text-xl md:text-base font-sans leading-relaxed text-white/70 placeholder:text-zinc-700 resize-y pb-4 custom-scroll relative z-10"
                                                                         />
                                                                     </div>
@@ -14825,7 +14825,7 @@ ${afcMapContext}
                                                                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
                                                                         <Plus size={16} />
                                                                     </div>
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest">Añadir otro panel</span>
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest">AÃ±adir otro panel</span>
                                                                 </button>
                                                             </div>
                                                         )}
@@ -14848,13 +14848,13 @@ ${afcMapContext}
                                 <input
                                     autoFocus
                                     className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-lg font-black italic text-accent placeholder:text-zinc-800 mb-8"
-                                    placeholder="Agrega un título..."
+                                    placeholder="Agrega un tÃ­tulo..."
                                     value={caption}
                                     onChange={e => setCaption(e.target.value)}
                                 />
                                 <label className="group w-full h-48 border-2 border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all text-zinc-500 hover:text-white">
                                     <Plus size={28} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase mt-4 tracking-widest">{mediaFile ? '¡Reliquia Lista!' : `Vincular ${composerStep}`}</span>
+                                    <span className="text-[10px] font-black uppercase mt-4 tracking-widest">{mediaFile ? 'Â¡Reliquia Lista!' : `Vincular ${composerStep}`}</span>
                                     <input type="file" className="hidden" accept={composerStep === 'image' ? 'image/*' : (composerStep === 'audio' ? 'audio/*' : 'video/*')} onChange={handleFileChange} />
                                 </label>
                                 <button
@@ -14976,7 +14976,7 @@ const MuralText = ({ block, updateBlock, isSelected, bringToFront, accent }) => 
             }}
             onMouseDown={(e) => e.stopPropagation()} // Prevent canvas drag while typing
             onTouchStart={(e) => e.stopPropagation()} // Prevent mobile pan while typing
-            placeholder={block.isTitle ? "TITULAR..." : "Escribe aquí..."}
+            placeholder={block.isTitle ? "TITULAR..." : "Escribe aquÃ­..."}
         />
     );
 };
@@ -15249,7 +15249,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
         const newBlock = {
             id: `mural-text-${Date.now()}`,
             type: 'text',
-            content: 'Escribe tu idea aquí...',
+            content: 'Escribe tu idea aquÃ­...',
             x: x,
             y: y,
             w: 300,
@@ -15571,7 +15571,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                     <button
                         onClick={addImage}
                         className="w-10 h-10 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-all flex items-center justify-center shrink-0"
-                        title="Añadir Imagen (JPG/PNG)"
+                        title="AÃ±adir Imagen (JPG/PNG)"
                     >
                         <ImageIcon size={16} />
                     </button>
@@ -15581,26 +15581,26 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                     <div className="relative group shrink-0">
                         <button
                             className="w-10 h-10 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-all flex items-center justify-center"
-                            title="Añadir Forma"
+                            title="AÃ±adir Forma"
                         >
                             <Zap size={16} />
                         </button>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 py-2 w-40 bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl hidden group-hover:block z-[2200]">
-                            <button onClick={() => addShape('rect')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Rectángulo</button>
-                            <button onClick={() => addShape('circle')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Círculo</button>
-                            <button onClick={() => addShape('triangle')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Triángulo</button>
-                            <button onClick={() => addShape('pill')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Píldora</button>
+                            <button onClick={() => addShape('rect')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">RectÃ¡ngulo</button>
+                            <button onClick={() => addShape('circle')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">CÃ­rculo</button>
+                            <button onClick={() => addShape('triangle')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">TriÃ¡ngulo</button>
+                            <button onClick={() => addShape('pill')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">PÃ­ldora</button>
                             <button onClick={() => addShape('arrow')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Flecha</button>
                             <button onClick={() => addShape('star')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Estrella</button>
                             <button onClick={() => addShape('bubble')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Burbuja</button>
-                            <button onClick={() => addShape('heart')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">Corazón</button>
+                            <button onClick={() => addShape('heart')} className="w-full px-4 py-2 hover:bg-white/5 text-left text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-white">CorazÃ³n</button>
                         </div>
                     </div>
 
                     <button
                         onClick={addText}
                         className="w-10 h-10 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-all flex items-center justify-center shrink-0"
-                        title="Añadir Texto"
+                        title="AÃ±adir Texto"
                     >
                         <FileText size={16} />
                     </button>
@@ -15608,7 +15608,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                     <button
                         onClick={addTitle}
                         className="w-10 h-10 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-all flex items-center justify-center shrink-0"
-                        title="Añadir Título"
+                        title="AÃ±adir TÃ­tulo"
                     >
                         <Type size={16} />
                     </button>
@@ -15628,7 +15628,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                 {/* Utility Actions (Clear & Save) */}
                 <div className="flex items-center gap-2 shrink-0">
                     <button
-                        onClick={() => { if (confirm('¿Limpiar todo el mural?')) syncBlocks([]); }}
+                        onClick={() => { if (confirm('Â¿Limpiar todo el mural?')) syncBlocks([]); }}
                         className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all flex items-center justify-center shrink-0"
                         title="Limpiar Todo el Mural"
                     >
@@ -15849,25 +15849,25 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     onClick={() => setActiveTool(null)}
                                     className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white flex items-center gap-1"
                                 >
-                                    ← Volver
+                                    â† Volver
                                 </button>
                                 <span className="text-[10px] font-black uppercase tracking-widest text-accent">
                                     {activeTool === 'crop' && 'Silueta & Recorte'}
                                     {activeTool === 'fitting' && 'Ajuste de Relleno'}
                                     {activeTool === 'zoom' && 'Zoom de la Foto'}
-                                    {activeTool === 'filter' && 'Filtro Artístico'}
+                                    {activeTool === 'filter' && 'Filtro ArtÃ­stico'}
                                     {activeTool === 'border' && 'Bordes & Efectos'}
                                     {activeTool === 'layers' && 'Organizar Capas'}
-                                    {activeTool === 'shape' && 'Diseño de la Forma'}
+                                    {activeTool === 'shape' && 'DiseÃ±o de la Forma'}
                                     {activeTool === 'color' && 'Paleta de Color'}
                                     {activeTool === 'text' && 'Formato de Letra'}
-                                    {activeTool === 'size' && 'Tamaño de Letra'}
+                                    {activeTool === 'size' && 'TamaÃ±o de Letra'}
                                 </span>
                                 <button
                                     onClick={() => setSelectedId(null)}
                                     className="text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300"
                                 >
-                                    Listo ✓
+                                    Listo âœ“
                                 </button>
                             </div>
 
@@ -15876,11 +15876,11 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                 {/* CROP OPTIONS */}
                                 {activeTool === 'crop' && [
                                     { id: 'none', label: 'Original' },
-                                    { id: 'circle', label: 'Círculo' },
-                                    { id: 'hexagon', label: 'Hexágono' },
+                                    { id: 'circle', label: 'CÃ­rculo' },
+                                    { id: 'hexagon', label: 'HexÃ¡gono' },
                                     { id: 'diamond', label: 'Diamante' },
                                     { id: 'arch', label: 'Arco' },
-                                    { id: 'pill', label: 'Píldora' }
+                                    { id: 'pill', label: 'PÃ­ldora' }
                                 ].map((m) => (
                                     <button
                                         key={m.id}
@@ -15929,8 +15929,8 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                     { id: 'invert', label: 'Negativo' },
                                     { id: 'blur', label: 'Blur' },
                                     { id: 'brightness-sat', label: 'Saturado' },
-                                    { id: 'warm', label: 'Cálido' },
-                                    { id: 'cool', label: 'Frío' }
+                                    { id: 'warm', label: 'CÃ¡lido' },
+                                    { id: 'cool', label: 'FrÃ­o' }
                                 ].map((f) => (
                                     <button
                                         key={f.id}
@@ -15943,14 +15943,14 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
 
                                 {/* SHAPE OPTIONS */}
                                 {activeTool === 'shape' && [
-                                    { id: 'rect', label: 'Rectángulo' },
-                                    { id: 'circle', label: 'Círculo' },
-                                    { id: 'triangle', label: 'Triángulo' },
-                                    { id: 'pill', label: 'Píldora' },
+                                    { id: 'rect', label: 'RectÃ¡ngulo' },
+                                    { id: 'circle', label: 'CÃ­rculo' },
+                                    { id: 'triangle', label: 'TriÃ¡ngulo' },
+                                    { id: 'pill', label: 'PÃ­ldora' },
                                     { id: 'arrow', label: 'Flecha' },
                                     { id: 'star', label: 'Estrella' },
                                     { id: 'bubble', label: 'Burbuja' },
-                                    { id: 'heart', label: 'Corazón' }
+                                    { id: 'heart', label: 'CorazÃ³n' }
                                 ].map((s) => (
                                     <button
                                         key={s.id}
@@ -16003,8 +16003,8 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                         ))}
 
                                         {[
-                                            { id: 'uppercase', label: 'MAYÚS' },
-                                            { id: 'lowercase', label: 'minús' },
+                                            { id: 'uppercase', label: 'MAYÃšS' },
+                                            { id: 'lowercase', label: 'minÃºs' },
                                             { id: 'none', label: 'Abc' }
                                         ].map((t) => (
                                             <button
@@ -16082,7 +16082,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                             onClick={() => bringToFront(selectedBlock.id)}
                                             className="px-3 py-2 rounded-full bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shrink-0"
                                         >
-                                            Traer al Frente ⬆️
+                                            Traer al Frente â¬†ï¸
                                         </button>
                                         <button
                                             onClick={() => {
@@ -16091,13 +16091,13 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                             }}
                                             className="px-3 py-2 rounded-full bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shrink-0"
                                         >
-                                            Enviar al Fondo ⬇️
+                                            Enviar al Fondo â¬‡ï¸
                                         </button>
                                         <button
                                             onClick={() => updateBlock(selectedBlock.id, { rotation: (selectedBlock.rotation || 0) - 45 })}
                                             className="px-3 py-2 rounded-full bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shrink-0"
                                         >
-                                            Girar -45°
+                                            Girar -45Â°
                                         </button>
                                         <button
                                             onClick={() => updateBlock(selectedBlock.id, { rotation: 0 })}
@@ -16109,7 +16109,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                             onClick={() => updateBlock(selectedBlock.id, { rotation: (selectedBlock.rotation || 0) + 45 })}
                                             className="px-3 py-2 rounded-full bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shrink-0"
                                         >
-                                            Girar +45°
+                                            Girar +45Â°
                                         </button>
                                     </div>
                                 )}
@@ -16196,7 +16196,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                         className={`flex flex-col items-center justify-center min-w-[56px] h-12 rounded-xl transition-all ${activeTool === 'size' ? 'text-accent bg-white/5' : 'text-zinc-400 hover:text-white'}`}
                                     >
                                         <Sliders size={16} />
-                                        <span className="text-[8px] font-black tracking-tighter mt-1">Tamaño</span>
+                                        <span className="text-[8px] font-black tracking-tighter mt-1">TamaÃ±o</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTool('color')}
@@ -16278,7 +16278,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                     }}
                     className="fixed bottom-32 right-6 md:right-10 z-[5000] w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl hover:scale-110 active:scale-95 pointer-events-auto"
                     style={{ backgroundColor: accent || '#ef4444', color: '#000' }}
-                    title="Centrar en última nota"
+                    title="Centrar en Ãºltima nota"
                 >
                     <Focus size={28} className="stroke-[2.5]" />
                 </button>
