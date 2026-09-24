@@ -424,9 +424,9 @@ export const getNodeExperiencePhrases = (node) => {
         if (/^(sobrepensar|aislamiento|cansancio|agotamiento|miedo|miedos|temor|temores|consumo|refugio|dolor|dolores|nudo|deseo|deseos|diálogo|juicio|juicios|reproche|reproches|malestar|estancamiento|rechazo|vacío|desapego|impulso|impulsos)/i.test(firstWord)) {
             return 'el';
         }
-        if (str.endsWith('as') || str.endsWith('ciones')) return 'las';
-        if (str.endsWith('os') || str.endsWith('es')) return 'los';
-        if (str.endsWith('a') || str.endsWith('ción') || str.endsWith('sión') || str.endsWith('dad')) return 'la';
+        if (firstWord.endsWith('as') || firstWord.endsWith('ciones')) return 'las';
+        if (firstWord.endsWith('os') || firstWord.endsWith('es')) return 'los';
+        if (firstWord.endsWith('a') || firstWord.endsWith('ción') || firstWord.endsWith('sión') || firstWord.endsWith('dad')) return 'la';
         return 'el';
     };
 
@@ -673,45 +673,91 @@ export const generateEmpatheticPerspectiveQuestion = (
     const convOrigin = originContext?.originNode ? getConversationalPhrase(cleanOriginLabel) : null;
     const convTarget = consequenceContext?.targetNode ? getConversationalPhrase(cleanTargetLabel) : null;
 
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
     switch (safeIdx) {
-        case 0: { // Raíz Histórica y Origen ("De dónde viene")
+        case 0: { // Raíz Histórica y Origen
             if (convOrigin && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
-                return `Me cuentas un poco sobre ${convLabel}, y pareciera que empezó por ${convOrigin}. ¿Crees que hoy en día podrías intentar manejarlo de otra forma?`;
+                return pickRandom([
+                    `Me cuentas un poco sobre ${convLabel}, y pareciera que empezó por ${convOrigin}. ¿Crees que hoy en día podrías intentar manejarlo de otra forma?`,
+                    `Mencionas ${convLabel}, algo que parece venir desde ${convOrigin}. ¿Te has puesto a pensar cómo sería soltar eso un poquito hoy?`,
+                    `Es súper interesante cómo ${convOrigin} terminó convirtiéndose en ${convLabel}. Si pudieras viajar al pasado, ¿qué te dirías a ti mismo?`
+                ]);
             }
-            return `Me cuentas un poco sobre ${convLabel}... ¿cómo te hace sentir esto en tu día a día? ¿Te gustaría intentar algo distinto ahora?`;
+            return pickRandom([
+                `Me cuentas un poco sobre ${convLabel}... ¿cómo te hace sentir esto en tu día a día? ¿Te gustaría intentar algo distinto ahora?`,
+                `Oye, mencionabas ${convLabel}. ¿Qué es lo que más te cuesta de vivir con esto?`,
+                `Al pensar en ${convLabel}, ¿qué es lo primero que se te viene a la mente?`
+            ]);
         }
 
-        case 1: { // Relaciones Actuales y Entorno Social ("Cómo afecta los vínculos")
-            return `Cuando notas ${convLabel}, ¿cómo crees que afecta a la gente cercana a ti? ¿Sientes que a veces te alejas sin querer?`;
+        case 1: { // Relaciones Actuales y Entorno Social
+            return pickRandom([
+                `Cuando notas ${convLabel}, ¿cómo crees que afecta a la gente cercana a ti? ¿Sientes que a veces te alejas sin querer?`,
+                `Oye, y cuando estás lidiando con ${convLabel}, ¿cómo cambia tu forma de tratar a los demás?`,
+                `A veces ${convLabel} hace que nos encerremos. ¿Te ha pasado que alguien importante para ti lo nota?`
+            ]);
         }
 
-        case 2: { // Cuerpo y Fisiología Somática ("La vivencia corporal")
+        case 2: { // Cuerpo y Fisiología Somática
             if (nodeType === 'physiological' || nodeType === 'biological') {
-                return `Me mencionas ${convLabel}. Si tu cuerpo pudiera hablar a través de esa sensación, ¿qué crees que te estaría pidiendo?`;
+                return pickRandom([
+                    `Me mencionas ${convLabel}. Si tu cuerpo pudiera hablar a través de esa sensación, ¿qué crees que te estaría pidiendo?`,
+                    `Cuando sientes ${convLabel}, ¿hay algo que te dé alivio físico inmediato?`,
+                    `Ese malestar de ${convLabel}... si le pusieras atención un minuto en silencio, ¿qué crees que pasaría?`
+                ]);
             }
-            return `Al experimentar ${convLabel}, ¿en qué parte del cuerpo lo notas más? ¿Qué pasaría si te detienes un momento a escuchar esa sensación?`;
+            return pickRandom([
+                `Al experimentar ${convLabel}, ¿en qué parte del cuerpo lo notas más? ¿Qué pasaría si te detienes un momento a escuchar esa sensación?`,
+                `A veces ${convLabel} se siente pesadísimo físicamente. ¿Dónde sientes más tensión cuando pasa esto?`,
+                `¿Has notado cómo tu cuerpo reacciona antes, durante y después de ${convLabel}?`
+            ]);
         }
 
-        case 3: { // Valores y Diálogo Interno ("Lo que te dices y lo que defiendes")
-            return `A veces, con ${convLabel}, somos muy duros con nosotros mismos. Si un buen amigo estuviera pasando por lo mismo, ¿qué consejo le darías?`;
+        case 3: { // Valores y Diálogo Interno
+            return pickRandom([
+                `A veces, con ${convLabel}, somos muy duros con nosotros mismos. Si un buen amigo estuviera pasando por lo mismo, ¿qué consejo le darías?`,
+                `Oye, cuando estás en medio de ${convLabel}, ¿qué tipo de cosas te dices en tu cabeza? ¿Eres amable contigo?`,
+                `Imagínate que alguien que quieres mucho te cuenta que sufre de ${convLabel}. ¿Cómo lo consolarías?`
+            ]);
         }
 
-        case 4: { // Conductas y Patrones Automáticos ("Hacia dónde conduce")
+        case 4: { // Conductas y Patrones Automáticos
             if (convTarget && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
-                return `Veo que ${convLabel} a veces te lleva hacia ${convTarget}. ¿Sientes que lo que haces para aliviarte rápido te termina costando caro después?`;
+                return pickRandom([
+                    `Veo que ${convLabel} a veces te lleva hacia ${convTarget}. ¿Sientes que lo que haces para aliviarte rápido te termina costando caro después?`,
+                    `Es curioso cómo ${convLabel} termina causando ${convTarget}. ¿Alguna vez has intentado romper ese ciclo haciendo algo completamente distinto?`,
+                    `Cuando notas que ${convLabel} te está empujando hacia ${convTarget}, ¿hay algo que te ayude a frenar a tiempo?`
+                ]);
             }
-            return `A veces ${convLabel} trae un alivio rápido que no dura mucho. ¿Qué crees que estás evitando sentir ahora mismo?`;
+            return pickRandom([
+                `A veces ${convLabel} trae un alivio rápido que no dura mucho. ¿Qué crees que estás evitando sentir ahora mismo?`,
+                `Oye, después de que pasa ${convLabel}, ¿cómo te sientes contigo mismo? ¿Te arrepientes o sientes culpa?`,
+                `Si dejaras de responder de forma automática ante ${convLabel}, ¿qué es lo peor que crees que podría pasar?`
+            ]);
         }
 
-        case 5: { // Reto Conductual Amable ("Micro-experimento compasivo")
+        case 5: { // Reto Conductual Amable
             if (challenge && challenge.length > 5) {
-                return `Te propongo algo súper sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¿Te animas a intentarlo hoy para manejar ${convLabel} de otra manera?`;
+                return pickRandom([
+                    `Te propongo algo súper sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¿Te animas a intentarlo hoy para manejar ${convLabel} de otra manera?`,
+                    `Oye, y si intentamos algo pequeñito: ${challenge.toLowerCase()}. ¿Crees que podrías hacerlo esta semana solo para ver qué pasa?`,
+                    `Sé que ${convLabel} es difícil, pero ¿qué tal si pruebas ${challenge.toLowerCase()}? Sin presión, solo como un experimento.`
+                ]);
             }
-            return `Si pudieras cambiar solo un poquitito tu forma de responder ante ${convLabel}, ¿cuál sería el primer paso? Por más pequeño que sea.`;
+            return pickRandom([
+                `Si pudieras cambiar solo un poquitito tu forma de responder ante ${convLabel}, ¿cuál sería el primer paso? Por más pequeño que sea.`,
+                `¿Qué es lo más fácil y pequeñito que podrías hacer hoy mismo para que ${convLabel} no te afecte tanto?`,
+                `Si tuvieras una varita mágica y pudieras cambiar una sola cosa sobre cómo manejas ${convLabel}, ¿qué sería?`
+            ]);
         }
 
-        case 6: { // Integración y Cierre Compasivo ("Resignificación del nodo")
-            return `Entiendo que ${convLabel} es parte de lo que has vivido. Viéndolo con calma y sin juzgarte, ¿cómo podrías aceptarlo para seguir adelante un poco más tranquilo?`;
+        case 6: { // Integración y Cierre Compasivo
+            return pickRandom([
+                `Entiendo que ${convLabel} es parte de lo que has vivido. Viéndolo con calma y sin juzgarte, ¿cómo podrías aceptarlo para seguir adelante un poco más tranquilo?`,
+                `Oye, después de todo lo que platicamos sobre ${convLabel}, ¿hay algo nuevo de lo que te hayas dado cuenta?`,
+                `Si tuvieras que escribirle una carta de despedida a ${convLabel}, ¿qué le dirías para por fin dejarlo ir?`
+            ]);
         }
     }
 
