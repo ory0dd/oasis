@@ -2302,12 +2302,19 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
     const chatContainerRef = useRef(null);
 
     const getSafeCurrentChat = useCallback((nodeId, threadIndex = 0) => {
+        if (!nodeId || !nodeChats) return [];
         const chatData = nodeChats[nodeId];
         if (!chatData) return [];
         if (Array.isArray(chatData)) {
-            return threadIndex === 0 ? chatData : [];
+            return chatData;
         }
-        return chatData[threadIndex] || [];
+        if (typeof chatData === 'object') {
+            if (Array.isArray(chatData[threadIndex])) return chatData[threadIndex];
+            if (Array.isArray(chatData[0])) return chatData[0];
+            const firstKey = Object.keys(chatData)[0];
+            if (firstKey && Array.isArray(chatData[firstKey])) return chatData[firstKey];
+        }
+        return [];
     }, [nodeChats]);
 
     const hasAnsweredAllPerspectives = useCallback((nodeId) => {
@@ -4897,70 +4904,34 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         }
     };
 
-    const continueNodeExploration = async (currentNode, userResponseText = null, threadIndex = selectedQuestionIndex || 0) => {
-        let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-        if (activeKey && (
-            activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
-            activeKey.includes("VAR>") ||
-            activeKey.includes("7c7e257ac179439185c9deeff48d11f0") ||
-            activeKey.includes("6cf43dc93") ||
-            activeKey.includes("qw12") ||
-            activeKey.includes("YOUR_DEEPSEEK_KEY") ||
-            activeKey.includes("ESCRIBE_AQUI") ||
-            activeKey.includes("fb77d")
-        )) {
-            activeKey = '';
-        }
+    const sendNodeReflection = async (currentNode, userResponseText) => {
+        if (!currentNode || !userResponseText?.trim() || isGeneratingExplorations) return;
         
+        const userText = userResponseText.trim();
+        setExplorationResponse('');
         setIsGeneratingExplorations(true);
 
-        // Fetch current chat history for this node
-        const currentChat = getSafeCurrentChat(currentNode.id, threadIndex);
+        const currentChat = getSafeCurrentChat(currentNode.id, 0);
+        const updatedChat = [...currentChat, { role: 'user', content: userText }];
 
-        // When user submits their reflection, save it and invoke ChatGPT for a therapeutic insight
-        if (userResponseText) {
-            let threadChat = [...currentChat];
-            const userHasAnswered = threadChat.some(m => m.role === 'user');
-            const isGenericAssistant = threadChat.length === 1 && threadChat[0].role === 'assistant' && (
-                !threadChat[0].content ||
-                threadChat[0].content.length < 40 ||
-                isStaleOrRoboticQuestion(threadChat[0].content)
-            );
-            if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                threadChat = [{ role: 'assistant', content: initialQ, isAIGenerated: true }];
-            }
-            const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
-            
-            setNodeChats(prev => {
-                const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-                return {
-                    ...prev,
-                    [currentNode.id]: {
-                        ...currentThreads,
-                        [threadIndex]: [...updatedChat, { role: 'assistant', content: 'Reflexionando sobre tu respuesta...', isLoading: true }]
-                    }
-                };
-            });
-            
-            setExplorationResponse('');
-            
-            if (threadIndex === 6) {
-                setAfcData(prev => {
-                    if (!prev || !prev.nodes) return prev;
-                    return {
-                        ...prev,
-                        nodes: prev.nodes.map(n => n.id === currentNode.id ? { ...n, status: 'integrated' } : n)
-                    };
-                });
-            }
+        // Optimistically update chat with user response + typing placeholder
+        setNodeChats(prev => ({
+            ...prev,
+            [currentNode.id]: [...updatedChat, { role: 'assistant', content: 'Reflexionando sobre lo que compartes...', isLoading: true }]
+        }));
 
-            try {
-                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-                const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
-                
-                const replyPrompt = `Eres un psicoterapeuta clínico humano, empático, reflexivo y de profunda agudeza psicológica.
-El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}).
+        try {
+            const API_URL = import.meta.env.VITE_API_URL ||
+                ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
+                    ? `http://${window.location.hostname}:5046`
+                    : 'https://oasis-production-6303.up.railway.app');
+
+            const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
+            const replyPrompt = `Eres un psicoterapeuta clínico humano, empático, reflexivo y de profunda agudeza psicológica.
+El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripción: ${currentNode.description || 'N/A'}).
 
 Historial de esta reflexión:
 ${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
@@ -4971,349 +4942,48 @@ INSTRUCCIONES CLÍNICAS:
 3. Conecta su sentir con la raíz o función del patrón sin usar viñetas, sin títulos, sin encabezados ni subdivisiones.
 4. NUNCA uses clichés, frases robóticas ni explicaciones teóricas aburridas.`;
 
-                const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        endpoint: endpoint,
-                        key: activeKey || null,
-                        payload: {
-                            model: model,
-                            messages: [{ role: 'user', content: replyPrompt }],
-                            temperature: 0.6,
-                            max_tokens: 500
-                        }
-                    })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    const aiReply = data.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g, '');
-                    if (aiReply) {
-                        setNodeChats(prev => {
-                            const currentThreads = prev[currentNode.id] || {};
-                            return {
-                                ...prev,
-                                [currentNode.id]: {
-                                    ...currentThreads,
-                                    [threadIndex]: [...updatedChat, { role: 'assistant', content: aiReply, isAIGenerated: true }]
-                                }
-                            };
-                        });
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    endpoint: endpoint,
+                    key: apiKey || null,
+                    payload: {
+                        model: model,
+                        messages: [{ role: 'user', content: replyPrompt }],
+                        temperature: 0.6,
+                        max_tokens: 400
                     }
-                } else {
-                    throw new Error("HTTP error in chat reply");
-                }
-            } catch (err) {
-                console.error("AI reply error:", err);
-                setNodeChats(prev => {
-                    const currentThreads = prev[currentNode.id] || {};
-                    return {
-                        ...prev,
-                        [currentNode.id]: {
-                            ...currentThreads,
-                            [threadIndex]: updatedChat
-                        }
-                    };
-                });
-            } finally {
-                setIsGeneratingExplorations(false);
+                })
+            });
+
+            if (!res.ok) throw new Error("Error en la respuesta del modelo");
+
+            const data = await res.json();
+            const aiReply = data?.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g, '');
+            if (aiReply) {
+                setNodeChats(prev => ({
+                    ...prev,
+                    [currentNode.id]: [...updatedChat, { role: 'assistant', content: aiReply, isAIGenerated: true }]
+                }));
+            } else {
+                throw new Error("Respuesta vacía");
             }
-            
+        } catch (err) {
+            console.error("AI reply error:", err);
+            setNodeChats(prev => ({
+                ...prev,
+                [currentNode.id]: updatedChat
+            }));
+        } finally {
+            setIsGeneratingExplorations(false);
             setTimeout(() => {
                 const containers = document.querySelectorAll('.custom-scroll');
                 containers.forEach(container => container.scrollTop = container.scrollHeight);
             }, 100);
-            return;
-        }
-
-        // Build messages array for LLM context (ONLY RUNS FOR INITIAL QUESTION)
-        const llmMessages = [];
-        
-        // System prompt
-        let systemPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-El paciente está explorando su mapa conductual (Grafo de Bucles). Estás formulando la ÚNICA pregunta para la perspectiva actual.
-
-=== CONTEXTO DEL PACIENTE ===
-Diagnóstico Existencial: ${phenomData ? JSON.stringify(phenomData) : "No hay datos."}
-Historia de Vida: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos."}
-
-=== NODO ACTUAL EN EXPLORACIÓN ===
-Nodo: "${currentNode.label}" (Tipo: ${currentNode.type})
-Análisis original: ${getFallbackDescription(currentNode, user)}
-
-=== INSTRUCCIONES ===
-1. Revisa la "MEMORIA GLOBAL DE EXPLORACIÓN" (si existe) para entender qué ha revelado el paciente en otras perspectivas y en otros nodos.
-2. Formula UNA ÚNICA PREGUNTA de transición. NO HAGAS UNA PREGUNTA GENÉRICA. Construye tu pregunta a partir de la "arquitectura" de las respuestas previas del paciente.
-3. Si detectas que una respuesta anterior (ej. "lo odié hasta ya no sentir nada") abre una conexión hacia otra idea (ej. apagamiento emocional), USA ESA CONEXIÓN explícitamente para formular tu pregunta actual.
-4. Enfoque de la perspectiva actual: ${threadIndex === 0 ? 'RAÍZ HISTÓRICA o pasado' : threadIndex === 1 ? 'RELACIONES ACTUALES o entorno social' : threadIndex === 2 ? 'EFECTOS FISIOLÓGICOS o corporales' : threadIndex === 3 ? 'VALORES y significados' : threadIndex === 4 ? 'CONDUCTAS y patrones' : threadIndex === 5 ? 'EXPERIMENTOS y acciones' : 'INTEGRACIÓN y cierre del nodo'}.
-5. Devuelve ÚNICAMENTE un objeto JSON.
-
-ESTRUCTURA DE SALIDA ESPERADA:
-{
-  "next_question": "Tu única pregunta profunda y transicional.",
-  "new_node": null
-}`;
-
-
-
-        llmMessages.push({ role: 'system', content: systemPrompt });
-
-        // Recopilar TODAS las perspectivas exploradas en todo el mapa
-        let globalContext = "=== MEMORIA GLOBAL DE EXPLORACIÓN DEL PACIENTE ===\n";
-        let hasGlobalContext = false;
-        if (afcData && afcData.nodes && nodeChats) {
-            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
-            afcData.nodes.forEach(node => {
-                const chats = nodeChats[node.id];
-                if (chats) {
-                    let nodeMemory = "";
-                    for (let i = 0; i < 7; i++) {
-                        const tChat = chats[i];
-                        if (tChat && tChat.length > 0) {
-                            nodeMemory += `\n  - Perspectiva [${threadLabels[i]}]:\n`;
-                            tChat.forEach(m => {
-                                nodeMemory += `    ${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}\n`;
-                            });
-                        }
-                    }
-                    if (nodeMemory) {
-                        globalContext += `\nNODO: "${node.label}" (Tipo: ${node.type})${nodeMemory}`;
-                        hasGlobalContext = true;
-                    }
-                }
-            });
-        }
-        if (hasGlobalContext) {
-            llmMessages.push({ role: 'system', content: globalContext });
-        }
-
-        // Append past conversation history for current thread (though it should be empty for new questions)
-        currentChat.forEach(msg => {
-            if (msg.role === 'assistant') {
-                llmMessages.push({ role: 'assistant', content: msg.content });
-            } else if (msg.role === 'user') {
-                llmMessages.push({ role: 'user', content: msg.content });
-            }
-        });
-
-
-
-        try {
-            const customEp = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const customM = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
-
-            let provider = 'openai';
-            let resolvedEndpoint = customEp;
-            let resolvedModel = customM;
-
-            if (customEp.includes('deepseek.com') || (customM && customM.toLowerCase().includes('deepseek'))) {
-                provider = 'deepseek';
-                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.deepseek.com/chat/completions';
-                if (!resolvedModel) resolvedModel = 'deepseek-chat';
-            } else {
-                provider = 'openai';
-                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.openai.com/v1/chat/completions';
-                if (!resolvedModel) resolvedModel = 'gpt-4o';
-            }
-
-            const payload = {
-                model: resolvedModel,
-                messages: llmMessages.length > 1 ? llmMessages : [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Iniciemos la exploración del nodo "${currentNode.label}". ¿Qué pregunta me harías para empezar a indagar en la raíz de esto?` }
-                ],
-                response_format: { type: "json_object" },
-                temperature: 0.4,
-                max_tokens: 4096
-            };
-
-            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ provider, endpoint: resolvedEndpoint, key: activeKey || null, payload: payload })
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Error HTTP ${res.status}: ${errText}`);
-            }
-
-            const data = await res.json();
-            const aiContent = data.choices[0].message.content;
-
-            let cleanContent = aiContent.trim();
-            if (cleanContent.startsWith("```")) {
-                cleanContent = cleanContent.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "");
-            }
-
-            let parsed;
-            try {
-                parsed = JSON.parse(cleanContent.trim());
-            } catch (err) {
-                if (err.message.includes('Unexpected end of JSON input') || err.message.includes('Unterminated string')) {
-                    // LLM cutoff (max_tokens hit or network timeout). Auto-heal basic cutoffs.
-                    let healed = cleanContent.trim();
-                    if (healed.lastIndexOf('"') > healed.lastIndexOf(':')) {
-                        healed += '"}';
-                    } else {
-                        healed += '}';
-                    }
-                    try {
-                        parsed = JSON.parse(healed);
-                    } catch (e2) {
-                        throw new Error('El modelo de IA agotó su límite de tiempo o tokens al responder. Intenta enviar tu respuesta de nuevo.');
-                    }
-                } else {
-                    throw err;
-                }
-            }
-            if (parsed.next_question) {
-                // Determine new chat array
-                const updatedChat = [...currentChat];
-                if (userResponseText) {
-                    updatedChat.push({ role: 'user', content: userResponseText });
-                }
-                
-                const assistantMessage = { 
-                    role: 'assistant', 
-                    content: parsed.next_question,
-                    newNodeAdded: parsed.new_node || null
-                };
-                updatedChat.push(assistantMessage);
-
-                setNodeChats(prev => {
-                    const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-                    const isLegacy = Array.isArray(currentThreads);
-                    
-                    if (isLegacy) {
-                        return {
-                            ...prev,
-                            [currentNode.id]: {
-                                0: threadIndex === 0 ? updatedChat : currentThreads,
-                                1: threadIndex === 1 ? updatedChat : [],
-                                2: threadIndex === 2 ? updatedChat : [],
-                                3: threadIndex === 3 ? updatedChat : [],
-                                4: threadIndex === 4 ? updatedChat : [],
-                                5: threadIndex === 5 ? updatedChat : [],
-                                6: threadIndex === 6 ? updatedChat : []
-                            }
-                        };
-                    }
-
-                    return {
-                        ...prev,
-                        [currentNode.id]: {
-                            ...currentThreads,
-                            [threadIndex]: updatedChat
-                        }
-                    };
-                });
-
-                // Handle new node dynamic addition to visual map if LLM proposed one
-                if (threadIndex === 6 && parsed.node_status === 'integrated') {
-                        setAfcData(prev => {
-                            if (!prev || !prev.nodes) return prev;
-                            return {
-                                ...prev,
-                                nodes: prev.nodes.map(n => n.id === currentNode.id ? { ...n, status: 'integrated' } : n)
-                            };
-                        });
-                    }
-                    if (parsed.new_node) {
-                    const uniqueId = `dynamic_node_${Date.now()}`;
-                    const newNode = {
-                        id: uniqueId,
-                        type: parsed.new_node.type || 'cognitive',
-                        label: parsed.new_node.label || 'Nuevo patrón',
-                        description: parsed.new_node.description || '',
-                        x: currentNode.x + (Math.random() * 20 - 10),
-                        y: currentNode.y + (Math.random() * 20 - 10)
-                    };
-                    const newEdge = {
-                        source: currentNode.id,
-                        target: uniqueId,
-                        weight: 1.5,
-                        edge_type: parsed.new_node.edge_type || 'progression'
-                    };
-                    
-                    if (afcData) {
-                        const updatedAfcData = { ...afcData };
-                        updatedAfcData.nodes = [...updatedAfcData.nodes, newNode];
-                        updatedAfcData.edges = [...updatedAfcData.edges, newEdge];
-                        setAfcData(updatedAfcData);
-                        setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updatedAfcData));
-                    }
-                }
-
-                // Scroll to bottom of chat if UI is open
-                setTimeout(() => {
-                    const containers = document.querySelectorAll('.node-chat-scroll');
-                    containers.forEach(container => {
-                        container.scrollTop = container.scrollHeight;
-                    });
-                }, 100);
-
-            } else {
-                throw new Error("No se devolvió un next_question válido en el JSON.");
-            }
-        } catch (err) {
-            console.warn("Auto-exploración en segundo plano no pudo completarse:", err.message);
-            const fallbackQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-            setNodeChats(prev => {
-                const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-                const isLegacy = Array.isArray(currentThreads);
-                if (isLegacy) {
-                    return {
-                        ...prev,
-                        [currentNode.id]: {
-                            0: [{ role: 'assistant', content: fallbackQ }],
-                            1: [], 2: [], 3: [], 4: [], 5: [], 6: []
-                        }
-                    };
-                }
-                if (currentThreads[threadIndex] && currentThreads[threadIndex].length > 0) return prev;
-                return {
-                    ...prev,
-                    [currentNode.id]: {
-                        ...currentThreads,
-                        [threadIndex]: [{ role: 'assistant', content: fallbackQ }]
-                    }
-                };
-            });
-            if (userResponseText) {
-                alert("Ocurrió un error al continuar la conversación: " + err.message);
-            }
-        } finally {
-            setIsGeneratingExplorations(false);
-            setExplorationResponse(''); // Clear input box
-            localStorage.removeItem('draft_' + currentNode.id + '_' + threadIndex);
-
-            // Check if we just unlocked the integration thread!
-            if (threadIndex !== 6) {
-                let answeredCount = 0;
-                for (let i = 0; i < 6; i++) {
-                    if (i === threadIndex) answeredCount++; // We just answered this one
-                    else {
-                        const tChat = getSafeCurrentChat(currentNode.id, i);
-                        if (tChat.some(m => m.role === 'user')) answeredCount++;
-                    }
-                }
-                if (answeredCount === 6) {
-                    // Auto-switch to Integration!
-                    setTimeout(() => {
-                        setSelectedQuestionIndex(6);
-                        const nextChat = getSafeCurrentChat(currentNode.id, 6);
-                        if (!nextChat || nextChat.length === 0) {
-                            // Optionally trigger the initial LLM message for integration automatically:
-                            continueNodeExploration(currentNode, null, 6);
-                        }
-                    }, 1500); // Wait a moment so they see their message submitted
-                }
-            }
-
         }
     };
+    const continueNodeExploration = sendNodeReflection;
 
     const generateReformulation = async () => {
         setIsGeneratingReformulation(true);
