@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Aperture, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare } from 'lucide-react';
+import { Aperture, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -2346,6 +2346,64 @@ Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este
     const [isMapExpanded, setIsMapExpanded] = useState(false);
     // Local state for accordion expand in Bucles list — does NOT navigate to map
     const [expandedBucleNodeId, setExpandedBucleNodeId] = useState(null);
+    const [insightActionToast, setInsightActionToast] = useState(null);
+
+    const saveInsightToCanvas = useCallback((text, node, perspectiveLabel) => {
+        try {
+            const key = `oasis_canvas_nodes_${user}`;
+            const raw = localStorage.getItem(key);
+            const existingBlocks = raw ? JSON.parse(raw) : [];
+            const newBlock = {
+                id: `text-${Date.now()}`,
+                type: 'text',
+                content: text,
+                caption: `💡 Revelación: ${node?.label || 'Patrón'} (${perspectiveLabel || 'Perspectiva'})`,
+                x: Math.floor(Math.random() * 200) + 120,
+                y: Math.floor(Math.random() * 200) + 120,
+                width: 320,
+                height: 240,
+                isPublic: false,
+                createdAt: new Date().toISOString(),
+                canvasId: 'canvas_default'
+            };
+            const updated = [...existingBlocks, newBlock];
+            localStorage.setItem(key, JSON.stringify(updated));
+
+            // Sync to backend database
+            fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated)
+            }).catch(err => console.error("Error syncing canvas block:", err));
+
+            window.dispatchEvent(new CustomEvent('oasis_block_added', { detail: newBlock }));
+            setInsightActionToast("✨ ¡Guardado en tu Lienzo como nota!");
+            setTimeout(() => setInsightActionToast(null), 3500);
+        } catch (e) {
+            console.error("Error saving insight to canvas:", e);
+        }
+    }, [user]);
+
+    const toggleNodeIntegration = useCallback((node) => {
+        if (!node) return;
+        const isCurrentlyIntegrated = node.status === 'integrated';
+        const newStatus = isCurrentlyIntegrated ? 'identified' : 'integrated';
+
+        setAfcData(prev => {
+            if (!prev || !prev.nodes) return prev;
+            const updatedNodes = prev.nodes.map(n => n.id === node.id ? { ...n, status: newStatus } : n);
+            const updatedAfc = { ...prev, nodes: updatedNodes };
+            setLocalItem(`oasis_afc_data_${user}`, JSON.stringify(updatedAfc));
+            return updatedAfc;
+        });
+
+        setInsightActionToast(
+            newStatus === 'integrated'
+                ? `✨ Nodo "${node.label}" integrado con éxito en tu mapa`
+                : `Nodo devuelto a exploración activa`
+        );
+        setTimeout(() => setInsightActionToast(null), 3500);
+    }, [user, setLocalItem]);
 
     const getAfcPatterns = useCallback((data) => {
         if (!data?.nodes || data.nodes.length === 0) return [];
@@ -4945,16 +5003,19 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
                 
-                const replyPrompt = `Eres un psicoterapeuta humano, empático y reflexivo en sesión clínica.
-El paciente está explorando su mapa mental en el nodo: "${currentNode.label}".
+                const replyPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
+El paciente está realizando una introspección consciente sobre el siguiente nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}).
 
 Historial de esta reflexión:
 ${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
 
-INSTRUCCIONES:
-1. Responde con calidez y agudeza clínica a lo que acaba de reflexionar el paciente (máximo 2 a 3 oraciones).
-2. Valida su sentir o haz una observación perspicaz que le ayude a conectar los puntos.
-3. Puedes cerrar con una pregunta abierta o un mensaje de aliento profundo.
+INSTRUCCIONES CLÍNICAS:
+1. Responde de forma cálida, humana y sumamente perspicaz a la reflexión del paciente.
+2. Ayúdale a conectar este nodo con su vida y dale una perspectiva reveladora.
+3. Estructura tu respuesta en 3 bloques visuales bien definidos usando exactamente estos encabezados con emojis:
+- 🪞 **Espejo Clínico**: 1 o 2 oraciones empáticas conectando lo que siente y la función oculta de este patrón.
+- 💎 **Insight Clave**: 1 revelación nuclear o toma de conciencia sobre este nodo.
+- 🎯 **Acción Consciente**: 1 sugerencia práctica o micro-experimento que el paciente pueda crear o poner a prueba en su día a día para transformar esto.
 4. NUNCA uses clichés ni frases robotizadas.`;
 
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -8460,22 +8521,77 @@ Por favor, analicemos:
                                                                         })}
                                                                     </div>
 
+                                                                    {/* Action Toast Feedback */}
+                                                                    {insightActionToast && (
+                                                                        <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500/30 to-emerald-500/30 border border-sky-400/40 text-sky-200 text-[10px] font-semibold flex items-center gap-1.5 animate-pulse shadow-md shrink-0">
+                                                                            <Sparkles size={12} className="text-amber-300 shrink-0" />
+                                                                            <span>{insightActionToast}</span>
+                                                                        </div>
+                                                                    )}
+
                                                                     {/* Chat / Question Display Area */}
-                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2 min-h-[90px] max-h-[160px]">
+                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2 min-h-[90px] max-h-[175px]">
                                                                         {effectiveChat.map((msg, msgIdx) => {
                                                                             if (msg.role === 'assistant') {
                                                                                 return (
                                                                                     <div key={msgIdx} className="p-3 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/10 shadow-inner flex flex-col gap-1.5">
-                                                                                        <div className="flex items-center gap-1.5 text-[8.5px] font-mono uppercase tracking-widest text-sky-400 font-bold">
-                                                                                            <Sparkles size={10} />
-                                                                                            <span>{perspectivePills[safeThreadIndex]?.icon} {perspectivePills[safeThreadIndex]?.label}</span>
+                                                                                        <div className="flex items-center justify-between text-[8.5px] font-mono uppercase tracking-widest text-sky-400 font-bold">
+                                                                                            <div className="flex items-center gap-1.5">
+                                                                                                <Sparkles size={10} />
+                                                                                                <span>{perspectivePills[safeThreadIndex]?.icon} {perspectivePills[safeThreadIndex]?.label} {msgIdx > 0 ? '· Resonancia' : ''}</span>
+                                                                                            </div>
+                                                                                            {msg.isAIGenerated && (
+                                                                                                <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-normal">IA Clínica</span>
+                                                                                            )}
                                                                                         </div>
-                                                                                        <p className="text-[11px] leading-relaxed text-zinc-200 font-sans">
+                                                                                        <p className="text-[11px] leading-relaxed text-zinc-200 font-sans whitespace-pre-line">
                                                                                             {msg.content}
                                                                                         </p>
                                                                                         {msg.newNodeAdded && (
                                                                                             <div className="mt-1 pt-1.5 border-t border-sky-500/20">
                                                                                                 <span className="text-[8.5px] font-mono font-bold text-amber-300 flex items-center gap-1"><Sparkles size={10}/> Nuevo patrón: {softenNodeLabel(msg.newNodeAdded.label)}</span>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {/* Quick Action bar for assistant reflection */}
+                                                                                        {msgIdx > 0 && !msg.isLoading && (
+                                                                                            <div className="mt-2 pt-2 border-t border-white/10 flex flex-wrap items-center gap-1.5 justify-end">
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        saveInsightToCanvas(msg.content, currentNode, perspectivePills[safeThreadIndex]?.label);
+                                                                                                    }}
+                                                                                                    className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-[9.5px] font-medium flex items-center gap-1 transition-all active:scale-95 shadow-sm"
+                                                                                                    title="Guardar como nota en tu Lienzo / Pizarrón"
+                                                                                                >
+                                                                                                    <Sparkles size={10} />
+                                                                                                    <span>⚡ Guardar en Lienzo</span>
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        toggleNodeIntegration(currentNode);
+                                                                                                    }}
+                                                                                                    className={`px-2.5 py-1 rounded-lg border text-[9.5px] font-medium flex items-center gap-1 transition-all active:scale-95 shadow-sm ${currentNode.status === 'integrated' ? 'bg-amber-500/25 border-amber-400/40 text-amber-300' : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300 hover:text-white'}`}
+                                                                                                    title="Marcar este nodo como integrado / consciente"
+                                                                                                >
+                                                                                                    <span>✨</span>
+                                                                                                    <span>{currentNode.status === 'integrated' ? 'Integrado' : 'Integrar Nodo'}</span>
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        navigator.clipboard.writeText(msg.content);
+                                                                                                        setInsightActionToast("📋 Copiado al portapapeles");
+                                                                                                        setTimeout(() => setInsightActionToast(null), 2500);
+                                                                                                    }}
+                                                                                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 border border-white/5 text-[9.5px] transition-all"
+                                                                                                    title="Copiar texto"
+                                                                                                >
+                                                                                                    <Copy size={11} />
+                                                                                                </button>
                                                                                             </div>
                                                                                         )}
                                                                                     </div>
