@@ -2178,6 +2178,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
     // Node Exploration States
     const [nodeExplorations, setNodeExplorations] = useState({});
+    const fetchingPerspectivesRef = useRef(new Set());
     const [isExploringActiveNode, setIsExploringActiveNode] = useState(false);
     const [nodeChats, setNodeChats] = useState({}); // { nodeId: [{ role: 'assistant'|'user', content: string }] }
     const [isGeneratingExplorations, setIsGeneratingExplorations] = useState(false);
@@ -2196,18 +2197,26 @@ Devuelve estrictamente el JSON sin formato extra.
         if (!node) return;
         
         const safeIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-        const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
+        const fetchKey = `${node.id}_${safeIdx}`;
+        
+        // Prevent concurrent or duplicate in-flight requests
+        if (fetchingPerspectivesRef.current && fetchingPerspectivesRef.current.has(fetchKey)) return;
 
         const currentChat = nodeChats[node.id]?.[safeIdx];
+        const isCurrentlyLoading = currentChat && currentChat.some(m => m.isLoading);
+        if (isCurrentlyLoading) return;
+
         const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
         const firstAssistant = currentChat && currentChat.find(m => m.role === 'assistant');
         const isStale = firstAssistant ? isStaleOrRoboticQuestion(firstAssistant.content) : true;
         const isAIGen = firstAssistant?.isAIGenerated === true;
         
-        // Fetch fresh ChatGPT question if no chat, or if not yet answered and question is stale/generic
+        // Fetch fresh ChatGPT question ONLY if no chat exists, or if not yet answered and question is stale or not AI generated
         const needsFetch = !currentChat || currentChat.length === 0 || (!userHasAnswered && (isStale || !isAIGen));
         
         if (needsFetch) {
+            if (fetchingPerspectivesRef.current) fetchingPerspectivesRef.current.add(fetchKey);
+            
             setNodeChats(prev => ({
                 ...prev,
                 [node.id]: {
@@ -2221,6 +2230,7 @@ Devuelve estrictamente el JSON sin formato extra.
                     ? `http://${window.location.hostname}:5046`
                     : 'https://oasis-production-6303.up.railway.app');
                     
+            const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
@@ -2270,19 +2280,21 @@ Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este
                 if (!res.ok) throw new Error(`HTTP error ${res.status}`);
                 return res.json();
             }).then(data => {
+                if (fetchingPerspectivesRef.current) fetchingPerspectivesRef.current.delete(fetchKey);
                 if (data && data.choices && data.choices[0]) {
                     let aiText = data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
                     setNodeChats(prev => ({
                         ...prev,
                         [node.id]: {
                             ...(prev[node.id] || {}),
-                            [safeIdx]: [{ role: "assistant", content: aiText, isAIGenerated: true }]
+                            [safeIdx]: [{ role: "assistant", content: aiText, isAIGenerated: true, isLoading: false }]
                         }
                     }));
                 } else {
                     throw new Error("Invalid LLM response");
                 }
             }).catch(e => {
+                if (fetchingPerspectivesRef.current) fetchingPerspectivesRef.current.delete(fetchKey);
                 console.error("AI Error:", e);
                 // Fallback only if offline/network failure
                 const fallbackQ = getNodePerspectiveQuestion(node, safeIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
@@ -2290,7 +2302,7 @@ Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este
                     ...prev,
                     [node.id]: {
                         ...(prev[node.id] || {}),
-                        [safeIdx]: [{ role: "assistant", content: fallbackQ, isAIGenerated: false }]
+                        [safeIdx]: [{ role: "assistant", content: fallbackQ, isAIGenerated: true, isLoading: false }]
                     }
                 }));
             });
