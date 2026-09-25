@@ -517,7 +517,34 @@ export const isStaleOrRoboticQuestion = (q) => {
         'arrastran irremediablemente',
         'al pensar en',
         'qué te diría ese tú del pasado',
-        'qué pasaría si hoy decides dejar de ignorar'
+        'qué pasaría si hoy decides dejar de ignorar',
+        'Ehm, estaba pensando en',
+        'Es curioso cómo se da esto de',
+        'Sabes, me quedé pensando en',
+        'Fíjate que al observar',
+        'Hmm, escuchando sobre',
+        'Cuando mencionas',
+        'es súper interesante cómo parece venir desde',
+        '¿Crees que esa vieja forma de responder te sigue sirviendo',
+        '¿cómo lo vives realmente en tu día a día?',
+        '¿qué es lo que más te cuesta o te agota de esto?',
+        '¿qué es lo primerito que se te viene a la mente',
+        '¿te gustaría que intentemos buscar hacer algo distinto?',
+        '¿cómo crees que esto termina afectando a la gente cercana',
+        '¿sientes que a veces te alejas o te aíslas',
+        '¿cómo cambia tu forma de tratar a los demás',
+        '¿te ha pasado que alguien importante para ti lo nota',
+        'si tu cuerpo pudiera hablar a través de esa sensación',
+        '¿hay algo que te dé alivio físico inmediato',
+        'si le pusieras atención a ese malestar en silencio',
+        '¿en qué parte del cuerpo crees que lo notas más?',
+        'a veces esto se siente pesadísimo físicamente',
+        '¿has notado cómo reacciona tu cuerpo antes y después',
+        '¿qué pasaría si te detienes un momento a respirar',
+        'a veces somos súper duros con nosotros mismos',
+        '¿qué tipo de cosas te dices en tu cabeza',
+        'imagínate que alguien que quieres mucho te cuenta',
+        '¿crees que te estás exigiendo de más'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
@@ -2164,31 +2191,31 @@ Devuelve estrictamente el JSON sin formato extra.
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
 
     useEffect(() => {
-        if (!selectedNode || selectedQuestionIndex === null) return;
+        if (!selectedNode) return;
         const node = afcData?.nodes?.find(n => n.id === selectedNode.id);
         if (!node) return;
         
+        const safeIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
         const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
-        // Removed return so the backend default key can be used.
 
-        const currentChat = nodeChats[node.id]?.[selectedQuestionIndex];
+        const currentChat = nodeChats[node.id]?.[safeIdx];
         const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-        const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === "assistant" && !currentChat[0].isAIGenerated && !currentChat[0].isLoading;
+        const firstAssistant = currentChat && currentChat.find(m => m.role === 'assistant');
+        const isStale = firstAssistant ? isStaleOrRoboticQuestion(firstAssistant.content) : true;
+        const isAIGen = firstAssistant?.isAIGenerated === true;
         
-        // Check if we need to fetch
-        const needsFetch = !currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericOnly);
+        // Fetch fresh ChatGPT question if no chat, or if not yet answered and question is stale/generic
+        const needsFetch = !currentChat || currentChat.length === 0 || (!userHasAnswered && (isStale || !isAIGen));
         
         if (needsFetch) {
-            // Set loading state
             setNodeChats(prev => ({
                 ...prev,
                 [node.id]: {
                     ...(prev[node.id] || {}),
-                    [selectedQuestionIndex]: [{ role: 'assistant', content: 'Pensando la mejor pregunta...', isLoading: true }]
+                    [safeIdx]: [{ role: 'assistant', content: 'Reflexionando con IA la mejor pregunta...', isLoading: true }]
                 }
             }));
             
-            // Llama a la API
             const API_URL = import.meta.env.VITE_API_URL ||
                 ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
                     ? `http://${window.location.hostname}:5046`
@@ -2200,51 +2227,56 @@ Devuelve estrictamente el JSON sin formato extra.
             const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
             
             const perspectives = [
-                "Raíz Histórica y Origen (de dónde viene este patrón)",
-                "Relaciones Actuales y Entorno Social (cómo impacta a sus vínculos)",
-                "Cuerpo y Fisiología Somática (cómo se siente físicamente y emocionalmente)",
-                "Valores y Diálogo Interno (qué se dice a sí mismo y autocrítica)",
-                "Conductas y Patrones Automáticos (a dónde lo lleva o qué evita)",
-                "Reto Conductual Amable (un pequeñísimo experimento o paso a dar)",
-                "Integración y Cierre Compasivo (aceptación y soltar el ciclo)"
+                "Raíz Histórica y Origen (de dónde viene este patrón en su historia de vida)",
+                "Relaciones Actuales y Entorno Social (cómo impacta sus vínculos personales y familiares)",
+                "Cuerpo y Fisiología Somática (cómo se siente física y corporalmente)",
+                "Valores y Diálogo Interno (autocrítica, autoexigencia y qué se dice a sí mismo)",
+                "Conductas y Patrones Automáticos (evitación, escape o reacciones automáticas)",
+                "Reto Conductual Amable (un pequeño experimento o acción para desarmar el patrón)",
+                "Integración y Cierre Compasivo (aceptación y reconciliación)"
             ];
             
-            let prompt = `Actúa como un psicoterapeuta humano, empático y MUY directo. 
-El paciente está explorando su mapa mental y se detuvo en el nodo: "${node.label}" (Descripción: ${node.description || 'N/A'}).
-Queremos que le hagas una pregunta o comentario conversacional explorando este nodo desde la perspectiva: ${perspectives[selectedQuestionIndex]}.`;
+            let prompt = `Eres un psicoterapeuta clínico humano, empático, agudo y MUY directo en consulta privada.
+El paciente está explorando su mapa mental y está observando el nodo: "${node.label}" (Tipo: ${node.type || 'patrón'}, Descripción: ${node.description || 'N/A'}).
+Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este nodo desde la perspectiva: ${perspectives[safeIdx]}.`;
 
             if (originContext?.originNode) {
-                prompt += `\nNota: Este patrón parece originarse o detonarse por: "${originContext.originNode.label}".`;
+                prompt += `\nContexto de origen: Este patrón parece conectarse o detonarse por: "${originContext.originNode.label}".`;
             }
             if (consequenceContext?.targetNode) {
-                prompt += `\nNota: Este patrón suele desembocar en: "${consequenceContext.targetNode.label}".`;
+                prompt += `\nContexto de desenlace: Este patrón suele desembocar en: "${consequenceContext.targetNode.label}".`;
             }
 
-            prompt += `\n\nREGLAS IMPORTANTES:
-1. NO uses lenguaje robótico, ni clichés clínicos (evita palabras como "toma de consciencia", "armadura", "patrón", "ciclo").
-2. Escribe SOLO la pregunta directa que le dirías al paciente. Nada de saludos ni introducciones tuyas.
-3. Hazlo sentir como una charla genuina. Empieza natural (ej. "Sabes, me quedaba pensando en...", "Es curioso cómo...", "Oye, y cuando te pasa esto...").
-4. Sé breve, máximo 2 oraciones.`;
+            prompt += `\n\nREGLAS ESTRICTAS:
+1. NUNCA uses frases de plantilla como "Ehm, estaba pensando en...", "es súper interesante cómo...", "¿Crees que esa vieja forma de responder te sigue sirviendo?".
+2. Formula una pregunta fresca, natural, profunda y personalizada basada directamente en el nodo "${node.label}".
+3. Escribe ÚNICAMENTE la pregunta directa que le dirías al paciente cara a cara. Sin saludos ni comillas.
+4. Máximo 2 oraciones cortas.`;
 
             fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    provider: 'deepseek', endpoint: null,
-                    key: apiKey,
+                    endpoint: endpoint,
+                    key: apiKey || null,
                     payload: {
                         model: model,
-                        messages: [{ role: 'user', content: prompt }]
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7,
+                        max_tokens: 350
                     }
                 })
-            }).then(res => res.json()).then(data => {
+            }).then(res => {
+                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+                return res.json();
+            }).then(data => {
                 if (data && data.choices && data.choices[0]) {
                     let aiText = data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
                     setNodeChats(prev => ({
                         ...prev,
                         [node.id]: {
                             ...(prev[node.id] || {}),
-                            [selectedQuestionIndex]: [{ role: "assistant", content: aiText, isAIGenerated: true }]
+                            [safeIdx]: [{ role: "assistant", content: aiText, isAIGenerated: true }]
                         }
                     }));
                 } else {
@@ -2252,18 +2284,17 @@ Queremos que le hagas una pregunta o comentario conversacional explorando este n
                 }
             }).catch(e => {
                 console.error("AI Error:", e);
-                // Fallback to local
-                const fallbackQ = getNodePerspectiveQuestion(node, selectedQuestionIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
+                // Fallback only if offline/network failure
+                const fallbackQ = getNodePerspectiveQuestion(node, safeIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
                 setNodeChats(prev => ({
                     ...prev,
                     [node.id]: {
                         ...(prev[node.id] || {}),
-                        [selectedQuestionIndex]: [{ role: "assistant", content: fallbackQ, isAIGenerated: true }]
+                        [safeIdx]: [{ role: "assistant", content: fallbackQ, isAIGenerated: false }]
                     }
                 }));
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedNode?.id, selectedQuestionIndex, afcData]);
 
     const chatContainerRef = useRef(null);
@@ -2672,11 +2703,11 @@ Queremos que le hagas una pregunta o comentario conversacional explorando este n
                         if (threads && typeof threads === 'object') {
                             Object.keys(threads).forEach(tIdx => {
                                 const thread = threads[tIdx];
-                                if (Array.isArray(thread) && thread.length >= 1 && thread[0].role === 'assistant') {
-                                    const c = thread[0].content || '';
-                                    if (isStaleOrRoboticQuestion(c)) {
-                                        const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || { id: nodeId };
-                                        thread[0].content = getNodePerspectiveQuestion(targetNode, parseInt(tIdx, 10), user, bioData, phenomData, afcData?.edges, afcData?.nodes);
+                                if (Array.isArray(thread) && thread.length >= 1) {
+                                    const userAns = thread.some(m => m.role === 'user');
+                                    const firstAss = thread.find(m => m.role === 'assistant');
+                                    if (!userAns && firstAss && isStaleOrRoboticQuestion(firstAss.content)) {
+                                        delete threads[tIdx];
                                         hasRepaired = true;
                                     }
                                 }
@@ -4860,7 +4891,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         // Fetch current chat history for this node
         const currentChat = getSafeCurrentChat(currentNode.id, threadIndex);
 
-        // If user is submitting an answer, just save it and STOP. No more follow-up questions.
+        // When user submits their reflection, save it and invoke ChatGPT for a therapeutic insight
         if (userResponseText) {
             let threadChat = [...currentChat];
             const userHasAnswered = threadChat.some(m => m.role === 'user');
@@ -4871,37 +4902,23 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             );
             if (threadChat.length === 0 || !threadChat.some(m => m.role === 'assistant') || (!userHasAnswered && isGenericAssistant)) {
                 const initialQ = getNodePerspectiveQuestion(currentNode, threadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                threadChat = [{ role: 'assistant', content: initialQ }];
+                threadChat = [{ role: 'assistant', content: initialQ, isAIGenerated: true }];
             }
             const updatedChat = [...threadChat, { role: 'user', content: userResponseText }];
             
             setNodeChats(prev => {
                 const currentThreads = prev[currentNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-                const isLegacy = Array.isArray(currentThreads);
-                if (isLegacy) {
-                    return {
-                        ...prev,
-                        [currentNode.id]: {
-                            0: threadIndex === 0 ? updatedChat : currentThreads,
-                            1: threadIndex === 1 ? updatedChat : [],
-                            2: threadIndex === 2 ? updatedChat : [],
-                            3: threadIndex === 3 ? updatedChat : [],
-                            4: threadIndex === 4 ? updatedChat : [],
-                            5: threadIndex === 5 ? updatedChat : [],
-                            6: threadIndex === 6 ? updatedChat : []
-                        }
-                    };
-                }
                 return {
                     ...prev,
                     [currentNode.id]: {
                         ...currentThreads,
-                        [threadIndex]: updatedChat
+                        [threadIndex]: [...updatedChat, { role: 'assistant', content: 'Reflexionando sobre tu respuesta...', isLoading: true }]
                     }
                 };
             });
             
-            // If this is the integration perspective, mark the node as integrated automatically
+            setExplorationResponse('');
+            
             if (threadIndex === 6) {
                 setAfcData(prev => {
                     if (!prev || !prev.nodes) return prev;
@@ -4912,10 +4929,71 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 });
             }
 
-            setIsGeneratingExplorations(false);
-            setExplorationResponse('');
+            try {
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+                const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+                
+                const replyPrompt = `Eres un psicoterapeuta humano, empático y reflexivo en sesión clínica.
+El paciente está explorando su mapa mental en el nodo: "${currentNode.label}".
+
+Historial de esta reflexión:
+${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
+
+INSTRUCCIONES:
+1. Responde con calidez y agudeza clínica a lo que acaba de reflexionar el paciente (máximo 2 a 3 oraciones).
+2. Valida su sentir o haz una observación perspicaz que le ayude a conectar los puntos.
+3. Puedes cerrar con una pregunta abierta o un mensaje de aliento profundo.
+4. NUNCA uses clichés ni frases robotizadas.`;
+
+                const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: endpoint,
+                        key: activeKey || null,
+                        payload: {
+                            model: model,
+                            messages: [{ role: 'user', content: replyPrompt }],
+                            temperature: 0.6,
+                            max_tokens: 500
+                        }
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const aiReply = data.choices?.[0]?.message?.content?.trim().replace(/^["']|["']$/g, '');
+                    if (aiReply) {
+                        setNodeChats(prev => {
+                            const currentThreads = prev[currentNode.id] || {};
+                            return {
+                                ...prev,
+                                [currentNode.id]: {
+                                    ...currentThreads,
+                                    [threadIndex]: [...updatedChat, { role: 'assistant', content: aiReply, isAIGenerated: true }]
+                                }
+                            };
+                        });
+                    }
+                } else {
+                    throw new Error("HTTP error in chat reply");
+                }
+            } catch (err) {
+                console.error("AI reply error:", err);
+                setNodeChats(prev => {
+                    const currentThreads = prev[currentNode.id] || {};
+                    return {
+                        ...prev,
+                        [currentNode.id]: {
+                            ...currentThreads,
+                            [threadIndex]: updatedChat
+                        }
+                    };
+                });
+            } finally {
+                setIsGeneratingExplorations(false);
+            }
             
-            // Auto scroll
             setTimeout(() => {
                 const containers = document.querySelectorAll('.custom-scroll');
                 containers.forEach(container => container.scrollTop = container.scrollHeight);
