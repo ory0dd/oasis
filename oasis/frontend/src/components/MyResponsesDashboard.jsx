@@ -2192,11 +2192,12 @@ Devuelve estrictamente el JSON sin formato extra.
     const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(null);
 
     useEffect(() => {
-        if (!selectedNode) return;
-        const node = afcData?.nodes?.find(n => n.id === selectedNode.id);
+        const activeNode = selectedNode || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || null;
+        if (!activeNode) return;
+        const node = afcData?.nodes?.find(n => n.id === activeNode.id) || activeNode;
         if (!node) return;
         
-        const safeIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
+        const safeIdx = 0; // Single unique question per node
         const fetchKey = `${node.id}_${safeIdx}`;
         
         // Prevent concurrent or duplicate in-flight requests
@@ -2221,7 +2222,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 ...prev,
                 [node.id]: {
                     ...(prev[node.id] || {}),
-                    [safeIdx]: [{ role: 'assistant', content: 'Reflexionando con IA la mejor pregunta...', isLoading: true }]
+                    [safeIdx]: [{ role: 'assistant', content: 'Generando pregunta reflexiva...', isLoading: true }]
                 }
             }));
             
@@ -2236,32 +2237,21 @@ Devuelve estrictamente el JSON sin formato extra.
             const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
             const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
             
-            const perspectives = [
-                "Raíz Histórica y Origen (de dónde viene este patrón en su historia de vida)",
-                "Relaciones Actuales y Entorno Social (cómo impacta sus vínculos personales y familiares)",
-                "Cuerpo y Fisiología Somática (cómo se siente física y corporalmente)",
-                "Valores y Diálogo Interno (autocrítica, autoexigencia y qué se dice a sí mismo)",
-                "Conductas y Patrones Automáticos (evitación, escape o reacciones automáticas)",
-                "Reto Conductual Amable (un pequeño experimento o acción para desarmar el patrón)",
-                "Integración y Cierre Compasivo (aceptación y reconciliación)"
-            ];
-            
-            let prompt = `Eres un psicoterapeuta clínico humano, empático, agudo y MUY directo en consulta privada.
-El paciente está explorando su mapa mental y está observando el nodo: "${node.label}" (Tipo: ${node.type || 'patrón'}, Descripción: ${node.description || 'N/A'}).
-Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este nodo desde la perspectiva: ${perspectives[safeIdx]}.`;
+            let prompt = `Eres un psicoterapeuta clínico humano, empático, sumamente perspicaz y directo.
+El paciente está en su mapa mental observando el nodo: "${node.label}" (Tipo: ${node.type || 'conductual'}, Descripción: ${node.description || 'N/A'}).
+Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita al paciente conectar sinceramente con este patrón en su vida.`;
 
             if (originContext?.originNode) {
-                prompt += `\nContexto de origen: Este patrón parece conectarse o detonarse por: "${originContext.originNode.label}".`;
+                prompt += `\nDetonante o antecedente vinculado: "${originContext.originNode.label}".`;
             }
             if (consequenceContext?.targetNode) {
-                prompt += `\nContexto de desenlace: Este patrón suele desembocar en: "${consequenceContext.targetNode.label}".`;
+                prompt += `\nEfecto o consecuencia posterior: "${consequenceContext.targetNode.label}".`;
             }
 
             prompt += `\n\nREGLAS ESTRICTAS:
-1. NUNCA uses frases de plantilla como "Ehm, estaba pensando en...", "es súper interesante cómo...", "¿Crees que esa vieja forma de responder te sigue sirviendo?".
-2. Formula una pregunta fresca, natural, profunda y personalizada basada directamente en el nodo "${node.label}".
-3. Escribe ÚNICAMENTE la pregunta directa que le dirías al paciente cara a cara. Sin saludos ni comillas.
-4. Máximo 2 oraciones cortas.`;
+1. NUNCA uses frases robotizadas ni clichés de autoayuda o plantillas.
+2. Formula UNA SOLA PREGUNTA directa al paciente.
+3. Devuelve ÚNICAMENTE el texto de la pregunta (máximo 2 oraciones). Sin saludos, sin comillas ni listas.`;
 
             fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
@@ -2307,7 +2297,7 @@ Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este
                 }));
             });
         }
-    }, [selectedNode?.id, selectedQuestionIndex, afcData]);
+    }, [selectedNode?.id, tourActiveIndex]);
 
     const chatContainerRef = useRef(null);
 
@@ -2869,40 +2859,6 @@ Formula UNA ÚNICA PREGUNTA socrática o comentario reflexivo para explorar este
         }
     }, [selectedNode, tourActiveIndex]);
 
-    // Auto-start chat when a node is opened and has no chat history (or has stale generic prompt)
-    useEffect(() => {
-        const activeNode = selectedNode || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || null;
-        if (activeNode) {
-            const tIdx = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-            const currentChat = getSafeCurrentChat(activeNode.id, tIdx);
-            const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-            const isGenericAssistant = currentChat && currentChat[0]?.role === 'assistant' && isStaleOrRoboticQuestion(currentChat[0]?.content);
-            if (!currentChat || currentChat.length === 0 || (!userHasAnswered && isGenericAssistant)) {
-                const initialQ = getNodePerspectiveQuestion(activeNode, tIdx, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                setNodeChats(prev => {
-                    const currentThreads = prev[activeNode.id] || { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-                    const isLegacy = Array.isArray(currentThreads);
-                    if (isLegacy) {
-                        return {
-                            ...prev,
-                            [activeNode.id]: {
-                                0: [{ role: 'assistant', content: initialQ }],
-                                1: [], 2: [], 3: [], 4: [], 5: [], 6: []
-                            }
-                        };
-                    }
-                    if (currentThreads[tIdx] && currentThreads[tIdx].length > 0 && !isGenericAssistant) return prev;
-                    return {
-                        ...prev,
-                        [activeNode.id]: {
-                            ...currentThreads,
-                            [tIdx]: [{ role: 'assistant', content: initialQ }]
-                        }
-                    };
-                });
-            }
-        }
-    }, [selectedNode, tourActiveIndex, selectedQuestionIndex, sortedTourNodes, getSafeCurrentChat]);
 
     // Synchronize draft input per active node and perspective
     useEffect(() => {
@@ -5003,20 +4959,17 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
                 const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
                 
-                const replyPrompt = `Eres un Psicólogo Clínico y Analista Existencial de Nivel Experto.
-El paciente está realizando una introspección consciente sobre el siguiente nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}).
+                const replyPrompt = `Eres un psicoterapeuta clínico humano, empático, reflexivo y de profunda agudeza psicológica.
+El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}).
 
 Historial de esta reflexión:
 ${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
 
 INSTRUCCIONES CLÍNICAS:
-1. Responde de forma cálida, humana y sumamente perspicaz a la reflexión del paciente.
-2. Ayúdale a conectar este nodo con su vida y dale una perspectiva reveladora.
-3. Estructura tu respuesta en 3 bloques visuales bien definidos usando exactamente estos encabezados con emojis:
-- 🪞 **Espejo Clínico**: 1 o 2 oraciones empáticas conectando lo que siente y la función oculta de este patrón.
-- 💎 **Insight Clave**: 1 revelación nuclear o toma de conciencia sobre este nodo.
-- 🎯 **Acción Consciente**: 1 sugerencia práctica o micro-experimento que el paciente pueda crear o poner a prueba en su día a día para transformar esto.
-4. NUNCA uses clichés ni frases robotizadas.`;
+1. Responde de forma cálida, humana y sumamente perspicaz a lo que el paciente acaba de expresar.
+2. Devuelve UNA SOLA reflexión o devolución clínica profunda (máximo 2 a 3 oraciones en un único párrafo fluido).
+3. Conecta su sentir con la raíz o función del patrón sin usar viñetas, sin títulos, sin encabezados ni subdivisiones.
+4. NUNCA uses clichés, frases robóticas ni explicaciones teóricas aburridas.`;
 
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
@@ -8464,63 +8417,15 @@ Por favor, analicemos:
 
                                                         {/* Sleek Minimalist Perspective Pills Switcher */}
                                                         {(() => {
-                                                            const safeThreadIndex = selectedQuestionIndex !== null ? selectedQuestionIndex : 0;
-                                                            const perspectivePills = [
-                                                                { id: 0, label: 'Raíz', icon: '🌱' },
-                                                                { id: 1, label: 'Vínculos', icon: '🫧' },
-                                                                { id: 2, label: 'Cuerpo', icon: '🫀' },
-                                                                { id: 3, label: 'Diálogo', icon: '💎' },
-                                                                { id: 4, label: 'Conductas', icon: '⚡' },
-                                                                { id: 5, label: 'Reto', icon: '🎯' },
-                                                                { id: 6, label: 'Cierre', icon: '✨' }
-                                                            ];
-
-                                                            const currentChat = getSafeCurrentChat(currentNode.id, safeThreadIndex);
+                                                            const currentChat = getSafeCurrentChat(currentNode.id, 0);
                                                             const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
                                                             const isGenericOnly = currentChat && currentChat.length === 1 && currentChat[0].role === "assistant" && !currentChat[0].isAIGenerated;
                                                             const effectiveChat = (currentChat && currentChat.length > 0 && !(isGenericOnly && !userHasAnswered))
                                                                 ? currentChat
-                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, safeThreadIndex, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
+                                                                : [{ role: 'assistant', content: getNodePerspectiveQuestion(currentNode, 0, user, bioData, phenomData, afcData?.edges, afcData?.nodes) }];
 
                                                             return (
                                                                 <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden" onClick={e => e.stopPropagation()}>
-                                                                    {/* Horizontal Perspective Pills */}
-                                                                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 pt-0.5 shrink-0">
-                                                                        {perspectivePills.map(p => {
-                                                                            const isActive = safeThreadIndex === p.id;
-                                                                            const pChat = getSafeCurrentChat(currentNode.id, p.id);
-                                                                            const isDone = pChat && pChat.some(m => m.role === 'user');
-                                                                            return (
-                                                                                <button
-                                                                                    key={p.id}
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setSelectedQuestionIndex(p.id);
-                                                                                        setChatExchangeIndices(prev => ({...prev, [`${currentNode.id}_${p.id}`]: undefined}));
-                                                                                        const nextChat = getSafeCurrentChat(currentNode.id, p.id);
-                                                                                        const userAns = nextChat && nextChat.some(m => m.role === 'user');
-                                                                                        const isStale = nextChat && nextChat.length === 1 && nextChat[0].role === 'assistant' && isStaleOrRoboticQuestion(nextChat[0].content);
-                                                                                        if (!nextChat || nextChat.length === 0 || (!userAns && isStale)) {
-                                                                                            const initQ = getNodePerspectiveQuestion(currentNode, p.id, user, bioData, phenomData, afcData?.edges, afcData?.nodes);
-                                                                                            setNodeChats(prev => ({
-                                                                                                ...prev,
-                                                                                                [currentNode.id]: {
-                                                                                                    ...(prev[currentNode.id] || {}),
-                                                                                                    [p.id]: [{ role: 'assistant', content: initQ }]
-                                                                                                }
-                                                                                            }));
-                                                                                        }
-                                                                                    }}
-                                                                                    className={`px-2.5 py-1 rounded-xl text-[9.5px] font-bold tracking-tight transition-all shrink-0 flex items-center gap-1 select-none ${isActive ? 'bg-white text-zinc-950 shadow-md scale-[1.02]' : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-zinc-200 border border-white/5'}`}
-                                                                                >
-                                                                                    <span className="text-[10px] leading-none">{p.icon}</span>
-                                                                                    <span>{p.label}</span>
-                                                                                    {isDone && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-0.5" />}
-                                                                                </button>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-
                                                                     {/* Action Toast Feedback */}
                                                                     {insightActionToast && (
                                                                         <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-500/30 to-emerald-500/30 border border-sky-400/40 text-sky-200 text-[10px] font-semibold flex items-center gap-1.5 animate-pulse shadow-md shrink-0">
@@ -8530,7 +8435,7 @@ Por favor, analicemos:
                                                                     )}
 
                                                                     {/* Chat / Question Display Area */}
-                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2 min-h-[90px] max-h-[175px]">
+                                                                    <div className="flex-1 overflow-y-auto custom-scroll pr-1 flex flex-col gap-2 min-h-[90px] max-h-[195px]">
                                                                         {effectiveChat.map((msg, msgIdx) => {
                                                                             if (msg.role === 'assistant') {
                                                                                 return (
@@ -8538,13 +8443,13 @@ Por favor, analicemos:
                                                                                         <div className="flex items-center justify-between text-[8.5px] font-mono uppercase tracking-widest text-sky-400 font-bold">
                                                                                             <div className="flex items-center gap-1.5">
                                                                                                 <Sparkles size={10} />
-                                                                                                <span>{perspectivePills[safeThreadIndex]?.icon} {perspectivePills[safeThreadIndex]?.label} {msgIdx > 0 ? '· Resonancia' : ''}</span>
+                                                                                                <span>{msgIdx === 0 ? 'Pregunta de Introspección' : 'Resonancia Terapéutica'}</span>
                                                                                             </div>
                                                                                             {msg.isAIGenerated && (
                                                                                                 <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-normal">IA Clínica</span>
                                                                                             )}
                                                                                         </div>
-                                                                                        <p className="text-[11px] leading-relaxed text-zinc-200 font-sans whitespace-pre-line">
+                                                                                        <p className="text-[11.5px] leading-relaxed text-zinc-200 font-sans whitespace-pre-line">
                                                                                             {msg.content}
                                                                                         </p>
                                                                                         {msg.newNodeAdded && (
@@ -8559,7 +8464,7 @@ Por favor, analicemos:
                                                                                                     type="button"
                                                                                                     onClick={(e) => {
                                                                                                         e.stopPropagation();
-                                                                                                        saveInsightToCanvas(msg.content, currentNode, perspectivePills[safeThreadIndex]?.label);
+                                                                                                        saveInsightToCanvas(msg.content, currentNode, "Introspección");
                                                                                                     }}
                                                                                                     className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 hover:text-white border border-sky-500/30 text-[9.5px] font-medium flex items-center gap-1 transition-all active:scale-95 shadow-sm"
                                                                                                     title="Guardar como nota en tu Lienzo / Pizarrón"
@@ -8643,7 +8548,7 @@ Por favor, analicemos:
                                                                                 if (e.key === 'Enter' && !e.shiftKey) {
                                                                                     e.preventDefault();
                                                                                     if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                        continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                                        continueNodeExploration(currentNode, explorationResponse.trim(), 0);
                                                                                     }
                                                                                 }
                                                                             }}
@@ -8654,7 +8559,7 @@ Por favor, analicemos:
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 if (explorationResponse.trim() && !isGeneratingExplorations) {
-                                                                                    continueNodeExploration(currentNode, explorationResponse.trim(), safeThreadIndex);
+                                                                                    continueNodeExploration(currentNode, explorationResponse.trim(), 0);
                                                                                 }
                                                                             }}
                                                                             className={`absolute right-2 bottom-2 w-7 h-7 rounded-xl flex items-center justify-center transition-all ${explorationResponse.trim() && !isGeneratingExplorations ? 'bg-sky-500 hover:bg-sky-400 text-white shadow-md active:scale-95' : 'bg-white/5 text-zinc-600 cursor-not-allowed'}`}
