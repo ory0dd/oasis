@@ -6959,69 +6959,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                         ))}
                                     </div>
 
-                                    {/* SVG Edges */}
-                                    
-                                    {/* --- INJECTION FOR MINI NODES --- */}
+                                    {/* SVG Edges & HTML Nodes */}
                                     {(() => {
-                                        let finalNodesToRender = [...(nodesToRender || [])];
-                                        let finalEdgesToRender = [...(edgesToRender || [])];
-                                        const activeChatNode = (mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) ? sortedTourNodes[tourActiveIndex] : null;
-                                        
-                                        const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integración'];
-                                        const initialNodes = [...finalNodesToRender];
-                                        const activeContextNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
+                                        const finalNodesToRender = nodesToRender || [];
+                                        const finalEdgesToRender = edgesToRender || [];
 
-                                        initialNodes.forEach(node => {
-                                            if (node.type === 'mini_chat') return;
-                                            if (!activeContextNodeId || node.id !== activeContextNodeId) return;
-                                            
-                                            // Render history for the selected node to show context
-                                            let activeThreads = [];
-                                            for (let t = 0; t < 7; t++) {
-                                                const currentChat = getSafeCurrentChat(node.id, t);
-                                                if (currentChat && currentChat.length > 0) {
-                                                    activeThreads.push({t});
-                                                }
-                                            }
-                                            
-                                            activeThreads.forEach((item, i) => {
-                                                const {t} = item;
-                                                const miniNodeId = `mini_node_${node.id}_thread_${t}`;
-                                                // Constellation orbit matching the white aura (tight crown)
-                                                let pixelRx = 110, pixelRy = 65; // Default for rectangular nodes (cognitive, motor, consequences)
-                                                if (node.type === 'historical') {
-                                                    pixelRx = 95; pixelRy = 95; // Diamond shape
-                                                } else if (node.type === 'biological' || node.type === 'social') {
-                                                    pixelRx = 85; pixelRy = 85; // Circular shape
-                                                }
-                                                
-                                                const rx = (pixelRx / VIRTUAL_WIDTH) * 100;
-                                                const ry = (pixelRy / VIRTUAL_HEIGHT) * 100;
-                                                const angle = (i / activeThreads.length) * Math.PI * 2 - Math.PI / 2;
-                                                const x = node.x + Math.cos(angle) * rx;
-                                                const y = node.y + Math.sin(angle) * ry;
-                                                
-                                                finalNodesToRender.push({
-                                                    id: miniNodeId,
-                                                    type: 'mini_chat',
-                                                    label: `${threadLabels[t]}`,
-                                                    parentId: node.id,
-                                                    threadIndex: t,
-                                                    x, y
-                                                });
-                                                
-                                                finalEdgesToRender.push({
-                                                    source: node.id,
-                                                    target: miniNodeId,
-                                                    type: 'mini_chat_link',
-                                                    weight: 1.0
-                                                });
-                                            });
-                                        });
-
-
-    return (
-        <React.Fragment>
+                                        return (
+                                            <React.Fragment>
                                                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
 
                                         <style>{`
@@ -7211,7 +7155,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 (e.target === activeNodeId && e.source === node.id)
                                             ))
                                         )) || isNodeInPattern;
-                                        const isDimmed = (activeNodeId || selectedPatternId) && !isConnected && node.type !== 'mini_chat';
+                                        const isDimmed = (activeNodeId || selectedPatternId) && !isConnected;
 
                                         // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click rápido
                                         const handleNodeClick = (e) => {
@@ -7228,26 +7172,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                             setSelectedNode(targetNode);
 
                                             if (targetNode) {
-                                                // If clicked on a mini chat node, open the parent node's chat at the correct perspective
-                                                if (targetNode.type === 'mini_chat') {
-                                                    const parentNode = sortedTourNodes.find(sn => sn.id === targetNode.parentId) || (nodesToRender || []).find(n => n.id === targetNode.parentId);
-                                                    if (parentNode) {
-                                                        setSelectedNode(parentNode);
-                                                        const idx = sortedTourNodes.findIndex(sn => sn.id === parentNode.id);
-                                                        if (idx !== -1) {
-                                                            setTourActiveIndex(idx);
-                                                            setIsExploringActiveNode(true);
-                                                        } else {
-                                                            setTourActiveIndex(null);
-                                                            setIsExploringActiveNode(false);
-                                                        }
-                                                        setSelectedQuestionIndex(targetNode.threadIndex);
-                                                        setChatExchangeIndices(prev => ({...prev, [`${parentNode.id}_${targetNode.threadIndex}`]: undefined}));
-                                                        setTimeout(() => zoomToNode(parentNode), 15);
-                                                    }
-                                                    return;
-                                                }
-
                                                 // If the clicked node is a blind spot node, mark it as clicked in localStorage
                                                 if (targetNode.id.startsWith("blind_spot_")) {
                                                     const spotId = targetNode.id.substring("blind_spot_".length);
@@ -7386,14 +7310,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
                                             >
 
-                                                {node.type === 'mini_chat' ? (
-                                                    <div className="group relative cursor-pointer flex items-center justify-center w-8 h-8">
-                                                        <div className={`w-2.5 h-2.5 rounded-full border shadow-sm transition-transform duration-300 group-hover:scale-150 ${node.role === 'assistant' ? 'bg-sky-400/40 border-sky-300' : 'bg-pink-400/40 border-pink-300'}`} />
-                                                        <div className={`absolute opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 rounded-xl bg-black/90 border p-1.5 backdrop-blur-md shadow-lg z-50 ${node.role === 'assistant' ? 'border-sky-400/60 shadow-[0_0_15px_rgba(14,165,233,0.3)]' : 'border-pink-400/60 shadow-[0_0_15px_rgba(244,114,182,0.3)]'}`}>
-                                                            <span className="block text-[7px] font-medium text-center whitespace-nowrap text-zinc-100">{softenNodeLabel(node.label)}</span>
-                                                        </div>
-                                                    </div>
-                                                ) : (() => {
+                                                {(() => {
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
                                                     const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
                                                     const isIntegrated = node.status === 'integrated';
