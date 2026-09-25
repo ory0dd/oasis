@@ -2194,7 +2194,8 @@ Devuelve estrictamente el JSON sin formato extra.
                     ? `http://${window.location.hostname}:5046`
                     : 'https://oasis-production-6303.up.railway.app');
                     
-            const model = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
             const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
             
@@ -4995,21 +4996,21 @@ ESTRUCTURA DE SALIDA ESPERADA:
 
 
         try {
-            const customEp = localStorage.getItem('oasis_deepseek_endpoint') || '';
-            const customM = localStorage.getItem('oasis_deepseek_model') || '';
+            const customEp = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const customM = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
-            let provider = 'deepseek';
+            let provider = 'openai';
             let resolvedEndpoint = customEp;
             let resolvedModel = customM;
 
-            if (activeKey.startsWith('sk-proj-') || (customEp && customEp.includes('openai.com')) || (customM && customM.toLowerCase().includes('gpt'))) {
-                provider = 'openai';
-                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.openai.com/v1/chat/completions';
-                if (!resolvedModel) resolvedModel = 'gpt-4o';
-            } else {
+            if (customEp.includes('deepseek.com') || (customM && customM.toLowerCase().includes('deepseek'))) {
                 provider = 'deepseek';
                 if (!resolvedEndpoint) resolvedEndpoint = 'https://api.deepseek.com/chat/completions';
                 if (!resolvedModel) resolvedModel = 'deepseek-chat';
+            } else {
+                provider = 'openai';
+                if (!resolvedEndpoint) resolvedEndpoint = 'https://api.openai.com/v1/chat/completions';
+                if (!resolvedModel) resolvedModel = 'gpt-4o';
             }
 
             const payload = {

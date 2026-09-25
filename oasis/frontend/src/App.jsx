@@ -7093,14 +7093,14 @@ export default function App() {
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'deepseek-chat';
+            const model = localStorage.getItem('oasis_deepseek_model') || lastSuccessModel.current || 'gpt-4o';
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    provider: 'deepseek', endpoint: null,
+                    endpoint: endpoint,
                     key: deepseekKey,
                     payload: {
                         model: model,
@@ -8835,7 +8835,7 @@ export default function App() {
         // Deshabilitado por peticiÃ³n del usuario
         return;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -8876,7 +8876,7 @@ export default function App() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provider: 'deepseek', endpoint: null,
+                        endpoint: endpoint,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -8957,7 +8957,7 @@ export default function App() {
         
         Responde ÃšNICAMENTE con el JSON o "SIN CAMBIOS".`;
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -8970,7 +8970,7 @@ export default function App() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provider: 'deepseek', endpoint: null,
+                        endpoint: endpoint,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -9017,7 +9017,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                provider: 'deepseek', endpoint: null,
+                                endpoint: endpoint,
                                 key: deepseekKey,
                                 payload: { model: model, messages: [{ role: 'user', content: stylePrompt }], response_format: { type: "json_object" } }
                             })
@@ -9388,7 +9388,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
     const backgroundAnalyzeContent = async (prompt) => {
         setAnalysisError(null);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const modelsToTry = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -9404,7 +9404,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provider: 'deepseek', endpoint: null,
+                        endpoint: endpoint,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -9572,7 +9572,7 @@ Devuelve un JSON estricto con esta estructura (si no tienes datos claros, devuel
             generateChatTitle(effectiveConvId, inputToProcess);
         }
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -9828,7 +9828,7 @@ ${afcMapContext}
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provider: 'deepseek', endpoint: null,
+                        endpoint: endpoint,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
@@ -9968,7 +9968,7 @@ ${afcMapContext}
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    provider: 'deepseek', endpoint: null,
+                    endpoint: endpoint,
                     key: key,
                     payload: {
                         model: model,
@@ -10557,7 +10557,7 @@ ${afcMapContext}
 
         console.log(`Sintetizando ${involvedBlocks.length} fragmentos con el NÃºcleo Cognitivo...`);
 
-        const customModel = localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat';
+        const customModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
         const MODELS_TO_TRY = lastSuccessModel.current
             ? [lastSuccessModel.current, ...availableModels.filter(m => m !== lastSuccessModel.current)]
             : [customModel, 'gpt-4o', 'deepseek-reasoner'];
@@ -10574,7 +10574,7 @@ ${afcMapContext}
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        provider: 'deepseek', endpoint: null,
+                        endpoint: endpoint,
                         key: deepseekKey,
                         payload: {
                             model: modelName,
