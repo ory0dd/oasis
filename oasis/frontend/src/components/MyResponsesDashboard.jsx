@@ -2176,6 +2176,224 @@ Devuelve estrictamente el JSON sin formato extra.
 
     // Removed localStorage sync to always perform fresh mathematical auto-centering on mount and tab load
 
+    // --- COLLAPSIBLE PATTERNS (Islas del Mapa) & TOUR STATE ---
+    const [selectedPatternId, setSelectedPatternId] = useState(null);
+    const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
+    const [isMapExpanded, setIsMapExpanded] = useState(false);
+    const [expandedBucleNodeId, setExpandedBucleNodeId] = useState(null);
+    const [insightActionToast, setInsightActionToast] = useState(null);
+    const [isIslandsPanelExpanded, setIsIslandsPanelExpanded] = useState(window.innerWidth > 768);
+
+    // Tour/Narrative State
+    const [tourActiveIndex, setTourActiveIndex] = useState(null);
+    const [isTourMinimized, setIsTourMinimized] = useState(false);
+
+    const getAfcPatterns = useCallback((data) => {
+        if (!data?.nodes || data.nodes.length === 0) return [];
+
+        const nodes = data.nodes;
+        const edges = data.edges || [];
+        const islands = [];
+
+        nodes.forEach(node => {
+            const connectedNodeIds = new Set();
+            connectedNodeIds.add(node.id);
+
+            // Find all nodes directly connected to this node
+            edges.forEach(edge => {
+                if (edge.source === node.id) {
+                    connectedNodeIds.add(edge.target);
+                } else if (edge.target === node.id) {
+                    connectedNodeIds.add(edge.source);
+                }
+            });
+
+            // We only create an island if it represents a connection (meaning the node has at least 1 neighbor, so size >= 2)
+            if (connectedNodeIds.size >= 2) {
+                // Sort nodes inside this component using typeOrder to establish clínical sequence (linearity)
+                const typeOrder = {
+                    historical: 0,
+                    biological: 1,
+                    social: 2,
+                    cognitive: 3,
+                    motor: 4,
+                    physiological: 5,
+                    consequence: 6
+                };
+
+                const sortedComponentNodes = Array.from(connectedNodeIds)
+                    .map(id => nodes.find(n => n.id === id))
+                    .filter(Boolean)
+                    .sort((a, b) => {
+                        const orderA = typeOrder[a.type] ?? 99;
+                        const orderB = typeOrder[b.type] ?? 99;
+                        if (orderA !== orderB) return orderA - orderB;
+                        if (a.x !== b.x) return a.x - b.x;
+                        return a.y - b.y;
+                    });
+
+                const sortedIds = sortedComponentNodes.map(n => n.id);
+
+                const pathLabels = sortedComponentNodes.map(n => n.label).join(' → ');
+                const description = `Bucle Clínico Conectado: ${pathLabels}`;
+
+                islands.push({
+                    id: `isla_node_${node.id}`,
+                    nombre: `Bucle: ${node.label}`,
+                    descripcion: description,
+                    node_ids: sortedIds,
+                    primary_node_id: node.id,
+                    sortedNodes: sortedComponentNodes
+                });
+            }
+        });
+
+        // Fallback: If no multi-node islands exist, return individual nodes as islands
+        if (islands.length === 0) {
+            nodes.forEach(node => {
+                islands.push({
+                    id: `isla_fallback_${node.id}`,
+                    nombre: `Punto de Interés: ${node.label}`,
+                    descripcion: `Nodo aislado en el mapa clínico.`,
+                    node_ids: [node.id],
+                    primary_node_id: node.id,
+                    sortedNodes: [node]
+                });
+            });
+        }
+
+        return islands;
+    }, []);
+
+    // --- NODE INTENSITIES & CLINICAL DENSITY ---
+    const [nodeIntensities, setNodeIntensities] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_node_intensities_${user}`);
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            return {};
+        }
+    });
+
+    const handleIntensityChange = (nodeId, val) => {
+        setNodeIntensities(prev => {
+            const updated = { ...prev, [nodeId]: val };
+            setLocalItem(`oasis_node_intensities_${user}`, JSON.stringify(updated));
+            window.dispatchEvent(new Event('oasis_intensities_updated'));
+            return updated;
+        });
+    };
+
+    const loadIntensities = useCallback(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_node_intensities_${user}`);
+            if (saved) {
+                setNodeIntensities(JSON.parse(saved));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [user]);
+
+    const currentPatterns = useMemo(() => {
+        const patterns = getAfcPatterns({ nodes: nodesToRender, edges: edgesToRender });
+        
+        return patterns.map(pattern => {
+            let totalIntensity = 0;
+            let selfSabotageKeywords = ['culpa', 'miedo', 'adicción', 'droga', 'evitación', 'ansiedad', 'depresión', 'castigo', 'aislamiento', 'procrastinación', 'control', 'trampas', 'tóxic'];
+            let keywordScore = 0;
+            let totalDifficulty = 0;
+            
+            pattern.sortedNodes.forEach(node => {
+                const userInt = nodeIntensities[node.id] || 0;
+                totalIntensity += userInt;
+                
+                const text = (node.label + " " + (node.observations || "")).toLowerCase();
+                selfSabotageKeywords.forEach(kw => {
+                    if (text.includes(kw)) keywordScore += 2;
+                });
+                
+                if (node.type === 'behavior') totalDifficulty += 1;
+                else if (node.type === 'trigger') totalDifficulty += 2;
+                else if (node.type === 'cognitive') totalDifficulty += 4;
+                else if (node.type === 'origin') totalDifficulty += 5;
+                else totalDifficulty += 3;
+            });
+            
+            const avgDifficulty = pattern.sortedNodes.length > 0 ? totalDifficulty / pattern.sortedNodes.length : 0;
+            const finalIntensity = totalIntensity + keywordScore + (pattern.sortedNodes.length * 1.5);
+            
+            return {
+                ...pattern,
+                computedIntensity: finalIntensity,
+                computedDifficulty: avgDifficulty
+            };
+        }).sort((a, b) => {
+            const getIntensityTier = (score) => {
+                if (score >= 15) return 3;
+                if (score >= 8) return 2;
+                return 1;
+            };
+            
+            const tierA = getIntensityTier(a.computedIntensity);
+            const tierB = getIntensityTier(b.computedIntensity);
+            
+            if (tierA !== tierB) {
+                return tierA - tierB; // Menor intensidad primero
+            }
+            return a.computedDifficulty - b.computedDifficulty; // Más fácil primero dentro de la misma intensidad
+        });
+    }, [nodesToRender, edgesToRender, getAfcPatterns, nodeIntensities]);
+
+    const activePattern = useMemo(() => {
+        return currentPatterns.find(p => p.id === selectedPatternId) || null;
+    }, [currentPatterns, selectedPatternId]);
+
+    // Derived sorted list of nodes for narrative tour
+    const sortedTourNodes = useMemo(() => {
+        let rawNodes = afcData ? afcData.nodes : [];
+        if (!rawNodes || rawNodes.length === 0) return [];
+
+        if (selectedPatternId) {
+            const activePat = currentPatterns.find(p => p.id === selectedPatternId);
+            if (activePat && activePat.node_ids) {
+                rawNodes = rawNodes.filter(n => activePat.node_ids.includes(n.id));
+            }
+        }
+
+        const clinicalRoleOrder = {
+            antecedent: 0,
+            cognitive: 1,
+            internal_barrier: 1,
+            physiological: 2,
+            motor: 3,
+            experiential_avoidance: 3,
+            consequence: 4,
+            maintaining_trap: 4
+        };
+        const typeOrder = {
+            historical: 0,
+            social: 0,
+            cognitive: 1,
+            physiological: 2,
+            biological: 2,
+            motor: 3,
+            consequence: 4
+        };
+        return [...rawNodes].sort((a, b) => {
+            const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
+            const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
+            if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
+                return roleA - roleB;
+            }
+            const orderA = typeOrder[a.type] ?? 99;
+            const orderB = typeOrder[b.type] ?? 99;
+            if (orderA !== orderB) return orderA - orderB;
+            if (a.x !== b.x) return a.x - b.x;
+            return a.y - b.y;
+        });
+    }, [afcData, selectedPatternId, currentPatterns]);
+
     // Node Exploration States
     const [nodeExplorations, setNodeExplorations] = useState({});
     const fetchingPerspectivesRef = useRef(new Set());
@@ -2337,14 +2555,6 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
     });
 
-    // --- COLLAPSIBLE PATTERNS (Islas del Mapa) ---
-    const [selectedPatternId, setSelectedPatternId] = useState(null);
-    const [isOpenIslandModal, setIsOpenIslandModal] = useState(false);
-    const [isMapExpanded, setIsMapExpanded] = useState(false);
-    // Local state for accordion expand in Bucles list — does NOT navigate to map
-    const [expandedBucleNodeId, setExpandedBucleNodeId] = useState(null);
-    const [insightActionToast, setInsightActionToast] = useState(null);
-
     const saveInsightToCanvas = useCallback((text, node, perspectiveLabel) => {
         try {
             const key = `oasis_canvas_nodes_${user}`;
@@ -2401,174 +2611,6 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         );
         setTimeout(() => setInsightActionToast(null), 3500);
     }, [user, setLocalItem]);
-
-    const getAfcPatterns = useCallback((data) => {
-        if (!data?.nodes || data.nodes.length === 0) return [];
-
-        const nodes = data.nodes;
-        const edges = data.edges || [];
-        const islands = [];
-
-        nodes.forEach(node => {
-            const connectedNodeIds = new Set();
-            connectedNodeIds.add(node.id);
-
-            // Find all nodes directly connected to this node
-            edges.forEach(edge => {
-                if (edge.source === node.id) {
-                    connectedNodeIds.add(edge.target);
-                } else if (edge.target === node.id) {
-                    connectedNodeIds.add(edge.source);
-                }
-            });
-
-            // We only create an island if it represents a connection (meaning the node has at least 1 neighbor, so size >= 2)
-            if (connectedNodeIds.size >= 2) {
-                // Sort nodes inside this component using typeOrder to establish clínical sequence (linearity)
-                const typeOrder = {
-                    historical: 0,
-                    biological: 1,
-                    social: 2,
-                    cognitive: 3,
-                    motor: 4,
-                    physiological: 5,
-                    consequence: 6
-                };
-
-                const sortedComponentNodes = Array.from(connectedNodeIds)
-                    .map(id => nodes.find(n => n.id === id))
-                    .filter(Boolean)
-                    .sort((a, b) => {
-                        const orderA = typeOrder[a.type] ?? 99;
-                        const orderB = typeOrder[b.type] ?? 99;
-                        if (orderA !== orderB) return orderA - orderB;
-                        if (a.x !== b.x) return a.x - b.x;
-                        return a.y - b.y;
-                    });
-
-                const sortedIds = sortedComponentNodes.map(n => n.id);
-
-                const pathLabels = sortedComponentNodes.map(n => n.label).join(' → ');
-                const description = `Bucle Clínico Conectado: ${pathLabels}`;
-
-                islands.push({
-                    id: `isla_node_${node.id}`,
-                    nombre: `Bucle: ${node.label}`,
-                    descripcion: description,
-                    node_ids: sortedIds,
-                    primary_node_id: node.id,
-                    sortedNodes: sortedComponentNodes
-                });
-            }
-        });
-
-        // Fallback: If no multi-node islands exist, return individual nodes as islands
-        if (islands.length === 0) {
-            nodes.forEach(node => {
-                islands.push({
-                    id: `isla_fallback_${node.id}`,
-                    nombre: `Punto de Interés: ${node.label}`,
-                    descripcion: `Nodo aislado en el mapa clínico.`,
-                    node_ids: [node.id],
-                    primary_node_id: node.id,
-                    sortedNodes: [node]
-                });
-            });
-        }
-
-        return islands;
-    }, []);
-
-
-
-    const [isIslandsPanelExpanded, setIsIslandsPanelExpanded] = useState(window.innerWidth > 768);
-
-    // --- NODE INTENSITIES & CLINICAL DENSITY ---
-    const [nodeIntensities, setNodeIntensities] = useState(() => {
-        try {
-            const saved = localStorage.getItem(`oasis_node_intensities_${user}`);
-            return saved ? JSON.parse(saved) : {};
-        } catch (e) {
-            return {};
-        }
-    });
-
-    const handleIntensityChange = (nodeId, val) => {
-        setNodeIntensities(prev => {
-            const updated = { ...prev, [nodeId]: val };
-            setLocalItem(`oasis_node_intensities_${user}`, JSON.stringify(updated));
-            window.dispatchEvent(new Event('oasis_intensities_updated'));
-            return updated;
-        });
-    };
-
-    const loadIntensities = useCallback(() => {
-        try {
-            const saved = localStorage.getItem(`oasis_node_intensities_${user}`);
-            if (saved) {
-                setNodeIntensities(JSON.parse(saved));
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    }, [user]);
-
-    const currentPatterns = useMemo(() => {
-        const patterns = getAfcPatterns({ nodes: nodesToRender, edges: edgesToRender });
-        
-        return patterns.map(pattern => {
-            let totalIntensity = 0;
-            let selfSabotageKeywords = ['culpa', 'miedo', 'adicción', 'droga', 'evitación', 'ansiedad', 'depresión', 'castigo', 'aislamiento', 'procrastinación', 'control', 'trampas', 'tóxic'];
-            let keywordScore = 0;
-            let totalDifficulty = 0;
-            
-            pattern.sortedNodes.forEach(node => {
-                const userInt = nodeIntensities[node.id] || 0;
-                totalIntensity += userInt;
-                
-                const text = (node.label + " " + (node.observations || "")).toLowerCase();
-                selfSabotageKeywords.forEach(kw => {
-                    if (text.includes(kw)) keywordScore += 2;
-                });
-                
-                if (node.type === 'behavior') totalDifficulty += 1;
-                else if (node.type === 'trigger') totalDifficulty += 2;
-                else if (node.type === 'cognitive') totalDifficulty += 4;
-                else if (node.type === 'origin') totalDifficulty += 5;
-                else totalDifficulty += 3;
-            });
-            
-            const avgDifficulty = pattern.sortedNodes.length > 0 ? totalDifficulty / pattern.sortedNodes.length : 0;
-            const finalIntensity = totalIntensity + keywordScore + (pattern.sortedNodes.length * 1.5);
-            
-            return {
-                ...pattern,
-                computedIntensity: finalIntensity,
-                computedDifficulty: avgDifficulty
-            };
-        }).sort((a, b) => {
-            const getIntensityTier = (score) => {
-                if (score >= 15) return 3;
-                if (score >= 8) return 2;
-                return 1;
-            };
-            
-            const tierA = getIntensityTier(a.computedIntensity);
-            const tierB = getIntensityTier(b.computedIntensity);
-            
-            if (tierA !== tierB) {
-                return tierA - tierB; // Menor intensidad primero
-            }
-            return a.computedDifficulty - b.computedDifficulty; // Más fácil primero dentro de la misma intensidad
-        });
-    }, [nodesToRender, edgesToRender, getAfcPatterns, nodeIntensities]);
-
-
-    // Auto-selection removed from here, moved to after zoomToNode
-
-    const activePattern = useMemo(() => {
-        return currentPatterns.find(p => p.id === selectedPatternId) || null;
-    }, [currentPatterns, selectedPatternId]);
 
     // --- MICRO-CHALLENGES / COMMITMENTS (Vincular Acción) ---
     const [nodeChallenges, setNodeChallenges] = useState(() => {
@@ -2804,55 +2846,6 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
     const mapContainerRef = useRef(null);
     const nodeDraggedRef = useRef(false);
     const nodeClickedRef = useRef(false);
-
-    // Tour/Narrative State
-    const [tourActiveIndex, setTourActiveIndex] = useState(null);
-    const [isTourMinimized, setIsTourMinimized] = useState(false);
-
-    // Derived sorted list of nodes for narrative tour
-    const sortedTourNodes = useMemo(() => {
-        let rawNodes = afcData ? afcData.nodes : [];
-        if (!rawNodes || rawNodes.length === 0) return [];
-
-        if (selectedPatternId) {
-            const activePat = currentPatterns.find(p => p.id === selectedPatternId);
-            if (activePat && activePat.node_ids) {
-                rawNodes = rawNodes.filter(n => activePat.node_ids.includes(n.id));
-            }
-        }
-
-        const clinicalRoleOrder = {
-            antecedent: 0,
-            cognitive: 1,
-            internal_barrier: 1,
-            physiological: 2,
-            motor: 3,
-            experiential_avoidance: 3,
-            consequence: 4,
-            maintaining_trap: 4
-        };
-        const typeOrder = {
-            historical: 0,
-            social: 0,
-            cognitive: 1,
-            physiological: 2,
-            biological: 2,
-            motor: 3,
-            consequence: 4
-        };
-        return [...rawNodes].sort((a, b) => {
-            const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
-            const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
-            if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
-                return roleA - roleB;
-            }
-            const orderA = typeOrder[a.type] ?? 99;
-            const orderB = typeOrder[b.type] ?? 99;
-            if (orderA !== orderB) return orderA - orderB;
-            if (a.x !== b.x) return a.x - b.x;
-            return a.y - b.y;
-        });
-    }, [afcData, selectedPatternId, currentPatterns]);
 
     useEffect(() => {
         setIsExploringActiveNode(false);
