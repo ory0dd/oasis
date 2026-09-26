@@ -1119,6 +1119,19 @@ const findExactUserMention = (node, bioData, phenomData) => {
     return null;
 };
 
+
+const getFallbackQuestion = (node) => {
+    if (node?.reflection_question) return node.reflection_question;
+    if (node?.challenge) return node.challenge;
+    
+    // Default fallback questions based on node type
+    const type = node?.clinical_role || node?.type || '';
+    if (type.includes('consequence')) return "¿De qué manera crees que este ciclo te está afectando actualmente?";
+    if (type.includes('cognitive') || type.includes('thought')) return "¿Qué pasaría si te permitieras cuestionar esta idea por un momento?";
+    if (type.includes('motor') || type.includes('behavior')) return "¿Qué ganarías y qué perderías si decidieras actuar distinto la próxima vez?";
+    return "¿De qué manera crees que esto está impactando tu bienestar y qué te enseña sobre ti?";
+};
+
 const getFallbackSource = (node, bioData, phenomData, user = '') => {
     if (!node) return "";
 
@@ -7840,10 +7853,10 @@ Por favor, analicemos:
                                                                         {getFallbackDescription(currentNode, user)}
                                                                     </p>
                                                                     {getFallbackSource(currentNode, bioData, phenomData, user) && (<div className="mt-1.5 pt-1.5 border-t border-emerald-500/10"><p className="text-[9.5px] text-zinc-400/90 italic leading-relaxed whitespace-pre-wrap"><span className="text-emerald-400 font-bold not-italic mr-1">&#128269; Contexto:</span>{getFallbackSource(currentNode, bioData, phenomData, user)}</p></div>)}
-{(currentNode.reflection_question || currentNode.challenge) && (
+{(getFallbackQuestion(currentNode)) && (
     <div className="mt-3 pt-3 border-t border-white/5">
         <p className="text-[10.5px] text-zinc-300 font-medium italic mb-2 leading-relaxed">
-            {currentNode.reflection_question || currentNode.challenge}
+            {getFallbackQuestion(currentNode)}
         </p>
         {nodeChats[currentNode.id] && nodeChats[currentNode.id].find(m => m.role === 'user') ? (
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md">
