@@ -1123,13 +1123,7 @@ const findExactUserMention = (node, bioData, phenomData) => {
 const getFallbackQuestion = (node) => {
     if (node?.reflection_question) return node.reflection_question;
     if (node?.challenge) return node.challenge;
-    
-    // Default fallback questions based on node type
-    const type = node?.clinical_role || node?.type || '';
-    if (type.includes('consequence')) return "¿De qué manera crees que este ciclo te está afectando actualmente?";
-    if (type.includes('cognitive') || type.includes('thought')) return "¿Qué pasaría si te permitieras cuestionar esta idea por un momento?";
-    if (type.includes('motor') || type.includes('behavior')) return "¿Qué ganarías y qué perderías si decidieras actuar distinto la próxima vez?";
-    return "¿De qué manera crees que esto está impactando tu bienestar y qué te enseña sobre ti?";
+    return null;
 };
 
 const getFallbackSource = (node, bioData, phenomData, user = '') => {
