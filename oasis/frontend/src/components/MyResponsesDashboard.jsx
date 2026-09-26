@@ -4137,8 +4137,8 @@ Reglas clínicas de conexión de contingencia funcional:
 - type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence'
 - clinical_role: 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence'
 - label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni clínico (ej. "Dificultades al relacionarse", "Sensación de no estar bien", "Presión de la familia", "Cansancio acumulado", "Necesidad de distancia").
-- description: 10 a 20 palabras. OBLIGATORIO: No uses análisis clínicos fríos ni invasivos (prohibido usar "Creencia de...", "Experiencia de maltrato..."). Redáctalo como una exploración delicada y empática, empezando SIEMPRE con frases como "Comentaste que...", "Mencionaste que...", "Sientes que...". (Ej. "Comentaste que antes era difícil tener una relación por las situaciones que pasaron", en lugar de "Creencia de no estar bien").
-- source: cita o referencia fiel a lo expresado en la entrevista
+- description: 10 a 20 palabras. MUY IMPORTANTE: Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar usa 'dificultades para ver tu propio valor'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
+- source: Referencia EXACTA de donde sacaste esta informacion (ej. 'Basado en tu entrevista', 'Del test de personalidad'). Esto servira para que el usuario sepa de donde sale la info
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
 - reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
 - x: coordenada porcentual sugerida (10 a 90)
@@ -7828,9 +7828,16 @@ Por favor, analicemos:
                                                                 {softenNodeLabel(currentNode.label)}
                                                             </h4>
                                                             {getFallbackDescription(currentNode, user) && (
-                                                                <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-2 mt-0.5">
-                                                                    {getFallbackDescription(currentNode, user)}
-                                                                </p>
+                                                                <div className="flex flex-col gap-1.5 mt-0.5">
+                                                                    <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-2">
+                                                                        {getFallbackDescription(currentNode, user)}
+                                                                    </p>
+                                                                    {getFallbackSource(currentNode, bioData, phenomData, user) && (
+                                                                        <span className="text-[8.5px] font-mono text-emerald-400/80 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 inline-block w-fit line-clamp-1" title={getFallbackSource(currentNode, bioData, phenomData, user)}>
+                                                                            &#128269; {getFallbackSource(currentNode, bioData, phenomData, user)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
