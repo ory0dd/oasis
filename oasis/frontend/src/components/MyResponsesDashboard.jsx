@@ -2113,6 +2113,7 @@ Devuelve estrictamente el JSON sin formato extra.
     const [mapTransform, setMapTransform] = useState({ x: 0, y: 0, scale: 0.2 });
     const [isInitialZoom, setIsInitialZoom] = useState(true);
     const [isDraggingMap, setIsDraggingMap] = useState(false);
+    const isDraggingMapRef = useRef(false);
     const [tourModalPos, setTourModalPos] = useState({ x: 0, y: 0 });
     const [isDraggingTour, setIsDraggingTour] = useState(false);
     const dragTourStartRef = useRef({ x: 0, y: 0 });
@@ -4137,7 +4138,7 @@ Reglas clínicas de conexión de contingencia funcional:
 - type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence'
 - clinical_role: 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence'
 - label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni clínico (ej. "Dificultades al relacionarse", "Sensación de no estar bien", "Presión de la familia", "Cansancio acumulado", "Necesidad de distancia").
-- description: 10 a 20 palabras. MUY IMPORTANTE: Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar usa 'dificultades para ver tu propio valor'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
+- description: 25 a 45 palabras. MUY IMPORTANTE: Desarrolla y profundiza un poco mas en el significado de este nodo. Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar explica 'hay dificultades para ver el gran valor que hay en ti, lo cual genera agotamiento...'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
 - source: Referencia EXACTA de donde sacaste esta informacion (ej. 'Basado en tu entrevista', 'Del test de personalidad'). Esto servira para que el usuario sepa de donde sale la info
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
 - reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
@@ -5258,7 +5259,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     }, [updateDOMTransform, selectedNode]);
 
     const handleMapMouseDown = (e) => {
-        setIsDraggingMap(true);
+        isDraggingMapRef.current = true;
+        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
         lastPointerPos.current = { x: e.clientX, y: e.clientY };
         mapDragged.current = false;
     };
@@ -5289,7 +5291,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return;
         }
 
-        if (!isDraggingMap) return;
+        if (!isDraggingMapRef.current) return;
         const deltaX = e.clientX - lastPointerPos.current.x;
         const deltaY = e.clientY - lastPointerPos.current.y;
         lastPointerPos.current = { x: e.clientX, y: e.clientY };
@@ -5305,7 +5307,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     };
 
     const handleDragEnd = () => {
-        setIsDraggingMap(false);
+        isDraggingMapRef.current = false;
+        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
         if (draggingNodeId && nodeDraggedRef.current) {
             const adx = window._dragNodeAcc ? window._dragNodeAcc.dx : 0;
             const ady = window._dragNodeAcc ? window._dragNodeAcc.dy : 0;
@@ -5367,12 +5370,12 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
     const handleMapTouchStart = (e) => {
         if (e.touches.length === 1) {
-            setIsDraggingMap(true);
+            isDraggingMapRef.current = true;
             const touch = e.touches[0];
             lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
             mapDragged.current = false;
         } else if (e.touches.length === 2) {
-            setIsDraggingMap(false);
+            isDraggingMapRef.current = false;
             const t1 = e.touches[0];
             const t2 = e.touches[1];
             const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -5404,7 +5407,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                     el.style.left = `${baseX + window._dragNodeAcc.dx}%`;
                     el.style.top = `${baseY + window._dragNodeAcc.dy}%`;
                 }
-            } else if (isDraggingMap) {
+            } else if (isDraggingMapRef.current) {
                 const deltaX = touch.clientX - lastPointerPos.current.x;
                 const deltaY = touch.clientY - lastPointerPos.current.y;
                 lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
@@ -6828,7 +6831,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
     <div
                                 ref={mapContainerRef}
-                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none transition-all duration-200 ease-in-out ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
+                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
                                 onClick={handleMapClick}
                                 onMouseDown={handleMapMouseDown}
                                 onMouseMove={handleMapMouseMove}
