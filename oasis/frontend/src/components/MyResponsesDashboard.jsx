@@ -7852,46 +7852,60 @@ Por favor, analicemos:
         <p className="text-[10.5px] text-zinc-300 font-medium italic mb-2 leading-relaxed">
             {getFallbackQuestion(currentNode)}
         </p>
-        {nodeChats[currentNode.id] && nodeChats[currentNode.id].find(m => m.role === 'user') ? (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md">
-                <p className="text-[9.5px] text-emerald-300 leading-relaxed italic">
-                    "{nodeChats[currentNode.id].find(m => m.role === 'user').content}"
-                </p>
-            </div>
-        ) : (
-            <div className="flex gap-2">
-                <input 
-                    id={`reflection-input-${currentNode.id}`}
-                    type="text" 
-                    placeholder="Escribe tu reflexión..." 
-                    autoComplete="off"
-                    className="flex-1 bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50"
-                    onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (e.key === 'Enter' && e.target.value.trim()) {
-                            const val = e.target.value.trim();
-                            setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: val }] }));
-                        }
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                />
-                <button 
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        const input = document.getElementById(`reflection-input-${currentNode.id}`);
-                        if (input && input.value.trim()) {
-                            setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: input.value.trim() }] }));
-                        }
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 py-1.5 px-3 rounded-md transition-colors border border-emerald-500/30 font-semibold"
-                >
-                    Responder
-                </button>
-            </div>
-        )}
+        {(() => {
+            const chatData = nodeChats[currentNode.id];
+            let chatArray = [];
+            if (Array.isArray(chatData)) {
+                chatArray = Array.isArray(chatData[0]) ? chatData[0] : chatData;
+            } else if (chatData && typeof chatData === 'object') {
+                chatArray = chatData[0] || [];
+            }
+            const userMsg = chatArray.find(m => m?.role === 'user');
+            
+            if (userMsg) {
+                return (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md">
+                        <p className="text-[9.5px] text-emerald-300 leading-relaxed italic">
+                            "{userMsg.content}"
+                        </p>
+                    </div>
+                );
+            }
+            return (
+                <div className="flex gap-2">
+                    <input 
+                        id={`reflection-input-${currentNode.id}`}
+                        type="text" 
+                        placeholder="Escribe tu reflexión..." 
+                        autoComplete="off"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50"
+                        onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter' && e.target.value.trim()) {
+                                const val = e.target.value.trim();
+                                setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: val }] }));
+                            }
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                    />
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const input = document.getElementById(`reflection-input-${currentNode.id}`);
+                            if (input && input.value.trim()) {
+                                setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: input.value.trim() }] }));
+                            }
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 py-1.5 px-3 rounded-md transition-colors border border-emerald-500/30 font-semibold"
+                    >
+                        Responder
+                    </button>
+                </div>
+            );
+        })()}
     </div>
 )}
 
