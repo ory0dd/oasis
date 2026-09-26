@@ -2112,6 +2112,10 @@ Devuelve estrictamente el JSON sin formato extra.
     // Map Interaction State
     const [mapTransform, setMapTransform] = useState({ x: 0, y: 0, scale: 0.2 });
     const [isInitialZoom, setIsInitialZoom] = useState(true);
+    useEffect(() => {
+        const t = setTimeout(() => setIsInitialZoom(false), 1500);
+        return () => clearTimeout(t);
+    }, []);
     const [isDraggingMap, setIsDraggingMap] = useState(false);
     const isDraggingMapRef = useRef(false);
     const [tourModalPos, setTourModalPos] = useState({ x: 0, y: 0 });
