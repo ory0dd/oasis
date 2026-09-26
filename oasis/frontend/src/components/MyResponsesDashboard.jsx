@@ -7839,11 +7839,11 @@ Por favor, analicemos:
                                                                     <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-2">
                                                                         {getFallbackDescription(currentNode, user)}
                                                                     </p>
-                                                                    {getFallbackSource(currentNode, bioData, phenomData, user) && (
-                                                                        <span className="text-[8.5px] font-mono text-emerald-400/80 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 inline-block w-fit line-clamp-1" title={getFallbackSource(currentNode, bioData, phenomData, user)}>
-                                                                            &#128269; {getFallbackSource(currentNode, bioData, phenomData, user)}
-                                                                        </span>
-                                                                    )}
+                                                                    {getFallbackSource(currentNode, bioData, phenomData, user) && (<div className="mt-1.5 pt-1.5 border-t border-emerald-500/10"><p className="text-[9.5px] text-zinc-400/90 italic leading-relaxed whitespace-pre-wrap"><span className="text-emerald-400 font-bold not-italic mr-1">&#128269; Contexto:</span>{getFallbackSource(currentNode, bioData, phenomData, user)}</p></div>)}
+
+
+
+
                                                                 </div>
                                                             )}
                                                         </div>
