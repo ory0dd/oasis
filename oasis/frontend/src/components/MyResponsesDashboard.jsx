@@ -6677,8 +6677,8 @@ Devuelve estrictamente el JSON sin formato extra.
             {/* Background Effects */}
             {!isEmbedded && (
                 <div className="fixed inset-0 pointer-events-none z-0">
-                    <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent/5 blur-[150px] rounded-full mix-blend-screen transform translate-x-1/3 -translate-y-1/3" style={{ backgroundColor: accent }} />
-                    <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full mix-blend-screen transform -translate-x-1/3 translate-y-1/3" />
+                    <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent/5 blur-[150px] rounded-full  transform translate-x-1/3 -translate-y-1/3" style={{ backgroundColor: accent }} />
+                    <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full  transform -translate-x-1/3 translate-y-1/3" />
                     <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
                 </div>
             )}
@@ -6846,9 +6846,9 @@ Devuelve estrictamente el JSON sin formato extra.
                             >
                                 {/* Decoración de fondo del lienzo (fija kawaii / dreamy constellation) */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
-                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full mix-blend-screen pointer-events-none" />
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full mix-blend-screen pointer-events-none" />
+                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full  pointer-events-none" />
+                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full  pointer-events-none" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full  pointer-events-none" />
                                     <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
                                 </div>
 
@@ -6920,7 +6920,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {/* Transform Container (Pan/Zoom applies here) */}
                                 <div
                                     ref={transformContainerRef}
-                                    className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
+                                    className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
                                     style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
@@ -6978,11 +6978,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     }
                                                     .edge-flow-active {
                                                         stroke-dasharray: 0.7, 0.35;
-                                                        animation: edgeFlowAnim 1.4s linear infinite;
+                                                        /* animation disabled for perf */
                                                     }
                                                     .edge-flow-feedback {
                                                         stroke-dasharray: 0.5, 0.35;
-                                                        animation: edgeFlowAnim 2.2s linear infinite;
+                                                        /* animation disabled for perf */
                                                     }
                                                 `}</style>
                                         <defs>
