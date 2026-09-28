@@ -17,6 +17,7 @@ import { LLMNotebookTab } from './LLMNotebookTab';
 import { CLINICAL_TESTS, recomendarPruebasPosteriores } from '../data/clinicalTestsBank';
 import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { safeJSONParse } from '../utils/jsonParser';
+import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult, getCompletedTestsCount } from '../utils/api';
 
 // ErrorBoundary for embedded clinical views
@@ -1301,6 +1302,19 @@ const PsychologistDashboard = ({ onClose }) => {
         loadPatients();
     }, [currentModule]);
 
+    // AUTO-SAVE SYSTEM: periodically sync all patient data to cloud to avoid data loss
+    useEffect(() => {
+        if (!selectedPatient || !selectedPatient.name) return;
+        const interval = setInterval(() => {
+            if (typeof syncAllLocalPatientTestsToCloud === 'function') {
+                syncAllLocalPatientTestsToCloud(selectedPatient.name);
+                console.log("[Auto-Save] Respaldando datos del paciente:", selectedPatient.name);
+            }
+        }, 15000); // 15 seconds
+        return () => clearInterval(interval);
+    }, [selectedPatient?.name]);
+
+
     const handleDeleteUser = async (e, username) => {
         e.stopPropagation();
         if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
@@ -2496,7 +2510,63 @@ const PsychologistDashboard = ({ onClose }) => {
 
         const currentCompletedCount = getCompletedTestsCount(patientName);
 
-        const handleTriggerSync = async () => {
+        const [isExtractingPDF, setIsExtractingPDF] = useState(false);
+    const handlePDFUploadForInterview = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsExtractingPDF(true);
+        try {
+            const text = await extractTextFromPdf(file);
+            const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
+1. "bio": Un arreglo de strings con la información biográfica básica (aproximadamente 12 respuestas).
+2. "phenom": Un objeto con claves que representan dimensiones fenomenológicas (ej: "Pensamiento", "Emoción", "Conducta", "Interpersonal") y valores string con la info.
+
+Texto del informe:
+${text.substring(0, 10000)}
+
+Responde ÚNICAMENTE con un JSON válido.`;
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    endpoint: '',
+                    key: localStorage.getItem('oasis_deepseek_key') || '',
+                    model: localStorage.getItem('oasis_deepseek_model') || 'gpt-4o',
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.1
+                })
+            });
+            if (!res.ok) throw new Error("Error en la API del LLM");
+            const data = await res.json();
+            
+            let content = data.choices[0].message.content.trim();
+            if (content.startsWith("```json")) {
+                content = content.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+            } else if (content.startsWith("```")) {
+                content = content.replace(/^```\n?/, '').replace(/\n?```$/, '');
+            }
+            const parsed = JSON.parse(content);
+            
+            if (parsed.bio && Array.isArray(parsed.bio)) {
+                localStorage.setItem(`oasis_answers_${selectedPatient.name}`, JSON.stringify(parsed.bio));
+            }
+            if (parsed.phenom) {
+                localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
+            }
+            
+            alert("Información biográfica y fenomenológica extraída y guardada exitosamente.");
+            window.location.reload();
+        } catch (err) {
+            console.error("Error procesando PDF:", err);
+            alert("Ocurrió un error al procesar el PDF o al extraer la información con IA. " + err.message);
+        } finally {
+            setIsExtractingPDF(false);
+        }
+        e.target.value = '';
+    };
+
+    const handleTriggerSync = async () => {
             setCloudSyncStatus('syncing');
             try {
                 const syncRes = await syncAllLocalPatientTestsToCloud(patientName);
@@ -2655,13 +2725,14 @@ const PsychologistDashboard = ({ onClose }) => {
                         <p className="text-xs text-zinc-400 leading-relaxed font-sans">
                             Estas pruebas de cribaje se desbloquean automáticamente en cuanto el consultante responde su <strong>Entrevista Biográfica Inicial</strong>. Esto asegura que el algoritmo detecte sus síntomas específicos y no aplique pruebas innecesarias o redundantes.
                         </p>
-                        <div className="pt-2">
+                        <div className="pt-2 flex items-center gap-3">
                             <button
                                 onClick={() => setActiveTab('VISION_GENERAL')}
                                 className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 text-xs font-mono font-bold uppercase tracking-wider transition-all"
                             >
                                 Ir a Entrevista Biográfica
                             </button>
+                            
                         </div>
                     </div>
                 ) : (
@@ -5275,6 +5346,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <Activity className="w-4.5 h-4.5 shrink-0 text-purple-400" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Pruebas Posteriores</span>}
                                     </button>
+                                    
+                                    {/* Boton Llenar con IA (Subir PDF) integrado en Sidebar */}
+                                    <label className={`w-full text-left p-2.5 rounded-xl border border-indigo-500/30 flex gap-3 items-center bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 font-bold transition-all cursor-pointer`}>
+                                        <div className="w-4.5 h-4.5 shrink-0 flex items-center justify-center">
+                                            {isExtractingPDF ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <span className="font-bold text-lg leading-none">+</span>}
+                                        </div>
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">{isExtractingPDF ? 'Procesando...' : 'Llenar con Informe PDF'}</span>}
+                                        <input type="file" accept=".pdf" className="hidden" onChange={handlePDFUploadForInterview} disabled={isExtractingPDF} />
+                                    </label>
                                 </div>
                             </div>
 

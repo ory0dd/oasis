@@ -15,6 +15,60 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [manualText, setManualText] = useState('');
 
     const audioRef = useRef(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const mediaRecorderRef = useRef(null);
+    const chunksRef = useRef([]);
+    const timerRef = useRef(null);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            let options = { mimeType: 'audio/webm' };
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                options = { mimeType: 'audio/mp4' };
+            }
+            const mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorderRef.current = mediaRecorder;
+            chunksRef.current = [];
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunksRef.current.push(e.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunksRef.current, { type: options.mimeType });
+                const ext = options.mimeType.includes('webm') ? 'webm' : 'm4a';
+                const file = new File([blob], `sesion_grabada_${Date.now()}.${ext}`, { type: options.mimeType });
+                handleUploadAndTranscribe({ target: { files: [file], value: '' } });
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } catch (err) {
+            alert('Error accediendo al micrófono: ' + err.message);
+        }
+    };
+    
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            clearInterval(timerRef.current);
+        }
+    };
+    
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
 
     useEffect(() => {
         if (!patientName) return;
@@ -177,6 +231,22 @@ export const TranscriptionsTab = ({ patientName }) => {
                     >
                         <FileText size={14} /> {isAddingManual ? 'Cancelar Nota' : 'Poner Nota Manual'}
                     </button>
+                    {isRecording ? (
+                        <button 
+                            onClick={stopRecording}
+                            className="bg-red-500 hover:bg-red-400 text-white font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 animate-pulse"
+                        >
+                            <span className="w-2 h-2 bg-white rounded-sm"></span> Detener ({formatTime(recordingTime)})
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={startRecording}
+                            disabled={isUploading || isTranscribing}
+                            className="bg-rose-600 hover:bg-rose-500 text-white font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl transition-colors shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Mic size={14} /> Grabar
+                        </button>
+                    )}
                     <label className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl cursor-pointer transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
                         {isUploading ? 'Subiendo...' : isTranscribing ? 'Transcribiendo...' : 'Subir y Transcribir'}
                         {!(isUploading || isTranscribing) && <Upload size={14} />}

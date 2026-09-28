@@ -6866,67 +6866,24 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
                                 {(afcData?.is_mock || afcData?.is_valid === false) && (
-                                    <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none animate-in fade-in duration-500">
+                                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-500 gap-4">
                                         <p className="text-sm font-mono text-zinc-500 uppercase tracking-widest px-6 py-3 rounded-xl bg-black/80 sm:bg-black/40 border border-white/5 sm:backdrop-blur-md">
-                                            {afcData?.is_valid === false ? "No hay información suficiente" : "Aún no hay datos"}
+                                            {afcData?.is_valid === false ? "No hay informaci\u00f3n suficiente" : "A\u00fan no hay datos"}
                                         </p>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                localStorage.removeItem(`oasis_afc_attempted_${user}`);
+                                                generateAFCAnalysis(false);
+                                            }}
+                                            className="pointer-events-auto px-6 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold tracking-wide shadow-xl shadow-emerald-900/30 transition-all active:scale-95 border border-emerald-400/20"
+                                        >
+                                            Generar Mapa
+                                        </button>
                                     </div>
                                 )}
 
 
-
-                                {/* Zoom Controls Overlay - Modern Floating Glass Widget */}
-                                {mapViewTab === 'map' && (
-                                    <div 
-                                        className="zoom-controls fixed sm:absolute right-3 sm:right-6 top-24 sm:top-24 z-[160] flex flex-col items-center bg-zinc-950/90 border border-white/15 backdrop-blur-xl p-1 sm:p-1.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.7)] gap-1 transition-all duration-200 pointer-events-auto select-none"
-                                        onClick={e => e.stopPropagation()}
-                                        onMouseDown={e => e.stopPropagation()}
-                                        onTouchStart={e => e.stopPropagation()}
-                                    >
-                                        <button 
-                                            onClick={() => handleZoom(0.25)} 
-                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title="Acercar mapa (Zoom In)"
-                                        >
-                                            <ZoomIn size={15} />
-                                        </button>
-                                        
-                                        <button
-                                            onClick={toggleMobileFitOrReset}
-                                            className="text-[9px] font-mono font-black text-zinc-400 hover:text-white px-1 py-1 rounded hover:bg-white/5 transition-colors cursor-pointer"
-                                            title="Nivel de Zoom (clic para alternar Vista Lectura / Vista Completa)"
-                                        >
-                                            {Math.round((mapTransform.scale || 1) * 100)}%
-                                        </button>
-
-                                        <button 
-                                            onClick={() => handleZoom(-0.25)} 
-                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title="Alejar mapa (Zoom Out)"
-                                        >
-                                            <ZoomOut size={15} />
-                                        </button>
-
-                                        <div className="w-5 h-[1px] bg-white/10 my-0.5" />
-
-                                        <button 
-                                            onClick={toggleMobileFitOrReset} 
-                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title={isMobileDevice && mobileViewMode === 'readable' ? "Ver Todo el Grafo (Overview)" : "Vista Lectura Legible"}
-                                        >
-                                            <Maximize2 size={14} />
-                                        </button>
-
-                                        <button 
-                                            onClick={() => reorganizeNodes()} 
-                                            className="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-400 hover:text-emerald-200 border border-emerald-500/30 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm" 
-                                            title="Ajustar y alinear nodos (5 columnas)"
-                                            aria-label="Ajustar y alinear nodos"
-                                        >
-                                            <Network size={14} />
-                                        </button>
-                                    </div>
-                                )}
 
                                 {/* Transform Container (Pan/Zoom applies here) */}
                                 <div

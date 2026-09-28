@@ -77,6 +77,7 @@ export async function syncTestResultToCloud(patientName, testId, result, informa
 /**
  * Scans local storage for any test results belonging to this patient and syncs them all to cloud.
  */
+const lastSyncPayloadStrings = {};
 export async function syncAllLocalPatientTestsToCloud(patientName) {
     if (!patientName || typeof window === 'undefined') return { success: false, count: 0 };
 
@@ -88,7 +89,8 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
             const key = localStorage.key(i);
             if (!key) continue;
 
-            if (key.startsWith(`oasis_test_result_${patientName}`) || key.startsWith(`oasis_tests_index_${patientName}`)) {
+            const matchRegex = new RegExp(`^oasis_.*_\$\{patientName\}(_|$|__)`, 'i');
+            if (matchRegex.test(key)) {
                 const val = localStorage.getItem(key);
                 if (val) {
                     payload[key] = val;
@@ -104,6 +106,12 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
         }
 
         if (Object.keys(payload).length > 0) {
+            const payloadString = JSON.stringify(payload);
+            if (lastSyncPayloadStrings[patientName] === payloadString) {
+                return { success: true, count: testIds.size, testIds: Array.from(testIds), skipped: true };
+            }
+            lastSyncPayloadStrings[patientName] = payloadString;
+
             const caller = localStorage.getItem('oasis_user') || 'observador1';
             const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientName)}`, {
                 method: 'POST',
@@ -111,7 +119,7 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
                     'Content-Type': 'application/json',
                     'X-Oasis-User': caller
                 },
-                body: JSON.stringify(payload)
+                body: payloadString
             });
             return { success: res.ok, count: testIds.size, testIds: Array.from(testIds) };
         }
