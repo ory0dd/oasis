@@ -3092,7 +3092,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 using var jsonDoc = System.Text.Json.JsonDocument.Parse(uploadResText);
                 var fileUri = jsonDoc.RootElement.GetProperty("file").GetProperty("uri").GetString();
 
-                var generateUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={geminiKey}";
+                var generateUrl = $"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={geminiKey}";
                 var prompt = !string.IsNullOrWhiteSpace(req?.Prompt) 
                     ? req.Prompt 
                     : "Transcribe literal y exactamente lo que dice el audio palabra por palabra. Devuelve únicamente el texto exacto dicho en el audio, sin agregar comentarios, sin inventar nombres ni personajes ni formatos de guion o diálogo.";
