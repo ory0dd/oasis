@@ -3073,6 +3073,30 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 else if (urlLower.Contains(".wav")) mimeType = "audio/wav";
                 else if (urlLower.Contains(".webm")) mimeType = "audio/webm";
 
+                var groqKey = Environment.GetEnvironmentVariable("GROQ_KEY");
+                if (!string.IsNullOrEmpty(groqKey)) {
+                    using var groqClient = new System.Net.Http.HttpClient();
+                    groqClient.Timeout = TimeSpan.FromMinutes(5);
+                    groqClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", groqKey);
+                    
+                    using var form = new MultipartFormDataContent();
+                    var fileContent = new ByteArrayContent(audioBytes);
+                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+                    form.Add(fileContent, "file", "audio." + mimeType.Split('/')[1]);
+                    form.Add(new StringContent("whisper-large-v3"), "model");
+                    form.Add(new StringContent("es"), "language");
+                    
+                    var groqRes = await groqClient.PostAsync("https://api.groq.com/openai/v1/audio/transcriptions", form);
+                    var groqResText = await groqRes.Content.ReadAsStringAsync();
+                    
+                    if (!groqRes.IsSuccessStatusCode) {
+                        return StatusCode((int)groqRes.StatusCode, $"Error procesando transcripción en Groq: {groqResText}");
+                    }
+                    
+                    using var groqDoc = System.Text.Json.JsonDocument.Parse(groqResText);
+                    return Ok(new { transcription = groqDoc.RootElement.GetProperty("text").GetString() });
+                }
+
                 using var client = new System.Net.Http.HttpClient();
                 client.Timeout = TimeSpan.FromMinutes(5);
 
