@@ -914,6 +914,62 @@ const PsychologistDashboard = ({ onClose }) => {
             localStorage.setItem('oasis_psych_active_tab', activeTab);
         }
     }, [activeTab]);
+    const [isExtractingPDF, setIsExtractingPDF] = useState(false);
+    const handlePDFUploadForInterview = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsExtractingPDF(true);
+        try {
+            const text = await extractTextFromPdf(file);
+            const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
+1. "bio": Un arreglo de strings con la información biográfica básica (aproximadamente 12 respuestas).
+2. "phenom": Un objeto con claves que representan dimensiones fenomenológicas (ej: "Pensamiento", "Emoción", "Conducta", "Interpersonal") y valores string con la info.
+
+Texto del informe:
+${text.substring(0, 10000)}
+
+Responde ÚNICAMENTE con un JSON válido.`;
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    endpoint: '',
+                    key: localStorage.getItem('oasis_deepseek_key') || '',
+                    model: localStorage.getItem('oasis_deepseek_model') || 'gpt-4o',
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.1
+                })
+            });
+            if (!res.ok) throw new Error("Error en la API del LLM");
+            const data = await res.json();
+            
+            let content = data.choices[0].message.content.trim();
+            if (content.startsWith("```json")) {
+                content = content.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+            } else if (content.startsWith("```")) {
+                content = content.replace(/^```\n?/, '').replace(/\n?```$/, '');
+            }
+            const parsed = JSON.parse(content);
+            
+            if (parsed.bio && Array.isArray(parsed.bio) && selectedPatient?.name) {
+                localStorage.setItem(`oasis_answers_${selectedPatient.name}`, JSON.stringify(parsed.bio));
+            }
+            if (parsed.phenom && selectedPatient?.name) {
+                localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
+            }
+            
+            alert("Información biográfica y fenomenológica extraída y guardada exitosamente.");
+            window.location.reload();
+        } catch (err) {
+            console.error("Error procesando PDF:", err);
+            alert("Ocurrió un error al procesar el PDF o al extraer la información con IA. " + err.message);
+        } finally {
+            setIsExtractingPDF(false);
+        }
+        e.target.value = '';
+    };
+
     const [selectedKioChatId, setSelectedKioChatId] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [kioSidebarWidth, setKioSidebarWidth] = useState(320);
@@ -2509,62 +2565,6 @@ const PsychologistDashboard = ({ onClose }) => {
         };
 
         const currentCompletedCount = getCompletedTestsCount(patientName);
-
-        const [isExtractingPDF, setIsExtractingPDF] = useState(false);
-    const handlePDFUploadForInterview = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setIsExtractingPDF(true);
-        try {
-            const text = await extractTextFromPdf(file);
-            const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
-1. "bio": Un arreglo de strings con la información biográfica básica (aproximadamente 12 respuestas).
-2. "phenom": Un objeto con claves que representan dimensiones fenomenológicas (ej: "Pensamiento", "Emoción", "Conducta", "Interpersonal") y valores string con la info.
-
-Texto del informe:
-${text.substring(0, 10000)}
-
-Responde ÚNICAMENTE con un JSON válido.`;
-
-            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    endpoint: '',
-                    key: localStorage.getItem('oasis_deepseek_key') || '',
-                    model: localStorage.getItem('oasis_deepseek_model') || 'gpt-4o',
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.1
-                })
-            });
-            if (!res.ok) throw new Error("Error en la API del LLM");
-            const data = await res.json();
-            
-            let content = data.choices[0].message.content.trim();
-            if (content.startsWith("```json")) {
-                content = content.replace(/^```json\n?/, '').replace(/\n?```$/, '');
-            } else if (content.startsWith("```")) {
-                content = content.replace(/^```\n?/, '').replace(/\n?```$/, '');
-            }
-            const parsed = JSON.parse(content);
-            
-            if (parsed.bio && Array.isArray(parsed.bio)) {
-                localStorage.setItem(`oasis_answers_${selectedPatient.name}`, JSON.stringify(parsed.bio));
-            }
-            if (parsed.phenom) {
-                localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
-            }
-            
-            alert("Información biográfica y fenomenológica extraída y guardada exitosamente.");
-            window.location.reload();
-        } catch (err) {
-            console.error("Error procesando PDF:", err);
-            alert("Ocurrió un error al procesar el PDF o al extraer la información con IA. " + err.message);
-        } finally {
-            setIsExtractingPDF(false);
-        }
-        e.target.value = '';
-    };
 
     const handleTriggerSync = async () => {
             setCloudSyncStatus('syncing');
