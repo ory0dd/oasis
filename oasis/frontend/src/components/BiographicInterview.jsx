@@ -112,7 +112,22 @@ export const BIO_QUESTIONS = [
 export function BiographicInterview({ username, activeVersion = 1, onComplete, onClose }) {
     const [isStarted, setIsStarted] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [answers, setAnswers] = useState({});
+    
+    const draftKey = `oasis_bio_draft_${username || 'Invitado'}_v${activeVersion}`;
+    const [answers, setAnswers] = useState(() => {
+        try {
+            const saved = localStorage.getItem(draftKey);
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            return {};
+        }
+    });
+
+    useEffect(() => {
+        if (Object.keys(answers).length > 0) {
+            localStorage.setItem(draftKey, JSON.stringify(answers));
+        }
+    }, [answers, draftKey]);
 
     // Track dwell times
     const [dwellTimes, setDwellTimes] = useState({});
@@ -153,6 +168,7 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
             });
 
             localStorage.setItem(`oasis_bio_metadata_${patientName}${suffix}`, JSON.stringify(bioMetadata));
+            localStorage.removeItem(draftKey);
             onComplete(answers);
         }
     };
