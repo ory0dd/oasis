@@ -922,8 +922,8 @@ const PsychologistDashboard = ({ onClose }) => {
         try {
             const result = await extractTextFromPdf(file);
             const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
-1. "bio": Un arreglo de strings con la información biográfica básica (aproximadamente 12 respuestas).
-2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe:
+1. "bio": Un objeto donde las claves sean estrictamente números del "0" al "15" (representando el orden de las preguntas biográficas estándar). Debes incluir obligatoriamente las 16 claves. Si no encuentras la información para alguna pregunta (ej. fármacos, horas de sueño), su valor debe ser exactamente: "No se encontró esta información en el reporte."
+2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe. Si no encuentras información para alguna dimensión, su valor debe ser exactamente: "No se encontró esta información en el reporte."
    - "antecedentes_origen": (Historia temprana, figuras de apego, origen)
    - "experiencia_insuficiencia": (Autoexigencia, culpa, sensación de no ser suficiente)
    - "temporalidad_vivida": (Relación con el tiempo, angustia, ritmo de vida)
@@ -961,11 +961,13 @@ Responde ÚNICAMENTE con un JSON válido.`;
             }
             const parsed = JSON.parse(content);
             
-            if (parsed.bio && Array.isArray(parsed.bio) && selectedPatient?.name) {
+            if (parsed.bio && selectedPatient?.name) {
                 const bioObject = {};
-                parsed.bio.forEach((ans, index) => {
-                    bioObject[index] = ans;
-                });
+                if (Array.isArray(parsed.bio)) {
+                    parsed.bio.forEach((ans, index) => { bioObject[index] = ans; });
+                } else if (typeof parsed.bio === 'object') {
+                    Object.entries(parsed.bio).forEach(([key, val]) => { bioObject[key] = val; });
+                }
                 localStorage.setItem(`oasis_bio_transcriptions_${selectedPatient.name}`, JSON.stringify(bioObject));
             }
             if (parsed.phenom && selectedPatient?.name) {
