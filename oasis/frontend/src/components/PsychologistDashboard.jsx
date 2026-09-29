@@ -962,7 +962,11 @@ Responde ÚNICAMENTE con un JSON válido.`;
             const parsed = JSON.parse(content);
             
             if (parsed.bio && Array.isArray(parsed.bio) && selectedPatient?.name) {
-                localStorage.setItem(`oasis_answers_${selectedPatient.name}`, JSON.stringify(parsed.bio));
+                const bioObject = {};
+                parsed.bio.forEach((ans, index) => {
+                    bioObject[index] = ans;
+                });
+                localStorage.setItem(`oasis_bio_transcriptions_${selectedPatient.name}`, JSON.stringify(bioObject));
             }
             if (parsed.phenom && selectedPatient?.name) {
                 localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
@@ -4985,7 +4989,7 @@ Instrucciones Estrictas:
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const phenomData = JSON.parse(localStorage.getItem(`oasis_phenom_data_${selectedPatient.name}`) || '{}');
-            const bioData = JSON.parse(localStorage.getItem(`oasis_answers_${selectedPatient.name}`) || '[]');
+            const bioData = JSON.parse(localStorage.getItem(`oasis_bio_transcriptions_${selectedPatient.name}`) || '{}');
             const patientDataStr = patientBlocks.map(b => b.content || b.Content).join('. ');
 
             const prompt = `
