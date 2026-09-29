@@ -934,16 +934,19 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: 'https://api.deepseek.com/chat/completions',
-                    key: localStorage.getItem('oasis_deepseek_key') || '',
+                    endpoint: 'https://api.openai.com/v1/chat/completions',
+                    key: localStorage.getItem('oasis_openai_key') || '',
                     payload: {
-                        model: localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat',
+                        model: localStorage.getItem('oasis_openai_model') || 'gpt-4o',
                         messages: [{ role: "user", content: prompt }],
                         temperature: 0.1
                     }
                 })
             });
-            if (!res.ok) throw new Error("Error en la API del LLM");
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Error en la API del LLM: ${errText}`);
+            }
             const data = await res.json();
             
             let content = data.choices[0].message.content.trim();
