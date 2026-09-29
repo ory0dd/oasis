@@ -934,9 +934,9 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    endpoint: '',
+                    endpoint: 'https://api.deepseek.com/chat/completions',
                     key: localStorage.getItem('oasis_deepseek_key') || '',
-                    model: localStorage.getItem('oasis_deepseek_model') || 'gpt-4o',
+                    model: localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat',
                     messages: [{ role: "user", content: prompt }],
                     temperature: 0.1
                 })
