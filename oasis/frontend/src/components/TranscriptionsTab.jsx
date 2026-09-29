@@ -17,9 +17,14 @@ export const TranscriptionsTab = ({ patientName }) => {
     const audioRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
+    const [audioVolume, setAudioVolume] = useState(0);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const dataArrayRef = useRef(null);
+    const animationFrameRef = useRef(null);
 
     const startRecording = async () => {
         try {
@@ -42,7 +47,41 @@ export const TranscriptionsTab = ({ patientName }) => {
                 const file = new File([blob], `sesion_grabada_${Date.now()}.${ext}`, { type: options.mimeType });
                 handleUploadAndTranscribe({ target: { files: [file], value: '' } });
                 stream.getTracks().forEach(track => track.stop());
+                
+                if (audioContextRef.current) {
+                    audioContextRef.current.close();
+                    audioContextRef.current = null;
+                }
+                if (animationFrameRef.current) {
+                    cancelAnimationFrame(animationFrameRef.current);
+                }
             };
+
+            // Setup audio visualizer
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            audioContextRef.current = audioContext;
+            analyserRef.current = analyser;
+            dataArrayRef.current = dataArray;
+            
+            const updateVolume = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+                let sum = 0;
+                for (let i = 0; i < dataArrayRef.current.length; i++) {
+                    sum += dataArrayRef.current[i];
+                }
+                const average = sum / dataArrayRef.current.length;
+                setAudioVolume(average);
+                animationFrameRef.current = requestAnimationFrame(updateVolume);
+            };
+            updateVolume();
             
             mediaRecorder.start();
             setIsRecording(true);
@@ -234,9 +273,15 @@ export const TranscriptionsTab = ({ patientName }) => {
                     {isRecording ? (
                         <button 
                             onClick={stopRecording}
-                            className="bg-red-500 hover:bg-red-400 text-white font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 animate-pulse"
+                            className="bg-red-500 hover:bg-red-400 text-white font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-3"
                         >
-                            <span className="w-2 h-2 bg-white rounded-sm"></span> Detener ({formatTime(recordingTime)})
+                            <div className="flex gap-1 items-center h-4">
+                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 1.5))}%` }}></div>
+                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 2.5))}%` }}></div>
+                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 3.0))}%` }}></div>
+                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 2.0))}%` }}></div>
+                            </div>
+                            Detener ({formatTime(recordingTime)})
                         </button>
                     ) : (
                         <button 
