@@ -936,9 +936,11 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 body: JSON.stringify({
                     endpoint: 'https://api.deepseek.com/chat/completions',
                     key: localStorage.getItem('oasis_deepseek_key') || '',
-                    model: localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat',
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.1
+                    payload: {
+                        model: localStorage.getItem('oasis_deepseek_model') || 'deepseek-chat',
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.1
+                    }
                 })
             });
             if (!res.ok) throw new Error("Error en la API del LLM");
