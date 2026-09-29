@@ -923,7 +923,11 @@ const PsychologistDashboard = ({ onClose }) => {
             const result = await extractTextFromPdf(file);
             const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
 1. "bio": Un arreglo de strings con la información biográfica básica (aproximadamente 12 respuestas).
-2. "phenom": Un objeto con claves que representan dimensiones fenomenológicas (ej: "Pensamiento", "Emoción", "Conducta", "Interpersonal") y valores string con la info.
+2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe:
+   - "antecedentes_origen": (Historia temprana, figuras de apego, origen)
+   - "experiencia_insuficiencia": (Autoexigencia, culpa, sensación de no ser suficiente)
+   - "temporalidad_vivida": (Relación con el tiempo, angustia, ritmo de vida)
+   - "premisa_realidad": (Visión del mundo, postura vital, seguridad/desconfianza)
 
 Texto del informe:
 ${result.text.substring(0, 10000)}
