@@ -922,8 +922,25 @@ const PsychologistDashboard = ({ onClose }) => {
         try {
             const result = await extractTextFromPdf(file);
             const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
-1. "bio": Un objeto donde las claves sean estrictamente números del "0" al "15" (representando el orden de las preguntas biográficas estándar). Debes incluir obligatoriamente las 16 claves. Si no encuentras la información para alguna pregunta (ej. fármacos, horas de sueño), su valor debe ser exactamente: "No se encontró esta información en el reporte."
-2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe. Si no encuentras información para alguna dimensión, su valor debe ser exactamente: "No se encontró esta información en el reporte."
+1. "bio": Un objeto donde las claves sean estrictamente números del "0" al "15" representando las respuestas a las siguientes preguntas biográficas:
+   0: Nombre completo del consultante
+   1: Edad y ocupación actual
+   2: Motivo de consulta (describir brevemente)
+   3: Repercusiones (impacto debido a este motivo)
+   4: Temporalidad (¿Desde cuándo se presenta?)
+   5: Atribución (¿A qué lo asocia?)
+   6: Diagnóstico clínico o psicológico actual
+   7: Estudios de salud o neurológicos recientes
+   8: Horas promedio y calidad de descanso/sueño
+   9: Dificultades específicas en el ciclo de sueño
+   10: Relación con la música y el silencio
+   11: Sonidos, géneros o frecuencias de rechazo
+   12: Herramientas de relajación
+   13: Procesos terapéuticos previos
+   14: Sustancias, plantas o herramientas alternativas
+   15: Tratamiento farmacológico activo
+Debes incluir obligatoriamente las 16 claves numéricas. Si no encuentras la información para alguna, su valor debe ser: "No se encontró esta información en el reporte."
+2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe. Si no encuentras información para alguna dimensión, su valor debe ser: "No se encontró esta información en el reporte."
    - "antecedentes_origen": (Historia temprana, figuras de apego, origen)
    - "experiencia_insuficiencia": (Autoexigencia, culpa, sensación de no ser suficiente)
    - "temporalidad_vivida": (Relación con el tiempo, angustia, ritmo de vida)
