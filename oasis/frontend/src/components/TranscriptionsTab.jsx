@@ -153,7 +153,7 @@ export const TranscriptionsTab = ({ patientName }) => {
     };
 
     const handleUploadAndTranscribe = async (e, precomputedTranscript = null) => {
-        const file = e.target.files?.[0] || e;
+        const file = e?.target?.files?.[0] || e;
         if (!file || !file.name) return;
 
         setIsUploading(true);
