@@ -280,6 +280,11 @@ export const LLMNotebookTab = ({ patientName }) => {
     const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
     const audioPreviewRef = useRef(null);
+    const [audioVolume, setAudioVolume] = useState(0);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const dataArrayRef = useRef(null);
+    const animationFrameRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const recordingTimerRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -1621,7 +1626,41 @@ Devuelve el documento COMPLETO, EXTENSO Y EXHAUSTIVO en Markdown puro y sin omis
                 }
             }
 
+            // Setup audio visualizer
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            audioContextRef.current = audioContext;
+            analyserRef.current = analyser;
+            dataArrayRef.current = dataArray;
+            
+            const updateVolume = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+                let sum = 0;
+                for (let i = 0; i < dataArrayRef.current.length; i++) {
+                    sum += dataArrayRef.current[i];
+                }
+                const average = sum / dataArrayRef.current.length;
+                setAudioVolume(average);
+                animationFrameRef.current = requestAnimationFrame(updateVolume);
+            };
+            updateVolume();
+
             mediaRecorder.onstop = async () => {
+                if (audioContextRef.current) {
+                    audioContextRef.current.close();
+                    audioContextRef.current = null;
+                }
+                if (animationFrameRef.current) {
+                    cancelAnimationFrame(animationFrameRef.current);
+                }
+
                 if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
                 const finalDuration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
                 setRecordingDuration(finalDuration);
@@ -3993,10 +4032,10 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                     className="w-8 h-8 rounded-full bg-[#e55353] hover:bg-[#eb5757] flex items-center justify-center transition-all active:scale-95 shadow-md shadow-red-500/20 animate-in fade-in duration-150"
                                     title="Detener y finalizar grabación"
                                 >
-                                    <div className="flex items-center justify-center gap-[2.5px] h-3.5">
-                                        <span className="w-[2.5px] h-2 bg-white rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
-                                        <span className="w-[2.5px] h-3.5 bg-white rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
-                                        <span className="w-[2.5px] h-2 bg-white rounded-full animate-[pulse_0.7s_ease-in-out_infinite]" />
+                                    <div className="flex items-center justify-center gap-[2px] h-3.5">
+                                        <div className="w-[2.5px] bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 1.5))}%` }}></div>
+                                        <div className="w-[2.5px] bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 2.5))}%` }}></div>
+                                        <div className="w-[2.5px] bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 1.5))}%` }}></div>
                                     </div>
                                 </button>
                             )}
