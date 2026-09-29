@@ -25,6 +25,8 @@ export const TranscriptionsTab = ({ patientName }) => {
     const analyserRef = useRef(null);
     const dataArrayRef = useRef(null);
     const animationFrameRef = useRef(null);
+    const browserTranscriptRef = useRef('');
+    const backgroundRecognitionRef = useRef(null);
 
     const startRecording = async () => {
         try {
@@ -36,16 +38,40 @@ export const TranscriptionsTab = ({ patientName }) => {
             const mediaRecorder = new MediaRecorder(stream, options);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
+            browserTranscriptRef.current = '';
             
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data.size > 0) chunksRef.current.push(e.data);
             };
+
+            const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+            if (SpeechRecognition) {
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = 'es-ES';
+                    recognition.onresult = (event) => {
+                        let fullText = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            fullText += event.results[i][0].transcript + ' ';
+                        }
+                        browserTranscriptRef.current = fullText.trim();
+                    };
+                    recognition.start();
+                    backgroundRecognitionRef.current = recognition;
+                } catch (recErr) {}
+            }
             
             mediaRecorder.onstop = () => {
+                if (backgroundRecognitionRef.current) {
+                    try { backgroundRecognitionRef.current.stop(); } catch (e) {}
+                    backgroundRecognitionRef.current = null;
+                }
                 const blob = new Blob(chunksRef.current, { type: options.mimeType });
                 const ext = options.mimeType.includes('webm') ? 'webm' : 'm4a';
                 const file = new File([blob], `sesion_grabada_${Date.now()}.${ext}`, { type: options.mimeType });
-                handleUploadAndTranscribe({ target: { files: [file], value: '' } });
+                handleUploadAndTranscribe(file, browserTranscriptRef.current);
                 stream.getTracks().forEach(track => track.stop());
                 
                 if (audioContextRef.current) {
@@ -126,9 +152,9 @@ export const TranscriptionsTab = ({ patientName }) => {
         localStorage.setItem(`oasis_transcriptions_${patientName}`, JSON.stringify(newTrans));
     };
 
-    const handleUploadAndTranscribe = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const handleUploadAndTranscribe = async (e, precomputedTranscript = null) => {
+        const file = e.target.files?.[0] || e;
+        if (!file || !file.name) return;
 
         setIsUploading(true);
         setErrorMessage(null);
@@ -148,25 +174,30 @@ export const TranscriptionsTab = ({ patientName }) => {
             const audioUrl = uploadData.url;
 
             setIsUploading(false);
-            setIsTranscribing(true);
-
-            const transRes = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: audioUrl })
-            });
-            if (!transRes.ok) {
-                const errText = await transRes.text();
-                throw new Error(`[Error de Transcripción ${transRes.status}]: ${errText || transRes.statusText}`);
+            
+            let finalTranscription = precomputedTranscript;
+            
+            if (!finalTranscription) {
+                setIsTranscribing(true);
+                const transRes = await fetch(`${API_URL}/api/oasis/transcribe-audio`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: audioUrl })
+                });
+                if (!transRes.ok) {
+                    const errText = await transRes.text();
+                    throw new Error(`[Error de Transcripción ${transRes.status}]: ${errText || transRes.statusText}`);
+                }
+                const transData = await transRes.json();
+                finalTranscription = transData.transcription;
             }
-            const transData = await transRes.json();
 
             const newItem = {
                 id: `trans_${Date.now()}`,
                 date: new Date().toLocaleString(),
                 filename: file.name,
                 audioUrl: audioUrl,
-                text: transData.transcription
+                text: finalTranscription
             };
 
             saveToLocal([newItem, ...transcriptions]);
