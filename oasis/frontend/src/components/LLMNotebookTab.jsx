@@ -411,6 +411,18 @@ export const LLMNotebookTab = ({ patientName }) => {
             });
         }
 
+        // Full clinical report text
+        const reportText = localStorage.getItem(`oasis_clinical_report_text_${patientName}`);
+        if (reportText) {
+            availSources.push({
+                id: 'clinical_report',
+                name: 'Informe Clínico Original (Base)',
+                type: 'documento',
+                rawData: reportText,
+                content: reportText
+            });
+        }
+
         // PID-5 (Inventario de Personalidad DSM-5 - Forma Breve)
         const pidStr = localStorage.getItem(`oasis_pid_answers_${patientName}`);
         if (pidStr) {
@@ -3028,21 +3040,25 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                 sources.map(s => (
                                     <div 
                                         key={s.id} 
-                                        className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 group ${
+                                        onClick={() => handleOpenSource(s)}
+                                        className={`p-3 rounded-xl border transition-all flex items-start justify-between gap-2.5 group cursor-pointer ${
                                             selectedSources.has(s.id) 
-                                            ? 'bg-blue-500/10 border-blue-500/30' 
-                                            : 'bg-zinc-900/40 border-white/5 opacity-60 hover:opacity-100'
+                                            ? 'bg-blue-500/10 border-blue-500/30 hover:border-blue-500/50' 
+                                            : 'bg-zinc-900/40 border-white/5 opacity-60 hover:opacity-100 hover:border-white/10'
                                         }`}
                                     >
-                                        <div 
-                                            onClick={() => toggleSource(s.id)}
-                                            className="flex items-start gap-2.5 flex-1 cursor-pointer min-w-0"
-                                        >
-                                            <div className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border transition-all ${
-                                                selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-600 text-transparent'
-                                            }`}>
+                                        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSource(s.id);
+                                                }}
+                                                className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center border transition-all cursor-pointer ${
+                                                    selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black hover:bg-blue-600' : 'border-zinc-600 text-transparent hover:border-blue-400'
+                                                }`}
+                                            >
                                                 <CheckCircle2 size={12} />
-                                            </div>
+                                            </button>
                                             <div className="min-w-0 flex-1">
                                                 <h4 className={`text-xs font-bold leading-snug line-clamp-2 ${selectedSources.has(s.id) ? 'text-blue-100' : 'text-zinc-400'}`}>
                                                     {s.name}
@@ -3062,25 +3078,23 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                             {s.isPdf && (
                                                 <button
                                                     type="button"
-                                                    onClick={(e) => handleDeletePdfSource(s.id, e)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeletePdfSource(s.id, e);
+                                                    }}
                                                     title="Eliminar este PDF de las fuentes"
                                                     className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/20 transition-all"
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>
                                             )}
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleOpenSource(s);
-                                                }}
+                                            <div
                                                 title="Abrir y ver documento completo"
-                                                className="p-1.5 rounded-lg bg-white/5 hover:bg-purple-600/20 text-zinc-400 hover:text-purple-300 border border-white/10 hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                                className="p-1.5 rounded-lg bg-white/5 group-hover:bg-purple-600/20 text-zinc-400 group-hover:text-purple-300 border border-white/10 group-hover:border-purple-500/40 transition-all shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
                                             >
                                                 <Eye size={12} />
                                                 <span>Ver</span>
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))
@@ -3248,21 +3262,25 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                     sources.map(s => (
                                         <div 
                                             key={s.id} 
-                                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all ${
+                                            onClick={() => handleOpenSource(s)}
+                                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all cursor-pointer ${
                                                 selectedSources.has(s.id) 
                                                 ? 'bg-blue-500/15 border-blue-500/40 text-blue-100 font-medium' 
                                                 : 'bg-zinc-900/40 border-white/5 text-zinc-500'
                                             }`}
                                         >
-                                            <div 
-                                                onClick={() => toggleSource(s.id)}
-                                                className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
-                                            >
-                                                <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border ${
-                                                    selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
-                                                }`}>
+                                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSource(s.id);
+                                                    }}
+                                                    className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border cursor-pointer ${
+                                                        selectedSources.has(s.id) ? 'bg-blue-500 border-blue-500 text-black' : 'border-zinc-700 text-transparent'
+                                                    }`}
+                                                >
                                                     <CheckCircle2 size={11} />
-                                                </div>
+                                                </button>
                                                 <span className="truncate">{s.name}</span>
                                             </div>
 
@@ -3270,24 +3288,22 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                                                 {s.isPdf && (
                                                     <button
                                                         type="button"
-                                                        onClick={(e) => handleDeletePdfSource(s.id, e)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeletePdfSource(s.id, e);
+                                                        }}
                                                         className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20"
                                                         title="Eliminar PDF"
                                                     >
                                                         <Trash2 size={11} />
                                                     </button>
                                                 )}
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenSource(s);
-                                                    }}
-                                                    className="p-1.5 rounded-lg bg-white/5 text-zinc-300 hover:text-white border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
+                                                <div
+                                                    className="p-1.5 rounded-lg bg-white/5 text-zinc-300 border border-white/10 shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold"
                                                 >
                                                     <Eye size={12} />
                                                     <span>Ver</span>
-                                                </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))

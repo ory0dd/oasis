@@ -921,15 +921,15 @@ const PsychologistDashboard = ({ onClose }) => {
         setIsExtractingPDF(true);
         try {
             const result = await extractTextFromPdf(file);
-            const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información y estructurarla en un objeto JSON puro con dos claves:
-1. "bio": Un objeto donde las claves sean estrictamente números del "0" al "15" representando las respuestas a las siguientes preguntas biográficas:
+            const prompt = `Eres un asistente clínico experto. Se te entregará el texto extraído de un informe clínico (PDF) generado previamente. Tu tarea es extraer la información con máxima profundidad clínica, conservando la riqueza de los detalles, la narrativa y la complejidad del paciente. Estructúralo en un objeto JSON puro con dos claves:
+1. "bio": Un objeto donde las claves sean estrictamente números del "0" al "15" representando las respuestas a las siguientes preguntas biográficas. Redacta las respuestas de forma EXTENSA, PROFUNDA y DESCRIPTIVA, tal como vienen en el informe:
    0: Nombre completo del consultante
    1: Edad y ocupación actual
-   2: Motivo de consulta (describir brevemente)
-   3: Repercusiones (impacto debido a este motivo)
-   4: Temporalidad (¿Desde cuándo se presenta?)
-   5: Atribución (¿A qué lo asocia?)
-   6: Diagnóstico clínico o psicológico actual
+   2: Motivo de consulta (análisis detallado y complejo)
+   3: Repercusiones (impacto fenomenológico y funcional)
+   4: Temporalidad (desarrollo histórico y evolución)
+   5: Atribución (¿A qué lo asocia o cómo lo significa?)
+   6: Diagnóstico clínico o psicológico (con matices)
    7: Estudios de salud o neurológicos recientes
    8: Horas promedio y calidad de descanso/sueño
    9: Dificultades específicas en el ciclo de sueño
@@ -939,15 +939,15 @@ const PsychologistDashboard = ({ onClose }) => {
    13: Procesos terapéuticos previos
    14: Sustancias, plantas o herramientas alternativas
    15: Tratamiento farmacológico activo
-Debes incluir obligatoriamente las 16 claves numéricas. Si no encuentras la información para alguna, su valor debe ser: "No se encontró esta información en el reporte."
-2. "phenom": Un objeto con las siguientes 4 claves exactas y sus valores string extraídos del informe. Si no encuentras información para alguna dimensión, su valor debe ser: "No se encontró esta información en el reporte."
-   - "antecedentes_origen": (Historia temprana, figuras de apego, origen)
-   - "experiencia_insuficiencia": (Autoexigencia, culpa, sensación de no ser suficiente)
-   - "temporalidad_vivida": (Relación con el tiempo, angustia, ritmo de vida)
-   - "premisa_realidad": (Visión del mundo, postura vital, seguridad/desconfianza)
+Debes incluir obligatoriamente las 16 claves numéricas. Si no encuentras la información, su valor debe ser exactamente: "No se encontró esta información en el reporte."
+2. "phenom": Un objeto con las siguientes 4 claves exactas. Extrae la información de manera RICA, COMPLETA y ANALÍTICA. Si no encuentras información, pon: "No se encontró esta información en el reporte."
+   - "antecedentes_origen": (Historia temprana, figuras de apego, dinámica familiar profunda)
+   - "experiencia_insuficiencia": (Sombra de autoexigencia, autovaloración, comparación, culpa)
+   - "temporalidad_vivida": (Relación con el tiempo, impulsividad, ritmo de vida, ansiedad)
+   - "premisa_realidad": (Visión del mundo, sistema de valores, reglas de relación, límites)
 
 Texto del informe:
-${result.text.substring(0, 10000)}
+${result.text.substring(0, 15000)}
 
 Responde ÚNICAMENTE con un JSON válido.`;
 
@@ -960,7 +960,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     payload: {
                         model: localStorage.getItem('oasis_openai_model') || 'gpt-4o',
                         messages: [{ role: "user", content: prompt }],
-                        temperature: 0.1
+                        temperature: 0.2
                     }
                 })
             });
@@ -989,6 +989,9 @@ Responde ÚNICAMENTE con un JSON válido.`;
             }
             if (parsed.phenom && selectedPatient?.name) {
                 localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
+            }
+            if (result.text && selectedPatient?.name) {
+                localStorage.setItem(`oasis_clinical_report_text_${selectedPatient.name}`, result.text);
             }
             
             alert("Información biográfica y fenomenológica extraída y guardada exitosamente.");
