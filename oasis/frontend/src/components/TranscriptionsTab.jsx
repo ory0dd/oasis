@@ -534,9 +534,13 @@ export const TranscriptionsTab = ({ patientName }) => {
                                         {playingId === t.id ? <Pause size={16} /> : <Play size={16} className="ml-1" />}
                                     </button>
                                 )}
-                                <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
-                                    <Download size={16} />
-                                </button>
+                                
+                                  <button onClick={() => handleCopy(t.id, t.text)} className="w-10 h-10 rounded-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 flex items-center justify-center transition-colors" title="Copiar texto">
+                                      {copiedId === t.id ? <Check size={16} /> : <Copy size={16} />}
+                                  </button>
+                                  <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
+                                      <Download size={16} />
+                                  </button>
                                 <button onClick={() => handleDelete(t.id)} className="w-10 h-10 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors">
                                     <Trash2 size={16} />
                                 </button>
