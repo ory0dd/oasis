@@ -173,7 +173,7 @@ export const TranscriptionsTab = ({ patientName }) => {
         if (!destStreamRef.current) {
             await initMixer();
             if (!destStreamRef.current) {
-                alert('No se pudo acceder al micrófono.');
+                alert('No se pudo acceder al micrÃ³fono.');
                 return;
             }
         }
@@ -322,7 +322,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                 });
                 if (!transRes.ok) {
                     const errText = await transRes.text();
-                    throw new Error(`[Error de Transcripción ${transRes.status}]: ${errText || transRes.statusText}`);
+                    throw new Error(`[Error de TranscripciÃ³n ${transRes.status}]: ${errText || transRes.statusText}`);
                 }
                 const transData = await transRes.json();
                 finalTranscription = transData.transcription;
@@ -372,9 +372,9 @@ export const TranscriptionsTab = ({ patientName }) => {
     const exportToWord = (item) => {
         const html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head><meta charset='utf-8'><title>Transcripción</title></head>
+            <head><meta charset='utf-8'><title>TranscripciÃ³n</title></head>
             <body>
-                <h1>Transcripción: ${item.filename}</h1>
+                <h1>TranscripciÃ³n: ${item.filename}</h1>
                 <p><strong>Fecha:</strong> ${item.date}</p>
                 <p><strong>Paciente:</strong> ${patientName}</p>
                 <hr />
@@ -396,7 +396,7 @@ export const TranscriptionsTab = ({ patientName }) => {
     };
 
     const handleDelete = (id) => {
-        if (confirm('¿Seguro que deseas eliminar esta transcripción?')) {
+        if (confirm('Â¿Seguro que deseas eliminar esta transcripciÃ³n?')) {
             const filtered = transcriptions.filter(t => t.id !== id);
             saveToLocal(filtered);
         }
@@ -404,7 +404,7 @@ export const TranscriptionsTab = ({ patientName }) => {
 
     const handleSaveManualNote = () => {
         if (!manualTitle.trim() || !manualText.trim()) {
-            setErrorMessage("El título y el contenido son obligatorios para una nota manual.");
+            setErrorMessage("El tÃ­tulo y el contenido son obligatorios para una nota manual.");
             return;
         }
 
@@ -446,8 +446,8 @@ export const TranscriptionsTab = ({ patientName }) => {
         <div className="flex flex-col gap-6 p-6 overflow-y-auto max-h-full h-full text-white">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#111113] p-6 rounded-3xl border border-white/5 gap-4">
                 <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2"><Mic className="text-emerald-400"/> Transcripción de Sesiones</h2>
-                    <p className="text-zinc-400 text-sm mt-1 max-w-lg">Sube audios largos de tus sesiones (hasta 1-2 GB). El sistema usa IA avanzada para transcribir automáticamente la hora y media completa, o pega tus propias notas si ya lo tienes escrito.</p>
+                    <h2 className="text-xl font-bold flex items-center gap-2"><Mic className="text-emerald-400"/> TranscripciÃ³n de Sesiones</h2>
+                    <p className="text-zinc-400 text-sm mt-1 max-w-lg">Sube audios largos de tus sesiones (hasta 1-2 GB). El sistema usa IA avanzada para transcribir automÃ¡ticamente la hora y media completa, o pega tus propias notas si ya lo tienes escrito.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
                     <button 
@@ -506,24 +506,24 @@ export const TranscriptionsTab = ({ patientName }) => {
 
             {isAddingManual && (
                 <div className="bg-zinc-950/80 border border-emerald-500/30 rounded-3xl p-6 animate-in slide-in-from-top-4 fade-in duration-300">
-                    <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">Añadir Resumen / Transcripción Manual</h3>
+                    <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-4">AÃ±adir Resumen / TranscripciÃ³n Manual</h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">Título de la Sesión o Nota</label>
+                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">TÃ­tulo de la SesiÃ³n o Nota</label>
                             <input 
                                 type="text" 
                                 value={manualTitle}
                                 onChange={e => setManualTitle(e.target.value)}
-                                placeholder="Ej: Sesión 3 - Lunes 15 (Audio Largo)" 
+                                placeholder="Ej: SesiÃ³n 3 - Lunes 15 (Audio Largo)" 
                                 className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500/50"
                             />
                         </div>
                         <div>
-                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">Contenido (Texto, Notas, Transcripción generada externamente)</label>
+                            <label className="block text-[10px] uppercase font-mono text-zinc-500 mb-1">Contenido (Texto, Notas, TranscripciÃ³n generada externamente)</label>
                             <textarea 
                                 value={manualText}
                                 onChange={e => setManualText(e.target.value)}
-                                placeholder="Pega aquí la transcripción que hiciste, o tus apuntes detallados de la hora y media de sesión..." 
+                                placeholder="Pega aquÃ­ la transcripciÃ³n que hiciste, o tus apuntes detallados de la hora y media de sesiÃ³n..." 
                                 className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500/50 min-h-[200px]"
                             />
                         </div>
@@ -545,7 +545,7 @@ export const TranscriptionsTab = ({ patientName }) => {
             {errorMessage && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-red-400 font-bold text-xs uppercase tracking-widest">❌ Error Detectado</span>
+                        <span className="text-red-400 font-bold text-xs uppercase tracking-widest">â Error Detectado</span>
                         <button onClick={() => setErrorMessage(null)} className="text-zinc-500 hover:text-white text-xs px-2 py-1 rounded bg-white/5">Cerrar</button>
                     </div>
                     <pre className="text-red-300 text-xs font-mono whitespace-pre-wrap break-words bg-black/30 rounded-xl p-3 max-h-48 overflow-y-auto leading-relaxed">{errorMessage}</pre>
@@ -555,8 +555,8 @@ export const TranscriptionsTab = ({ patientName }) => {
             {isTranscribing && (
                 <div className="flex flex-col items-center justify-center p-10 border border-dashed border-emerald-500/30 rounded-3xl bg-emerald-500/5">
                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">La IA de Gemini está analizando la sesión...</h3>
-                    <p className="text-emerald-500/70 text-xs mt-2">Esto puede tomar un par de minutos dependiendo de la duración del audio.</p>
+                    <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-sm">La IA de Gemini estÃ¡ analizando la sesiÃ³n...</h3>
+                    <p className="text-emerald-500/70 text-xs mt-2">Esto puede tomar un par de minutos dependiendo de la duraciÃ³n del audio.</p>
                 </div>
             )}
 
@@ -571,7 +571,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                         <div className="flex justify-between items-start border-b border-white/5 pb-4">
                             <div>
                                 <h3 className="font-bold text-lg text-emerald-300 truncate max-w-md">{t.filename}</h3>
-                                <p className="text-zinc-500 text-xs uppercase tracking-widest font-mono mt-1">{t.date} {t.size ? ` � ${(t.size / (1024 * 1024)) >= 1 ? (t.size / (1024 * 1024)).toFixed(2) + " MB" : (t.size / 1024).toFixed(2) + " KB"}` : ""}</p>
+                                <p className="text-zinc-500 text-xs uppercase tracking-widest font-mono mt-1">{t.date} {t.size ? `  ${(t.size / (1024 * 1024)) >= 1 ? (t.size / (1024 * 1024)).toFixed(2) + " MB" : (t.size / 1024).toFixed(2) + " KB"}` : ""}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 {t.audioUrl && (
