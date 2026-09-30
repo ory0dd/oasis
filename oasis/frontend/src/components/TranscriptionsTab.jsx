@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, Download, Play, Pause, Trash2, Mic } from 'lucide-react';
 import { API_URL } from '../utils/api';
+import { AudioMixer } from './AudioMixer';
 
 export const TranscriptionsTab = ({ patientName }) => {
     const [transcriptions, setTranscriptions] = useState([]);
@@ -19,6 +20,10 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioVolume, setAudioVolume] = useState(0);
     const [micGain, setMicGain] = useState(1.0);
+    const [eqLow, setEqLow] = useState(0);
+    const [eqMid, setEqMid] = useState(0);
+    const [eqHigh, setEqHigh] = useState(0);
+    const eqNodesRef = useRef(null);
     const playbackCtxRef = useRef(null);
     const micGainRef = useRef(null);
     const mediaRecorderRef = useRef(null);
@@ -34,6 +39,14 @@ export const TranscriptionsTab = ({ patientName }) => {
     
     
 
+    
+    useEffect(() => {
+        if (eqNodesRef.current) {
+            eqNodesRef.current.low.gain.value = eqLow;
+            eqNodesRef.current.mid.gain.value = eqMid;
+            eqNodesRef.current.high.gain.value = eqHigh;
+        }
+    }, [eqLow, eqMid, eqHigh]);
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -340,6 +353,15 @@ export const TranscriptionsTab = ({ patientName }) => {
                     </label>
                 </div>
             </div>
+            
+            <AudioMixer 
+                analyser={analyserRef.current} 
+                micGain={micGain} setMicGain={setMicGain}
+                eqLow={eqLow} setEqLow={setEqLow}
+                eqMid={eqMid} setEqMid={setEqMid}
+                eqHigh={eqHigh} setEqHigh={setEqHigh}
+                isRecording={isRecording}
+            />
 
             {isAddingManual && (
                 <div className="bg-zinc-950/80 border border-emerald-500/30 rounded-3xl p-6 animate-in slide-in-from-top-4 fade-in duration-300">
@@ -412,21 +434,9 @@ export const TranscriptionsTab = ({ patientName }) => {
                             </div>
                             <div className="flex items-center gap-2">
                                 {t.audioUrl && (
-                                    <div className="flex items-center gap-3 mr-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
-                                        <div className="flex flex-col items-center gap-1">
-                                            <label className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Ganancia (x{playbackGain.toFixed(1)})</label>
-                                            <input 
-                                                type="range" min="0.1" max="5.0" step="0.1" 
-                                                value={playbackGain} 
-                                                onChange={(e) => setPlaybackGain(parseFloat(e.target.value))}
-                                                className="w-20 accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                                            />
-                                        </div>
-                                        <div className="w-[1px] h-6 bg-white/10 mx-1"></div>
-                                        <button onClick={() => togglePlay(t.audioUrl, t.id)} className="w-9 h-9 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 transition-colors shadow-lg border border-emerald-500/20">
-                                            {playingId === t.id ? <Pause size={14} /> : <Play size={14} className="ml-1" />}
-                                        </button>
-                                    </div>
+                                    <button onClick={() => togglePlay(t.audioUrl, t.id)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors mr-2">
+                                        {playingId === t.id ? <Pause size={16} /> : <Play size={16} className="ml-1" />}
+                                    </button>
                                 )}
                                 <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
                                     <Download size={16} />
