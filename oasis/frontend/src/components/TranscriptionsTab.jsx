@@ -333,7 +333,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                 date: new Date().toLocaleString(),
                 filename: file.name,
                 audioUrl: audioUrl,
-                text: finalTranscription
+                text: finalTranscription, size: file.size
             };
 
             saveToLocal([newItem, ...transcriptions]);
@@ -571,7 +571,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                         <div className="flex justify-between items-start border-b border-white/5 pb-4">
                             <div>
                                 <h3 className="font-bold text-lg text-emerald-300 truncate max-w-md">{t.filename}</h3>
-                                <p className="text-zinc-500 text-xs uppercase tracking-widest font-mono mt-1">{t.date}</p>
+                                <p className="text-zinc-500 text-xs uppercase tracking-widest font-mono mt-1">{t.date} {t.size ? ` • ${(t.size / (1024 * 1024)) >= 1 ? (t.size / (1024 * 1024)).toFixed(2) + " MB" : (t.size / 1024).toFixed(2) + " KB"}` : ""}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 {t.audioUrl && (
@@ -605,3 +605,5 @@ export const TranscriptionsTab = ({ patientName }) => {
         </div>
     );
 };
+
+
