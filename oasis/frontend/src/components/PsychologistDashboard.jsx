@@ -2062,7 +2062,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
 
         if (dashboardSubView === 'WHATSAPP_CRM') {
             return (
-                <div className="w-full h-full flex-1 min-h-0 flex flex-col bg-[#070709] relative overflow-hidden">
+                <div className="w-full h-full flex-1 min-h-0 flex flex-col bg-[#050505] relative overflow-hidden">
                     <WhatsAppCRM 
                         clinicPatients={patients}
                         currentUser={localStorage.getItem('oasis_user') || 'observador1'}
@@ -2073,396 +2073,413 @@ Responde ÚNICAMENTE con un JSON válido.`;
         }
 
         return (
-            <div className="w-full flex-1 min-h-0 p-3 sm:p-6 md:p-10 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#070709] selection:bg-emerald-500/30">
-                {/* AMBIENT GLOW */}
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/[0.03] rounded-full blur-3xl pointer-events-none -z-10" />
+            <div className="w-full flex-1 min-h-0 p-4 sm:p-8 md:p-12 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#050505] selection:bg-emerald-500/30">
+                {/* 2026 APPLE-LIKE AMBIENT GLOWS */}
+                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
+                <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-500/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
 
-                {/* 2026 HEADER BAR */}
-                <div className="mb-4 sm:mb-6 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)] shrink-0">
-                            <Hexagon className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                                <h1 className="text-sm sm:text-lg md:text-2xl font-black text-white tracking-tight truncate">
-                                    Centro de Mando
-                                </h1>
-                                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    CLÍNICO
-                                </span>
+                <div className="max-w-6xl mx-auto">
+                    {/* 2026 HEADER BAR */}
+                    <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                        <div className="flex items-start gap-4 min-w-0">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] shrink-0 backdrop-blur-xl">
+                                <Hexagon className="w-6 h-6 sm:w-7 sm:h-7 drop-shadow-md" />
                             </div>
-                            <p className="text-zinc-500 text-[8px] sm:text-[10px] font-mono uppercase tracking-widest flex items-center gap-1 mt-0.5 truncate">
-                                <span>Observación</span>
-                                <span>•</span>
-                                <span className="text-zinc-400">{patients.length} identidades</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                            onClick={() => setDashboardSubView('WHATSAPP_CRM')}
-                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-full font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:scale-105 active:scale-95 flex items-center gap-1.5 shrink-0"
-                            title="Abrir WhatsApp CRM y Contactos de Pacientes"
-                        >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">WhatsApp CRM</span>
-                            <span className="sm:hidden">CRM</span>
-                        </button>
-
-                        <button 
-                            onClick={async () => {
-                                const newUser = prompt("Nombre de usuario del nuevo sujeto:");
-                                if (newUser && newUser.trim()) {
-                                    try {
-                                        const currentUser = localStorage.getItem('oasis_user') || 'observador';
-                                        const res = await fetch(`${API_URL}/api/oasis/register`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                                Username: newUser.trim(),
-                                                Password: '123',
-                                                Role: 'patient',
-                                                ClinicianId: currentUser
-                                            })
-                                        });
-                                        
-                                        if (res.ok || res.status === 400) {
-                                            const newPatient = {
-                                                id: 'PT-' + newUser.trim().toUpperCase(),
-                                                name: newUser.trim(),
-                                                date: new Date().toISOString().split('T')[0],
-                                                status: 'Pendiente de revisión',
-                                                phenomenology: null,
-                                                clínicalInterview: null,
-                                                pid5: null,
-                                                icar16: null
-                                            };
-                                            localStorage.setItem(`oasis_patient_status_${newUser.trim()}`, 'Pendiente de revisión');
-                                            setSelectedPatient(newPatient);
-                                            setCurrentModule('PROFILE');
-                                            setActiveTab('CLINICAL_REPORT');
-                                            setTimeout(loadPatients, 1000);
-                                        } else {
-                                            alert("Error creando paciente.");
-                                        }
-                                    } catch (e) {
-                                        alert("Error de conexión con el servidor.");
-                                    }
-                                }
-                            }}
-                            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full font-black text-[10px] sm:text-xs tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:scale-105 active:scale-95 flex items-center gap-1 shrink-0"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Nuevo</span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                localStorage.removeItem('oasis_user');
-                                window.location.reload();
-                            }}
-                            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/[0.03] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0"
-                            title="Cerrar Sesión"
-                        >
-                            <LogOut size={12} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* 2026 SEGMENTED VIEW SWITCHER: IDENTIDADES vs WHATSAPP CRM */}
-                <div className="flex items-center gap-1 p-1 bg-white/[0.02] border border-white/[0.06] rounded-2xl w-fit mb-4">
-                    <button
-                        onClick={() => setDashboardSubView('IDENTITIES')}
-                        className={`px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold font-mono transition-all flex items-center gap-2 ${
-                            dashboardSubView === 'IDENTITIES'
-                                ? 'bg-white/10 text-white shadow-sm border border-white/10'
-                                : 'text-zinc-400 hover:text-zinc-200'
-                        }`}
-                    >
-                        <Hexagon size={13} className="text-emerald-400" />
-                        <span>Identidades Clínicas ({patients.length})</span>
-                    </button>
-                    <button
-                        onClick={() => setDashboardSubView('WHATSAPP_CRM')}
-                        className="px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold font-mono transition-all flex items-center gap-2 text-zinc-400 hover:text-white"
-                    >
-                        <MessageCircle size={13} className="text-emerald-400" />
-                        <span>Pacientes & WhatsApp CRM</span>
-                    </button>
-                </div>
-
-                {/* 2026 IDENTITY FILTER PILLS */}
-                <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1 scrollbar-none">
-                    <button
-                        onClick={() => setIdentityFilter('ALL')}
-                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all ${
-                            identityFilter === 'ALL'
-                                ? 'bg-white/10 text-white border border-white/20 shadow-sm'
-                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
-                        }`}
-                    >
-                        Todas las Identidades ({patients.length})
-                    </button>
-                    <button
-                        onClick={() => setIdentityFilter('PATIENTS')}
-                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all ${
-                            identityFilter === 'PATIENTS'
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
-                        }`}
-                    >
-                        Pacientes ({totalPatientsOnly})
-                    </button>
-                    <button
-                        onClick={() => setIdentityFilter('CLINICIANS')}
-                        className={`px-3 py-1 rounded-xl text-[10px] font-mono font-bold transition-all flex items-center gap-1 ${
-                            identityFilter === 'CLINICIANS'
-                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-                                : 'bg-white/[0.02] text-zinc-500 hover:text-zinc-300 border border-white/[0.04]'
-                        }`}
-                    >
-                        <span>🩺</span>
-                        <span>Clínicos & Observador ({totalCliniciansOnly})</span>
-                    </button>
-                </div>
-
-                {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
-                <div className="mb-4">
-                    <div className="relative flex items-center bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.05] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-3 py-1.5 sm:py-2 backdrop-blur-xl transition-all">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 mr-2 shrink-0" />
-                        <input 
-                            type="text" 
-                            placeholder="Filtrar por identidad, nombre o ID..."
-                            className="w-full bg-transparent text-white placeholder-zinc-600 focus:outline-none font-mono text-[11px] sm:text-xs"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="p-1 text-zinc-500 hover:text-white text-xs font-mono">
-                                <X size={12} />
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* CONTENT AREA */}
-                {filtered.length === 0 ? (
-                    <div className="bg-white/[0.01] border border-dashed border-white/10 p-6 rounded-2xl text-center flex flex-col items-center justify-center gap-2.5 min-h-[180px]">
-                        <Activity className="w-7 h-7 text-zinc-700 animate-pulse" />
-                        <div>
-                            <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Sin Coincidencias</h4>
-                            <p className="text-[10px] text-zinc-600 mt-0.5">No se encontraron identidades con los criterios de búsqueda.</p>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        {/* ── MOBILE: 2026 MODERN DENSE CARDS (ZERO HORIZONTAL SCROLL) ── */}
-                        <div className="block md:hidden space-y-2 w-full max-w-full">
-                            {filtered.map(patient => (
-                                <div 
-                                    key={patient.id} 
-                                    onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
-                                    className="p-3 rounded-2xl bg-[#0c0c0e]/90 hover:bg-[#121215] border border-white/[0.06] hover:border-emerald-500/30 backdrop-blur-md active:scale-[0.99] transition-all flex flex-col gap-2 group cursor-pointer w-full"
-                                >
-                                    {/* Row 1: Avatar + Name + ID + Status Pill */}
-                                    <div className="flex items-center justify-between gap-2 min-w-0">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-300 font-black text-[10px] uppercase shrink-0">
-                                                {patient.name.slice(0, 2)}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-1.5 flex-wrap">
-                                                    <span className="text-xs font-black text-white tracking-tight truncate">@{patient.name}</span>
-                                                    {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-0.5">
-                                                            🩺 <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
-                                                        </span>
-                                                    )}
-                                                    {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
-                                                            👁️ <span>Observador</span>
-                                                        </span>
-                                                    )}
-                                                    {patient.name.toLowerCase() === 'ory11' && (
-                                                        <span className="px-1.5 py-0.5 rounded text-[7px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-0.5">
-                                                            ⚡ <span>Admin</span>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-[8px] font-mono text-zinc-500 truncate">{patient.id}</div>
-                                            </div>
-                                        </div>
-
-                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border shrink-0 ${
-                                            patient.status === 'Publicado' 
-                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                                                : patient.status === 'Editando'
-                                                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                        }`}>
-                                            <span className="w-1 h-1 rounded-full bg-current" />
-                                            {patient.status === 'Pendiente de revisión' ? 'Pendiente' : patient.status}
-                                        </span>
-                                    </div>
-
-                                    {/* Row 2: Password pill + Date + Action Buttons */}
-                                    <div className="flex items-center justify-between pt-1.5 border-t border-white/[0.04]">
-                                        <div className="flex items-center gap-2">
-                                            {patient.password && (
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigator.clipboard.writeText(patient.password);
-                                                        if (navigator.vibrate) navigator.vibrate(25);
-                                                    }}
-                                                    className="inline-flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/20 transition-all active:scale-95"
-                                                    title="Copiar contraseña"
-                                                >
-                                                    <span>🔑</span>
-                                                    <span>{patient.password}</span>
-                                                    <Copy size={8} className="opacity-50" />
-                                                </button>
-                                            )}
-                                            <span className="font-mono text-[8px] text-zinc-500">{patient.date}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-1">
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setDashboardSubView('WHATSAPP_CRM');
-                                                }}
-                                                className="p-1 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                                                title="Conectar vía WhatsApp"
-                                            >
-                                                <MessageCircle size={13} className="text-emerald-400" />
-                                            </button>
-                                            <button 
-                                                onClick={(e) => handleDeleteUser(e, patient.name)}
-                                                className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
-                                                title="Eliminar usuario"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                            <ChevronRight size={13} className="text-zinc-500 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-                                        </div>
-                                    </div>
+                            <div className="min-w-0 pt-0.5">
+                                <div className="flex items-center gap-2.5 mb-1">
+                                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight truncate drop-shadow-sm">
+                                        Centro de Mando
+                                    </h1>
+                                    <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 backdrop-blur-md">
+                                        <Sparkles className="w-3 h-3 mr-1" />
+                                        CLÍNICO
+                                    </span>
                                 </div>
-                            ))}
+                                <p className="text-zinc-400 text-xs sm:text-sm font-medium flex items-center gap-2 truncate">
+                                    <span className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-emerald-500" /> Observación Activa</span>
+                                    <span className="text-zinc-600">•</span>
+                                    <span className="text-zinc-300 font-mono text-[11px] bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{patients.length} IDENTIDADES</span>
+                                </p>
+                            </div>
                         </div>
 
-                        {/* ── DESKTOP: CLEAN GLASS TABLE ── */}
-                        <div className="hidden md:block bg-zinc-900/20 border border-white/[0.06] rounded-3xl overflow-hidden backdrop-blur-sm">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="border-b border-white/[0.06] bg-white/[0.01]">
-                                        <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Identidad / Aura</th>
-                                        <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Fecha Registro</th>
-                                        <th className="px-6 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Estado Clínico</th>
-                                        <th className="px-6 py-3.5 text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map(patient => (
-                                        <tr 
-                                            key={patient.id} 
-                                            onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
-                                            className="border-b border-white/[0.04] hover:bg-white/[0.02] cursor-pointer transition-colors group"
-                                        >
-                                            <td className="px-6 py-3.5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-300 font-black text-xs uppercase shrink-0">
-                                                        {patient.name.slice(0, 2)}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="text-xs font-black text-white italic">@{patient.name}</span>
-                                                            {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
-                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
-                                                                    <span>🩺</span>
-                                                                    <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
-                                                                </span>
-                                                            )}
-                                                            {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
-                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                                                                    <span>👁️</span>
-                                                                    <span>Observador Clínico</span>
-                                                                </span>
-                                                            )}
-                                                            {patient.name.toLowerCase() === 'ory11' && (
-                                                                <span className="px-2 py-0.5 rounded-md text-[8px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
-                                                                    <span>⚡</span>
-                                                                    <span>Admin</span>
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-zinc-600 text-[10px] font-mono">{patient.id}</div>
-                                                        {patient.password && (
-                                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                                <div className="text-emerald-500/80 text-[10px] font-mono font-bold">
-                                                                    🔑 {patient.password}
-                                                                </div>
-                                                                <button 
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        navigator.clipboard.writeText(patient.password);
-                                                                    }}
-                                                                    className="text-zinc-500 hover:text-emerald-400 transition-colors p-0.5"
-                                                                    title="Copiar contraseña"
-                                                                >
-                                                                    <Copy className="w-2.5 h-2.5" />
-                                                                </button>
-                                                            </div>
+                        <div className="flex items-center gap-2.5 shrink-0">
+                            <button
+                                onClick={() => setDashboardSubView('WHATSAPP_CRM')}
+                                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-400 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 ease-out hover:scale-105 active:scale-95 flex items-center gap-2 shrink-0 backdrop-blur-xl"
+                                title="Abrir WhatsApp CRM y Contactos de Pacientes"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                <span className="hidden sm:inline">WhatsApp CRM</span>
+                                <span className="sm:hidden">CRM</span>
+                            </button>
+
+                            <button 
+                                onClick={async () => {
+                                    const newUser = prompt("Nombre de usuario del nuevo sujeto:");
+                                    if (newUser && newUser.trim()) {
+                                        try {
+                                            const currentUser = localStorage.getItem('oasis_user') || 'observador';
+                                            const res = await fetch(`${API_URL}/api/oasis/register`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    Username: newUser.trim(),
+                                                    Password: '123',
+                                                    Role: 'patient',
+                                                    ClinicianId: currentUser
+                                                })
+                                            });
+                                            
+                                            if (res.ok || res.status === 400) {
+                                                const newPatient = {
+                                                    id: 'PT-' + newUser.trim().toUpperCase(),
+                                                    name: newUser.trim(),
+                                                    date: new Date().toISOString().split('T')[0],
+                                                    status: 'Pendiente de revisión',
+                                                    phenomenology: null,
+                                                    clínicalInterview: null,
+                                                    pid5: null,
+                                                    icar16: null
+                                                };
+                                                localStorage.setItem(`oasis_patient_status_${newUser.trim()}`, 'Pendiente de revisión');
+                                                setSelectedPatient(newPatient);
+                                                setCurrentModule('PROFILE');
+                                                setActiveTab('CLINICAL_REPORT');
+                                                setTimeout(loadPatients, 1000);
+                                            } else {
+                                                alert("Error creando paciente.");
+                                            }
+                                        } catch (e) {
+                                            alert("Error de conexión con el servidor.");
+                                        }
+                                    }
+                                }}
+                                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-black border border-emerald-400/50 rounded-xl font-black text-xs tracking-wider uppercase transition-all duration-300 ease-out shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95 flex items-center gap-1.5 shrink-0"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Nuevo</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('oasis_user');
+                                    window.location.reload();
+                                }}
+                                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/[0.03] border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition-all duration-300 flex items-center justify-center shrink-0 backdrop-blur-xl"
+                                title="Cerrar Sesión"
+                            >
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                        {/* 2026 SEGMENTED VIEW SWITCHER */}
+                        <div className="flex items-center p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl w-fit backdrop-blur-2xl">
+                            <button
+                                onClick={() => setDashboardSubView('IDENTITIES')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-2 ${
+                                    dashboardSubView === 'IDENTITIES'
+                                        ? 'bg-white/10 text-white shadow-md shadow-black/20'
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                <Hexagon size={14} className={dashboardSubView === 'IDENTITIES' ? 'text-emerald-400' : ''} />
+                                <span>Identidades Clínicas</span>
+                            </button>
+                            <button
+                                onClick={() => setDashboardSubView('WHATSAPP_CRM')}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center gap-2 ${
+                                    dashboardSubView === 'WHATSAPP_CRM'
+                                        ? 'bg-white/10 text-white shadow-md shadow-black/20'
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                <MessageCircle size={14} className={dashboardSubView === 'WHATSAPP_CRM' ? 'text-emerald-400' : ''} />
+                                <span>Pacientes & WhatsApp CRM</span>
+                            </button>
+                        </div>
+
+                        {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
+                        <div className="relative flex items-center bg-white/[0.03] hover:bg-white/[0.05] focus-within:bg-white/[0.07] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-4 py-2 sm:py-2.5 backdrop-blur-2xl transition-all duration-300 w-full lg:w-80 group">
+                            <Search className="w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors mr-2.5 shrink-0" />
+                            <input 
+                                type="text" 
+                                placeholder="Buscar identidad, nombre o ID..."
+                                className="w-full bg-transparent text-white placeholder-zinc-600 focus:outline-none font-medium text-xs sm:text-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            {searchQuery && (
+                                <button onClick={() => setSearchQuery('')} className="p-1 text-zinc-500 hover:text-white transition-colors">
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 2026 IDENTITY FILTER PILLS */}
+                    <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none mask-fade-edges">
+                        <button
+                            onClick={() => setIdentityFilter('ALL')}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-2 ${
+                                identityFilter === 'ALL'
+                                    ? 'bg-white text-black shadow-lg shadow-white/10'
+                                    : 'bg-white/[0.03] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] border border-white/[0.05]'
+                            }`}
+                        >
+                            Todas las Identidades <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono ${identityFilter === 'ALL' ? 'bg-black/10 text-black' : 'bg-white/10 text-zinc-300'}`}>{patients.length}</span>
+                        </button>
+                        <button
+                            onClick={() => setIdentityFilter('PATIENTS')}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-2 ${
+                                identityFilter === 'PATIENTS'
+                                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+                                    : 'bg-white/[0.03] text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 border border-white/[0.05] hover:border-emerald-500/20'
+                            }`}
+                        >
+                            Pacientes <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono ${identityFilter === 'PATIENTS' ? 'bg-black/10 text-black' : 'bg-emerald-500/20 text-emerald-300'}`}>{totalPatientsOnly}</span>
+                        </button>
+                        <button
+                            onClick={() => setIdentityFilter('CLINICIANS')}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide transition-all duration-300 whitespace-nowrap flex items-center gap-2 ${
+                                identityFilter === 'CLINICIANS'
+                                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                                    : 'bg-white/[0.03] text-zinc-400 hover:text-purple-400 hover:bg-purple-500/10 border border-white/[0.05] hover:border-purple-500/20'
+                            }`}
+                        >
+                            <span>🩺 Clínicos & Observador</span>
+                            <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono ${identityFilter === 'CLINICIANS' ? 'bg-black/20 text-white' : 'bg-purple-500/20 text-purple-300'}`}>{totalCliniciansOnly}</span>
+                        </button>
+                    </div>
+
+                    {/* CONTENT AREA */}
+                    {filtered.length === 0 ? (
+                        <div className="bg-white/[0.02] border border-white/[0.05] p-12 rounded-3xl text-center flex flex-col items-center justify-center gap-4 min-h-[300px] backdrop-blur-xl">
+                            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                                <Search className="w-8 h-8 text-zinc-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-base font-bold text-zinc-300">Sin Coincidencias</h4>
+                                <p className="text-sm text-zinc-500 mt-1 max-w-sm mx-auto">No se encontraron identidades clínicas con los criterios de búsqueda actuales. Intenta con otros términos.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* ── MOBILE: 2026 MODERN DENSE CARDS ── */}
+                            <div className="block md:hidden space-y-3 w-full max-w-full">
+                                {filtered.map(patient => (
+                                    <div 
+                                        key={patient.id} 
+                                        onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
+                                        className="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-emerald-500/30 backdrop-blur-xl active:scale-[0.98] transition-all duration-300 flex flex-col gap-3 group cursor-pointer w-full shadow-lg shadow-black/20"
+                                    >
+                                        <div className="flex items-center justify-between gap-3 min-w-0">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-zinc-200 font-black text-sm uppercase shrink-0 shadow-inner">
+                                                    {patient.name.slice(0, 2)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="text-sm font-bold text-white tracking-tight truncate">@{patient.name}</span>
+                                                        {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
+                                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                                                                🩺 <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Psicóloga / Clínico'}</span>
+                                                            </span>
+                                                        )}
+                                                        {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
+                                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                                                👁️ <span>Observador</span>
+                                                            </span>
+                                                        )}
+                                                        {patient.name.toLowerCase() === 'ory11' && (
+                                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                                                                ⚡ <span>Admin</span>
+                                                            </span>
                                                         )}
                                                     </div>
+                                                    <div className="text-[10px] font-mono text-zinc-500 truncate mt-0.5">{patient.id}</div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-3.5 text-xs text-zinc-400 font-mono">{patient.date}</td>
-                                            <td className="px-6 py-3.5">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                                    patient.status === 'Publicado' 
-                                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                                                        : patient.status === 'Editando'
-                                                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                }`}>
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                                                    {patient.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-3.5 text-right">
+                                            </div>
+
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide border shrink-0 ${
+                                                patient.status === 'Publicado' 
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                                    : patient.status === 'Editando'
+                                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                            }`}>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                                {patient.status === 'Pendiente de revisión' ? 'Pendiente' : patient.status}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                                            <div className="flex items-center gap-3">
+                                                {patient.password && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigator.clipboard.writeText(patient.password);
+                                                            if (navigator.vibrate) navigator.vibrate(25);
+                                                        }}
+                                                        className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-md border border-emerald-500/20 transition-all active:scale-95"
+                                                        title="Copiar contraseña"
+                                                    >
+                                                        <span>🔑</span>
+                                                        <span>{patient.password}</span>
+                                                        <Copy size={10} className="opacity-60" />
+                                                    </button>
+                                                )}
+                                                <span className="font-mono text-[9px] text-zinc-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {patient.date}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1">
                                                 <button 
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setDashboardSubView('WHATSAPP_CRM');
                                                     }}
-                                                    className="p-1.5 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors mr-1"
-                                                    title="Conectar vía WhatsApp"
+                                                    className="p-1.5 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
                                                 >
-                                                    <MessageCircle className="w-4 h-4 text-emerald-400" />
+                                                    <MessageCircle size={15} />
                                                 </button>
                                                 <button 
                                                     onClick={(e) => handleDeleteUser(e, patient.name)}
-                                                    className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors mr-1"
-                                                    title="Eliminar usuario"
+                                                    className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 size={15} />
                                                 </button>
-                                                <ChevronRight className="inline-block w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors" />
-                                            </td>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* ── DESKTOP: CLEAN GLASS TABLE ── */}
+                            <div className="hidden md:block bg-white/[0.02] border border-white/[0.06] rounded-3xl overflow-hidden backdrop-blur-xl shadow-2xl shadow-black/40">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/[0.08] bg-white/[0.02]">
+                                            <th className="px-6 py-4 text-xs font-bold text-zinc-400 font-mono tracking-wide">Identidad Clínica</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-zinc-400 font-mono tracking-wide">Registro</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-zinc-400 font-mono tracking-wide">Estado</th>
+                                            <th className="px-6 py-4 text-right text-xs font-bold text-zinc-400 font-mono tracking-wide">Acciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {filtered.map((patient, idx) => (
+                                            <tr 
+                                                key={patient.id} 
+                                                onClick={() => { setSelectedPatient(patient); setCurrentModule('PROFILE'); setActiveTab('CLINICAL_REPORT'); }}
+                                                className={`border-b border-white/[0.04] hover:bg-white/[0.04] cursor-pointer transition-all duration-300 group ${idx === filtered.length - 1 ? 'border-b-0' : ''}`}
+                                            >
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-zinc-200 font-black text-sm uppercase shrink-0 shadow-inner group-hover:border-emerald-500/30 group-hover:text-emerald-400 transition-colors">
+                                                            {patient.name.slice(0, 2)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-bold text-white tracking-tight">@{patient.name}</span>
+                                                                {(patient.role === 'clinician' || ['yul', 'yuli', '2112'].includes(patient.name.toLowerCase())) && (
+                                                                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1.5">
+                                                                        <span>🩺</span>
+                                                                        <span>{patient.fullName && !patient.fullName.includes('@') ? patient.fullName : 'Clínico'}</span>
+                                                                    </span>
+                                                                )}
+                                                                {(patient.role === 'supervisor' || patient.role === 'observador' || patient.name.toLowerCase().includes('observador')) && (
+                                                                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1.5">
+                                                                        <span>👁️</span>
+                                                                        <span>Observador</span>
+                                                                    </span>
+                                                                )}
+                                                                {patient.name.toLowerCase() === 'ory11' && (
+                                                                    <span className="px-2 py-0.5 rounded-md text-[9px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 flex items-center gap-1.5">
+                                                                        <span>⚡</span>
+                                                                        <span>Admin</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-3 mt-1">
+                                                                <div className="text-zinc-500 text-[11px] font-mono">{patient.id}</div>
+                                                                {patient.password && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-zinc-700">•</span>
+                                                                        <div className="text-emerald-500/80 text-[11px] font-mono font-medium flex items-center gap-1">
+                                                                            <Lock className="w-3 h-3" /> {patient.password}
+                                                                        </div>
+                                                                        <button 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                navigator.clipboard.writeText(patient.password);
+                                                                            }}
+                                                                            className="text-zinc-500 hover:text-emerald-400 transition-colors p-0.5 bg-white/5 rounded opacity-0 group-hover:opacity-100"
+                                                                            title="Copiar contraseña"
+                                                                        >
+                                                                            <Copy className="w-3 h-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                                                        <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                                                        {patient.date}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wide border ${
+                                                        patient.status === 'Publicado' 
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                                            : patient.status === 'Editando'
+                                                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${patient.status === 'Publicado' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : patient.status === 'Editando' ? 'bg-purple-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]'}`} />
+                                                        {patient.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setDashboardSubView('WHATSAPP_CRM');
+                                                            }}
+                                                            className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all"
+                                                            title="Conectar vía WhatsApp"
+                                                        >
+                                                            <MessageCircle className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => handleDeleteUser(e, patient.name)}
+                                                            className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                                            title="Eliminar usuario"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                        <div className="w-px h-4 bg-white/10 mx-1"></div>
+                                                        <button className="p-2 text-zinc-400 group-hover:text-white transition-colors">
+                                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </>
-                )}
+                    )}
+                </div>
             </div>
         );
     };
-
     // --- Tab Renderers ---
     const renderBiographicTab = () => {
         const transcripts = activePatientData?.clínicalInterview?.transcripts || {};
