@@ -337,51 +337,65 @@ export default function WhatsAppCRM({
     }, [patients]);
 
     return (
-        <div className="w-full h-full flex-1 min-h-0 overflow-y-auto custom-sidebar-scroll p-3 sm:p-6 md:p-8 pb-48 sm:pb-40 relative bg-[#050505] text-white selection:bg-emerald-500/30">
+        <div className={`w-full h-full flex-1 min-h-0 overflow-y-auto custom-sidebar-scroll relative text-white selection:bg-emerald-500/30 ${isEmbedded ? 'p-1 sm:p-4 bg-transparent' : 'p-3 sm:p-6 md:p-8 pb-48 sm:pb-40 bg-[#050505]'}`}>
             {/* AMBIENT GLOWS - 2026 APPLE VISION STYLE */}
             <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/[0.035] rounded-full blur-[120px] pointer-events-none -z-10" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/[0.025] rounded-full blur-[100px] pointer-events-none -z-10" />
 
             {/* HEADER DE SUB-PÁGINA */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.04]">
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] shrink-0 transition-transform hover:scale-105">
-                        <MessageCircle className="w-6 h-6 text-emerald-400" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 flex items-center gap-2">
-                                Pacientes & WhatsApp CRM
-                            </h2>
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                                Directo
-                            </span>
+            {!isEmbedded && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.04]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] shrink-0 transition-transform hover:scale-105">
+                            <MessageCircle className="w-6 h-6 text-emerald-400" />
                         </div>
-                        <p className="text-zinc-500 text-[10px] sm:text-xs font-mono uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                            <span>Conexión Inmediata</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Agenda</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Mensajería 1-clic</span>
-                        </p>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 flex items-center gap-2">
+                                    Pacientes & WhatsApp CRM
+                                </h2>
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                    Directo
+                                </span>
+                            </div>
+                            <p className="text-zinc-500 text-[10px] sm:text-xs font-mono uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                                <span>Conexión Inmediata</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Agenda</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Mensajería 1-clic</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                        {onBackToClinical && (
+                            <button
+                                onClick={onBackToClinical}
+                                className="px-4 py-2 rounded-full bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 text-zinc-300 text-[10px] sm:text-xs font-mono uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                            >
+                                ← Volver a Identidades
+                            </button>
+                        )}
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            <Plus size={16} className="stroke-[3]" />
+                            <span>Añadir Paciente</span>
+                        </button>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                    {onBackToClinical && (
-                        <button
-                            onClick={onBackToClinical}
-                            className="px-4 py-2 rounded-full bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 text-zinc-300 text-[10px] sm:text-xs font-mono uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
-                        >
-                            ← Volver a Identidades
-                        </button>
-                    )}
-
+            )}
+            
+            {/* Si está embeddido, solo mostramos el botón de añadir paciente alineado a la derecha */}
+            {isEmbedded && (
+                <div className="flex justify-end mb-2">
                     <button
                         onClick={() => handleOpenModal()}
-                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
                     >
-                        <Plus size={16} className="stroke-[3]" />
+                        <Plus size={14} className="stroke-[3]" />
                         <span>Añadir Paciente</span>
                     </button>
                 </div>
-            </div>
+            )}
 
             {/* KPI METRICS CHIPS */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 my-6">

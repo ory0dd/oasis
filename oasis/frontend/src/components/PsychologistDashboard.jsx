@@ -2206,6 +2206,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         </div>
 
                         {/* SEARCH BAR (MINIMALIST 2026 GLASS) */}
+                        {dashboardSubView === 'IDENTITIES' && (
                         <div className="relative flex items-center bg-white/[0.03] hover:bg-white/[0.05] focus-within:bg-white/[0.07] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-4 py-2 sm:py-2.5 backdrop-blur-2xl transition-all duration-300 w-full lg:w-80 group">
                             <Search className="w-4 h-4 text-zinc-500 group-focus-within:text-emerald-400 transition-colors mr-2.5 shrink-0" />
                             <input 
@@ -2221,8 +2222,15 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                 </button>
                             )}
                         </div>
+                        )}
                     </div>
 
+                    {dashboardSubView === 'WHATSAPP_CRM' ? (
+                        <div className="flex-1 w-full h-full min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-3xl overflow-hidden bg-black/20 border border-white/[0.02]">
+                            <WhatsAppCRM isEmbedded={true} />
+                        </div>
+                    ) : (
+                        <>
                     {/* 2026 IDENTITY FILTER PILLS */}
                     <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none mask-fade-edges">
                         <button
