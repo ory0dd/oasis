@@ -178,9 +178,9 @@ export const TranscriptionsTab = ({ patientName }) => {
             }
         }
         
-        let options = { mimeType: 'audio/webm' };
+        let options = { mimeType: 'audio/webm', audioBitsPerSecond: 16000 };
         if (!MediaRecorder.isTypeSupported('audio/webm')) {
-            options = { mimeType: 'audio/mp4' };
+            options = { mimeType: 'audio/mp4', audioBitsPerSecond: 16000 };
         }
         
         const mediaRecorder = new MediaRecorder(destStreamRef.current, options);
