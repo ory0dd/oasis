@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, Download, Play, Pause, Trash2, Mic } from 'lucide-react';
 import { API_URL } from '../utils/api';
 
@@ -18,6 +18,9 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioVolume, setAudioVolume] = useState(0);
+    const [playbackGain, setPlaybackGain] = useState(1.0);
+    const playbackCtxRef = useRef(null);
+    const playbackGainRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
@@ -27,6 +30,31 @@ export const TranscriptionsTab = ({ patientName }) => {
     const animationFrameRef = useRef(null);
     const browserTranscriptRef = useRef('');
     const backgroundRecognitionRef = useRef(null);
+
+    
+    useEffect(() => {
+        if (!audioRef.current || audioRef.current.dataset.sourceCreated) return;
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioContext();
+            const source = ctx.createMediaElementSource(audioRef.current);
+            const gainNode = ctx.createGain();
+            source.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            playbackCtxRef.current = ctx;
+            playbackGainRef.current = gainNode;
+            audioRef.current.dataset.sourceCreated = "true";
+        } catch (e) {
+            console.error("Audio Context initialization failed", e);
+        }
+    }, [audioRef.current]);
+
+    useEffect(() => {
+        if (playbackGainRef.current) {
+            playbackGainRef.current.gain.value = playbackGain;
+        }
+    }, [playbackGain]);
 
     const startRecording = async () => {
         try {
@@ -370,7 +398,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                 </div>
             )}
 
-            <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} />
+            <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} crossOrigin="anonymous" />
 
             {/* ERROR BANNER */}
             {errorMessage && (
@@ -406,8 +434,20 @@ export const TranscriptionsTab = ({ patientName }) => {
                             </div>
                             <div className="flex items-center gap-2">
                                 {t.audioUrl && (
-                                    <div className="flex flex-col gap-1 items-end mr-4">
-                                        <audio controls src={getFullAudioUrl(t.audioUrl)} className="h-8 w-64 opacity-80 hover:opacity-100 transition-opacity" />
+                                    <div className="flex items-center gap-3 mr-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <label className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">Ganancia (x{playbackGain.toFixed(1)})</label>
+                                            <input 
+                                                type="range" min="0.1" max="5.0" step="0.1" 
+                                                value={playbackGain} 
+                                                onChange={(e) => setPlaybackGain(parseFloat(e.target.value))}
+                                                className="w-20 accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                                            />
+                                        </div>
+                                        <div className="w-[1px] h-6 bg-white/10 mx-1"></div>
+                                        <button onClick={() => togglePlay(t.audioUrl, t.id)} className="w-9 h-9 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center text-emerald-400 transition-colors shadow-lg border border-emerald-500/20">
+                                            {playingId === t.id ? <Pause size={14} /> : <Play size={14} className="ml-1" />}
+                                        </button>
                                     </div>
                                 )}
                                 <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
