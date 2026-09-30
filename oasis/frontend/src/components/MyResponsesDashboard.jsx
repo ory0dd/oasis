@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Aperture, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
+﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -1807,6 +1807,10 @@ Devuelve estrictamente el JSON sin formato extra.
         } catch (e) {}
     }, [user]);
     const [isGeneratingTreatmentPlan, setIsGeneratingTreatmentPlan] = useState(false);
+
+    // Node editing state
+    const [editingNodeId, setEditingNodeId] = useState(null);
+    const [editNodeForm, setEditNodeForm] = useState({ label: '', description: '', question: '' });
 
     const handleExportDoc = () => {
         let content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -7796,7 +7800,65 @@ Por favor, analicemos:
                                             {!isTourMinimized && (
                                                 <>
                                                     <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
-                                                        {/* Node Label & Description */}
+                                                        {editingNodeId === currentNode.id ? (
+    <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1">
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1">Título del Nodo</label>
+        <input 
+            value={editNodeForm.label}
+            onChange={(e) => setEditNodeForm(prev => ({...prev, label: e.target.value}))}
+            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
+            placeholder="Nombre del nodo..."
+            onKeyDown={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+        />
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Descripción / Función</label>
+        <textarea
+            value={editNodeForm.description}
+            onChange={(e) => setEditNodeForm(prev => ({...prev, description: e.target.value}))}
+            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[45px] resize-none focus:outline-none focus:border-blue-500/50"
+            placeholder="Descripción o función..."
+            onKeyDown={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+        />
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Pregunta de Reflexión (Opcional)</label>
+        <textarea
+            value={editNodeForm.question}
+            onChange={(e) => setEditNodeForm(prev => ({...prev, question: e.target.value}))}
+            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[35px] resize-none focus:outline-none focus:border-blue-500/50"
+            placeholder="Pregunta de reflexión..."
+            onKeyDown={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+        />
+        <div className="flex justify-end gap-2 mt-1">
+            <button 
+                onClick={(e) => { e.stopPropagation(); setEditingNodeId(null); }}
+                className="text-[10px] px-2.5 py-1.5 rounded-md text-zinc-400 hover:bg-white/5 font-semibold"
+            >
+                Cancelar
+            </button>
+            <button 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    const newAfcData = { ...afcData };
+                    const nodeIndex = newAfcData.nodes.findIndex(n => n.id === currentNode.id);
+                    if (nodeIndex > -1) {
+                        newAfcData.nodes[nodeIndex].label = editNodeForm.label;
+                        newAfcData.nodes[nodeIndex].description = editNodeForm.description;
+                        newAfcData.nodes[nodeIndex].question = editNodeForm.question;
+                        setAfcData(newAfcData);
+                        localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+                        setSelectedNode(newAfcData.nodes[nodeIndex]);
+                        setEditingNodeId(null);
+                    }
+                }}
+                className="text-[10px] px-2.5 py-1.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 font-bold"
+            >
+                Guardar Cambios
+            </button>
+        </div>
+    </div>
+) : (
+{/* Node Label & Description */}
                                                         <div>
                                                             <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
                                                                 {softenNodeLabel(currentNode.label)}
