@@ -370,7 +370,7 @@ const getFallbackDescription = (node, user, bioData = null, phenomData = null) =
     }
 
     // Si el nodo ya tiene una descripción clínica válida y sustancial (>= 20 caracteres)
-    if (node && node.description && typeof node.description === 'string' && node.description.trim().length >= 20 && !node.description.includes('Factor de tu mapa')) {
+    if (node && node.description && typeof node.description === 'string' && node.description.trim().length > 0 && !node.description.includes('Factor de tu mapa')) {
         return node.description.trim();
     }
 
@@ -7770,7 +7770,21 @@ Por favor, analicemos:
                                                         <ChevronRight size={13} />
                                                     </button>
                                                     <button
-                                                        onClick={() => setIsTourMinimized(!isTourMinimized)}
+    onClick={() => {
+        setEditingNodeId(currentNode.id);
+        setEditNodeForm({
+            label: currentNode.label || '',
+            description: currentNode.description || '',
+            question: currentNode.question || ''
+        });
+    }}
+    className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
+    title="Editar Nodo"
+>
+    <Edit2 size={12} />
+</button>
+<button
+    onClick={() => setIsTourMinimized(!isTourMinimized)}
                                                         className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
                                                         title={isTourMinimized ? "Maximizar" : "Minimizar"}
                                                     >
@@ -7858,7 +7872,7 @@ Por favor, analicemos:
         </div>
     </div>
 ) : (
-{/* Node Label & Description */}
+
                                                         <div>
                                                             <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
                                                                 {softenNodeLabel(currentNode.label)}
@@ -7938,6 +7952,7 @@ Por favor, analicemos:
                                                                 </div>
                                                             )}
                                                         </div>
+                                                    )}
                                                     </div>
                                                 </>
                                             )}
