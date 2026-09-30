@@ -64,7 +64,7 @@ export const AudioMixer = ({
         return () => cancelAnimationFrame(animationId);
     }, [analyser, isRecording]);
 
-    if (!isRecording) return null;
+    // Always show mixer
 
     return (
         <div className="bg-[#18181b] border border-white/10 rounded-2xl p-4 flex gap-4 w-full animate-in slide-in-from-top-4 fade-in">
