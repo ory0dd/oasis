@@ -17,6 +17,9 @@ export const TranscriptionsTab = ({ patientName }) => {
 
     const audioRef = useRef(null);
     const [isRecording, setIsRecording] = useState(false);
+    const [isMonitoring, setIsMonitoring] = useState(false);
+    const streamRef = useRef(null);
+    const destStreamRef = useRef(null);
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioVolume, setAudioVolume] = useState(0);
     const [micGain, setMicGain] = useState(1.0);
@@ -360,7 +363,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                 eqLow={eqLow} setEqLow={setEqLow}
                 eqMid={eqMid} setEqMid={setEqMid}
                 eqHigh={eqHigh} setEqHigh={setEqHigh}
-                isRecording={isRecording}
+                isRecording={isMonitoring || isRecording}
             />
 
             {isAddingManual && (
