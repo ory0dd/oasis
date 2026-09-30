@@ -1445,8 +1445,12 @@ Responde ÚNICAMENTE con un JSON válido.`;
         }
 
         try {
+            const currentUser = localStorage.getItem('oasis_user') || 'observador';
             const res = await fetch(`${API_URL}/api/oasis/users/${username}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'X-Oasis-User': currentUser
+                }
             });
             if (res.ok) {
                 setPatients(prev => prev.filter(p => p.name !== username));
