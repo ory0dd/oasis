@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileText, Download, Play, Pause, Trash2, Mic, Copy, Check } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, FileText, Download, Play, Pause, Trash2, Mic, Copy, Check, FileAudio } from 'lucide-react';
 import { API_URL } from '../utils/api';
 import { AudioMixer } from './AudioMixer';
 
@@ -324,6 +324,27 @@ export const TranscriptionsTab = ({ patientName }) => {
         e.target.value = '';
     };
 
+    const handleDownloadAudio = async (url, filename) => {
+        if (!url) return;
+        const fullUrl = getFullAudioUrl(url);
+        try {
+            const response = await fetch(fullUrl);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename || 'audio.webm';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.warn("Error con fetch, usando window.open como fallback:", error);
+            window.open(fullUrl, '_blank');
+        }
+    };
+
     const exportToWord = (item) => {
         const html = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -494,7 +515,7 @@ export const TranscriptionsTab = ({ patientName }) => {
                 </div>
             )}
 
-            <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} crossOrigin="anonymous" />
+            <audio ref={audioRef} className="hidden" onEnded={() => setPlayingId(null)} />
 
             {/* ERROR BANNER */}
             {errorMessage && (
@@ -541,6 +562,11 @@ export const TranscriptionsTab = ({ patientName }) => {
                                   <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
                                       <Download size={16} />
                                   </button>
+                                  {t.audioUrl && (
+                                      <button onClick={() => handleDownloadAudio(t.audioUrl, t.filename)} className="w-10 h-10 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 flex items-center justify-center transition-colors" title="Descargar Audio">
+                                          <FileAudio size={16} />
+                                      </button>
+                                  )}
                                 <button onClick={() => handleDelete(t.id)} className="w-10 h-10 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors">
                                     <Trash2 size={16} />
                                 </button>
