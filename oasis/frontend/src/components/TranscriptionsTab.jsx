@@ -25,6 +25,9 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [eqLow, setEqLow] = useState(0);
     const [eqMid, setEqMid] = useState(0);
     const [eqHigh, setEqHigh] = useState(0);
+    const [freqLow, setFreqLow] = useState(150);
+    const [freqMid, setFreqMid] = useState(1000);
+    const [freqHigh, setFreqHigh] = useState(3000);
     const eqNodesRef = useRef(null);
     const playbackCtxRef = useRef(null);
     const micGainRef = useRef(null);
@@ -47,8 +50,13 @@ export const TranscriptionsTab = ({ patientName }) => {
             eqNodesRef.current.low.gain.value = eqLow;
             eqNodesRef.current.mid.gain.value = eqMid;
             eqNodesRef.current.high.gain.value = eqHigh;
+            
+            // Limit frequencies to valid ranges
+            eqNodesRef.current.low.frequency.value = Math.max(20, Math.min(20000, freqLow));
+            eqNodesRef.current.mid.frequency.value = Math.max(20, Math.min(20000, freqMid));
+            eqNodesRef.current.high.frequency.value = Math.max(20, Math.min(20000, freqHigh));
         }
-    }, [eqLow, eqMid, eqHigh]);
+    }, [eqLow, eqMid, eqHigh, freqLow, freqMid, freqHigh]);
     
     const initMixer = async () => {
         if (streamRef.current) return;
@@ -395,6 +403,9 @@ export const TranscriptionsTab = ({ patientName }) => {
                 eqLow={eqLow} setEqLow={setEqLow}
                 eqMid={eqMid} setEqMid={setEqMid}
                 eqHigh={eqHigh} setEqHigh={setEqHigh}
+                freqLow={freqLow} setFreqLow={setFreqLow}
+                freqMid={freqMid} setFreqMid={setFreqMid}
+                freqHigh={freqHigh} setFreqHigh={setFreqHigh}
                 isRecording={true}
             />
 
