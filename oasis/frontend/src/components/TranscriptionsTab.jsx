@@ -18,9 +18,9 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioVolume, setAudioVolume] = useState(0);
-    const [playbackGain, setPlaybackGain] = useState(1.0);
+    const [micGain, setMicGain] = useState(1.0);
     const playbackCtxRef = useRef(null);
-    const playbackGainRef = useRef(null);
+    const micGainRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
@@ -32,29 +32,7 @@ export const TranscriptionsTab = ({ patientName }) => {
     const backgroundRecognitionRef = useRef(null);
 
     
-    useEffect(() => {
-        if (!audioRef.current || audioRef.current.dataset.sourceCreated) return;
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AudioContext();
-            const source = ctx.createMediaElementSource(audioRef.current);
-            const gainNode = ctx.createGain();
-            source.connect(gainNode);
-            gainNode.connect(ctx.destination);
-            
-            playbackCtxRef.current = ctx;
-            playbackGainRef.current = gainNode;
-            audioRef.current.dataset.sourceCreated = "true";
-        } catch (e) {
-            console.error("Audio Context initialization failed", e);
-        }
-    }, [audioRef.current]);
-
-    useEffect(() => {
-        if (playbackGainRef.current) {
-            playbackGainRef.current.gain.value = playbackGain;
-        }
-    }, [playbackGain]);
+    
 
     const startRecording = async () => {
         try {
