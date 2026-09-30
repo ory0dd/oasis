@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { Upload, FileText, Download, Play, Pause, Trash2, Mic } from 'lucide-react';
+import { Upload, FileText, Download, Play, Pause, Trash2, Mic, Copy, Check } from 'lucide-react';
 import { API_URL } from '../utils/api';
 import { AudioMixer } from './AudioMixer';
 
@@ -9,6 +9,13 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
     const [playingId, setPlayingId] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
+
+    const handleCopy = (id, text) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
     
     // Manual Note States
     const [isAddingManual, setIsAddingManual] = useState(false);
