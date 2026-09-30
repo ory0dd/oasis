@@ -11,25 +11,41 @@ const formatUrl = (url) => {
 };
 
 export const TypedText = ({ text, speed = 10, delay = 150 }) => {
-    const [displayedText, setDisplayedText] = React.useState('');
-    const [started, setStarted] = React.useState(false);
+    const textRef = React.useRef(null);
+    const indexRef = React.useRef(0);
+    const textDataRef = React.useRef(text);
 
     React.useEffect(() => {
-        const timer = setTimeout(() => setStarted(true), delay);
-        return () => clearTimeout(timer);
-    }, [delay]);
+        textDataRef.current = text;
+        indexRef.current = 0;
+        if (textRef.current) textRef.current.textContent = '';
+        
+        let timeout;
+        let isActive = true;
 
-    React.useEffect(() => {
-        if (!started) return;
-        if (displayedText.length < text.length) {
-            const timeout = setTimeout(() => {
-                setDisplayedText(text.slice(0, displayedText.length + 1));
-            }, speed);
-            return () => clearTimeout(timeout);
-        }
-    }, [displayedText, text, speed, started]);
+        const type = () => {
+            if (!isActive || !textRef.current) return;
+            const currentText = textDataRef.current;
+            
+            const chunkSize = speed <= 10 ? 3 : 1; 
+            
+            if (indexRef.current < currentText.length) {
+                indexRef.current = Math.min(indexRef.current + chunkSize, currentText.length);
+                textRef.current.textContent = currentText.slice(0, indexRef.current);
+                timeout = setTimeout(type, speed);
+            }
+        };
 
-    return <span>{displayedText}</span>;
+        const initialTimer = setTimeout(type, delay);
+
+        return () => {
+            isActive = false;
+            clearTimeout(initialTimer);
+            clearTimeout(timeout);
+        };
+    }, [text, speed, delay]);
+
+    return <span ref={textRef}></span>;
 };
 
 export const SimpleNarrativeRenderer = React.memo(({ content }) => {
