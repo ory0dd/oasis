@@ -193,26 +193,50 @@ export const TranscriptionsTab = ({ patientName }) => {
         };
 
         const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+        let fullSessionTranscript = '';
+        let currentRunTranscript = '';
+        
         if (SpeechRecognition) {
-            try {
-                const recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = 'es-ES';
-                recognition.onresult = (event) => {
-                    let fullText = '';
-                    for (let i = 0; i < event.results.length; i++) {
-                        fullText += event.results[i][0].transcript + ' ';
-                    }
-                    browserTranscriptRef.current = fullText.trim();
-                };
-                recognition.start();
-                backgroundRecognitionRef.current = recognition;
-            } catch (recErr) {}
+            const startContinuousRecognition = () => {
+                if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') return;
+                
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = 'es-ES';
+                    
+                    recognition.onresult = (event) => {
+                        let text = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            text += event.results[i][0].transcript + ' ';
+                        }
+                        currentRunTranscript = text.trim();
+                        browserTranscriptRef.current = (fullSessionTranscript + ' ' + currentRunTranscript).trim();
+                    };
+                    
+                    recognition.onend = () => {
+                        if (currentRunTranscript) {
+                            fullSessionTranscript = (fullSessionTranscript + ' ' + currentRunTranscript).trim();
+                            currentRunTranscript = '';
+                        }
+                        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                            setTimeout(startContinuousRecognition, 250);
+                        }
+                    };
+                    
+                    recognition.onerror = (e) => console.warn('SpeechRec error', e.error);
+                    
+                    recognition.start();
+                    backgroundRecognitionRef.current = recognition;
+                } catch (recErr) {}
+            };
+            startContinuousRecognition();
         }
             
         mediaRecorder.onstop = () => {
             if (backgroundRecognitionRef.current) {
+                backgroundRecognitionRef.current.onend = null;
                 try { backgroundRecognitionRef.current.stop(); } catch (e) {}
                 backgroundRecognitionRef.current = null;
             }
