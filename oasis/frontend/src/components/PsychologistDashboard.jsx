@@ -5216,8 +5216,8 @@ Devuelve estrictamente el JSON sin formato extra.
                 <div className={`w-full ${isSidebarOpen ? 'md:w-80 h-full' : 'md:w-[84px] h-auto md:h-full'} bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-visible md:overflow-x-hidden z-[50]`}>
                     <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full overflow-y-auto no-scrollbar">
                         {/* Mobile Header / Desktop Menu Button */}
-                        <div className="flex items-center justify-between md:block">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all md:absolute md:top-6 md:z-10 ${isSidebarOpen ? 'md:right-6' : 'md:left-1/2 md:-translate-x-1/2'}`}>
+                        <div className={`flex items-center justify-between md:flex md:mb-2 ${isSidebarOpen ? 'md:justify-end' : 'md:justify-center'}`}>
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all`}>
                                 <Menu size={16} />
                             </button>
                             
