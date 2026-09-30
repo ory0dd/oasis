@@ -2488,6 +2488,8 @@ Responde ÚNICAMENTE con un JSON válido.`;
                             </div>
                         </div>
                     )}
+                        </>
+                    )}
                 </div>
             </div>
         );

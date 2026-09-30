@@ -983,5 +983,3 @@ export default function WhatsAppCRM({
         </div>
     );
 }
-;
-}
