@@ -337,114 +337,93 @@ export default function WhatsAppCRM({
     }, [patients]);
 
     return (
-        <div className="w-full h-full flex-1 min-h-0 crm-scroll p-3 sm:p-6 md:p-8 pb-48 sm:pb-40 relative bg-[#070709] text-white selection:bg-emerald-500/30">
-            {/* AMBIENT GLOW */}
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/[0.04] rounded-full blur-3xl pointer-events-none -z-10" />
+        <div className="w-full h-full flex-1 min-h-0 overflow-y-auto custom-sidebar-scroll p-3 sm:p-6 md:p-8 pb-48 sm:pb-40 relative bg-[#050505] text-white selection:bg-emerald-500/30">
+            {/* AMBIENT GLOWS - 2026 APPLE VISION STYLE */}
+            <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/[0.035] rounded-full blur-[120px] pointer-events-none -z-10" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/[0.025] rounded-full blur-[100px] pointer-events-none -z-10" />
 
             {/* HEADER DE SUB-PÁGINA */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.06]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.04]">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)] shrink-0">
-                        <MessageCircle className="w-5 h-5 text-emerald-400" />
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] shrink-0 transition-transform hover:scale-105">
+                        <MessageCircle className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                                <span>Pacientes & WhatsApp CRM</span>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 flex items-center gap-2">
+                                Pacientes & WhatsApp CRM
                             </h2>
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                DIRECTO
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                Directo
                             </span>
                         </div>
-                        <p className="text-zinc-500 text-[9px] sm:text-xs font-mono uppercase tracking-widest mt-0.5">
-                            Conexión inmediata • Agenda • Mensajería en 1 clic
+                        <p className="text-zinc-500 text-[10px] sm:text-xs font-mono uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                            <span>Conexión Inmediata</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Agenda</span> <span className="w-1 h-1 rounded-full bg-zinc-700" /> <span>Mensajería 1-clic</span>
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-3 shrink-0">
                     {onBackToClinical && (
                         <button
                             onClick={onBackToClinical}
-                            className="px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-zinc-300 text-[10px] sm:text-xs font-mono uppercase tracking-wider transition-all"
+                            className="px-4 py-2 rounded-full bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 text-zinc-300 text-[10px] sm:text-xs font-mono uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                         >
-                            ← Identidades Clínicas
+                            ← Volver a Identidades
                         </button>
                     )}
 
                     <button
                         onClick={() => handleOpenModal()}
-                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
+                        className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                     >
-                        <Plus size={14} className="stroke-[3]" />
+                        <Plus size={16} className="stroke-[3]" />
                         <span>Añadir Paciente</span>
                     </button>
                 </div>
             </div>
 
             {/* KPI METRICS CHIPS */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 my-5">
-                <div className="p-3 rounded-2xl bg-[#0c0c0e]/90 border border-white/[0.06] backdrop-blur-md flex flex-col justify-between">
-                    <span className="text-zinc-500 text-[9px] font-mono uppercase tracking-wider">Total Pacientes</span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-xl sm:text-2xl font-black text-white">{stats.total}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">contactos</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 my-6">
+                {[
+                    { label: 'Total Pacientes', val: stats.total, sub: 'contactos', color: 'text-white', dot: 'bg-white/40', icon: null },
+                    { label: 'Constantes', val: stats.constantes, sub: 'en proceso', color: 'text-emerald-400', dot: 'bg-emerald-400', icon: null },
+                    { label: 'Por Confirmar', val: stats.porConfirmar, sub: 'pendientes', color: 'text-amber-400', dot: 'bg-amber-400', icon: null },
+                    { label: 'Con Próxima Sesión', val: stats.programadas, sub: 'agendadas', color: 'text-blue-400', dot: null, icon: <Calendar size={12} className="text-blue-400" /> }
+                ].map((kpi, i) => (
+                    <div key={i} className="p-4 rounded-3xl bg-white/[0.02] border border-white/[0.04] backdrop-blur-xl hover:bg-white/[0.04] transition-colors flex flex-col justify-between group">
+                        <span className={`${kpi.color} opacity-80 text-[10px] font-mono uppercase tracking-widest flex items-center gap-1.5`}>
+                            {kpi.dot && <span className={`w-1.5 h-1.5 rounded-full ${kpi.dot} shadow-[0_0_8px_currentColor]`} />}
+                            {kpi.icon && kpi.icon}
+                            {kpi.label}
+                        </span>
+                        <div className="flex items-baseline gap-2 mt-2">
+                            <span className={`text-2xl sm:text-3xl font-black ${kpi.color} group-hover:scale-105 transition-transform origin-left`}>{kpi.val}</span>
+                            <span className="text-[10px] text-zinc-500 font-mono tracking-wide">{kpi.sub}</span>
+                        </div>
                     </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-[#0c0c0e]/90 border border-white/[0.06] backdrop-blur-md flex flex-col justify-between">
-                    <span className="text-emerald-400/80 text-[9px] font-mono uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        Constantes
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-xl sm:text-2xl font-black text-emerald-400">{stats.constantes}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">en proceso</span>
-                    </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-[#0c0c0e]/90 border border-white/[0.06] backdrop-blur-md flex flex-col justify-between">
-                    <span className="text-amber-400/80 text-[9px] font-mono uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        Por Confirmar
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-xl sm:text-2xl font-black text-amber-400">{stats.porConfirmar}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">pendientes</span>
-                    </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-[#0c0c0e]/90 border border-white/[0.06] backdrop-blur-md flex flex-col justify-between">
-                    <span className="text-blue-400/80 text-[9px] font-mono uppercase tracking-wider flex items-center gap-1">
-                        <Calendar size={11} className="text-blue-400" />
-                        Con Próxima Sesión
-                    </span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className="text-xl sm:text-2xl font-black text-blue-400">{stats.programadas}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">agendadas</span>
-                    </div>
-                </div>
+                ))}
             </div>
 
             {/* CONTROLES: BÚSQUEDA Y FILTROS */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
-                <div className="relative flex-1 bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.05] border border-white/[0.08] focus-within:border-emerald-500/40 rounded-xl px-3 py-2 transition-all">
-                    <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+                <div className="relative flex-1 max-w-xl bg-white/[0.02] hover:bg-white/[0.04] focus-within:bg-white/[0.06] border border-white/[0.05] focus-within:border-emerald-500/50 rounded-2xl px-4 py-3 transition-all backdrop-blur-md shadow-lg">
+                    <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2" />
                     <input 
                         type="text"
-                        placeholder="Buscar por paciente, teléfono, notas o fecha de sesión..."
-                        className="w-full bg-transparent pl-7 pr-4 text-white placeholder-zinc-600 focus:outline-none font-mono text-xs"
+                        placeholder="Buscar por paciente, teléfono, notas o fecha..."
+                        className="w-full bg-transparent pl-8 pr-4 text-white placeholder-zinc-500 focus:outline-none font-mono text-xs sm:text-sm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white">
-                            <X size={12} />
+                        <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors">
+                            <X size={14} />
                         </button>
                     )}
                 </div>
 
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none custom-scroll">
                     {[
                         { id: 'ALL', label: 'Todos' },
                         { id: 'Constante', label: '🟢 Constante' },
@@ -455,10 +434,10 @@ export default function WhatsAppCRM({
                         <button
                             key={tab.id}
                             onClick={() => setStatusFilter(tab.id)}
-                            className={`px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-mono font-medium whitespace-nowrap transition-all ${
+                            className={`px-4 py-2 rounded-2xl text-[10px] sm:text-xs font-mono uppercase tracking-wider font-bold whitespace-nowrap transition-all shadow-lg ${
                                 statusFilter === tab.id 
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                    : 'bg-white/[0.02] text-zinc-400 hover:text-white border border-white/5 hover:bg-white/5'
+                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
+                                    : 'bg-white/[0.02] text-zinc-400 hover:text-white border border-white/5 hover:bg-white/[0.05]'
                             }`}
                         >
                             {tab.label}
@@ -469,24 +448,24 @@ export default function WhatsAppCRM({
 
             {/* TABLA / LISTA DE PACIENTES */}
             {filteredPatients.length === 0 ? (
-                <div className="bg-white/[0.01] border border-dashed border-white/10 p-8 sm:p-12 rounded-3xl text-center flex flex-col items-center justify-center gap-3 my-4">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                        <MessageSquare className="w-6 h-6 opacity-70" />
+                <div className="bg-white/[0.02] border border-dashed border-white/[0.08] backdrop-blur-xl p-10 sm:p-16 rounded-[2rem] text-center flex flex-col items-center justify-center gap-4 my-4 animate-in fade-in duration-700">
+                    <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                        <MessageSquare className="w-8 h-8 opacity-90" />
                     </div>
                     <div>
-                        <h4 className="text-sm font-bold text-white tracking-wide">
-                            {searchQuery || statusFilter !== 'ALL' ? 'Sin coincidencias en la búsqueda' : 'Aún no tienes pacientes en tu CRM'}
+                        <h4 className="text-base font-black text-white tracking-wide">
+                            {searchQuery || statusFilter !== 'ALL' ? 'Sin coincidencias' : 'CRM Vacío'}
                         </h4>
-                        <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                        <p className="text-xs text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
                             {searchQuery || statusFilter !== 'ALL'
-                                ? 'Prueba cambiando los términos o restableciendo los filtros de estado.'
-                                : 'Añade a tu primer paciente para conectar directamente por WhatsApp con mensajes predeterminados.'}
+                                ? 'Prueba ajustando los términos de búsqueda o los filtros.'
+                                : 'Comienza a organizar tu práctica clínica agregando a tu primer paciente al CRM.'}
                         </p>
                     </div>
                     {(!searchQuery && statusFilter === 'ALL') && (
                         <button
                             onClick={() => handleOpenModal()}
-                            className="mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-lg transition-all"
+                            className="mt-4 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-xs uppercase tracking-wider rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
                         >
                             + Añadir Primer Paciente
                         </button>
@@ -494,302 +473,237 @@ export default function WhatsAppCRM({
                 </div>
             ) : (
                 <>
-                    {/* VISTA MÓVIL: TARJETAS COMPACTAS TÁCTILES */}
-                    <div className="block md:hidden space-y-2.5 w-full pb-16">
+                    {/* VISTA MÓVIL: TARJETAS COMPACTAS */}
+                    <div className="block md:hidden space-y-3 w-full pb-16">
                         {filteredPatients.map(patient => (
                             <div 
-                                key={patient.id}
-                                className="p-3.5 rounded-2xl bg-[#0c0c0e]/95 border border-white/[0.06] backdrop-blur-md flex flex-col gap-2.5 shadow-lg"
+                                key={patient.id} 
+                                className="bg-white/[0.02] border border-white/[0.05] rounded-[1.5rem] p-4 flex flex-col gap-3 relative overflow-hidden backdrop-blur-xl shadow-xl animate-in slide-in-from-bottom-4 duration-500"
                             >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-200 font-black text-xs uppercase shrink-0">
-                                            {patient.name.slice(0, 2)}
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center font-black text-sm text-white shadow-inner">
+                                            {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
-                                        <div className="min-w-0">
-                                            <div className="text-xs font-black text-white truncate flex items-center gap-1.5">
-                                                <span>{patient.name}</span>
-                                                {patient.sessionPrice && (
-                                                    <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded">
-                                                        ${patient.sessionPrice}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="text-[10px] font-mono text-zinc-400 flex items-center gap-1 mt-0.5">
-                                                <Phone size={10} className="text-zinc-500" />
-                                                <span>{formatDisplayPhone(patient.phone)}</span>
+                                        <div>
+                                            <h3 className="font-bold text-white text-sm">{patient.name}</h3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className={`text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border ${getStatusBadge(patient.status)}`}>
+                                                    {patient.status || 'Inactivo'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold font-mono uppercase tracking-wider border shrink-0 ${
-                                        patient.status === 'Constante' 
-                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                            : patient.status === 'Nueva'
-                                            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                            : patient.status === 'Por confirmar'
-                                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                            : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-                                    }`}>
-                                        {patient.status}
-                                    </span>
+                                    <button
+                                        onClick={() => handleOpenModal(patient)}
+                                        className="p-1.5 text-zinc-500 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
                                 </div>
-
-                                {(patient.nextSession || patient.privateNotes || editingNotePatientId === patient.id) && (
-                                    <div className="text-[10px] bg-white/[0.02] border border-white/[0.04] p-2 rounded-xl flex flex-col gap-1">
-                                        {patient.nextSession && (
-                                            <div className="flex items-center gap-1.5 text-zinc-300 font-mono">
-                                                <Calendar size={10} className="text-emerald-400 shrink-0" />
-                                                <span className="text-zinc-500">Próxima:</span>
-                                                <strong className="text-white font-semibold">{patient.nextSession}</strong>
-                                                {patient.frequency && <span className="text-zinc-500">({patient.frequency})</span>}
-                                            </div>
-                                        )}
-                                        {editingNotePatientId === patient.id ? (
-                                            <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
-                                                <input
-                                                    type="text"
-                                                    autoFocus
-                                                    value={inlineNoteValue}
-                                                    onChange={(e) => setInlineNoteValue(e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                            handleSaveInlineNote(patient);
-                                                        } else if (e.key === 'Escape') {
-                                                            handleCancelInlineNote();
-                                                        }
-                                                    }}
-                                                    onBlur={() => handleSaveInlineNote(patient)}
-                                                    placeholder="Nota rápida..."
-                                                    className="w-full bg-black/90 border border-emerald-500/70 rounded-lg px-2 py-1 text-[10px] text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 font-sans shadow-md"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div 
-                                                onDoubleClick={() => handleStartEditNote(patient)}
-                                                onClick={() => handleStartEditNote(patient)}
-                                                className="text-zinc-400 line-clamp-2 italic text-[9px] cursor-pointer hover:text-white flex items-center justify-between gap-1 mt-0.5"
-                                                title="Toca para editar nota directa"
-                                            >
-                                                <span>"{patient.privateNotes || 'Añadir nota rápida...'}"</span>
-                                                <Edit2 size={9} className="text-zinc-600 shrink-0" />
-                                            </div>
-                                        )}
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div className="bg-black/40 rounded-xl p-2.5 border border-white/[0.02]">
+                                        <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider block mb-1">Teléfono</span>
+                                        <span className="text-zinc-300 font-mono" onClick={() => handleCopyPhone(patient.id, patient.phone)}>
+                                            {formatDisplayPhone(patient.phone) || '—'}
+                                        </span>
+                                    </div>
+                                    <div className="bg-black/40 rounded-xl p-2.5 border border-white/[0.02]">
+                                        <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider block mb-1">Próxima Sesión</span>
+                                        <span className="text-blue-400 font-medium flex items-center gap-1">
+                                            {patient.nextSession && patient.nextSession !== '—' && <Calendar size={10} />}
+                                            <span className="truncate">{patient.nextSession || '—'}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                {patient.privateNotes && (
+                                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-2.5">
+                                        <span className="text-[9px] text-amber-500/70 font-mono uppercase tracking-wider block mb-1">Nota Privada</span>
+                                        <span className="text-zinc-300 text-xs italic">{patient.privateNotes}</span>
                                     </div>
                                 )}
-
-                                <div className="flex items-center justify-between pt-1 border-t border-white/[0.04] gap-1.5">
-                                    <div className="flex items-center gap-1">
-                                        <button 
-                                            onClick={() => handleOpenModal(patient)}
-                                            className="p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
-                                            title="Editar paciente"
-                                        >
-                                            <Edit2 size={12} />
-                                        </button>
-                                        <button 
-                                            onClick={() => deletePatientRecord(patient.id, patient.name)}
-                                            className="p-1.5 text-zinc-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
-                                            title="Eliminar paciente"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex items-center gap-1.5">
-                                        <button
-                                            onClick={() => handleOpenTemplates(patient)}
-                                            className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-full text-[9px] font-mono text-zinc-300 flex items-center gap-1"
-                                        >
-                                            <Sparkles size={10} className="text-amber-400" />
-                                            <span>Plantillas</span>
-                                        </button>
-
-                                        <button
-                                            onClick={() => handleSendWhatsApp(patient.phone)}
-                                            className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-[10px] rounded-full flex items-center gap-1 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                                        >
-                                            <MessageCircle size={11} className="fill-black" />
-                                            <span>WhatsApp</span>
-                                        </button>
-                                    </div>
+                                <div className="flex gap-2 pt-1">
+                                    <button
+                                        onClick={() => handleOpenTemplates(patient)}
+                                        className="flex-1 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-xl text-[10px] font-mono text-zinc-300 flex items-center justify-center gap-1.5 transition-all"
+                                    >
+                                        <Sparkles size={12} className="text-amber-400" />
+                                        Plantillas
+                                    </button>
+                                    <button
+                                        onClick={() => handleSendWhatsApp(patient.phone)}
+                                        className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-[10px] uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all"
+                                    >
+                                        <MessageCircle size={12} className="fill-black" />
+                                        WhatsApp
+                                    </button>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* VISTA ESCRITORIO: TABLA MODERNA GLASS */}
-                    <div className="hidden md:block bg-zinc-900/20 border border-white/[0.06] rounded-3xl overflow-x-auto custom-sidebar-scroll backdrop-blur-sm shadow-xl mb-16">
-                        <table className="w-full text-left border-collapse min-w-[760px]">
-                            <thead>
-                                <tr className="border-b border-white/[0.06] bg-white/[0.01]">
-                                    <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Paciente</th>
-                                    <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Teléfono</th>
-                                    <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Estado</th>
-                                    <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Próxima Sesión</th>
-                                    <th className="px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">Notas</th>
-                                    <th className="px-5 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-zinc-500 font-mono">WhatsApp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredPatients.map(patient => (
-                                    <tr 
-                                        key={patient.id}
-                                        className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group"
-                                    >
-                                        <td className="px-5 py-3.5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center text-zinc-200 font-black text-xs uppercase shrink-0">
-                                                    {patient.name.slice(0, 2)}
+                    {/* VISTA ESCRITORIO: TABLA GLASSMORPHISM */}
+                    <div className="hidden md:block w-full overflow-hidden rounded-[2rem] bg-white/[0.015] border border-white/[0.05] backdrop-blur-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-700">
+                        <div className="overflow-x-auto custom-scroll">
+                            <table className="w-full text-left text-sm text-zinc-300 border-collapse">
+                                <thead className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest bg-black/40 border-b border-white/[0.06]">
+                                    <tr>
+                                        <th className="px-6 py-5 font-bold">Paciente</th>
+                                        <th className="px-6 py-5 font-bold">Teléfono</th>
+                                        <th className="px-6 py-5 font-bold">Estado</th>
+                                        <th className="px-6 py-5 font-bold">Próxima Sesión</th>
+                                        <th className="px-6 py-5 font-bold">Notas (Doble clic)</th>
+                                        <th className="px-6 py-5 font-bold text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.03]">
+                                    {filteredPatients.map((patient, index) => (
+                                        <tr 
+                                            key={patient.id} 
+                                            className="hover:bg-white/[0.02] transition-colors group/row"
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center font-black text-xs text-white shadow-inner group-hover/row:border-emerald-500/30 group-hover/row:text-emerald-400 transition-colors">
+                                                        {patient.name.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-white text-sm">{patient.name}</span>
+                                                        <span className="text-[10px] text-zinc-500 font-mono flex items-center gap-1">
+                                                            {patient.sessionPrice ? `${patient.sessionPrice}` : '-'}
+                                                            <span className="text-zinc-700">•</span>
+                                                            {patient.frequency || '-'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="text-xs font-black text-white flex items-center gap-1.5">
-                                                        <span>{patient.name}</span>
-                                                        {patient.sessionPrice && (
-                                                            <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
-                                                                ${patient.sessionPrice}
+                                            </td>
+                                            
+                                            <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">
+                                                <div 
+                                                    className="flex items-center gap-2 cursor-pointer group/phone hover:text-white transition-colors"
+                                                    onClick={() => handleCopyPhone(patient.id, patient.phone)}
+                                                >
+                                                    <span>{formatDisplayPhone(patient.phone) || '—'}</span>
+                                                    {copiedPhoneId === patient.id ? (
+                                                        <Check size={12} className="text-emerald-400" />
+                                                    ) : (
+                                                        <Copy size={12} className="text-zinc-600 opacity-0 group-hover/phone:opacity-100 transition-opacity" />
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full border shadow-sm ${getStatusBadge(patient.status)}`}>
+                                                    {patient.status || 'Inactivo'}
+                                                </span>
+                                            </td>
+
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-xs">
+                                                    {patient.nextSession && patient.nextSession !== '—' && (
+                                                        <Calendar size={12} className="text-blue-400 opacity-70" />
+                                                    )}
+                                                    <span className={patient.nextSession && patient.nextSession !== '—' ? 'text-blue-300' : 'text-zinc-600'}>
+                                                        {patient.nextSession || '—'}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            <td 
+                                                className="px-6 py-4 min-w-[200px] max-w-[300px]"
+                                                onDoubleClick={() => handleStartEditNote(patient)}
+                                            >
+                                                {editingNotePatientId === patient.id ? (
+                                                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                        <input
+                                                            type="text"
+                                                            autoFocus
+                                                            value={inlineNoteValue}
+                                                            onChange={(e) => setInlineNoteValue(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    handleSaveInlineNote(patient);
+                                                                } else if (e.key === 'Escape') {
+                                                                    handleCancelInlineNote();
+                                                                }
+                                                            }}
+                                                            onBlur={() => handleSaveInlineNote(patient)}
+                                                            placeholder="Escribe nota y presiona Enter..."
+                                                            className="w-full bg-black border border-emerald-500/50 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-sans shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div 
+                                                        className="cursor-pointer group/note flex items-center justify-between gap-2 py-1.5 px-3 -mx-3 rounded-xl hover:bg-white/[0.03] transition-colors"
+                                                        title="Doble clic para editar"
+                                                    >
+                                                        {patient.privateNotes ? (
+                                                            <p className="text-zinc-400 text-xs italic truncate group-hover/note:text-zinc-200 transition-colors">
+                                                                {patient.privateNotes}
+                                                            </p>
+                                                        ) : (
+                                                            <span className="text-zinc-600 group-hover/note:text-zinc-400 text-xs italic flex items-center gap-2">
+                                                                <span>—</span>
+                                                                <span className="opacity-0 group-hover/note:opacity-100 text-[10px] text-emerald-400/60 font-mono transition-opacity">
+                                                                    (doble clic)
+                                                                </span>
                                                             </span>
                                                         )}
+                                                        <Edit2 size={12} className="text-zinc-600 opacity-0 group-hover/note:opacity-100 group-hover/note:text-emerald-400 transition-all shrink-0 ml-2" />
                                                     </div>
-                                                    <div className="text-zinc-500 text-[10px] font-mono">
-                                                        {patient.frequency || 'Semanal'}
-                                                    </div>
+                                                )}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-60 group-hover/row:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => handleOpenTemplates(patient)}
+                                                        className="px-3 py-1.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 rounded-full text-[10px] font-mono text-zinc-300 flex items-center gap-1.5 transition-all hover:border-amber-500/30"
+                                                        title="Plantillas de mensaje"
+                                                    >
+                                                        <Sparkles size={12} className="text-amber-400" />
+                                                        <span>Plantillas</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => handleSendWhatsApp(patient.phone)}
+                                                        className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:scale-105 active:scale-95 transition-all"
+                                                        title="Chat de WhatsApp"
+                                                    >
+                                                        <MessageCircle size={14} className="fill-black" />
+                                                        <span>Chat</span>
+                                                    </button>
+
+                                                    <div className="h-4 w-px bg-white/10 mx-1"></div>
+
+                                                    <button
+                                                        onClick={() => handleOpenModal(patient)}
+                                                        className="p-1.5 text-zinc-500 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => deletePatientRecord(patient.id, patient.name)}
+                                                        className="p-1.5 text-zinc-500 hover:text-red-400 rounded-xl hover:bg-red-500/10 transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        </td>
-
-                                        <td className="px-5 py-3.5">
-                                            <div className="flex items-center gap-1.5 font-mono text-xs text-zinc-300">
-                                                <span>{formatDisplayPhone(patient.phone)}</span>
-                                                <button
-                                                    onClick={() => handleCopyPhone(patient.id, patient.phone)}
-                                                    className="text-zinc-600 hover:text-emerald-400 p-1 transition-colors"
-                                                    title="Copiar número"
-                                                >
-                                                    {copiedPhoneId === patient.id ? <Check size={12} className="text-emerald-400" /> : <Copy size={11} />}
-                                                </button>
-                                            </div>
-                                        </td>
-
-                                        <td className="px-5 py-3.5">
-                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono uppercase tracking-wider border ${
-                                                patient.status === 'Constante' 
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                    : patient.status === 'Nueva'
-                                                    ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                                    : patient.status === 'Por confirmar'
-                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                    : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
-                                            }`}>
-                                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                                                {patient.status}
-                                            </span>
-                                        </td>
-
-                                        <td className="px-5 py-3.5 font-mono text-xs">
-                                            {patient.nextSession ? (
-                                                <div className="flex items-center gap-1.5 text-zinc-200">
-                                                    <Calendar size={12} className="text-emerald-400" />
-                                                    <span>{patient.nextSession}</span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-zinc-600">—</span>
-                                            )}
-                                        </td>
-
-                                        <td 
-                                            className="px-5 py-3.5 min-w-[180px] max-w-[260px]"
-                                            onDoubleClick={() => handleStartEditNote(patient)}
-                                        >
-                                            {editingNotePatientId === patient.id ? (
-                                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                    <input
-                                                        type="text"
-                                                        autoFocus
-                                                        value={inlineNoteValue}
-                                                        onChange={(e) => setInlineNoteValue(e.target.value)}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                e.preventDefault();
-                                                                handleSaveInlineNote(patient);
-                                                            } else if (e.key === 'Escape') {
-                                                                handleCancelInlineNote();
-                                                            }
-                                                        }}
-                                                        onBlur={() => handleSaveInlineNote(patient)}
-                                                        placeholder="Escribe nota y presiona Enter..."
-                                                        className="w-full bg-black/90 border border-emerald-500/70 rounded-xl px-2.5 py-1 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 font-sans shadow-[0_0_12px_rgba(16,185,129,0.25)]"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div 
-                                                    className="cursor-pointer group/note flex items-center justify-between gap-1.5 py-1 px-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-all"
-                                                    title="Doble clic para editar nota directamente"
-                                                >
-                                                    {patient.privateNotes ? (
-                                                        <p className="text-zinc-300 text-xs italic truncate group-hover/note:text-white transition-colors">
-                                                            {patient.privateNotes}
-                                                        </p>
-                                                    ) : (
-                                                        <span className="text-zinc-600 group-hover/note:text-zinc-400 text-xs italic flex items-center gap-1">
-                                                            <span>—</span>
-                                                            <span className="opacity-0 group-hover/note:opacity-100 text-[10px] text-emerald-400/80 font-mono transition-opacity">
-                                                                (doble clic)
-                                                            </span>
-                                                        </span>
-                                                    )}
-                                                    <Edit2 size={11} className="text-zinc-600 opacity-0 group-hover/note:opacity-100 group-hover/note:text-emerald-400 transition-all shrink-0 ml-1" />
-                                                </div>
-                                            )}
-                                        </td>
-
-                                        <td className="px-5 py-3.5 text-right">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <button
-                                                    onClick={() => handleOpenTemplates(patient)}
-                                                    className="px-2.5 py-1 bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 rounded-full text-[10px] font-mono text-zinc-300 flex items-center gap-1 transition-all"
-                                                    title="Elegir plantilla de mensaje predeterminado"
-                                                >
-                                                    <Sparkles size={11} className="text-amber-400" />
-                                                    <span>Plantillas</span>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => handleSendWhatsApp(patient.phone)}
-                                                    className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs rounded-full flex items-center gap-1 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 transition-all"
-                                                    title="Abrir chat directo en WhatsApp"
-                                                >
-                                                    <MessageCircle size={12} className="fill-black" />
-                                                    <span>💬</span>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => handleOpenModal(patient)}
-                                                    className="p-1.5 text-zinc-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors ml-1"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={12} />
-                                                </button>
-
-                                                <button
-                                                    onClick={() => deletePatientRecord(patient.id, patient.name)}
-                                                    className="p-1.5 text-zinc-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </>
             )}
 
-            {/* MODAL PARA CREAR / EDITAR PACIENTE */}
+{/* MODAL PARA CREAR / EDITAR PACIENTE */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div 
@@ -1054,4 +968,6 @@ export default function WhatsAppCRM({
             )}
         </div>
     );
+}
+;
 }
