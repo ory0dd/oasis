@@ -7769,7 +7769,7 @@ Por favor, analicemos:
                                                     >
                                                         <ChevronRight size={13} />
                                                     </button>
-                                                    <button
+                                                    {isEmbedded && (<button
     onClick={() => {
         setEditingNodeId(currentNode.id);
         setEditNodeForm({
@@ -7782,7 +7782,7 @@ Por favor, analicemos:
     title="Editar Nodo"
 >
     <Edit2 size={12} />
-</button>
+</button>)}
 <button
     onClick={() => setIsTourMinimized(!isTourMinimized)}
                                                         className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
