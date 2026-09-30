@@ -4070,6 +4070,9 @@ ${bioText || "No aportada aún."}
 === DIAGNÓSTICO EXISTENCIAL (FENOMENOLOGÍA VIVIDA) ===
 ${phenomText || "No aportado aún."}
 
+=== INFORME CLÍNICO ORIGINAL (PDF) ===
+${getLocalItemCaseInsensitive('oasis_clinical_report_text_', user) || "No hay informe clínico base."}
+
 === NOTAS CLÍNICAS / OBSERVACIONES DEL ESPECIALISTA ===
 ${allNotes || "No hay notas adicionales."}
 
@@ -4098,7 +4101,7 @@ Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en for
 === PRINCIPIO FUNDAMENTAL: ANÁLISIS FUNCIONAL CIENTÍFICO Y AUTÉNTICO (CERO INVENTOS) ===
 - NUNCA inventes nodos con etiquetas artificiales de coaching o autoayuda como "Pivote:", "Pivote de", "Valor: ...", "Consejo", etc. 
 - PROHIBIDO inventar soluciones, consejos o metas hipotéticas dentro del mapa del problema.
-- CERO ALUCINACIONES BIOGRÁFICAS O MÉDICAS: NUNCA inventes eventos ni síntomas médicos que el usuario no haya dicho explícitamente.
+- CERO ALUCINACIONES BIOGRÁFICAS O MÉDICAS: NUNCA inventes eventos ni síntomas médicos que el usuario no haya dicho explícitamente.\n- RIGOR HISTÓRICO Y PRECISIÓN CLÍNICA: Si te basas en el Informe Clínico, NO generalices ni inventes abstracciones como \"Conflictos con mamá\" o \"Desconfianza paterna\" si el texto original dice algo distinto (ej. \"La relación con la madre es distante pero puede comer con ella\", \"Nunca le tuvo desconfianza directa al padre\"). Mantente fiel a los hechos y matices del informe.
 - *** REGLA DE ORO DE LOS NOMBRES DE NODOS ***: ESTÁ ESTRICTAMENTE PROHIBIDO usar abstracciones clínicas genéricas para los "label" de los nodos si el usuario no usó esas palabras.
   - PROHIBIDO USAR: "Estancamiento", "Rumiación", "Evitación", "Fricción", "Sobreadaptación", "Autocrítica", "Aislamiento Defensivo", "Reactivación de la Autocrítica", a menos que el usuario lo haya escrito tal cual.
   - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, úsalo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual clínico".
