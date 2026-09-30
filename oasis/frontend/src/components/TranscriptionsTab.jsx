@@ -46,17 +46,28 @@ export const TranscriptionsTab = ({ patientName }) => {
 
     
     useEffect(() => {
+        ensureContextRunning();
         if (eqNodesRef.current) {
-            eqNodesRef.current.low.gain.value = eqLow;
-            eqNodesRef.current.mid.gain.value = eqMid;
-            eqNodesRef.current.high.gain.value = eqHigh;
+            // Apply smoothing for audio params to prevent clicking
+            const now = audioContextRef.current ? audioContextRef.current.currentTime : 0;
             
-            // Limit frequencies to valid ranges
-            eqNodesRef.current.low.frequency.value = Math.max(20, Math.min(20000, freqLow));
-            eqNodesRef.current.mid.frequency.value = Math.max(20, Math.min(20000, freqMid));
-            eqNodesRef.current.high.frequency.value = Math.max(20, Math.min(20000, freqHigh));
+            eqNodesRef.current.low.gain.setTargetAtTime(eqLow, now, 0.1);
+            eqNodesRef.current.mid.gain.setTargetAtTime(eqMid, now, 0.1);
+            eqNodesRef.current.high.gain.setTargetAtTime(eqHigh, now, 0.1);
+            
+            eqNodesRef.current.low.frequency.setTargetAtTime(Math.max(20, Math.min(20000, freqLow)), now, 0.1);
+            eqNodesRef.current.mid.frequency.setTargetAtTime(Math.max(20, Math.min(20000, freqMid)), now, 0.1);
+            eqNodesRef.current.high.frequency.setTargetAtTime(Math.max(20, Math.min(20000, freqHigh)), now, 0.1);
         }
     }, [eqLow, eqMid, eqHigh, freqLow, freqMid, freqHigh]);
+
+    useEffect(() => {
+        ensureContextRunning();
+        if (micGainRef.current) {
+            const now = audioContextRef.current ? audioContextRef.current.currentTime : 0;
+            micGainRef.current.gain.setTargetAtTime(micGain, now, 0.1);
+        }
+    }, [micGain]);
     
     const initMixer = async () => {
         if (streamRef.current) return;
@@ -121,7 +132,15 @@ export const TranscriptionsTab = ({ patientName }) => {
         };
     }, []);
 
+
+    const ensureContextRunning = () => {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+        }
+    };
+
     const startRecording = async () => {
+        ensureContextRunning();
         if (!destStreamRef.current) {
             await initMixer();
             if (!destStreamRef.current) {
