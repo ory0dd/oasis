@@ -5405,7 +5405,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <Eye className="w-4.5 h-4.5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Privada</span>}
                                     </button>
+                                    {/* Boton Externo ChatGPT */}
+                                    <button 
+                                        onClick={handleOpenChatGPT}
+                                        onContextMenu={handleOpenChatGPT}
+                                        title="Click Izquierdo: Abrir ChatGPT | Click Derecho: Editar Link"
+                                        className="w-full text-left p-2.5 rounded-xl border flex gap-3 items-center bg-transparent border-transparent text-zinc-500 hover:text-emerald-400 hover:bg-white/[0.02] transition-all"
+                                    >
+                                        <MessageSquare className="w-4.5 h-4.5 shrink-0" />
+                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Caso en ChatGPT</span>}
+                                    </button>
                                 </div>
+
                             </div>
 
                             {/* SECCIÓN: SESIONES Y AUDIOS */}
