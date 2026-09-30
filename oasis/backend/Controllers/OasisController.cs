@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Oasis.Backend.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -3083,8 +3083,10 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                     var fileContent = new ByteArrayContent(audioBytes);
                     fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                     form.Add(fileContent, "file", "audio." + mimeType.Split('/')[1]);
-                    form.Add(new StringContent("whisper-large-v3"), "model");
+                                        form.Add(new StringContent("whisper-large-v3"), "model");
                     form.Add(new StringContent("es"), "language");
+                    form.Add(new StringContent("Transcribe lo que se escucha fielmente. No incluyas cosas como 'Subtítulos por la comunidad de Amara.org', '¿Qué pasa?', ni '¿Qué es la educación?'."), "prompt");
+                    form.Add(new StringContent("0.0"), "temperature");
                     
                     var groqRes = await groqClient.PostAsync("https://api.groq.com/openai/v1/audio/transcriptions", form);
                     var groqResText = await groqRes.Content.ReadAsStringAsync();
@@ -3093,8 +3095,13 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                         return StatusCode((int)groqRes.StatusCode, $"Error procesando transcripción en Groq: {groqResText}");
                     }
                     
-                    using var groqDoc = System.Text.Json.JsonDocument.Parse(groqResText);
-                    return Ok(new { transcription = groqDoc.RootElement.GetProperty("text").GetString() });
+                                        using var groqDoc = System.Text.Json.JsonDocument.Parse(groqResText);
+                    string t = groqDoc.RootElement.GetProperty("text").GetString()?.Trim() ?? "";
+                    
+                    var h = new[] { "¿Qué pasa?", "¿Qué es la educación?", "¡Hola!", "Subtítulos por la comunidad de Amara.org", "Subtítulos realizados por la comunidad de Amara.org" };
+                    if (h.Contains(t, StringComparer.OrdinalIgnoreCase)) t = "";
+                    
+                    return Ok(new { transcription = t });
                 }
 
                 using var client = new System.Net.Http.HttpClient();
@@ -3160,3 +3167,4 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 }
 
 public class TranscribeRequest { public string Url { get; set; } = ""; public string? Prompt { get; set; } }
+
