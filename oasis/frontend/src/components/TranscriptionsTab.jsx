@@ -19,6 +19,28 @@ export const TranscriptionsTab = ({ patientName }) => {
     const [isRecording, setIsRecording] = useState(false);
         const streamRef = useRef(null);
     const destStreamRef = useRef(null);
+    const wakeLockRef = useRef(null);
+
+    const requestWakeLock = async () => {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLockRef.current = await navigator.wakeLock.request('screen');
+                console.log('Pantalla bloqueada para evitar que se apague.');
+            }
+        } catch (err) {
+            console.warn('No se pudo bloquear la pantalla:', err);
+        }
+    };
+
+    const releaseWakeLock = () => {
+        if (wakeLockRef.current !== null) {
+            wakeLockRef.current.release()
+                .then(() => {
+                    wakeLockRef.current = null;
+                });
+        }
+    };
+
     const [recordingTime, setRecordingTime] = useState(0);
     const [audioVolume, setAudioVolume] = useState(0);
     const [micGain, setMicGain] = useState(1.0);
@@ -194,8 +216,9 @@ export const TranscriptionsTab = ({ patientName }) => {
             setIsRecording(false);
         };
 
-        mediaRecorder.start();
+        mediaRecorder.start(1000); // chunk every 1 second
         setIsRecording(true);
+        requestWakeLock();
         setRecordingTime(0);
         timerRef.current = setInterval(() => {
             setRecordingTime(prev => prev + 1);
@@ -206,6 +229,7 @@ export const TranscriptionsTab = ({ patientName }) => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             mediaRecorderRef.current.stop();
             clearInterval(timerRef.current);
+            releaseWakeLock();
         }
     };
     
