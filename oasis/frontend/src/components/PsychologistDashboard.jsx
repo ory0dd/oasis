@@ -1406,6 +1406,38 @@ Responde ÚNICAMENTE con un JSON válido.`;
     }, [selectedPatient?.name]);
 
 
+
+    const handleOpenChatGPT = (e) => {
+        if (!selectedPatient) return;
+        const currentLink = selectedPatient.clinicalData?.chatGptLink;
+        
+        if (currentLink && e.type !== 'contextmenu') {
+            window.open(currentLink, '_blank');
+            return;
+        }
+
+        e.preventDefault();
+        const newLink = prompt('Ingresa el link de la conversación de ChatGPT para este paciente (ej. https://chatgpt.com/c/...):', currentLink || '');
+        if (newLink !== null) {
+            const updatedPatient = { ...selectedPatient };
+            if (!updatedPatient.clinicalData) updatedPatient.clinicalData = {};
+            updatedPatient.clinicalData.chatGptLink = newLink.trim();
+            setSelectedPatient(updatedPatient);
+            setPatients(prev => prev.map(p => p.name === selectedPatient.name ? updatedPatient : p));
+            
+            const callerUser = localStorage.getItem('oasis_user');
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(selectedPatient.name)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': callerUser },
+                body: JSON.stringify({ chatGptLink: newLink.trim() })
+            }).catch(err => console.error("Error saving ChatGPT link:", err));
+            
+            if (newLink.trim() && !currentLink) {
+                window.open(newLink.trim(), '_blank');
+            }
+        }
+    };
+
     const handleDeleteUser = async (e, username) => {
         e.stopPropagation();
         if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
