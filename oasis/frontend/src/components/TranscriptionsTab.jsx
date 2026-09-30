@@ -306,11 +306,15 @@ export const TranscriptionsTab = ({ patientName }) => {
                             onClick={stopRecording}
                             className="bg-red-500 hover:bg-red-400 text-white font-bold uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-3"
                         >
-                            <div className="flex gap-1 items-center h-4">
-                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 1.5))}%` }}></div>
-                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 2.5))}%` }}></div>
-                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 3.0))}%` }}></div>
-                                <div className="w-1 bg-white rounded-full transition-all duration-75" style={{ height: `${Math.max(20, Math.min(100, audioVolume * 2.0))}%` }}></div>
+                            <div className="flex gap-[3px] items-center h-6 bg-black/20 px-3 py-1 rounded-full border border-black/20">
+                                {[1.2, 2.5, 3.8, 2.1, 4.5, 2.8, 1.5, 3.2].map((mult, i) => (
+                                    <div key={i} className="w-1.5 rounded-full transition-all duration-75" 
+                                         style={{ 
+                                            height: `${Math.max(15, Math.min(100, audioVolume * mult))}%`,
+                                            backgroundColor: audioVolume * mult > 70 ? '#ef4444' : audioVolume * mult > 40 ? '#fbbf24' : '#10b981'
+                                         }}>
+                                    </div>
+                                ))}
                             </div>
                             Detener ({formatTime(recordingTime)})
                         </button>
@@ -401,9 +405,11 @@ export const TranscriptionsTab = ({ patientName }) => {
                                 <p className="text-zinc-500 text-xs uppercase tracking-widest font-mono mt-1">{t.date}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={() => togglePlay(t.audioUrl, t.id)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors">
-                                    {playingId === t.id ? <Pause size={16} /> : <Play size={16} className="ml-1" />}
-                                </button>
+                                {t.audioUrl && (
+                                    <div className="flex flex-col gap-1 items-end mr-4">
+                                        <audio controls src={getFullAudioUrl(t.audioUrl)} className="h-8 w-64 opacity-80 hover:opacity-100 transition-opacity" />
+                                    </div>
+                                )}
                                 <button onClick={() => exportToWord(t)} className="w-10 h-10 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center transition-colors" title="Exportar a Word">
                                     <Download size={16} />
                                 </button>
