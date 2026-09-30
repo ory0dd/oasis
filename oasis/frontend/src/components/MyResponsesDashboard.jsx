@@ -1758,6 +1758,17 @@ Devuelve estrictamente el JSON sin formato extra.
     const [lifeUpdateText, setLifeUpdateText] = useState("");
     const [isUpdatingMap, setIsUpdatingMap] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [mapGenerationCount, setMapGenerationCount] = useState(() => parseInt(localStorage.getItem(`oasis_afc_gen_count_${user}`) || '0', 10));
+
+    const handleGenerateMap = (e, isAdditive = false) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (mapGenerationCount >= 3) return;
+        const newCount = mapGenerationCount + 1;
+        setMapGenerationCount(newCount);
+        localStorage.setItem(`oasis_afc_gen_count_${user}`, newCount.toString());
+        localStorage.removeItem(`oasis_afc_attempted_${user}`);
+        generateAFCAnalysis(isAdditive);
+    };
     const [afcData, setAfcData] = useState(null);
     const [deepseekKey, setDeepseekKey] = useState(null);
     const [phenomExpanded, setPhenomExpanded] = useState(false);
@@ -6781,13 +6792,13 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Action Buttons Toolbar (Top right on mobile, Bottom left on desktop) */}
                             <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
-                                <button
-                                    onClick={() => generateAFCAnalysis(false)}
+                                {mapGenerationCount < 3 && (<button
+                                    onClick={(e) => handleGenerateMap(e, false)}
                                     className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
                                     title="Generar Análisis Clínico"
                                 >
                                     <Sparkles size={11} />
-                                </button>
+                                </button>)}
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
@@ -6877,16 +6888,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <p className="text-sm font-mono text-zinc-500 uppercase tracking-widest px-6 py-3 rounded-xl bg-black/80 sm:bg-black/40 border border-white/5 sm:backdrop-blur-md">
                                             {afcData?.is_valid === false ? "No hay informaci\u00f3n suficiente" : "A\u00fan no hay datos"}
                                         </p>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                localStorage.removeItem(`oasis_afc_attempted_${user}`);
-                                                generateAFCAnalysis(false);
-                                            }}
+                                        {mapGenerationCount < 3 && (<button 
+                                            onClick={(e) => handleGenerateMap(e, false)}
                                             className="pointer-events-auto px-6 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold tracking-wide shadow-xl shadow-emerald-900/30 transition-all active:scale-95 border border-emerald-400/20"
                                         >
                                             Generar Mapa
-                                        </button>
+                                        </button>)}
                                     </div>
                                 )}
 
