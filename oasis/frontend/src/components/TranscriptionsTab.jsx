@@ -63,7 +63,7 @@ export const TranscriptionsTab = ({ patientName }) => {
             
             const lowNode = audioContext.createBiquadFilter();
             lowNode.type = 'lowshelf';
-            lowNode.frequency.value = 352;
+            lowNode.frequency.value = 150;
             
             const midNode = audioContext.createBiquadFilter();
             midNode.type = 'peaking';
@@ -84,7 +84,7 @@ export const TranscriptionsTab = ({ patientName }) => {
             gainNode.connect(destination);
             destStreamRef.current = destination.stream;
             
-            analyser.fftSize = 256;
+            analyser.fftSize = 4096;
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             
