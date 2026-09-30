@@ -49,66 +49,41 @@ export const TranscriptionsTab = ({ patientName }) => {
             eqNodesRef.current.high.gain.value = eqHigh;
         }
     }, [eqLow, eqMid, eqHigh]);
-    const startRecording = async () => {
+    
+    const initMixer = async () => {
+        if (streamRef.current) return;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            let options = { mimeType: 'audio/webm' };
-            if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                options = { mimeType: 'audio/mp4' };
-            }
-            const mediaRecorder = new MediaRecorder(stream, options);
-            mediaRecorderRef.current = mediaRecorder;
-            chunksRef.current = [];
-            browserTranscriptRef.current = '';
+            streamRef.current = stream;
             
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksRef.current.push(e.data);
-            };
-
-            const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
-            if (SpeechRecognition) {
-                try {
-                    const recognition = new SpeechRecognition();
-                    recognition.continuous = true;
-                    recognition.interimResults = true;
-                    recognition.lang = 'es-ES';
-                    recognition.onresult = (event) => {
-                        let fullText = '';
-                        for (let i = 0; i < event.results.length; i++) {
-                            fullText += event.results[i][0].transcript + ' ';
-                        }
-                        browserTranscriptRef.current = fullText.trim();
-                    };
-                    recognition.start();
-                    backgroundRecognitionRef.current = recognition;
-                } catch (recErr) {}
-            }
-            
-            mediaRecorder.onstop = () => {
-                if (backgroundRecognitionRef.current) {
-                    try { backgroundRecognitionRef.current.stop(); } catch (e) {}
-                    backgroundRecognitionRef.current = null;
-                }
-                const blob = new Blob(chunksRef.current, { type: options.mimeType });
-                const ext = options.mimeType.includes('webm') ? 'webm' : 'm4a';
-                const file = new File([blob], `sesion_grabada_${Date.now()}.${ext}`, { type: options.mimeType });
-                handleUploadAndTranscribe(file, browserTranscriptRef.current);
-                stream.getTracks().forEach(track => track.stop());
-                
-                if (audioContextRef.current) {
-                    audioContextRef.current.close();
-                    audioContextRef.current = null;
-                }
-                if (animationFrameRef.current) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                }
-            };
-
-            // Setup audio visualizer
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const analyser = audioContext.createAnalyser();
             const source = audioContext.createMediaStreamSource(stream);
-            source.connect(analyser);
+            const analyser = audioContext.createAnalyser();
+            const gainNode = audioContext.createGain();
+            
+            const lowNode = audioContext.createBiquadFilter();
+            lowNode.type = 'lowshelf';
+            lowNode.frequency.value = 352;
+            
+            const midNode = audioContext.createBiquadFilter();
+            midNode.type = 'peaking';
+            midNode.frequency.value = 1000;
+            midNode.Q.value = 0.71;
+            
+            const highNode = audioContext.createBiquadFilter();
+            highNode.type = 'highshelf';
+            highNode.frequency.value = 3000;
+            
+            source.connect(lowNode);
+            lowNode.connect(midNode);
+            midNode.connect(highNode);
+            highNode.connect(gainNode);
+            gainNode.connect(analyser);
+            
+            const destination = audioContext.createMediaStreamDestination();
+            gainNode.connect(destination);
+            destStreamRef.current = destination.stream;
+            
             analyser.fftSize = 256;
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
@@ -117,34 +92,92 @@ export const TranscriptionsTab = ({ patientName }) => {
             analyserRef.current = analyser;
             dataArrayRef.current = dataArray;
             
-            const updateVolume = () => {
-                if (!analyserRef.current) return;
-                analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-                let sum = 0;
-                for (let i = 0; i < dataArrayRef.current.length; i++) {
-                    sum += dataArrayRef.current[i];
-                }
-                const average = sum / dataArrayRef.current.length;
-                setAudioVolume(average);
-                animationFrameRef.current = requestAnimationFrame(updateVolume);
-            };
-            updateVolume();
+            gainNode.gain.value = micGain;
+            lowNode.gain.value = eqLow;
+            midNode.gain.value = eqMid;
+            highNode.gain.value = eqHigh;
             
-            mediaRecorder.start();
-            setIsRecording(true);
-            setRecordingTime(0);
-            timerRef.current = setInterval(() => {
-                setRecordingTime(prev => prev + 1);
-            }, 1000);
+            micGainRef.current = gainNode;
+            eqNodesRef.current = { low: lowNode, mid: midNode, high: highNode };
         } catch (err) {
-            alert('Error accediendo al micrófono: ' + err.message);
+            console.warn('Microphone permission denied or not available.', err);
         }
     };
-    
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
+
+    useEffect(() => {
+        initMixer();
+        return () => {
+            if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+            if (destStreamRef.current) destStreamRef.current.getTracks().forEach(track => track.stop());
+            if (audioContextRef.current) audioContextRef.current.close();
+        };
+    }, []);
+
+    const startRecording = async () => {
+        if (!destStreamRef.current) {
+            await initMixer();
+            if (!destStreamRef.current) {
+                alert('No se pudo acceder al micrófono.');
+                return;
+            }
+        }
+        
+        let options = { mimeType: 'audio/webm' };
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/mp4' };
+        }
+        
+        const mediaRecorder = new MediaRecorder(destStreamRef.current, options);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+        browserTranscriptRef.current = '';
+            
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunksRef.current.push(e.data);
+        };
+
+        const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+        if (SpeechRecognition) {
+            try {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+                recognition.onresult = (event) => {
+                    let fullText = '';
+                    for (let i = 0; i < event.results.length; i++) {
+                        fullText += event.results[i][0].transcript + ' ';
+                    }
+                    browserTranscriptRef.current = fullText.trim();
+                };
+                recognition.start();
+                backgroundRecognitionRef.current = recognition;
+            } catch (recErr) {}
+        }
+            
+        mediaRecorder.onstop = () => {
+            if (backgroundRecognitionRef.current) {
+                try { backgroundRecognitionRef.current.stop(); } catch (e) {}
+                backgroundRecognitionRef.current = null;
+            }
+            const blob = new Blob(chunksRef.current, { type: options.mimeType });
+            const ext = options.mimeType.includes('webm') ? 'webm' : 'm4a';
+            const file = new File([blob], `sesion_grabada_${Date.now()}.${ext}`, { type: options.mimeType });
+            handleUploadAndTranscribe(file, browserTranscriptRef.current);
             setIsRecording(false);
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+        setRecordingTime(0);
+        timerRef.current = setInterval(() => {
+            setRecordingTime(prev => prev + 1);
+        }, 1000);
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
             clearInterval(timerRef.current);
         }
     };
