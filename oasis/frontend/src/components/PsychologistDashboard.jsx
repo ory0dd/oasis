@@ -3685,7 +3685,7 @@ Varianza Interna Global: ${pidState.globalVariance}
                                                 onClick={() => setExpandedIcarQuestion(isExpanded ? null : q.question_number)}
                                                 className="p-5 flex justify-between items-center gap-4 cursor-pointer select-none"
                                             >
-                                                <div className="flex gap-3 items-center">
+                                                <div className={`flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"}`}>
                                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center font-mono font-black text-xs ${isCorrect ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                                                         {isCorrect ? <Check size={14} /> : <X size={14} />}
                                                     </span>
@@ -5232,7 +5232,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         </div>
 
                         {/* Patient Badge */}
-                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'hidden md:block opacity-0 h-0 pointer-events-none p-0 overflow-hidden mt-0' : 'mt-3 md:mt-10'}`}>
+                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'hidden md:block opacity-0 h-0 pointer-events-none p-0 overflow-hidden mt-0' : 'mt-3'}`}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
@@ -5405,18 +5405,18 @@ Devuelve estrictamente el JSON sin formato extra.
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Caso Clínico</span>}
                                 <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('VISION_GENERAL'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <FileText className="w-4.5 h-4.5 shrink-0" />
+                                    <button onClick={() => { setActiveTab('VISION_GENERAL'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <FileText className="w-5 h-5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Visión General</span>}
                                     </button>
-                                    <button onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Activity className="w-4.5 h-4.5 shrink-0 text-purple-400" />
+                                    <button onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <Activity className="w-5 h-5 shrink-0 text-purple-400" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Pruebas Posteriores</span>}
                                     </button>
                                     
                                     {/* Boton Llenar con IA (Subir PDF) integrado en Sidebar */}
-                                    <label className={`w-full text-left p-2.5 rounded-xl border border-indigo-500/30 flex gap-3 items-center bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 font-bold transition-all cursor-pointer`}>
-                                        <div className="w-4.5 h-4.5 shrink-0 flex items-center justify-center">
+                                    <label className={`w-full text-left p-2.5 rounded-xl border border-indigo-500/30 flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 font-bold transition-all cursor-pointer`}>
+                                        <div className="w-5 h-5 shrink-0 flex items-center justify-center">
                                             {isExtractingPDF ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <span className="font-bold text-lg leading-none">+</span>}
                                         </div>
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">{isExtractingPDF ? 'Procesando...' : 'Llenar con Informe PDF'}</span>}
@@ -5429,12 +5429,12 @@ Devuelve estrictamente el JSON sin formato extra.
                             <div className="space-y-2 w-full">
                                 {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Espacio de Exploración</span>}
                                 <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Folder className="w-4.5 h-4.5 shrink-0" />
+                                    <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <Folder className="w-5 h-5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Asistente Kio (Docs)</span>}
                                     </button>
-                                    <button onClick={() => { setActiveTab('REFLEXION'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Eye className="w-4.5 h-4.5 shrink-0" />
+                                    <button onClick={() => { setActiveTab('REFLEXION'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
+                                        <Eye className="w-5 h-5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Privada</span>}
                                     </button>
                                     {/* Boton Externo ChatGPT */}
@@ -5442,9 +5442,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                         onClick={handleOpenChatGPT}
                                         onContextMenu={handleOpenChatGPT}
                                         title="Click Izquierdo: Abrir ChatGPT | Click Derecho: Editar Link"
-                                        className="w-full text-left p-2.5 rounded-xl border flex gap-3 items-center bg-transparent border-transparent text-zinc-500 hover:text-emerald-400 hover:bg-white/[0.02] transition-all"
+                                        className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} bg-transparent border-transparent text-zinc-500 hover:text-emerald-400 hover:bg-white/[0.02] transition-all`}
                                     >
-                                        <MessageSquare className="w-4.5 h-4.5 shrink-0" />
+                                        <MessageSquare className="w-5 h-5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Caso en ChatGPT</span>}
                                     </button>
                                 </div>
@@ -5471,11 +5471,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     setActiveTab(`SESION_${v}`);
                                                     if (window.innerWidth < 768) setIsSidebarOpen(false);
                                                 }}
-                                                className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${
+                                                className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${
                                                     isSelected ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'
                                                 } transition-all`}
                                             >
-                                                <Mic className="w-4.5 h-4.5 shrink-0" />
+                                                <Mic className="w-5 h-5 shrink-0" />
                                                 {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Sesión {v}</span>}
                                             </button>
                                         );
