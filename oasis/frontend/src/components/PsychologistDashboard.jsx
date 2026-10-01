@@ -2109,7 +2109,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
 
 
         return (
-            <div className="w-full flex-1 min-h-0 p-4 sm:p-8 md:p-12 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#050505] selection:bg-emerald-500/30">
+            <div className={`w-full flex-1 min-h-0 h-full p-4 sm:p-8 md:p-12 overflow-y-auto overflow-x-hidden pb-36 sm:pb-24 relative z-10 ${dashboardBg ? 'bg-[#030304]/60 backdrop-blur-sm' : 'bg-[#050505]'} selection:bg-emerald-500/30`}>
                 {/* 2026 APPLE-LIKE AMBIENT GLOWS */}
                 <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
                 <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-500/[0.03] rounded-full blur-[100px] pointer-events-none -z-10" />
@@ -5283,7 +5283,7 @@ Devuelve estrictamente el JSON sin formato extra.
         if (!selectedPatient) return null;
 
         return (
-            <div className="w-full h-full flex flex-col md:flex-row animate-in fade-in duration-300 bg-[#030304]">
+            <div className={`w-full flex-1 min-h-0 h-full flex flex-col md:flex-row animate-in fade-in duration-300 relative z-10 ${dashboardBg ? 'bg-[#030304]/80' : 'bg-[#030304]'}`}>
                 {/* Left Clinical Sidebar */}
                 <div className={`w-full ${isSidebarOpen ? 'md:w-80 h-full' : 'md:w-[84px] h-auto md:h-full'} bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-visible md:overflow-x-hidden z-[50]`}>
                     <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full overflow-y-auto no-scrollbar">
@@ -5732,11 +5732,11 @@ Devuelve estrictamente el JSON sin formato extra.
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col relative">
+        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col">
             {/* Ambient Wallpaper Layer */}
             {dashboardBg && (
                 <div 
-                    className="absolute inset-0 pointer-events-none transition-opacity duration-700 z-0 bg-cover bg-center"
+                    className="fixed inset-0 pointer-events-none transition-opacity duration-700 z-0 bg-cover bg-center"
                     style={{
                         backgroundImage: `url("${dashboardBg}")`,
                         opacity: dashboardBgOpacity,
@@ -5746,13 +5746,11 @@ Devuelve estrictamente el JSON sin formato extra.
             )}
             {/* Dark Vignette / Gradient Overlay for pristine text readability */}
             {dashboardBg && (
-                <div className="absolute inset-0 pointer-events-none z-0 bg-gradient-to-t from-[#030304] via-[#030304]/70 to-[#030304]/40" />
+                <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-t from-[#030304] via-[#030304]/70 to-[#030304]/40" />
             )}
 
-            <div className="relative z-10 flex flex-col flex-1 h-full min-h-0 overflow-hidden">
-                {currentModule === 'DASHBOARD' && renderDashboard()}
-                {currentModule === 'PROFILE' && renderProfileWorkspace()}
-            </div>
+            {currentModule === 'DASHBOARD' && renderDashboard()}
+            {currentModule === 'PROFILE' && renderProfileWorkspace()}
 
             {/* Interactive Clinical Test Runner Modal */}
             {activeTestRunnerId && (
