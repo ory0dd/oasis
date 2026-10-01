@@ -1793,7 +1793,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
     const handleGenerateMap = (e, isAdditive = false) => {
         if (e && e.stopPropagation) e.stopPropagation();
-        if (mapGenerationCount >= 3) return;
+        // Limit removed
         const newCount = mapGenerationCount + 1;
         setMapGenerationCount(newCount);
         localStorage.setItem(`oasis_afc_gen_count_${user}`, newCount.toString());
