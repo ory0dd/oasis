@@ -344,6 +344,11 @@ const resolveCollisions = (nodes) => {
                 const n1 = adjustedNodes[i];
                 const n2 = adjustedNodes[j];
 
+                // No repeler un nodo padre de sus propios satélites en órbita
+                if (n1.id === n2.parent_id || n2.id === n1.parent_id) {
+                    continue;
+                }
+
                 let dx = n2.x - n1.x;
                 let dy = n2.y - n1.y;
 
@@ -2342,8 +2347,9 @@ ESTRUCTURA JSON OBLIGATORIA:
                 edges: newEdges
             };
 
-            // 4. Desactivar filtro de patrón previo para que se vean todos los nodos y ramas nuevas
+            // 4. Desactivar filtro de patrón y tour previo para que se vean todos los nodos y ramas nuevas sin atenuación
             setSelectedPatternId(null);
+            setTourActiveIndex(null);
 
             // 5. Actualizar estado reactivo
             setAfcData(newAfcData);
@@ -2388,12 +2394,9 @@ ESTRUCTURA JSON OBLIGATORIA:
                 console.error("Error al registrar corrección clínica:", e);
             }
 
-            // 8. Sincronizar el puntero del tour para que apunte con certeza al nodo adaptado
-            const newTourIdx = resolvedNodes.findIndex(n => n.id === nodeId);
-            if (newTourIdx !== -1) {
-                setTourActiveIndex(newTourIdx);
-            }
+            // 8. Mantener el nodo adaptado como nodo seleccionado activo
             setSelectedNode(updatedTargetNode);
+            setTourActiveIndex(null);
 
             // 9. Mostrar toast de confirmación clínica
             setMoldSuccessToast({
@@ -8505,10 +8508,9 @@ Por favor, analicemos:
                                 </div>
                             )}
 
-                            {mapViewTab === 'map' && ((tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || selectedNode) && (() => {
-                                const currentNode = (selectedNode && selectedNode.id === (sortedTourNodes[tourActiveIndex]?.id || selectedNode.id))
-                                    ? selectedNode
-                                    : (sortedTourNodes[tourActiveIndex] || selectedNode);
+                            {mapViewTab === 'map' && (selectedNode || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex])) && (() => {
+                                const currentNode = selectedNode || (tourActiveIndex !== null ? sortedTourNodes[tourActiveIndex] : null);
+                                if (!currentNode) return null;
                                 const typeCompactLabels = {
                                     historical: "Histórico",
                                     biological: "Biológico",
