@@ -1344,18 +1344,6 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     const [mobileViewMode, setMobileViewMode] = useState('readable');
     const [activeColumnIndex, setActiveColumnIndex] = useState(null);
     const [focusedStageIndex, setFocusedStageIndex] = useState(null);
-
-    const handleStageSelect = useCallback((idx) => {
-        if (focusedStageIndex === idx) {
-            setFocusedStageIndex(null);
-            setActiveColumnIndex(null);
-            resetMapTransform(isMobileDevice ? 'readable' : 'overview');
-        } else {
-            setFocusedStageIndex(idx);
-            setActiveColumnIndex(idx);
-            panToColumn(idx);
-        }
-    }, [focusedStageIndex, panToColumn, resetMapTransform, isMobileDevice]);
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -3128,6 +3116,18 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             setMobileViewMode('readable');
         }
     }, [triggerProgrammaticTransition]);
+
+    const handleStageSelect = useCallback((idx) => {
+        if (focusedStageIndex === idx) {
+            setFocusedStageIndex(null);
+            setActiveColumnIndex(null);
+            resetMapTransform(isMobileDevice ? 'readable' : 'overview');
+        } else {
+            setFocusedStageIndex(idx);
+            setActiveColumnIndex(idx);
+            panToColumn(idx);
+        }
+    }, [focusedStageIndex, panToColumn, resetMapTransform, isMobileDevice]);
 
     const zoomToNode = useCallback((targetNode) => {
         if (targetNode && mapContainerRef.current) {
