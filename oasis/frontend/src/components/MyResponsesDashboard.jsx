@@ -7351,42 +7351,77 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
                                                     const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
                                                     const accent = theme.color || '#a78bfa';
+
+                                                    // Neuronal island: node size based on degree (connections)
+                                                    const degree = (edgesToRender || []).filter(e => e.source === node.id || e.target === node.id).length;
+                                                    const isHub = degree >= 4;
+                                                    const isMid = degree >= 2 && degree < 4;
+                                                    // Size: hub=36px, mid=24px, leaf=16px
+                                                    const dotSize = isHub ? 36 : isMid ? 24 : 16;
+                                                    const dotSizePx = `${dotSize}px`;
+                                                    const labelOffset = dotSize + 8;
+                                                    
+                                                    // Hub nodes glow much more
+                                                    const baseGlow = isHub ? 50 : isMid ? 30 : 15;
+                                                    const activeMult = isSelected || isConnected ? 1.8 : 1;
                                                     
                                                     return (
-                                                        <div className="relative flex flex-col items-center group-hover:scale-110 transition-transform duration-300">
-                                                            {/* Minimalist Glowing Dot (Neuronal Style) */}
+                                                        <div className="relative flex flex-col items-center transition-transform duration-300" style={{ transform: isSelected ? 'scale(1.2)' : 'scale(1)' }}>
+                                                            {/* Ambient outer halo for hub nodes */}
+                                                            {isHub && (
+                                                                <div className="absolute rounded-full pointer-events-none" style={{
+                                                                    width: `${dotSize * 2.8}px`,
+                                                                    height: `${dotSize * 2.8}px`,
+                                                                    top: '50%', left: '50%',
+                                                                    transform: 'translate(-50%, -50%)',
+                                                                    background: `radial-gradient(circle, ${accent}12 0%, transparent 70%)`,
+                                                                }} />
+                                                            )}
+                                                            
+                                                            {/* The Neuron Dot */}
                                                             <div 
-                                                                className={`w-6 h-6 rounded-full border-[2.5px] transition-all duration-300 shadow-xl ${isSelected || isConnected ? 'scale-125' : ''}`}
+                                                                className="rounded-full transition-all duration-300 relative"
                                                                 style={{
-                                                                    borderColor: accent,
-                                                                    backgroundColor: isSelected || isConnected ? accent : '#050505',
-                                                                    boxShadow: isSelected || isConnected ? `0 0 35px ${accent}, 0 0 15px ${accent} inset` : `0 0 15px ${accent}40`,
-                                                                    opacity: node.dashed ? 0.7 : 1
+                                                                    width: dotSizePx,
+                                                                    height: dotSizePx,
+                                                                    border: `${isHub ? 2.5 : 2}px solid ${accent}`,
+                                                                    backgroundColor: isSelected || isConnected ? accent : (isHub ? `${accent}22` : '#050505'),
+                                                                    boxShadow: isSelected || isConnected
+                                                                        ? `0 0 ${baseGlow * activeMult}px ${accent}, 0 0 ${baseGlow * 0.5}px ${accent} inset`
+                                                                        : `0 0 ${baseGlow}px ${accent}55`,
+                                                                    opacity: node.dashed ? 0.6 : 1
                                                                 }}
                                                             >
-                                                                {/* Inner pulse ring if selected */}
+                                                                {/* Pulse ring on selected or connected */}
                                                                 {(isSelected || isConnected) && (
-                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: accent }} />
+                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ backgroundColor: accent }} />
+                                                                )}
+                                                                {/* Inner bright dot for hubs */}
+                                                                {isHub && !isSelected && !isConnected && (
+                                                                    <div className="absolute inset-[6px] rounded-full opacity-50" style={{ backgroundColor: accent }} />
                                                                 )}
                                                             </div>
                                                             
-                                                            {/* Floating Label (Obsidian Style) */}
-                                                            <div className={`absolute top-8 flex flex-col items-center w-36 pointer-events-none transition-all duration-300 ${isSelected || isConnected ? 'translate-y-1' : ''}`}>
-                                                                {/* Micro-badge for role */}
+                                                            {/* Floating Label */}
+                                                            <div 
+                                                                className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
+                                                                style={{ top: `${labelOffset}px`, width: isHub ? '160px' : '120px' }}
+                                                            >
+                                                                {/* Role badge */}
                                                                 <span 
-                                                                    className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full backdrop-blur-md border shadow-lg mb-1" 
+                                                                    className={`font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded-full backdrop-blur-md border mb-0.5 ${isHub ? 'text-[9px]' : 'text-[7.5px]'}`}
                                                                     style={{ 
                                                                         color: accent,
-                                                                        backgroundColor: `${accent}10`,
-                                                                        borderColor: `${accent}25`,
-                                                                        textShadow: `0 1px 2px rgba(0,0,0,0.8)`
+                                                                        backgroundColor: `${accent}12`,
+                                                                        borderColor: `${accent}30`,
+                                                                        textShadow: `0 1px 2px rgba(0,0,0,0.9)`
                                                                     }}
                                                                 >
                                                                     {theme.icon} {node.clinical_role || theme.category}
                                                                 </span>
                                                                 
-                                                                {/* Main Text */}
-                                                                <span className={`text-[10px] text-center font-medium leading-tight px-1.5 py-0.5 rounded backdrop-blur-sm ${isSelected || isConnected ? 'text-white font-bold' : 'text-zinc-300'} [text-shadow:0_1px_3px_rgba(0,0,0,0.95)]`}>
+                                                                {/* Label text - bigger for hubs */}
+                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${isHub ? 'text-[11px] text-zinc-100' : isMid ? 'text-[10px] text-zinc-200' : 'text-[9px] text-zinc-400'} ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
                                                                     {node.label}
                                                                 </span>
                                                             </div>
