@@ -274,6 +274,9 @@ const REPLACEMENTS = [
 export function sanitizeSpanishText(str) {
   if (typeof str !== 'string' || !str) return str;
   let res = str;
+  // Deduplicate any recursive "Tensión o Tensión o ..." artifacts
+  res = res.replace(/(?:Tensi[oó]n(?:\s+o)?\s*){2,}/gi, 'Tensión o ');
+  res = res.replace(/\s+o\s*$/i, '');
   for (let i = 0; i < REPLACEMENTS.length; i++) {
     res = res.replace(REPLACEMENTS[i][0], REPLACEMENTS[i][1]);
   }

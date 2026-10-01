@@ -56,10 +56,13 @@ export const softenNodeLabel = (label) => {
     if (!label || typeof label !== 'string') return label;
     let s = sanitizeSpanishText(label.trim());
 
+    // Deduplicate any recursive "Tensión o Tensión o ..." artifacts
+    s = s.replace(/(?:Tensi[oó]n(?:\s+o)?\s*){2,}/gi, 'Tensión o ');
+    s = s.replace(/\s+o\s*$/i, '');
+
     const transformations = [
         [/\bopresi[oó]n\s+tor[aá]cica\b/gi, "Tensión por estrés"],
-        [/\bsensaci[oó]n\s+de\s+nudo\s+en\s+el\s+pecho\b/gi, "Tensión o nudo en el pecho"],
-        [/\bnudo\s+en\s+el\s+pecho\b/gi, "Tensión o nudo en el pecho"],
+        [/\b(?:sensaci[oó]n\s+de\s+)?(?:tensi[oó]n\s+o\s+)*nudo\s+en\s+el\s+pecho\b/gi, "Tensión o nudo en el pecho"],
         [/\bsensaci[oó]n\s+de\s+peso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
         [/\bpeso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
         [/\bnudo\s+en\s+la\s+garganta\b/gi, "Incomodidad al expresarse"],
@@ -119,7 +122,7 @@ export const softenNodeLabels = (nodes) => {
     if (!Array.isArray(nodes)) return nodes;
     return nodes.map(n => ({
         ...n,
-        label: n.is_corrected ? n.label : softenNodeLabel(n.label)
+        label: n.is_corrected ? sanitizeSpanishText(n.label) : softenNodeLabel(n.label)
     }));
 };
 
