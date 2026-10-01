@@ -983,94 +983,67 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         layerNodes[idx].push(n);
     });
 
-    // Radial Spiderweb Geometry (Opens from center out)
-    const CX = 50;
-    const CY = 51;
+    // Multi-Cluster Starburst Topology (Flowers / Multipolar Neurons like Obsidian)
+    // 6 Starburst Flower Hub Centers across the canvas
+    const flowerCenters = [
+        { cx: 14, cy: 50 }, // Flor 1: Contexto Historico & Social
+        { cx: 31, cy: 46 }, // Flor 2: Detonantes Inmediatos
+        { cx: 48, cy: 39 }, // Flor 3: Nucleo Cognitivo (Pensamientos)
+        { cx: 69, cy: 46 }, // Flor 4: Respuesta Operante (Conductas)
+        { cx: 86, cy: 50 }, // Flor 5: Consecuencias & Trampas
+        { cx: 52, cy: 63 }  // Flor 6: Nucleo Somatico & Fisiologico (Cuerpo)
+    ];
 
-    // 1. Central Core: Private Events (layer 2) & Functions (layer 5)
-    const coreNodes = [...layerNodes[2], ...layerNodes[5]];
-    const coreCount = coreNodes.length;
-
-    coreNodes.forEach((node, i) => {
-        const isFunction = node.clinical_role === 'function';
-        if (isFunction && i % 2 === 0) {
-            node.x = CX + (Math.sin(i * 1.5) * 8);
-            node.y = 22 + (Math.cos(i * 1.2) * 3);
-        } else if (isFunction) {
-            node.x = CX + (Math.sin(i * 1.5) * 8);
-            node.y = 78 + (Math.cos(i * 1.2) * 3);
-        } else {
-            const angle = (i / Math.max(1, coreCount)) * 2 * Math.PI - (Math.PI / 2);
-            const radius = 7.5 + ((i % 3) * 3.8);
-            node.x = CX + Math.cos(angle) * radius * 1.35;
-            node.y = CY + Math.sin(angle) * radius * 0.95;
+    // Helper to arrange a list of nodes as a flower around a hub (center + radial petals)
+    const arrangeFlower = (nodesList, center, radiusMin = 6.0, radiusMax = 13.5) => {
+        if (!nodesList || nodesList.length === 0) return;
+        const total = nodesList.length;
+        if (total === 1) {
+            nodesList[0].x = center.cx;
+            nodesList[0].y = center.cy;
+            return;
         }
-    });
 
-    const sortNodesByConnectedCore = (nodesList) => {
-        if (!rawEdges || rawEdges.length === 0) return nodesList;
-        return [...nodesList].sort((nodeA, nodeB) => {
-            const getAvgCoreY = (id) => {
-                const connected = rawEdges.filter(e => e.source === id || e.target === id);
-                let sumY = 0;
-                let c = 0;
-                connected.forEach(e => {
-                    const otherId = e.source === id ? e.target : e.source;
-                    const peer = coreNodes.find(cn => cn.id === otherId);
-                    if (peer && peer.y !== undefined) {
-                        sumY += peer.y;
-                        c++;
-                    }
-                });
-                return c > 0 ? sumY / c : 50;
-            };
-            return getAvgCoreY(nodeA.id) - getAvgCoreY(nodeB.id);
+        // Identify node with highest degree as the central hub of this flower
+        let bestHubIdx = 0;
+        let maxDeg = -1;
+        nodesList.forEach((n, idx) => {
+            const deg = (rawEdges || []).filter(e => e && (e.source === n.id || e.target === n.id)).length;
+            if (deg > maxDeg) {
+                maxDeg = deg;
+                bestHubIdx = idx;
+            }
+        });
+
+        // Place central hub
+        nodesList[bestHubIdx].x = center.cx;
+        nodesList[bestHubIdx].y = center.cy;
+
+        // Place petal satellites radiating around hub
+        const petals = nodesList.filter((_, idx) => idx !== bestHubIdx);
+        const petalCount = petals.length;
+        petals.forEach((node, i) => {
+            const angle = (i / Math.max(1, petalCount)) * 2 * Math.PI + (i % 2 === 0 ? 0.2 : -0.2);
+            const dist = radiusMin + ((i % 3) / 2) * (radiusMax - radiusMin);
+            const px = center.cx + Math.cos(angle) * dist * 1.25;
+            const py = center.cy + Math.sin(angle) * dist;
+            node.x = Math.max(5, Math.min(95, px));
+            node.y = Math.max(12, Math.min(90, py));
         });
     };
 
-    // 2. Left Middle Wing: Immediate Antecedents (125 deg to 235 deg)
-    const antecedents = sortNodesByConnectedCore(layerNodes[1]);
-    const antCount = antecedents.length;
-    antecedents.forEach((node, i) => {
-        const t = antCount > 1 ? i / (antCount - 1) : 0.5;
-        const angle = (125 + t * 110) * (Math.PI / 180);
-        const radius = 22 + (i % 2 === 0 ? -1.8 : 1.8);
-        node.x = Math.max(18, Math.min(36, CX + Math.cos(angle) * radius * 1.25));
-        node.y = Math.max(22, Math.min(80, CY + Math.sin(angle) * radius * 1.15));
-    });
+    // Separate Layer 2 into Cognitive and Somatic for dual central flowers
+    const cogNodes = layerNodes[2].filter(n => n.type !== 'physiological');
+    const physNodes = layerNodes[2].filter(n => n.type === 'physiological');
+    // If functions exist, blend them into central and bridge positions
+    const funcNodes = layerNodes[5];
 
-    // 3. Left Outer Wing: Context & Variables (100 deg to 260 deg)
-    const contextNodes = sortNodesByConnectedCore(layerNodes[0]);
-    const ctxCount = contextNodes.length;
-    contextNodes.forEach((node, i) => {
-        const t = ctxCount > 1 ? i / (ctxCount - 1) : 0.5;
-        const angle = (100 + t * 160) * (Math.PI / 180);
-        const radius = 34 + (i % 2 === 0 ? -2.2 : 2.2);
-        node.x = Math.max(7, Math.min(22, CX + Math.cos(angle) * radius * 1.18));
-        node.y = Math.max(14, Math.min(88, CY + Math.sin(angle) * radius * 1.12));
-    });
-
-    // 4. Right Middle Wing: Operant Response (-55 deg to +55 deg)
-    const motorNodes = sortNodesByConnectedCore(layerNodes[3]);
-    const motorCount = motorNodes.length;
-    motorNodes.forEach((node, i) => {
-        const t = motorCount > 1 ? i / (motorCount - 1) : 0.5;
-        const angle = (-55 + t * 110) * (Math.PI / 180);
-        const radius = 22 + (i % 2 === 0 ? -1.8 : 1.8);
-        node.x = Math.max(64, Math.min(82, CX + Math.cos(angle) * radius * 1.25));
-        node.y = Math.max(22, Math.min(80, CY + Math.sin(angle) * radius * 1.15));
-    });
-
-    // 5. Right Outer Wing: Consequences (-75 deg to +75 deg)
-    const consequenceNodes = sortNodesByConnectedCore(layerNodes[4]);
-    const consCount = consequenceNodes.length;
-    consequenceNodes.forEach((node, i) => {
-        const t = consCount > 1 ? i / (consCount - 1) : 0.5;
-        const angle = (-75 + t * 150) * (Math.PI / 180);
-        const radius = 34 + (i % 2 === 0 ? -2.2 : 2.2);
-        node.x = Math.max(78, Math.min(93, CX + Math.cos(angle) * radius * 1.18));
-        node.y = Math.max(14, Math.min(88, CY + Math.sin(angle) * radius * 1.12));
-    });
+    arrangeFlower(layerNodes[0], flowerCenters[0], 7.0, 14.5); // Flor Contexto
+    arrangeFlower(layerNodes[1], flowerCenters[1], 6.5, 13.0); // Flor Detonantes
+    arrangeFlower(cogNodes, flowerCenters[2], 5.5, 12.0);      // Flor Cognitiva
+    arrangeFlower(layerNodes[3], flowerCenters[3], 6.5, 13.0); // Flor Operante
+    arrangeFlower(layerNodes[4], flowerCenters[4], 7.0, 14.5); // Flor Consecuencias
+    arrangeFlower([...physNodes, ...funcNodes], flowerCenters[5], 5.5, 12.5); // Flor Somatica / Bucles
 
     return resolveCollisions(newNodes);
 };
@@ -4183,7 +4156,7 @@ ${currentBlindSpotsText}
         const systemPromptTopology = `
 Eres un Psicólogo Clínico Especialista en Análisis Funcional de la Conducta (AFC) y Terapia Cognitivo-Conductual Científica (TCC / Terapias de Tercera Generación Contextuales).
 ETAPA 1: FORMULACIÓN CLÍNICA DE CASO EN MODO GRAFO (ANÁLISIS FUNCIONAL DE LA CONDUCTA).
-Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 20 Y 24 NODOS CLÍNICOS REALES y EXACTAMENTE ENTRE 32 Y 48 CONEXIONES FUNCIONALES DIRECTAS.
+Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 48 Y 65 NODOS CLÍNICOS REALES y EXACTAMENTE ENTRE 70 Y 105 CONEXIONES FUNCIONALES DIRECTAS (RED EXTENSA TIPO OBSIDIAN).
 
 === PRINCIPIO FUNDAMENTAL: ANÁLISIS FUNCIONAL CIENTÍFICO Y AUTÉNTICO (CERO INVENTOS) ===
 - NUNCA inventes nodos con etiquetas artificiales de coaching o autoayuda como "Pivote:", "Pivote de", "Valor: ...", "Consejo", etc. 
@@ -4193,42 +4166,42 @@ Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en for
   - PROHIBIDO USAR: "Estancamiento", "Rumiación", "Evitación", "Fricción", "Sobreadaptación", "Autocrítica", "Aislamiento Defensivo", "Reactivación de la Autocrítica", a menos que el usuario lo haya escrito tal cual.
   - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, úsalo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual clínico".
 
-=== LOS 6 PILARES DEL ANÁLISIS FUNCIONAL DINÁMICO (DISTRIBUCIÓN DE 20 A 24 NODOS EN TOTAL) ===
-Distribuye los nodos rigurosamente en las 6 columnas funcionales del caso:
+=== LOS 6 PILARES DEL ANALISIS FUNCIONAL DINAMICO (DISTRIBUCION DE 48 A 65 NODOS EN TOTAL) ===
+Distribuye los nodos en una constelacion densa de estrellas/flores neuronales estilo Obsidian:
 
-1. COLUMNA 1: CONTEXTO & OPERACIONES MOTIVACIONALES (Variables de Fondo) (3 a 4 nodos):
-   - Tipos: 'historical' o 'social'.
+1. COLUMNA 1: CONTEXTO & OPERACIONES MOTIVACIONALES (7 a 10 nodos):
+   - Tipos: 'historical' o 'social'
    - clinical_role: 'context'
-   - Qué representa: Condiciones de vida actuales o historia que alteran el valor de las consecuencias (ej. "Privación de afecto", "Agotamiento crónico").
+   - Pautas vinculares tempranas, historia familiar, exigencias escolares/laborales, factores biologicos.
 
-2. COLUMNA 2: ESTÍMULOS DISCRIMINATIVOS / DETONANTES (Señales Inmediatas, ED) (3 a 4 nodos):
+2. COLUMNA 2: ESTIMULOS DISCRIMINATIVOS / DETONANTES (8 a 11 nodos):
    - Tipos: 'antecedent'
    - clinical_role: 'antecedent'
-   - Qué representa: La señal específica aquí-y-ahora que dispara el bucle.
+   - Situaciones concretas e interacciones interpersonales exactas que detonan el malestar.
 
-3. COLUMNA 3: EVENTOS PRIVADOS (Respuestas Cognitivas y Somáticas, RC/RF) (4 a 5 nodos):
+3. COLUMNA 3: EVENTOS PRIVADOS (14 a 18 nodos):
    - Tipos: 'cognitive' o 'physiological'
-   - clinical_role: 'cognitive'
-   - Qué representa: Pensamientos, reglas verbales, emociones y sensaciones físicas.
+   - clinical_role: 'cognitive' o 'physiological'
+   - Pensamientos automaticos exactos, dudas paralizantes, sensaciones somatico-viscerales (pecho, cuello, taquicardia).
 
-4. COLUMNA 4: RESPUESTA OPERANTE (Conductas Observables y Encubiertas, RO) (4 a 5 nodos):
+4. COLUMNA 4: RESPUESTA OPERANTE (10 a 14 nodos):
    - Tipos: 'motor'
    - clinical_role: 'motor'
-   - Qué representa: Lo que hace la persona (manifiesto o mental) para intentar resolver o escapar.
+   - Conductas especificas manifiestas y encubiertas: escape, procrastinacion, chequeo compulsivo, callar, aislamiento.
 
-5. COLUMNA 5: CONSECUENCIAS (A corto y largo plazo, R+/R-) (4 a 5 nodos):
+5. COLUMNA 5: CONSECUENCIAS (8 a 12 nodos):
    - Tipos: 'consequence'
    - clinical_role: 'consequence'
-   - Qué representa: El resultado ambiental/interno de la conducta.
+   - Alivio efimero inmediato, culpa tardia, deterioro vincular, agotamiento cronico, trampas de mantenimiento.
 
-6. COLUMNA 6: FUNCIÓN DEL BUCLE (El "Para Qué") (2 a 3 nodos):
+6. COLUMNA 6: FUNCION DEL BUCLE (4 a 7 nodos):
    - Tipos: 'function'
    - clinical_role: 'function'
-   - Qué representa: El objetivo funcional que mantiene el circuito vivo (ej. "Reducción de incertidumbre").
+   - Hipotesis clinicas de sentido: reduccion urgente de angustia visceral, proteccion ante abandono, control de incertidumbre.
 
-TOTAL EXACTO DE NODOS: ENTRE 20 Y 24 NODOS.
+TOTAL EXACTO DE NODOS: ENTRE 48 Y 65 NODOS.
 
-=== CONEXIONES FUNCIONALES DIRECTAS (EDGES): ENTRE 32 Y 48 CONEXIONES ===
+=== CONEXIONES FUNCIONALES DIRECTAS (EDGES): ENTRE 70 Y 105 CONEXIONES ===
 Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámica):
 1. Cadena de Contingencia y Modulación:
    - Contexto/OM -> Altera el valor de las Consecuencias y evoca los ED.
@@ -4244,7 +4217,7 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
 - id: formato "n1", "n2", "n3"...
 - type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence' | 'function'
 - clinical_role: 'context' | 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence' | 'function'
-- label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni clínico (ej. "Dificultades al relacionarse", "Sensación de no estar bien", "Presión de la familia", "Cansancio acumulado", "Necesidad de distancia").
+- label: 2 a 5 palabras. ESTRICTAMENTE PROHIBIDO usar clises vagos como "Evitacion del dolor", "Autoexigencia constante", "Sobrepensar decisiones", "Evitacion de conflictos", "Toma de decisiones impulsivas", "Intento de control", "Aislamiento emocional", "Cansancio emocional", "Busqueda de distraccion". DEBE ser una unidad funcional clinicamente precisa y contextualmente situada en la vida del paciente (ej. "Callar desacuerdos con pareja", "Tension y taquicardia al sonar telefono", "Duda paralizante sobre propio criterio", "Revisar chat compulsivamente", "Distanciamiento afectivo en relacion").
 - description: 25 a 45 palabras. MUY IMPORTANTE: Desarrolla y profundiza un poco mas en el significado de este nodo. Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar explica 'hay dificultades para ver el gran valor que hay en ti, lo cual genera agotamiento...'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
 - source: La CITA TEXTUAL EXACTA (entre comillas) de lo que dijo el usuario que inspiro este nodo. Nada de explicaciones, solo la cita directa.
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
@@ -4409,19 +4382,19 @@ ${isAdditive ? `
             const payload1 = {
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: `Genera la FORMULACION CLINICA DE CASO en Modo Grafo Funcional como una RED DENSA Y EXTENSA (EXACTAMENTE entre 32 y 45 nodos nucleares y entre 48 y 75 conexiones) basada en el Analisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
+                    { role: 'user', content: `Genera la FORMULACION CLINICA DE CASO en Modo Grafo Funcional como una RED DENSA Y EXTENSA (EXACTAMENTE entre 48 y 65 nodos nucleares y entre 70 y 105 conexiones (Formando estrellas/flores neuronales estilo Obsidian)) basada en el Analisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
 REGLAS ESENCIALES:
-- RED EXPANSIVA Y RICA (Estilo Red Neuronal / Obsidian): Genera exactamente entre 32 y 45 nodos distribuidos en los 6 pilares:
-  1. Contexto & Variables (5-7 nodos: historical/social, clinical_role: 'context')
-  2. Detonantes Inmediatos (5-7 nodos: antecedent, clinical_role: 'antecedent')
-  3. Eventos Privados (8-11 nodos: pensamientos, emociones, sensaciones somáticas, clinical_role: 'cognitive' o 'physiological')
-  4. Respuesta Operante (6-9 nodos: conductas motoras, escape, hábitos, acciones, clinical_role: 'motor')
-  5. Consecuencias (5-8 nodos: consecuencias a corto y largo plazo, trampas de mantenimiento, clinical_role: 'consequence')
-  6. Funcion del Bucle (3-5 nodos: hipótesis de sentido/función nuclear, clinical_role: 'function')
-- BUCLES MULTIPLES Y PARALELOS: Identifica y mapea entre 3 y 5 bucles o islas funcionales que conviven en el paciente (ej. bucle de autoexigencia laboral, bucle de aislamiento social, bucle somático/insomnio, bucle de evitación afectiva).
-- ESTRUCTURA DE HUBS Y SATELITES: Algunos nodos clave deben ser conectores nucleares con 4 o más conexiones (hubs), mientras que otros nodos son satélites específicos con 1 o 2 conexiones.
-- LENGUAJE HIPOTETICO Y SUAVE: Este es un mapa de HIPOTESIS clinicas para explorar con el paciente. NUNCA uses etiquetas rigidas o acusatorias absolutas (ej. NO uses "Evitar el dolor", mejor usa "Posible evasion del malestar?", o "Intento de alivio?"). Usa signos de interrogacion o palabras como "Posible", "Aparente" para mantener una postura curiosa y no encasillar al paciente de forma injusta.
-- EXACTAMENTE entre 48 y 75 conexiones funcionales que enlacen los bucles entre sí y muestren su dinámica de retroalimentación.
+- RED EXPANSIVA Y RICA (Estilo Flores/Neuronas Obsidian): Genera exactamente entre 48 y 65 nodos distribuidos en los 6 pilares:
+  1. Contexto & Variables (7-10 nodos: historical/social, clinical_role: 'context')
+  2. Detonantes Inmediatos (8-11 nodos: antecedent, clinical_role: 'antecedent')
+  3. Eventos Privados (14-18 nodos: pensamientos especificos, emociones, sensaciones somaticas, clinical_role: 'cognitive' o 'physiological')
+  4. Respuesta Operante (10-14 nodos: micro-conductas observables, escape, habitos, acciones, clinical_role: 'motor')
+  5. Consecuencias (8-12 nodos: consecuencias inmediatas y a largo plazo, trampas de mantenimiento, clinical_role: 'consequence')
+  6. Funcion del Bucle (4-7 nodos: hipotesis de sentido/funcion nuclear, clinical_role: 'function')
+- BUCLES MULTIPLES Y PARALELOS: Identifica y mapea entre 4 y 6 flores o islas funcionales que conviven en el paciente (ej. bucle de autoexigencia laboral, bucle vincular de pareja, bucle somatico de insomnio/tension, bucle de aislamiento).
+- ESTRUCTURA DE FLORES / NEURONAS CON HUBS: Cada flor tiene un nodo central (hub con 4+ conexiones) rodeado de nodos satelite (petalos con 1-2 conexiones).
+- MAXIMA ESPECIFICIDAD CLINICA: PROHIBIDO usar clises vagos como "Evitacion del dolor" o "Sobrepensar". Usa unidades funcionales situadas (ej. "Callar desacuerdos con pareja", "Tension y taquicardia al sonar telefono", "Duda paralizante sobre propio criterio").
+- EXACTAMENTE entre 70 y 105 conexiones funcionales directas.
 - CERO PIVOTES: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:".
 - Cada nodo con su 'clinical_role', 'label' certero e hipotetico (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
 Datos clinicos del paciente:\n` + context }
@@ -5403,17 +5376,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                     y2 = curY;
                 }
 
-                const isFb = pathEl.getAttribute('data-isfeedback') === '1' || x2 < x1;
-                if (isFb) {
-                    const midY = (y1 + y2) / 2;
-                    const horizontalDist = Math.abs(x1 - x2);
-                    const bowDir = midY < 50 ? -1 : 1;
-                    const bowDepth = Math.min(13, Math.max(5, horizontalDist * 0.16));
-                    const cpOffset = Math.min(horizontalDist * 0.35, 12);
-                    pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1 - cpOffset} ${y1 + (bowDir * bowDepth * 0.85)}, ${x2 + cpOffset} ${y2 + (bowDir * bowDepth * 0.85)}, ${x2} ${y2}`);
-                } else {
-                    pathEl.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
-                }
+                pathEl.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
             }
         } catch (err) {
             // silent fail on edge sync
@@ -7184,21 +7147,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                             const isProgression = edge.type === 'progression';
                                             const isFeedback = edge.type === 'feedback' || target.x < source.x;
 
-                                            let pathData;
-                                            if (isFeedback) {
-                                                const midX = (x1 + x2) / 2;
-                                                const midY = (y1 + y2) / 2;
-                                                const horizontalDist = Math.abs(x1 - x2);
-                                                const bowDir = midY < 50 ? -1 : 1;
-                                                const bowDepth = Math.min(13, Math.max(5, horizontalDist * 0.16));
-                                                const cpOffset = Math.min(horizontalDist * 0.35, 12);
-                                                pathData = `M ${x1} ${y1} C ${x1 - cpOffset} ${y1 + (bowDir * bowDepth * 0.85)}, ${x2 + cpOffset} ${y2 + (bowDir * bowDepth * 0.85)}, ${x2} ${y2}`;
-                                            } else {
-                                                const deltaX = x2 - x1;
-                                                const curvature = Math.max(3.5, Math.min(Math.abs(deltaX) * 0.42, 14));
-                                                // Make edges completely straight to fit the minimalist Obsidian aesthetic
-                                                pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
-                                            }
+                                            // 100% straight connections everywhere (Obsidian aesthetic)
+                                            let pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
 
                                             // Determine highlight state
                                             const activeNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
