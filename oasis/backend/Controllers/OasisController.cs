@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Oasis.Backend.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -1009,20 +1009,37 @@ namespace Oasis.Backend.Controllers
                 if (string.IsNullOrEmpty(resolvedKey) || IsPlaceholderOrLegacyKey(resolvedKey)) {
                     if (provider == "deepseek") {
                         resolvedKey = _config["DeepSeek:Key"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+                        if (string.IsNullOrEmpty(resolvedKey) || IsPlaceholderOrLegacyKey(resolvedKey)) {
+                            resolvedKey = _config["OpenAI:Key"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                            if (!string.IsNullOrEmpty(resolvedKey) && !IsPlaceholderOrLegacyKey(resolvedKey)) {
+                                provider = "openai";
+                                req.Endpoint = null;
+                            }
+                        }
                     } else {
                         // "openai"
                         resolvedKey = _config["OpenAI:Key"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? _config["DeepSeek:Key"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY"); 
                     }
                 }
-                // Fallbacks finales (evita crashear si no hay)
-                resolvedKey = GetResolvedAIKey(resolvedKey);
+                
+                if (string.IsNullOrEmpty(resolvedKey) || IsPlaceholderOrLegacyKey(resolvedKey)) {
+                    resolvedKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+                    if (!string.IsNullOrEmpty(resolvedKey) && !IsPlaceholderOrLegacyKey(resolvedKey)) {
+                        provider = "openai";
+                        req.Endpoint = null;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(resolvedKey) || IsPlaceholderOrLegacyKey(resolvedKey)) {
+                    resolvedKey = GetResolvedAIKey(resolvedKey);
+                }
 
                 if (IsPlaceholderOrLegacyKey(resolvedKey)) {
                     return BadRequest(new { msg = $"Clave de IA no disponible para proveedor {provider}. Configúrala en variables de entorno (OPENAI_API_KEY o DEEPSEEK_API_KEY)." });
                 }
 
                 string resolvedEndpoint = req.Endpoint ?? "";
-                if (string.IsNullOrEmpty(resolvedEndpoint)) {
+                if (string.IsNullOrEmpty(resolvedEndpoint) || (provider == "openai" && resolvedEndpoint.Contains("deepseek.com"))) {
                     if (provider == "deepseek") {
                         resolvedEndpoint = _config["DeepSeek:BaseUrl"] ?? Environment.GetEnvironmentVariable("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com/chat/completions";
                     } else {
@@ -1034,6 +1051,9 @@ namespace Oasis.Backend.Controllers
                 request.Headers.Add("Authorization", $"Bearer {resolvedKey}");
                 
                 var jsonPayload = JsonSerializer.Serialize(req.Payload, JsonOptions);
+                if (provider == "openai" && jsonPayload.Contains("\"deepseek-chat\"")) {
+                    jsonPayload = jsonPayload.Replace("\"deepseek-chat\"", "\"gpt-4o-mini\"");
+                }
                 request.Content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
 
                 using var response = await _httpClient.SendAsync(request);

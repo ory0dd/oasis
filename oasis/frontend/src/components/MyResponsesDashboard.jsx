@@ -58,6 +58,8 @@ export const softenNodeLabel = (label) => {
 
     const transformations = [
         [/\bopresi[oó]n\s+tor[aá]cica\b/gi, "Tensión por estrés"],
+        [/\bsensaci[oó]n\s+de\s+nudo\s+en\s+el\s+pecho\b/gi, "Tensión o nudo en el pecho"],
+        [/\bnudo\s+en\s+el\s+pecho\b/gi, "Tensión o nudo en el pecho"],
         [/\bsensaci[oó]n\s+de\s+peso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
         [/\bpeso\s+en\s+el\s+pecho\b/gi, "Tensión acumulada"],
         [/\bnudo\s+en\s+la\s+garganta\b/gi, "Incomodidad al expresarse"],
@@ -348,8 +350,12 @@ const resolveCollisions = (nodes) => {
                 if (Math.abs(dx) < 0.1) dx = (Math.random() - 0.5) * 1.5;
                 if (Math.abs(dy) < 0.1) dy = (Math.random() - 0.5) * 1.5;
 
-                const nx = dx / minDx;
-                const ny = dy / minDy;
+                const isSatPair = (n1.is_satellite || n2.is_satellite);
+                const curMinDx = isSatPair ? 4.6 : minDx;
+                const curMinDy = isSatPair ? 3.9 : minDy;
+
+                const nx = dx / curMinDx;
+                const ny = dy / curMinDy;
                 const distNorm = Math.hypot(nx, ny);
 
                 if (distNorm < 1.0) {
@@ -358,8 +364,8 @@ const resolveCollisions = (nodes) => {
                     const ux = nx / (distNorm || 0.001);
                     const uy = ny / (distNorm || 0.001);
 
-                    const moveX = ux * overlap * minDx * damping * 0.5;
-                    const moveY = uy * overlap * minDy * damping * 0.5;
+                    const moveX = ux * overlap * curMinDx * damping * 0.5;
+                    const moveY = uy * overlap * curMinDy * damping * 0.5;
 
                     // Hubs have high inertia (they remain centered, satellites yield)
                     const weight1 = n1.is_island_hub ? 0.2 : 0.8;
@@ -1952,6 +1958,7 @@ Devuelve estrictamente el JSON sin formato extra.
     const [moldFeedback, setMoldFeedback] = useState('');
     const [shouldBranchGraph, setShouldBranchGraph] = useState(true);
     const [isMoldingNode, setIsMoldingNode] = useState(false);
+    const [moldSuccessToast, setMoldSuccessToast] = useState(null);
 
     const synthesizeMoldedNodeFallback = (targetNode, feedbackText, autoBranch = true) => {
         const raw = (feedbackText || '').trim();
@@ -2083,6 +2090,19 @@ Devuelve estrictamente el JSON sin formato extra.
             const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || selectedNode;
             if (!targetNode) return;
 
+            // Recopilar factores conectados actualmente para permitir que la IA los resignifique
+            const connectedNeighborNodes = (afcData?.edges || [])
+                .filter(e => e.source === targetNode.id || e.target === targetNode.id)
+                .map(e => {
+                    const otherId = e.source === targetNode.id ? e.target : e.source;
+                    return (afcData?.nodes || []).find(n => n.id === otherId);
+                })
+                .filter(Boolean);
+
+            const neighborsContext = connectedNeighborNodes.length > 0
+                ? connectedNeighborNodes.map(n => `- [${n.id}] "${n.label}" (Rol: ${n.clinical_role || n.type}): ${n.description || ''}`).join('\n')
+                : 'Ninguno conectado directamente';
+
             let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             if (activeKey && (
                 activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
@@ -2096,49 +2116,57 @@ Devuelve estrictamente el JSON sin formato extra.
                 activeKey = '';
             }
 
-            const prompt = `Actúa como un psicólogo conductual experto del sistema Oasis.
-El consultante o terapeuta está moldeando e integrando la historia real de su caso para hacer crecer orgánicamente su red clínica funcional (estilo constelación Obsidian).
+            const promptSystem = `Eres el motor clínico experto de formulación conductual y contextual en Oasis (estilo constelación Obsidian).
+Tu misión es reformular la red clínica funcional adaptándola con precisión absoluta a la realidad y vivencia auténtica del consultante o terapeuta.
+Elimina cualquier suposición falsa o inventada y devuelve estrictamente un objeto JSON válido con ortografía y tildes perfectas en español.`;
 
-NODO PRINCIPAL A MODIFICAR:
-- Título: "${targetNode.label}"
+            const promptUser = `El consultante o terapeuta está moldeando e integrando la realidad de este factor en su red clínica:
+
+NODO PRINCIPAL A REFORMULAR:
+- ID: "${targetNode.id}"
+- Título actual: "${targetNode.label}"
+- Rol funcional: "${targetNode.clinical_role || targetNode.type || 'cognitive'}"
 - Descripción actual: "${targetNode.description || ''}"
-- Rol funcional: "${targetNode.clinical_role || targetNode.type || ''}"
+
+FACTORES CONECTADOS EXISTENTES EN SU MAPA:
+${neighborsContext}
 
 ACLARACIÓN Y CONTEXTO REAL DADO POR EL USUARIO:
 "${feedbackText.trim()}"
 
-INSTRUCCIONES CLÍNICAS:
-1. Elimina cualquier suposición falsa o inventada.
-2. Reformula el nodo principal con base 100% en la aclaración del usuario.
-${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamente de lo que explicó el usuario (ej: conductas que surgen de esto, sensaciones somáticas o costos vitales) para que el mapa crezca orgánicamente con nuevos nodos interconectados.
-4. Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura:
+OBJETIVOS CLÍNICOS EXACTOS:
+1. REFORMULAR EL NODO PRINCIPAL: Reemplaza el título "${targetNode.label}" por un título completamente nuevo, conciso (2 a 5 palabras) y clínicamente preciso que refleje fielmente lo que ocurre según la aclaración del usuario. NUNCA devuelvas el mismo título antiguo si la aclaración lo contradice o matiza. Redacta una descripción clara y empática (máximo 2-3 líneas) y una pregunta existencial o reflexiva empática.
+2. RESIGNIFICAR FACTORES CONECTADOS EXISTENTES ("affectedConnectedNodes"): Si la aclaración cambia la función, causa o interpretación de alguno de los factores conectados existentes en la lista previa (ej. sensaciones somáticas como nudo en el pecho o tensión, conductas o pensamientos vinculados), incluye en "affectedConnectedNodes" los ajustes necesarios (nuevo título o descripción resignificada) para que la constelación completa guarde armonía y veracidad.
+${autoBranch ? `3. GENERAR FACTORES DERIVADOS CERCANOS ("branchNodes"): Extrae de 2 a 3 nuevos factores satélites (derivados directos) que completen la red funcional a partir de la aclaración (ej. sensaciones corporales, conductas de desconexión o costos emocionales).` : ''}
+
+ESTRUCTURA JSON OBLIGATORIA:
 {
   "updatedNode": {
-    "label": "Título conciso (máximo 4 a 5 palabras)",
-    "description": "Descripción clara y sobria de cómo opera este factor en su vida (máximo 2 líneas)",
+    "label": "Nuevo título clínico conciso (2-5 palabras)",
+    "description": "Descripción clara, empática y ajustada a la realidad",
     "question": "¿Pregunta reflexiva empática para explorar este factor?"
   },
+  "affectedConnectedNodes": [
+    {
+      "id": "ID_del_nodo_conectado_existente",
+      "label": "Título resignificado",
+      "description": "Descripción adaptada al nuevo contexto"
+    }
+  ],
   "branchNodes": [
     {
-      "label": "Título del nuevo factor conectado",
+      "label": "Título del nuevo factor derivado",
       "type": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
       "clinical_role": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
-      "description": "Descripción clínica breve según lo que contó el usuario",
+      "description": "Descripción clínica breve de este factor",
       "question": "¿Pregunta reflexiva sobre este nuevo factor?"
     }
   ]
-}` : `3. Devuelve EXCLUSIVAMENTE un objeto JSON:
-{
-  "updatedNode": {
-    "label": "Título conciso (máximo 4 a 5 palabras)",
-    "description": "Descripción clara de cómo opera este factor (máx 2 líneas)",
-    "question": "¿Pregunta reflexiva para explorar este factor?"
-  }
-}`}`;
+}`;
 
-            // AbortController con timeout estricto de 7.5s para garantizar que la UI nunca se quede congelada en "Moldeando..."
+            // AbortController con timeout de 25s
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 7500);
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
 
             let parsedResult = null;
             try {
@@ -2152,26 +2180,46 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                     if (model === 'gpt-4o-mini') model = 'deepseek-chat';
                 }
 
-                const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    signal: controller.signal,
-                    body: JSON.stringify({
-                        provider: provider,
-                        endpoint: endpoint || null,
-                        key: activeKey || null,
-                        payload: {
-                            model: model,
-                            messages: [{ role: 'system', content: prompt }],
-                            response_format: { type: "json_object" },
-                            temperature: 0.35,
-                            max_tokens: 1500
-                        }
-                    })
-                });
+                const payloadKey = (activeKey && activeKey.length > 10) ? activeKey : null;
+
+                const makeAiCall = async (targetApiUrl) => {
+                    return await fetch(`${targetApiUrl}/api/oasis/config/chat-completion`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal,
+                        body: JSON.stringify({
+                            provider: provider,
+                            endpoint: endpoint || null,
+                            key: payloadKey,
+                            payload: {
+                                model: model,
+                                messages: [
+                                    { role: 'system', content: promptSystem },
+                                    { role: 'user', content: promptUser }
+                                ],
+                                response_format: { type: "json_object" },
+                                temperature: 0.35,
+                                max_tokens: 1500
+                            }
+                        })
+                    });
+                };
+
+                let res = null;
+                try {
+                    res = await makeAiCall(API_URL);
+                } catch (firstErr) {
+                    if (API_URL.includes('localhost') || API_URL.includes('127.0.0.1')) {
+                        console.warn("[MoldNode] API local no disponible, reintentando con servidor Railway...");
+                        res = await makeAiCall('https://oasis-production-6303.up.railway.app');
+                    } else {
+                        throw firstErr;
+                    }
+                }
+
                 clearTimeout(timeoutId);
 
-                if (res.ok) {
+                if (res && res.ok) {
                     const data = await res.json();
                     const content = data?.choices?.[0]?.message?.content?.trim();
                     if (content) {
@@ -2185,22 +2233,24 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
             }
 
             // Si la IA no devolvió respuesta estructurada o falló, sintetizar clínicamente de forma instantánea
-            if (!parsedResult || !parsedResult.updatedNode) {
+            if (!parsedResult || !parsedResult.updatedNode || !parsedResult.updatedNode.label) {
                 parsedResult = synthesizeMoldedNodeFallback(targetNode, feedbackText, autoBranch);
             }
 
-            const updatedData = parsedResult?.updatedNode || {
-                label: targetNode.label,
-                description: feedbackText.trim(),
-                question: targetNode.question
+            const updatedData = {
+                label: sanitizeSpanishText(parsedResult?.updatedNode?.label || targetNode.label),
+                description: sanitizeSpanishText(parsedResult?.updatedNode?.description || feedbackText.trim()),
+                question: sanitizeSpanishText(parsedResult?.updatedNode?.question || targetNode.question)
             };
 
             const branchNodes = parsedResult?.branchNodes || [];
+            const affectedConnectedNodes = parsedResult?.affectedConnectedNodes || [];
 
             // Clonar profundamente nodos y aristas para reactividad limpia
             const newNodes = (afcData?.nodes || []).map(n => ({ ...n }));
             const newEdges = (afcData?.edges || []).map(e => ({ ...e }));
 
+            // 1. Actualizar el nodo principal
             const nodeIndex = newNodes.findIndex(n => n.id === nodeId);
             let updatedTargetNode;
             if (nodeIndex > -1) {
@@ -2225,42 +2275,56 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                 newNodes.push(updatedTargetNode);
             }
 
+            // 2. Resignificar factores conectados afectados si la IA propuso ajustes
+            if (Array.isArray(affectedConnectedNodes) && affectedConnectedNodes.length > 0) {
+                affectedConnectedNodes.forEach(aff => {
+                    const affIdx = newNodes.findIndex(n => n.id === aff.id);
+                    if (affIdx > -1) {
+                        newNodes[affIdx] = {
+                            ...newNodes[affIdx],
+                            label: aff.label ? sanitizeSpanishText(aff.label) : newNodes[affIdx].label,
+                            description: aff.description ? sanitizeSpanishText(aff.description) : newNodes[affIdx].description,
+                            is_corrected: true,
+                            molded_note: `Resignificado en coherencia con "${updatedData.label}": "${feedbackText.trim()}"`
+                        };
+                    }
+                });
+            }
+
             const spawnedNodeLabels = [];
-            // Integrar ramificaciones en el mapa manteniendo el orden de columnas clínicas
+            // 3. Integrar ramificaciones MUY CERQUITAS del nodo padre (satélites compactos en órbita cerrada)
             if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
                 const parentX = targetNode.x || 50;
                 const parentY = targetNode.y || 50;
+                const totalBranches = branchNodes.length;
 
                 branchNodes.forEach((bNode, idx) => {
                     const role = bNode.clinical_role || bNode.type || 'cognitive';
-                    let targetBaseX = parentX + 15;
-                    if (role === 'context') targetBaseX = 12;
-                    else if (role === 'antecedent' || role === 'historical') targetBaseX = 27;
-                    else if (role === 'cognitive' || role === 'physiological') targetBaseX = 42;
-                    else if (role === 'motor') targetBaseX = 57;
-                    else if (role === 'consequence') targetBaseX = 72;
-                    else if (role === 'function') targetBaseX = 87;
-
-                    const newX = Math.max(8, Math.min(92, targetBaseX + (idx % 2 === 0 ? 1 : -1) * 2));
-                    const newY = Math.max(12, Math.min(88, parentY + (idx === 0 ? -14 : idx === 1 ? 14 : 26)));
+                    // Radio orbital compacto: 4.8% horizontal y 4.2% vertical para que queden inmediatamente adyacentes
+                    const angle = (idx * (2 * Math.PI / Math.max(1, totalBranches))) + (Math.PI / 4);
+                    const radiusX = 4.8;
+                    const radiusY = 4.2;
+                    const newX = Math.max(6, Math.min(94, parentX + Math.cos(angle) * radiusX));
+                    const newY = Math.max(8, Math.min(92, parentY + Math.sin(angle) * radiusY));
                     const newId = 'molded_' + Date.now().toString(36) + '_' + idx;
 
                     const spawnedNode = {
                         id: newId,
                         type: role,
                         clinical_role: role,
-                        label: bNode.label,
-                        description: bNode.description,
-                        question: bNode.question || "¿De qué manera notas que esto se manifiesta en tu día a día?",
+                        label: sanitizeSpanishText(bNode.label),
+                        description: sanitizeSpanishText(bNode.description),
+                        question: sanitizeSpanishText(bNode.question || "¿De qué manera notas que esto se manifiesta en tu día a día?"),
                         x: newX,
                         y: newY,
                         is_satellite: true,
                         is_corrected: true,
+                        parent_id: targetNode.id,
                         molded_note: `Factor derivado de aclaración: "${feedbackText.trim()}"`
                     };
 
                     newNodes.push(spawnedNode);
-                    spawnedNodeLabels.push(bNode.label);
+                    spawnedNodeLabels.push(spawnedNode.label);
 
                     newEdges.push({
                         source: targetNode.id,
@@ -2278,23 +2342,32 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                 edges: newEdges
             };
 
-            // 1. Desactivar filtro de patrón previo para que se vean todos los nodos y ramas nuevas
+            // 4. Desactivar filtro de patrón previo para que se vean todos los nodos y ramas nuevas
             setSelectedPatternId(null);
 
-            // 2. Actualizar estado reactivo
+            // 5. Actualizar estado reactivo
             setAfcData(newAfcData);
             setSelectedNode(updatedTargetNode);
 
-            // 3. Persistir en todos los niveles locales y nube clínica
+            // 6. Persistir en todos los niveles locales y nube clínica permanente
             try {
                 localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
                 localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+                if (user) {
+                    fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData)
+                        })
+                    }).catch(() => {});
+                }
             } catch (e) {
                 console.error("Error al persistir afcData:", e);
             }
 
-            // 4. Registrar en la Memoria Clínica Permanente para Asistente Documental / Kio
+            // 7. Registrar en la Memoria Clínica Permanente para Asistente Documental / Kio
             try {
                 const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
                 currentCorrections.push({
@@ -2315,44 +2388,22 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                 console.error("Error al registrar corrección clínica:", e);
             }
 
-            // 5. Sincronizar el puntero del tour para que apunte con certeza al nodo adaptado
-            const clinicalRoleOrder = {
-                antecedent: 0,
-                cognitive: 1,
-                internal_barrier: 1,
-                physiological: 2,
-                motor: 3,
-                experiential_avoidance: 3,
-                consequence: 4,
-                maintaining_trap: 4
-            };
-            const typeOrder = {
-                historical: 0,
-                social: 0,
-                cognitive: 1,
-                physiological: 2,
-                biological: 2,
-                motor: 3,
-                consequence: 4
-            };
-            const sorted = [...resolvedNodes].sort((a, b) => {
-                const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
-                const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
-                if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
-                    return roleA - roleB;
-                }
-                const orderA = typeOrder[a.type] ?? 99;
-                const orderB = typeOrder[b.type] ?? 99;
-                if (orderA !== orderB) return orderA - orderB;
-                if (a.x !== b.x) return a.x - b.x;
-                return a.y - b.y;
-            });
-            const newTourIdx = sorted.findIndex(n => n.id === nodeId);
+            // 8. Sincronizar el puntero del tour para que apunte con certeza al nodo adaptado
+            const newTourIdx = resolvedNodes.findIndex(n => n.id === nodeId);
             if (newTourIdx !== -1) {
                 setTourActiveIndex(newTourIdx);
             }
+            setSelectedNode(updatedTargetNode);
 
-            // 6. Suave re-centrado y encuadre visual de la cámara en el nodo adaptado
+            // 9. Mostrar toast de confirmación clínica
+            setMoldSuccessToast({
+                nodeId: updatedTargetNode.id,
+                label: updatedData.label,
+                branches: branchNodes.length
+            });
+            setTimeout(() => setMoldSuccessToast(null), 6500);
+
+            // 10. Suave re-centrado y encuadre visual de la cámara en el nodo adaptado
             setTimeout(() => {
                 zoomToNode(updatedTargetNode);
             }, 60);
@@ -2361,6 +2412,7 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
             setMoldFeedback('');
         } catch (err) {
             console.error("Error al moldear nodo:", err);
+            alert("Ocurrió un error al moldear el factor. Por favor inténtalo de nuevo.");
         } finally {
             setIsMoldingNode(false);
         }
@@ -8817,6 +8869,15 @@ Por favor, analicemos:
 ) : (
 
                                                         <div>
+                                                            {/* Banner de confirmación cuando el nodo activo acaba de ser moldeado */}
+                                                            {moldSuccessToast && moldSuccessToast.nodeId === currentNode.id && (
+                                                                <div className="mb-2.5 p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 to-zinc-900/80 border border-emerald-500/50 flex items-center gap-2.5 text-emerald-300 animate-in fade-in shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                                                                    <Sparkles size={14} className="text-emerald-400 shrink-0 animate-pulse" />
+                                                                    <span className="text-[10.5px] font-medium leading-snug">
+                                                                        Factor reformulado exitosamente y red expandida. Se adaptaron también los factores corporales y emocionales vinculados.
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                             <div className="flex items-center gap-2 flex-wrap mb-1">
                                                                 <h4 className="text-xs sm:text-[14px] font-bold text-white leading-snug tracking-tight">
                                                                     {sanitizeSpanishText(currentNode.is_corrected ? currentNode.label : softenNodeLabel(currentNode.label))}
@@ -8961,6 +9022,52 @@ Por favor, analicemos:
                                         </div>
                                 );
                             })()}
+
+                            {/* Floating Toast Notification for Mold with AI */}
+                            {moldSuccessToast && (
+                                <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-[300] pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-zinc-950/95 border border-emerald-500/50 shadow-[0_0_35px_rgba(16,185,129,0.35)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-[92vw]">
+                                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                                        <Sparkles size={16} className="text-emerald-400 animate-pulse" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-[12px] font-bold text-white tracking-tight">
+                                                {moldSuccessToast.label ? `"${sanitizeSpanishText(moldSuccessToast.label)}"` : 'Factor adaptado'}
+                                            </span>
+                                            <span className="text-[8.5px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/40">
+                                                Adaptado con IA
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-emerald-200/80 mt-0.5">
+                                            {moldSuccessToast.branches > 0 
+                                                ? `Red expandida con ${moldSuccessToast.branches} ramificaciones satélite contiguas y factores conectados re-significados.`
+                                                : `Factor re-formulado y factores conectados re-significados con éxito.`}
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setMoldSuccessToast(null)}
+                                        className="text-zinc-500 hover:text-white p-1 rounded-md transition-colors ml-2"
+                                        title="Cerrar notificación"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Floating Toast Notification for Insight Actions */}
+                            {insightActionToast && (
+                                <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-[300] pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-zinc-950/95 border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.35)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-[92vw]">
+                                    <Sparkles size={15} className="text-purple-400 animate-pulse shrink-0" />
+                                    <span className="text-xs font-medium text-purple-200">{insightActionToast}</span>
+                                    <button 
+                                        onClick={() => setInsightActionToast(null)}
+                                        className="text-zinc-500 hover:text-white p-1 rounded-md transition-colors ml-2"
+                                        title="Cerrar notificación"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
 
                         </div>
 
