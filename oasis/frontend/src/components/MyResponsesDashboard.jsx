@@ -7092,7 +7092,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                             } else {
                                                 const deltaX = x2 - x1;
                                                 const curvature = Math.max(3.5, Math.min(Math.abs(deltaX) * 0.42, 14));
-                                                pathData = `M ${x1} ${y1} C ${x1 + curvature} ${y1}, ${x2 - curvature} ${y2}, ${x2} ${y2}`;
+                                                // Make edges completely straight to fit the minimalist Obsidian aesthetic
+                                                pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
                                             }
 
                                             // Determine highlight state
@@ -7333,6 +7334,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         nodeClass += isDimmed ? "opacity-30 " : "opacity-100 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] ";
 
                                         return (
+                                            
                                             <div
                                                 key={node.id}
                                                 id={`afc-node-${node.id}`}
@@ -7342,63 +7344,52 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
                                                 onDragStart={(e) => e.preventDefault()}
-                                                className={nodeClass}
-                                                style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
+                                                className={`absolute flex flex-col items-center justify-center cursor-pointer transition-all duration-500 group ${isHighlighted ? 'z-50' : (isAnyNodeSelected ? 'opacity-20 z-10' : 'z-20 hover:z-40')}`}
+                                                style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none' }}
                                             >
-
                                                 {(() => {
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
                                                     const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
-                                                    const isIntegrated = node.status === 'integrated';
-                                                    const isDashed = Boolean(node.dashed);
-
-                                                    let borderStyle = theme.border;
-                                                    let bgStyle = "bg-[#0c0d15]/85";
-                                                    let shadowStyle = theme.glow;
-                                                    let textStyle = theme.textColor;
-
-                                                    if (isIntegrated) {
-                                                        borderStyle = "border-amber-300/80 bg-amber-950/40 shadow-[0_0_24px_rgba(251,191,36,0.35)]";
-                                                        textStyle = "text-amber-200 font-bold";
-                                                    } else if (isSelected) {
-                                                        borderStyle = theme.selected;
-                                                        bgStyle = "bg-[#111222]/95";
-                                                        textStyle = "text-white font-semibold";
-                                                    } else if (isDashed) {
-                                                        borderStyle = "border-dashed border-sky-400/50 bg-sky-950/30";
-                                                        textStyle = "text-sky-200";
-                                                    }
-
+                                                    const accent = theme.color || '#a78bfa';
+                                                    
                                                     return (
-                                                        <div 
-                                                            className={`group relative min-w-[105px] max-w-[155px] px-2.5 py-1.5 rounded-[1.2rem] border backdrop-blur-xl transition-all duration-300 flex flex-col items-center justify-center gap-1 shadow-md ${bgStyle} ${borderStyle} ${shadowStyle} hover:-translate-y-0.5 active:scale-95`}
-                                                            style={{
-                                                                boxShadow: isSelected 
-                                                                    ? `0 0 20px ${theme.color}45, 0 6px 18px rgba(0,0,0,0.4)`
-                                                                    : `0 3px 12px rgba(0,0,0,0.3)`
-                                                            }}
-                                                        >
-                                                            {/* Soft inner ambient gloss shine */}
-                                                            <div className="absolute inset-x-2.5 top-0.5 h-[1px] rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
-
-                                                            {/* Cute Micro-badge pill */}
+                                                        <div className="relative flex flex-col items-center group-hover:scale-110 transition-transform duration-300">
+                                                            {/* Minimalist Glowing Dot (Neuronal Style) */}
                                                             <div 
-                                                                className="flex items-center gap-1 px-2 py-0.5 rounded-full border text-[7.5px] font-bold tracking-wider uppercase select-none shadow-sm backdrop-blur-sm"
+                                                                className={`w-6 h-6 rounded-full border-[2.5px] transition-all duration-300 shadow-xl ${isSelected || isHighlighted ? 'scale-125' : ''}`}
                                                                 style={{
-                                                                    backgroundColor: `${theme.color}18`,
-                                                                    borderColor: `${theme.color}35`,
-                                                                    color: theme.color
+                                                                    borderColor: accent,
+                                                                    backgroundColor: isSelected || isHighlighted ? accent : '#050505',
+                                                                    boxShadow: isSelected || isHighlighted ? `0 0 35px ${accent}, 0 0 15px ${accent} inset` : `0 0 15px ${accent}40`,
+                                                                    opacity: node.dashed ? 0.7 : 1
                                                                 }}
                                                             >
-                                                                <span className="text-[9px] leading-none">{theme.icon}</span>
-                                                                <span className="leading-none">{theme.category}</span>
-                                                                {isIntegrated && <span className="text-[7.5px] text-amber-300 ml-0.5">✨</span>}
+                                                                {/* Inner pulse ring if selected */}
+                                                                {(isSelected || isHighlighted) && (
+                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: accent }} />
+                                                                )}
                                                             </div>
-
-                                                            {/* Node Label */}
-                                                            <span className={`text-[9.5px] font-medium text-center leading-tight break-words px-0.5 line-clamp-2 [text-shadow:0_1px_2px_rgba(0,0,0,0.85)] ${textStyle}`}>
-                                                                {softenNodeLabel(node.label)}
-                                                            </span>
+                                                            
+                                                            {/* Floating Label (Obsidian Style) */}
+                                                            <div className={`absolute top-8 flex flex-col items-center w-36 pointer-events-none transition-all duration-300 ${isSelected || isHighlighted ? 'translate-y-1' : ''}`}>
+                                                                {/* Micro-badge for role */}
+                                                                <span 
+                                                                    className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full backdrop-blur-md border shadow-lg mb-1" 
+                                                                    style={{ 
+                                                                        color: accent,
+                                                                        backgroundColor: `${accent}10`,
+                                                                        borderColor: `${accent}25`,
+                                                                        textShadow: `0 1px 2px rgba(0,0,0,0.8)`
+                                                                    }}
+                                                                >
+                                                                    {theme.icon} {node.clinical_role || theme.category}
+                                                                </span>
+                                                                
+                                                                {/* Main Text */}
+                                                                <span className={`text-[10px] text-center font-medium leading-tight px-1.5 py-0.5 rounded backdrop-blur-sm ${isSelected || isHighlighted ? 'text-white font-bold' : 'text-zinc-300'} [text-shadow:0_1px_3px_rgba(0,0,0,0.95)]`}>
+                                                                    {node.label}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     );
                                                 })()}
