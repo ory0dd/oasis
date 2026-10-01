@@ -7344,7 +7344,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
                                                 onDragStart={(e) => e.preventDefault()}
-                                                className={`absolute flex flex-col items-center justify-center cursor-pointer transition-all duration-500 group ${isHighlighted ? 'z-50' : (isAnyNodeSelected ? 'opacity-20 z-10' : 'z-20 hover:z-40')}`}
+                                                className={`absolute flex flex-col items-center justify-center cursor-pointer transition-all duration-500 group ${isConnected ? 'z-50' : (isDimmed ? 'opacity-20 z-10' : 'z-20 hover:z-40')}`}
                                                 style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none' }}
                                             >
                                                 {(() => {
@@ -7356,22 +7356,22 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         <div className="relative flex flex-col items-center group-hover:scale-110 transition-transform duration-300">
                                                             {/* Minimalist Glowing Dot (Neuronal Style) */}
                                                             <div 
-                                                                className={`w-6 h-6 rounded-full border-[2.5px] transition-all duration-300 shadow-xl ${isSelected || isHighlighted ? 'scale-125' : ''}`}
+                                                                className={`w-6 h-6 rounded-full border-[2.5px] transition-all duration-300 shadow-xl ${isSelected || isConnected ? 'scale-125' : ''}`}
                                                                 style={{
                                                                     borderColor: accent,
-                                                                    backgroundColor: isSelected || isHighlighted ? accent : '#050505',
-                                                                    boxShadow: isSelected || isHighlighted ? `0 0 35px ${accent}, 0 0 15px ${accent} inset` : `0 0 15px ${accent}40`,
+                                                                    backgroundColor: isSelected || isConnected ? accent : '#050505',
+                                                                    boxShadow: isSelected || isConnected ? `0 0 35px ${accent}, 0 0 15px ${accent} inset` : `0 0 15px ${accent}40`,
                                                                     opacity: node.dashed ? 0.7 : 1
                                                                 }}
                                                             >
                                                                 {/* Inner pulse ring if selected */}
-                                                                {(isSelected || isHighlighted) && (
+                                                                {(isSelected || isConnected) && (
                                                                     <div className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ backgroundColor: accent }} />
                                                                 )}
                                                             </div>
                                                             
                                                             {/* Floating Label (Obsidian Style) */}
-                                                            <div className={`absolute top-8 flex flex-col items-center w-36 pointer-events-none transition-all duration-300 ${isSelected || isHighlighted ? 'translate-y-1' : ''}`}>
+                                                            <div className={`absolute top-8 flex flex-col items-center w-36 pointer-events-none transition-all duration-300 ${isSelected || isConnected ? 'translate-y-1' : ''}`}>
                                                                 {/* Micro-badge for role */}
                                                                 <span 
                                                                     className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full backdrop-blur-md border shadow-lg mb-1" 
@@ -7386,7 +7386,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 </span>
                                                                 
                                                                 {/* Main Text */}
-                                                                <span className={`text-[10px] text-center font-medium leading-tight px-1.5 py-0.5 rounded backdrop-blur-sm ${isSelected || isHighlighted ? 'text-white font-bold' : 'text-zinc-300'} [text-shadow:0_1px_3px_rgba(0,0,0,0.95)]`}>
+                                                                <span className={`text-[10px] text-center font-medium leading-tight px-1.5 py-0.5 rounded backdrop-blur-sm ${isSelected || isConnected ? 'text-white font-bold' : 'text-zinc-300'} [text-shadow:0_1px_3px_rgba(0,0,0,0.95)]`}>
                                                                     {node.label}
                                                                 </span>
                                                             </div>
