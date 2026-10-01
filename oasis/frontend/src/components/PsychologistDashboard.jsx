@@ -4,13 +4,12 @@ import { Aperture, Mic,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
 import { saveObservation, getObservations } from '../utils/db';
 import MyResponsesDashboard from './MyResponsesDashboard';
-import FloatingNotebook from './FloatingNotebook';
 import WhatsAppCRM from './WhatsAppCRM';
 import { TranscriptionsTab } from './TranscriptionsTab';
 import { LLMNotebookTab } from './LLMNotebookTab';
@@ -875,7 +874,9 @@ const PsychologistDashboard = ({ onClose }) => {
         return localStorage.getItem('oasis_psych_dashboard_subview') || 'IDENTITIES';
     });
     const [activeTab, setActiveTab] = useState(() => {
-        return localStorage.getItem('oasis_psych_active_tab') || 'VISION_GENERAL';
+        const saved = localStorage.getItem('oasis_psych_active_tab') || 'VISION_GENERAL';
+        if (saved === 'REFLEXION' || saved === 'HALLAZGOS') return 'EXPLORACION_DOCS';
+        return saved;
     });
     const [isReprocessing, setIsReprocessing] = useState(false);
     const [privateNotes, setPrivateNotes] = useState('');
@@ -885,6 +886,25 @@ const PsychologistDashboard = ({ onClose }) => {
     const [cloudSyncStatus, setCloudSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'error'
     const [lastSyncTime, setLastSyncTime] = useState(null);
     const [syncNotification, setSyncNotification] = useState(null);
+
+    // Dashboard Wallpaper / Background Customization State
+    const BG_PRESETS = [
+        { id: 'cyber_zen', name: 'Cyber Zen Oasis', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2070&auto=format&fit=crop' },
+        { id: 'deep_space', name: 'Nebulosa Cósmica', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2070&auto=format&fit=crop' },
+        { id: 'glass_abstract', name: 'Vidrio Oscuro & Gradientes', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2070&auto=format&fit=crop' },
+        { id: 'forest_mist', name: 'Bosque en la Niebla', url: 'https://images.unsplash.com/photo-1511497584788-87676104235f?q=80&w=2070&auto=format&fit=crop' },
+        { id: 'minimal_dark', name: 'Negro Puro (Sin Fondo)', url: '' }
+    ];
+
+    const [dashboardBg, setDashboardBg] = useState(() => {
+        return localStorage.getItem('oasis_psych_bg_url') || 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2070&auto=format&fit=crop';
+    });
+    const [dashboardBgOpacity, setDashboardBgOpacity] = useState(() => {
+        const val = localStorage.getItem('oasis_psych_bg_opacity');
+        return val !== null ? parseFloat(val) : 0.22;
+    });
+    const [isBgModalOpen, setIsBgModalOpen] = useState(false);
+    const [customBgInput, setCustomBgInput] = useState('');
 
     useEffect(() => {
         if (dashboardSubView) {
@@ -1221,12 +1241,13 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         uname = normalizePatientUsername(uname);
                         if (isRogueUser(uname)) return;
 
+                        const cData = u.clinicalData || u.ClinicalData || {};
                         const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
                         const isAxel = uname.toLowerCase() === 'axel roben';
                         const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : isAxel ? 'Axel Roben' : '');
                         
                         const storedLink = localStorage.getItem(`oasis_chatgpt_link_${uname}`) || 
-                                           (cData && (cData.chatGptLink || cData[`oasis_chatgpt_link_${uname}`])) || '';
+                                           cData.chatGptLink || cData[`oasis_chatgpt_link_${uname}`] || '';
 
                         patientsMap[uname] = {
                             ...(patientsMap[uname] || {}),
@@ -1236,15 +1257,14 @@ Responde ÚNICAMENTE con un JSON válido.`;
                             password: u.password || u.Password || patientsMap[uname]?.password,
                             role: userRole,
                             clinicalData: {
-                                ...(cData || {}),
+                                ...cData,
                                 ...(patientsMap[uname]?.clinicalData || {}),
                                 chatGptLink: storedLink
                             }
                         };
                         
                         // Dynamically sync backend clinical data into local storage so it is available locally!
-                        const cData = u.clinicalData || u.ClinicalData;
-                        if (cData) {
+                        if (cData && Object.keys(cData).length > 0) {
                             window.isDownloadingClinicalData = true;
                             try {
                                 Object.keys(cData).forEach(key => {
@@ -2120,6 +2140,15 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         </div>
 
                         <div className="flex items-center gap-2.5 shrink-0">
+                            <button
+                                onClick={() => setIsBgModalOpen(true)}
+                                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-400 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 ease-out hover:scale-105 active:scale-95 flex items-center gap-2 shrink-0 backdrop-blur-xl"
+                                title="Personalizar Fondo del Dashboard Clínico"
+                            >
+                                <Palette className="w-4 h-4 text-emerald-400" />
+                                <span className="hidden sm:inline">Fondo</span>
+                            </button>
+
                             <button
                                 onClick={() => setDashboardSubView('WHATSAPP_CRM')}
                                 className="px-4 py-2 sm:px-5 sm:py-2.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/10 hover:border-emerald-500/30 text-zinc-300 hover:text-emerald-400 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 ease-out hover:scale-105 active:scale-95 flex items-center gap-2 shrink-0 backdrop-blur-xl"
@@ -5476,10 +5505,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <Folder className="w-5 h-5 shrink-0" />
                                         {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Asistente Kio (Docs)</span>}
                                     </button>
-                                    <button onClick={() => { setActiveTab('REFLEXION'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Eye className="w-5 h-5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Reflexión Privada</span>}
-                                    </button>
                                     {/* Boton Externo ChatGPT */}
                                     <button 
                                         onClick={handleOpenChatGPT}
@@ -5582,29 +5607,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
                         )}
 
-                        {(activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS') && (
-                            <div className="space-y-8 animate-in fade-in duration-300 h-full">
-                                <div>
-                                    <h3 className="text-lg font-black text-white italic">Reflexión Privada</h3>
-                                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">
-                                        Hipótesis, observaciones privadas y apuntes
-                                    </p>
-                                </div>
-                                <textarea
-                                    value={privateNotes}
-                                    onChange={e => {
-                                        setPrivateNotes(e.target.value);
-                                        if (selectedPatient?.name) {
-                                            localStorage.setItem(`oasis_private_notes_${selectedPatient.name}`, e.target.value);
-                                        }
-                                    }}
-                                    placeholder="Escribe tus observaciones y hallazgos clínicos aquí. Estos apuntes son estrictamente privados..."
-                                    className="w-full h-[60vh] bg-zinc-950/70 border border-emerald-500/20 rounded-3xl p-6 text-sm text-emerald-100/90 resize-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans outline-none placeholder:text-emerald-950/50"
-                                />
-                            </div>
-                        )}
-
-                        {(activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT') && (
+                        {(activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' || activeTab === 'CONTEXTUAL_REPORT' || activeTab === 'REFLEXION' || activeTab === 'HALLAZGOS') && (
                             <LLMNotebookTab key={'notebook-' + (selectedPatient?.name || 'default')} patientName={selectedPatient?.name} />
                         )}
                     </div>
@@ -5729,9 +5732,27 @@ Devuelve estrictamente el JSON sin formato extra.
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col">
-            {currentModule === 'DASHBOARD' && renderDashboard()}
-            {currentModule === 'PROFILE' && renderProfileWorkspace()}
+        <div className="fixed inset-0 z-50 bg-[#030304] text-white overflow-hidden font-sans flex flex-col relative">
+            {/* Ambient Wallpaper Layer */}
+            {dashboardBg && (
+                <div 
+                    className="absolute inset-0 pointer-events-none transition-opacity duration-700 z-0 bg-cover bg-center"
+                    style={{
+                        backgroundImage: `url("${dashboardBg}")`,
+                        opacity: dashboardBgOpacity,
+                        filter: 'blur(1.5px) brightness(0.85)'
+                    }}
+                />
+            )}
+            {/* Dark Vignette / Gradient Overlay for pristine text readability */}
+            {dashboardBg && (
+                <div className="absolute inset-0 pointer-events-none z-0 bg-gradient-to-t from-[#030304] via-[#030304]/70 to-[#030304]/40" />
+            )}
+
+            <div className="relative z-10 flex flex-col flex-1 h-full min-h-0 overflow-hidden">
+                {currentModule === 'DASHBOARD' && renderDashboard()}
+                {currentModule === 'PROFILE' && renderProfileWorkspace()}
+            </div>
 
             {/* Interactive Clinical Test Runner Modal */}
             {activeTestRunnerId && (
@@ -5802,8 +5823,148 @@ Devuelve estrictamente el JSON sin formato extra.
                 </div>
             )}
             
-            {/* Global Floating Notebook */}
-            <FloatingNotebook user={selectedPatient?.name} />
+            {/* Background / Wallpaper Settings Modal */}
+            {isBgModalOpen && (
+                <div 
+                    className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setIsBgModalOpen(false)}
+                >
+                    <div 
+                        className="bg-[#0b0b0f] border border-white/10 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-5"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div className="flex items-center gap-2.5 text-white font-bold text-sm tracking-wide">
+                                <Palette size={18} className="text-emerald-400" />
+                                <span>Fondo del Dashboard Clínico</span>
+                            </div>
+                            <button 
+                                onClick={() => setIsBgModalOpen(false)}
+                                className="p-1.5 text-zinc-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Presets Grid */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">
+                                Fondos Preset (Atmósferas Clínicas)
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                {BG_PRESETS.map((preset) => {
+                                    const isSelected = dashboardBg === preset.url;
+                                    return (
+                                        <button
+                                            key={preset.id}
+                                            onClick={() => {
+                                                setDashboardBg(preset.url);
+                                                localStorage.setItem('oasis_psych_bg_url', preset.url);
+                                            }}
+                                            className={`relative rounded-xl overflow-hidden border p-2 text-left transition-all duration-200 flex flex-col gap-1.5 ${
+                                                isSelected 
+                                                    ? 'border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-500/30 shadow-lg' 
+                                                    : 'border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-white/20'
+                                            }`}
+                                        >
+                                            <div 
+                                                className="w-full h-16 rounded-lg bg-cover bg-center border border-white/5 relative overflow-hidden"
+                                                style={{
+                                                    backgroundImage: preset.url ? `url("${preset.url}")` : 'none',
+                                                    backgroundColor: preset.url ? 'transparent' : '#030304'
+                                                }}
+                                            >
+                                                {!preset.url && (
+                                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-500 font-mono">
+                                                        Puro Negro
+                                                    </span>
+                                                )}
+                                                {isSelected && (
+                                                    <div className="absolute top-1 right-1 bg-emerald-500 text-black rounded-full p-0.5 shadow">
+                                                        <Check size={11} className="stroke-[3]" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="text-[10.5px] font-semibold text-zinc-200 truncate">
+                                                {preset.name}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Custom URL Input */}
+                        <div className="space-y-2 pt-2 border-t border-white/5">
+                            <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold block">
+                                O introduce una URL de imagen personalizada
+                            </label>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    placeholder="https://images.unsplash.com/... o enlace de tu imagen"
+                                    value={customBgInput}
+                                    onChange={(e) => setCustomBgInput(e.target.value)}
+                                    className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500/50"
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (customBgInput.trim()) {
+                                            setDashboardBg(customBgInput.trim());
+                                            localStorage.setItem('oasis_psych_bg_url', customBgInput.trim());
+                                            setCustomBgInput('');
+                                        }
+                                    }}
+                                    disabled={!customBgInput.trim()}
+                                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 text-black font-bold text-xs rounded-xl transition-all shadow-sm"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Opacity Slider */}
+                        {dashboardBg && (
+                            <div className="space-y-2 pt-2 border-t border-white/5">
+                                <div className="flex items-center justify-between text-[11px]">
+                                    <span className="font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                                        Opacidad del Fondo
+                                    </span>
+                                    <span className="font-mono text-emerald-400 font-bold">
+                                        {Math.round(dashboardBgOpacity * 100)}%
+                                    </span>
+                                </div>
+                                <input 
+                                    type="range"
+                                    min="0.05"
+                                    max="0.65"
+                                    step="0.01"
+                                    value={dashboardBgOpacity}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        setDashboardBgOpacity(val);
+                                        localStorage.setItem('oasis_psych_bg_opacity', val.toString());
+                                    }}
+                                    className="w-full accent-emerald-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg appearance-none"
+                                />
+                                <p className="text-[9.5px] text-zinc-500 italic">
+                                    Recomendado entre 15% y 30% para máxima legibilidad clínica de los datos y fichas.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="pt-2 flex justify-end">
+                            <button
+                                onClick={() => setIsBgModalOpen(false)}
+                                className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition-all"
+                            >
+                                Listo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
         </div>
     );
 };

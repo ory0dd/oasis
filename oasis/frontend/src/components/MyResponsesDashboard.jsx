@@ -116,7 +116,7 @@ export const softenNodeLabels = (nodes) => {
     if (!Array.isArray(nodes)) return nodes;
     return nodes.map(n => ({
         ...n,
-        label: softenNodeLabel(n.label)
+        label: n.is_corrected ? n.label : softenNodeLabel(n.label)
     }));
 };
 
@@ -853,7 +853,7 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
     if (!Array.isArray(nodes)) return nodes;
 
     return nodes.map(node => {
-        let n = { ...node, label: softenNodeLabel(node.label) };
+        let n = { ...node, label: node.is_corrected ? node.label : softenNodeLabel(node.label) };
         if (n.description && typeof n.description === 'string') {
             n.description = n.description
                 .replace(/opresi[oó]n\s+tor[aá]cica/gi, "tensión física")
@@ -929,7 +929,7 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
 
     const newNodes = enrichAfcNodesWithPerspectiveMetadata(
         sanitizedNodes.map(n => {
-            const clean = { ...n, label: softenNodeLabel(n.label) };
+            const clean = { ...n, label: n.is_corrected ? n.label : softenNodeLabel(n.label) };
             delete clean.is_value;
             return clean;
         }),
@@ -2201,8 +2201,9 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
             const newEdges = (afcData?.edges || []).map(e => ({ ...e }));
 
             const nodeIndex = newNodes.findIndex(n => n.id === nodeId);
+            let updatedTargetNode;
             if (nodeIndex > -1) {
-                const updatedTargetNode = {
+                updatedTargetNode = {
                     ...newNodes[nodeIndex],
                     label: updatedData.label,
                     description: updatedData.description,
@@ -2211,130 +2212,149 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                     molded_note: feedbackText.trim()
                 };
                 newNodes[nodeIndex] = updatedTargetNode;
-
-                const spawnedNodeLabels = [];
-                // Integrar ramificaciones en el mapa manteniendo el orden de columnas clínicas
-                if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
-                    const parentX = targetNode.x || 50;
-                    const parentY = targetNode.y || 50;
-
-                    branchNodes.forEach((bNode, idx) => {
-                        const role = bNode.clinical_role || bNode.type || 'cognitive';
-                        let targetBaseX = parentX + 15;
-                        if (role === 'context') targetBaseX = 12;
-                        else if (role === 'antecedent' || role === 'historical') targetBaseX = 27;
-                        else if (role === 'cognitive' || role === 'physiological') targetBaseX = 42;
-                        else if (role === 'motor') targetBaseX = 57;
-                        else if (role === 'consequence') targetBaseX = 72;
-                        else if (role === 'function') targetBaseX = 87;
-
-                        const newX = Math.max(8, Math.min(92, targetBaseX + (idx % 2 === 0 ? 1 : -1) * 2));
-                        const newY = Math.max(12, Math.min(88, parentY + (idx === 0 ? -14 : idx === 1 ? 14 : 26)));
-                        const newId = 'molded_' + Date.now().toString(36) + '_' + idx;
-
-                        const spawnedNode = {
-                            id: newId,
-                            type: role,
-                            clinical_role: role,
-                            label: bNode.label,
-                            description: bNode.description,
-                            question: bNode.question || "¿De qué manera notas que esto se manifiesta en tu día a día?",
-                            x: newX,
-                            y: newY,
-                            is_satellite: true,
-                            is_corrected: true,
-                            molded_note: `Factor derivado de aclaración: "${feedbackText.trim()}"`
-                        };
-
-                        newNodes.push(spawnedNode);
-                        spawnedNodeLabels.push(bNode.label);
-
-                        newEdges.push({
-                            source: targetNode.id,
-                            target: newId,
-                            weight: 2,
-                            type: 'unidirectional'
-                        });
-                    });
-                }
-
-                const newAfcData = {
-                    ...afcData,
-                    nodes: newNodes,
-                    edges: newEdges
+            } else {
+                updatedTargetNode = {
+                    ...targetNode,
+                    label: updatedData.label,
+                    description: updatedData.description,
+                    question: updatedData.question || targetNode.question,
+                    is_corrected: true,
+                    molded_note: feedbackText.trim()
                 };
-
-                // 1. Actualizar estado reactivo
-                setAfcData(newAfcData);
-                setSelectedNode(updatedTargetNode);
-
-                // 2. Persistir en todos los niveles locales y nube clínica
-                try {
-                    localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-                    localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
-                    setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-                } catch (e) {
-                    console.error("Error al persistir afcData:", e);
-                }
-
-                // 3. Registrar en la Memoria Clínica Permanente para Asistente Documental / Kio
-                try {
-                    const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
-                    currentCorrections.push({
-                        id: 'corr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
-                        nodeId: nodeId,
-                        previousLabel: targetNode.label,
-                        previousDescription: targetNode.description || '',
-                        correction: feedbackText.trim(),
-                        newLabel: updatedData.label,
-                        newDescription: updatedData.description,
-                        branchesCreated: branchNodes.length,
-                        branchDetails: spawnedNodeLabels,
-                        timestamp: new Date().toISOString()
-                    });
-                    localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
-                    setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
-                } catch (e) {
-                    console.error("Error al registrar corrección clínica:", e);
-                }
-
-                // 4. Sincronizar el puntero del tour para que no salte a otro nodo tras la reordenación
-                const clinicalRoleOrder = {
-                    antecedent: 0,
-                    cognitive: 1,
-                    internal_barrier: 1,
-                    physiological: 2,
-                    motor: 3,
-                    experiential_avoidance: 3,
-                    consequence: 4,
-                    maintaining_trap: 4
-                };
-                const typeOrder = {
-                    historical: 0,
-                    social: 0,
-                    cognitive: 1,
-                    physiological: 2,
-                    biological: 2,
-                    motor: 3,
-                    consequence: 4
-                };
-                const sorted = [...newNodes].sort((a, b) => {
-                    const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
-                    const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
-                    if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
-                        return roleA - roleB;
-                    }
-                    const orderA = typeOrder[a.type] ?? 99;
-                    const orderB = typeOrder[b.type] ?? 99;
-                    if (orderA !== orderB) return orderA - orderB;
-                    if (a.x !== b.x) return a.x - b.x;
-                    return a.y - b.y;
-                });
-                const newTourIdx = sorted.findIndex(n => n.id === nodeId);
-                if (newTourIdx !== -1) {
-                    setTourActiveIndex(newTourIdx);
-                }
+                newNodes.push(updatedTargetNode);
             }
+
+            const spawnedNodeLabels = [];
+            // Integrar ramificaciones en el mapa manteniendo el orden de columnas clínicas
+            if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
+                const parentX = targetNode.x || 50;
+                const parentY = targetNode.y || 50;
+
+                branchNodes.forEach((bNode, idx) => {
+                    const role = bNode.clinical_role || bNode.type || 'cognitive';
+                    let targetBaseX = parentX + 15;
+                    if (role === 'context') targetBaseX = 12;
+                    else if (role === 'antecedent' || role === 'historical') targetBaseX = 27;
+                    else if (role === 'cognitive' || role === 'physiological') targetBaseX = 42;
+                    else if (role === 'motor') targetBaseX = 57;
+                    else if (role === 'consequence') targetBaseX = 72;
+                    else if (role === 'function') targetBaseX = 87;
+
+                    const newX = Math.max(8, Math.min(92, targetBaseX + (idx % 2 === 0 ? 1 : -1) * 2));
+                    const newY = Math.max(12, Math.min(88, parentY + (idx === 0 ? -14 : idx === 1 ? 14 : 26)));
+                    const newId = 'molded_' + Date.now().toString(36) + '_' + idx;
+
+                    const spawnedNode = {
+                        id: newId,
+                        type: role,
+                        clinical_role: role,
+                        label: bNode.label,
+                        description: bNode.description,
+                        question: bNode.question || "¿De qué manera notas que esto se manifiesta en tu día a día?",
+                        x: newX,
+                        y: newY,
+                        is_satellite: true,
+                        is_corrected: true,
+                        molded_note: `Factor derivado de aclaración: "${feedbackText.trim()}"`
+                    };
+
+                    newNodes.push(spawnedNode);
+                    spawnedNodeLabels.push(bNode.label);
+
+                    newEdges.push({
+                        source: targetNode.id,
+                        target: newId,
+                        weight: 2,
+                        type: 'unidirectional'
+                    });
+                });
+            }
+
+            const resolvedNodes = resolveCollisions(newNodes);
+            const newAfcData = {
+                ...afcData,
+                nodes: resolvedNodes,
+                edges: newEdges
+            };
+
+            // 1. Desactivar filtro de patrón previo para que se vean todos los nodos y ramas nuevas
+            setSelectedPatternId(null);
+
+            // 2. Actualizar estado reactivo
+            setAfcData(newAfcData);
+            setSelectedNode(updatedTargetNode);
+
+            // 3. Persistir en todos los niveles locales y nube clínica
+            try {
+                localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+                localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
+                setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+            } catch (e) {
+                console.error("Error al persistir afcData:", e);
+            }
+
+            // 4. Registrar en la Memoria Clínica Permanente para Asistente Documental / Kio
+            try {
+                const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
+                currentCorrections.push({
+                    id: 'corr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
+                    nodeId: nodeId,
+                    previousLabel: targetNode.label,
+                    previousDescription: targetNode.description || '',
+                    correction: feedbackText.trim(),
+                    newLabel: updatedData.label,
+                    newDescription: updatedData.description,
+                    branchesCreated: branchNodes.length,
+                    branchDetails: spawnedNodeLabels,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+                setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+            } catch (e) {
+                console.error("Error al registrar corrección clínica:", e);
+            }
+
+            // 5. Sincronizar el puntero del tour para que apunte con certeza al nodo adaptado
+            const clinicalRoleOrder = {
+                antecedent: 0,
+                cognitive: 1,
+                internal_barrier: 1,
+                physiological: 2,
+                motor: 3,
+                experiential_avoidance: 3,
+                consequence: 4,
+                maintaining_trap: 4
+            };
+            const typeOrder = {
+                historical: 0,
+                social: 0,
+                cognitive: 1,
+                physiological: 2,
+                biological: 2,
+                motor: 3,
+                consequence: 4
+            };
+            const sorted = [...resolvedNodes].sort((a, b) => {
+                const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
+                const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
+                if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
+                    return roleA - roleB;
+                }
+                const orderA = typeOrder[a.type] ?? 99;
+                const orderB = typeOrder[b.type] ?? 99;
+                if (orderA !== orderB) return orderA - orderB;
+                if (a.x !== b.x) return a.x - b.x;
+                return a.y - b.y;
+            });
+            const newTourIdx = sorted.findIndex(n => n.id === nodeId);
+            if (newTourIdx !== -1) {
+                setTourActiveIndex(newTourIdx);
+            }
+
+            // 6. Suave re-centrado y encuadre visual de la cámara en el nodo adaptado
+            setTimeout(() => {
+                zoomToNode(updatedTargetNode);
+            }, 60);
 
             setEditingNodeId(null);
             setMoldFeedback('');
@@ -5821,45 +5841,6 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         setBlindSpotResponse("");
     }, [activeSpot?.id]);
 
-    useEffect(() => {
-        const container = mapContainerRef.current;
-        if (!container) return;
-
-        const handleWheel = (e) => {
-            e.preventDefault(); // Bloquear el scroll de la página completa
-            const scaleChange = e.deltaY * -0.0012;
-            const prev = transformRef.current;
-            const rect = container.getBoundingClientRect();
-            
-            const prevScale = prev.scale;
-            const newScale = Math.min(Math.max(window.innerWidth < 768 ? 0.08 : 0.20, prevScale + scaleChange), 4);
-            
-            // Zoom relative to mouse pointer coordinates
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const canvasX = (mouseX - prev.x) / prevScale;
-            const canvasY = (mouseY - prev.y) / prevScale;
-            const newX = mouseX - canvasX * newScale;
-            const newY = mouseY - canvasY * newScale;
-            
-            prev.x = newX;
-            prev.y = newY;
-            prev.scale = newScale;
-
-            updateDOMTransform(newX, newY, newScale);
-
-            if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current);
-            zoomTimeoutRef.current = setTimeout(() => {
-                setMapTransform({ x: newX, y: newY, scale: newScale });
-            }, 100);
-        };
-
-        container.addEventListener('wheel', handleWheel, { passive: false });
-        return () => {
-            container.removeEventListener('wheel', handleWheel);
-        };
-    }, [updateDOMTransform, selectedNode]);
-
     const handleMapMouseDown = (e) => {
         isDraggingMapRef.current = true;
         if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
@@ -6189,6 +6170,12 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             if (mapViewTab !== 'map') return;
             e.preventDefault();
 
+            // Desactivar inmediatamente cualquier animación de rebote o transición CSS en el canvas
+            if (transformContainerRef.current) {
+                transformContainerRef.current.style.transition = 'none';
+            }
+            setIsProgrammaticTransition(false);
+
             const rect = container.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -6196,13 +6183,13 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             const current = transformRef.current;
             const prevScale = current.scale;
 
-            // Factor de zoom fluido según el giro de la rueda
-            const zoomDelta = -e.deltaY * 0.0018;
+            // Factor de zoom fluido y directo según la rueda
+            const zoomDelta = -e.deltaY * 0.0016;
             const minScale = window.innerWidth < 768 ? 0.08 : 0.15;
             const maxScale = 4.0;
             const newScale = Math.min(Math.max(minScale, prevScale * (1 + zoomDelta)), maxScale);
 
-            // Zoom centrado exactamente donde apunta el puntero del mouse
+            // Zoom centrado exactamente en el puntero del mouse
             const canvasX = (mouseX - current.x) / prevScale;
             const canvasY = (mouseY - current.y) / prevScale;
 
@@ -6217,8 +6204,11 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
             if (wheelTimeout) clearTimeout(wheelTimeout);
             wheelTimeout = setTimeout(() => {
+                if (transformContainerRef.current) {
+                    transformContainerRef.current.style.transition = 'none';
+                }
                 setMapTransform({ ...current });
-            }, 60);
+            }, 40);
         };
 
         const handleKeyDown = (e) => {
@@ -8075,7 +8065,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             : (isSelected || isConnected ? '0 0 16px #94a3b8' : '0 0 5px rgba(148,163,184,0.3)');
 
                                                     return (
-                                                        <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1)' }}>
+                                                        <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s ease-out' }}>
                                                             {/* Halo exterior radiante para Islas Centrales (Hubs) */}
                                                             {isHub && (
                                                                 <div className="absolute rounded-full pointer-events-none" style={{
@@ -8359,7 +8349,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     
                                                                     <div className="flex flex-col min-w-0 flex-1">
                                                                         <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{typeShortLabels[node.type]}</span>
-                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{softenNodeLabel(node.label)}</span>
+                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{node.is_corrected ? node.label : softenNodeLabel(node.label)}</span>
                                                                     </div>
 
                                                                     <div className={`ml-auto shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-white' : 'text-zinc-600'}`}>
@@ -8452,8 +8442,10 @@ Por favor, analicemos:
                                 </div>
                             )}
 
-                            {mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex] && (() => {
-                                const currentNode = sortedTourNodes[tourActiveIndex];
+                            {mapViewTab === 'map' && ((tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]) || selectedNode) && (() => {
+                                const currentNode = (selectedNode && selectedNode.id === (sortedTourNodes[tourActiveIndex]?.id || selectedNode.id))
+                                    ? selectedNode
+                                    : (sortedTourNodes[tourActiveIndex] || selectedNode);
                                 const typeCompactLabels = {
                                     historical: "Histórico",
                                     biological: "Biológico",
@@ -8814,22 +8806,54 @@ Por favor, analicemos:
 ) : (
 
                                                         <div>
-                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
-                                                                    {softenNodeLabel(currentNode.label)}
+                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                <h4 className="text-xs sm:text-[14px] font-bold text-white leading-snug tracking-tight">
+                                                                    {currentNode.is_corrected ? currentNode.label : softenNodeLabel(currentNode.label)}
                                                                 </h4>
                                                                 {currentNode.is_corrected && (
-                                                                    <span className="text-[8.5px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-semibold flex items-center gap-1 shadow-sm">
-                                                                        <Sparkles size={8.5} /> Verificado con IA
+                                                                    <span className="text-[8.5px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono font-bold flex items-center gap-1 shadow-[0_0_10px_rgba(52,211,153,0.25)]">
+                                                                        <Sparkles size={9} className="text-emerald-400 animate-pulse" /> Moldeado & Adaptado
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            {currentNode.molded_note && (
-                                                                <div className="mt-1.5 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-[9.5px] text-emerald-300 leading-relaxed font-sans flex items-start gap-1.5">
-                                                                    <span className="text-emerald-400 font-bold shrink-0">Aclaración:</span>
-                                                                    <span className="italic line-clamp-2">"{currentNode.molded_note}"</span>
+
+                                                            {/* Apartado Destacado: Ajuste Clínico del Consultante / Terapeuta */}
+                                                            {(currentNode.molded_note || currentNode.is_corrected) && (
+                                                                <div className="my-2.5 p-3 rounded-xl bg-gradient-to-br from-emerald-950/60 via-zinc-900/80 to-black/80 border border-emerald-500/40 space-y-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
+                                                                    <div className="flex items-center justify-between text-[9.5px] font-mono">
+                                                                        <span className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                                                            <Sparkles size={11} className="text-emerald-400 animate-pulse" />
+                                                                            🌿 Ajuste Clínico del Consultante
+                                                                        </span>
+                                                                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold text-[8px] border border-emerald-500/30">
+                                                                            Activo en Red
+                                                                        </span>
+                                                                    </div>
+                                                                    {currentNode.molded_note && (
+                                                                        <div className="bg-black/60 p-2.5 rounded-lg border border-emerald-500/20 space-y-1">
+                                                                            <span className="text-[8px] font-bold uppercase text-emerald-400/80 tracking-wider block">Aclaración y vivencia real:</span>
+                                                                            <p className="text-[11px] text-zinc-100 italic font-sans leading-relaxed">
+                                                                                "{currentNode.molded_note}"
+                                                                            </p>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex items-center justify-between pt-1 border-t border-emerald-500/15 text-[9px] text-zinc-400">
+                                                                        <span className="italic text-[8.5px]">Factor reformulado en el mapa</span>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingNodeId(currentNode.id);
+                                                                                setEditTab('mold');
+                                                                                setMoldFeedback(currentNode.molded_note || '');
+                                                                            }}
+                                                                            className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 hover:underline"
+                                                                        >
+                                                                            <Edit2 size={9} /> Re-moldear
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             )}
+
                                                             {getFallbackDescription(currentNode, user) && (
                                                                 <div className="flex flex-col gap-1.5 mt-0.5">
                                                                     <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">
