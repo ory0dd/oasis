@@ -931,15 +931,15 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         if (count <= 0) return [];
         if (count === 1) return [{ x: baseX, y: 52 }];
 
-        // Cada nodo recibe su propio nivel vertical para lectura óptima y nítida
+        // Incremented yStep significantly to spread nodes vertically and prevent clutter
         let yStep;
-        if (count === 2) yStep = 24;
-        else if (count === 3) yStep = 18;
-        else if (count === 4) yStep = 15;
-        else if (count === 5) yStep = 13;
-        else if (count === 6) yStep = 11.2;
-        else if (count <= 8) yStep = 9.8;
-        else yStep = Math.max(7.8, 68 / (count - 1));
+        if (count === 2) yStep = 32;
+        else if (count === 3) yStep = 24;
+        else if (count === 4) yStep = 18;
+        else if (count === 5) yStep = 15;
+        else if (count === 6) yStep = 13;
+        else if (count <= 8) yStep = 11;
+        else yStep = Math.max(9, 75 / (count - 1));
 
         const totalHeight = (count - 1) * yStep;
         const startY = 52 - (totalHeight / 2);
@@ -961,11 +961,12 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
     // 4. Conductas de Evitación (68%) -> Respuesta Motora / Operante (Rm)
     // 5. Trampa de Mantenimiento (86%) -> Consecuencias & Bucles (C)
     const layers = [
-        { id: 'antecedents', label: 'Contexto & Detonantes', baseX: 14 },
-        { id: 'cognitive', label: 'Pensamientos & Creencias', baseX: 32 },
-        { id: 'physiological', label: 'Activación Somática', baseX: 50 },
-        { id: 'motor', label: 'Conductas de Evitación', baseX: 68 },
-        { id: 'consequence', label: 'Trampa de Mantenimiento', baseX: 86 }
+        { id: 'context', label: 'Contexto & Variables', baseX: 12 },
+        { id: 'antecedents', label: 'Detonantes Inmediatos', baseX: 27 },
+        { id: 'cognitive', label: 'Eventos Privados', baseX: 42 },
+        { id: 'motor', label: 'Respuesta Operante', baseX: 57 },
+        { id: 'consequence', label: 'Consecuencias', baseX: 72 },
+        { id: 'function', label: 'Funcin del Bucle', baseX: 87 }
     ];
 
     const getLayerIndex = (n) => {
@@ -973,44 +974,20 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         const type = String(n.type || '').toLowerCase().trim();
         const label = String(n.label || '').toLowerCase().trim();
 
-        // 1. Columna 5: Consecuencias & Trampa de Mantenimiento (C)
-        if (
-            role === 'consequence' || role === 'maintaining_trap' || role.includes('consecuen') || role.includes('trampa') || role.includes('costo') || role.includes('alivio') ||
-            type === 'consequence' || type.includes('consecuen') || type === 'outcome' || type === 'trap' || type === 'maintenance'
-        ) return 4;
-
-        // 2. Columna 4: Conductas Operantes de Evitación & Escape (Rm)
-        if (
-            role === 'motor' || role === 'experiential_avoidance' || role.includes('motor') || role.includes('evita') || role.includes('escape') || role.includes('conduct') ||
-            type === 'motor' || type === 'behavior' || type === 'action' || type.includes('conduct') || type.includes('evita')
-        ) return 3;
-
-        // 3. Columna 3: Activación Somática & Emocional (Rf)
-        if (
-            role === 'physiological' || role === 'biological' || role.includes('somat') || role.includes('fisio') || role.includes('cuerpo') || role.includes('biolog') ||
-            type === 'physiological' || type === 'biological' || type === 'somatic' || type.includes('somat') || type.includes('fisio')
-        ) return 2;
-
-        // 4. Columna 2: Pensamientos & Creencias Nucleares (Rc)
-        if (
-            role === 'cognitive' || role === 'internal_barrier' || role.includes('cognit') || role.includes('pensam') || role.includes('creencia') || role.includes('mente') ||
-            type === 'cognitive' || type === 'thought' || type === 'belief' || type.includes('cognit')
-        ) return 1;
-
-        // 5. Columna 1: Contexto & Detonantes (Antecedentes E)
-        if (
-            role === 'antecedent' || role.includes('anteced') || role.includes('context') || role.includes('detonan') || role.includes('histor') || role.includes('social') ||
-            type === 'historical' || type === 'social' || type === 'antecedent' || type === 'context' || type === 'trigger'
-        ) return 0;
-
-        // Inferencias semánticas directas desde la etiqueta si clinical_role o type fueron ambiguos
-        if (label.includes('insomnio') || label.includes('taquicardia') || label.includes('cansancio') || label.includes('fatiga') || label.includes('tensión corporal') || label.includes('cefalea')) return 2;
-        if (label.includes('escape') || label.includes('aislamiento') || label.includes('procrastina') || label.includes('pantalla') || label.includes('encierro') || label.includes('confronta')) return 3;
-        if (label.includes('alivio') || label.includes('culpa') || label.includes('soledad') || label.includes('estancamiento') || label.includes('deterioro') || label.includes('cronific')) return 4;
-        if (label.includes('rumia') || label.includes('autocrítica') || label.includes('creencia') || label.includes('juicio') || label.includes('miedo')) return 1;
-        if (label.includes('norma') || label.includes('regla') || label.includes('exigencia') || label.includes('mudanza') || label.includes('familia')) return 0;
-
-        return 1;
+        // 6. Funcion (F)
+        if (role === 'function' || role.includes('funci')) return 5;
+        // 5. Consecuencias (C)
+        if (role === 'consequence' || role.includes('consec') || type === 'consequence') return 4;
+        // 4. Respuesta Operante (Rm)
+        if (role === 'motor' || type === 'motor' || type === 'experiential_avoidance') return 3;
+        // 3. Eventos Privados (Rc/Rf)
+        if (role === 'cognitive' || role === 'physiological' || type === 'cognitive' || type === 'physiological' || type === 'biological') return 2;
+        // 2. Detonantes Inmediatos (ED)
+        if (role === 'antecedent' || type === 'antecedent' || label.includes('detonante')) return 1;
+        // 1. Contexto (OM)
+        if (role === 'context' || type === 'historical' || type === 'social') return 0;
+        
+        return 2;
     };
 
     const roleByLayer = ['antecedent', 'cognitive', 'physiological', 'motor', 'consequence'];
@@ -1445,7 +1422,7 @@ ${userResponsesText}
 `;
 
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const payload = {
                 model: model,
@@ -1539,7 +1516,7 @@ ${userResponsesText}
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
             
             const prompt = `
 Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial, actuando como SUPERVISOR CLÍNICO.
@@ -1646,7 +1623,7 @@ Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
             
             const prompt = `
 Eres un Psicólogo Clínico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
@@ -1719,7 +1696,7 @@ Instrucciones Críticas:
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
             
             const prompt = `
 Eres un psicoterapeuta avanzado configurando a "Kio", una IA asistente de salud mental.
@@ -2509,7 +2486,7 @@ Devuelve estrictamente el JSON sin formato extra.
                     
             const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
             const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
             const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
             
@@ -4248,7 +4225,7 @@ ${isAdditive ? `
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const configuredModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const configuredModel = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const executeAICallWithFallback = async (basePayload, stageName, maxTokens = 4000) => {
                 const targetPayload = { ...basePayload, max_tokens: maxTokens };
@@ -4714,7 +4691,7 @@ Conexiones actuales: ${currentEdgesText}
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const payload = {
                 model: model,
@@ -4840,7 +4817,7 @@ ACTUALIZACIÓN DEL PACIENTE:
 `;
 
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const payload = {
                 model: model,
@@ -4914,7 +4891,7 @@ ACTUALIZACIÓN DEL PACIENTE:
         try {
             let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const prompt = `
 Eres un psicoterapeuta avanzado analizando la Historia de Vida de un paciente.
@@ -4991,7 +4968,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
 
             const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const replyPrompt = `Eres un psicoterapeuta clínico humano, empático, reflexivo y de profunda agudeza psicológica.
 El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripción: ${currentNode.description || 'N/A'}).
@@ -5106,7 +5083,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
         try {
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
             
             const payload = {
                 model: model,
@@ -6670,7 +6647,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         try {
             let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
-            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const prompt = `
 Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Clínico.
