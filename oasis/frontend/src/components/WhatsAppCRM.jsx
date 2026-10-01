@@ -84,7 +84,7 @@ const DEFAULT_TEMPLATES = [
     }
 ];
 
-export default function WhatsAppCRM({ 
+export default function WhatsAppCRM({ isEmbedded = false, 
     clinicPatients = [], 
     currentUser = 'observador1', 
     onBackToClinical = null 
