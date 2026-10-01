@@ -7009,14 +7009,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         from { stroke-dashoffset: 4; }
                                                         to { stroke-dashoffset: 0; }
                                                     }
-                                                    .edge-flow-active {
-                                                        stroke-dasharray: 0.7, 0.35;
-                                                        /* animation disabled for perf */
-                                                    }
-                                                    .edge-flow-feedback {
-                                                        stroke-dasharray: 0.5, 0.35;
-                                                        /* animation disabled for perf */
-                                                    }
+                                                     .edge-flow-active {
+                                                         stroke-dasharray: 0.7, 0.35;
+                                                         animation: edgeFlowAnim 1.8s linear infinite;
+                                                     }
+                                                     .edge-flow-feedback {
+                                                         stroke-dasharray: 0.5, 0.35;
+                                                         animation: edgeFlowAnim 2.4s linear infinite reverse;
+                                                     }
+                                                     @keyframes hubPulse {
+                                                         0%, 100% { filter: brightness(1); }
+                                                         50% { filter: brightness(1.8); }
+                                                     }
                                                 `}</style>
                                         <defs>
                                             <marker id="arrowhead-default" markerWidth="2.6" markerHeight="2.6" refX="2.0" refY="1.3" orient="auto">
@@ -7344,8 +7348,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
                                                 onDragStart={(e) => e.preventDefault()}
-                                                className={`absolute flex flex-col items-center justify-center cursor-pointer transition-all duration-500 group ${isConnected ? 'z-50' : (isDimmed ? 'opacity-20 z-10' : 'z-20 hover:z-40')}`}
-                                                style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)', userSelect: 'none' }}
+                                                className={`absolute flex flex-col items-center justify-center cursor-pointer group ${isConnected ? 'z-50' : (isDimmed ? 'opacity-20 z-10' : 'z-20 hover:z-40')}`}
+                                                style={{ 
+                                                    left: `${node.x}%`, 
+                                                    top: `${node.y}%`, 
+                                                    transform: 'translate(-50%, -50%)', 
+                                                    userSelect: 'none',
+                                                    animation: 'nodeEntrance 0.45s cubic-bezier(0.34,1.56,0.64,1) both',
+                                                    transition: 'opacity 0.4s ease, filter 0.4s ease'
+                                                }}
                                             >
                                                 {(() => {
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
@@ -7389,7 +7400,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     boxShadow: isSelected || isConnected
                                                                         ? `0 0 ${baseGlow * activeMult}px ${accent}, 0 0 ${baseGlow * 0.5}px ${accent} inset`
                                                                         : `0 0 ${baseGlow}px ${accent}55`,
-                                                                    opacity: node.dashed ? 0.6 : 1
+                                                                    opacity: node.dashed ? 0.6 : 1,
+                                                                    animation: isHub && !isSelected && !isConnected ? `hubPulse ${3 + (degree % 3)}s ease-in-out infinite` : undefined,
+                                                                    transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)'
                                                                 }}
                                                             >
                                                                 {/* Pulse ring on selected or connected */}
