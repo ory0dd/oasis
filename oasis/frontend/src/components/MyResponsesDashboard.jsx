@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
@@ -1849,6 +1849,40 @@ Devuelve estrictamente el JSON sin formato extra.
     const [lifeUpdateText, setLifeUpdateText] = useState("");
     const [isUpdatingMap, setIsUpdatingMap] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [loadingProgress, setLoadingProgress] = useState(10);
+    const [isFinishingLoading, setIsFinishingLoading] = useState(false);
+    const wasAnalyzingRef = useRef(false);
+
+    useEffect(() => {
+        let interval = null;
+        if (isAnalyzing) {
+            wasAnalyzingRef.current = true;
+            setIsFinishingLoading(false);
+            interval = setInterval(() => {
+                setLoadingProgress(prev => {
+                    if (prev >= 92) return 92;
+                    let inc = 0;
+                    if (prev < 30) inc = (30 - prev) * 0.08 + Math.random() * 0.7;
+                    else if (prev < 60) inc = (60 - prev) * 0.045 + Math.random() * 0.45;
+                    else if (prev < 80) inc = (80 - prev) * 0.025 + Math.random() * 0.3;
+                    else inc = 0.05;
+                    return Math.min(92, prev + inc);
+                });
+            }, 80);
+        } else if (wasAnalyzingRef.current) {
+            setIsFinishingLoading(true);
+            setLoadingProgress(100);
+            const timer = setTimeout(() => {
+                wasAnalyzingRef.current = false;
+                setIsFinishingLoading(false);
+                setLoadingProgress(10);
+            }, 550);
+            return () => clearTimeout(timer);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isAnalyzing]);
     const [mapGenerationCount, setMapGenerationCount] = useState(() => parseInt(localStorage.getItem(`oasis_afc_gen_count_${user}`) || '0', 10));
 
     const handleGenerateMap = (e, isAdditive = false) => {
@@ -1913,6 +1947,203 @@ Devuelve estrictamente el JSON sin formato extra.
     // Node editing state
     const [editingNodeId, setEditingNodeId] = useState(null);
     const [editNodeForm, setEditNodeForm] = useState({ label: '', description: '', question: '' });
+    const [editTab, setEditTab] = useState('mold');
+    const [moldFeedback, setMoldFeedback] = useState('');
+    const [shouldBranchGraph, setShouldBranchGraph] = useState(true);
+    const [isMoldingNode, setIsMoldingNode] = useState(false);
+
+    const handleMoldNode = async (nodeId, feedbackText, autoBranch = true) => {
+        if (!feedbackText || !feedbackText.trim()) return;
+        setIsMoldingNode(true);
+        
+        try {
+            const targetNode = afcData?.nodes?.find(n => n.id === nodeId) || selectedNode;
+            if (!targetNode) return;
+
+            let activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
+            if (activeKey && (
+                activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || 
+                activeKey.includes("VAR>") ||
+                activeKey.includes("7c7e257ac179439185c9deeff48d11f0") ||
+                activeKey.includes("6cf43dc93") ||
+                activeKey.includes("qw12") ||
+                activeKey.includes("YOUR_DEEPSEEK_KEY") ||
+                activeKey.includes("ESCRIBE_AQUI")
+            )) {
+                activeKey = '';
+            }
+
+            const prompt = `Actúa como un psicólogo conductual experto del sistema Oasis.
+El consultante o terapeuta está moldeando e integrando la historia real de su caso para hacer crecer orgánicamente su red clínica funcional (estilo constelación Obsidian).
+
+NODO PRINCIPAL A MODIFICAR:
+- Título: "${targetNode.label}"
+- Descripción actual: "${targetNode.description || ''}"
+- Rol funcional: "${targetNode.clinical_role || targetNode.type || ''}"
+
+ACLARACIÓN Y CONTEXTO REAL DADO POR EL USUARIO:
+"${feedbackText.trim()}"
+
+INSTRUCCIONES CLÍNICAS:
+1. Elimina cualquier suposición falsa o inventada.
+2. Reformula el nodo principal con base 100% en la aclaración del usuario.
+${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamente de lo que explicó el usuario (ej: conductas que surgen de esto, sensaciones somáticas o costos vitales) para que el mapa crezca orgánicamente con nuevos nodos interconectados.
+4. Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura:
+{
+  "updatedNode": {
+    "label": "Título conciso (máximo 4 a 5 palabras)",
+    "description": "Descripción clara y sobria de cómo opera este factor en su vida (máximo 2 líneas)",
+    "question": "¿Pregunta reflexiva empática para explorar este factor?"
+  },
+  "branchNodes": [
+    {
+      "label": "Título del nuevo factor conectado",
+      "type": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
+      "clinical_role": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
+      "description": "Descripción clínica breve según lo que contó el usuario",
+      "question": "¿Pregunta reflexiva sobre este nuevo factor?"
+    }
+  ]
+}` : `3. Devuelve EXCLUSIVAMENTE un objeto JSON:
+{
+  "updatedNode": {
+    "label": "Título conciso (máximo 4 a 5 palabras)",
+    "description": "Descripción clara de cómo opera este factor (máx 2 líneas)",
+    "question": "¿Pregunta reflexiva para explorar este factor?"
+  }
+}`}`;
+
+            let parsedResult = null;
+            try {
+                const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider: 'openai',
+                        endpoint: null,
+                        key: activeKey,
+                        payload: {
+                            model: 'gpt-4o-mini',
+                            messages: [{ role: 'system', content: prompt }],
+                            response_format: { type: "json_object" },
+                            temperature: 0.35
+                        }
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const content = data?.choices?.[0]?.message?.content?.trim();
+                    if (content) {
+                        let clean = content.replace(/^```[a-zA-Z]*\s*/, "").replace(/\s*```$/, "");
+                        parsedResult = JSON.parse(clean);
+                    }
+                }
+            } catch (apiErr) {
+                console.warn("[MoldNode] Fallback local para moldear nodo:", apiErr);
+            }
+
+            const updatedData = parsedResult?.updatedNode || parsedResult || {
+                label: feedbackText.trim().split(/[.\n]/)[0].slice(0, 30),
+                description: feedbackText.trim(),
+                question: "¿De qué forma influye esta situación en tu día a día?"
+            };
+
+            const branchNodes = parsedResult?.branchNodes || [];
+
+            const newAfcData = { ...afcData };
+            const nodeIndex = newAfcData.nodes.findIndex(n => n.id === nodeId);
+            if (nodeIndex > -1) {
+                newAfcData.nodes[nodeIndex] = {
+                    ...newAfcData.nodes[nodeIndex],
+                    label: updatedData.label,
+                    description: updatedData.description,
+                    question: updatedData.question,
+                    is_corrected: true,
+                    molded_note: feedbackText.trim()
+                };
+
+                // Integrar ramificaciones en el mapa manteniendo el orden de columnas clínicas
+                if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
+                    const parentX = targetNode.x || 50;
+                    const parentY = targetNode.y || 50;
+
+                    branchNodes.forEach((bNode, idx) => {
+                        const role = bNode.clinical_role || bNode.type || 'cognitive';
+                        let targetBaseX = parentX + 15;
+                        if (role === 'context') targetBaseX = 12;
+                        else if (role === 'antecedent' || role === 'historical') targetBaseX = 27;
+                        else if (role === 'cognitive' || role === 'physiological') targetBaseX = 42;
+                        else if (role === 'motor') targetBaseX = 57;
+                        else if (role === 'consequence') targetBaseX = 72;
+                        else if (role === 'function') targetBaseX = 87;
+
+                        const newX = Math.max(8, Math.min(92, targetBaseX + (idx % 2 === 0 ? 1 : -1) * 2));
+                        const newY = Math.max(12, Math.min(88, parentY + (idx === 0 ? -14 : idx === 1 ? 14 : 26)));
+                        const newId = 'molded_' + Date.now().toString(36) + '_' + idx;
+
+                        const spawnedNode = {
+                            id: newId,
+                            type: role,
+                            clinical_role: role,
+                            label: bNode.label,
+                            description: bNode.description,
+                            question: bNode.question,
+                            x: newX,
+                            y: newY,
+                            is_satellite: true,
+                            is_corrected: true
+                        };
+
+                        newAfcData.nodes.push(spawnedNode);
+
+                        newAfcData.edges.push({
+                            source: targetNode.id,
+                            target: newId,
+                            weight: 2,
+                            type: 'unidirectional'
+                        });
+                    });
+                }
+
+                setAfcData(newAfcData);
+                localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+                setSelectedNode(newAfcData.nodes[nodeIndex]);
+
+                try {
+                    const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
+                    currentCorrections.push({
+                        nodeId: nodeId,
+                        previousLabel: targetNode.label,
+                        correction: feedbackText.trim(),
+                        newLabel: updatedData.label,
+                        branchesCreated: branchNodes.length,
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+                } catch (e) {}
+            }
+
+            setEditingNodeId(null);
+            setMoldFeedback('');
+        } catch (err) {
+            console.error("Error al moldear nodo:", err);
+            alert("Ocurrió un error al moldear el nodo: " + err.message);
+        } finally {
+            setIsMoldingNode(false);
+        }
+    };
+
+    const handleDeleteNode = (nodeId) => {
+        if (!window.confirm("¿Deseas descartar este factor del mapa? Las conexiones directas a este nodo también serán removidas.")) return;
+        const newAfcData = { ...afcData };
+        newAfcData.nodes = (newAfcData.nodes || []).filter(n => n.id !== nodeId);
+        newAfcData.edges = (newAfcData.edges || []).filter(e => e.source !== nodeId && e.target !== nodeId);
+        setAfcData(newAfcData);
+        localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+        setSelectedNode(null);
+        setEditingNodeId(null);
+    };
 
     const handleExportDoc = () => {
         let content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -6915,27 +7146,75 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
 
-                {isAnalyzing ? (
-                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] animate-in fade-in duration-300">
-                        <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full px-6">
-                            <div className="relative flex items-center justify-center w-16 h-16">
-                                <div className="absolute inset-0 rounded-full border border-white/5"></div>
-                                <div className="absolute inset-0 rounded-full border-t border-emerald-400/80 animate-spin" style={{ animationDuration: '2s' }}></div>
-                                <Settings className="animate-spin text-zinc-500" size={20} style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+                {(isAnalyzing || isFinishingLoading) ? (
+                    <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] transition-opacity duration-300 pointer-events-auto ${isFinishingLoading && loadingProgress >= 100 ? 'opacity-95' : 'opacity-100'}`}>
+                        <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full px-6 animate-in fade-in duration-300">
+                            {/* Neural Core Animation */}
+                            <div className="relative flex items-center justify-center w-18 h-18">
+                                <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-xl animate-pulse"></div>
+                                <div className="absolute -inset-1.5 rounded-full border border-dashed border-emerald-400/30 animate-spin" style={{ animationDuration: '12s' }}></div>
+                                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-400/90 border-r-emerald-400/60 animate-spin" style={{ animationDuration: isFinishingLoading ? '0.6s' : '1.8s' }}></div>
+                                <div className="relative w-12 h-12 rounded-full bg-zinc-950/90 border border-emerald-500/40 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+                                    <Network className={`text-emerald-400 ${isFinishingLoading ? 'scale-110' : 'animate-pulse'}`} size={22} />
+                                </div>
                             </div>
                             
                             <div className="flex flex-col gap-2 w-full items-center">
-                                <h2 className="text-[13px] font-medium text-white tracking-widest uppercase">
-                                    Diseñando mapa de bucles
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-[10px] font-mono text-emerald-300 tracking-wider uppercase">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                    Diseñando mapa de conexiones
+                                </div>
+
+                                <h2 className="text-[14px] font-bold text-white tracking-wide">
+                                    Extrayendo conexiones dentro de tu historia
                                 </h2>
-                                <p className="text-[11px] text-zinc-500 font-mono">
-                                    {typeof isAnalyzing === "string" ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '') : "Procesando topología..."}
+
+                                <p className="text-[11px] text-zinc-400 font-mono tracking-tight min-h-[16px]">
+                                    {isFinishingLoading || loadingProgress >= 100
+                                        ? "¡Conexiones extraídas y sincronizadas con éxito!"
+                                        : typeof isAnalyzing === "string" && !isAnalyzing.includes("bucles reales")
+                                            ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '')
+                                            : loadingProgress < 30
+                                                ? "Rastreando detonantes y contexto biográfico..."
+                                                : loadingProgress < 60
+                                                    ? "Identificando pensamientos y respuestas somáticas..."
+                                                    : loadingProgress < 85
+                                                        ? "Conectando patrones conductuales y consecuencias..."
+                                                        : "Tejiendo la red funcional y topología..."}
                                 </p>
                                 
-                                <div className="w-full max-w-[200px] h-[2px] bg-white/5 rounded-full mt-4 overflow-hidden relative">
-                                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500/20 via-emerald-400 to-emerald-500/20 rounded-full w-[40%] animate-[pulse_1s_ease-in-out_infinite] blur-[1px]"></div>
-                                    <div className="absolute top-0 left-0 h-full bg-emerald-400 rounded-full w-[40%] shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" style={{ animationDuration: '1.5s' }}></div>
-                                    <div className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                                {/* Game-like Organic Progress Bar */}
+                                <div className="w-full max-w-[280px] flex flex-col gap-2 mt-2">
+                                    <div className="w-full h-[6px] bg-zinc-900/90 border border-white/10 rounded-full overflow-hidden relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                                        <div 
+                                            className={`h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 relative transition-all shadow-[0_0_12px_rgba(52,211,153,0.85)] ${isFinishingLoading ? 'brightness-125' : ''}`}
+                                            style={{ 
+                                                width: `${Math.round(loadingProgress)}%`,
+                                                transition: isFinishingLoading ? 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'width 0.15s ease-out'
+                                            }}
+                                        >
+                                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
+                                        </div>
+
+                                        {loadingProgress > 3 && loadingProgress < 99 && (
+                                            <div 
+                                                className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_#ffffff,0_0_14px_#34d399] pointer-events-none transition-all duration-100"
+                                                style={{ left: `calc(${Math.round(loadingProgress)}% - 5px)` }}
+                                            >
+                                                <div className="absolute inset-0 rounded-full bg-emerald-300 animate-ping opacity-75"></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500 px-0.5">
+                                        <span className="flex items-center gap-1.5 text-zinc-400">
+                                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isFinishingLoading ? 'bg-emerald-400 animate-bounce' : 'bg-emerald-500/70 animate-pulse'}`}></span>
+                                            {isFinishingLoading || loadingProgress >= 100 ? 'SINCRONIZADO' : 'EXTRAYENDO'}
+                                        </span>
+                                        <span className={`font-bold tabular-nums tracking-wider ${isFinishingLoading || loadingProgress >= 100 ? 'text-emerald-300 scale-105' : 'text-emerald-400'} transition-transform`}>
+                                            {Math.round(loadingProgress)}%
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -8073,20 +8352,22 @@ Por favor, analicemos:
                                                     >
                                                         <ChevronRight size={13} />
                                                     </button>
-                                                    {isEmbedded && (<button
+                                                    <button
     onClick={() => {
         setEditingNodeId(currentNode.id);
+        setEditTab('mold');
+        setMoldFeedback(currentNode.molded_note || '');
         setEditNodeForm({
             label: currentNode.label || '',
             description: currentNode.description || '',
             question: currentNode.question || ''
         });
     }}
-    className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
-    title="Editar Nodo"
+    className="p-1 text-zinc-400 hover:text-emerald-300 transition-colors rounded-lg hover:bg-white/10 ml-0.5"
+    title="Moldear o corregir este factor con IA"
 >
     <Edit2 size={12} />
-</button>)}
+</button>
 <button
     onClick={() => setIsTourMinimized(!isTourMinimized)}
                                                         className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
@@ -8119,61 +8400,181 @@ Por favor, analicemos:
                                                 <>
                                                     <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
                                                         {editingNodeId === currentNode.id ? (
-    <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1">
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1">Título del Nodo</label>
-        <input 
-            value={editNodeForm.label}
-            onChange={(e) => setEditNodeForm(prev => ({...prev, label: e.target.value}))}
-            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
-            placeholder="Nombre del nodo..."
-            onKeyDown={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-        />
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Descripción / Función</label>
-        <textarea
-            value={editNodeForm.description}
-            onChange={(e) => setEditNodeForm(prev => ({...prev, description: e.target.value}))}
-            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[45px] resize-none focus:outline-none focus:border-blue-500/50"
-            placeholder="Descripción o función..."
-            onKeyDown={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-        />
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Pregunta de Reflexión (Opcional)</label>
-        <textarea
-            value={editNodeForm.question}
-            onChange={(e) => setEditNodeForm(prev => ({...prev, question: e.target.value}))}
-            className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[35px] resize-none focus:outline-none focus:border-blue-500/50"
-            placeholder="Pregunta de reflexión..."
-            onKeyDown={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-        />
-        <div className="flex justify-end gap-2 mt-1">
-            <button 
-                onClick={(e) => { e.stopPropagation(); setEditingNodeId(null); }}
-                className="text-[10px] px-2.5 py-1.5 rounded-md text-zinc-400 hover:bg-white/5 font-semibold"
+    <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1 animate-in fade-in duration-200">
+        {/* Selector de modo: Moldear con IA vs Edición Manual */}
+        <div className="flex items-center gap-1 p-0.5 bg-black/40 border border-white/10 rounded-lg">
+            <button
+                type="button"
+                onClick={() => setEditTab('mold')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[10.5px] font-semibold transition-all ${
+                    editTab === 'mold'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+                        : 'text-zinc-400 hover:text-white'
+                }`}
             >
-                Cancelar
+                <Sparkles size={11} className={editTab === 'mold' ? 'text-emerald-400' : 'text-zinc-500'} />
+                <span>Moldear con IA</span>
             </button>
-            <button 
-                onClick={(e) => {
-                    e.stopPropagation();
-                    const newAfcData = { ...afcData };
-                    const nodeIndex = newAfcData.nodes.findIndex(n => n.id === currentNode.id);
-                    if (nodeIndex > -1) {
-                        newAfcData.nodes[nodeIndex].label = editNodeForm.label;
-                        newAfcData.nodes[nodeIndex].description = editNodeForm.description;
-                        newAfcData.nodes[nodeIndex].question = editNodeForm.question;
-                        setAfcData(newAfcData);
-                        localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
-                        setSelectedNode(newAfcData.nodes[nodeIndex]);
-                        setEditingNodeId(null);
-                    }
-                }}
-                className="text-[10px] px-2.5 py-1.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 font-bold"
+            <button
+                type="button"
+                onClick={() => setEditTab('manual')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-[10.5px] font-semibold transition-all ${
+                    editTab === 'manual'
+                        ? 'bg-zinc-800 text-white border border-white/10 shadow-sm'
+                        : 'text-zinc-400 hover:text-white'
+                }`}
             >
-                Guardar Cambios
+                <Edit2 size={11} />
+                <span>Edición Manual</span>
             </button>
         </div>
+
+        {editTab === 'mold' ? (
+            <div className="flex flex-col gap-2">
+                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-2 text-left">
+                    <p className="text-[10px] text-emerald-300 font-medium leading-relaxed">
+                        ¿Información imprecisa o suposiciones falsas?
+                    </p>
+                    <p className="text-[9.5px] text-zinc-400 leading-normal mt-0.5">
+                        Dile al mapa qué ocurre realmente y lo reformularemos al instante integrándolo a tu historia sin reiniciar.
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-1 text-left">
+                    <label className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">
+                        Tu aclaración o contexto real:
+                    </label>
+                    <textarea
+                        value={moldFeedback}
+                        onChange={(e) => setMoldFeedback(e.target.value)}
+                        className="bg-black/50 border border-emerald-500/30 rounded-lg px-2.5 py-2 text-[11px] text-white min-h-[70px] resize-none focus:outline-none focus:border-emerald-400 placeholder:text-zinc-600 leading-relaxed custom-scroll"
+                        placeholder="Ej: Su trabajo es en línea y relajado, pero eso mismo lo hace medio desobligado; la tarea es fácil pero le cansan otras cosas..."
+                        onKeyDown={e => e.stopPropagation()}
+                        onMouseDown={e => e.stopPropagation()}
+                        autoFocus
+                    />
+                </div>
+
+                {/* Opción de ramificar y expandir como constelación */}
+                <label className="flex items-center gap-2 cursor-pointer select-none px-1 text-left">
+                    <input 
+                        type="checkbox"
+                        checked={shouldBranchGraph}
+                        onChange={(e) => setShouldBranchGraph(e.target.checked)}
+                        className="rounded bg-black/60 border-emerald-500/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                    />
+                    <span className="text-[10px] text-zinc-300 font-sans">
+                        🌿 <strong className="text-emerald-400 font-semibold">Expandir mapa:</strong> generar 2-3 factores derivados dentro del orden clínico
+                    </span>
+                </label>
+
+                <div className="flex items-center justify-between gap-2 mt-1">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNode(currentNode.id);
+                        }}
+                        className="text-[10px] px-2 py-1.5 rounded-md text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-1 transition-colors"
+                        title="Descartar este factor del mapa"
+                    >
+                        <Trash2 size={11} />
+                        <span>Descartar</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingNodeId(null);
+                            }}
+                            className="text-[10px] px-2.5 py-1.5 rounded-md text-zinc-400 hover:bg-white/5 font-semibold"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!moldFeedback.trim() || isMoldingNode}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleMoldNode(currentNode.id, moldFeedback, shouldBranchGraph);
+                            }}
+                            className="text-[10.5px] px-3 py-1.5 rounded-md bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5 shadow-[0_0_12px_rgba(52,211,153,0.4)] transition-all"
+                        >
+                            {isMoldingNode ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Moldeando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={11} />
+                                    <span>{shouldBranchGraph ? 'Moldear y Expandir Red' : 'Moldear e Integrar'}</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        ) : (
+            <div className="flex flex-col gap-2 text-left">
+                <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1">Título del Nodo</label>
+                <input 
+                    value={editNodeForm.label}
+                    onChange={(e) => setEditNodeForm(prev => ({...prev, label: e.target.value}))}
+                    className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50"
+                    placeholder="Nombre del nodo..."
+                    onKeyDown={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                />
+                <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Descripción / Función</label>
+                <textarea
+                    value={editNodeForm.description}
+                    onChange={(e) => setEditNodeForm(prev => ({...prev, description: e.target.value}))}
+                    className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[45px] resize-none focus:outline-none focus:border-blue-500/50"
+                    placeholder="Descripción o función..."
+                    onKeyDown={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                />
+                <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Pregunta de Reflexión</label>
+                <textarea
+                    value={editNodeForm.question}
+                    onChange={(e) => setEditNodeForm(prev => ({...prev, question: e.target.value}))}
+                    className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[35px] resize-none focus:outline-none focus:border-blue-500/50"
+                    placeholder="Pregunta de reflexión..."
+                    onKeyDown={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                />
+                <div className="flex justify-end gap-2 mt-1">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setEditingNodeId(null); }}
+                        className="text-[10px] px-2.5 py-1.5 rounded-md text-zinc-400 hover:bg-white/5 font-semibold"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const newAfcData = { ...afcData };
+                            const nodeIndex = newAfcData.nodes.findIndex(n => n.id === currentNode.id);
+                            if (nodeIndex > -1) {
+                                newAfcData.nodes[nodeIndex].label = editNodeForm.label;
+                                newAfcData.nodes[nodeIndex].description = editNodeForm.description;
+                                newAfcData.nodes[nodeIndex].question = editNodeForm.question;
+                                setAfcData(newAfcData);
+                                localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+                                setSelectedNode(newAfcData.nodes[nodeIndex]);
+                                setEditingNodeId(null);
+                            }
+                        }}
+                        className="text-[10px] px-2.5 py-1.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 font-bold"
+                    >
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        )}
     </div>
 ) : (
 
@@ -8183,9 +8584,22 @@ Por favor, analicemos:
                                                             </h4>
                                                             {getFallbackDescription(currentNode, user) && (
                                                                 <div className="flex flex-col gap-1.5 mt-0.5">
-                                                                    <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-2">
+                                                                    <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">
                                                                         {getFallbackDescription(currentNode, user)}
                                                                     </p>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingNodeId(currentNode.id);
+                                                                            setEditTab('mold');
+                                                                            setMoldFeedback(currentNode.molded_note || '');
+                                                                        }}
+                                                                        className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all mt-1 w-fit"
+                                                                        title="Dile a la IA qué está mal informado para que reformule el nodo y expanda la red"
+                                                                    >
+                                                                        <Sparkles size={11} className="text-emerald-400" />
+                                                                        <span>¿Información imprecisa? Moldear con IA</span>
+                                                                    </button>
                                                                     
 {(getFallbackQuestion(currentNode)) && (
     <div className="mt-3 pt-3 border-t border-white/5">
