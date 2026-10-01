@@ -7353,7 +7353,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     const accent = theme.color || '#a78bfa';
 
                                                     // Neuronal island: node size based on degree (connections)
-                                                    const degree = (edgesToRender || []).filter(e => e.source === node.id || e.target === node.id).length;
+                                                    const degree = (finalEdgesToRender || []).filter(e => e && e.source === node.id || e && e.target === node.id).length;
                                                     const isHub = degree >= 4;
                                                     const isMid = degree >= 2 && degree < 4;
                                                     // Size: hub=36px, mid=24px, leaf=16px
