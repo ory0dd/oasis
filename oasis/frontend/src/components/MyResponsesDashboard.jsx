@@ -4392,11 +4392,13 @@ Datos clinicos del paciente:\n` + context }
                 const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topología", 6500);
                 parsedTopology = safeJSONParse(raw1);
             } catch(e) {
-                console.warn("[AFC] Etapa 1 de topología no completó por red o IA. Ensamblando formulación clínica de 5 columnas basada en datos del consultante:", e.message);
+                console.warn("[AFC] Etapa 1 de topologia no completo por red o IA:", e.message);
+                alert("AVISO: Fallo la conexion con la IA (Etapa 1). Mostrando mapa de respaldo basico. Error: " + e.message);
                 parsedTopology = generateUniversalTopologyFromClinicalData(user, bioData, phenomData, pidData, clinicianNotesText);
             }
 
             if (!parsedTopology || typeof parsedTopology !== 'object' || !Array.isArray(parsedTopology.nodes) || parsedTopology.nodes.length < 5) {
+                alert("AVISO: La IA genero un formato invalido. Mostrando mapa de respaldo basico.");
                 parsedTopology = generateUniversalTopologyFromClinicalData(user, bioData, phenomData, pidData, clinicianNotesText);
             }
 
