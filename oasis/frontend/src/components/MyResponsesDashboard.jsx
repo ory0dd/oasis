@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
+import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -6775,19 +6775,27 @@ Devuelve estrictamente el JSON sin formato extra.
 
 
                 {isAnalyzing ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500 bg-zinc-950/40 border border-white/5 rounded-[2rem] p-12 shadow-2xl">
-                        <Activity className="animate-spin mb-6" size={48} style={{ color: accent }} />
-                        <h2 className="text-2xl font-light text-white mb-3">{typeof isAnalyzing === "string" ? isAnalyzing : "Construyendo tu Mapa Conductual"}</h2>
-                        <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed mb-6">
-                            Nuestra IA está analizando de forma segura tus respuestas en el Diagnóstico Existencial y la Historia de Vida para formular tus hipótesis clínicas y estructurar el mapa de bucles.
-                        </p>
-                        <div className="bg-[#18181b] border border-orange-500/30 rounded-xl p-4 max-w-md w-full flex items-start gap-3 text-left">
-                            <ShieldAlert className="text-orange-400 shrink-0 mt-0.5" size={18} />
-                            <div>
-                                <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">Análisis Clínico Personalizado</h4>
-                                <p className="text-[11px] text-zinc-400">
-                                    Estructurando la red funcional basada 100% en la historia real del paciente. Este proceso demorará entre <strong className="text-zinc-200">10 y 15 segundos</strong>.
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] animate-in fade-in duration-300">
+                        <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full px-6">
+                            <div className="relative flex items-center justify-center w-16 h-16">
+                                <div className="absolute inset-0 rounded-full border border-white/5"></div>
+                                <div className="absolute inset-0 rounded-full border-t border-emerald-400/80 animate-spin" style={{ animationDuration: '2s' }}></div>
+                                <Settings className="animate-spin text-zinc-500" size={20} style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+                            </div>
+                            
+                            <div className="flex flex-col gap-2 w-full items-center">
+                                <h2 className="text-[13px] font-medium text-white tracking-widest uppercase">
+                                    Diseñando mapa de bucles
+                                </h2>
+                                <p className="text-[11px] text-zinc-500 font-mono">
+                                    {typeof isAnalyzing === "string" ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '') : "Procesando topología..."}
                                 </p>
+                                
+                                <div className="w-full max-w-[200px] h-[2px] bg-white/5 rounded-full mt-4 overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500/20 via-emerald-400 to-emerald-500/20 rounded-full w-[40%] animate-[pulse_1s_ease-in-out_infinite] blur-[1px]"></div>
+                                    <div className="absolute top-0 left-0 h-full bg-emerald-400 rounded-full w-[40%] shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" style={{ animationDuration: '1.5s' }}></div>
+                                    <div className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
