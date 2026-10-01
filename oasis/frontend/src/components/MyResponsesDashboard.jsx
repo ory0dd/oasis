@@ -7333,7 +7333,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         };
 
                                         let nodeClass = "absolute flex items-center justify-center cursor-pointer transition-[transform,opacity,filter,box-shadow] z-10 select-none ";
-                                        nodeClass += draggingNodeId === node.id ? "duration-0 " : "duration-200 ";
+                                        nodeClass += draggingNodeId === node.id ? "duration-0 " : "duration-75 ";
                                         nodeClass += isSelected ? "scale-110 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] z-30 " : (draggingNodeId === node.id ? "scale-110 z-30 " : "hover:scale-105 hover:z-30 ");
                                         nodeClass += isDimmed ? "opacity-30 " : "opacity-100 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] ";
 
@@ -7354,8 +7354,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     top: `${node.y}%`, 
                                                     transform: 'translate(-50%, -50%)', 
                                                     userSelect: 'none',
-                                                    animation: 'nodeEntrance 0.45s cubic-bezier(0.34,1.56,0.64,1) both',
-                                                    transition: 'opacity 0.4s ease, filter 0.4s ease'
+                                                    willChange: 'transform, opacity',
+                                                    transition: 'opacity 0.1s ease, filter 0.1s ease'
                                                 }}
                                             >
                                                 {(() => {
@@ -7377,7 +7377,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     const activeMult = isSelected || isConnected ? 1.8 : 1;
                                                     
                                                     return (
-                                                        <div className="relative flex flex-col items-center transition-transform duration-300" style={{ transform: isSelected ? 'scale(1.2)' : 'scale(1)' }}>
+                                                        <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1)' }}>
                                                             {/* Ambient outer halo for hub nodes */}
                                                             {isHub && (
                                                                 <div className="absolute rounded-full pointer-events-none" style={{
@@ -7402,7 +7402,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         : `0 0 ${baseGlow}px ${accent}55`,
                                                                     opacity: node.dashed ? 0.6 : 1,
                                                                     animation: isHub && !isSelected && !isConnected ? `hubPulse ${3 + (degree % 3)}s ease-in-out infinite` : undefined,
-                                                                    transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)'
+                                                                    transition: 'transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease'
                                                                 }}
                                                             >
                                                                 {/* Pulse ring on selected or connected */}
