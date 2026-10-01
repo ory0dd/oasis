@@ -6,7 +6,7 @@ import { safeJSONParse } from '../utils/jsonParser';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
-    layout_version: 4,
+    layout_version: 7,
     nodes: [
         // Columna 1: Contexto & Detonantes (Antecedentes E) (x: 14)
         { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfección y rendimiento para validar el propio valor.", x: 14, y: 35 },
@@ -327,17 +327,15 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 5.2;
-    const paddingY = 5.2;
+    // Strict bounding clearance (% of virtual canvas):
+    // Horizontal 9.0% (~180px) and Vertical 7.0% (~84px) guarantee zero overlap
+    const minDx = 9.0;
+    const minDy = 7.0;
+    const damping = 0.50;
+    const maxIterations = 100;
 
-    let adjusted = true;
-    let iterations = 0;
-    const maxIterations = 60;
-    const damping = 0.38; // Factor de amortiguación para evitar oscilaciones
-
-    while (adjusted && iterations < maxIterations) {
-        adjusted = false;
-        iterations++;
+    for (let it = 0; it < maxIterations; it++) {
+        let changed = false;
         for (let i = 0; i < adjustedNodes.length; i++) {
             for (let j = i + 1; j < adjustedNodes.length; j++) {
                 const n1 = adjustedNodes[i];
@@ -346,43 +344,32 @@ const resolveCollisions = (nodes) => {
                 let dx = n2.x - n1.x;
                 let dy = n2.y - n1.y;
 
-                // Si están exactamente superpuestos, desempatar suavemente
-                if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
-                    dx = (Math.random() - 0.5) * 1.5;
-                    dy = (Math.random() - 0.5) * 2;
-                }
+                if (Math.abs(dx) < 0.1) dx = (Math.random() - 0.5) * 1.5;
+                if (Math.abs(dy) < 0.1) dy = (Math.random() - 0.5) * 1.5;
 
-                const dx_norm = dx / paddingX;
-                const dy_norm = dy / paddingY;
-                const dist_norm = Math.hypot(dx_norm, dy_norm) || 0.01;
+                const nx = dx / minDx;
+                const ny = dy / minDy;
+                const distNorm = Math.hypot(nx, ny);
 
-                if (dist_norm < 1.0) {
-                    adjusted = true;
+                if (distNorm < 1.0) {
+                    changed = true;
+                    const overlap = 1.0 - distNorm;
+                    const ux = nx / (distNorm || 0.001);
+                    const uy = ny / (distNorm || 0.001);
 
-                    const ux = dx_norm / dist_norm;
-                    const uy = dy_norm / dist_norm;
-                    const overlap = 1.0 - dist_norm;
+                    const moveX = ux * overlap * minDx * damping * 0.5;
+                    const moveY = uy * overlap * minDy * damping * 0.5;
 
-                    // Si pertenecen a columnas sustancialmente diferentes (dx > 6.5), priorizar ajuste puramente vertical
-                    // para no romper el orden columnar de la topología funcional
-                    const sameColumn = Math.abs(dx) < 6.5;
-                    const moveX = sameColumn ? ux * overlap * damping * paddingX * 0.25 : 0;
-                    const moveY = uy * overlap * damping * paddingY;
-
-                    n1.x -= moveX;
-                    n1.y -= moveY;
-                    n2.x += moveX;
-                    n2.y += moveY;
-
-                    // Mantener dentro de los límites cómodos del lienzo virtual
-                    n1.x = Math.max(9, Math.min(91, n1.x));
-                    n2.x = Math.max(9, Math.min(91, n2.x));
-                    n1.y = Math.max(14, Math.min(88, n1.y));
-                    n2.y = Math.max(14, Math.min(88, n2.y));
+                    n1.x = Math.max(5, Math.min(95, n1.x - moveX));
+                    n1.y = Math.max(8, Math.min(92, n1.y - moveY));
+                    n2.x = Math.max(5, Math.min(95, n2.x + moveX));
+                    n2.y = Math.max(8, Math.min(92, n2.y + moveY));
                 }
             }
         }
+        if (!changed) break;
     }
+
     return adjustedNodes;
 };
 
@@ -927,50 +914,36 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         rawEdges
     );
 
-    const getStaggeredSlots = (count, baseX) => {
-        if (count <= 0) return [];
-        if (count === 1) return [{ x: baseX, y: 52 }];
-
-        let yStep;
-        if (count === 2) yStep = 30;
-        else if (count === 3) yStep = 22;
-        else if (count === 4) yStep = 17;
-        else if (count === 5) yStep = 14;
-        else if (count === 6) yStep = 12;
-        else if (count <= 8) yStep = 10;
-        else yStep = Math.max(7.2, 74 / (count - 1));
-
-        const totalHeight = (count - 1) * yStep;
-        const startY = 52 - (totalHeight / 2);
-        const slots = [];
-        for (let i = 0; i < count; i++) {
-            const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 1.5 : 0;
-            const altX = (i % 2 === 0 ? -1.2 : 1.2);
-            const x = Math.max(8, Math.min(92, baseX + altX + waveX));
-            const y = Math.max(14, Math.min(90, startY + (i * yStep)));
-            slots.push({ x, y });
-        }
-        return slots;
-    };
-
     // 5 Columnas Canónicas de Análisis Funcional de la Conducta (E-O-R-C):
-    // 1. Contexto & Detonantes (14%) -> Estímulos Antecedentes (E)
-    // 2. Pensamientos & Creencias (32%) -> Respuesta Cognitiva (Rc)
-    // 3. Activación Somática (50%) -> Respuesta Fisiológica / Somática (Rf)
-    // 4. Conductas de Evitación (68%) -> Respuesta Motora / Operante (Rm)
-    // 5. Trampa de Mantenimiento (86%) -> Consecuencias & Bucles (C)
+    // 0. Contexto & Historia de Aprendizaje (11%) -> Estímulos Disposicionales / OM
+    // 1. Detonantes Inmediatos (28.5%) -> Estímulos Discriminativos (Ed)
+    // 2. Eventos Privados (48%) -> Organismo: Cognitivo (Arriba) & Somático (Abajo)
+    // 3. Respuestas Operantes (68.5%) -> Conductas Manifiestas / Evitaciones (Rm)
+    // 4. Consecuencias & Trampas (88%) -> Alivio efímero & Costos vitales (C)
+    // 5. Bucles de Mantenimiento & Función -> Puentes orbitarios que cierran el circuito
     const getLayerIndex = (n) => {
         const role = String(n.clinical_role || '').toLowerCase().trim();
         const type = String(n.type || '').toLowerCase().trim();
         const label = String(n.label || '').toLowerCase().trim();
 
-        if (role === 'function' || role.includes('funci')) return 5;
+        if (role === 'function' || role.includes('funci') || type === 'function') return 5;
         if (role === 'consequence' || role.includes('consec') || type === 'consequence') return 4;
         if (role === 'motor' || type === 'motor' || type === 'experiential_avoidance') return 3;
         if (role === 'cognitive' || role === 'physiological' || type === 'cognitive' || type === 'physiological' || type === 'biological') return 2;
         if (role === 'antecedent' || type === 'antecedent' || label.includes('detonante')) return 1;
         if (role === 'context' || type === 'historical' || type === 'social') return 0;
         return 2;
+    };
+
+    const getFunctionalStream = (node, idx) => {
+        if (node.type === 'physiological' || node.type === 'biological' || node.clinical_role === 'physiological') {
+            return 2; // Stream somático inferior
+        }
+        const theme = getClinicalTheme(node);
+        if (theme === 'somatic' || theme === 'substances') return 2;
+        if (theme === 'attachment' || theme === 'anger' || theme === 'avoidance' || node.type === 'social') return 0; // Stream relacional superior
+        if (theme === 'perfectionism' || theme === 'work_pressure' || theme === 'overthinking' || theme === 'insecurity') return 1; // Stream exigencia medio
+        return (idx % 3);
     };
 
     const roleByLayer = ['context', 'antecedent', 'cognitive', 'motor', 'consequence', 'function'];
@@ -983,67 +956,58 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         layerNodes[idx].push(n);
     });
 
-    // Multi-Cluster Starburst Topology (Flowers / Multipolar Neurons like Obsidian)
-    // 6 Starburst Flower Hub Centers across the canvas
-    const flowerCenters = [
-        { cx: 14, cy: 50 }, // Flor 1: Contexto Historico & Social
-        { cx: 31, cy: 46 }, // Flor 2: Detonantes Inmediatos
-        { cx: 48, cy: 39 }, // Flor 3: Nucleo Cognitivo (Pensamientos)
-        { cx: 69, cy: 46 }, // Flor 4: Respuesta Operante (Conductas)
-        { cx: 86, cy: 50 }, // Flor 5: Consecuencias & Trampas
-        { cx: 52, cy: 63 }  // Flor 6: Nucleo Somatico & Fisiologico (Cuerpo)
-    ];
+    // 5 Canales temporales canónicos (X-axis)
+    const layerBaseX = [11.0, 28.5, 48.0, 68.5, 88.0];
+    // 3 Rutas temáticas de flujo funcional (Y-axis)
+    const streamBaseY = [24.0, 50.0, 76.0];
 
-    // Helper to arrange a list of nodes as a flower around a hub (center + radial petals)
-    const arrangeFlower = (nodesList, center, radiusMin = 6.0, radiusMax = 13.5) => {
-        if (!nodesList || nodesList.length === 0) return;
-        const total = nodesList.length;
-        if (total === 1) {
-            nodesList[0].x = center.cx;
-            nodesList[0].y = center.cy;
-            return;
+    // Distribuir cada etapa a lo largo de las 3 rutas funcionales
+    for (let l = 0; l < 5; l++) {
+        const stageList = layerNodes[l];
+        const streamBuckets = [[], [], []];
+        stageList.forEach((n, idx) => {
+            const s = getFunctionalStream(n, idx);
+            streamBuckets[s].push(n);
+        });
+
+        for (let s = 0; s < 3; s++) {
+            const bucket = streamBuckets[s];
+            const count = bucket.length;
+            const bx = layerBaseX[l];
+            const by = streamBaseY[s];
+
+            bucket.forEach((node, k) => {
+                if (count === 1) {
+                    node.x = bx;
+                    node.y = by;
+                } else if (count === 2) {
+                    node.x = bx + (k === 0 ? -3.6 : 3.6);
+                    node.y = by + (k === 0 ? -5.5 : 5.5);
+                } else if (count === 3) {
+                    node.x = bx + (k === 1 ? 4.0 : -4.0);
+                    node.y = by + (k - 1) * 7.5;
+                } else {
+                    const isRight = (k % 2 === 1);
+                    const xOffset = isRight ? 4.2 : -4.2;
+                    const totalRows = Math.ceil(count / 2);
+                    const row = Math.floor(k / 2);
+                    const ySpread = Math.min(8.5, 18.0 / Math.max(1, totalRows - 1));
+                    const yOffset = (row - (totalRows - 1) / 2) * ySpread;
+                    node.x = bx + xOffset;
+                    node.y = by + yOffset + (isRight ? 1.5 : -1.5);
+                }
+            });
         }
+    }
 
-        // Identify node with highest degree as the central hub of this flower
-        let bestHubIdx = 0;
-        let maxDeg = -1;
-        nodesList.forEach((n, idx) => {
-            const deg = (rawEdges || []).filter(e => e && (e.source === n.id || e.target === n.id)).length;
-            if (deg > maxDeg) {
-                maxDeg = deg;
-                bestHubIdx = idx;
-            }
-        });
-
-        // Place central hub
-        nodesList[bestHubIdx].x = center.cx;
-        nodesList[bestHubIdx].y = center.cy;
-
-        // Place petal satellites radiating around hub
-        const petals = nodesList.filter((_, idx) => idx !== bestHubIdx);
-        const petalCount = petals.length;
-        petals.forEach((node, i) => {
-            const angle = (i / Math.max(1, petalCount)) * 2 * Math.PI + (i % 2 === 0 ? 0.2 : -0.2);
-            const dist = radiusMin + ((i % 3) / 2) * (radiusMax - radiusMin);
-            const px = center.cx + Math.cos(angle) * dist * 1.25;
-            const py = center.cy + Math.sin(angle) * dist;
-            node.x = Math.max(5, Math.min(95, px));
-            node.y = Math.max(12, Math.min(90, py));
-        });
-    };
-
-    // Separate Layer 2 into Cognitive and Somatic for dual central flowers
-    const cogNodes = layerNodes[2].filter(n => n.type !== 'physiological');
-    const physNodes = layerNodes[2].filter(n => n.type === 'physiological');
-    // If functions exist, blend them into central and bridge positions
-    const funcNodes = layerNodes[5];
-
-    arrangeFlower(layerNodes[0], flowerCenters[0], 7.0, 14.5); // Flor Contexto
-    arrangeFlower(layerNodes[1], flowerCenters[1], 6.5, 13.0); // Flor Detonantes
-    arrangeFlower(cogNodes, flowerCenters[2], 5.5, 12.0);      // Flor Cognitiva
-    arrangeFlower(layerNodes[3], flowerCenters[3], 6.5, 13.0); // Flor Operante
-    arrangeFlower(layerNodes[4], flowerCenters[4], 7.0, 14.5); // Flor Consecuencias
-    arrangeFlower([...physNodes, ...funcNodes], flowerCenters[5], 5.5, 12.5); // Flor Somatica / Bucles
+    // Etapa 5: Bucles y Funciones de Mantenimiento (Circuitos orbitarios de retroalimentación)
+    const funcList = layerNodes[5];
+    funcList.forEach((node, idx) => {
+        const isUpper = (idx % 2 === 0);
+        const progress = funcList.length > 1 ? (idx / (funcList.length - 1)) : 0.5;
+        node.x = 32 + progress * 42;
+        node.y = isUpper ? 11.0 : 89.0;
+    });
 
     return resolveCollisions(newNodes);
 };
@@ -3431,7 +3395,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
 
         if (parsed && Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
-            const needsReorg = parsed.layout_version !== 4 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+            const needsReorg = parsed.layout_version !== 7 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
             if (needsReorg) {
                 parsed.nodes = layoutClinicalNodes(parsed.nodes, parsed.edges || [], user, bioData, phenomData);
                 const validIds = new Set(parsed.nodes.map(n => n.id));
@@ -3494,7 +3458,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                     const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`];
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const needsReorg = cloudAfc.layout_version !== 4 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+                        const needsReorg = cloudAfc.layout_version !== 7 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
                         let updatedNodes;
                         let updatedEdges = cloudAfc.edges || [];
                         if (needsReorg) {
@@ -3504,7 +3468,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         } else {
                             updatedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
                         }
-                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 4 };
+                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 7 };
                         setAfcData(resolved);
                         try {
                             localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
@@ -3961,7 +3925,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         return {
             is_valid: true,
             rejection_reason: "",
-            layout_version: 4,
+            layout_version: 7,
             nodes: allNodes,
             edges: edges,
             tripleModality: {
@@ -4211,7 +4175,7 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
    - Consecuencias -> Cumplen una Función específica.
 2. Bucles de Retroalimentación Funcional (Cierre Funcional):
    - La Función y las Consecuencias a largo plazo conectan DE REGRESO al Contexto y a los Detonantes (ED), explicando por qué ante futuras señales, la RO será aún más probable.
-- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 32 y 48 conexiones con 'source' y 'target' válidos.
+- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 70 y 105 conexiones con 'source' y 'target' válidos para que toda la red esté densamente interconectada (como una tela de araña de contingencia funcional estilo Obsidian).
 
 === FORMATO DE CADA NODO ===
 - id: formato "n1", "n2", "n3"...
@@ -4644,7 +4608,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 const safeAfc = {
                     ...safeTopology,
                     ...safeInsights,
-                    layout_version: 4
+                    layout_version: 7
                 };
                 safeAfc.nodes = layoutClinicalNodes(safeAfc.nodes, safeAfc.edges || [], user, bioData, phenomData);
                 setAfcData(safeAfc);
@@ -5611,7 +5575,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const cleanEdges = edges.filter(e => e && validNodeIds.has(e.source) && validNodeIds.has(e.target));
 
         if (!isArray) {
-            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 4 };
+            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 7 };
             setAfcData(updated);
             if (user) {
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
@@ -6916,7 +6880,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                    title="Reorganizar en Telarana Funcional"
+                                    title="Reorganizar en Red de Análisis Funcional (AFC)"
                                     aria-label="Ajustar y alinear nodos"
                                 >
                                     <Network size={11} className="text-emerald-400" />
@@ -7068,22 +7032,34 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
 
                                         <style>{`
+                                                    @keyframes edgeStreamFlow {
+                                                        from { stroke-dashoffset: 3.2; }
+                                                        to { stroke-dashoffset: 0; }
+                                                    }
+                                                    @keyframes edgeStreamFlowReverse {
+                                                        from { stroke-dashoffset: 0; }
+                                                        to { stroke-dashoffset: 3.2; }
+                                                    }
                                                     @keyframes edgeFlowAnim {
                                                         from { stroke-dashoffset: 4; }
                                                         to { stroke-dashoffset: 0; }
                                                     }
-                                                     .edge-flow-active {
-                                                         stroke-dasharray: 0.7, 0.35;
-                                                         animation: edgeFlowAnim 1.8s linear infinite;
-                                                     }
-                                                     .edge-flow-feedback {
-                                                         stroke-dasharray: 0.5, 0.35;
-                                                         animation: edgeFlowAnim 2.4s linear infinite reverse;
-                                                     }
-                                                     @keyframes hubPulse {
-                                                         0%, 100% { filter: brightness(1); }
-                                                         50% { filter: brightness(1.8); }
-                                                     }
+                                                    .edge-flow-stream {
+                                                        stroke-dasharray: 0.8, 0.45;
+                                                        animation: edgeStreamFlow 4.5s linear infinite;
+                                                    }
+                                                    .edge-flow-feedback-stream {
+                                                        stroke-dasharray: 0.6, 0.35;
+                                                        animation: edgeStreamFlowReverse 3.6s linear infinite;
+                                                    }
+                                                    .edge-flow-active {
+                                                        stroke-dasharray: 0.7, 0.35;
+                                                        animation: edgeFlowAnim 1.6s linear infinite;
+                                                    }
+                                                    @keyframes hubPulse {
+                                                        0%, 100% { filter: brightness(1); }
+                                                        50% { filter: brightness(1.8); }
+                                                    }
                                                 `}</style>
                                         <defs>
                                             <marker id="arrowhead-default" markerWidth="2.6" markerHeight="2.6" refX="2.0" refY="1.3" orient="auto">
@@ -7159,19 +7135,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                             const isHighlighted = (activeNodeId && (isIncoming || isOutgoing)) || isEdgeInPattern;
                                             const isAnyNodeSelected = !!activeNodeId || !!selectedPatternId;
 
-                                            let strokeColor = "rgba(255,255,255,0.15)";
+                                            // Default flowing energy stream for non-selected state
+                                            let strokeColor = isFeedback ? "rgba(192, 132, 252, 0.45)" : "rgba(148, 163, 184, 0.30)";
                                             let strokeWidth = (edge.weight || 1.2) * 0.1;
-                                            let className = "";
-                                            let markerEnd = edge.type === 'unidirectional' || isFeedback ? "url(#arrowhead-default)" : "";
+                                            let className = isFeedback ? "edge-flow-feedback-stream" : "edge-flow-stream";
+                                            let markerEnd = isFeedback ? "url(#arrowhead-feedback)" : (edge.type === 'unidirectional' ? "url(#arrowhead-default)" : "");
                                             let style = {};
 
                                             if (isAnyNodeSelected && !isHighlighted) {
-                                                // If a node/pattern (island) is selected, but this edge is not highlighted, fade it completely
+                                                // If a node/pattern is selected, but this edge is not highlighted, fade it completely
                                                 strokeColor = "rgba(255,255,255,0.02)";
                                                 strokeWidth = 0.04;
+                                                className = "";
                                                 markerEnd = "";
                                             } else if (isEdgeInPattern) {
-                                                strokeColor = "rgba(168, 85, 247, 0.95)"; // Brighter purple active line for selected patterns/islands
+                                                strokeColor = "rgba(168, 85, 247, 0.95)";
                                                 strokeWidth = 0.24;
                                                 className = "edge-flow-active";
                                                 markerEnd = "url(#arrowhead-feedback)";
@@ -7188,7 +7166,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     markerEnd = "url(#arrowhead-outgoing)";
                                                 }
                                                 strokeWidth = 0.26;
-                                                className += " edge-flow-active";
+                                                className = "edge-flow-active";
                                                 style = {};
                                             } else if (edge.type === 'mini_chat_link') {
                                                 strokeColor = "rgba(255, 255, 255, 0.4)";
@@ -7196,26 +7174,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 style = { strokeDasharray: "0.5, 0.5" };
                                                 markerEnd = "";
                                             } else if (isProgression) {
-                                                strokeColor = "rgba(59, 130, 246, 0.45)";
-                                                strokeWidth = 0.09;
-                                                style = { strokeDasharray: "0.2, 0.2" };
+                                                strokeColor = "rgba(99, 102, 241, 0.45)";
+                                                strokeWidth = 0.10;
+                                                className = "edge-flow-stream";
                                                 markerEnd = "";
                                             } else if (isFeedback) {
-                                                strokeColor = "rgba(168, 85, 247, 0.55)";
+                                                strokeColor = "rgba(192, 132, 252, 0.55)";
                                                 strokeWidth = 0.14;
-                                                className = "edge-flow-active";
+                                                className = "edge-flow-feedback-stream";
                                                 markerEnd = "url(#arrowhead-feedback)";
-                                                style = { strokeDasharray: "0.4, 0.4" };
                                             } else if (isBlindSpotEdge) {
                                                 strokeColor = "#38bdf8";
                                                 strokeWidth = 0.18;
-                                                className += " edge-flow-active";
+                                                className = "edge-flow-active";
                                                 markerEnd = "url(#arrowhead-blindspot)";
                                                 style = {};
-                                            } else if (isAnyNodeSelected) {
-                                                strokeColor = "rgba(255,255,255,0.03)";
-                                                strokeWidth = 0.05;
-                                                markerEnd = "";
                                             }
 
                                             return (
@@ -7477,7 +7450,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             {/* Floating Label */}
                                                             <div 
                                                                 className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
-                                                                style={{ top: `${labelOffset}px`, width: isHub ? '160px' : '120px' }}
+                                                                style={{ top: `${labelOffset}px`, width: isHub ? '135px' : '100px' }}
                                                             >
                                                                 {/* Role badge */}
                                                                 <span 
