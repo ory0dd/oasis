@@ -998,6 +998,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
             }
             const parsed = JSON.parse(content);
             
+            const payloadToSync = {};
             if (parsed.bio && selectedPatient?.name) {
                 const bioObject = {};
                 if (Array.isArray(parsed.bio)) {
@@ -1005,13 +1006,35 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 } else if (typeof parsed.bio === 'object') {
                     Object.entries(parsed.bio).forEach(([key, val]) => { bioObject[key] = val; });
                 }
-                localStorage.setItem(`oasis_bio_transcriptions_${selectedPatient.name}`, JSON.stringify(bioObject));
+                const bioStr = JSON.stringify(bioObject);
+                localStorage.setItem(`oasis_bio_transcriptions_${selectedPatient.name}`, bioStr);
+                payloadToSync[`oasis_bio_transcriptions_${selectedPatient.name}`] = bioStr;
             }
             if (parsed.phenom && selectedPatient?.name) {
-                localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, JSON.stringify(parsed.phenom));
+                const phenomStr = JSON.stringify(parsed.phenom);
+                localStorage.setItem(`oasis_phenom_qualitative_${selectedPatient.name}`, phenomStr);
+                payloadToSync[`oasis_phenom_qualitative_${selectedPatient.name}`] = phenomStr;
             }
             if (result.text && selectedPatient?.name) {
                 localStorage.setItem(`oasis_clinical_report_text_${selectedPatient.name}`, result.text);
+                payloadToSync[`oasis_clinical_report_text_${selectedPatient.name}`] = result.text;
+            }
+            
+            // Sync to backend immediately so information is never lost on refresh
+            if (Object.keys(payloadToSync).length > 0 && selectedPatient?.name) {
+                try {
+                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                    await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(selectedPatient.name)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Oasis-User': callerUser
+                        },
+                        body: JSON.stringify(payloadToSync)
+                    });
+                } catch(syncErr) {
+                    console.error("Error auto-syncing PDF extraction to backend:", syncErr);
+                }
             }
             
             alert("Información biográfica y fenomenológica extraída y guardada exitosamente.");
