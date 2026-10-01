@@ -6,7 +6,7 @@ import { safeJSONParse } from '../utils/jsonParser';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
-    layout_version: 7,
+    layout_version: 8,
     nodes: [
         // Columna 1: Contexto & Detonantes (Antecedentes E) (x: 14)
         { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfección y rendimiento para validar el propio valor.", x: 14, y: 35 },
@@ -328,11 +328,11 @@ const resolveCollisions = (nodes) => {
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
     // Strict bounding clearance (% of virtual canvas):
-    // Horizontal 9.0% (~180px) and Vertical 7.0% (~84px) guarantee zero overlap
-    const minDx = 9.0;
-    const minDy = 7.0;
-    const damping = 0.50;
-    const maxIterations = 100;
+    // Horizontal 8.8% (~176px) and Vertical 6.8% (~82px) guarantee zero label collision
+    const minDx = 8.8;
+    const minDy = 6.8;
+    const damping = 0.52;
+    const maxIterations = 120;
 
     for (let it = 0; it < maxIterations; it++) {
         let changed = false;
@@ -360,10 +360,15 @@ const resolveCollisions = (nodes) => {
                     const moveX = ux * overlap * minDx * damping * 0.5;
                     const moveY = uy * overlap * minDy * damping * 0.5;
 
-                    n1.x = Math.max(5, Math.min(95, n1.x - moveX));
-                    n1.y = Math.max(8, Math.min(92, n1.y - moveY));
-                    n2.x = Math.max(5, Math.min(95, n2.x + moveX));
-                    n2.y = Math.max(8, Math.min(92, n2.y + moveY));
+                    // Hubs have high inertia (they remain centered, satellites yield)
+                    const weight1 = n1.is_island_hub ? 0.2 : 0.8;
+                    const weight2 = n2.is_island_hub ? 0.2 : 0.8;
+                    const totalWeight = weight1 + weight2;
+
+                    n1.x = Math.max(5, Math.min(95, n1.x - moveX * (weight1 / totalWeight) * 2));
+                    n1.y = Math.max(8, Math.min(92, n1.y - moveY * (weight1 / totalWeight) * 2));
+                    n2.x = Math.max(5, Math.min(95, n2.x + moveX * (weight2 / totalWeight) * 2));
+                    n2.y = Math.max(8, Math.min(92, n2.y + moveY * (weight2 / totalWeight) * 2));
                 }
             }
         }
@@ -894,13 +899,18 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
 export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioData = null, phenomData = null) => {
     if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) return [];
 
-    // Filtrar rigurosamente cualquier nodo inventado de coaching ("pivote", "valor:")
-    const sanitizedNodes = rawNodes.filter(n => {
-        if (!n || !n.label) return false;
+    // Helper para detectar y purgar nodos alucinados (ej. "revisar chat", "desacuerdos con pareja", "pivotes")
+    const isFakeOrCoachingNode = (n) => {
+        if (!n || !n.label) return true;
         const l = (n.label || '').toLowerCase();
-        if (l.includes('pivote') || l.startsWith('valor:')) return false;
-        return true;
-    });
+        const d = (n.description || '').toLowerCase();
+        if (l.includes('pivote') || l.startsWith('valor:')) return true;
+        if (l.includes('revisar chat') || d.includes('revisar chat') || d.includes('chat de tu pareja') || d.includes('chat compulsivamente')) return true;
+        if (l.includes('callar desacuerdos con pareja') || d.includes('desacuerdos con pareja')) return true;
+        return false;
+    };
+
+    const sanitizedNodes = rawNodes.filter(n => !isFakeOrCoachingNode(n));
 
     const newNodes = enrichAfcNodesWithPerspectiveMetadata(
         sanitizedNodes.map(n => {
@@ -914,13 +924,6 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         rawEdges
     );
 
-    // 5 Columnas Canónicas de Análisis Funcional de la Conducta (E-O-R-C):
-    // 0. Contexto & Historia de Aprendizaje (11%) -> Estímulos Disposicionales / OM
-    // 1. Detonantes Inmediatos (28.5%) -> Estímulos Discriminativos (Ed)
-    // 2. Eventos Privados (48%) -> Organismo: Cognitivo (Arriba) & Somático (Abajo)
-    // 3. Respuestas Operantes (68.5%) -> Conductas Manifiestas / Evitaciones (Rm)
-    // 4. Consecuencias & Trampas (88%) -> Alivio efímero & Costos vitales (C)
-    // 5. Bucles de Mantenimiento & Función -> Puentes orbitarios que cierran el circuito
     const getLayerIndex = (n) => {
         const role = String(n.clinical_role || '').toLowerCase().trim();
         const type = String(n.type || '').toLowerCase().trim();
@@ -935,78 +938,74 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         return 2;
     };
 
-    const getFunctionalStream = (node, idx) => {
-        if (node.type === 'physiological' || node.type === 'biological' || node.clinical_role === 'physiological') {
-            return 2; // Stream somático inferior
-        }
-        const theme = getClinicalTheme(node);
-        if (theme === 'somatic' || theme === 'substances') return 2;
-        if (theme === 'attachment' || theme === 'anger' || theme === 'avoidance' || node.type === 'social') return 0; // Stream relacional superior
-        if (theme === 'perfectionism' || theme === 'work_pressure' || theme === 'overthinking' || theme === 'insecurity') return 1; // Stream exigencia medio
-        return (idx % 3);
-    };
+    // 6 Centros de Islas Florales distribuidas orgánicamente en el lienzo (Estilo Obsidian)
+    // Cada isla tiene un ángulo de apertura hacia el exterior para que los pétalos se abran hacia el espacio libre
+    const flowerHubs = [
+        { cx: 18, cy: 46, angleOut: Math.PI },          // Flor 1: Origen & Contexto (Abre hacia la izquierda)
+        { cx: 36, cy: 26, angleOut: -Math.PI * 0.65 },  // Flor 2: Detonantes & Condiciones (Abre hacia arriba-izq)
+        { cx: 52, cy: 46, angleOut: 0 },                 // Flor 3: Núcleo Cognitivo / Diálogo Interno (Centro)
+        { cx: 74, cy: 28, angleOut: -Math.PI * 0.30 },  // Flor 4: Respuestas Operantes (Abre hacia arriba-der)
+        { cx: 48, cy: 78, angleOut: Math.PI * 0.5 },    // Flor 5: Núcleo Somático & Alerta (Abre hacia abajo)
+        { cx: 82, cy: 64, angleOut: Math.PI * 0.20 }    // Flor 6: Consecuencias & Trampas (Abre hacia abajo-der)
+    ];
 
-    const roleByLayer = ['context', 'antecedent', 'cognitive', 'motor', 'consequence', 'function'];
-    const layerNodes = [[], [], [], [], [], []];
+    const islandNodes = [[], [], [], [], [], []];
 
     newNodes.forEach(n => {
-        const idx = getLayerIndex(n);
-        n.clinical_role = roleByLayer[idx];
-        delete n.is_value;
-        layerNodes[idx].push(n);
+        const l = getLayerIndex(n);
+        if (l === 2) {
+            if (n.type === 'physiological' || n.clinical_role === 'physiological') {
+                islandNodes[4].push(n); // Flor Somática
+            } else {
+                islandNodes[2].push(n); // Flor Cognitiva
+            }
+        } else if (l === 5) {
+            islandNodes[5].push(n); // Flor Consecuencias/Trampas
+        } else {
+            islandNodes[l].push(n);
+        }
     });
 
-    // 5 Canales temporales canónicos (X-axis)
-    const layerBaseX = [11.0, 28.5, 48.0, 68.5, 88.0];
-    // 3 Rutas temáticas de flujo funcional (Y-axis)
-    const streamBaseY = [24.0, 50.0, 76.0];
+    islandNodes.forEach((list, islandIdx) => {
+        if (!list || list.length === 0) return;
+        const hubCenter = flowerHubs[islandIdx];
 
-    // Distribuir cada etapa a lo largo de las 3 rutas funcionales
-    for (let l = 0; l < 5; l++) {
-        const stageList = layerNodes[l];
-        const streamBuckets = [[], [], []];
-        stageList.forEach((n, idx) => {
-            const s = getFunctionalStream(n, idx);
-            streamBuckets[s].push(n);
+        // Identificar el nodo central (Hub) con mayor número de conexiones
+        let hubIdx = 0;
+        let maxDegree = -1;
+        list.forEach((n, idx) => {
+            const deg = (rawEdges || []).filter(e => e && (e.source === n.id || e.target === n.id)).length;
+            if (deg > maxDegree) {
+                maxDegree = deg;
+                hubIdx = idx;
+            }
         });
 
-        for (let s = 0; s < 3; s++) {
-            const bucket = streamBuckets[s];
-            const count = bucket.length;
-            const bx = layerBaseX[l];
-            const by = streamBaseY[s];
+        const hubNode = list[hubIdx];
+        hubNode.x = hubCenter.cx;
+        hubNode.y = hubCenter.cy;
+        hubNode.is_island_hub = true;
 
-            bucket.forEach((node, k) => {
-                if (count === 1) {
-                    node.x = bx;
-                    node.y = by;
-                } else if (count === 2) {
-                    node.x = bx + (k === 0 ? -3.6 : 3.6);
-                    node.y = by + (k === 0 ? -5.5 : 5.5);
-                } else if (count === 3) {
-                    node.x = bx + (k === 1 ? 4.0 : -4.0);
-                    node.y = by + (k - 1) * 7.5;
-                } else {
-                    const isRight = (k % 2 === 1);
-                    const xOffset = isRight ? 4.2 : -4.2;
-                    const totalRows = Math.ceil(count / 2);
-                    const row = Math.floor(k / 2);
-                    const ySpread = Math.min(8.5, 18.0 / Math.max(1, totalRows - 1));
-                    const yOffset = (row - (totalRows - 1) / 2) * ySpread;
-                    node.x = bx + xOffset;
-                    node.y = by + yOffset + (isRight ? 1.5 : -1.5);
-                }
-            });
-        }
-    }
+        const satellites = list.filter((_, idx) => idx !== hubIdx);
+        const satCount = satellites.length;
+        if (satCount === 0) return;
 
-    // Etapa 5: Bucles y Funciones de Mantenimiento (Circuitos orbitarios de retroalimentación)
-    const funcList = layerNodes[5];
-    funcList.forEach((node, idx) => {
-        const isUpper = (idx % 2 === 0);
-        const progress = funcList.length > 1 ? (idx / (funcList.length - 1)) : 0.5;
-        node.x = 32 + progress * 42;
-        node.y = isUpper ? 11.0 : 89.0;
+        // Apertura en abanico floral hacia afuera
+        const isCenterIsland = (islandIdx === 2);
+        const arcSpan = isCenterIsland ? (2 * Math.PI) : Math.min(Math.PI * 1.5, 0.7 + satCount * 0.32);
+        const startAngle = isCenterIsland ? 0 : (hubCenter.angleOut - arcSpan / 2);
+
+        satellites.forEach((sat, i) => {
+            const t = isCenterIsland ? (i / satCount) : (satCount === 1 ? 0.5 : (i / (satCount - 1)));
+            const angle = startAngle + t * arcSpan;
+            const rMin = 10.0;
+            const rMax = 19.0;
+            const radius = (i % 2 === 0 ? rMin : rMax);
+
+            sat.x = Math.max(5, Math.min(95, hubCenter.cx + Math.cos(angle) * radius * 1.25));
+            sat.y = Math.max(8, Math.min(92, hubCenter.cy + Math.sin(angle) * radius));
+            sat.is_island_hub = false;
+        });
     });
 
     return resolveCollisions(newNodes);
@@ -3395,12 +3394,25 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
 
         if (parsed && Array.isArray(parsed.nodes) && parsed.nodes.length > 0) {
-            const needsReorg = parsed.layout_version !== 7 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+            // Purgar rigurosamente cualquier nodo alucinado persistido previamente
+            parsed.nodes = parsed.nodes.filter(n => {
+                if (!n || !n.label) return false;
+                const l = (n.label || '').toLowerCase();
+                const d = (n.description || '').toLowerCase();
+                if (l.includes('pivote') || l.startsWith('valor:')) return false;
+                if (l.includes('revisar chat') || d.includes('revisar chat') || d.includes('chat de tu pareja') || d.includes('chat compulsivamente')) return false;
+                if (l.includes('callar desacuerdos con pareja') || d.includes('desacuerdos con pareja')) return false;
+                return true;
+            });
+            const validIds = new Set(parsed.nodes.map(n => n.id));
+            parsed.edges = (parsed.edges || []).filter(e => validIds.has(e.source) && validIds.has(e.target));
+
+            const needsReorg = parsed.layout_version !== 8 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.is_island_hub || Math.abs(n.x - 18) < 3.5);
             if (needsReorg) {
                 parsed.nodes = layoutClinicalNodes(parsed.nodes, parsed.edges || [], user, bioData, phenomData);
                 const validIds = new Set(parsed.nodes.map(n => n.id));
                 parsed.edges = (parsed.edges || []).filter(e => validIds.has(e.source) && validIds.has(e.target));
-                parsed.layout_version = 4;
+                parsed.layout_version = 8;
                 try {
                     localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(parsed));
                 } catch (e) {}
@@ -3413,7 +3425,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             console.log("ℹ️ No hay afcData para", user, ", usando plantilla clínica universal.");
             const mock = { ...MOCK_AFC_DATA };
             mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
-            mock.layout_version = 4;
+            mock.layout_version = 8;
             setAfcData(mock);
         }
 
@@ -3458,7 +3470,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                     const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`];
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const needsReorg = cloudAfc.layout_version !== 7 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+                        const needsReorg = cloudAfc.layout_version !== 8 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
                         let updatedNodes;
                         let updatedEdges = cloudAfc.edges || [];
                         if (needsReorg) {
@@ -3468,7 +3480,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         } else {
                             updatedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
                         }
-                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 7 };
+                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 8 };
                         setAfcData(resolved);
                         try {
                             localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
@@ -3925,7 +3937,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         return {
             is_valid: true,
             rejection_reason: "",
-            layout_version: 7,
+            layout_version: 8,
             nodes: allNodes,
             edges: edges,
             tripleModality: {
@@ -4181,7 +4193,8 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
 - id: formato "n1", "n2", "n3"...
 - type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence' | 'function'
 - clinical_role: 'context' | 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence' | 'function'
-- label: 2 a 5 palabras. ESTRICTAMENTE PROHIBIDO usar clises vagos como "Evitacion del dolor", "Autoexigencia constante", "Sobrepensar decisiones", "Evitacion de conflictos", "Toma de decisiones impulsivas", "Intento de control", "Aislamiento emocional", "Cansancio emocional", "Busqueda de distraccion". DEBE ser una unidad funcional clinicamente precisa y contextualmente situada en la vida del paciente (ej. "Callar desacuerdos con pareja", "Tension y taquicardia al sonar telefono", "Duda paralizante sobre propio criterio", "Revisar chat compulsivamente", "Distanciamiento afectivo en relacion").
+- label: 2 a 5 palabras. ESTRICTAMENTE PROHIBIDO usar clises vagos como "Evitacion del dolor", "Autoexigencia constante", "Sobrepensar decisiones", "Evitacion de conflictos", "Toma de decisiones impulsivas", "Intento de control", "Aislamiento emocional", "Cansancio emocional", "Busqueda de distraccion". DEBE ser una unidad funcional clinicamente precisa extraida DIRECTAMENTE de lo que el paciente expreso en sus respuestas (ej. "Tension y taquicardia ante presion", "Duda paralizante sobre propio criterio", "Postergar tareas clave", "Sensacion de nudo en el pecho").
+- REGLA DE ORO DE VERACIDAD ABSOLUTA: PROHIBIDO inventar temas de pareja, revisar chats, celos, infidelidad o situaciones afectivas conyugales si el paciente NO las menciono explicitamente en su texto. CADA NODO DEBE TENER SU CITA REAL EN 'source'. CERO ALUCINACIONES.
 - description: 25 a 45 palabras. MUY IMPORTANTE: Desarrolla y profundiza un poco mas en el significado de este nodo. Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar explica 'hay dificultades para ver el gran valor que hay en ti, lo cual genera agotamiento...'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
 - source: La CITA TEXTUAL EXACTA (entre comillas) de lo que dijo el usuario que inspiro este nodo. Nada de explicaciones, solo la cita directa.
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
@@ -4355,9 +4368,9 @@ REGLAS ESENCIALES:
   4. Respuesta Operante (10-14 nodos: micro-conductas observables, escape, habitos, acciones, clinical_role: 'motor')
   5. Consecuencias (8-12 nodos: consecuencias inmediatas y a largo plazo, trampas de mantenimiento, clinical_role: 'consequence')
   6. Funcion del Bucle (4-7 nodos: hipotesis de sentido/funcion nuclear, clinical_role: 'function')
-- BUCLES MULTIPLES Y PARALELOS: Identifica y mapea entre 4 y 6 flores o islas funcionales que conviven en el paciente (ej. bucle de autoexigencia laboral, bucle vincular de pareja, bucle somatico de insomnio/tension, bucle de aislamiento).
-- ESTRUCTURA DE FLORES / NEURONAS CON HUBS: Cada flor tiene un nodo central (hub con 4+ conexiones) rodeado de nodos satelite (petalos con 1-2 conexiones).
-- MAXIMA ESPECIFICIDAD CLINICA: PROHIBIDO usar clises vagos como "Evitacion del dolor" o "Sobrepensar". Usa unidades funcionales situadas (ej. "Callar desacuerdos con pareja", "Tension y taquicardia al sonar telefono", "Duda paralizante sobre propio criterio").
+- BUCLES MULTIPLES Y PARALELOS: Identifica y mapea entre 4 y 6 flores o islas funcionales reales presentes en los datos del paciente (ej. isla de autoexigencia/rendimiento, isla somatica de tension/cansancio, isla de aislamiento/evitacion, isla de origen familiar).
+- ESTRUCTURA DE FLORES CON HUBS: Cada flor tiene un nodo central grande (hub blanco con 4+ conexiones) rodeado de nodos satelites (petalos grises de variacion y nodos verdes de condicion).
+- MAXIMA ESPECIFICIDAD CLINICA BASADA EN DATOS REALES: PROHIBIDO usar clises vagos como "Evitacion del dolor" o "Sobrepensar". Usa unidades funcionales situadas basadas exclusivamente en lo que el paciente dijo. CERO invenciones de pareja o chats.
 - EXACTAMENTE entre 70 y 105 conexiones funcionales directas.
 - CERO PIVOTES: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:".
 - Cada nodo con su 'clinical_role', 'label' certero e hipotetico (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
@@ -4608,7 +4621,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 const safeAfc = {
                     ...safeTopology,
                     ...safeInsights,
-                    layout_version: 7
+                    layout_version: 8
                 };
                 safeAfc.nodes = layoutClinicalNodes(safeAfc.nodes, safeAfc.edges || [], user, bioData, phenomData);
                 setAfcData(safeAfc);
@@ -5575,7 +5588,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const cleanEdges = edges.filter(e => e && validNodeIds.has(e.source) && validNodeIds.has(e.target));
 
         if (!isArray) {
-            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 7 };
+            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 8 };
             setAfcData(updated);
             if (user) {
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
@@ -7393,80 +7406,87 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 {(() => {
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
                                                     const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
-                                                    const accent = theme.color || '#a78bfa';
 
-                                                    // Neuronal island: node size based on degree (connections)
-                                                    const degree = (finalEdgesToRender || []).filter(e => e && e.source === node.id || e && e.target === node.id).length;
-                                                    const isHub = degree >= 4;
-                                                    const isMid = degree >= 2 && degree < 4;
-                                                    // Size: hub=36px, mid=24px, leaf=16px
-                                                    const dotSize = isHub ? 36 : isMid ? 24 : 16;
+                                                    // Jerarquía Estilo Obsidian:
+                                                    // 1. Hubs = Islas Centrales Grandes Blancas (#ffffff)
+                                                    // 2. Condiciones = Nodos Verdes (#10b981)
+                                                    // 3. Satélites = Variaciones / Pétalos Grises (#94a3b8)
+                                                    const degree = (finalEdgesToRender || []).filter(e => e && (e.source === node.id || e.target === node.id)).length;
+                                                    const isHub = Boolean(node.is_island_hub || degree >= 4);
+                                                    const isCondition = Boolean(!isHub && (node.type === 'antecedent' || node.clinical_role === 'antecedent' || (node.id && node.id.includes('cond'))));
+
+                                                    const dotSize = isHub ? 26 : isCondition ? 13 : 11;
                                                     const dotSizePx = `${dotSize}px`;
-                                                    const labelOffset = dotSize + 8;
-                                                    
-                                                    // Hub nodes glow much more
-                                                    const baseGlow = isHub ? 50 : isMid ? 30 : 15;
-                                                    const activeMult = isSelected || isConnected ? 1.8 : 1;
-                                                    
+                                                    const labelOffset = dotSize + 6;
+
+                                                    const fillColor = isHub ? '#ffffff' : (isCondition ? '#10b981' : '#94a3b8');
+                                                    const borderColor = isHub ? 'rgba(255,255,255,0.95)' : (isCondition ? '#34d399' : '#64748b');
+                                                    const glowShadow = isHub 
+                                                        ? (isSelected || isConnected ? '0 0 25px #ffffff, 0 0 50px rgba(255,255,255,0.8)' : '0 0 15px rgba(255,255,255,0.6)')
+                                                        : isCondition
+                                                            ? (isSelected || isConnected ? '0 0 20px #10b981, 0 0 35px #34d399' : '0 0 10px rgba(16,185,129,0.6)')
+                                                            : (isSelected || isConnected ? '0 0 16px #94a3b8' : '0 0 5px rgba(148,163,184,0.3)');
+
                                                     return (
                                                         <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s cubic-bezier(0.34,1.56,0.64,1)' }}>
-                                                            {/* Ambient outer halo for hub nodes */}
+                                                            {/* Halo exterior radiante para Islas Centrales (Hubs) */}
                                                             {isHub && (
                                                                 <div className="absolute rounded-full pointer-events-none" style={{
                                                                     width: `${dotSize * 2.8}px`,
                                                                     height: `${dotSize * 2.8}px`,
                                                                     top: '50%', left: '50%',
                                                                     transform: 'translate(-50%, -50%)',
-                                                                    background: `radial-gradient(circle, ${accent}12 0%, transparent 70%)`,
+                                                                    background: `radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)`,
                                                                 }} />
                                                             )}
                                                             
-                                                            {/* The Neuron Dot */}
+                                                            {/* El Punto Neuronal (Estilo Obsidian) */}
                                                             <div 
                                                                 className="rounded-full transition-all duration-300 relative"
                                                                 style={{
                                                                     width: dotSizePx,
                                                                     height: dotSizePx,
-                                                                    border: `${isHub ? 2.5 : 2}px solid ${accent}`,
-                                                                    backgroundColor: isSelected || isConnected ? accent : (isHub ? `${accent}22` : '#050505'),
-                                                                    boxShadow: isSelected || isConnected
-                                                                        ? `0 0 ${baseGlow * activeMult}px ${accent}, 0 0 ${baseGlow * 0.5}px ${accent} inset`
-                                                                        : `0 0 ${baseGlow}px ${accent}55`,
+                                                                    border: `${isHub ? 2 : 1.5}px solid ${borderColor}`,
+                                                                    backgroundColor: fillColor,
+                                                                    boxShadow: glowShadow,
                                                                     opacity: node.dashed ? 0.6 : 1,
                                                                     animation: isHub && !isSelected && !isConnected ? `hubPulse ${3 + (degree % 3)}s ease-in-out infinite` : undefined,
                                                                     transition: 'transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease'
                                                                 }}
                                                             >
-                                                                {/* Pulse ring on selected or connected */}
+                                                                {/* Pulso ping en nodo seleccionado */}
                                                                 {(isSelected || isConnected) && (
-                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ backgroundColor: accent }} />
-                                                                )}
-                                                                {/* Inner bright dot for hubs */}
-                                                                {isHub && !isSelected && !isConnected && (
-                                                                    <div className="absolute inset-[6px] rounded-full opacity-50" style={{ backgroundColor: accent }} />
+                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-35" style={{ backgroundColor: fillColor }} />
                                                                 )}
                                                             </div>
                                                             
-                                                            {/* Floating Label */}
+                                                            {/* Etiqueta Flotante Minimalista */}
                                                             <div 
                                                                 className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
-                                                                style={{ top: `${labelOffset}px`, width: isHub ? '135px' : '100px' }}
+                                                                style={{ top: `${labelOffset}px`, width: isHub ? '135px' : isCondition ? '100px' : '92px' }}
                                                             >
-                                                                {/* Role badge */}
+                                                                {/* Badge sutil de rol */}
                                                                 <span 
-                                                                    className={`font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded-full backdrop-blur-md border mb-0.5 ${isHub ? 'text-[9px]' : 'text-[7.5px]'}`}
-                                                                    style={{ 
-                                                                        color: accent,
-                                                                        backgroundColor: `${accent}12`,
-                                                                        borderColor: `${accent}30`,
-                                                                        textShadow: `0 1px 2px rgba(0,0,0,0.9)`
-                                                                    }}
+                                                                    className={`font-mono uppercase tracking-widest px-1.5 py-0.2 rounded-full border mb-0.5 text-[7px] ${
+                                                                        isHub 
+                                                                            ? 'text-white bg-white/10 border-white/20' 
+                                                                            : isCondition 
+                                                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
+                                                                                : 'text-zinc-400 bg-zinc-800/40 border-zinc-700/30'
+                                                                    }`}
+                                                                    style={{ textShadow: `0 1px 2px rgba(0,0,0,0.9)` }}
                                                                 >
-                                                                    {theme.icon} {node.clinical_role || theme.category}
+                                                                    {node.clinical_role || theme.category}
                                                                 </span>
                                                                 
-                                                                {/* Label text - bigger for hubs */}
-                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${isHub ? 'text-[11px] text-zinc-100' : isMid ? 'text-[10px] text-zinc-200' : 'text-[9px] text-zinc-400'} ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
+                                                                {/* Texto del nodo */}
+                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${
+                                                                    isHub 
+                                                                        ? 'text-[11px] font-bold text-white' 
+                                                                        : isCondition 
+                                                                            ? 'text-[9.5px] font-medium text-emerald-300' 
+                                                                            : 'text-[9px] text-zinc-300'
+                                                                } ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
                                                                     {node.label}
                                                                 </span>
                                                             </div>
