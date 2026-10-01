@@ -89,8 +89,10 @@ export async function syncAllLocalPatientTestsToCloud(patientName) {
             const key = localStorage.key(i);
             if (!key) continue;
 
-            const matchRegex = new RegExp(`^oasis_.*_\$\{patientName\}(_|$|__)`, 'i');
-            if (matchRegex.test(key)) {
+            const pLower = (patientName || "").toLowerCase().trim();
+            const kLower = key.toLowerCase();
+            const isMatch = kLower.includes(`_${pLower}_`) || kLower.endsWith(`_${pLower}`) || kLower.includes(`_${pLower}__`);
+            if (isMatch) {
                 const val = localStorage.getItem(key);
                 if (val) {
                     payload[key] = val;

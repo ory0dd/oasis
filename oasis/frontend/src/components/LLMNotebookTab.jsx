@@ -94,12 +94,6 @@ const loadStoredPatientMessages = (patientName) => {
         if (saved) {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                if (isContaminatedWithOtherPatient(parsed, patientName)) {
-                    // Purge the contaminated key for this patient so they get a fresh start
-                    localStorage.removeItem(k.messagesKey);
-                    localStorage.removeItem(k.backupKey);
-                    return [];
-                }
                 return parsed;
             }
         }
@@ -411,13 +405,15 @@ export const LLMNotebookTab = ({ patientName }) => {
             });
         }
 
-        // Full clinical report text
-        const reportText = localStorage.getItem(`oasis_clinical_report_text_${patientName}`);
-        if (reportText) {
+        // Full clinical report text or contextual formulation report
+        const reportText = localStorage.getItem(`oasis_clinical_report_text_${patientName}`) ||
+                           localStorage.getItem(`oasis_contextual_report_${patientName}`) ||
+                           localStorage.getItem(`oasis_apa_clinical_report_${patientName}`);
+        if (reportText && reportText.length > 50) {
             availSources.push({
                 id: 'clinical_report',
-                name: 'Informe Clínico Original (Base)',
-                type: 'documento',
+                name: '📄 Formulación e Informe Clínico Base (Completo)',
+                type: 'informe clínico',
                 rawData: reportText,
                 content: reportText
             });
@@ -617,10 +613,43 @@ ${PID5_ITEMS.map(item => {
                         .then(r => r.ok ? r.json() : {})
                         .then(cloudData => {
                             const cloudRep = cloudData[`oasis_apa_clinical_report_${patientName}`] || 
-                                             cloudData[`oasis_apa_clinical_report_${patientName.toLowerCase()}`];
-                            if (cloudRep && cloudRep.length > (savedReport ? savedReport.length : 150) && !cloudRep.toLowerCase().includes('lo siento') && !cloudRep.toLowerCase().includes('no puedo ayudar')) {
+                                             cloudData[`oasis_apa_clinical_report_${patientName.toLowerCase()}`] ||
+                                             cloudData[`oasis_contextual_report_${patientName}`] ||
+                                             cloudData[`oasis_contextual_report_${patientName.toLowerCase()}`];
+                            if (cloudRep && cloudRep.length > 50 && !cloudRep.toLowerCase().includes('lo siento') && !cloudRep.toLowerCase().includes('no puedo ayudar')) {
                                 setApaReportContent(cloudRep);
                                 localStorage.setItem(`oasis_apa_clinical_report_${patientName || 'general'}`, cloudRep);
+                                if (cloudData[`oasis_contextual_report_${patientName}`]) {
+                                    localStorage.setItem(`oasis_contextual_report_${patientName}`, cloudData[`oasis_contextual_report_${patientName}`]);
+                                }
+                            }
+                        })
+                        .catch(() => null);
+
+                    // Sincronizar conversaciones y sesiones desde el backend
+                    fetch(`${API_URL}/api/oasis/conversations?user=${encodeURIComponent(k.safeName)}`)
+                        .then(r => r.ok ? r.json() : [])
+                        .then(convList => {
+                            if (Array.isArray(convList) && convList.length > 0) {
+                                const formattedSessions = convList.map(c => ({
+                                    id: c.id || `sess_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                                    title: c.title || 'Sesión Clínica',
+                                    messages: c.messages || [],
+                                    createdAt: c.createdAt || new Date().toISOString()
+                                }));
+                                setSavedSessions(prev => {
+                                    const merged = [...formattedSessions];
+                                    (prev || []).forEach(p => {
+                                        if (!merged.some(m => m.id === p.id)) merged.push(p);
+                                    });
+                                    return merged;
+                                });
+                                setMessages(prev => {
+                                    if ((!prev || prev.length === 0) && convList[0]?.messages?.length > 0) {
+                                        return convList[0].messages;
+                                    }
+                                    return prev;
+                                });
                             }
                         })
                         .catch(() => null);

@@ -1225,13 +1225,21 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         const isAxel = uname.toLowerCase() === 'axel roben';
                         const defaultName = (['yul', 'yuli'].includes(uname.toLowerCase()) ? 'Psicóloga Yuliana' : uname.toLowerCase().includes('observador') ? 'Observador Clínico' : isAxel ? 'Axel Roben' : '');
                         
+                        const storedLink = localStorage.getItem(`oasis_chatgpt_link_${uname}`) || 
+                                           (cData && (cData.chatGptLink || cData[`oasis_chatgpt_link_${uname}`])) || '';
+
                         patientsMap[uname] = {
                             ...(patientsMap[uname] || {}),
                             name: uname,
                             fullName: u.fullName || u.FullName || defaultName || patientsMap[uname]?.fullName || uname,
                             age: u.age ?? u.Age ?? patientsMap[uname]?.age ?? (isAxel ? 14 : null),
                             password: u.password || u.Password || patientsMap[uname]?.password,
-                            role: userRole
+                            role: userRole,
+                            clinicalData: {
+                                ...(cData || {}),
+                                ...(patientsMap[uname]?.clinicalData || {}),
+                                chatGptLink: storedLink
+                            }
                         };
                         
                         // Dynamically sync backend clinical data into local storage so it is available locally!
@@ -1409,7 +1417,10 @@ Responde ÚNICAMENTE con un JSON válido.`;
 
     const handleOpenChatGPT = (e) => {
         if (!selectedPatient) return;
-        const currentLink = selectedPatient.clinicalData?.chatGptLink;
+        const patientKey = selectedPatient.name;
+        const currentLink = selectedPatient.clinicalData?.chatGptLink || 
+                            localStorage.getItem(`oasis_chatgpt_link_${patientKey}`) ||
+                            selectedPatient.clinicalData?.[`oasis_chatgpt_link_${patientKey}`];
         
         if (currentLink && e.type !== 'contextmenu') {
             window.open(currentLink, '_blank');
@@ -1419,21 +1430,32 @@ Responde ÚNICAMENTE con un JSON válido.`;
         e.preventDefault();
         const newLink = prompt('Ingresa el link de la conversación de ChatGPT para este paciente (ej. https://chatgpt.com/c/...):', currentLink || '');
         if (newLink !== null) {
+            const cleanLink = newLink.trim();
             const updatedPatient = { ...selectedPatient };
             if (!updatedPatient.clinicalData) updatedPatient.clinicalData = {};
-            updatedPatient.clinicalData.chatGptLink = newLink.trim();
+            updatedPatient.clinicalData.chatGptLink = cleanLink;
+            updatedPatient.clinicalData[`oasis_chatgpt_link_${patientKey}`] = cleanLink;
             setSelectedPatient(updatedPatient);
             setPatients(prev => prev.map(p => p.name === selectedPatient.name ? updatedPatient : p));
             
+            if (cleanLink) {
+                localStorage.setItem(`oasis_chatgpt_link_${patientKey}`, cleanLink);
+            } else {
+                localStorage.removeItem(`oasis_chatgpt_link_${patientKey}`);
+            }
+
             const callerUser = localStorage.getItem('oasis_user');
-            fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(selectedPatient.name)}`, {
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(patientKey)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Oasis-User': callerUser },
-                body: JSON.stringify({ chatGptLink: newLink.trim() })
+                body: JSON.stringify({ 
+                    chatGptLink: cleanLink,
+                    [`oasis_chatgpt_link_${patientKey}`]: cleanLink
+                })
             }).catch(err => console.error("Error saving ChatGPT link:", err));
             
-            if (newLink.trim() && !currentLink) {
-                window.open(newLink.trim(), '_blank');
+            if (cleanLink && !currentLink) {
+                window.open(cleanLink, '_blank');
             }
         }
     };

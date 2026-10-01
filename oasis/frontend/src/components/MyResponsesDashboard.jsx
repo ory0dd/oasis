@@ -1,12 +1,12 @@
 ﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
+import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
-    layout_version: 8,
+    layout_version: 9,
     nodes: [
         // Columna 1: Contexto & Detonantes (Antecedentes E) (x: 14)
         { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfección y rendimiento para validar el propio valor.", x: 14, y: 35 },
@@ -896,6 +896,21 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
     });
 };
 
+export const getClinicalLayerIndex = (n) => {
+    if (!n) return 2;
+    const role = String(n.clinical_role || '').toLowerCase().trim();
+    const type = String(n.type || '').toLowerCase().trim();
+    const label = String(n.label || '').toLowerCase().trim();
+
+    if (role === 'function' || role.includes('funci') || type === 'function') return 5;
+    if (role === 'consequence' || role.includes('consec') || type === 'consequence') return 4;
+    if (role === 'motor' || type === 'motor' || type === 'experiential_avoidance') return 3;
+    if (role === 'cognitive' || role === 'physiological' || type === 'cognitive' || type === 'physiological' || type === 'biological') return 2;
+    if (role === 'antecedent' || type === 'antecedent' || label.includes('detonante')) return 1;
+    if (role === 'context' || type === 'historical' || type === 'social') return 0;
+    return 2;
+};
+
 export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioData = null, phenomData = null) => {
     if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) return [];
 
@@ -924,53 +939,28 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         rawEdges
     );
 
-    const getLayerIndex = (n) => {
-        const role = String(n.clinical_role || '').toLowerCase().trim();
-        const type = String(n.type || '').toLowerCase().trim();
-        const label = String(n.label || '').toLowerCase().trim();
-
-        if (role === 'function' || role.includes('funci') || type === 'function') return 5;
-        if (role === 'consequence' || role.includes('consec') || type === 'consequence') return 4;
-        if (role === 'motor' || type === 'motor' || type === 'experiential_avoidance') return 3;
-        if (role === 'cognitive' || role === 'physiological' || type === 'cognitive' || type === 'physiological' || type === 'biological') return 2;
-        if (role === 'antecedent' || type === 'antecedent' || label.includes('detonante')) return 1;
-        if (role === 'context' || type === 'historical' || type === 'social') return 0;
-        return 2;
-    };
-
-    // 6 Centros de Islas Florales distribuidas orgánicamente en el lienzo (Estilo Obsidian)
-    // Cada isla tiene un ángulo de apertura hacia el exterior para que los pétalos se abran hacia el espacio libre
-    const flowerHubs = [
-        { cx: 18, cy: 46, angleOut: Math.PI },          // Flor 1: Origen & Contexto (Abre hacia la izquierda)
-        { cx: 36, cy: 26, angleOut: -Math.PI * 0.65 },  // Flor 2: Detonantes & Condiciones (Abre hacia arriba-izq)
-        { cx: 52, cy: 46, angleOut: 0 },                 // Flor 3: Núcleo Cognitivo / Diálogo Interno (Centro)
-        { cx: 74, cy: 28, angleOut: -Math.PI * 0.30 },  // Flor 4: Respuestas Operantes (Abre hacia arriba-der)
-        { cx: 48, cy: 78, angleOut: Math.PI * 0.5 },    // Flor 5: Núcleo Somático & Alerta (Abre hacia abajo)
-        { cx: 82, cy: 64, angleOut: Math.PI * 0.20 }    // Flor 6: Consecuencias & Trampas (Abre hacia abajo-der)
+    // 6 Canonical Column Centers (Directly under CLINICAL_COLUMNS headers baseX: 12, 27, 42, 57, 72, 87)
+    const columnConfig = [
+        { baseX: 12.0, baseY: 50.0, minX: 6.0, maxX: 18.0 },   // 1. Origen & Contexto (OM)
+        { baseX: 27.0, baseY: 48.0, minX: 21.0, maxX: 33.0 },  // 2. Detonantes Inmediatos (ED)
+        { baseX: 42.0, baseY: 50.0, minX: 36.0, maxX: 48.0 },  // 3. Mente (Cognitivo) & Cuerpo (Somático)
+        { baseX: 57.0, baseY: 50.0, minX: 51.0, maxX: 63.0 },  // 4. Respuestas Operantes (RO)
+        { baseX: 72.0, baseY: 50.0, minX: 66.0, maxX: 78.0 },  // 5. Consecuencias (C)
+        { baseX: 87.0, baseY: 50.0, minX: 81.0, maxX: 93.0 }   // 6. Función del Bucle
     ];
 
-    const islandNodes = [[], [], [], [], [], []];
-
+    const colNodes = [[], [], [], [], [], []];
     newNodes.forEach(n => {
-        const l = getLayerIndex(n);
-        if (l === 2) {
-            if (n.type === 'physiological' || n.clinical_role === 'physiological') {
-                islandNodes[4].push(n); // Flor Somática
-            } else {
-                islandNodes[2].push(n); // Flor Cognitiva
-            }
-        } else if (l === 5) {
-            islandNodes[5].push(n); // Flor Consecuencias/Trampas
-        } else {
-            islandNodes[l].push(n);
-        }
+        const l = getClinicalLayerIndex(n);
+        colNodes[l].push(n);
     });
 
-    islandNodes.forEach((list, islandIdx) => {
-        if (!list || list.length === 0) return;
-        const hubCenter = flowerHubs[islandIdx];
+    for (let colIdx = 0; colIdx < 6; colIdx++) {
+        const list = colNodes[colIdx];
+        if (!list || list.length === 0) continue;
+        const cfg = columnConfig[colIdx];
 
-        // Identificar el nodo central (Hub) con mayor número de conexiones
+        // Find hub node with highest degree in this list
         let hubIdx = 0;
         let maxDegree = -1;
         list.forEach((n, idx) => {
@@ -981,34 +971,127 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
             }
         });
 
-        const hubNode = list[hubIdx];
-        hubNode.x = hubCenter.cx;
-        hubNode.y = hubCenter.cy;
-        hubNode.is_island_hub = true;
+        if (colIdx === 2) {
+            // Layer 2: Split Cognitive (top) and Somatic (bottom)
+            const cogList = list.filter(n => n.type !== 'physiological' && n.clinical_role !== 'physiological');
+            const physList = list.filter(n => n.type === 'physiological' || n.clinical_role === 'physiological');
 
-        const satellites = list.filter((_, idx) => idx !== hubIdx);
-        const satCount = satellites.length;
-        if (satCount === 0) return;
+            // Top: Cognitive Hub + satellites
+            if (cogList.length > 0) {
+                let cogHubIdx = 0;
+                let cogMaxDeg = -1;
+                cogList.forEach((n, idx) => {
+                    const deg = (rawEdges || []).filter(e => e && (e.source === n.id || e.target === n.id)).length;
+                    if (deg > cogMaxDeg) { cogMaxDeg = deg; cogHubIdx = idx; }
+                });
+                const cogHub = cogList[cogHubIdx];
+                cogHub.x = cfg.baseX;
+                cogHub.y = 32.0;
+                cogHub.is_island_hub = true;
 
-        // Apertura en abanico floral hacia afuera
-        const isCenterIsland = (islandIdx === 2);
-        const arcSpan = isCenterIsland ? (2 * Math.PI) : Math.min(Math.PI * 1.5, 0.7 + satCount * 0.32);
-        const startAngle = isCenterIsland ? 0 : (hubCenter.angleOut - arcSpan / 2);
+                const cogSats = cogList.filter((_, idx) => idx !== cogHubIdx);
+                const count = cogSats.length;
+                cogSats.forEach((sat, i) => {
+                    const angle = (i / Math.max(1, count)) * 2 * Math.PI;
+                    const r = (i % 2 === 0 ? 8.5 : 13.5);
+                    sat.x = Math.max(cfg.minX, Math.min(cfg.maxX, cfg.baseX + Math.cos(angle) * (r * 0.48)));
+                    sat.y = Math.max(12, Math.min(52, 32.0 + Math.sin(angle) * r));
+                    sat.is_island_hub = false;
+                });
+            }
 
-        satellites.forEach((sat, i) => {
-            const t = isCenterIsland ? (i / satCount) : (satCount === 1 ? 0.5 : (i / (satCount - 1)));
-            const angle = startAngle + t * arcSpan;
-            const rMin = 10.0;
-            const rMax = 19.0;
-            const radius = (i % 2 === 0 ? rMin : rMax);
+            // Bottom: Somatic Hub + satellites
+            if (physList.length > 0) {
+                let physHubIdx = 0;
+                let physMaxDeg = -1;
+                physList.forEach((n, idx) => {
+                    const deg = (rawEdges || []).filter(e => e && (e.source === n.id || e.target === n.id)).length;
+                    if (deg > physMaxDeg) { physMaxDeg = deg; physHubIdx = idx; }
+                });
+                const physHub = physList[physHubIdx];
+                physHub.x = cfg.baseX;
+                physHub.y = 70.0;
+                physHub.is_island_hub = true;
 
-            sat.x = Math.max(5, Math.min(95, hubCenter.cx + Math.cos(angle) * radius * 1.25));
-            sat.y = Math.max(8, Math.min(92, hubCenter.cy + Math.sin(angle) * radius));
-            sat.is_island_hub = false;
-        });
-    });
+                const physSats = physList.filter((_, idx) => idx !== physHubIdx);
+                const count = physSats.length;
+                physSats.forEach((sat, i) => {
+                    const angle = (i / Math.max(1, count)) * 2 * Math.PI;
+                    const r = (i % 2 === 0 ? 8.0 : 13.0);
+                    sat.x = Math.max(cfg.minX, Math.min(cfg.maxX, cfg.baseX + Math.cos(angle) * (r * 0.48)));
+                    sat.y = Math.max(52, Math.min(88, 70.0 + Math.sin(angle) * r));
+                    sat.is_island_hub = false;
+                });
+            }
+        } else {
+            const hub = list[hubIdx];
+            hub.x = cfg.baseX;
+            hub.y = cfg.baseY;
+            hub.is_island_hub = true;
 
-    return resolveCollisions(newNodes);
+            const sats = list.filter((_, idx) => idx !== hubIdx);
+            const count = sats.length;
+            sats.forEach((sat, i) => {
+                const angle = (i / Math.max(1, count)) * 2 * Math.PI;
+                const r = (i % 2 === 0 ? 9.5 : 16.0);
+                sat.x = Math.max(cfg.minX, Math.min(cfg.maxX, cfg.baseX + Math.cos(angle) * (r * 0.46)));
+                sat.y = Math.max(14, Math.min(86, cfg.baseY + Math.sin(angle) * r));
+                sat.is_island_hub = false;
+            });
+        }
+    }
+
+    // Relax collisions strictly within each column lane so nodes never overlap and never cross columns
+    const minDx = 6.2;
+    const minDy = 5.8;
+    const damping = 0.55;
+
+    for (let it = 0; it < 80; it++) {
+        let changed = false;
+        for (let i = 0; i < newNodes.length; i++) {
+            for (let j = i + 1; j < newNodes.length; j++) {
+                const n1 = newNodes[i];
+                const n2 = newNodes[j];
+
+                let dx = n2.x - n1.x;
+                let dy = n2.y - n1.y;
+
+                if (Math.abs(dx) < 0.1) dx = (Math.random() - 0.5) * 1.5;
+                if (Math.abs(dy) < 0.1) dy = (Math.random() - 0.5) * 1.5;
+
+                const nx = dx / minDx;
+                const ny = dy / minDy;
+                const distNorm = Math.hypot(nx, ny);
+
+                if (distNorm < 1.0) {
+                    changed = true;
+                    const overlap = 1.0 - distNorm;
+                    const ux = nx / (distNorm || 0.001);
+                    const uy = ny / (distNorm || 0.001);
+
+                    const moveX = ux * overlap * minDx * damping * 0.5;
+                    const moveY = uy * overlap * minDy * damping * 0.5;
+
+                    const w1 = n1.is_island_hub ? 0.15 : 0.85;
+                    const w2 = n2.is_island_hub ? 0.15 : 0.85;
+                    const tw = w1 + w2;
+
+                    const l1 = getClinicalLayerIndex(n1);
+                    const l2 = getClinicalLayerIndex(n2);
+                    const cfg1 = columnConfig[l1] || columnConfig[2];
+                    const cfg2 = columnConfig[l2] || columnConfig[2];
+
+                    n1.x = Math.max(cfg1.minX, Math.min(cfg1.maxX, n1.x - moveX * (w1 / tw) * 2));
+                    n1.y = Math.max(12, Math.min(88, n1.y - moveY * (w1 / tw) * 2));
+                    n2.x = Math.max(cfg2.minX, Math.min(cfg2.maxX, n2.x + moveX * (w2 / tw) * 2));
+                    n2.y = Math.max(12, Math.min(88, n2.y + moveY * (w2 / tw) * 2));
+                }
+            }
+        }
+        if (!changed) break;
+    }
+
+    return newNodes;
 };
 
 export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null, edges = [], allNodes = []) => {
@@ -1259,7 +1342,20 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     const VIRTUAL_WIDTH = 1950;
     const VIRTUAL_HEIGHT = 1150;
     const [mobileViewMode, setMobileViewMode] = useState('readable');
-    const [activeColumnIndex, setActiveColumnIndex] = useState(0);
+    const [activeColumnIndex, setActiveColumnIndex] = useState(null);
+    const [focusedStageIndex, setFocusedStageIndex] = useState(null);
+
+    const handleStageSelect = useCallback((idx) => {
+        if (focusedStageIndex === idx) {
+            setFocusedStageIndex(null);
+            setActiveColumnIndex(null);
+            resetMapTransform(isMobileDevice ? 'readable' : 'overview');
+        } else {
+            setFocusedStageIndex(idx);
+            setActiveColumnIndex(idx);
+            panToColumn(idx);
+        }
+    }, [focusedStageIndex, panToColumn, resetMapTransform, isMobileDevice]);
     const [phenomData, setPhenomData] = useState(null);
     const [bioData, setBioData] = useState(null);
     const [pidData, setPidData] = useState(null);
@@ -3407,12 +3503,12 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             const validIds = new Set(parsed.nodes.map(n => n.id));
             parsed.edges = (parsed.edges || []).filter(e => validIds.has(e.source) && validIds.has(e.target));
 
-            const needsReorg = parsed.layout_version !== 8 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.is_island_hub || Math.abs(n.x - 18) < 3.5);
+            const needsReorg = parsed.layout_version !== 9 || hasLegacyPivotes(parsed) || !parsed.nodes.some(n => n.is_island_hub || Math.abs(n.x - 18) < 3.5);
             if (needsReorg) {
                 parsed.nodes = layoutClinicalNodes(parsed.nodes, parsed.edges || [], user, bioData, phenomData);
                 const validIds = new Set(parsed.nodes.map(n => n.id));
                 parsed.edges = (parsed.edges || []).filter(e => validIds.has(e.source) && validIds.has(e.target));
-                parsed.layout_version = 8;
+                parsed.layout_version = 9;
                 try {
                     localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(parsed));
                 } catch (e) {}
@@ -3425,7 +3521,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             console.log("ℹ️ No hay afcData para", user, ", usando plantilla clínica universal.");
             const mock = { ...MOCK_AFC_DATA };
             mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
-            mock.layout_version = 8;
+            mock.layout_version = 9;
             setAfcData(mock);
         }
 
@@ -3470,7 +3566,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                     const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`];
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
-                        const needsReorg = cloudAfc.layout_version !== 8 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
+                        const needsReorg = cloudAfc.layout_version !== 9 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
                         let updatedNodes;
                         let updatedEdges = cloudAfc.edges || [];
                         if (needsReorg) {
@@ -3480,7 +3576,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         } else {
                             updatedNodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(cloudAfc.nodes, user, bioData, phenomData, cloudAfc.edges || [])));
                         }
-                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 8 };
+                        const resolved = { ...cloudAfc, nodes: updatedNodes, edges: updatedEdges, layout_version: 9 };
                         setAfcData(resolved);
                         try {
                             localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
@@ -3937,7 +4033,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         return {
             is_valid: true,
             rejection_reason: "",
-            layout_version: 8,
+            layout_version: 9,
             nodes: allNodes,
             edges: edges,
             tripleModality: {
@@ -4599,10 +4695,10 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             if (parsedAfc.is_valid && parsedAfc.nodes) {
                 if (!isAdditive) {
                     parsedAfc.nodes = layoutClinicalNodes(parsedAfc.nodes, parsedAfc.edges || [], user, bioData, phenomData);
-                    parsedAfc.layout_version = 4;
+                    parsedAfc.layout_version = 9;
                 } else {
                     parsedAfc.nodes = resolveCollisions(parsedAfc.nodes);
-                    parsedAfc.layout_version = 4;
+                    parsedAfc.layout_version = 9;
                 }
             }
 
@@ -4621,7 +4717,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 const safeAfc = {
                     ...safeTopology,
                     ...safeInsights,
-                    layout_version: 8
+                    layout_version: 9
                 };
                 safeAfc.nodes = layoutClinicalNodes(safeAfc.nodes, safeAfc.edges || [], user, bioData, phenomData);
                 setAfcData(safeAfc);
@@ -5336,24 +5432,28 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 const tId = pathEl.getAttribute('data-target');
                 const isSrc = sId === nodeId;
 
-                let x1, y1, x2, y2;
+                let px1, py1, px2, py2;
                 if (isSrc) {
-                    x1 = curX;
-                    y1 = curY;
+                    px1 = (curX / 100) * VIRTUAL_WIDTH;
+                    py1 = (curY / 100) * VIRTUAL_HEIGHT;
                     const tgtEl = document.getElementById(`afc-node-${tId}`);
                     if (!tgtEl) continue;
-                    x2 = parseFloat(tgtEl.dataset.curx || tgtEl.dataset.basex || 0);
-                    y2 = parseFloat(tgtEl.dataset.cury || tgtEl.dataset.basey || 0);
+                    const tx = parseFloat(tgtEl.dataset.curx || tgtEl.dataset.basex || 0);
+                    const ty = parseFloat(tgtEl.dataset.cury || tgtEl.dataset.basey || 0);
+                    px2 = (tx / 100) * VIRTUAL_WIDTH;
+                    py2 = (ty / 100) * VIRTUAL_HEIGHT;
                 } else {
                     const srcEl = document.getElementById(`afc-node-${sId}`);
                     if (!srcEl) continue;
-                    x1 = parseFloat(srcEl.dataset.curx || srcEl.dataset.basex || 0);
-                    y1 = parseFloat(srcEl.dataset.cury || srcEl.dataset.basey || 0);
-                    x2 = curX;
-                    y2 = curY;
+                    const sx = parseFloat(srcEl.dataset.curx || srcEl.dataset.basex || 0);
+                    const sy = parseFloat(srcEl.dataset.cury || srcEl.dataset.basey || 0);
+                    px1 = (sx / 100) * VIRTUAL_WIDTH;
+                    py1 = (sy / 100) * VIRTUAL_HEIGHT;
+                    px2 = (curX / 100) * VIRTUAL_WIDTH;
+                    py2 = (curY / 100) * VIRTUAL_HEIGHT;
                 }
 
-                pathEl.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+                pathEl.setAttribute('d', `M ${px1} ${py1} L ${px2} ${py2}`);
             }
         } catch (err) {
             // silent fail on edge sync
@@ -5588,7 +5688,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const cleanEdges = edges.filter(e => e && validNodeIds.has(e.source) && validNodeIds.has(e.target));
 
         if (!isArray) {
-            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 8 };
+            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 9 };
             setAfcData(updated);
             if (user) {
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
@@ -6857,27 +6957,74 @@ Devuelve estrictamente el JSON sin formato extra.
                                 </div>
                             </div>
 
-                            {/* Mobile Quick Column Navigation Pills */}
-                            {isMobileDevice && mapViewTab === 'map' && (
-                                <div className="absolute top-[48px] left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto">
+                            {/* Quick Column Navigation Pills (Desktop & Mobile) */}
+                            {mapViewTab === 'map' && (
+                                <div className="absolute top-[48px] md:top-3.5 left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto">
+                                    <button
+                                        onClick={() => { setFocusedStageIndex(null); setActiveColumnIndex(null); resetMapTransform(isMobileDevice ? 'readable' : 'overview'); }}
+                                        className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
+                                            focusedStageIndex === null
+                                                ? 'bg-white/20 text-white shadow-sm border border-white/30' 
+                                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                                        }`}
+                                        title="Ver todo el mapa funcional"
+                                    >
+                                        <Eye size={11} />
+                                        <span>Ver Todo</span>
+                                    </button>
+                                    <div className="w-[1px] h-3 bg-white/15 mx-0.5 shrink-0" />
                                     {CLINICAL_COLUMNS.map((col, idx) => {
-                                        const isActive = activeColumnIndex === idx;
+                                        const isActive = focusedStageIndex === idx;
                                         return (
                                             <button
                                                 key={col.id}
-                                                onClick={() => panToColumn(idx)}
+                                                onClick={() => handleStageSelect(idx)}
                                                 className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
                                                     isActive 
-                                                        ? 'bg-white/15 text-white shadow-sm border border-white/20' 
+                                                        ? 'bg-white/20 text-white shadow-sm border border-white/30 font-extrabold' 
                                                         : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
                                                 }`}
-                                                style={isActive ? { borderColor: `${col.color}60`, color: col.color } : {}}
+                                                style={isActive ? { borderColor: `${col.color}80`, color: col.color, boxShadow: `0 0 12px ${col.color}40` } : {}}
+                                                title={`Paso ${col.num}: ${col.title}`}
                                             >
                                                 <span className="text-[10px]">{col.icon}</span>
                                                 <span>{col.num}. {col.title.split(' ')[0]}</span>
                                             </button>
                                         );
                                     })}
+                                </div>
+                            )}
+
+                            {/* Floating Step-by-Step Abordaje Banner */}
+                            {mapViewTab === 'map' && focusedStageIndex !== null && (
+                                <div className="absolute top-[88px] md:top-14 left-1/2 -translate-x-1/2 z-[125] flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-950/95 border border-indigo-500/30 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.8)] pointer-events-auto animate-in fade-in duration-200">
+                                    <button
+                                        onClick={() => handleStageSelect(Math.max(0, focusedStageIndex - 1))}
+                                        disabled={focusedStageIndex === 0}
+                                        className="p-1 rounded-full text-zinc-400 hover:text-white disabled:opacity-25 hover:bg-white/10 transition-colors"
+                                        title="Paso anterior"
+                                    >
+                                        <ChevronLeft size={13} />
+                                    </button>
+                                    <div className="flex items-center gap-1.5 text-center">
+                                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-300">
+                                            Paso {focusedStageIndex + 1}/6:
+                                        </span>
+                                        <span className="text-[10.5px] font-bold text-white">
+                                            {CLINICAL_COLUMNS[focusedStageIndex].title}
+                                        </span>
+                                        <span className="text-[9px] text-zinc-400 hidden sm:inline">
+                                            • {CLINICAL_COLUMNS[focusedStageIndex].subtitle}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleStageSelect(Math.min(5, focusedStageIndex + 1))}
+                                        disabled={focusedStageIndex === 5}
+                                        className="p-1 rounded-full text-zinc-400 hover:text-white disabled:opacity-25 hover:bg-white/10 transition-colors"
+                                        title="Paso siguiente"
+                                    >
+                                        <ChevronRight size={13} />
+                                    </button>
                                 </div>
                             )}
 
@@ -6994,7 +7141,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <div
                                     ref={transformContainerRef}
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
-                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, willChange: 'transform' }}
+                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
                                     <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
@@ -7004,35 +7151,43 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
 
-                                        {CLINICAL_COLUMNS.map((col) => (
-                                            <div
-                                                key={col.id}
-                                                className="absolute top-0 bottom-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
-                                                style={{ left: `${col.baseX}%`, width: '280px' }}
-                                            >
-                                                
-
-                                                {/* Column Header Card */}
-                                                <div 
-                                                    className="mt-3.5 px-3.5 py-1.5 rounded-2xl border backdrop-blur-xl shadow-lg flex flex-col items-center gap-0.5 pointer-events-auto"
-                                                    style={{
-                                                        backgroundColor: 'rgba(10, 11, 18, 0.75)',
-                                                        borderColor: `${col.color}35`,
-                                                        boxShadow: `0 8px 24px -4px ${col.color}20`
-                                                    }}
+                                        {CLINICAL_COLUMNS.map((col, idx) => {
+                                            const isStageFocused = focusedStageIndex === idx;
+                                            return (
+                                                <div
+                                                    key={col.id}
+                                                    className="absolute top-0 bottom-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
+                                                    style={{ left: `${col.baseX}%`, width: '280px' }}
                                                 >
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-xs leading-none">{col.icon}</span>
-                                                        <span className="text-[10.5px] font-black tracking-wider uppercase font-mono" style={{ color: col.color }}>
-                                                            {col.title}
+                                                    {/* Column Header Card */}
+                                                    <div 
+                                                        onClick={() => handleStageSelect(idx)}
+                                                        className={`mt-3.5 px-3.5 py-1.5 rounded-2xl border backdrop-blur-xl shadow-lg flex flex-col items-center gap-0.5 pointer-events-auto cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 ${isStageFocused ? 'ring-2 ring-white/30' : ''}`}
+                                                        style={{
+                                                            backgroundColor: isStageFocused ? 'rgba(25, 27, 44, 0.95)' : 'rgba(10, 11, 18, 0.80)',
+                                                            borderColor: isStageFocused ? col.color : `${col.color}35`,
+                                                            boxShadow: isStageFocused ? `0 0 32px ${col.color}70` : `0 8px 24px -4px ${col.color}20`
+                                                        }}
+                                                        title={`Clic para enfocar Etapa ${col.num}: ${col.title}`}
+                                                    >
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs leading-none">{col.icon}</span>
+                                                            <span className="text-[10.5px] font-black tracking-wider uppercase font-mono" style={{ color: col.color }}>
+                                                                {col.num}. {col.title}
+                                                            </span>
+                                                            {isStageFocused && (
+                                                                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[8px] bg-white/20 text-white font-sans font-bold">
+                                                                    Activo
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[8px] text-zinc-400 font-medium tracking-tight">
+                                                            {col.subtitle}
                                                         </span>
                                                     </div>
-                                                    <span className="text-[8px] text-zinc-400 font-medium tracking-tight">
-                                                        {col.subtitle}
-                                                    </span>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
                                     {/* SVG Edges & HTML Nodes */}
@@ -7042,7 +7197,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                         return (
                                             <React.Fragment>
-                                                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+                                                <svg viewBox={`0 0 ${VIRTUAL_WIDTH} ${VIRTUAL_HEIGHT}`} className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" style={{ shapeRendering: 'geometricPrecision' }}>
 
                                         <style>{`
                                                     @keyframes edgeStreamFlow {
@@ -7075,23 +7230,23 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     }
                                                 `}</style>
                                         <defs>
-                                            <marker id="arrowhead-default" markerWidth="2.6" markerHeight="2.6" refX="2.0" refY="1.3" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.2 1.3 L 0.2 2.3 Q 0.7 1.3 0.2 0.3 Z" fill="rgba(255,255,255,0.45)" />
+                                            <marker id="arrowhead-default" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                                                <path d="M 0 0.5 L 6 3.5 L 0 6.5 Q 1.5 3.5 0 0.5 Z" fill="rgba(255,255,255,0.45)" />
                                             </marker>
-                                            <marker id="arrowhead-incoming" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#818cf8" />
+                                            <marker id="arrowhead-incoming" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                                                <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#818cf8" />
                                             </marker>
-                                            <marker id="arrowhead-outgoing" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#fb7185" />
+                                            <marker id="arrowhead-outgoing" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                                                <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#fb7185" />
                                             </marker>
-                                            <marker id="arrowhead-both" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#c084fc" />
+                                            <marker id="arrowhead-both" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                                                <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#c084fc" />
                                             </marker>
-                                            <marker id="arrowhead-blindspot" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#38bdf8" />
+                                            <marker id="arrowhead-blindspot" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                                                <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#38bdf8" />
                                             </marker>
-                                            <marker id="arrowhead-feedback" markerWidth="3.0" markerHeight="3.0" refX="2.3" refY="1.5" orient="auto">
-                                                <path d="M 0.2 0.3 L 2.5 1.5 L 0.2 2.7 Q 0.8 1.5 0.2 0.3 Z" fill="#c084fc" />
+                                            <marker id="arrowhead-feedback" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                                                <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#c084fc" />
                                             </marker>
                                         </defs>
                                         {finalEdgesToRender.map((edge, i) => {
@@ -7104,69 +7259,81 @@ Devuelve estrictamente el JSON sin formato extra.
                                             const isClicked = spotId ? localStorage.getItem(`oasis_blindspot_clicked_${user}__${spotId}`) === 'true' : false;
                                             const isBlindSpotEdge = spotNodeId && !isClicked;
 
-                                            // Calculate vector & distance
-                                            const dx = target.x - source.x;
-                                            const dy = target.y - source.y;
+                                            // Calculate vector & distance in exact virtual pixel coordinates (1950 x 1150)
+                                            const sx = (source.x / 100) * VIRTUAL_WIDTH;
+                                            const sy = (source.y / 100) * VIRTUAL_HEIGHT;
+                                            const tx = (target.x / 100) * VIRTUAL_WIDTH;
+                                            const ty = (target.y / 100) * VIRTUAL_HEIGHT;
+
+                                            const dx = tx - sx;
+                                            const dy = ty - sy;
                                             const dist = Math.hypot(dx, dy) || 1;
 
-                                            // Node radii offsets
-                                            let sourceOffset = 5.2;
-                                            let targetOffset = 5.2;
+                                            // Real Node Radii in Pixels (Exact Obsidian circles: Hub 26px dia = 13px rad; Condition 13px dia = 6.5px rad; Satellite 11px dia = 5.5px rad)
+                                            const isSourceHub = Boolean(source.is_island_hub);
+                                            const isTargetHub = Boolean(target.is_island_hub);
+                                            const isSourceCond = Boolean(!isSourceHub && (source.type === 'antecedent' || source.clinical_role === 'antecedent' || (source.id && source.id.includes('cond'))));
+                                            const isTargetCond = Boolean(!isTargetHub && (target.type === 'antecedent' || target.clinical_role === 'antecedent' || (target.id && target.id.includes('cond'))));
 
-                                            if (source.type === 'historical') sourceOffset = 5.2;
-                                            if (source.type === 'biological' || source.type === 'social') sourceOffset = 5.0;
-                                            if (source.type === 'motor' || source.type === 'cognitive' || source.type === 'physiological') sourceOffset = 5.2;
-                                            if (source.type === 'consequence') sourceOffset = 5.2;
-
-                                            if (target.type === 'historical') targetOffset = 5.2;
-                                            if (target.type === 'biological' || target.type === 'social') targetOffset = 5.0;
-                                            if (target.type === 'motor' || target.type === 'cognitive' || target.type === 'physiological') targetOffset = 5.2;
-                                            if (target.type === 'consequence') targetOffset = 5.2;
-
-                                            // Apply offsets only if there's enough space
-                                            const actualSourceOffset = dist > sourceOffset + targetOffset + 2 ? sourceOffset : 0;
-                                            const actualTargetOffset = dist > sourceOffset + targetOffset + 2 ? targetOffset : 0;
-
-                                            const x1 = source.x + (dx / dist) * actualSourceOffset;
-                                            const y1 = source.y + (dy / dist) * actualSourceOffset;
-                                            const x2 = target.x - (dx / dist) * actualTargetOffset;
-                                            const y2 = target.y - (dy / dist) * actualTargetOffset;
+                                            const sourceRadius = isSourceHub ? 13 : (isSourceCond ? 6.5 : 5.5);
+                                            const targetRadius = isTargetHub ? 13 : (isTargetCond ? 6.5 : 5.5);
 
                                             // Determine edge types
                                             const isProgression = edge.type === 'progression';
                                             const isFeedback = edge.type === 'feedback' || target.x < source.x;
+                                            const hasMarker = isFeedback || edge.type === 'unidirectional' || isBlindSpotEdge;
 
-                                            // 100% straight connections everywhere (Obsidian aesthetic)
+                                            // Exact boundary offsets (Lines connect seamlessly to the border of circles, NO floating gap!)
+                                            const srcOffset = sourceRadius + 1;
+                                            const tgtOffset = targetRadius + (hasMarker ? 7 : 1);
+
+                                            const actualSourceOffset = dist > (srcOffset + tgtOffset + 4) ? srcOffset : 0;
+                                            const actualTargetOffset = dist > (srcOffset + tgtOffset + 4) ? tgtOffset : 0;
+
+                                            const x1 = sx + (dx / dist) * actualSourceOffset;
+                                            const y1 = sy + (dy / dist) * actualSourceOffset;
+                                            const x2 = tx - (dx / dist) * actualTargetOffset;
+                                            const y2 = ty - (dy / dist) * actualTargetOffset;
+
+                                            // 100% straight solid connection
                                             let pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
 
                                             // Determine highlight state
                                             const activeNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
-
                                             const isIncoming = activeNodeId === target.id;
                                             const isOutgoing = activeNodeId === source.id;
                                             const isEdgeInPattern = activePattern && activePattern.node_ids.includes(source.id) && activePattern.node_ids.includes(target.id);
                                             const isHighlighted = (activeNodeId && (isIncoming || isOutgoing)) || isEdgeInPattern;
                                             const isAnyNodeSelected = !!activeNodeId || !!selectedPatternId;
 
-                                            // Default flowing energy stream for non-selected state
-                                            let strokeColor = isFeedback ? "rgba(192, 132, 252, 0.45)" : "rgba(148, 163, 184, 0.30)";
-                                            let strokeWidth = (edge.weight || 1.2) * 0.1;
-                                            let className = isFeedback ? "edge-flow-feedback-stream" : "edge-flow-stream";
+                                            // Stage focus state
+                                            const isStageFocused = focusedStageIndex !== null;
+                                            const isEdgeInFocusedStage = !isStageFocused || (
+                                                getClinicalLayerIndex(source) === focusedStageIndex ||
+                                                getClinicalLayerIndex(target) === focusedStageIndex
+                                            );
+
+                                            // Solid continuous vector strokes everywhere (Obsidian Graph aesthetic)
+                                            let strokeColor = isFeedback ? "rgba(192, 132, 252, 0.45)" : "rgba(255, 255, 255, 0.22)";
+                                            let strokeWidth = isFeedback ? 1.6 : 1.4;
+                                            let className = "";
                                             let markerEnd = isFeedback ? "url(#arrowhead-feedback)" : (edge.type === 'unidirectional' ? "url(#arrowhead-default)" : "");
                                             let style = {};
 
-                                            if (isAnyNodeSelected && !isHighlighted) {
-                                                // If a node/pattern is selected, but this edge is not highlighted, fade it completely
-                                                strokeColor = "rgba(255,255,255,0.02)";
-                                                strokeWidth = 0.04;
-                                                className = "";
+                                            if (isStageFocused && !isEdgeInFocusedStage && !isHighlighted) {
+                                                // When stage is focused, dim edges outside this stage
+                                                strokeColor = "rgba(255, 255, 255, 0.03)";
+                                                strokeWidth = 0.5;
+                                                markerEnd = "";
+                                            } else if (isAnyNodeSelected && !isHighlighted) {
+                                                // When individual node selected, dim unrelated edges
+                                                strokeColor = "rgba(255, 255, 255, 0.03)";
+                                                strokeWidth = 0.5;
                                                 markerEnd = "";
                                             } else if (isEdgeInPattern) {
                                                 strokeColor = "rgba(168, 85, 247, 0.95)";
-                                                strokeWidth = 0.24;
-                                                className = "edge-flow-active";
+                                                strokeWidth = 2.2;
                                                 markerEnd = "url(#arrowhead-feedback)";
-                                                style = { strokeDasharray: "0.2, 0.2" };
                                             } else if (isHighlighted) {
                                                 if (isIncoming && isOutgoing) {
                                                     strokeColor = "#a78bfa";
@@ -7178,30 +7345,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     strokeColor = "#fb7185";
                                                     markerEnd = "url(#arrowhead-outgoing)";
                                                 }
-                                                strokeWidth = 0.26;
-                                                className = "edge-flow-active";
-                                                style = {};
+                                                strokeWidth = 2.4;
                                             } else if (edge.type === 'mini_chat_link') {
-                                                strokeColor = "rgba(255, 255, 255, 0.4)";
-                                                strokeWidth = 0.15;
-                                                style = { strokeDasharray: "0.5, 0.5" };
+                                                strokeColor = "rgba(255, 255, 255, 0.35)";
+                                                strokeWidth = 1.2;
                                                 markerEnd = "";
-                                            } else if (isProgression) {
-                                                strokeColor = "rgba(99, 102, 241, 0.45)";
-                                                strokeWidth = 0.10;
-                                                className = "edge-flow-stream";
-                                                markerEnd = "";
-                                            } else if (isFeedback) {
-                                                strokeColor = "rgba(192, 132, 252, 0.55)";
-                                                strokeWidth = 0.14;
-                                                className = "edge-flow-feedback-stream";
-                                                markerEnd = "url(#arrowhead-feedback)";
                                             } else if (isBlindSpotEdge) {
                                                 strokeColor = "#38bdf8";
-                                                strokeWidth = 0.18;
-                                                className = "edge-flow-active";
+                                                strokeWidth = 1.8;
                                                 markerEnd = "url(#arrowhead-blindspot)";
-                                                style = {};
                                             }
 
                                             return (
@@ -7236,7 +7388,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 (e.target === activeNodeId && e.source === node.id)
                                             ))
                                         )) || isNodeInPattern;
-                                        const isDimmed = (activeNodeId || selectedPatternId) && !isConnected;
+
+                                        const nodeLayer = getClinicalLayerIndex(node);
+                                        const isStageFocused = focusedStageIndex !== null;
+                                        const isNodeInFocusedStage = !isStageFocused || (nodeLayer === focusedStageIndex);
+                                        const isDimmed = ((activeNodeId || selectedPatternId) && !isConnected) || (isStageFocused && !isNodeInFocusedStage && !isConnected && !isSelected);
 
                                         // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click rápido
                                         const handleNodeClick = (e) => {
@@ -7399,8 +7555,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     top: `${node.y}%`, 
                                                     transform: 'translate(-50%, -50%)', 
                                                     userSelect: 'none',
-                                                    willChange: 'transform, opacity',
-                                                    transition: 'opacity 0.1s ease, filter 0.1s ease'
+                                                    transition: 'opacity 0.15s ease, filter 0.15s ease'
                                                 }}
                                             >
                                                 {(() => {

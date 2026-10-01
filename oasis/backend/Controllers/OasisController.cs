@@ -65,6 +65,7 @@ namespace Oasis.Backend.Controllers
         private bool IsKeyForUser(string key, string username)
         {
             if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(username)) return false;
+            if (key.Equals("chatGptLink", StringComparison.OrdinalIgnoreCase) || key.Equals("chatgpt_link", StringComparison.OrdinalIgnoreCase)) return true;
             
             int idx = key.IndexOf(username, StringComparison.OrdinalIgnoreCase);
             if (idx == -1) return false;
@@ -2332,6 +2333,11 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
             string caller = GetAuthenticatedUser();
             var filtered = new Dictionary<string, string>();
+            if (u.ClinicalData.TryGetValue($"oasis_chatgpt_link_{user}", out var cLink) || u.ClinicalData.TryGetValue("chatGptLink", out cLink))
+            {
+                filtered["chatGptLink"] = cLink;
+                filtered[$"oasis_chatgpt_link_{user}"] = cLink;
+            }
             foreach (var kvp in u.ClinicalData)
             {
                 if (IsKeyForUser(kvp.Key, user))
@@ -2370,6 +2376,13 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
             {
                 foreach (var kvp in data)
                 {
+                    if (kvp.Key.Equals("chatGptLink", StringComparison.OrdinalIgnoreCase) || 
+                        kvp.Key.Equals("chatgpt_link", StringComparison.OrdinalIgnoreCase))
+                    {
+                        u.ClinicalData[$"oasis_chatgpt_link_{user}"] = kvp.Value;
+                        u.ClinicalData["chatGptLink"] = kvp.Value;
+                        continue;
+                    }
                     if (IsKeyForUser(kvp.Key, user))
                     {
                         var callerUser = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, caller, StringComparison.OrdinalIgnoreCase));
