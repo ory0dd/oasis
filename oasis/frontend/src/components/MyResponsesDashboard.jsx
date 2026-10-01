@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
@@ -9,24 +9,24 @@ const MOCK_AFC_DATA = {
     layout_version: 4,
     nodes: [
         // Columna 1: Contexto & Detonantes (Antecedentes E) (x: 14)
-        { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfecci√≥n y rendimiento para validar el propio valor.", x: 14, y: 35 },
-        { id: "s1", type: "social", clinical_role: "antecedent", label: "Demandas del entorno", description: "Percepci√≥n de presi√≥n social o familiar respecto a los resultados y normas.", x: 14, y: 65 },
+        { id: "h1", type: "historical", clinical_role: "antecedent", label: "Autoexigencia formativa", description: "Expectativa temprana de perfecciÛn y rendimiento para validar el propio valor.", x: 14, y: 35 },
+        { id: "s1", type: "social", clinical_role: "antecedent", label: "Demandas del entorno", description: "PercepciÛn de presiÛn social o familiar respecto a los resultados y normas.", x: 14, y: 65 },
 
-        // Columna 2: Pensamientos & Creencias (Di√°logo Interno Rc) (x: 32)
+        // Columna 2: Pensamientos & Creencias (Di·logo Interno Rc) (x: 32)
         { id: "c1", type: "cognitive", clinical_role: "cognitive", label: "Miedo al rechazo", description: "Pensamiento anticipatorio recurrente de no estar a la altura o defraudar.", x: 32, y: 35 },
-        { id: "c2", type: "cognitive", clinical_role: "cognitive", label: "Rumiaci√≥n autocr√≠tica", description: "Di√°logo interno de constante juicio sobre los propios errores y desempe√±o.", x: 32, y: 65 },
+        { id: "c2", type: "cognitive", clinical_role: "cognitive", label: "RumiaciÛn autocrÌtica", description: "Di·logo interno de constante juicio sobre los propios errores y desempeÒo.", x: 32, y: 65 },
 
-        // Columna 3: Activaci√≥n Som√°tica (Cuerpo & Emoci√≥n Rf) (x: 50)
-        { id: "p1", type: "physiological", clinical_role: "physiological", label: "Tensi√≥n corporal de estr√©s", description: "Respuesta som√°tica de alerta y sobrecarga en el cuerpo frente al conflicto.", x: 50, y: 35 },
-        { id: "p2", type: "physiological", clinical_role: "physiological", label: "Desvelo e hiperactivaci√≥n", description: "Dificultad para relajarse y conciliar el sue√±o por sobreactivaci√≥n som√°tica.", x: 50, y: 65 },
+        // Columna 3: ActivaciÛn Som·tica (Cuerpo & EmociÛn Rf) (x: 50)
+        { id: "p1", type: "physiological", clinical_role: "physiological", label: "TensiÛn corporal de estrÈs", description: "Respuesta som·tica de alerta y sobrecarga en el cuerpo frente al conflicto.", x: 50, y: 35 },
+        { id: "p2", type: "physiological", clinical_role: "physiological", label: "Desvelo e hiperactivaciÛn", description: "Dificultad para relajarse y conciliar el sueÒo por sobreactivaciÛn som·tica.", x: 50, y: 65 },
 
-        // Columna 4: Conductas de Evitaci√≥n (Respuestas Operantes Rm) (x: 68)
+        // Columna 4: Conductas de EvitaciÛn (Respuestas Operantes Rm) (x: 68)
         { id: "m1", type: "motor", clinical_role: "motor", label: "Escape en distracciones", description: "Uso continuo de actividades evasivas o pantallas para no conectar con el malestar.", x: 68, y: 35 },
-        { id: "m2", type: "motor", clinical_role: "motor", label: "Aislamiento defensivo", description: "Encierro y corte de la comunicaci√≥n interpersonal ante la tensi√≥n.", x: 68, y: 65 },
+        { id: "m2", type: "motor", clinical_role: "motor", label: "Aislamiento defensivo", description: "Encierro y corte de la comunicaciÛn interpersonal ante la tensiÛn.", x: 68, y: 65 },
 
         // Columna 5: Trampa de Mantenimiento (Alivio & Costos C) (x: 86)
-        { id: "con1", type: "consequence", clinical_role: "consequence", label: "Alivio transitorio breve", description: "Reducci√≥n moment√°nea del malestar al evadir la situaci√≥n (refuerzo negativo).", x: 86, y: 35 },
-        { id: "con2", type: "consequence", clinical_role: "consequence", label: "Cronificaci√≥n y culpa", description: "Costo vital acumulativo: distanciamiento vincular y aumento de la autocr√≠tica posterior.", x: 86, y: 65 }
+        { id: "con1", type: "consequence", clinical_role: "consequence", label: "Alivio transitorio breve", description: "ReducciÛn moment·nea del malestar al evadir la situaciÛn (refuerzo negativo).", x: 86, y: 35 },
+        { id: "con2", type: "consequence", clinical_role: "consequence", label: "CronificaciÛn y culpa", description: "Costo vital acumulativo: distanciamiento vincular y aumento de la autocrÌtica posterior.", x: 86, y: 65 }
     ],
     edges: [
         { source: "h1", target: "c1", weight: 2, type: "unidirectional" },
@@ -46,8 +46,8 @@ const MOCK_AFC_DATA = {
         physiological: 2
     },
     hypotheses: {
-        mantenimiento: "Los datos a√∫n no han sido procesados. Presiona 'Generar An√°lisis Cl√≠nico' para formular la red funcional completa del caso.",
-        solucion: "Los datos a√∫n no han sido procesados. Presiona 'Generar An√°lisis Cl√≠nico' para formular la red funcional completa del caso."
+        mantenimiento: "Los datos a˙n no han sido procesados. Presiona 'Generar An·lisis ClÌnico' para formular la red funcional completa del caso.",
+        solucion: "Los datos a˙n no han sido procesados. Presiona 'Generar An·lisis ClÌnico' para formular la red funcional completa del caso."
     }
 };
 
@@ -56,52 +56,52 @@ export const softenNodeLabel = (label) => {
     let s = label.trim();
 
     const transformations = [
-        [/\bopresi[o√≥]n\s+tor[a√°]cica\b/gi, "Tensi√≥n por estr√©s"],
-        [/\bsensaci[o√≥]n\s+de\s+peso\s+en\s+el\s+pecho\b/gi, "Tensi√≥n acumulada"],
-        [/\bpeso\s+en\s+el\s+pecho\b/gi, "Tensi√≥n acumulada"],
+        [/\bopresi[oÛ]n\s+tor[a·]cica\b/gi, "TensiÛn por estrÈs"],
+        [/\bsensaci[oÛ]n\s+de\s+peso\s+en\s+el\s+pecho\b/gi, "TensiÛn acumulada"],
+        [/\bpeso\s+en\s+el\s+pecho\b/gi, "TensiÛn acumulada"],
         [/\bnudo\s+en\s+la\s+garganta\b/gi, "Incomodidad al expresarse"],
-        [/\brespiraci[o√≥]n\s+corta\b/gi, "Inquietud y prisa"],
-        [/\binactividad\s+f[i√≠]sica\b/gi, "Pausa en las actividades"],
-        [/\balimentaci[o√≥]n\s+emocional\b/gi, "Comer por ansiedad"],
+        [/\brespiraci[oÛ]n\s+corta\b/gi, "Inquietud y prisa"],
+        [/\binactividad\s+f[iÌ]sica\b/gi, "Pausa en las actividades"],
+        [/\balimentaci[oÛ]n\s+emocional\b/gi, "Comer por ansiedad"],
         [/\bmaltrato\s+materno\b/gi, "Exigencia familiar del pasado"],
         [/\bmaltrato\s+paterno\b/gi, "Distancia familiar del pasado"],
-        [/\bviolencia\s+familiar\b/gi, "Tensi√≥n familiar en la infancia"],
-        [/\bviolencia\s+intrafamiliar\b/gi, "Tensi√≥n familiar en la infancia"],
+        [/\bviolencia\s+familiar\b/gi, "TensiÛn familiar en la infancia"],
+        [/\bviolencia\s+intrafamiliar\b/gi, "TensiÛn familiar en la infancia"],
         [/\bdivorcio\s+de\s+los\s+padres\b/gi, "Separaciones en el pasado"],
         [/\bdivorcio\s+de\s+padres\b/gi, "Separaciones en el pasado"],
-        [/\btrastorno\s+som[a√°]tico\b/gi, "Desgaste del cuerpo"],
-        [/\bhipervigilancia\s+som[a√°]tica\b/gi, "Atenci√≥n al cansancio"],
-        [/\bautocr√≠tica\s+punitiva\s+interna\b/gi, "Autoexigencia y reproche"],
-        [/\bautocr√≠tica\s+punitiva\b/gi, "Autoexigencia y reproche"],
+        [/\btrastorno\s+som[a·]tico\b/gi, "Desgaste del cuerpo"],
+        [/\bhipervigilancia\s+som[a·]tica\b/gi, "AtenciÛn al cansancio"],
+        [/\bautocrÌtica\s+punitiva\s+interna\b/gi, "Autoexigencia y reproche"],
+        [/\bautocrÌtica\s+punitiva\b/gi, "Autoexigencia y reproche"],
         [/\bpunitiva\b/gi, "severa"],
-        [/\bagotamiento\s+neuroqu√≠mico\s+por\s+estr√©s\b/gi, "Cansancio mental acumulado"],
-        [/\bagotamiento\s+neuroqu√≠mico\b/gi, "Cansancio mental"],
-        [/\bhipersensibilidad\s+neurosom√°tica\b/gi, "Tensi√≥n f√≠sica ante el estr√©s"],
-        [/\bneurosom√°tica\b/gi, "corporal"],
-        [/\bneuroqu√≠mic[oa]s?\b/gi, "mental"],
-        [/\bconsumo\s+ansiol√≠tico\s+de\s+nicotina\b/gi, "Fumar para calmar la ansiedad"],
-        [/\bconsumo\s+ansiol√≠tico\b/gi, "Consumo para calmarse"],
+        [/\bagotamiento\s+neuroquÌmico\s+por\s+estrÈs\b/gi, "Cansancio mental acumulado"],
+        [/\bagotamiento\s+neuroquÌmico\b/gi, "Cansancio mental"],
+        [/\bhipersensibilidad\s+neurosom·tica\b/gi, "TensiÛn fÌsica ante el estrÈs"],
+        [/\bneurosom·tica\b/gi, "corporal"],
+        [/\bneuroquÌmic[oa]s?\b/gi, "mental"],
+        [/\bconsumo\s+ansiolÌtico\s+de\s+nicotina\b/gi, "Fumar para calmar la ansiedad"],
+        [/\bconsumo\s+ansiolÌtico\b/gi, "Consumo para calmarse"],
         [/\bansiosa\s+constante\b/gi, "por inseguridad"],
-        [/\bindecisi√≥n\s+ansiosa\s+constante\b/gi, "Dudas frecuentes al decidir"],
+        [/\bindecisiÛn\s+ansiosa\s+constante\b/gi, "Dudas frecuentes al decidir"],
         [/\baislamiento\s+conductual\s+evasivo\b/gi, "Necesidad de aislarse"],
-        [/\bconductual\s+evasiv[oa]\b/gi, "de desconexi√≥n"],
+        [/\bconductual\s+evasiv[oa]\b/gi, "de desconexiÛn"],
         [/\bculpa\s+existencial\s+persistente\b/gi, "Dudas frecuentes y culpa"],
         [/\bculpa\s+existencial\b/gi, "Sentimiento de culpa"],
-        [/\bdin√°micas\s+familiares\s+invalidantes\b/gi, "Incomprensi√≥n en la familia"],
+        [/\bdin·micas\s+familiares\s+invalidantes\b/gi, "IncomprensiÛn en la familia"],
         [/\binvalidantes?\b/gi, "distantes"],
-        [/\bfrialdad\s+afectiva\s+en\s+v√≠nculos\b/gi, "Distancia emocional con otros"],
+        [/\bfrialdad\s+afectiva\s+en\s+vÌnculos\b/gi, "Distancia emocional con otros"],
         [/\bfrialdad\s+afectiva\b/gi, "Distancia afectiva"],
         [/\bdistanciamiento\s+interpersonal\s+progresivo\b/gi, "Alejamiento de las personas"],
-        [/\balivio\s+transitorio\s+de\s+la\s+tensi√≥n\b/gi, "Alivio temporal de la tensi√≥n"],
+        [/\balivio\s+transitorio\s+de\s+la\s+tensiÛn\b/gi, "Alivio temporal de la tensiÛn"],
         [/\bdeterioro\s+de\s+la\s+autoeficacia\b/gi, "Dudas sobre la propia capacidad"],
         [/\bdeterioro\s+severo\b/gi, "Desgaste"],
-        [/\bcronificaci√≥n\s+del\s+malestar\b/gi, "Sensaci√≥n de estancamiento"],
-        [/\bcronificaci√≥n\b/gi, "Mantenimiento"],
+        [/\bcronificaciÛn\s+del\s+malestar\b/gi, "SensaciÛn de estancamiento"],
+        [/\bcronificaciÛn\b/gi, "Mantenimiento"],
         [/\bescape\s+mediante\s+videojuegos\b/gi, "Refugio en videojuegos"],
-        [/\bagitaci√≥n\s+psicomotriz\s+ansiosa\b/gi, "Inquietud f√≠sica por estr√©s"],
-        [/\bdesajuste\s+de\s+ritmos\s+circadianos\b/gi, "Dificultad en horarios de sue√±o"],
-        [/\bfatiga\s+psicof√≠sica\s+profunda\b/gi, "Cansancio f√≠sico y mental"],
-        [/\brumiaci√≥n\s+obsesiva\s+y\s+culpa\b/gi, "Darle vueltas a las cosas"]
+        [/\bagitaciÛn\s+psicomotriz\s+ansiosa\b/gi, "Inquietud fÌsica por estrÈs"],
+        [/\bdesajuste\s+de\s+ritmos\s+circadianos\b/gi, "Dificultad en horarios de sueÒo"],
+        [/\bfatiga\s+psicofÌsica\s+profunda\b/gi, "Cansancio fÌsico y mental"],
+        [/\brumiaciÛn\s+obsesiva\s+y\s+culpa\b/gi, "Darle vueltas a las cosas"]
     ];
 
     for (const [regex, replacement] of transformations) {
@@ -121,8 +121,38 @@ export const softenNodeLabels = (nodes) => {
 };
 
 export const CUTE_NODE_THEMES = {
+    context: {
+        icon: "??",
+        category: "Contexto",
+        color: "#818cf8",
+        badge: "bg-indigo-500/15 text-indigo-300 border-indigo-400/30",
+        border: "border-indigo-400/30 hover:border-indigo-300",
+        glow: "hover:shadow-[0_0_20px_rgba(129,140,248,0.3)]",
+        selected: "border-indigo-300 bg-indigo-950/40 shadow-[0_0_28px_rgba(129,140,248,0.45)]",
+        textColor: "text-indigo-100"
+    },
+    antecedent: {
+        icon: "?",
+        category: "Detonante",
+        color: "#fb923c",
+        badge: "bg-orange-500/15 text-orange-300 border-orange-400/30",
+        border: "border-orange-400/30 hover:border-orange-300",
+        glow: "hover:shadow-[0_0_20px_rgba(251,146,60,0.3)]",
+        selected: "border-orange-300 bg-orange-950/40 shadow-[0_0_28px_rgba(251,146,60,0.45)]",
+        textColor: "text-orange-100"
+    },
+    function: {
+        icon: "??",
+        category: "FunciÛn",
+        color: "#f87171",
+        badge: "bg-red-500/15 text-red-300 border-red-400/30",
+        border: "border-red-400/30 hover:border-red-300",
+        glow: "hover:shadow-[0_0_20px_rgba(248,113,113,0.3)]",
+        selected: "border-red-300 bg-red-950/40 shadow-[0_0_28px_rgba(248,113,113,0.45)]",
+        textColor: "text-red-100"
+    },
     historical: {
-        icon: "üå±",
+        icon: "??",
         category: "Origen",
         color: "#a5b4fc",
         badge: "bg-indigo-500/15 text-indigo-300 border-indigo-400/30",
@@ -132,7 +162,7 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-indigo-100"
     },
     cognitive: {
-        icon: "üí≠",
+        icon: "??",
         category: "Mente",
         color: "#f472b6",
         badge: "bg-pink-500/15 text-pink-300 border-pink-400/30",
@@ -142,8 +172,8 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-pink-100"
     },
     motor: {
-        icon: "üêæ",
-        category: "Acci√≥n",
+        icon: "??",
+        category: "AcciÛn",
         color: "#fbbf24",
         badge: "bg-amber-500/15 text-amber-300 border-amber-400/30",
         border: "border-amber-400/30 hover:border-amber-300",
@@ -152,7 +182,7 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-amber-100"
     },
     physiological: {
-        icon: "üå∏",
+        icon: "??",
         category: "Cuerpo",
         color: "#fb7185",
         badge: "bg-rose-500/15 text-rose-300 border-rose-400/30",
@@ -162,8 +192,8 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-rose-100"
     },
     biological: {
-        icon: "üåø",
-        category: "F√≠sico",
+        icon: "??",
+        category: "FÌsico",
         color: "#6ee7b7",
         badge: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
         border: "border-emerald-400/30 hover:border-emerald-300",
@@ -172,8 +202,8 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-emerald-100"
     },
     social: {
-        icon: "ü´ß",
-        category: "V√≠nculo",
+        icon: "??",
+        category: "VÌnculo",
         color: "#7dd3fc",
         badge: "bg-sky-500/15 text-sky-300 border-sky-400/30",
         border: "border-sky-400/30 hover:border-sky-300",
@@ -182,7 +212,7 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-sky-100"
     },
     consequence: {
-        icon: "ü™Ñ",
+        icon: "??",
         category: "Desenlace",
         color: "#c084fc",
         badge: "bg-purple-500/15 text-purple-300 border-purple-400/30",
@@ -192,7 +222,7 @@ export const CUTE_NODE_THEMES = {
         textColor: "text-purple-100"
     },
     values: {
-        icon: "üß≠",
+        icon: "??",
         category: "Valores",
         color: "#38bdf8",
         badge: "bg-sky-500/15 text-sky-300 border-sky-400/30",
@@ -204,82 +234,83 @@ export const CUTE_NODE_THEMES = {
 };
 
 export const CLINICAL_COLUMNS = [
-    { id: 'antecedents', num: '1', title: 'Contexto & Detonantes', subtitle: 'Est√≠mulos Antecedentes (E)', icon: 'üå±', baseX: 14, color: '#a5b4fc' },
-    { id: 'cognitive', num: '2', title: 'Pensamientos & Creencias', subtitle: 'Di√°logo Interno (Rc)', icon: 'üí≠', baseX: 32, color: '#f472b6' },
-    { id: 'physiological', num: '3', title: 'Activaci√≥n Som√°tica', subtitle: 'Cuerpo & Emoci√≥n (Rf)', icon: 'üå∏', baseX: 50, color: '#fb7185' },
-    { id: 'motor', num: '4', title: 'Conductas de Evitaci√≥n', subtitle: 'Respuestas Operantes (Rm)', icon: 'üêæ', baseX: 68, color: '#fbbf24' },
-    { id: 'consequence', num: '5', title: 'Trampa de Mantenimiento', subtitle: 'Alivio & Costos Vitales (C)', icon: 'ü™Ñ', baseX: 86, color: '#c084fc' }
+    { id: 'context', num: '1', title: 'Contexto & Variables', subtitle: 'Operaciones Motivacionales (OM)', icon: '??', baseX: 12, color: '#818cf8' },
+    { id: 'antecedent', num: '2', title: 'Detonantes Inmediatos', subtitle: 'EstÌmulos (ED)', icon: '?', baseX: 27, color: '#fb923c' },
+    { id: 'cognitive', num: '3', title: 'Eventos Privados', subtitle: 'Pensamientos & Som·tica (RC/RF)', icon: '??', baseX: 42, color: '#f472b6' },
+    { id: 'motor', num: '4', title: 'Respuesta Operante', subtitle: 'Conductas de EvitaciÛn/Escape (RO)', icon: '??', baseX: 57, color: '#fbbf24' },
+    { id: 'consequence', num: '5', title: 'Consecuencias', subtitle: 'Corto y Largo Plazo (R+/R-)', icon: '??', baseX: 72, color: '#c084fc' },
+    { id: 'function', num: '6', title: 'FunciÛn del Bucle', subtitle: 'El "Para QuÈ"', icon: '??', baseX: 87, color: '#f87171' }
 ];
 
 const BLIND_SPOTS_CONFIG = [
     {
         id: "cronologico",
-        title: "L√≠nea de An√°lisis Crucial (Eslab√≥n Perdido en el Grafo)",
-        question: "Tu mapa registra la exigencia externa y la desconexi√≥n som√°tica, pero hay un vac√≠o cronol√≥gico: ¬øqu√© evento de tu historia familiar o infancia instal√≥ la creencia inconsciente de que descansar es peligroso?",
-        node: { id: "blind_spot_cronologico", type: "biological", label: "Brecha Cronol√≥gica: Vac√≠o en la Infancia", x: 25, y: 35 },
+        title: "LÌnea de An·lisis Crucial (EslabÛn Perdido en el Grafo)",
+        question: "Tu mapa registra la exigencia externa y la desconexiÛn som·tica, pero hay un vacÌo cronolÛgico: øquÈ evento de tu historia familiar o infancia instalÛ la creencia inconsciente de que descansar es peligroso?",
+        node: { id: "blind_spot_cronologico", type: "biological", label: "Brecha CronolÛgica: VacÌo en la Infancia", x: 25, y: 35 },
         edge: { source: "h1", target: "blind_spot_cronologico", weight: 2, type: "unidirectional" }
     },
     {
         id: "funcional",
-        title: "Desconexi√≥n de Evitaci√≥n Activa (Funci√≥n del S√≠ntoma)",
-        question: "¬øC√≥mo ha funcionado el cansancio cr√≥nico para protegerte de enfrentar el miedo al fracaso en tus proyectos creativos/laborales?",
-        node: { id: "blind_spot_funcional", type: "motor", label: "Brecha Funcional: Evitaci√≥n del Fracaso", x: 75, y: 35 },
+        title: "DesconexiÛn de EvitaciÛn Activa (FunciÛn del SÌntoma)",
+        question: "øCÛmo ha funcionado el cansancio crÛnico para protegerte de enfrentar el miedo al fracaso en tus proyectos creativos/laborales?",
+        node: { id: "blind_spot_funcional", type: "motor", label: "Brecha Funcional: EvitaciÛn del Fracaso", x: 75, y: 35 },
         edge: { source: "blind_spot_funcional", target: "con1", weight: 2, type: "unidirectional" }
     },
     {
         id: "identidad",
-        title: "Fusi√≥n Cognitiva con el Rol de Proveedor",
-        question: "Si dejas de sobre-esforzarte, ¬øqui√©n eres t√∫ m√°s all√° de la utilidad y productividad que entregas a los dem√°s?",
-        node: { id: "blind_spot_identidad", type: "cognitive", label: "Brecha de Identidad: Fusi√≥n de Rol", x: 75, y: 75 },
+        title: "FusiÛn Cognitiva con el Rol de Proveedor",
+        question: "Si dejas de sobre-esforzarte, øquiÈn eres t˙ m·s all· de la utilidad y productividad que entregas a los dem·s?",
+        node: { id: "blind_spot_identidad", type: "cognitive", label: "Brecha de Identidad: FusiÛn de Rol", x: 75, y: 75 },
         edge: { source: "blind_spot_identidad", target: "con1", weight: 2, type: "unidirectional" }
     },
     {
         id: "relacional",
         title: "Escudo Relacional contra la Intimidad",
-        question: "¬øDe qu√© manera el mantenerte siempre ocupado te sirve como un escudo para evitar la intimidad o el conflicto en tus relaciones afectivas?",
-        node: { id: "blind_spot_relacional", type: "social", label: "Brecha Relacional: Evitaci√≥n de Intimidad", x: 45, y: 80 },
+        question: "øDe quÈ manera el mantenerte siempre ocupado te sirve como un escudo para evitar la intimidad o el conflicto en tus relaciones afectivas?",
+        node: { id: "blind_spot_relacional", type: "social", label: "Brecha Relacional: EvitaciÛn de Intimidad", x: 45, y: 80 },
         edge: { source: "s1", target: "blind_spot_relacional", weight: 2, type: "unidirectional" }
     },
     {
         id: "control",
-        title: "Fantas√≠a de Control y Omnipotencia",
-        question: "Si aceptas que no puedes controlarlo todo ni salvar a todos a tu alrededor, ¬øqu√© angustia o vac√≠o profundo tendr√≠as que confrontar?",
-        node: { id: "blind_spot_control", type: "cognitive", label: "Brecha de Control: Vac√≠o Som√°tico", x: 75, y: 95 },
+        title: "FantasÌa de Control y Omnipotencia",
+        question: "Si aceptas que no puedes controlarlo todo ni salvar a todos a tu alrededor, øquÈ angustia o vacÌo profundo tendrÌas que confrontar?",
+        node: { id: "blind_spot_control", type: "cognitive", label: "Brecha de Control: VacÌo Som·tico", x: 75, y: 95 },
         edge: { source: "c2", target: "blind_spot_control", weight: 2, type: "unidirectional" }
     },
     {
         id: "cuerpo",
-        title: "Anestesia Som√°tica e Indicios F√≠sicos",
-        question: "Tu cuerpo te env√≠a se√±ales claras de agotamiento que decides ignorar: ¬øqu√© dolor existencial est√°s silenciando a trav√©s del ruido del activismo constante?",
-        node: { id: "blind_spot_cuerpo", type: "physiological", label: "Brecha Som√°tica: Bloqueo de Alerta", x: 45, y: 15 },
+        title: "Anestesia Som·tica e Indicios FÌsicos",
+        question: "Tu cuerpo te envÌa seÒales claras de agotamiento que decides ignorar: øquÈ dolor existencial est·s silenciando a travÈs del ruido del activismo constante?",
+        node: { id: "blind_spot_cuerpo", type: "physiological", label: "Brecha Som·tica: Bloqueo de Alerta", x: 45, y: 15 },
         edge: { source: "blind_spot_cuerpo", target: "c3", weight: 2, type: "unidirectional" }
     },
     {
         id: "limites",
-        title: "Dificultad de Demarcaci√≥n y Complacencia",
-        question: "¬øCu√°l es el precio emocional que pagas por no poner l√≠mites claros, y qu√© fantas√≠a de omnipotencia mantienes al intentar complacer a todos?",
-        node: { id: "blind_spot_limites", type: "social", label: "Brecha de L√≠mites: Complacencia Excesiva", x: 45, y: 95 },
+        title: "Dificultad de DemarcaciÛn y Complacencia",
+        question: "øCu·l es el precio emocional que pagas por no poner lÌmites claros, y quÈ fantasÌa de omnipotencia mantienes al intentar complacer a todos?",
+        node: { id: "blind_spot_limites", type: "social", label: "Brecha de LÌmites: Complacencia Excesiva", x: 45, y: 95 },
         edge: { source: "s1", target: "blind_spot_limites", weight: 2, type: "unidirectional" }
     },
     {
         id: "culpa",
         title: "Mandatos de Rendimiento del Pasado",
-        question: "Al tomar un momento de descanso absoluto, surge una culpa inmediata: ¬øa la mirada de qu√© figura del pasado est√°s intentando complacer o pedir aprobaci√≥n con tu sobreesfuerzo?",
-        node: { id: "blind_spot_culpa", type: "historical", label: "Brecha de Aprobaci√≥n: Culpa Heredada", x: 15, y: 95 },
+        question: "Al tomar un momento de descanso absoluto, surge una culpa inmediata: øa la mirada de quÈ figura del pasado est·s intentando complacer o pedir aprobaciÛn con tu sobreesfuerzo?",
+        node: { id: "blind_spot_culpa", type: "historical", label: "Brecha de AprobaciÛn: Culpa Heredada", x: 15, y: 95 },
         edge: { source: "h2", target: "blind_spot_culpa", weight: 2, type: "unidirectional" }
     },
     {
         id: "emocion",
-        title: "Inhibici√≥n de Afectos Primitivos",
-        question: "¬øQu√© emoci√≥n espec√≠fica (miedo, tristeza, rabia) emerge cuando disminuyes la velocidad y el silencio te rodea?",
-        node: { id: "blind_spot_emocion", type: "physiological", label: "Brecha de Emoci√≥n: Afecto Inhibido", x: 75, y: 5 },
+        title: "InhibiciÛn de Afectos Primitivos",
+        question: "øQuÈ emociÛn especÌfica (miedo, tristeza, rabia) emerge cuando disminuyes la velocidad y el silencio te rodea?",
+        node: { id: "blind_spot_emocion", type: "physiological", label: "Brecha de EmociÛn: Afecto Inhibido", x: 75, y: 5 },
         edge: { source: "blind_spot_emocion", target: "c3", weight: 2, type: "unidirectional" }
     },
     {
         id: "sentido",
-        title: "Vac√≠o de Sentido e Identidad Esencial",
-        question: "Si tu valor como ser humano no dependiera de tus logros externos ni de tu rendimiento, ¬øcu√°l ser√≠a el sentido de tu existencia en este momento?",
-        node: { id: "blind_spot_sentido", type: "cognitive", label: "Brecha de Sentido: Vac√≠o Existencial", x: 75, y: 110 },
+        title: "VacÌo de Sentido e Identidad Esencial",
+        question: "Si tu valor como ser humano no dependiera de tus logros externos ni de tu rendimiento, øcu·l serÌa el sentido de tu existencia en este momento?",
+        node: { id: "blind_spot_sentido", type: "cognitive", label: "Brecha de Sentido: VacÌo Existencial", x: 75, y: 110 },
         edge: { source: "blind_spot_sentido", target: "con1", weight: 2, type: "unidirectional" }
     }
 ];
@@ -302,7 +333,7 @@ const resolveCollisions = (nodes) => {
     let adjusted = true;
     let iterations = 0;
     const maxIterations = 60;
-    const damping = 0.38; // Factor de amortiguaci√≥n para evitar oscilaciones
+    const damping = 0.38; // Factor de amortiguaciÛn para evitar oscilaciones
 
     while (adjusted && iterations < maxIterations) {
         adjusted = false;
@@ -315,7 +346,7 @@ const resolveCollisions = (nodes) => {
                 let dx = n2.x - n1.x;
                 let dy = n2.y - n1.y;
 
-                // Si est√°n exactamente superpuestos, desempatar suavemente
+                // Si est·n exactamente superpuestos, desempatar suavemente
                 if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
                     dx = (Math.random() - 0.5) * 1.5;
                     dy = (Math.random() - 0.5) * 2;
@@ -333,7 +364,7 @@ const resolveCollisions = (nodes) => {
                     const overlap = 1.0 - dist_norm;
 
                     // Si pertenecen a columnas sustancialmente diferentes (dx > 6.5), priorizar ajuste puramente vertical
-                    // para no romper el orden columnar de la topolog√≠a funcional
+                    // para no romper el orden columnar de la topologÌa funcional
                     const sameColumn = Math.abs(dx) < 6.5;
                     const moveX = sameColumn ? ux * overlap * damping * paddingX * 0.25 : 0;
                     const moveY = uy * overlap * damping * paddingY;
@@ -343,7 +374,7 @@ const resolveCollisions = (nodes) => {
                     n2.x += moveX;
                     n2.y += moveY;
 
-                    // Mantener dentro de los l√≠mites c√≥modos del lienzo virtual
+                    // Mantener dentro de los lÌmites cÛmodos del lienzo virtual
                     n1.x = Math.max(9, Math.min(91, n1.x));
                     n2.x = Math.max(9, Math.min(91, n2.x));
                     n1.y = Math.max(14, Math.min(88, n1.y));
@@ -365,16 +396,16 @@ const getFallbackDescription = (node, user, bioData = null, phenomData = null) =
         const answer = localStorage.getItem(`oasis_blindspot_answer_${user}__${spotId}`);
         if (question && answer) {
             const baseDescription = node.description ? `${node.description}\n\n` : "";
-            return `${baseDescription}Pregunta de Introspecci√≥n: ${question}\n\nTu respuesta y toma de conciencia: ${answer}`;
+            return `${baseDescription}Pregunta de IntrospecciÛn: ${question}\n\nTu respuesta y toma de conciencia: ${answer}`;
         }
     }
 
-    // Si el nodo ya tiene una descripci√≥n cl√≠nica v√°lida y sustancial (>= 20 caracteres)
+    // Si el nodo ya tiene una descripciÛn clÌnica v·lida y sustancial (>= 20 caracteres)
     if (node && node.description && typeof node.description === 'string' && node.description.trim().length > 0 && !node.description.includes('Factor de tu mapa')) {
         return node.description.trim();
     }
 
-    // Si existe una menci√≥n directa del consultante en sus entrevistas, usarla como base
+    // Si existe una menciÛn directa del consultante en sus entrevistas, usarla como base
     const mention = findExactUserMention(node, bioData, phenomData);
     if (mention) {
         return mention;
@@ -383,26 +414,26 @@ const getFallbackDescription = (node, user, bioData = null, phenomData = null) =
     if (!node) return "";
     switch (node.clinical_role || node.type) {
         case 'antecedent':
-        case 'historical': return "Est√≠mulo o vivencia hist√≥rica que aprendiste a interpretar como se√±al de alerta o exigencia.";
+        case 'historical': return "EstÌmulo o vivencia histÛrica que aprendiste a interpretar como seÒal de alerta o exigencia.";
         case 'social': return "Factor o demanda de tu entorno social, laboral o familiar actual.";
-        case 'cognitive': return "Di√°logo interno, juicio autocr√≠tico o regla r√≠gida con la que eval√∫as tu experiencia.";
+        case 'cognitive': return "Di·logo interno, juicio autocrÌtico o regla rÌgida con la que eval˙as tu experiencia.";
         case 'physiological':
-        case 'biological': return "Activaci√≥n f√≠sica y respuesta del sistema nervioso frente a la sobrecarga o estr√©s.";
-        case 'motor': return "Conducta operante de escape o evitaci√≥n para calmar la tensi√≥n urgente.";
+        case 'biological': return "ActivaciÛn fÌsica y respuesta del sistema nervioso frente a la sobrecarga o estrÈs.";
+        case 'motor': return "Conducta operante de escape o evitaciÛn para calmar la tensiÛn urgente.";
         case 'consequence': return "Consecuencia inmediata de alivio transitorio pero con costo vital o estancamiento a largo plazo.";
-        default: return "Factor de tu formulaci√≥n cl√≠nica conductual.";
+        default: return "Factor de tu formulaciÛn clÌnica conductual.";
     }
 };
 
 export const getNodeExperiencePhrases = (node) => {
     if (!node) return { short: "esta experiencia", full: "esta experiencia en tu vida" };
     
-    let rawLabel = softenNodeLabel(node.label || "").trim().replace(/["'‚Äú‚Äù()¬ø?¬°!]/g, '');
-    let rawDesc = (node.description || "").trim().replace(/["'‚Äú‚Äù()¬ø?¬°!]/g, '');
+    let rawLabel = softenNodeLabel(node.label || "").trim().replace(/["'ìî()ø?°!]/g, '');
+    let rawDesc = (node.description || "").trim().replace(/["'ìî()ø?°!]/g, '');
     
-    // Limpiar prefijos anal√≠ticos o t√©cnicos residuales
-    rawLabel = rawLabel.replace(/^(este es un hecho|representa lo que|representa c√≥mo|representa un factor|patr√≥n de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
-    rawDesc = rawDesc.replace(/^(este es un hecho|representa lo que|representa c√≥mo|representa un factor|patr√≥n de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
+    // Limpiar prefijos analÌticos o tÈcnicos residuales
+    rawLabel = rawLabel.replace(/^(este es un hecho|representa lo que|representa cÛmo|representa un factor|patrÛn de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
+    rawDesc = rawDesc.replace(/^(este es un hecho|representa lo que|representa cÛmo|representa un factor|patrÛn de|bucle de|conducta de|mecanismo de|esquema de)\s+/i, '').trim();
     
     if (rawLabel.length > 0) {
         rawLabel = rawLabel.charAt(0).toLowerCase() + rawLabel.slice(1);
@@ -411,22 +442,22 @@ export const getNodeExperiencePhrases = (node) => {
         rawDesc = rawDesc.charAt(0).toLowerCase() + rawDesc.slice(1);
     }
 
-    // Determinar art√≠culo gramatical natural en espa√±ol
+    // Determinar artÌculo gramatical natural en espaÒol
     const getArticle = (str) => {
         if (!str) return 'el';
         const firstWord = str.split(/\s+/)[0].toLowerCase();
-        if (/^(pensamientos|juicios|errores|problemas|reproches|miedos|temores|dudas|conflictos|l√≠mites)/i.test(firstWord)) {
+        if (/^(pensamientos|juicios|errores|problemas|reproches|miedos|temores|dudas|conflictos|lÌmites)/i.test(firstWord)) {
             return firstWord.endsWith('as') ? 'las' : 'los';
         }
-        if (/^(duda|dudas|culpa|culpas|tensi√≥n|tensiones|opresi√≥n|angustia|ansiedad|inseguridad|inseguridades|autoexigencia|necesidad|falta|dificultad|dificultades|distancia|incomprensi√≥n|irritabilidad|tristeza|sensaci√≥n|sensaciones|b√∫squeda|rabia|frustraci√≥n|verg√ºenza|preocupaci√≥n|preocupaciones|desconexi√≥n)/i.test(firstWord)) {
+        if (/^(duda|dudas|culpa|culpas|tensiÛn|tensiones|opresiÛn|angustia|ansiedad|inseguridad|inseguridades|autoexigencia|necesidad|falta|dificultad|dificultades|distancia|incomprensiÛn|irritabilidad|tristeza|sensaciÛn|sensaciones|b˙squeda|rabia|frustraciÛn|verg¸enza|preocupaciÛn|preocupaciones|desconexiÛn)/i.test(firstWord)) {
             return 'la';
         }
-        if (/^(sobrepensar|aislamiento|cansancio|agotamiento|miedo|miedos|temor|temores|consumo|refugio|dolor|dolores|nudo|deseo|deseos|di√°logo|juicio|juicios|reproche|reproches|malestar|estancamiento|rechazo|vac√≠o|desapego|impulso|impulsos)/i.test(firstWord)) {
+        if (/^(sobrepensar|aislamiento|cansancio|agotamiento|miedo|miedos|temor|temores|consumo|refugio|dolor|dolores|nudo|deseo|deseos|di·logo|juicio|juicios|reproche|reproches|malestar|estancamiento|rechazo|vacÌo|desapego|impulso|impulsos)/i.test(firstWord)) {
             return 'el';
         }
         if (firstWord.endsWith('as') || firstWord.endsWith('ciones')) return 'las';
         if (firstWord.endsWith('os') || firstWord.endsWith('es')) return 'los';
-        if (firstWord.endsWith('a') || firstWord.endsWith('ci√≥n') || firstWord.endsWith('si√≥n') || firstWord.endsWith('dad')) return 'la';
+        if (firstWord.endsWith('a') || firstWord.endsWith('ciÛn') || firstWord.endsWith('siÛn') || firstWord.endsWith('dad')) return 'la';
         return 'el';
     };
 
@@ -436,7 +467,7 @@ export const getNodeExperiencePhrases = (node) => {
         shortExp = `${art} ${shortExp}`;
     }
 
-    // Construir frase descriptiva rica combinando label + description si aporta informaci√≥n distinta
+    // Construir frase descriptiva rica combinando label + description si aporta informaciÛn distinta
     let fullExp = shortExp;
     if (rawDesc && rawDesc.length > 5 && !rawDesc.toLowerCase().includes(rawLabel.toLowerCase().slice(0, 7))) {
         const descArticle = getArticle(rawDesc);
@@ -462,95 +493,95 @@ export const isStaleOrRoboticQuestion = (q) => {
     if (!q || typeof q !== 'string') return true;
     const trimmed = q.trim();
     if (trimmed.length < 20) return true;
-    // Rechazar artefactos t√©cnicos o valores nulos
+    // Rechazar artefactos tÈcnicos o valores nulos
     if (trimmed.includes('[object Object]') || trimmed.includes('undefined') || trimmed.includes('null')) return true;
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) return true;
 
-    // Detectar plantillas gen√©ricas obsoletas, citas artificiales o clich√©s cl√≠nicos inventados
+    // Detectar plantillas genÈricas obsoletas, citas artificiales o clichÈs clÌnicos inventados
     const stalePhrases = [
-        '¬øQu√© reflexi√≥n o toma de consciencia te genera este momento de tu vida?',
-        '¬øQu√© reflexi√≥n o toma de consciencia surge al observar',
-        '¬øQu√© significado o aprendizaje extraes',
+        'øQuÈ reflexiÛn o toma de consciencia te genera este momento de tu vida?',
+        'øQuÈ reflexiÛn o toma de consciencia surge al observar',
+        'øQuÈ significado o aprendizaje extraes',
         'desarmar el bucle',
         'Observando el bucle completo',
-        '¬øCu√°les son los pensamientos, juicios o exigencias',
-        '¬øCu√°les son las acciones, maniobras de escape',
-        '¬øQu√© se√±ales espec√≠ficas notas en tu organismo',
-        '¬øDe qu√© manera influye tu entorno social actual',
-        '¬øQu√© pensamientos autom√°ticos o reglas internas',
+        'øCu·les son los pensamientos, juicios o exigencias',
+        'øCu·les son las acciones, maniobras de escape',
+        'øQuÈ seÒales especÌficas notas en tu organismo',
+        'øDe quÈ manera influye tu entorno social actual',
+        'øQuÈ pensamientos autom·ticos o reglas internas',
         'realidad cotidiana',
         'forma de estar en el mundo',
-        'esta vivencia se volv√≠a parte',
+        'esta vivencia se volvÌa parte',
         'de el esta vivencia',
         'de el esta',
         'de la esta',
-        'las ra√≠ces de el',
-        'ra√≠ces de el',
+        'las raÌces de el',
+        'raÌces de el',
         'aprendizajes tempranos te llevaron a desarrollar',
         'aprendizajes del pasado te llevaron a desarrollar',
         'Pensando en lo que compartiste al decir',
         'lo que compartiste al decir',
-        'en qu√© √©poca de tu vida recuerdas haber sentido',
+        'en quÈ Època de tu vida recuerdas haber sentido',
         'por primera vez el peso de',
         'comenzaras a responder de esta forma',
-        'opresi√≥n tor√°cica',
+        'opresiÛn tor·cica',
         'opresion toracica',
         'nudo en la garganta',
-        'respiraci√≥n corta',
+        'respiraciÛn corta',
         'respiracion corta',
-        'alimentaci√≥n emocional',
+        'alimentaciÛn emocional',
         'alimentacion emocional',
-        'inactividad f√≠sica',
+        'inactividad fÌsica',
         'inactividad fisica',
         'maltrato materno',
         'maltrato paterno',
         'violencia familiar',
         'divorcio de padres',
         'armadura',
-        'guerra que ya termin√≥',
+        'guerra que ya terminÛ',
         'precio invisible',
-        'gritando a trav√©s de',
+        'gritando a travÈs de',
         'esclavo de',
         'cicatriz de algo',
         'si te detienes a observar',
         'mandato interno muy severo',
         'arrastran irremediablemente',
         'al pensar en',
-        'qu√© te dir√≠a ese t√∫ del pasado',
-        'qu√© pasar√≠a si hoy decides dejar de ignorar',
+        'quÈ te dirÌa ese t˙ del pasado',
+        'quÈ pasarÌa si hoy decides dejar de ignorar',
         'Ehm, estaba pensando en',
-        'Es curioso c√≥mo se da esto de',
-        'Sabes, me qued√© pensando en',
-        'F√≠jate que al observar',
+        'Es curioso cÛmo se da esto de',
+        'Sabes, me quedÈ pensando en',
+        'FÌjate que al observar',
         'Hmm, escuchando sobre',
         'Cuando mencionas',
-        'es s√∫per interesante c√≥mo parece venir desde',
-        '¬øCrees que esa vieja forma de responder te sigue sirviendo',
-        '¬øc√≥mo lo vives realmente en tu d√≠a a d√≠a?',
-        '¬øqu√© es lo que m√°s te cuesta o te agota de esto?',
-        '¬øqu√© es lo primerito que se te viene a la mente',
-        '¬øte gustar√≠a que intentemos buscar hacer algo distinto?',
-        '¬øc√≥mo crees que esto termina afectando a la gente cercana',
-        '¬øsientes que a veces te alejas o te a√≠slas',
-        '¬øc√≥mo cambia tu forma de tratar a los dem√°s',
-        '¬øte ha pasado que alguien importante para ti lo nota',
-        'si tu cuerpo pudiera hablar a trav√©s de esa sensaci√≥n',
-        '¬øhay algo que te d√© alivio f√≠sico inmediato',
-        'si le pusieras atenci√≥n a ese malestar en silencio',
-        '¬øen qu√© parte del cuerpo crees que lo notas m√°s?',
-        'a veces esto se siente pesad√≠simo f√≠sicamente',
-        '¬øhas notado c√≥mo reacciona tu cuerpo antes y despu√©s',
-        '¬øqu√© pasar√≠a si te detienes un momento a respirar',
-        'a veces somos s√∫per duros con nosotros mismos',
-        '¬øqu√© tipo de cosas te dices en tu cabeza',
-        'imag√≠nate que alguien que quieres mucho te cuenta',
-        '¬øcrees que te est√°s exigiendo de m√°s'
+        'es s˙per interesante cÛmo parece venir desde',
+        'øCrees que esa vieja forma de responder te sigue sirviendo',
+        'øcÛmo lo vives realmente en tu dÌa a dÌa?',
+        'øquÈ es lo que m·s te cuesta o te agota de esto?',
+        'øquÈ es lo primerito que se te viene a la mente',
+        'øte gustarÌa que intentemos buscar hacer algo distinto?',
+        'øcÛmo crees que esto termina afectando a la gente cercana',
+        'øsientes que a veces te alejas o te aÌslas',
+        'øcÛmo cambia tu forma de tratar a los dem·s',
+        'øte ha pasado que alguien importante para ti lo nota',
+        'si tu cuerpo pudiera hablar a travÈs de esa sensaciÛn',
+        'øhay algo que te dÈ alivio fÌsico inmediato',
+        'si le pusieras atenciÛn a ese malestar en silencio',
+        'øen quÈ parte del cuerpo crees que lo notas m·s?',
+        'a veces esto se siente pesadÌsimo fÌsicamente',
+        'øhas notado cÛmo reacciona tu cuerpo antes y despuÈs',
+        'øquÈ pasarÌa si te detienes un momento a respirar',
+        'a veces somos s˙per duros con nosotros mismos',
+        'øquÈ tipo de cosas te dices en tu cabeza',
+        'imagÌnate que alguien que quieres mucho te cuenta',
+        'øcrees que te est·s exigiendo de m·s'
     ];
     for (const phrase of stalePhrases) {
         if (trimmed.toLowerCase().includes(phrase.toLowerCase())) return true;
     }
 
-    // Detectar repetici√≥n de "vivencia" en la misma pregunta
+    // Detectar repeticiÛn de "vivencia" en la misma pregunta
     const matchesVivencia = (trimmed.toLowerCase().match(/vivencia/g) || []).length;
     if (matchesVivencia >= 2) return true;
 
@@ -561,7 +592,7 @@ export const getClinicalTheme = (node) => {
     if (!node) return 'general';
     const combined = `${node.label || ''} ${node.description || ''} ${node.type || ''}`.toLowerCase();
 
-    if (/sobrepens|rumia|juicio|error|mente.*acelerada|dar.*vuelta|pensar.*demasiado|par[a√°]lisis.*an[a√°]lisis|pensamiento.*repetitivo|preocupaci/i.test(combined)) {
+    if (/sobrepens|rumia|juicio|error|mente.*acelerada|dar.*vuelta|pensar.*demasiado|par[a·]lisis.*an[a·]lisis|pensamiento.*repetitivo|preocupaci/i.test(combined)) {
         return 'overthinking';
     }
     if (/alcohol|trago|cerveza|copa|fumar|cigarro|nicotina|sustancia|consumo.*alcohol|consumo.*calmar/i.test(combined)) {
@@ -573,25 +604,25 @@ export const getClinicalTheme = (node) => {
     if (/laboral|trabajo|empleo|oficina|jefe|ambiente.*hostil/i.test(combined)) {
         return 'work_pressure';
     }
-    if (/dependen|apego|atenci[o√≥]n|valida|abandono|rechazo|afecto|pareja|separaci[o√≥]n|soledad vincular|desaprobaci|vac[i√≠]o vincular/i.test(combined)) {
+    if (/dependen|apego|atenci[oÛ]n|valida|abandono|rechazo|afecto|pareja|separaci[oÛ]n|soledad vincular|desaprobaci|vac[iÌ]o vincular/i.test(combined)) {
         return 'attachment';
     }
-    if (/autoexigen|cr[i√≠]tica|perfecc|culpa|reproche|insufic|equivocar|fallar|expectativa/i.test(combined)) {
+    if (/autoexigen|cr[iÌ]tica|perfecc|culpa|reproche|insufic|equivocar|fallar|expectativa/i.test(combined)) {
         return 'perfectionism';
     }
-    if (/aisla|evita|silencio|retirada|distancia.*emocional|desconexi[o√≥]n|repleg|encerr|huida|escap/i.test(combined)) {
+    if (/aisla|evita|silencio|retirada|distancia.*emocional|desconexi[oÛ]n|repleg|encerr|huida|escap/i.test(combined)) {
         return 'avoidance';
     }
     if (/ira|enojo|rabia|frustra|discusi|explosi|agresi|impuls|irritab|pelea|conflicto/i.test(combined)) {
         return 'anger';
     }
-    if (/cuerpo|tensi[o√≥]n|som[a√°]t|pecho|nudo|garganta|est[o√≥]mago|respiraci|fatiga|cansancio|sue√±o|insomnio|agotamiento|opresi[o√≥]n/i.test(combined) || node.type === 'physiological' || node.type === 'biological') {
+    if (/cuerpo|tensi[oÛ]n|som[a·]t|pecho|nudo|garganta|est[oÛ]mago|respiraci|fatiga|cansancio|sueÒo|insomnio|agotamiento|opresi[oÛ]n/i.test(combined) || node.type === 'physiological' || node.type === 'biological') {
         return 'somatic';
     }
-    if (/miedo|ansiedad|alerta|panico|cat[a√°]strof|control|peligro/i.test(combined)) {
+    if (/miedo|ansiedad|alerta|panico|cat[a·]strof|control|peligro/i.test(combined)) {
         return 'anxiety';
     }
-    if (/vac[i√≠]o|prop[o√≥]sito|sentido|futuro|desgano|rumbo|ilusi[o√≥]n|direcci|estancamiento/i.test(combined)) {
+    if (/vac[iÌ]o|prop[oÛ]sito|sentido|futuro|desgano|rumbo|ilusi[oÛ]n|direcci|estancamiento/i.test(combined)) {
         return 'purpose';
     }
     return 'general';
@@ -610,7 +641,7 @@ export const getNodeOriginContext = (node, edges = [], allNodes = []) => {
 
     if (incomingNodes.length === 0) return null;
 
-    // Prioridad cl√≠nica de antecedentes: hist√≥rico -> social -> biol√≥gico -> cognitivo -> motor
+    // Prioridad clÌnica de antecedentes: histÛrico -> social -> biolÛgico -> cognitivo -> motor
     const typePriority = { historical: 0, social: 1, biological: 2, cognitive: 3, motor: 4, physiological: 5, consequence: 6 };
     const sorted = [...incomingNodes].sort((a, b) => (typePriority[a.type] ?? 4) - (typePriority[b.type] ?? 4));
 
@@ -639,7 +670,7 @@ export const getNodeConsequenceContext = (node, edges = [], allNodes = []) => {
 
     if (outgoingNodes.length === 0) return null;
 
-    // Prioridad cl√≠nica de consecuencias: consequence -> physiological -> motor -> social -> cognitive
+    // Prioridad clÌnica de consecuencias: consequence -> physiological -> motor -> social -> cognitive
     const typePriority = { consequence: 0, physiological: 1, motor: 2, social: 3, cognitive: 4, biological: 5, historical: 6 };
     const sorted = [...outgoingNodes].sort((a, b) => (typePriority[a.type] ?? 4) - (typePriority[b.type] ?? 4));
 
@@ -664,21 +695,21 @@ export const generateEmpatheticPerspectiveQuestion = (
     edges = [], 
     allNodes = []
 ) => {
-    if (!node) return "¬øQu√© reflexi√≥n o toma de consciencia te genera este momento de tu vida?";
+    if (!node) return "øQuÈ reflexiÛn o toma de consciencia te genera este momento de tu vida?";
     const safeIdx = Math.max(0, Math.min(6, threadIndex));
 
     const originContext = getNodeOriginContext(node, edges, allNodes);
     const consequenceContext = getNodeConsequenceContext(node, edges, allNodes);
 
-    const rawLabel = (node.label || '').trim().replace(/["'‚Äú‚Äù]/g, '');
-    const label = softenNodeLabel(rawLabel || node.description || 'este patr√≥n');
-    const desc = (node.description || '').replace(/["'‚Äú‚Äù]/g, '').trim();
-    const challenge = (node.challenge || '').replace(/["'‚Äú‚Äù]/g, '').trim();
-    const reflection = (node.reflection_question || '').replace(/["'‚Äú‚Äù¬ø?]/g, '').trim();
+    const rawLabel = (node.label || '').trim().replace(/["'ìî]/g, '');
+    const label = softenNodeLabel(rawLabel || node.description || 'este patrÛn');
+    const desc = (node.description || '').replace(/["'ìî]/g, '').trim();
+    const challenge = (node.challenge || '').replace(/["'ìî]/g, '').trim();
+    const reflection = (node.reflection_question || '').replace(/["'ìîø?]/g, '').trim();
     const nodeType = node.type || 'cognitive';
 
-    const cleanOriginLabel = originContext?.originNode ? softenNodeLabel((originContext.originNode.label || '').replace(/["'‚Äú‚Äù]/g, '').trim()) : null;
-    const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel((consequenceContext.targetNode.label || '').replace(/["'‚Äú‚Äù]/g, '').trim()) : null;
+    const cleanOriginLabel = originContext?.originNode ? softenNodeLabel((originContext.originNode.label || '').replace(/["'ìî]/g, '').trim()) : null;
+    const cleanTargetLabel = consequenceContext?.targetNode ? softenNodeLabel((consequenceContext.targetNode.label || '').replace(/["'ìî]/g, '').trim()) : null;
 
     const getConversationalPhrase = (text) => {
         if (!text) return "esto que te pasa";
@@ -686,7 +717,7 @@ export const generateEmpatheticPerspectiveQuestion = (
         
         if (lower.startsWith('dificultad para ')) {
             const action = lower.replace('dificultad para ', '');
-            return `lo dif√≠cil que te resulta ${action}`;
+            return `lo difÌcil que te resulta ${action}`;
         }
         if (lower.startsWith('miedo a ')) return `ese miedo a ${lower.replace('miedo a ', '')} que sientes`;
         if (lower.startsWith('miedo al ')) return `ese miedo al ${lower.replace('miedo al ', '')} que sientes`;
@@ -703,95 +734,95 @@ export const generateEmpatheticPerspectiveQuestion = (
     const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const intros = [
         `Ehm, estaba pensando en ${convLabel}...`,
-        `Es curioso c√≥mo se da esto de ${convLabel}.`,
-        `Sabes, me qued√© pensando en ${convLabel}.`,
-        `F√≠jate que al observar ${convLabel}...`,
+        `Es curioso cÛmo se da esto de ${convLabel}.`,
+        `Sabes, me quedÈ pensando en ${convLabel}.`,
+        `FÌjate que al observar ${convLabel}...`,
         `Hmm, escuchando sobre ${convLabel},`,
         `Cuando mencionas ${convLabel},`
     ];
 
     switch (safeIdx) {
-        case 0: { // Ra√≠z Hist√≥rica y Origen
+        case 0: { // RaÌz HistÛrica y Origen
             if (convOrigin && cleanOriginLabel.toLowerCase() !== label.toLowerCase()) {
                 const bridges = [
-                    `pareciera tener ra√≠ces muy claras en ${convOrigin}.`,
-                    `es s√∫per interesante c√≥mo parece venir desde ${convOrigin}.`,
-                    `parece que todo empez√≥ por ${convOrigin}.`,
-                    `se nota la conexi√≥n directa con ${convOrigin}.`
+                    `pareciera tener raÌces muy claras en ${convOrigin}.`,
+                    `es s˙per interesante cÛmo parece venir desde ${convOrigin}.`,
+                    `parece que todo empezÛ por ${convOrigin}.`,
+                    `se nota la conexiÛn directa con ${convOrigin}.`
                 ];
                 const questions = [
-                    `¬øTe has puesto a pensar c√≥mo ser√≠a intentar manejarlo distinto hoy?`,
-                    `¬øQu√© crees que pasar√≠a si hoy decides soltar un poquito de eso?`,
-                    `Si pudieras viajar al pasado a ese momento, ¬øqu√© te dir√≠as a ti mismo?`,
-                    `¬øCrees que esa vieja forma de responder te sigue sirviendo hoy en d√≠a?`
+                    `øTe has puesto a pensar cÛmo serÌa intentar manejarlo distinto hoy?`,
+                    `øQuÈ crees que pasarÌa si hoy decides soltar un poquito de eso?`,
+                    `Si pudieras viajar al pasado a ese momento, øquÈ te dirÌas a ti mismo?`,
+                    `øCrees que esa vieja forma de responder te sigue sirviendo hoy en dÌa?`
                 ];
                 return `${pickRandom(intros)} ${pickRandom(bridges)} ${pickRandom(questions)}`;
             }
             const questions = [
-                `¬øc√≥mo lo vives realmente en tu d√≠a a d√≠a?`,
-                `¬øqu√© es lo que m√°s te cuesta o te agota de esto?`,
-                `¬øqu√© es lo primerito que se te viene a la mente cuando te pasa?`,
-                `¬øte gustar√≠a que intentemos buscar hacer algo distinto?`
+                `øcÛmo lo vives realmente en tu dÌa a dÌa?`,
+                `øquÈ es lo que m·s te cuesta o te agota de esto?`,
+                `øquÈ es lo primerito que se te viene a la mente cuando te pasa?`,
+                `øte gustarÌa que intentemos buscar hacer algo distinto?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
         case 1: { // Relaciones Actuales y Entorno Social
             const questions = [
-                `¬øc√≥mo crees que esto termina afectando a la gente cercana a ti?`,
-                `¬øsientes que a veces te alejas o te a√≠slas sin querer?`,
-                `¬øc√≥mo cambia tu forma de tratar a los dem√°s cuando est√°s pasando por esto?`,
-                `¬øte ha pasado que alguien importante para ti lo nota y te lo dice?`
+                `øcÛmo crees que esto termina afectando a la gente cercana a ti?`,
+                `øsientes que a veces te alejas o te aÌslas sin querer?`,
+                `øcÛmo cambia tu forma de tratar a los dem·s cuando est·s pasando por esto?`,
+                `øte ha pasado que alguien importante para ti lo nota y te lo dice?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
-        case 2: { // Cuerpo y Fisiolog√≠a Som√°tica
+        case 2: { // Cuerpo y FisiologÌa Som·tica
             if (nodeType === 'physiological' || nodeType === 'biological') {
                 const questions = [
-                    `si tu cuerpo pudiera hablar a trav√©s de esa sensaci√≥n, ¬øqu√© crees que te estar√≠a pidiendo?`,
-                    `¬øhay algo que te d√© alivio f√≠sico inmediato cuando est√°s as√≠?`,
-                    `si le pusieras atenci√≥n a ese malestar en silencio por un minuto, ¬øqu√© crees que pasar√≠a?`
+                    `si tu cuerpo pudiera hablar a travÈs de esa sensaciÛn, øquÈ crees que te estarÌa pidiendo?`,
+                    `øhay algo que te dÈ alivio fÌsico inmediato cuando est·s asÌ?`,
+                    `si le pusieras atenciÛn a ese malestar en silencio por un minuto, øquÈ crees que pasarÌa?`
                 ];
                 return `${pickRandom(intros)} ${pickRandom(questions)}`;
             }
             const questions = [
-                `¬øen qu√© parte del cuerpo crees que lo notas m√°s?`,
-                `a veces esto se siente pesad√≠simo f√≠sicamente. ¬øD√≥nde sientes m√°s tensi√≥n?`,
-                `¬øhas notado c√≥mo reacciona tu cuerpo antes y despu√©s de que pasa?`,
-                `¬øqu√© pasar√≠a si te detienes un momento a respirar y escuchar esa sensaci√≥n?`
+                `øen quÈ parte del cuerpo crees que lo notas m·s?`,
+                `a veces esto se siente pesadÌsimo fÌsicamente. øDÛnde sientes m·s tensiÛn?`,
+                `øhas notado cÛmo reacciona tu cuerpo antes y despuÈs de que pasa?`,
+                `øquÈ pasarÌa si te detienes un momento a respirar y escuchar esa sensaciÛn?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
-        case 3: { // Valores y Di√°logo Interno
+        case 3: { // Valores y Di·logo Interno
             const questions = [
-                `a veces somos s√∫per duros con nosotros mismos. Si un buen amigo pasara por esto, ¬øqu√© le dir√≠as?`,
-                `¬øqu√© tipo de cosas te dices en tu cabeza cuando est√°s ah√≠? ¬øEres amable contigo?`,
-                `imag√≠nate que alguien que quieres mucho te cuenta que sufre de esto. ¬øC√≥mo lo consolar√≠as?`,
-                `¬øcrees que te est√°s exigiendo de m√°s en esta situaci√≥n?`
+                `a veces somos s˙per duros con nosotros mismos. Si un buen amigo pasara por esto, øquÈ le dirÌas?`,
+                `øquÈ tipo de cosas te dices en tu cabeza cuando est·s ahÌ? øEres amable contigo?`,
+                `imagÌnate que alguien que quieres mucho te cuenta que sufre de esto. øCÛmo lo consolarÌas?`,
+                `øcrees que te est·s exigiendo de m·s en esta situaciÛn?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
-        case 4: { // Conductas y Patrones Autom√°ticos
+        case 4: { // Conductas y Patrones Autom·ticos
             if (convTarget && cleanTargetLabel.toLowerCase() !== label.toLowerCase()) {
                 const bridges = [
                     `a veces pareciera que te empuja directo hacia ${convTarget}.`,
-                    `es loco c√≥mo casi siempre termina causando ${convTarget}.`,
+                    `es loco cÛmo casi siempre termina causando ${convTarget}.`,
                     `se nota que es como un puente directo a ${convTarget}.`
                 ];
                 const questions = [
-                    `¬øSientes que lo que haces para aliviarte r√°pido te termina costando caro despu√©s?`,
-                    `¬øAlguna vez has intentado romper ese ciclo haciendo algo completamente distinto?`,
-                    `¬øHay algo que te ayude a frenar a tiempo antes de llegar ah√≠?`
+                    `øSientes que lo que haces para aliviarte r·pido te termina costando caro despuÈs?`,
+                    `øAlguna vez has intentado romper ese ciclo haciendo algo completamente distinto?`,
+                    `øHay algo que te ayude a frenar a tiempo antes de llegar ahÌ?`
                 ];
                 return `${pickRandom(intros)} ${pickRandom(bridges)} ${pickRandom(questions)}`;
             }
             const questions = [
-                `a veces esto trae un alivio r√°pido que no dura mucho. ¬øQu√© crees que est√°s evitando sentir realmente?`,
-                `despu√©s de que pasa la tormenta, ¬øc√≥mo te sientes contigo mismo?`,
-                `si dejaras de responder de forma autom√°tica a esto, ¬øqu√© es lo peor que crees que podr√≠a pasar?`
+                `a veces esto trae un alivio r·pido que no dura mucho. øQuÈ crees que est·s evitando sentir realmente?`,
+                `despuÈs de que pasa la tormenta, øcÛmo te sientes contigo mismo?`,
+                `si dejaras de responder de forma autom·tica a esto, øquÈ es lo peor que crees que podrÌa pasar?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
@@ -799,31 +830,31 @@ export const generateEmpatheticPerspectiveQuestion = (
         case 5: { // Reto Conductual Amable
             if (challenge && challenge.length > 5) {
                 const questions = [
-                    `te propongo algo s√∫per sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. ¬øTe animas a intentarlo hoy?`,
-                    `¬øy si intentamos algo peque√±ito como ${challenge.toLowerCase()}? ¬øCrees que podr√≠as hacerlo esta semana solo para ver qu√© pasa?`,
-                    `s√© que es dif√≠cil, pero ¬øqu√© tal si pruebas ${challenge.toLowerCase()}? Sin presi√≥n, solo como un experimento.`
+                    `te propongo algo s˙per sencillo: ${challenge.toLowerCase()}. No tiene que salir perfecto. øTe animas a intentarlo hoy?`,
+                    `øy si intentamos algo pequeÒito como ${challenge.toLowerCase()}? øCrees que podrÌas hacerlo esta semana solo para ver quÈ pasa?`,
+                    `sÈ que es difÌcil, pero øquÈ tal si pruebas ${challenge.toLowerCase()}? Sin presiÛn, solo como un experimento.`
                 ];
                 return `${pickRandom(intros)} ${pickRandom(questions)}`;
             }
             const questions = [
-                `si pudieras cambiar solo un poquitito tu forma de responder a esto, ¬øcu√°l ser√≠a el primer paso?`,
-                `¬øqu√© es lo m√°s f√°cil y peque√±ito que podr√≠as hacer hoy mismo para que esto no te afecte tanto?`,
-                `si tuvieras una varita m√°gica y pudieras cambiar una sola cosa sobre c√≥mo manejas esto, ¬øqu√© ser√≠a?`
+                `si pudieras cambiar solo un poquitito tu forma de responder a esto, øcu·l serÌa el primer paso?`,
+                `øquÈ es lo m·s f·cil y pequeÒito que podrÌas hacer hoy mismo para que esto no te afecte tanto?`,
+                `si tuvieras una varita m·gica y pudieras cambiar una sola cosa sobre cÛmo manejas esto, øquÈ serÌa?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
 
-        case 6: { // Integraci√≥n y Cierre Compasivo
+        case 6: { // IntegraciÛn y Cierre Compasivo
             const questions = [
-                `vi√©ndolo con calma y sin juzgarte, ¬øc√≥mo podr√≠as aceptarlo para seguir adelante un poco m√°s tranquilo?`,
-                `despu√©s de todo lo que platicamos sobre esto, ¬øhay algo nuevo de lo que te hayas dado cuenta?`,
-                `si tuvieras que escribirle una carta de despedida a esto, ¬øqu√© le dir√≠as para por fin dejarlo ir?`
+                `viÈndolo con calma y sin juzgarte, øcÛmo podrÌas aceptarlo para seguir adelante un poco m·s tranquilo?`,
+                `despuÈs de todo lo que platicamos sobre esto, øhay algo nuevo de lo que te hayas dado cuenta?`,
+                `si tuvieras que escribirle una carta de despedida a esto, øquÈ le dirÌas para por fin dejarlo ir?`
             ];
             return `${pickRandom(intros)} ${pickRandom(questions)}`;
         }
     }
 
-    return `¬øQu√© reflexi√≥n o toma de consciencia surge al observar ¬´${label}¬ª desde esta perspectiva?`;
+    return `øQuÈ reflexiÛn o toma de consciencia surge al observar ´${label}ª desde esta perspectiva?`;
 };
 
 export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData = null, phenomData = null, edges = []) => {
@@ -833,14 +864,14 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
         let n = { ...node, label: softenNodeLabel(node.label) };
         if (n.description && typeof n.description === 'string') {
             n.description = n.description
-                .replace(/opresi[o√≥]n\s+tor[a√°]cica/gi, "tensi√≥n f√≠sica")
+                .replace(/opresi[oÛ]n\s+tor[a·]cica/gi, "tensiÛn fÌsica")
                 .replace(/nudo\s+en\s+la\s+garganta/gi, "incomodidad al expresarse")
-                .replace(/respiraci[o√≥]n\s+corta/gi, "sensaci√≥n de prisa")
-                .replace(/alimentaci[o√≥]n\s+emocional/gi, "buscar alivio en la comida")
-                .replace(/inactividad\s+f[i√≠]sica/gi, "quedarse quieto sin avanzar");
+                .replace(/respiraci[oÛ]n\s+corta/gi, "sensaciÛn de prisa")
+                .replace(/alimentaci[oÛ]n\s+emocional/gi, "buscar alivio en la comida")
+                .replace(/inactividad\s+f[iÌ]sica/gi, "quedarse quieto sin avanzar");
         }
 
-        // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas o gen√©ricas
+        // Generar las 7 preguntas de perspectiva si no existen o si provienen de plantillas viejas o genÈricas
         const hasValidQuestions = Array.isArray(n.questions) && 
             n.questions.length === 7 && 
             n.questions.every(q => !isStaleOrRoboticQuestion(q));
@@ -851,15 +882,15 @@ export const enrichAfcNodesWithPerspectiveMetadata = (nodes, user = '', bioData 
             );
         }
 
-        // Incorporar metadatos por apartado para que cada perspectiva tenga su identidad cl√≠nica
+        // Incorporar metadatos por apartado para que cada perspectiva tenga su identidad clÌnica
         const perspectiveNames = [
-            'Ra√≠z Hist√≥rica & Origen',
+            'RaÌz HistÛrica & Origen',
             'Relaciones Actuales y Entorno Social',
-            'Cuerpo y Fisiolog√≠a Som√°tica',
-            'Valores y Di√°logo Interno',
-            'Conductas y Patrones Autom√°ticos',
+            'Cuerpo y FisiologÌa Som·tica',
+            'Valores y Di·logo Interno',
+            'Conductas y Patrones Autom·ticos',
             'Reto Conductual Amable',
-            'Integraci√≥n y Cierre Compasivo'
+            'IntegraciÛn y Cierre Compasivo'
         ];
 
         n.perspectives_metadata = n.questions.map((q, idx) => ({
@@ -900,7 +931,7 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         if (count <= 0) return [];
         if (count === 1) return [{ x: baseX, y: 52 }];
 
-        // Cada nodo recibe su propio nivel vertical para lectura √≥ptima y n√≠tida
+        // Cada nodo recibe su propio nivel vertical para lectura Ûptima y nÌtida
         let yStep;
         if (count === 2) yStep = 24;
         else if (count === 3) yStep = 18;
@@ -923,17 +954,17 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         return slots;
     };
 
-    // 5 Columnas Can√≥nicas de An√°lisis Funcional de la Conducta (E-O-R-C):
-    // 1. Contexto & Detonantes (14%) -> Est√≠mulos Antecedentes (E)
+    // 5 Columnas CanÛnicas de An·lisis Funcional de la Conducta (E-O-R-C):
+    // 1. Contexto & Detonantes (14%) -> EstÌmulos Antecedentes (E)
     // 2. Pensamientos & Creencias (32%) -> Respuesta Cognitiva (Rc)
-    // 3. Activaci√≥n Som√°tica (50%) -> Respuesta Fisiol√≥gica / Som√°tica (Rf)
-    // 4. Conductas de Evitaci√≥n (68%) -> Respuesta Motora / Operante (Rm)
+    // 3. ActivaciÛn Som·tica (50%) -> Respuesta FisiolÛgica / Som·tica (Rf)
+    // 4. Conductas de EvitaciÛn (68%) -> Respuesta Motora / Operante (Rm)
     // 5. Trampa de Mantenimiento (86%) -> Consecuencias & Bucles (C)
     const layers = [
         { id: 'antecedents', label: 'Contexto & Detonantes', baseX: 14 },
         { id: 'cognitive', label: 'Pensamientos & Creencias', baseX: 32 },
-        { id: 'physiological', label: 'Activaci√≥n Som√°tica', baseX: 50 },
-        { id: 'motor', label: 'Conductas de Evitaci√≥n', baseX: 68 },
+        { id: 'physiological', label: 'ActivaciÛn Som·tica', baseX: 50 },
+        { id: 'motor', label: 'Conductas de EvitaciÛn', baseX: 68 },
         { id: 'consequence', label: 'Trampa de Mantenimiento', baseX: 86 }
     ];
 
@@ -948,13 +979,13 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
             type === 'consequence' || type.includes('consecuen') || type === 'outcome' || type === 'trap' || type === 'maintenance'
         ) return 4;
 
-        // 2. Columna 4: Conductas Operantes de Evitaci√≥n & Escape (Rm)
+        // 2. Columna 4: Conductas Operantes de EvitaciÛn & Escape (Rm)
         if (
             role === 'motor' || role === 'experiential_avoidance' || role.includes('motor') || role.includes('evita') || role.includes('escape') || role.includes('conduct') ||
             type === 'motor' || type === 'behavior' || type === 'action' || type.includes('conduct') || type.includes('evita')
         ) return 3;
 
-        // 3. Columna 3: Activaci√≥n Som√°tica & Emocional (Rf)
+        // 3. Columna 3: ActivaciÛn Som·tica & Emocional (Rf)
         if (
             role === 'physiological' || role === 'biological' || role.includes('somat') || role.includes('fisio') || role.includes('cuerpo') || role.includes('biolog') ||
             type === 'physiological' || type === 'biological' || type === 'somatic' || type.includes('somat') || type.includes('fisio')
@@ -972,11 +1003,11 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
             type === 'historical' || type === 'social' || type === 'antecedent' || type === 'context' || type === 'trigger'
         ) return 0;
 
-        // Inferencias sem√°nticas directas desde la etiqueta si clinical_role o type fueron ambiguos
-        if (label.includes('insomnio') || label.includes('taquicardia') || label.includes('cansancio') || label.includes('fatiga') || label.includes('tensi√≥n corporal') || label.includes('cefalea')) return 2;
+        // Inferencias sem·nticas directas desde la etiqueta si clinical_role o type fueron ambiguos
+        if (label.includes('insomnio') || label.includes('taquicardia') || label.includes('cansancio') || label.includes('fatiga') || label.includes('tensiÛn corporal') || label.includes('cefalea')) return 2;
         if (label.includes('escape') || label.includes('aislamiento') || label.includes('procrastina') || label.includes('pantalla') || label.includes('encierro') || label.includes('confronta')) return 3;
         if (label.includes('alivio') || label.includes('culpa') || label.includes('soledad') || label.includes('estancamiento') || label.includes('deterioro') || label.includes('cronific')) return 4;
-        if (label.includes('rumia') || label.includes('autocr√≠tica') || label.includes('creencia') || label.includes('juicio') || label.includes('miedo')) return 1;
+        if (label.includes('rumia') || label.includes('autocrÌtica') || label.includes('creencia') || label.includes('juicio') || label.includes('miedo')) return 1;
         if (label.includes('norma') || label.includes('regla') || label.includes('exigencia') || label.includes('mudanza') || label.includes('familia')) return 0;
 
         return 1;
@@ -1005,10 +1036,10 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
 };
 
 export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bioData = null, phenomData = null, edges = [], allNodes = []) => {
-    if (!node) return "¬øQu√© reflexi√≥n o toma de consciencia te genera este momento de tu vida?";
+    if (!node) return "øQuÈ reflexiÛn o toma de consciencia te genera este momento de tu vida?";
     const safeIdx = Math.max(0, Math.min(6, threadIndex));
 
-    // 1. Si el nodo ya tiene preguntas personalizadas v√°lidas y no son obsoletas ni gen√©ricas
+    // 1. Si el nodo ya tiene preguntas personalizadas v·lidas y no son obsoletas ni genÈricas
     if (Array.isArray(node.questions) && node.questions[safeIdx]) {
         const q = node.questions[safeIdx];
         if (!isStaleOrRoboticQuestion(q)) {
@@ -1016,7 +1047,7 @@ export const getNodePerspectiveQuestion = (node, threadIndex = 0, user = '', bio
         }
     }
 
-    // 2. Generaci√≥n emp√°tica profunda universal (analiza lo que dice el nodo y de d√≥nde viene en el grafo)
+    // 2. GeneraciÛn emp·tica profunda universal (analiza lo que dice el nodo y de dÛnde viene en el grafo)
     const freshQ = generateEmpatheticPerspectiveQuestion(node, safeIdx, user, bioData, phenomData, edges, allNodes);
     if (Array.isArray(node.questions)) {
         node.questions[safeIdx] = freshQ;
@@ -1083,11 +1114,11 @@ const findExactUserMention = (node, bioData, phenomData) => {
                 if (match) {
                     if (!bestMatch || match.matches > bestMatch.matches) {
                         const sectionName =
-                            key === 'muerte' ? 'Diagn√≥stico Existencial: Sentido del Tiempo y Finitud' :
-                                key === 'libertad' ? 'Diagn√≥stico Existencial: Decisiones y Libertad' :
-                                    key === 'soledad' ? 'Diagn√≥stico Existencial: Relaciones y Soledad' :
-                                        key === 'vacio' ? 'Diagn√≥stico Existencial: Prop√≥sito y Vac√≠o' :
-                                            `Diagn√≥stico Existencial: Secci√≥n ${key}`;
+                            key === 'muerte' ? 'DiagnÛstico Existencial: Sentido del Tiempo y Finitud' :
+                                key === 'libertad' ? 'DiagnÛstico Existencial: Decisiones y Libertad' :
+                                    key === 'soledad' ? 'DiagnÛstico Existencial: Relaciones y Soledad' :
+                                        key === 'vacio' ? 'DiagnÛstico Existencial: PropÛsito y VacÌo' :
+                                            `DiagnÛstico Existencial: SecciÛn ${key}`;
                         bestMatch = {
                             text: `Mencionaste: "${match.sentence}" (en ${sectionName})`,
                             matches: match.matches
@@ -1113,7 +1144,7 @@ const findExactUserMention = (node, bioData, phenomData) => {
     }
 
     if (node.type === 'cognitive' && phenomData) {
-        if (phenomData.vacio && phenomData.vacio.length > 15) return `Mencionaste: "${phenomData.vacio.substring(0, 120)}..." (en Diagn√≥stico Existencial: Prop√≥sito y Vac√≠o)`;
+        if (phenomData.vacio && phenomData.vacio.length > 15) return `Mencionaste: "${phenomData.vacio.substring(0, 120)}..." (en DiagnÛstico Existencial: PropÛsito y VacÌo)`;
     }
 
     return null;
@@ -1129,26 +1160,26 @@ const getFallbackQuestion = (node) => {
 const getFallbackSource = (node, bioData, phenomData, user = '') => {
     if (!node) return "";
 
-    // 1. Si el nodo ya tiene una fuente cl√≠nica espec√≠fica guardada y v√°lida
-    if (node.source && typeof node.source === 'string' && node.source.trim().length >= 20 && !node.source.includes('Informaci√≥n extra√≠da')) {
+    // 1. Si el nodo ya tiene una fuente clÌnica especÌfica guardada y v·lida
+    if (node.source && typeof node.source === 'string' && node.source.trim().length >= 20 && !node.source.includes('InformaciÛn extraÌda')) {
         return node.source.trim();
     }
 
-    // 2. Buscar menci√≥n exacta en las respuestas reales del consultante
+    // 2. Buscar menciÛn exacta en las respuestas reales del consultante
     const exactMention = findExactUserMention(node, bioData, phenomData);
     if (exactMention) return exactMention;
 
-    // 3. Fallbacks contextuales seg√∫n la modalidad funcional
+    // 3. Fallbacks contextuales seg˙n la modalidad funcional
     switch (node.clinical_role || node.type) {
         case 'antecedent':
-        case 'historical': return "Relato de tu Entrevista de Vida (Historia personal y din√°micas de tu pasado).";
-        case 'biological': return "Reporte de sintomatolog√≠a biol√≥gica o reactividad temperamental expresada en el test PID-5.";
+        case 'historical': return "Relato de tu Entrevista de Vida (Historia personal y din·micas de tu pasado).";
+        case 'biological': return "Reporte de sintomatologÌa biolÛgica o reactividad temperamental expresada en el test PID-5.";
         case 'social': return "Respuestas de tu Entrevista de Vida sobre relaciones familiares, sociales o laborales.";
-        case 'motor': return "Comportamientos y evitaciones reportados en tu Diagn√≥stico Existencial y Entrevista.";
-        case 'cognitive': return "Di√°logos internos, culpas y esquemas cognitivos reportados en tus respuestas cl√≠nicas.";
-        case 'physiological': return "Sintomatolog√≠a f√≠sica y activaci√≥n del sistema nervioso reportada en tus respuestas.";
+        case 'motor': return "Comportamientos y evitaciones reportados en tu DiagnÛstico Existencial y Entrevista.";
+        case 'cognitive': return "Di·logos internos, culpas y esquemas cognitivos reportados en tus respuestas clÌnicas.";
+        case 'physiological': return "SintomatologÌa fÌsica y activaciÛn del sistema nervioso reportada en tus respuestas.";
         case 'consequence': return "Consecuencias a largo plazo y bucles de mantenimiento descritos en tu motivo de consulta.";
-        default: return "Informaci√≥n extra√≠da de tus entrevistas y evaluaciones cl√≠nicas.";
+        default: return "InformaciÛn extraÌda de tus entrevistas y evaluaciones clÌnicas.";
     }
 };
 
@@ -1162,28 +1193,28 @@ const getFallbackChallenge = (node, user) => {
         const answer = localStorage.getItem(`oasis_blindspot_answer_${user}__${spotId}`);
         if (question && answer) {
             if (node.challenge) return node.challenge;
-            return `Punto ciego cl√≠nico resuelto e integrado como eslab√≥n activo de autorregulaci√≥n.`;
+            return `Punto ciego clÌnico resuelto e integrado como eslabÛn activo de autorregulaciÛn.`;
         }
     }
     if (node && node.challenge) return node.challenge;
     if (!node) return "";
     switch (node.type) {
         case 'historical':
-            return "Las vivencias y heridas del pasado no quedan en el ayer, sino que act√∫an como esquemas protectores intensamente activos en tu presente. Repites este patr√≥n de manera autom√°tica porque tu sistema de alerta asocia los est√≠mulos actuales con la desprotecci√≥n, invalidaci√≥n o dolor experimentados en tu infancia. Al hacerlo, tu inconsciente intenta mantenerte a salvo reactivando la misma estrategia defensiva que en su momento te permiti√≥ sobrevivir, aunque hoy en d√≠a ya no sea necesaria y limite tu libertad.";
+            return "Las vivencias y heridas del pasado no quedan en el ayer, sino que act˙an como esquemas protectores intensamente activos en tu presente. Repites este patrÛn de manera autom·tica porque tu sistema de alerta asocia los estÌmulos actuales con la desprotecciÛn, invalidaciÛn o dolor experimentados en tu infancia. Al hacerlo, tu inconsciente intenta mantenerte a salvo reactivando la misma estrategia defensiva que en su momento te permitiÛ sobrevivir, aunque hoy en dÌa ya no sea necesaria y limite tu libertad.";
         case 'biological':
-            return "La activaci√≥n fisiol√≥gica y tu predisposici√≥n reactiva no representan un fallo de tu organismo, sino la respuesta adaptativa y evolutiva de tu cuerpo dise√±ada para protegerte ante amenazas percibidas. Tu sistema nervioso aut√≥nomo mantiene un estado de alerta y tensi√≥n constante porque interpreta la realidad circundante a trav√©s de un prisma de vulnerabilidad acumulada. Esta hiperreactividad corporal es el eco de una alarma interna que sigue intentando defenderte de peligros que tu mente racional ya sabe que han pasado.";
+            return "La activaciÛn fisiolÛgica y tu predisposiciÛn reactiva no representan un fallo de tu organismo, sino la respuesta adaptativa y evolutiva de tu cuerpo diseÒada para protegerte ante amenazas percibidas. Tu sistema nervioso autÛnomo mantiene un estado de alerta y tensiÛn constante porque interpreta la realidad circundante a travÈs de un prisma de vulnerabilidad acumulada. Esta hiperreactividad corporal es el eco de una alarma interna que sigue intentando defenderte de peligros que tu mente racional ya sabe que han pasado.";
         case 'social':
-            return "Tus interacciones y respuestas dentro de tu entorno social y afectivo reflejan una profunda b√∫squeda de pertenencia, reconocimiento y seguridad interpersonal. A menudo adoptas roles defensivos, de aislamiento o de complacencia excesiva para proteger el v√≠nculo con las personas que te rodean, intentando evitar a toda costa revivir el dolor del rechazo, la invalidaci√≥n o el abandono que marcaron tus primeras relaciones significativas.";
+            return "Tus interacciones y respuestas dentro de tu entorno social y afectivo reflejan una profunda b˙squeda de pertenencia, reconocimiento y seguridad interpersonal. A menudo adoptas roles defensivos, de aislamiento o de complacencia excesiva para proteger el vÌnculo con las personas que te rodean, intentando evitar a toda costa revivir el dolor del rechazo, la invalidaciÛn o el abandono que marcaron tus primeras relaciones significativas.";
         case 'motor':
-            return "Esta conducta motora de escape o evitaci√≥n se activa porque ofrece una v√≠a de escape inmediata y efectiva ante el malestar emocional o existencial. Tu mente selecciona este comportamiento autom√°tico como un mecanismo de amortiguaci√≥n a corto plazo para mitigar la ansiedad y la incomodidad interna. Sin embargo, al postergar o evadir la confrontaci√≥n directa del problema, este alivio inmediato refuerza el h√°bito y termina por estancar tu desarrollo existencial a largo plazo.";
+            return "Esta conducta motora de escape o evitaciÛn se activa porque ofrece una vÌa de escape inmediata y efectiva ante el malestar emocional o existencial. Tu mente selecciona este comportamiento autom·tico como un mecanismo de amortiguaciÛn a corto plazo para mitigar la ansiedad y la incomodidad interna. Sin embargo, al postergar o evadir la confrontaciÛn directa del problema, este alivio inmediato refuerza el h·bito y termina por estancar tu desarrollo existencial a largo plazo.";
         case 'cognitive':
-            return "La rumiaci√≥n de pensamientos autom√°ticos, la autocr√≠tica severa o la culpa constante son intentos desesperados de tu mente por anticipar, controlar y prevenir posibles peligros o errores en tu vida. Tu di√°logo interno se torna r√≠gido porque existe la creencia inconsciente de que juzgarte o hiper-analizar cada escenario te mantendr√° bajo control y evitar√° que seas vulnerable ante los dem√°s, actuando como una ilusi√≥n de seguridad cognitiva que en realidad perpet√∫a tu sufrimiento.";
+            return "La rumiaciÛn de pensamientos autom·ticos, la autocrÌtica severa o la culpa constante son intentos desesperados de tu mente por anticipar, controlar y prevenir posibles peligros o errores en tu vida. Tu di·logo interno se torna rÌgido porque existe la creencia inconsciente de que juzgarte o hiper-analizar cada escenario te mantendr· bajo control y evitar· que seas vulnerable ante los dem·s, actuando como una ilusiÛn de seguridad cognitiva que en realidad perpet˙a tu sufrimiento.";
         case 'physiological':
-            return "La tensi√≥n muscular acumulada, el insomnio persistente o la agitaci√≥n f√≠sica representan la energ√≠a som√°tica no procesada y contenida que tu cuerpo ha almacenado al no poder descargarla de forma saludable. Esta respuesta es la manifestaci√≥n som√°tica directa de una lucha interna por recuperar la homeostasis y el equilibrio fisiol√≥gico frente a demandas emocionales y existenciales que superan tu capacidad de procesamiento actual.";
+            return "La tensiÛn muscular acumulada, el insomnio persistente o la agitaciÛn fÌsica representan la energÌa som·tica no procesada y contenida que tu cuerpo ha almacenado al no poder descargarla de forma saludable. Esta respuesta es la manifestaciÛn som·tica directa de una lucha interna por recuperar la homeostasis y el equilibrio fisiolÛgico frente a demandas emocionales y existenciales que superan tu capacidad de procesamiento actual.";
         case 'consequence':
-            return "El bucle de mantenimiento de tu mapa conductual se consolida debido a que la consecuencia inmediata a corto plazo (que suele ser el alivio, la seguridad o la evitaci√≥n del dolor) act√∫a como un poderoso refuerzo que consolida el h√°bito. Al no experimentar nuevas alternativas de respuesta, tu sistema se habit√∫a a reaccionar del mismo modo, atrap√°ndote en un c√≠rculo vicioso donde la supuesta soluci√≥n del presente se convierte en el problema del futuro.";
+            return "El bucle de mantenimiento de tu mapa conductual se consolida debido a que la consecuencia inmediata a corto plazo (que suele ser el alivio, la seguridad o la evitaciÛn del dolor) act˙a como un poderoso refuerzo que consolida el h·bito. Al no experimentar nuevas alternativas de respuesta, tu sistema se habit˙a a reaccionar del mismo modo, atrap·ndote en un cÌrculo vicioso donde la supuesta soluciÛn del presente se convierte en el problema del futuro.";
         default:
-            return "Esta reacci√≥n se activa como un mecanismo de adaptaci√≥n para enfrentar situaciones percibidas como demandantes o amenazantes en tu vida cotidiana.";
+            return "Esta reacciÛn se activa como un mecanismo de adaptaciÛn para enfrentar situaciones percibidas como demandantes o amenazantes en tu vida cotidiana.";
     }
 };
 
@@ -1289,10 +1320,10 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
                         const localKey = key.replace('_%USER%', `_${user}`);
                         setLocalItem(localKey, value);
                     }
-                    alert("Informe importado exitosamente. La p√°gina se recargar√° para aplicar los datos.");
+                    alert("Informe importado exitosamente. La p·gina se recargar· para aplicar los datos.");
                     window.location.reload();
                 } else {
-                    alert("El documento no contiene datos de migraci√≥n v√°lidos.");
+                    alert("El documento no contiene datos de migraciÛn v·lidos.");
                 }
             } catch (err) {
                 console.error(err);
@@ -1387,26 +1418,26 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
             }
 
             const prompt = `
-Eres un analista cl√≠nico experto. Tu tarea es analizar los datos psicom√©tricos y la historia del paciente para generar descripciones cl√≠nicas profundas y detalladas de sus malestares y rasgos de personalidad (PID-5).
-Debes devolver √öNICAMENTE un objeto JSON v√°lido con las siguientes claves:
-- "malestarCognitivo": An√°lisis profundo del malestar cognitivo (Dudas, rumiaci√≥n, autocr√≠tica).
-- "malestarMotor": An√°lisis profundo del malestar motor (Evitaciones, conductas de escape).
-- "malestarFisiologico": An√°lisis profundo del malestar fisiol√≥gico (Tensi√≥n, somatizaci√≥n).
-- "pidReactividad": An√°lisis profundo de su Reactividad (Afectividad Negativa).
-- "pidConexion": An√°lisis profundo de su Conexi√≥n (Desapego).
-- "pidAsertividad": An√°lisis profundo de su Asertividad (Antagonismo).
-- "pidRitmo": An√°lisis profundo de su Ritmo (Desinhibici√≥n).
-- "pidSingularidad": An√°lisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario y emp√°tico, pero ESTRICTAMENTE ANCLADO EN LA VERDAD DE SU HISTORIA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su dolor en una met√°fora literaria sin perder el sentido de qui√©n es (no lo hagas tan abstracto que pierda conexi√≥n con su vida real). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su alma. Enf√≥cate en la belleza de su tensi√≥n interna y sus anhelos m√°s profundos. Debe ser UN SOLO P√ÅRRAFO con una longitud visual de aproximadamente 5 renglones. Estructura estricta:
+Eres un analista clÌnico experto. Tu tarea es analizar los datos psicomÈtricos y la historia del paciente para generar descripciones clÌnicas profundas y detalladas de sus malestares y rasgos de personalidad (PID-5).
+Debes devolver ⁄NICAMENTE un objeto JSON v·lido con las siguientes claves:
+- "malestarCognitivo": An·lisis profundo del malestar cognitivo (Dudas, rumiaciÛn, autocrÌtica).
+- "malestarMotor": An·lisis profundo del malestar motor (Evitaciones, conductas de escape).
+- "malestarFisiologico": An·lisis profundo del malestar fisiolÛgico (TensiÛn, somatizaciÛn).
+- "pidReactividad": An·lisis profundo de su Reactividad (Afectividad Negativa).
+- "pidConexion": An·lisis profundo de su ConexiÛn (Desapego).
+- "pidAsertividad": An·lisis profundo de su Asertividad (Antagonismo).
+- "pidRitmo": An·lisis profundo de su Ritmo (DesinhibiciÛn).
+- "pidSingularidad": An·lisis profundo de su Singularidad (Psicoticismo).
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario y emp·tico, pero ESTRICTAMENTE ANCLADO EN LA VERDAD DE SU HISTORIA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su dolor en una met·fora literaria sin perder el sentido de quiÈn es (no lo hagas tan abstracto que pierda conexiÛn con su vida real). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su alma. EnfÛcate en la belleza de su tensiÛn interna y sus anhelos m·s profundos. Debe ser UN SOLO P¡RRAFO con una longitud visual de aproximadamente 5 renglones. Estructura estricta:
   {
-     "sintesis": "P√°rrafo po√©tico, c√°lido y profundo anclado en su historia real (aprox 5 l√≠neas).",
+     "sintesis": "P·rrafo poÈtico, c·lido y profundo anclado en su historia real (aprox 5 lÌneas).",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   }
 
 DATOS DEL PACIENTE:
 - Malestar Motor Bruto: ${rawM}
 - Malestar Cognitivo Bruto: ${rawC}
-- Malestar Fisiol√≥gico/Som√°tico Bruto: ${rawS}
+- Malestar FisiolÛgico/Som·tico Bruto: ${rawS}
 - Rasgos PID-5 en bruto: ${JSON.stringify(rawPID)}
 
 RESPUESTAS EXISTENCIALES:
@@ -1462,32 +1493,32 @@ ${userResponsesText}
                 const normalizedTraits = {
                     sintesis: pTraits.sintesis || pTraits.Sintesis || '',
                     habitar: pTraits.habitar || pTraits.Habitar || '',
-                    vinculo: pTraits.vinculo || pTraits.Vinculo || pTraits.v√≠nculo || pTraits.V√≠nculo || '',
-                    busqueda: pTraits.busqueda || pTraits.Busqueda || pTraits.b√∫squeda || pTraits.B√∫squeda || '',
+                    vinculo: pTraits.vinculo || pTraits.Vinculo || pTraits.vÌnculo || pTraits.VÌnculo || '',
+                    busqueda: pTraits.busqueda || pTraits.Busqueda || pTraits.b˙squeda || pTraits.B˙squeda || '',
                     keywords: pTraits.keywords || pTraits.Keywords || []
                 };
                 setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
                 
                 // Add to clinical report view
                 parsedContent["Firma de Resonancia"] = normalizedTraits.sintesis ? 
-                    `S√≠ntesis Existencial: ${normalizedTraits.sintesis}` :
+                    `SÌntesis Existencial: ${normalizedTraits.sintesis}` :
                     `Habitar: ${normalizedTraits.habitar}\n` +
-                    `V√≠nculo: ${normalizedTraits.vinculo}\n` +
-                    `B√∫squeda: ${normalizedTraits.busqueda}\n` +
+                    `VÌnculo: ${normalizedTraits.vinculo}\n` +
+                    `B˙squeda: ${normalizedTraits.busqueda}\n` +
                     `Palabras clave: ${(normalizedTraits.keywords || []).join(', ')}`;
                 
                 delete parsedContent.publicTraits;
                 delete parsedContent.PublicTraits;
             } else {
                 console.warn("Firma de resonancia no encontrada en formato esperado.");
-                parsedContent["Firma de Resonancia (Aviso)"] = "La IA estructur√≥ parcialmente la firma existencial.";
+                parsedContent["Firma de Resonancia (Aviso)"] = "La IA estructurÛ parcialmente la firma existencial.";
             }
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
         } catch (e) {
             console.error("Error en generateDynamicTraits:", e);
             // Salvage the raw text and show it in the dashboard so it's not lost
             const fallbackContent = {
-                "Error de Estructura": "La IA no devolvi√≥ el formato JSON v√°lido que se le pidi√≥. A continuaci√≥n se muestra lo que respondi√≥:",
+                "Error de Estructura": "La IA no devolviÛ el formato JSON v·lido que se le pidiÛ. A continuaciÛn se muestra lo que respondiÛ:",
                 "Respuesta Cruda": aiContent ? aiContent : "Datos no disponibles."
             };
             handleTreatmentPlanChange('dynamicTraits', fallbackContent);
@@ -1511,69 +1542,69 @@ ${userResponsesText}
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const prompt = `
-Eres un Psic√≥logo Cl√≠nico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial, actuando como SUPERVISOR CL√çNICO.
-Tu tarea es redactar una "Formulaci√≥n Funcional y Supervisi√≥n Cl√≠nica de Caso" profunda y rigurosa en formato HTML.
+Eres un PsicÛlogo ClÌnico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial, actuando como SUPERVISOR CLÕNICO.
+Tu tarea es redactar una "FormulaciÛn Funcional y SupervisiÛn ClÌnica de Caso" profunda y rigurosa en formato HTML.
 
-CR√çTICO - FILOSOF√çA DEL MODELO MULTIMODAL EXPERIENCIAL Y SUPERVISI√ìN:
-No queremos un "informe bonito" que narre una historia cerrada. Queremos RAZONAMIENTO CL√çNICO.
-Separa radicalmente los HECHOS de las INFERENCIAS. No dictes sentencia ("tiene dependencia"), plantea preguntas cl√≠nicas ("¬øqu√© funci√≥n cumple su b√∫squeda de aprobaci√≥n?").
-Diferencia cuidadosamente entre conductas de evitaci√≥n y conductas leg√≠timas de regulaci√≥n (ej. reducir sobreestimulaci√≥n). No asumas que la cama o la m√∫sica son siempre evitaci√≥n; explora su funci√≥n m√∫ltiple.
-Cuestiona las limitaciones biol√≥gicas: no asumas insuficiencia psicol√≥gica si hay una posible limitaci√≥n org√°nica no revisada (ej. problemas de glucosa, falta de sue√±o).
+CRÕTICO - FILOSOFÕA DEL MODELO MULTIMODAL EXPERIENCIAL Y SUPERVISI”N:
+No queremos un "informe bonito" que narre una historia cerrada. Queremos RAZONAMIENTO CLÕNICO.
+Separa radicalmente los HECHOS de las INFERENCIAS. No dictes sentencia ("tiene dependencia"), plantea preguntas clÌnicas ("øquÈ funciÛn cumple su b˙squeda de aprobaciÛn?").
+Diferencia cuidadosamente entre conductas de evitaciÛn y conductas legÌtimas de regulaciÛn (ej. reducir sobreestimulaciÛn). No asumas que la cama o la m˙sica son siempre evitaciÛn; explora su funciÛn m˙ltiple.
+Cuestiona las limitaciones biolÛgicas: no asumas insuficiencia psicolÛgica si hay una posible limitaciÛn org·nica no revisada (ej. problemas de glucosa, falta de sueÒo).
 
-CR√çTICO - CONFIDENCIALIDAD ESTRICTA:
-NUNCA utilices nombres propios reales. Refi√©rete a la persona √öNICAMENTE como "el paciente" o "la paciente".
+CRÕTICO - CONFIDENCIALIDAD ESTRICTA:
+NUNCA utilices nombres propios reales. RefiÈrete a la persona ⁄NICAMENTE como "el paciente" o "la paciente".
 
 Datos del paciente:
 - Nombre de Usuario del Sistema: ${user}
-- Respuestas Fenomenol√≥gicas: ${JSON.stringify(phenomData)}
-- Entrevista Biogr√°fica: ${JSON.stringify(bioData)}
-- Mapa de Bucles (An√°lisis Funcional): ${JSON.stringify(afcData)}
+- Respuestas FenomenolÛgicas: ${JSON.stringify(phenomData)}
+- Entrevista Biogr·fica: ${JSON.stringify(bioData)}
+- Mapa de Bucles (An·lisis Funcional): ${JSON.stringify(afcData)}
 - Perfil PID-5: ${JSON.stringify(pidIndices)}
 
-ESTRUCTURA HTML REQUERIDA (¬°PROHIBIDO USAR MARKDOWN! Usa etiquetas HTML reales: <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>):
+ESTRUCTURA HTML REQUERIDA (°PROHIBIDO USAR MARKDOWN! Usa etiquetas HTML reales: <p>, <li>, <h1>, <h2>, <h3>, <ol>, <ul>, <strong>):
 
-<h1>FORMULACI√ìN FUNCIONAL Y SUPERVISI√ìN CL√çNICA</h1>
-<p><strong>ID de Usuario del Sistema:</strong> ${user} | <strong>Modalidad:</strong> Supervisi√≥n Contextual e Integrativa</p>
+<h1>FORMULACI”N FUNCIONAL Y SUPERVISI”N CLÕNICA</h1>
+<p><strong>ID de Usuario del Sistema:</strong> ${user} | <strong>Modalidad:</strong> SupervisiÛn Contextual e Integrativa</p>
 
-<h2>1. Datos (Qu√© sabemos realmente)</h2>
-<p>(Lista los hechos observables, reportes directos del paciente sin interpretaciones. Ej: "Mis pap√°s eran duros con los castigos y ahora yo soy muy duro conmigo".)</p>
+<h2>1. Datos (QuÈ sabemos realmente)</h2>
+<p>(Lista los hechos observables, reportes directos del paciente sin interpretaciones. Ej: "Mis pap·s eran duros con los castigos y ahora yo soy muy duro conmigo".)</p>
 
-<h2>2. Inferencias (Qu√© estamos interpretando)</h2>
-<p>(Se√±ala las narrativas o construcciones te√≥ricas que corremos el riesgo de asumir como hechos. Ej: "Asumimos que el abandono del gimnasio es por intolerancia al fracaso, pero hay una variable som√°tica de glucosa pendiente".)</p>
+<h2>2. Inferencias (QuÈ estamos interpretando)</h2>
+<p>(SeÒala las narrativas o construcciones teÛricas que corremos el riesgo de asumir como hechos. Ej: "Asumimos que el abandono del gimnasio es por intolerancia al fracaso, pero hay una variable som·tica de glucosa pendiente".)</p>
 
-<h2>3. Hip√≥tesis Cl√≠nicas Centrales</h2>
-<p>(Plantea las hip√≥tesis en tono de exploraci√≥n, no de afirmaci√≥n absoluta.)</p>
+<h2>3. HipÛtesis ClÌnicas Centrales</h2>
+<p>(Plantea las hipÛtesis en tono de exploraciÛn, no de afirmaciÛn absoluta.)</p>
 <ul>
-  <li><strong>Hip√≥tesis A (Ej. Autonom√≠a):</strong> ...</li>
-  <li><strong>Hip√≥tesis B (Ej. Autocr√≠tica como regulaci√≥n):</strong> ¬øQu√© funci√≥n intenta cumplir el juez interno? (Control, prevenci√≥n, castigo...)</li>
-  <li><strong>Hip√≥tesis C (Ej. Rumiaci√≥n y Desconexi√≥n):</strong> ¬øIntenta resolver algo revisando el pasado? ¬øEs sobrecarga o evitaci√≥n?</li>
+  <li><strong>HipÛtesis A (Ej. AutonomÌa):</strong> ...</li>
+  <li><strong>HipÛtesis B (Ej. AutocrÌtica como regulaciÛn):</strong> øQuÈ funciÛn intenta cumplir el juez interno? (Control, prevenciÛn, castigo...)</li>
+  <li><strong>HipÛtesis C (Ej. RumiaciÛn y DesconexiÛn):</strong> øIntenta resolver algo revisando el pasado? øEs sobrecarga o evitaciÛn?</li>
 </ul>
 
 <h2>4. Evidencia a favor y en contra</h2>
-<p>(Contrasta las hip√≥tesis con los datos del paciente. ¬øQu√© datos apoyan estas hip√≥tesis y qu√© datos las contradicen o matizan?)</p>
+<p>(Contrasta las hipÛtesis con los datos del paciente. øQuÈ datos apoyan estas hipÛtesis y quÈ datos las contradicen o matizan?)</p>
 
-<h2>5. Huecos de evaluaci√≥n</h2>
-<p>(¬øQu√© nos falta comprobar? ¬øQu√© variables m√©dicas/fisiol√≥gicas hay que descartar? ¬øQu√© contexto nos falta explorar antes de concluir?)</p>
+<h2>5. Huecos de evaluaciÛn</h2>
+<p>(øQuÈ nos falta comprobar? øQuÈ variables mÈdicas/fisiolÛgicas hay que descartar? øQuÈ contexto nos falta explorar antes de concluir?)</p>
 
 <h2>6. Bucles funcionales prioritarios</h2>
-<p>(Describe el circuito o circuitos de mantenimiento prioritarios. Contexto -> Conducta -> Consecuencia inmediata (funci√≥n) -> Costo a largo plazo.)</p>
+<p>(Describe el circuito o circuitos de mantenimiento prioritarios. Contexto -> Conducta -> Consecuencia inmediata (funciÛn) -> Costo a largo plazo.)</p>
 
-<h2>7. Qu√© S√ç intervenir ahora (Fase de Estabilizaci√≥n)</h2>
-<p>(Define el primer paso l√≥gico. Ej: Estabilizaci√≥n, comprensi√≥n funcional, experimentaci√≥n de autonom√≠a, evaluaci√≥n de riesgo estricta.)</p>
-<p><em>Evaluaci√≥n de Riesgo:</em> (Detalla operativamente la ideaci√≥n actual, plan, intenci√≥n, factores protectores y plan de seguridad. NO te bases solo en "no hay plan actual".)</p>
+<h2>7. QuÈ SÕ intervenir ahora (Fase de EstabilizaciÛn)</h2>
+<p>(Define el primer paso lÛgico. Ej: EstabilizaciÛn, comprensiÛn funcional, experimentaciÛn de autonomÌa, evaluaciÛn de riesgo estricta.)</p>
+<p><em>EvaluaciÛn de Riesgo:</em> (Detalla operativamente la ideaciÛn actual, plan, intenciÛn, factores protectores y plan de seguridad. NO te bases solo en "no hay plan actual".)</p>
 
-<h2>8. Qu√© NO tocar todav√≠a</h2>
-<p>(Se√±ala los temas que ser√≠an prematuros o "escolares" abordar ahora. Ej: No trabajar "prop√≥sito" hasta no desarrollar autonom√≠a y toma de decisiones b√°sicas.)</p>
+<h2>8. QuÈ NO tocar todavÌa</h2>
+<p>(SeÒala los temas que serÌan prematuros o "escolares" abordar ahora. Ej: No trabajar "propÛsito" hasta no desarrollar autonomÌa y toma de decisiones b·sicas.)</p>
 
-<h2>9. Preguntas cl√≠nicas para la siguiente sesi√≥n</h2>
+<h2>9. Preguntas clÌnicas para la siguiente sesiÛn</h2>
 <ul>
-  <li>(Lista 3-5 preguntas directas, abiertas y funcionales para explorar en sesi√≥n con el paciente que ayuden a cerrar los huecos de evaluaci√≥n.)</li>
+  <li>(Lista 3-5 preguntas directas, abiertas y funcionales para explorar en sesiÛn con el paciente que ayuden a cerrar los huecos de evaluaciÛn.)</li>
 </ul>
 
 <h2>10. Plan de Tratamiento Propuesto (Primeras 4 sesiones)</h2>
-<p>(Estructura un abordaje contextual (ACT/FAP/Activaci√≥n Conductual) paso a paso, org√°nico, enfocado en generar experiencias y no solo debate cognitivo.)</p>
+<p>(Estructura un abordaje contextual (ACT/FAP/ActivaciÛn Conductual) paso a paso, org·nico, enfocado en generar experiencias y no solo debate cognitivo.)</p>
 
-Devuelve √öNICAMENTE el c√≥digo HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final.
+Devuelve ⁄NICAMENTE el cÛdigo HTML crudo. No devuelvas Markdown. No incluyas \`\`\`html al inicio ni al final.
             `;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
@@ -1585,7 +1616,7 @@ Devuelve √öNICAMENTE el c√≥digo HTML crudo. No devuelvas Markdown. No incluyas \
                     payload: {
                         model: model,
                         messages: [
-                            { role: 'system', content: "Genera el informe estrictamente en HTML v√°lido y bien estilizado, sin bloques markdown de c√≥digo." },
+                            { role: 'system', content: "Genera el informe estrictamente en HTML v·lido y bien estilizado, sin bloques markdown de cÛdigo." },
                             { role: 'user', content: prompt }
                         ],
                         max_tokens: 8000
@@ -1603,7 +1634,7 @@ Devuelve √öNICAMENTE el c√≥digo HTML crudo. No devuelvas Markdown. No incluyas \
             }
         } catch (e) {
             console.error("Error generating Contextual Report:", e);
-            alert("Ocurri√≥ un error al generar el informe contextual.");
+            alert("OcurriÛ un error al generar el informe contextual.");
         } finally {
             setIsGeneratingReport(false);
         }
@@ -1618,20 +1649,20 @@ Devuelve √öNICAMENTE el c√≥digo HTML crudo. No devuelvas Markdown. No incluyas \
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
             
             const prompt = `
-Eres un Psic√≥logo Cl√≠nico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
-A continuaci√≥n te proporciono un Informe y Formulaci√≥n de Caso Cl√≠nico actual en formato HTML.
-Tu tarea es modificar y mejorar este documento bas√°ndote estrictamente en la siguiente instrucci√≥n de mejora proporcionada por el usuario (el terapeuta o el propio paciente).
+Eres un PsicÛlogo ClÌnico Experto en Terapias Contextuales (ACT, FAP) y el Modelo Multimodal Experiencial.
+A continuaciÛn te proporciono un Informe y FormulaciÛn de Caso ClÌnico actual en formato HTML.
+Tu tarea es modificar y mejorar este documento bas·ndote estrictamente en la siguiente instrucciÛn de mejora proporcionada por el usuario (el terapeuta o el propio paciente).
 
-INSTRUCCI√ìN DE MEJORA:
+INSTRUCCI”N DE MEJORA:
 "${improvementPrompt}"
 
 INFORME ACTUAL:
 ${contextualReportHtml}
 
-Instrucciones Cr√≠ticas:
-1. Aplica la instrucci√≥n de mejora a profundidad. Si la instrucci√≥n pide cambiar el enfoque terap√©utico (ej. de intelectualizado a multimodal experiencial), reestructura completamente las secciones de tratamiento, an√°lisis y conclusiones para reflejar esto.
-2. Mant√©n estrictamente el formato HTML. No uses Markdown, solo devuelve el c√≥digo HTML puro (comenzando con <h1> o <div> y terminando con las etiquetas correspondientes).
-3. No a√±adas introducciones ni conclusiones fuera del c√≥digo HTML.
+Instrucciones CrÌticas:
+1. Aplica la instrucciÛn de mejora a profundidad. Si la instrucciÛn pide cambiar el enfoque terapÈutico (ej. de intelectualizado a multimodal experiencial), reestructura completamente las secciones de tratamiento, an·lisis y conclusiones para reflejar esto.
+2. MantÈn estrictamente el formato HTML. No uses Markdown, solo devuelve el cÛdigo HTML puro (comenzando con <h1> o <div> y terminando con las etiquetas correspondientes).
+3. No aÒadas introducciones ni conclusiones fuera del cÛdigo HTML.
 `;
             let res;
             if (API_URL) {
@@ -1677,7 +1708,7 @@ Instrucciones Cr√≠ticas:
             setImprovementPrompt('');
         } catch (e) {
             console.error("Error mejorando reporte:", e);
-            alert("Ocurri√≥ un error al intentar mejorar el informe.");
+            alert("OcurriÛ un error al intentar mejorar el informe.");
         } finally {
             setIsImprovingReport(false);
         }
@@ -1692,15 +1723,15 @@ Instrucciones Cr√≠ticas:
             
             const prompt = `
 Eres un psicoterapeuta avanzado configurando a "Kio", una IA asistente de salud mental.
-Con base en los datos fenomenol√≥gicos e historia biogr√°fica del paciente, genera directrices para la personalidad de Kio.
+Con base en los datos fenomenolÛgicos e historia biogr·fica del paciente, genera directrices para la personalidad de Kio.
 
-Informaci√≥n extra√≠da:
-- Respuestas Fenomenol√≥gicas: ${JSON.stringify(phenomData)}
-- Entrevista Biogr√°fica: ${JSON.stringify(bioData)}
+InformaciÛn extraÌda:
+- Respuestas FenomenolÛgicas: ${JSON.stringify(phenomData)}
+- Entrevista Biogr·fica: ${JSON.stringify(bioData)}
 - Notas / Plan Actual: ${JSON.stringify(treatmentPlan)}
 
 Genera un JSON con los siguientes campos:
-1. "kioDirectives": Directrices personalizadas de intervenci√≥n de Kio (la IA asistente). Instrucciones exactas de c√≥mo Kio debe hablarle, qu√© preguntas ancla debe usar (ej. el Filtro del Otro) para romper sus sesgos cognitivos.
+1. "kioDirectives": Directrices personalizadas de intervenciÛn de Kio (la IA asistente). Instrucciones exactas de cÛmo Kio debe hablarle, quÈ preguntas ancla debe usar (ej. el Filtro del Otro) para romper sus sesgos cognitivos.
 2. "kioMemoryBase": Datos base clave y memoria core que Kio debe tener siempre presente al interactuar con el paciente.
 
 Devuelve estrictamente el JSON sin formato extra.
@@ -1825,7 +1856,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
     const handleExportDoc = () => {
         let content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head><meta charset='utf-8'><title>Informe Cl√≠nico - ${user}</title>
+        <head><meta charset='utf-8'><title>Informe ClÌnico - ${user}</title>
         <style>
             body { font-family: 'Calibri', 'Arial', sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: auto; padding: 20px; }
             h1 { color: #2c3e50; border-bottom: 2px solid #34495e; padding-bottom: 10px; font-size: 24px; text-transform: uppercase; }
@@ -1840,8 +1871,8 @@ Devuelve estrictamente el JSON sin formato extra.
         if (contextualReportHtml) {
             content += contextualReportHtml;
         } else {
-            content += `<h1>Informe Cl√≠nico Completo</h1>`;
-            content += `<p><strong>Paciente:</strong> ${user}<br><strong>Fecha de Exportaci√≥n:</strong> ${new Date().toLocaleDateString()}</p>`;
+            content += `<h1>Informe ClÌnico Completo</h1>`;
+            content += `<p><strong>Paciente:</strong> ${user}<br><strong>Fecha de ExportaciÛn:</strong> ${new Date().toLocaleDateString()}</p>`;
             
             if (pidIndices && pidIndices.status) {
                 content += `<div class="section"><h2>I. Perfil de Rasgos PID-5</h2><ul>`;
@@ -1852,10 +1883,10 @@ Devuelve estrictamente el JSON sin formato extra.
             }
 
             if (phenomData && Object.keys(phenomData).length > 0) {
-                content += `<div class="section"><h2>II. Diagn√≥stico Existencial</h2>`;
+                content += `<div class="section"><h2>II. DiagnÛstico Existencial</h2>`;
                 const phenomLabels = {
                     antecedentes_origen: "Antecedentes y Origen (Mecanismo y Origen)",
-                    experiencia_insuficiencia: "Experiencia Ontol√≥gica de Insuficiencia",
+                    experiencia_insuficiencia: "Experiencia OntolÛgica de Insuficiencia",
                     temporalidad_vivida: "Temporalidad Vivida",
                     premisa_realidad: "Premisa de Realidad"
                 };
@@ -1870,8 +1901,8 @@ Devuelve estrictamente el JSON sin formato extra.
                 const maintenance = afcData.explicacion_sencilla || afcData.hypotheses?.mantenimiento;
                 const solution = afcData.claves_salida || afcData.hypotheses?.solucion;
                 if (maintenance || solution) {
-                    content += `<div class="section"><h2>III. Conceptualizaci√≥n Din√°mica y An√°lisis Conductual</h2>`;
-                    if (maintenance) content += `<h3>Explicaci√≥n de Mantenimiento</h3><p style="white-space: pre-wrap;">${maintenance}</p>`;
+                    content += `<div class="section"><h2>III. ConceptualizaciÛn Din·mica y An·lisis Conductual</h2>`;
+                    if (maintenance) content += `<h3>ExplicaciÛn de Mantenimiento</h3><p style="white-space: pre-wrap;">${maintenance}</p>`;
                     if (solution) content += `<h3>Claves de Salida</h3><p style="white-space: pre-wrap;">${solution}</p>`;
                     content += `</div>`;
                 }
@@ -1881,12 +1912,12 @@ Devuelve estrictamente el JSON sin formato extra.
                 content += `<div class="section"><h2>IV. Plan de Tratamiento</h2>`;
                 if (treatmentPlan.goals) content += `<h3>Objetivos</h3><p style="white-space: pre-wrap;">${treatmentPlan.goals}</p>`;
                 if (treatmentPlan.strategies) content += `<h3>Estrategias</h3><p style="white-space: pre-wrap;">${treatmentPlan.strategies}</p>`;
-                if (treatmentPlan.notes) content += `<h3>Notas Cl√≠nicas</h3><p style="white-space: pre-wrap;">${treatmentPlan.notes}</p>`;
+                if (treatmentPlan.notes) content += `<h3>Notas ClÌnicas</h3><p style="white-space: pre-wrap;">${treatmentPlan.notes}</p>`;
                 content += `</div>`;
             }
 
             if (bioData && Object.keys(bioData).length > 0) {
-                content += `<div class="section"><h2>V. Entrevista Biogr√°fica</h2>`;
+                content += `<div class="section"><h2>V. Entrevista Biogr·fica</h2>`;
                 Object.entries(bioData).forEach(([q, a]) => {
                     if (['antecedentes_origen', 'experiencia_insuficiencia', 'temporalidad_vivida', 'premisa_realidad'].includes(q)) return;
                     const questionIndex = parseInt(q, 10);
@@ -1962,7 +1993,7 @@ Devuelve estrictamente el JSON sin formato extra.
             const injectedNode = {
                 ...activeNode,
                 dashed: !isSolidifying && !isClicked,
-                label: isSolidifying ? "Eslab√≥n Integrado" : activeNode.label
+                label: isSolidifying ? "EslabÛn Integrado" : activeNode.label
             };
 
             // Ensure coordinates are valid and properly mapped to columns
@@ -2237,7 +2268,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
             // We only create an island if it represents a connection (meaning the node has at least 1 neighbor, so size >= 2)
             if (connectedNodeIds.size >= 2) {
-                // Sort nodes inside this component using typeOrder to establish cl√≠nical sequence (linearity)
+                // Sort nodes inside this component using typeOrder to establish clÌnical sequence (linearity)
                 const typeOrder = {
                     historical: 0,
                     biological: 1,
@@ -2261,8 +2292,8 @@ Devuelve estrictamente el JSON sin formato extra.
 
                 const sortedIds = sortedComponentNodes.map(n => n.id);
 
-                const pathLabels = sortedComponentNodes.map(n => n.label).join(' ‚Üí ');
-                const description = `Bucle Cl√≠nico Conectado: ${pathLabels}`;
+                const pathLabels = sortedComponentNodes.map(n => n.label).join(' ? ');
+                const description = `Bucle ClÌnico Conectado: ${pathLabels}`;
 
                 islands.push({
                     id: `isla_node_${node.id}`,
@@ -2280,8 +2311,8 @@ Devuelve estrictamente el JSON sin formato extra.
             nodes.forEach(node => {
                 islands.push({
                     id: `isla_fallback_${node.id}`,
-                    nombre: `Punto de Inter√©s: ${node.label}`,
-                    descripcion: `Nodo aislado en el mapa cl√≠nico.`,
+                    nombre: `Punto de InterÈs: ${node.label}`,
+                    descripcion: `Nodo aislado en el mapa clÌnico.`,
                     node_ids: [node.id],
                     primary_node_id: node.id,
                     sortedNodes: [node]
@@ -2327,7 +2358,7 @@ Devuelve estrictamente el JSON sin formato extra.
         
         return patterns.map(pattern => {
             let totalIntensity = 0;
-            let selfSabotageKeywords = ['culpa', 'miedo', 'adicci√≥n', 'droga', 'evitaci√≥n', 'ansiedad', 'depresi√≥n', 'castigo', 'aislamiento', 'procrastinaci√≥n', 'control', 'trampas', 't√≥xic'];
+            let selfSabotageKeywords = ['culpa', 'miedo', 'adicciÛn', 'droga', 'evitaciÛn', 'ansiedad', 'depresiÛn', 'castigo', 'aislamiento', 'procrastinaciÛn', 'control', 'trampas', 'tÛxic'];
             let keywordScore = 0;
             let totalDifficulty = 0;
             
@@ -2368,7 +2399,7 @@ Devuelve estrictamente el JSON sin formato extra.
             if (tierA !== tierB) {
                 return tierA - tierB; // Menor intensidad primero
             }
-            return a.computedDifficulty - b.computedDifficulty; // M√°s f√°cil primero dentro de la misma intensidad
+            return a.computedDifficulty - b.computedDifficulty; // M·s f·cil primero dentro de la misma intensidad
         });
     }, [nodesToRender, edgesToRender, getAfcPatterns, nodeIntensities]);
 
@@ -2482,9 +2513,9 @@ Devuelve estrictamente el JSON sin formato extra.
             const originContext = getNodeOriginContext(node, afcData?.edges, afcData?.nodes);
             const consequenceContext = getNodeConsequenceContext(node, afcData?.edges, afcData?.nodes);
             
-            let prompt = `Eres un psicoterapeuta cl√≠nico humano, emp√°tico, sumamente perspicaz y directo.
-El paciente est√° en su mapa mental observando el nodo: "${node.label}" (Tipo: ${node.type || 'conductual'}, Descripci√≥n: ${node.description || 'N/A'}).
-Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita al paciente conectar sinceramente con este patr√≥n en su vida.`;
+            let prompt = `Eres un psicoterapeuta clÌnico humano, emp·tico, sumamente perspicaz y directo.
+El paciente est· en su mapa mental observando el nodo: "${node.label}" (Tipo: ${node.type || 'conductual'}, DescripciÛn: ${node.description || 'N/A'}).
+Formula UNA ⁄NICA PREGUNTA personalizada, profunda y reveladora que le permita al paciente conectar sinceramente con este patrÛn en su vida.`;
 
             if (originContext?.originNode) {
                 prompt += `\nDetonante o antecedente vinculado: "${originContext.originNode.label}".`;
@@ -2494,9 +2525,9 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             }
 
             prompt += `\n\nREGLAS ESTRICTAS:
-1. NUNCA uses frases robotizadas ni clich√©s de autoayuda o plantillas.
+1. NUNCA uses frases robotizadas ni clichÈs de autoayuda o plantillas.
 2. Formula UNA SOLA PREGUNTA directa al paciente.
-3. Devuelve √öNICAMENTE el texto de la pregunta (m√°ximo 2 oraciones). Sin saludos, sin comillas ni listas.`;
+3. Devuelve ⁄NICAMENTE el texto de la pregunta (m·ximo 2 oraciones). Sin saludos, sin comillas ni listas.`;
 
             fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
@@ -2591,7 +2622,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: `text-${Date.now()}`,
                 type: 'text',
                 content: text,
-                caption: `üí° Revelaci√≥n: ${node?.label || 'Patr√≥n'} (${perspectiveLabel || 'Perspectiva'})`,
+                caption: `?? RevelaciÛn: ${node?.label || 'PatrÛn'} (${perspectiveLabel || 'Perspectiva'})`,
                 x: Math.floor(Math.random() * 200) + 120,
                 y: Math.floor(Math.random() * 200) + 120,
                 width: 320,
@@ -2611,7 +2642,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             }).catch(err => console.error("Error syncing canvas block:", err));
 
             window.dispatchEvent(new CustomEvent('oasis_block_added', { detail: newBlock }));
-            setInsightActionToast("‚ú® ¬°Guardado en tu Lienzo como nota!");
+            setInsightActionToast("? °Guardado en tu Lienzo como nota!");
             setTimeout(() => setInsightActionToast(null), 3500);
         } catch (e) {
             console.error("Error saving insight to canvas:", e);
@@ -2633,13 +2664,13 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
 
         setInsightActionToast(
             newStatus === 'integrated'
-                ? `‚ú® Nodo "${node.label}" integrado con √©xito en tu mapa`
-                : `Nodo devuelto a exploraci√≥n activa`
+                ? `? Nodo "${node.label}" integrado con Èxito en tu mapa`
+                : `Nodo devuelto a exploraciÛn activa`
         );
         setTimeout(() => setInsightActionToast(null), 3500);
     }, [user, setLocalItem]);
 
-    // --- MICRO-CHALLENGES / COMMITMENTS (Vincular Acci√≥n) ---
+    // --- MICRO-CHALLENGES / COMMITMENTS (Vincular AcciÛn) ---
     const [nodeChallenges, setNodeChallenges] = useState(() => {
         try {
             const saved = localStorage.getItem(`oasis_node_challenges_${user}`);
@@ -2950,7 +2981,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         let tx, ty;
 
         if (isMobile && mode === 'readable') {
-            // VISTA LECTURA ENFOCADA (M√≥vil):
+            // VISTA LECTURA ENFOCADA (MÛvil):
             // Escala legible (0.75x) centrada en el flujo inicial (Columna 1: Contexto y Columna 2: Barreras)
             fitScale = 0.75;
             const targetX = 26; // Punto medio equilibrado entre Col 1 (14%) y Col 2 (32%)
@@ -2969,7 +3000,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             const scaleX = viewportWidth / (VIRTUAL_WIDTH * (graphWidthRange / 100 + paddingPercentX));
             const scaleY = viewportHeight / (VIRTUAL_HEIGHT * (graphHeightRange / 100 + paddingPercentY));
 
-            // Factor de encuadre seguro (0.90 desktop, 0.88 m√≥vil)
+            // Factor de encuadre seguro (0.90 desktop, 0.88 mÛvil)
             fitScale = Math.min(scaleX, scaleY) * (isMobile ? 0.88 : 0.90);
             const minScaleLimit = isMobile ? 0.16 : 0.20;
             fitScale = Math.min(Math.max(minScaleLimit, fitScale), 2.5);
@@ -3206,7 +3237,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
 
 
     const exploredNodes = [];
-    const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integraci√≥n'];
+    const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'IntegraciÛn'];
     
     if (afcData && afcData.nodes && nodeChats) {
         afcData.nodes.forEach(node => {
@@ -3381,7 +3412,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             try {
                 parsed = JSON.parse(storedAfc);
             } catch (e) {
-                console.error("üî¥ Error parsing afcData:", e);
+                console.error("?? Error parsing afcData:", e);
             }
         }
 
@@ -3398,17 +3429,17 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             } else {
                 parsed.nodes = softenNodeLabels(resolveCollisions(enrichAfcNodesWithPerspectiveMetadata(parsed.nodes, user, bioData, phenomData, parsed.edges || [])));
             }
-            console.log("üü¢ afcData cargada exitosamente para", user, ":", parsed);
+            console.log("?? afcData cargada exitosamente para", user, ":", parsed);
             setAfcData(parsed);
         } else {
-            console.log("‚ÑπÔ∏è No hay afcData para", user, ", usando plantilla cl√≠nica universal.");
+            console.log("?? No hay afcData para", user, ", usando plantilla clÌnica universal.");
             const mock = { ...MOCK_AFC_DATA };
             mock.nodes = layoutClinicalNodes(mock.nodes, mock.edges || [], user, bioData, phenomData);
             mock.layout_version = 4;
             setAfcData(mock);
         }
 
-        // Sincronizar desde la nube cl√≠nica para asegurar datos actualizados
+        // Sincronizar desde la nube clÌnica para asegurar datos actualizados
         if (user) {
             fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`)
                 .then(r => r.ok ? r.json() : {})
@@ -3477,7 +3508,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
     }, [user]);
 
-    // Garantizar que todos los nodos del mapa tengan sus propios metadatos de perspectiva y preguntas emp√°ticas
+    // Garantizar que todos los nodos del mapa tengan sus propios metadatos de perspectiva y preguntas emp·ticas
     useEffect(() => {
         if (afcData && Array.isArray(afcData.nodes) && afcData.nodes.length > 0) {
             const needsEnrichment = afcData.nodes.some(n => 
@@ -3570,7 +3601,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             if (!txt || typeof txt !== 'string') return defaultLabel;
             const words = txt.trim().split(/\s+/);
             if (words.length === 0) return defaultLabel;
-            const slice = words.slice(0, 4).join(" ").replace(/[^a-zA-Z√°√©√≠√≥√∫√Å√â√ç√ì√ö√±√ë0-9\s]/g, '');
+            const slice = words.slice(0, 4).join(" ").replace(/[^a-zA-Z·ÈÌÛ˙¡…Õ”⁄Ò—0-9\s]/g, '');
             if (slice.length < 4) return defaultLabel;
             return '"' + slice.charAt(0).toUpperCase() + slice.slice(1).toLowerCase() + '..."';
         };
@@ -3593,11 +3624,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n1",
                 type: "historical",
                 clinical_role: "antecedent",
-                label: familia ? getDynamicLabel(familia, "Din√°micas Familiares") : "Din√°micas Familiares",
-                description: familia ? `Pautas de exigencia o reglas tempranas aprendidas en el n√∫cleo familiar: "${cleanSnippet(familia, 85)}"` : "Expectativas y reglas impl√≠citas aprendidas en el entorno familiar primario.",
-                source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Entrevista de Vida: Historia Familiar)` : "Entrevista de Vida: Din√°mica y antecedentes familiares.",
-                challenge: "Diferenciar entre lo que te exigieron de ni√±o y lo que t√∫ decides hoy",
-                reflection_question: "¬øQu√© regla de tu infancia sigues obedeciendo hoy aunque te cueste tu propia paz?",
+                label: familia ? getDynamicLabel(familia, "Din·micas Familiares") : "Din·micas Familiares",
+                description: familia ? `Pautas de exigencia o reglas tempranas aprendidas en el n˙cleo familiar: "${cleanSnippet(familia, 85)}"` : "Expectativas y reglas implÌcitas aprendidas en el entorno familiar primario.",
+                source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Entrevista de Vida: Historia Familiar)` : "Entrevista de Vida: Din·mica y antecedentes familiares.",
+                challenge: "Diferenciar entre lo que te exigieron de niÒo y lo que t˙ decides hoy",
+                reflection_question: "øQuÈ regla de tu infancia sigues obedeciendo hoy aunque te cueste tu propia paz?",
                 x: 14,
                 y: 22
             },
@@ -3606,10 +3637,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "social",
                 clinical_role: "antecedent",
                 label: academica ? getDynamicLabel(academica, "Demandas del Entorno") : "Demandas del Entorno",
-                description: academica ? `Presi√≥n contextual formativa o laboral: "${cleanSnippet(academica, 85)}"` : "Exigencias cotidianas de rendimiento y validaci√≥n social en el entorno actual.",
+                description: academica ? `PresiÛn contextual formativa o laboral: "${cleanSnippet(academica, 85)}"` : "Exigencias cotidianas de rendimiento y validaciÛn social en el entorno actual.",
                 source: academica ? `Mencionaste: "${cleanSnippet(academica, 110)}" (en Entrevista de Vida)` : (atribucion ? `Mencionaste: "${cleanSnippet(atribucion, 110)}"` : "Entrevista de Vida: Entorno actual y demandas."),
-                challenge: "Poner l√≠mites saludables a las demandas externas",
-                reflection_question: "¬øHasta qu√© punto intentas cumplir con lo que otros esperan antes de escuchar tus necesidades?",
+                challenge: "Poner lÌmites saludables a las demandas externas",
+                reflection_question: "øHasta quÈ punto intentas cumplir con lo que otros esperan antes de escuchar tus necesidades?",
                 x: 14,
                 y: 40
             },
@@ -3618,10 +3649,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "historical",
                 clinical_role: "antecedent",
                 label: motivo ? getDynamicLabel(motivo, "Disparador del Malestar") : "Disparador del Malestar",
-                description: motivo ? `Situaciones que activan la consulta: "${cleanSnippet(motivo, 85)}"` : "Detonantes espec√≠ficos que desencadenan el episodio de malestar o sobrecarga.",
+                description: motivo ? `Situaciones que activan la consulta: "${cleanSnippet(motivo, 85)}"` : "Detonantes especÌficos que desencadenan el episodio de malestar o sobrecarga.",
                 source: motivo ? `Mencionaste: "${cleanSnippet(motivo, 110)}" (en Motivo de Consulta)` : "Entrevista de Vida: Motivo de consulta.",
-                challenge: "Identificar la primera se√±al ambiental antes de que el malestar escale",
-                reflection_question: "¬øQu√© situaci√≥n o interacci√≥n concreta funciona como la chispa que enciende tu inquietud?",
+                challenge: "Identificar la primera seÒal ambiental antes de que el malestar escale",
+                reflection_question: "øQuÈ situaciÛn o interacciÛn concreta funciona como la chispa que enciende tu inquietud?",
                 x: 14,
                 y: 58
             },
@@ -3630,10 +3661,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "social",
                 clinical_role: "antecedent",
                 label: soledad ? getDynamicLabel(soledad, "Incomodidad Interpersonal") : "Incomodidad Interpersonal",
-                description: soledad ? `Din√°mica vincular sensible al juicio: "${cleanSnippet(soledad, 85)}"` : "Interacciones interpersonales donde surge temor al desacuerdo o al rechazo.",
-                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Diagn√≥stico Existencial: Soledad)` : "Diagn√≥stico Existencial: Relaciones y Soledad.",
+                description: soledad ? `Din·mica vincular sensible al juicio: "${cleanSnippet(soledad, 85)}"` : "Interacciones interpersonales donde surge temor al desacuerdo o al rechazo.",
+                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en DiagnÛstico Existencial: Soledad)` : "DiagnÛstico Existencial: Relaciones y Soledad.",
                 challenge: "Comunicar tu incomodidad de forma serena en lugar de callar",
-                reflection_question: "¬øQu√© temes que suceda en tus relaciones si te muestras vulnerable y transparente?",
+                reflection_question: "øQuÈ temes que suceda en tus relaciones si te muestras vulnerable y transparente?",
                 x: 14,
                 y: 76
             }
@@ -3645,11 +3676,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n5",
                 type: "cognitive",
                 clinical_role: "cognitive",
-                label: vacio ? getDynamicLabel(vacio, "Presi√≥n Interna") : "Presi√≥n Interna",
+                label: vacio ? getDynamicLabel(vacio, "PresiÛn Interna") : "PresiÛn Interna",
                 description: "Creencia nuclear de que el propio valor depende de un rendimiento sin fallas ni errores.",
-                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagn√≥stico Existencial)` : "Evaluaci√≥n de Esquemas Cognitivos: Di√°logo autocr√≠tico.",
-                challenge: "Practicar la autocompasi√≥n frente al error humano",
-                reflection_question: "¬øC√≥mo te hablar√≠as si te trataras con la misma amabilidad con que tratas a alguien a quien quieres?",
+                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en DiagnÛstico Existencial)` : "EvaluaciÛn de Esquemas Cognitivos: Di·logo autocrÌtico.",
+                challenge: "Practicar la autocompasiÛn frente al error humano",
+                reflection_question: "øCÛmo te hablarÌas si te trataras con la misma amabilidad con que tratas a alguien a quien quieres?",
                 x: 32,
                 y: 20
             },
@@ -3659,9 +3690,9 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 clinical_role: "cognitive",
                 label: soledad ? getDynamicLabel(soledad, "Temor al Juicio") : "Temor al Juicio",
                 description: "Pensamiento anticipatorio de ser juzgado negativamente o quedar excluido.",
-                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "Diagn√≥stico Existencial: V√≠nculos y validaci√≥n externa.",
-                challenge: "Sostener tu propia opini√≥n aunque no haya aplauso un√°nime",
-                reflection_question: "¬øDe qui√©n est√°s buscando la aprobaci√≥n que a√∫n te cuesta darte a ti mismo?",
+                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "DiagnÛstico Existencial: VÌnculos y validaciÛn externa.",
+                challenge: "Sostener tu propia opiniÛn aunque no haya aplauso un·nime",
+                reflection_question: "øDe quiÈn est·s buscando la aprobaciÛn que a˙n te cuesta darte a ti mismo?",
                 x: 32,
                 y: 38
             },
@@ -3671,9 +3702,9 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 clinical_role: "cognitive",
                 label: repercusiones ? getDynamicLabel(repercusiones, "Bucle Mental") : "Bucle Mental",
                 description: "Bucle cognitivo de sobrepensar decisiones pasadas o anticipar escenarios adversos.",
-                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Entrevista de Vida: Repercusiones cognitivas del estr√©s.",
-                challenge: "Notar cuando est√°s rumiando y anclarte al presente",
-                reflection_question: "¬øCu√°ntas veces resolver un problema mentalmente en c√≠rculos ha solucionado la realidad?",
+                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Entrevista de Vida: Repercusiones cognitivas del estrÈs.",
+                challenge: "Notar cuando est·s rumiando y anclarte al presente",
+                reflection_question: "øCu·ntas veces resolver un problema mentalmente en cÌrculos ha solucionado la realidad?",
                 x: 32,
                 y: 56
             },
@@ -3682,10 +3713,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "cognitive",
                 clinical_role: "cognitive",
                 label: vacio ? getDynamicLabel(vacio, "Incertidumbre Vital") : "Incertidumbre Vital",
-                description: vacio ? `Cuestionamiento del sentido vital: "${cleanSnippet(vacio, 85)}"` : "Duda constante sobre la direcci√≥n personal y la autenticidad de los objetivos propios.",
-                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagn√≥stico Existencial: Vac√≠o)` : "Diagn√≥stico Existencial: Prop√≥sito y Sentido.",
-                challenge: "Elegir tus valores del d√≠a de hoy sin exigir certezas absolutas",
-                reflection_question: "¬øQu√© acci√≥n peque√±a le devolver√≠a vitalidad a tu d√≠a hoy mismo?",
+                description: vacio ? `Cuestionamiento del sentido vital: "${cleanSnippet(vacio, 85)}"` : "Duda constante sobre la direcciÛn personal y la autenticidad de los objetivos propios.",
+                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en DiagnÛstico Existencial: VacÌo)` : "DiagnÛstico Existencial: PropÛsito y Sentido.",
+                challenge: "Elegir tus valores del dÌa de hoy sin exigir certezas absolutas",
+                reflection_question: "øQuÈ acciÛn pequeÒa le devolverÌa vitalidad a tu dÌa hoy mismo?",
                 x: 32,
                 y: 74
             },
@@ -3694,26 +3725,26 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "cognitive",
                 clinical_role: "cognitive",
                 label: libertad ? getDynamicLabel(libertad, "Sentimiento de Culpa") : "Sentimiento de Culpa",
-                description: "Di√°logo interno de reproche tras haber reaccionado con evasi√≥n, frialdad o impulsividad.",
-                source: libertad ? `Mencionaste: "${cleanSnippet(libertad, 110)}" (en Decisiones y Libertad)` : "Diagn√≥stico Existencial: Di√°logo interno sobre decisiones pasadas.",
-                challenge: "Reconocer que la culpa sin acci√≥n reparadora solo perpet√∫a el ciclo",
-                reflection_question: "¬øQu√© te pide reparar tu sabidur√≠a interna en lugar de seguir castig√°ndote con la culpa?",
+                description: "Di·logo interno de reproche tras haber reaccionado con evasiÛn, frialdad o impulsividad.",
+                source: libertad ? `Mencionaste: "${cleanSnippet(libertad, 110)}" (en Decisiones y Libertad)` : "DiagnÛstico Existencial: Di·logo interno sobre decisiones pasadas.",
+                challenge: "Reconocer que la culpa sin acciÛn reparadora solo perpet˙a el ciclo",
+                reflection_question: "øQuÈ te pide reparar tu sabidurÌa interna en lugar de seguir castig·ndote con la culpa?",
                 x: 32,
                 y: 86
             }
         ];
 
-        // 3. Columna 3: Activaci√≥n Som√°tica (Respuesta Fisiol√≥gica Rf)
+        // 3. Columna 3: ActivaciÛn Som·tica (Respuesta FisiolÛgica Rf)
         const physNodes = [
             {
                 id: "n10",
                 type: "physiological",
                 clinical_role: "physiological",
-                label: "Tensi√≥n Corporal y Sobrecarga",
-                description: "Activaci√≥n auton√≥mica con tensi√≥n muscular frente a la sobrecarga y exigencia cotidiana.",
-                source: atribucion ? `Mencionaste: "${cleanSnippet(atribucion, 110)}" (en Atribuci√≥n)` : "Reporte cl√≠nico de somatizaci√≥n y reactividad f√≠sica al estr√©s.",
-                challenge: "Hacer pausas corporales para soltar la mand√≠bula y relajar los hombros",
-                reflection_question: "¬øEn qu√© parte exacta de tu cuerpo sientes primero cuando una situaci√≥n te sobrepasa?",
+                label: "TensiÛn Corporal y Sobrecarga",
+                description: "ActivaciÛn autonÛmica con tensiÛn muscular frente a la sobrecarga y exigencia cotidiana.",
+                source: atribucion ? `Mencionaste: "${cleanSnippet(atribucion, 110)}" (en AtribuciÛn)` : "Reporte clÌnico de somatizaciÛn y reactividad fÌsica al estrÈs.",
+                challenge: "Hacer pausas corporales para soltar la mandÌbula y relajar los hombros",
+                reflection_question: "øEn quÈ parte exacta de tu cuerpo sientes primero cuando una situaciÛn te sobrepasa?",
                 x: 50,
                 y: 25
             },
@@ -3721,11 +3752,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n11",
                 type: "physiological",
                 clinical_role: "physiological",
-                label: "Alteraci√≥n del Sue√±o y Desvelo",
-                description: sueno ? `Dificultades en el descanso: "${cleanSnippet(sueno, 85)}"` : "Desvelo nocturno por sobreactivaci√≥n mental o dificultad para conciliar un descanso profundo.",
-                source: sueno ? `Mencionaste: "${cleanSnippet(sueno, 110)}" (en Historial del Sue√±o)` : "Entrevista de Vida: Calidad del descanso y sue√±o.",
-                challenge: "Desconectar est√≠mulos intensos antes de dormir para reducir la alerta",
-                reflection_question: "¬øQu√© pendientes de tu mente te desvelan cuando el cuerpo pide apagar la luz?",
+                label: "AlteraciÛn del SueÒo y Desvelo",
+                description: sueno ? `Dificultades en el descanso: "${cleanSnippet(sueno, 85)}"` : "Desvelo nocturno por sobreactivaciÛn mental o dificultad para conciliar un descanso profundo.",
+                source: sueno ? `Mencionaste: "${cleanSnippet(sueno, 110)}" (en Historial del SueÒo)` : "Entrevista de Vida: Calidad del descanso y sueÒo.",
+                challenge: "Desconectar estÌmulos intensos antes de dormir para reducir la alerta",
+                reflection_question: "øQuÈ pendientes de tu mente te desvelan cuando el cuerpo pide apagar la luz?",
                 x: 50,
                 y: 50
             },
@@ -3733,27 +3764,27 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n12",
                 type: "physiological",
                 clinical_role: "physiological",
-                label: "Fatiga y Desgaste Som√°tico",
-                description: "Sensaci√≥n de agotamiento psicof√≠sico acumulado que disminuye la energ√≠a para afrontar el d√≠a.",
-                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Reporte de vitalidad y cansancio psicof√≠sico continuo.",
+                label: "Fatiga y Desgaste Som·tico",
+                description: "SensaciÛn de agotamiento psicofÌsico acumulado que disminuye la energÌa para afrontar el dÌa.",
+                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Reporte de vitalidad y cansancio psicofÌsico continuo.",
                 challenge: "Concederte descansos genuinos sin juzgarlos como tiempo perdido",
-                reflection_question: "¬øCu√°ndo fue la √∫ltima vez que descansaste sin sentirte culpable por estar descansando?",
+                reflection_question: "øCu·ndo fue la ˙ltima vez que descansaste sin sentirte culpable por estar descansando?",
                 x: 50,
                 y: 75
             }
         ];
 
-        // 4. Columna 4: Conductas de Evitaci√≥n (Respuesta Motora Rm)
+        // 4. Columna 4: Conductas de EvitaciÛn (Respuesta Motora Rm)
         const motNodes = [
             {
                 id: "n13",
                 type: "motor",
                 clinical_role: "motor",
                 label: "Escape en Distracciones Continuas",
-                description: "Uso de est√≠mulos superficiales, pantallas o tareas accesorias para anestesiar el malestar.",
-                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "Diagn√≥stico Existencial: Mecanismos de evasi√≥n cotidiana.",
-                challenge: "Tolerar unos minutos de incomodidad sin huir hacia la distracci√≥n inmediata",
-                reflection_question: "¬øDe qu√© pensamiento o emoci√≥n intentas alejarte cada vez que recurres a la distracci√≥n?",
+                description: "Uso de estÌmulos superficiales, pantallas o tareas accesorias para anestesiar el malestar.",
+                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "DiagnÛstico Existencial: Mecanismos de evasiÛn cotidiana.",
+                challenge: "Tolerar unos minutos de incomodidad sin huir hacia la distracciÛn inmediata",
+                reflection_question: "øDe quÈ pensamiento o emociÛn intentas alejarte cada vez que recurres a la distracciÛn?",
                 x: 68,
                 y: 22
             },
@@ -3762,10 +3793,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "motor",
                 clinical_role: "motor",
                 label: "Aislamiento y Silencio Defensivo",
-                description: "Cerrarse sobre s√≠ mismo o cortar el contacto afectivo cuando surge tensi√≥n vincular.",
-                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "Diagn√≥stico Existencial: Conductas de retirada interpersonal.",
+                description: "Cerrarse sobre sÌ mismo o cortar el contacto afectivo cuando surge tensiÛn vincular.",
+                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "DiagnÛstico Existencial: Conductas de retirada interpersonal.",
                 challenge: "Expresar lo que sientes a alguien cercano en lugar de alejarte en silencio",
-                reflection_question: "¬øA qui√©n mantienes a distancia para protegerte del riesgo de que te lastimen?",
+                reflection_question: "øA quiÈn mantienes a distancia para protegerte del riesgo de que te lastimen?",
                 x: 68,
                 y: 42
             },
@@ -3773,11 +3804,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n15",
                 type: "motor",
                 clinical_role: "motor",
-                label: "Postergaci√≥n de Decisiones Clave",
-                description: libertad ? `Retraso en asumir elecciones: "${cleanSnippet(libertad, 85)}"` : "Par√°lisis en la toma de decisiones por temor a equivocarse o perder el control.",
-                source: libertad ? `Mencionaste: "${cleanSnippet(libertad, 110)}" (en Decisiones y Libertad)` : "Diagn√≥stico Existencial: Procrastinaci√≥n en decisiones personales.",
-                challenge: "Tomar una decisi√≥n simple hoy aceptando que ninguna opci√≥n es 100% perfecta",
-                reflection_question: "¬øQu√© decisi√≥n importante sigues aplazando por miedo a las consecuencias?",
+                label: "PostergaciÛn de Decisiones Clave",
+                description: libertad ? `Retraso en asumir elecciones: "${cleanSnippet(libertad, 85)}"` : "Par·lisis en la toma de decisiones por temor a equivocarse o perder el control.",
+                source: libertad ? `Mencionaste: "${cleanSnippet(libertad, 110)}" (en Decisiones y Libertad)` : "DiagnÛstico Existencial: ProcrastinaciÛn en decisiones personales.",
+                challenge: "Tomar una decisiÛn simple hoy aceptando que ninguna opciÛn es 100% perfecta",
+                reflection_question: "øQuÈ decisiÛn importante sigues aplazando por miedo a las consecuencias?",
                 x: 68,
                 y: 62
             },
@@ -3787,9 +3818,9 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 clinical_role: "motor",
                 label: familia ? getDynamicLabel(familia, "Ceder y Callar") : "Ceder y Callar",
                 description: "Ceder en las propias necesidades o adoptar un rol complaciente para evitar el conflicto directo.",
-                source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Historia Familiar)` : "Entrevista Biogr√°fica: Pautas de respuesta ante la discrepancia.",
-                challenge: "Decir un ¬´no¬ª sereno y firme cuando algo no resuene contigo",
-                reflection_question: "¬øCu√°ntas veces has dicho ¬´s√≠¬ª por fuera mientras todo tu interior dec√≠a ¬´no¬ª?",
+                source: familia ? `Mencionaste: "${cleanSnippet(familia, 110)}" (en Historia Familiar)` : "Entrevista Biogr·fica: Pautas de respuesta ante la discrepancia.",
+                challenge: "Decir un ´noª sereno y firme cuando algo no resuene contigo",
+                reflection_question: "øCu·ntas veces has dicho ´sÌª por fuera mientras todo tu interior decÌa ´noª?",
                 x: 68,
                 y: 82
             }
@@ -3802,10 +3833,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "consequence",
                 clinical_role: "consequence",
                 label: "Alivio Pasajero",
-                description: "Reducci√≥n moment√°nea de la angustia al postergar o evadir el conflicto (refuerzo negativo).",
-                source: "An√°lisis Funcional: Efecto a corto plazo de la evitaci√≥n operante.",
-                challenge: "Advertir que el alivio de hoy es la deuda emocional de ma√±ana",
-                reflection_question: "¬øCu√°nto dura en realidad la calma que obtienes cuando escapas de lo que debes afrontar?",
+                description: "ReducciÛn moment·nea de la angustia al postergar o evadir el conflicto (refuerzo negativo).",
+                source: "An·lisis Funcional: Efecto a corto plazo de la evitaciÛn operante.",
+                challenge: "Advertir que el alivio de hoy es la deuda emocional de maÒana",
+                reflection_question: "øCu·nto dura en realidad la calma que obtienes cuando escapas de lo que debes afrontar?",
                 x: 86,
                 y: 20
             },
@@ -3814,10 +3845,10 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 type: "consequence",
                 clinical_role: "consequence",
                 label: repercusiones ? getDynamicLabel(repercusiones, "Regreso del Reproche") : "Regreso del Reproche",
-                description: "Al pasar el alivio inicial, la mente castiga la evasi√≥n con m√°s reproches y sensaci√≥n de fracaso.",
-                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "An√°lisis Funcional: Bucle de retroalimentaci√≥n cognitiva.",
-                challenge: "Frenar la espiral de reproches con una respiraci√≥n profunda y foco en el presente",
-                reflection_question: "¬øC√≥mo reacciona tu mente contigo mismo despu√©s de haber postergado lo importante?",
+                description: "Al pasar el alivio inicial, la mente castiga la evasiÛn con m·s reproches y sensaciÛn de fracaso.",
+                source: repercusiones ? `Mencionaste: "${cleanSnippet(repercusiones, 110)}" (en Repercusiones)` : "An·lisis Funcional: Bucle de retroalimentaciÛn cognitiva.",
+                challenge: "Frenar la espiral de reproches con una respiraciÛn profunda y foco en el presente",
+                reflection_question: "øCÛmo reacciona tu mente contigo mismo despuÈs de haber postergado lo importante?",
                 x: 86,
                 y: 38
             },
@@ -3825,11 +3856,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n19",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: soledad ? getDynamicLabel(soledad, "Desconexi√≥n") : "Desconexi√≥n",
-                description: "El aislamiento continuo erosiona la cercan√≠a con otros y consolida una soledad no deseada.",
-                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "Diagn√≥stico Existencial: Costo acumulativo en los v√≠nculos significativos.",
-                challenge: "Abrir una peque√±a rendija de vulnerabilidad con quien te aprecie",
-                reflection_question: "¬øQu√© v√≠nculos valiosos sientes que se van enfriando por mantenerte a la defensiva?",
+                label: soledad ? getDynamicLabel(soledad, "DesconexiÛn") : "DesconexiÛn",
+                description: "El aislamiento continuo erosiona la cercanÌa con otros y consolida una soledad no deseada.",
+                source: soledad ? `Mencionaste: "${cleanSnippet(soledad, 110)}" (en Relaciones y Soledad)` : "DiagnÛstico Existencial: Costo acumulativo en los vÌnculos significativos.",
+                challenge: "Abrir una pequeÒa rendija de vulnerabilidad con quien te aprecie",
+                reflection_question: "øQuÈ vÌnculos valiosos sientes que se van enfriando por mantenerte a la defensiva?",
                 x: 86,
                 y: 56
             },
@@ -3837,11 +3868,11 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 id: "n20",
                 type: "consequence",
                 clinical_role: "consequence",
-                label: vacio ? getDynamicLabel(vacio, "Sensaci√≥n de Pausa") : "Sensaci√≥n de Pausa",
-                description: vacio ? `P√©rdida de tracci√≥n personal: "${cleanSnippet(vacio, 85)}"` : "Postergaci√≥n de metas aut√©nticas y sensaci√≥n de que el tiempo pasa sin avances reales.",
-                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en Diagn√≥stico Existencial: Vac√≠o)` : "Diagn√≥stico Existencial: P√©rdida de vitalidad y estancamiento.",
+                label: vacio ? getDynamicLabel(vacio, "SensaciÛn de Pausa") : "SensaciÛn de Pausa",
+                description: vacio ? `PÈrdida de tracciÛn personal: "${cleanSnippet(vacio, 85)}"` : "PostergaciÛn de metas autÈnticas y sensaciÛn de que el tiempo pasa sin avances reales.",
+                source: vacio ? `Mencionaste: "${cleanSnippet(vacio, 110)}" (en DiagnÛstico Existencial: VacÌo)` : "DiagnÛstico Existencial: PÈrdida de vitalidad y estancamiento.",
                 challenge: "Dedicarle 15 minutos diarios a un proyecto tuyo sin importar el resultado",
-                reflection_question: "¬øQu√© sue√±o o proyecto propio has dejado en pausa por atender urgencias ajenas o por miedo?",
+                reflection_question: "øQuÈ sueÒo o proyecto propio has dejado en pausa por atender urgencias ajenas o por miedo?",
                 x: 86,
                 y: 74
             },
@@ -3851,9 +3882,9 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 clinical_role: "consequence",
                 label: temporalidad ? getDynamicLabel(temporalidad, "Bucle sin Fin") : "Bucle sin Fin",
                 description: "El circuito cerrado donde los costos a largo plazo confirman las creencias de insuficiencia.",
-                source: temporalidad ? `Mencionaste: "${cleanSnippet(temporalidad, 110)}" (en Temporalidad)` : "An√°lisis Funcional: Mantenimiento del circuito de sufrimiento.",
+                source: temporalidad ? `Mencionaste: "${cleanSnippet(temporalidad, 110)}" (en Temporalidad)` : "An·lisis Funcional: Mantenimiento del circuito de sufrimiento.",
                 challenge: "Reconocer el bucle completo para poder elegir una respuesta diferente",
-                reflection_question: "¬øEst√°s listo para detener el piloto autom√°tico y probar una salida diferente?",
+                reflection_question: "øEst·s listo para detener el piloto autom·tico y probar una salida diferente?",
                 x: 86,
                 y: 88
             }
@@ -3862,7 +3893,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         const allNodes = [...antNodes, ...cogNodes, ...physNodes, ...motNodes, ...consNodes];
 
         const edges = [
-            // 1. Antecedentes (E) -> Cognitivo (Rc) & Fisiol√≥gico (Rf)
+            // 1. Antecedentes (E) -> Cognitivo (Rc) & FisiolÛgico (Rf)
             { source: "n1", target: "n5", weight: 2, type: "unidirectional" },
             { source: "n1", target: "n6", weight: 2, type: "unidirectional" },
             { source: "n2", target: "n5", weight: 2, type: "unidirectional" },
@@ -3873,7 +3904,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             { source: "n4", target: "n6", weight: 2, type: "unidirectional" },
             { source: "n4", target: "n14", weight: 2, type: "unidirectional" },
 
-            // 2. Cognitivo (Rc) -> Fisiol√≥gico (Rf) & Conductas (Rm)
+            // 2. Cognitivo (Rc) -> FisiolÛgico (Rf) & Conductas (Rm)
             { source: "n5", target: "n10", weight: 2, type: "unidirectional" },
             { source: "n5", target: "n13", weight: 2, type: "unidirectional" },
             { source: "n5", target: "n16", weight: 2, type: "unidirectional" },
@@ -3885,7 +3916,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             { source: "n8", target: "n12", weight: 2, type: "unidirectional" },
             { source: "n9", target: "n14", weight: 2, type: "unidirectional" },
 
-            // 3. Fisiol√≥gico (Rf) -> Conductas de Escape (Rm)
+            // 3. FisiolÛgico (Rf) -> Conductas de Escape (Rm)
             { source: "n10", target: "n13", weight: 2, type: "unidirectional" },
             { source: "n10", target: "n14", weight: 2, type: "unidirectional" },
             { source: "n11", target: "n13", weight: 2, type: "unidirectional" },
@@ -3936,40 +3967,40 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
 
         const topCog = cognitiveNodes[0]?.label || 'autoexigencia y sobrepensar';
         const topMot = motorNodes[0]?.label || 'conductas de escape';
-        const topCons = consequenceNodes[0]?.label || 'sensaci√≥n de estancamiento';
+        const topCons = consequenceNodes[0]?.label || 'sensaciÛn de estancamiento';
         const topHist = historicalNodes[0]?.label || 'experiencias formativas tempranas';
 
         return {
             firma_resonancia: {
-                habitar: "Cuerpo que acumula tensi√≥n mientras la mente busca certeza y control.",
+                habitar: "Cuerpo que acumula tensiÛn mientras la mente busca certeza y control.",
                 vinculo: "Distancia preventiva y dificultad para expresar vulnerabilidad sin temor al juicio.",
                 busqueda: "Anhelo profundo de autenticidad, libertad de criterio y descanso emocional.",
-                keywords: ["Autoexigencia", "Autonom√≠a", "Desconexi√≥n", "Protecci√≥n"]
+                keywords: ["Autoexigencia", "AutonomÌa", "DesconexiÛn", "ProtecciÛn"]
             },
             hypotheses: {
-                mantenimiento: `El sufrimiento se mantiene mediante un circuito funcional cerrado donde ${topCog} activa respuestas som√°ticas y de sobrecarga. Ante esta tensi√≥n interna, recurres a ${topMot} buscando un alivio urgente y moment√°neo.\n\nEste alivio transitorio, sin embargo, genera a mediano plazo ${topCons}, lo cual reactiva el di√°logo interno autocr√≠tico y confirma la creencia aprendida de insuficiencia, reiniciando el ciclo continuo de malestar.`,
-                solucion: `La intervenci√≥n cl√≠nica debe focalizarse en romper la automaticidad entre la activaci√≥n cognitiva y la conducta de escape. Practicar pausas compasivas de desaceleraci√≥n y nombrar el malestar sin juzgarlo permite tolerar la incomodidad sin recurrir a la evitaci√≥n.\n\nSimult√°neamente, flexibilizar las reglas internas de autoexigencia y habilitar micro-acciones directas hacia tus valores restablecer√° el sentido de autoeficacia y paz cotidiana.`
+                mantenimiento: `El sufrimiento se mantiene mediante un circuito funcional cerrado donde ${topCog} activa respuestas som·ticas y de sobrecarga. Ante esta tensiÛn interna, recurres a ${topMot} buscando un alivio urgente y moment·neo.\n\nEste alivio transitorio, sin embargo, genera a mediano plazo ${topCons}, lo cual reactiva el di·logo interno autocrÌtico y confirma la creencia aprendida de insuficiencia, reiniciando el ciclo continuo de malestar.`,
+                solucion: `La intervenciÛn clÌnica debe focalizarse en romper la automaticidad entre la activaciÛn cognitiva y la conducta de escape. Practicar pausas compasivas de desaceleraciÛn y nombrar el malestar sin juzgarlo permite tolerar la incomodidad sin recurrir a la evitaciÛn.\n\nSimult·neamente, flexibilizar las reglas internas de autoexigencia y habilitar micro-acciones directas hacia tus valores restablecer· el sentido de autoeficacia y paz cotidiana.`
             },
-            explicacion_sencilla: `Hola. Al observar tu mapa completo, se hace evidente que tu mente aprendi√≥ a encender alarmas de sobrepensar como una forma de protegerte ante vivencias del pasado (${topHist}). Cuando sientes que la exigencia o el entorno te sobrepasan, tu cuerpo se tensa y buscas desconectarte para recuperar el aliento.\n\nEl problema no eres t√∫, sino este circuito en piloto autom√°tico: el alivio dura poco y despu√©s la culpa o el cansancio te hacen sentir que no avanzas. Entender este camino es el primer paso para responder con calma y elegir una salida m√°s amable.`,
-            claves_salida: "- Practicar una pausa consciente de respiraci√≥n diafragm√°tica de tres minutos en cuanto sientas la tensi√≥n corporal.\n- Expresar tus l√≠mites o desacuerdos de forma tranquila sin esperar a explotar ni acumular rencor.\n- Reemplazar la autocr√≠tica por un experimento conductual peque√±o que te acerque a lo que realmente valoras.",
+            explicacion_sencilla: `Hola. Al observar tu mapa completo, se hace evidente que tu mente aprendiÛ a encender alarmas de sobrepensar como una forma de protegerte ante vivencias del pasado (${topHist}). Cuando sientes que la exigencia o el entorno te sobrepasan, tu cuerpo se tensa y buscas desconectarte para recuperar el aliento.\n\nEl problema no eres t˙, sino este circuito en piloto autom·tico: el alivio dura poco y despuÈs la culpa o el cansancio te hacen sentir que no avanzas. Entender este camino es el primer paso para responder con calma y elegir una salida m·s amable.`,
+            claves_salida: "- Practicar una pausa consciente de respiraciÛn diafragm·tica de tres minutos en cuanto sientas la tensiÛn corporal.\n- Expresar tus lÌmites o desacuerdos de forma tranquila sin esperar a explotar ni acumular rencor.\n- Reemplazar la autocrÌtica por un experimento conductual pequeÒo que te acerque a lo que realmente valoras.",
             analysis_breakdown: {
-                historical_evidence: historicalNodes.map(n => n.label).slice(0, 3).join(', ') || "Vivencias tempranas de exigencia y l√≠mites.",
-                mediators_evidence: "Patrones de descanso irregular, tensi√≥n som√°tica y distancia en v√≠nculos √≠ntimos.",
+                historical_evidence: historicalNodes.map(n => n.label).slice(0, 3).join(', ') || "Vivencias tempranas de exigencia y lÌmites.",
+                mediators_evidence: "Patrones de descanso irregular, tensiÛn som·tica y distancia en vÌnculos Ìntimos.",
                 conducts_evidence: `${topCog} y ${topMot}.`,
-                consequences_evidence: consequenceNodes.map(n => n.label).slice(0, 3).join(', ') || "Alivio moment√°neo y desgaste prolongado."
+                consequences_evidence: consequenceNodes.map(n => n.label).slice(0, 3).join(', ') || "Alivio moment·neo y desgaste prolongado."
             },
             blind_spots: [
                 {
                     id: "brecha_escape",
                     title: "Costo oculto del escape",
-                    question: `¬øQu√© costo emocional pagas en silencio cada vez que recurres a ${topMot} para calmar ${topCog}?`,
+                    question: `øQuÈ costo emocional pagas en silencio cada vez que recurres a ${topMot} para calmar ${topCog}?`,
                     node: { id: "blind_spot_1", type: "dashed", label: "Costo del escape", x: 50, y: 50 },
                     edge: { source: cognitiveNodes[0]?.id || "n1", target: "blind_spot_1", weight: 2, type: "unidirectional" }
                 },
                 {
                     id: "brecha_autonomia",
-                    title: "Falsa protecci√≥n de la autoexigencia",
-                    question: "¬øDe qu√© crees que te est√° protegiendo exigirte tanto antes de que otros puedan opinar sobre ti?",
+                    title: "Falsa protecciÛn de la autoexigencia",
+                    question: "øDe quÈ crees que te est· protegiendo exigirte tanto antes de que otros puedan opinar sobre ti?",
                     node: { id: "blind_spot_2", type: "dashed", label: "Autoexigencia protectora", x: 65, y: 35 },
                     edge: { source: motorNodes[0]?.id || "n2", target: "blind_spot_2", weight: 2, type: "unidirectional" }
                 }
@@ -3977,15 +4008,15 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             patrones_dificultad: [
                 {
                     id: "patron_1",
-                    nombre: "Ciclo de exigencia y evasi√≥n",
-                    clave_salida: `Identificar la se√±al f√≠sica previa a ${topMot} y regalarte 60 segundos de respiraci√≥n antes de reaccionar.`
+                    nombre: "Ciclo de exigencia y evasiÛn",
+                    clave_salida: `Identificar la seÒal fÌsica previa a ${topMot} y regalarte 60 segundos de respiraciÛn antes de reaccionar.`
                 }
             ]
         };
     };
 
     const generateAFCAnalysis = async (isAdditive = false) => {
-        // Disparar en paralelo la generaci√≥n de la Firma de Resonancia (publicTraits) a petici√≥n del usuario
+        // Disparar en paralelo la generaciÛn de la Firma de Resonancia (publicTraits) a peticiÛn del usuario
         if (!isAdditive) {
             generateDynamicTraits();
             setNodeChats({});
@@ -4007,7 +4038,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         )) {
             activeKey = '';
         }
-        setIsAnalyzing("Extrayendo bucles reales de la historia cl√≠nica (Etapa 1/2)...");
+        setIsAnalyzing("Extrayendo bucles reales de la historia clÌnica (Etapa 1/2)...");
         
         // Retrieve resolved blind spot answers dynamically from localStorage keys
         let blindSpotAnswersContext = "";
@@ -4024,7 +4055,7 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         const question = localStorage.getItem(`oasis_blindspot_question_${user}__${spotId}`) || 
                                          localStorage.getItem(`oasis_blindspot_question_${user.toLowerCase()}__${spotId}`) || "Pregunta de punto ciego";
                         const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || 
-                                      localStorage.getItem(`oasis_blindspot_title_${user.toLowerCase()}__${spotId}`) || "Punto ciego cl√≠nico";
+                                      localStorage.getItem(`oasis_blindspot_title_${user.toLowerCase()}__${spotId}`) || "Punto ciego clÌnico";
                         if (answer) {
                             blindSpotAnswersContext += `- ${title} / Pregunta: "${question}" => Respuesta del paciente: "${answer}"\n`;
                         }
@@ -4074,28 +4105,28 @@ Formula UNA √öNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         const privateNotesText = getLocalItemCaseInsensitive('oasis_private_notes', user) || "";
         const allNotes = [treatmentPlan?.patientExtras, clinicianNotesText, privateNotesText].filter(Boolean).join('\n---\n');
 
-        const currentNodesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.nodes || [], null, 2) : "Ninguno (generaci√≥n desde cero)";
-        const currentEdgesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno (generaci√≥n desde cero)";
+        const currentNodesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.nodes || [], null, 2) : "Ninguno (generaciÛn desde cero)";
+        const currentEdgesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno (generaciÛn desde cero)";
         const currentBlindSpotsText = afcData && afcData.blind_spots ? JSON.stringify(afcData.blind_spots, null, 2) : "Ninguno";
 
         const context = `
-=== HISTORIA DE VIDA (ENTREVISTA BIOGR√ÅFICA) ===
-${bioText || "No aportada a√∫n."}
+=== HISTORIA DE VIDA (ENTREVISTA BIOGR¡FICA) ===
+${bioText || "No aportada a˙n."}
 
-=== DIAGN√ìSTICO EXISTENCIAL (FENOMENOLOG√çA VIVIDA) ===
-${phenomText || "No aportado a√∫n."}
+=== DIAGN”STICO EXISTENCIAL (FENOMENOLOGÕA VIVIDA) ===
+${phenomText || "No aportado a˙n."}
 
-=== INFORME CL√çNICO ORIGINAL (PDF) ===
-${getLocalItemCaseInsensitive('oasis_clinical_report_text_', user) || "No hay informe cl√≠nico base."}
+=== INFORME CLÕNICO ORIGINAL (PDF) ===
+${getLocalItemCaseInsensitive('oasis_clinical_report_text_', user) || "No hay informe clÌnico base."}
 
-=== NOTAS CL√çNICAS / OBSERVACIONES DEL ESPECIALISTA ===
+=== NOTAS CLÕNICAS / OBSERVACIONES DEL ESPECIALISTA ===
 ${allNotes || "No hay notas adicionales."}
 
 === RASGOS PID-5 ===
-${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No evaluado a√∫n."}
+${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No evaluado a˙n."}
 
 === RESPUESTAS A PUNTOS CIEGOS ===
-${blindSpotAnswersContext || "Ninguno a√∫n."}
+${blindSpotAnswersContext || "Ninguno a˙n."}
 
 === MAPA CONDUCTUAL ACTUAL A PRESERVAR (SI APLICA) ===
 Nodos actuales:
@@ -4109,75 +4140,81 @@ ${currentBlindSpotsText}
         `;
 
         const systemPromptTopology = `
-Eres un Psic√≥logo Cl√≠nico Especialista en An√°lisis Funcional de la Conducta (AFC) y Terapia Cognitivo-Conductual Cient√≠fica (TCC / Terapias de Tercera Generaci√≥n Contextuales).
-ETAPA 1: FORMULACI√ìN CL√çNICA DE CASO EN MODO GRAFO (AN√ÅLISIS FUNCIONAL DE LA CONDUCTA).
-Tu misi√≥n es construir la FORMULACI√ìN CL√çNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 20 Y 24 NODOS CL√çNICOS REALES y EXACTAMENTE ENTRE 32 Y 48 CONEXIONES FUNCIONALES DIRECTAS.
+Eres un PsicÛlogo ClÌnico Especialista en An·lisis Funcional de la Conducta (AFC) y Terapia Cognitivo-Conductual CientÌfica (TCC / Terapias de Tercera GeneraciÛn Contextuales).
+ETAPA 1: FORMULACI”N CLÕNICA DE CASO EN MODO GRAFO (AN¡LISIS FUNCIONAL DE LA CONDUCTA).
+Tu misiÛn es construir la FORMULACI”N CLÕNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 20 Y 24 NODOS CLÕNICOS REALES y EXACTAMENTE ENTRE 32 Y 48 CONEXIONES FUNCIONALES DIRECTAS.
 
-=== PRINCIPIO FUNDAMENTAL: AN√ÅLISIS FUNCIONAL CIENT√çFICO Y AUT√âNTICO (CERO INVENTOS) ===
+=== PRINCIPIO FUNDAMENTAL: AN¡LISIS FUNCIONAL CIENTÕFICO Y AUT…NTICO (CERO INVENTOS) ===
 - NUNCA inventes nodos con etiquetas artificiales de coaching o autoayuda como "Pivote:", "Pivote de", "Valor: ...", "Consejo", etc. 
-- PROHIBIDO inventar soluciones, consejos o metas hipot√©ticas dentro del mapa del problema.
-- CERO ALUCINACIONES BIOGR√ÅFICAS O M√âDICAS: NUNCA inventes eventos ni s√≠ntomas m√©dicos que el usuario no haya dicho expl√≠citamente.\n- RIGOR HIST√ìRICO Y PRECISI√ìN CL√çNICA: Si te basas en el Informe Cl√≠nico, NO generalices ni inventes abstracciones como \"Conflictos con mam√°\" o \"Desconfianza paterna\" si el texto original dice algo distinto (ej. \"La relaci√≥n con la madre es distante pero puede comer con ella\", \"Nunca le tuvo desconfianza directa al padre\"). Mantente fiel a los hechos y matices del informe.
-- *** REGLA DE ORO DE LOS NOMBRES DE NODOS ***: EST√Å ESTRICTAMENTE PROHIBIDO usar abstracciones cl√≠nicas gen√©ricas para los "label" de los nodos si el usuario no us√≥ esas palabras.
-  - PROHIBIDO USAR: "Estancamiento", "Rumiaci√≥n", "Evitaci√≥n", "Fricci√≥n", "Sobreadaptaci√≥n", "Autocr√≠tica", "Aislamiento Defensivo", "Reactivaci√≥n de la Autocr√≠tica", a menos que el usuario lo haya escrito tal cual.
-  - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, √∫salo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual cl√≠nico".
+- PROHIBIDO inventar soluciones, consejos o metas hipotÈticas dentro del mapa del problema.
+- CERO ALUCINACIONES BIOGR¡FICAS O M…DICAS: NUNCA inventes eventos ni sÌntomas mÈdicos que el usuario no haya dicho explÌcitamente.\n- RIGOR HIST”RICO Y PRECISI”N CLÕNICA: Si te basas en el Informe ClÌnico, NO generalices ni inventes abstracciones como \"Conflictos con mam·\" o \"Desconfianza paterna\" si el texto original dice algo distinto (ej. \"La relaciÛn con la madre es distante pero puede comer con ella\", \"Nunca le tuvo desconfianza directa al padre\"). Mantente fiel a los hechos y matices del informe.
+- *** REGLA DE ORO DE LOS NOMBRES DE NODOS ***: EST¡ ESTRICTAMENTE PROHIBIDO usar abstracciones clÌnicas genÈricas para los "label" de los nodos si el usuario no usÛ esas palabras.
+  - PROHIBIDO USAR: "Estancamiento", "RumiaciÛn", "EvitaciÛn", "FricciÛn", "SobreadaptaciÛn", "AutocrÌtica", "Aislamiento Defensivo", "ReactivaciÛn de la AutocrÌtica", a menos que el usuario lo haya escrito tal cual.
+  - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, ˙salo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual clÌnico".
 
-=== LOS 5 PILARES DEL AN√ÅLISIS FUNCIONAL (E-O-R-C) (DISTRIBUCI√ìN DE 20 A 24 NODOS EN TOTAL) ===
-Distribuye los nodos rigurosamente en las 5 columnas funcionales del caso:
+=== LOS 6 PILARES DEL AN¡LISIS FUNCIONAL DIN¡MICO (DISTRIBUCI”N DE 20 A 24 NODOS EN TOTAL) ===
+Distribuye los nodos rigurosamente en las 6 columnas funcionales del caso:
 
-1. COLUMNA 1: CONTEXTO & DETONANTES (Est√≠mulos Antecedentes, E) (4 a 5 nodos):
-   - Tipos: 'historical' (3 nodos), 'social' (1-2 nodos).
+1. COLUMNA 1: CONTEXTO & OPERACIONES MOTIVACIONALES (Variables de Fondo) (3 a 4 nodos):
+   - Tipos: 'historical' o 'social'.
+   - clinical_role: 'context'
+   - QuÈ representa: Condiciones de vida actuales o historia que alteran el valor de las consecuencias (ej. "PrivaciÛn de afecto", "Agotamiento crÛnico", "TensiÛn laboral constante").
+
+2. COLUMNA 2: ESTÕMULOS DISCRIMINATIVOS / DETONANTES (SeÒales Inmediatas, ED) (3 a 4 nodos):
+   - Tipos: 'antecedent'
    - clinical_role: 'antecedent'
-   - Qu√© representa: Todo lo que viene del exterior o del pasado. (Usa palabras del usuario: ej. "Mi mam√° me gritaba", "Discusi√≥n con mi pareja", "Mucho trabajo").
+   - QuÈ representa: La seÒal especÌfica aquÌ-y-ahora que dispara el bucle (ej. "Pareja tarda en contestar", "Recibir una crÌtica", "Estar solo en casa").
 
-2. COLUMNA 2: PENSAMIENTOS & CREENCIAS NUCLEARES (Respuesta Cognitiva, Rc) (4 a 5 nodos):
-   - Tipos: 'cognitive'
+3. COLUMNA 3: EVENTOS PRIVADOS (Respuestas Cognitivas y Som·ticas, RC/RF) (4 a 5 nodos):
+   - Tipos: 'cognitive' o 'physiological'
    - clinical_role: 'cognitive'
-   - Qu√© representa: Lo que el paciente se dice a s√≠ mismo en su cabeza. (Usa palabras del usuario: ej. "Soy un in√∫til", "No puedo fallar", "Me van a abandonar").
+   - QuÈ representa: Pensamientos, reglas verbales, im·genes, emociones y sensaciones fÌsicas (ej. "Si no reviso, algo malo pasar·", "Nudo en el estÛmago", "Taquicardia").
 
-3. COLUMNA 3: ACTIVACI√ìN SOM√ÅTICA & EMOCIONAL (Respuesta Fisiol√≥gica / Som√°tica, Rf) (3 a 4 nodos):
-   - Tipos: 'physiological' (o 'biological')
-   - clinical_role: 'physiological'
-   - Qu√© representa: C√≥mo reacciona el cuerpo o las emociones puras. (Usa palabras del usuario: ej. "Cansancio extremo", "Insomnio a las 3am", "Ganas de llorar").
-
-4. COLUMNA 4: CONDUCTAS DE EVITACI√ìN & ESCAPE (Respuesta Motora / Operante, Rm) (4 a 5 nodos):
+4. COLUMNA 4: RESPUESTA OPERANTE (Conductas Observables y Encubiertas, RO) (4 a 5 nodos):
    - Tipos: 'motor'
    - clinical_role: 'motor'
-   - Qu√© representa: Lo que hace para huir del malestar. (Usa palabras del usuario: ej. "Encerrarme en mi cuarto", "Ver TikTok horas", "Quedarme callado").
+   - QuÈ representa: Lo que hace la persona (manifiesto o mental) para intentar resolver o escapar (ej. "Revisar el celular compulsivamente", "Rumiar y analizar conversaciones", "Aislarse").
 
-5. COLUMNA 5: TRAMPA DE MANTENIMIENTO (Consecuencias a Corto y Largo Plazo, C) (4 a 5 nodos):
+5. COLUMNA 5: CONSECUENCIAS (A corto y largo plazo, R+/R-) (4 a 5 nodos):
    - Tipos: 'consequence'
    - clinical_role: 'consequence'
-   - Qu√© representa: El resultado final que mantiene el bucle. (Usa palabras del usuario: ej. "Me siento peor despu√©s", "Alejo a la gente", "Siento que no avanzo").
+   - QuÈ representa: El resultado ambiental/interno de la conducta (ej. "Alivio inmediato de la ansiedad [Corto Plazo]", "Mayor desgaste relacional [Largo Plazo]").
 
-TOTAL EXACTO DE NODOS: (4-5) + (4-5) + (3-4) + (4-5) + (4-5) = ENTRE 20 Y 24 NODOS.
+6. COLUMNA 6: FUNCI”N DEL BUCLE (El "Para QuÈ") (2 a 3 nodos):
+   - Tipos: 'function'
+   - clinical_role: 'function'
+   - QuÈ representa: El objetivo funcional que mantiene el circuito vivo (ej. "ReducciÛn de incertidumbre", "Obtener validaciÛn", "EvitaciÛn experiencial").
+
+TOTAL EXACTO DE NODOS: ENTRE 20 Y 24 NODOS.
 
 === CONEXIONES FUNCIONALES DIRECTAS (EDGES): ENTRE 32 Y 48 CONEXIONES ===
-Reglas cl√≠nicas de conexi√≥n de contingencia funcional:
-1. Cadena de Contingencia:
-   - Antecedente (E) -> Pensamiento (Rc) y/o Activaci√≥n Som√°tica (Rf)
-   - Pensamiento (Rc) -> Activaci√≥n Som√°tica (Rf) o Conducta de Evitaci√≥n (Rm)
-   - Activaci√≥n Som√°tica (Rf) -> Conducta de Evitaci√≥n (Rm)
-   - Conducta de Evitaci√≥n (Rm) -> Alivio Inmediato (C_cp) y Costo a Largo Plazo (C_lp)
-2. Bucles de Retroalimentaci√≥n de la Trampa (Cierre Funcional):
-   - Los Costos a Largo Plazo (C_lp) conectan de regreso a las Creencias (Rc) y a los Antecedentes (E), mostrando c√≥mo la trampa de evitaci√≥n perpet√∫a el sufrimiento del paciente.
-- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 32 y 48 conexiones con 'source' y 'target' v√°lidos.
+Reglas clÌnicas de conexiÛn de contingencia funcional (Formando la Red Din·mica):
+1. Cadena de Contingencia y ModulaciÛn:
+   - Contexto/OM -> Altera el valor de las Consecuencias y evoca los ED.
+   - Detonantes (ED) -> Disparan los Eventos Privados (RC/RF).
+   - Eventos Privados -> Funcionan como reglas que motivan la Respuesta Operante (RO).
+   - Respuesta Operante (RO) -> Produce las Consecuencias (inmediatas y a largo plazo).
+   - Consecuencias -> Cumplen una FunciÛn especÌfica.
+2. Bucles de RetroalimentaciÛn Funcional (Cierre Funcional):
+   - La FunciÛn y las Consecuencias a largo plazo conectan DE REGRESO al Contexto y a los Detonantes (ED), explicando por quÈ ante futuras seÒales, la RO ser· a˙n m·s probable. °ESTE ES EL BUCLE!
+- El array 'edges' DEBE contener OBLIGATORIAMENTE entre 32 y 48 conexiones con 'source' y 'target' v·lidos.
 
 === FORMATO DE CADA NODO ===
 - id: formato "n1", "n2", "n3"...
-- type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence'
-- clinical_role: 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence'
-- label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni cl√≠nico (ej. "Dificultades al relacionarse", "Sensaci√≥n de no estar bien", "Presi√≥n de la familia", "Cansancio acumulado", "Necesidad de distancia").
+- type: 'historical' | 'social' | 'cognitive' | 'physiological' | 'biological' | 'motor' | 'consequence' | 'function' | 'function'
+- clinical_role: 'context' | 'antecedent' | 'cognitive' | 'physiological' | 'motor' | 'consequence' | 'function'
+- label: 2 a 5 palabras. Usa el vocabulario del usuario de forma delicada y exploratoria, sin ser invasivo ni clÌnico (ej. "Dificultades al relacionarse", "SensaciÛn de no estar bien", "PresiÛn de la familia", "Cansancio acumulado", "Necesidad de distancia").
 - description: 25 a 45 palabras. MUY IMPORTANTE: Desarrolla y profundiza un poco mas en el significado de este nodo. Redactalo de una forma super empatica, linda y compasiva. NUNCA uses juicios crueles, duros o insensibles (PROHIBIDO decir cosas como 'te sientes un fracasado', en su lugar explica 'hay dificultades para ver el gran valor que hay en ti, lo cual genera agotamiento...'). Empieza preferiblemente con 'Sientes que...', 'Parece que...', o 'Mencionaste que...'.
 - source: La CITA TEXTUAL EXACTA (entre comillas) de lo que dijo el usuario que inspiro este nodo. Nada de explicaciones, solo la cita directa.
 - challenge: reto reflexivo o de toma de consciencia (4 a 8 palabras)
-- reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psic√≥logo de manual. Genera preguntas filos√≥ficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me hab√≠a preguntado esto para ser mejor persona'. Deben golpear directo al n√∫cleo del enga√±o o evasi√≥n del usuario.
-- x: coordenada porcentual sugerida (10 a 90)
+- reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicÛlogo de manual. Genera preguntas filosÛficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me habÌa preguntado esto para ser mejor persona'. Deben golpear directo al n˙cleo del engaÒo o evasiÛn del usuario.
+- x: coordenada porcentual sugerida (Contexto~12, Detonantes~27, Privados~42, Conducta~57, Consecuencia~72, Funcion~87)
 - y: coordenada porcentual sugerida (15 a 85)
 ${isAdditive ? `
-=== MODO ACTUALIZACI√ìN ADITIVA ===
+=== MODO ACTUALIZACI”N ADITIVA ===
 1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
 2. Copia EXACTAMENTE todas las conexiones de 'Conexiones actuales'.
-3. Analiza las respuestas a los puntos ciegos reci√©n respondidos y a√±ade de 1 a 3 NUEVOS nodos y conexiones reales basados en lo que respondi√≥ el paciente.
+3. Analiza las respuestas a los puntos ciegos reciÈn respondidos y aÒade de 1 a 3 NUEVOS nodos y conexiones reales basados en lo que respondiÛ el paciente.
 ` : ''}
 
 === ESTRUCTURA JSON REQUERIDA ===
@@ -4190,10 +4227,10 @@ ${isAdditive ? `
       "type": "historical",
       "clinical_role": "antecedent",
       "label": "Regla de Autoexigencia",
-      "description": "Aprendizaje de que solo rindiendo al m√°ximo se obtiene seguridad y aprobaci√≥n",
+      "description": "Aprendizaje de que solo rindiendo al m·ximo se obtiene seguridad y aprobaciÛn",
       "source": "expresado en historia de vida",
       "challenge": "Reconocer que tu valor no depende de rendir siempre",
-      "reflection_question": "¬øQu√© dolor est√°s tapando al obligarte a rendir al m√°ximo, y qu√© pasar√≠a si hoy decides que ya es suficiente?",
+      "reflection_question": "øQuÈ dolor est·s tapando al obligarte a rendir al m·ximo, y quÈ pasarÌa si hoy decides que ya es suficiente?",
       "x": 14,
       "y": 30
     }
@@ -4242,7 +4279,7 @@ ${isAdditive ? `
                             });
                         } catch (netErr) {
                             if (attempt === 0) {
-                                console.warn(`[AFC] Fetch fall√≥ (${stageName}), reintentando en 600ms...`, netErr.message);
+                                console.warn(`[AFC] Fetch fallÛ (${stageName}), reintentando en 600ms...`, netErr.message);
                                 await new Promise(r => setTimeout(r, 600));
                                 continue;
                             }
@@ -4274,7 +4311,7 @@ ${isAdditive ? `
                     return "";
                 };
 
-                // Intento 1: Modelo a trav√©s del proxy del backend
+                // Intento 1: Modelo a travÈs del proxy del backend
                 try {
                     const res = await attemptCall(modelForCall, endpoint, activeKey, false);
                     if (res.ok) {
@@ -4286,7 +4323,7 @@ ${isAdditive ? `
                     lastErr = new Error(`Error HTTP ${res.status} (${stageName}): ${errTxt}`);
                 } catch (netErr) {
                     lastErr = netErr;
-                    console.warn(`[AFC] Intento 1 con ${modelForCall} fall√≥:`, netErr.message);
+                    console.warn(`[AFC] Intento 1 con ${modelForCall} fallÛ:`, netErr.message);
                 }
 
                 // Intento 2: Si el usuario tiene una API key directa, intentar llamada directa cliente->OpenAI
@@ -4300,14 +4337,14 @@ ${isAdditive ? `
                             if (content) return content;
                         }
                     } catch (directErr) {
-                        console.warn("[AFC] Fall√≥ llamada directa:", directErr.message);
+                        console.warn("[AFC] FallÛ llamada directa:", directErr.message);
                     }
                 }
 
-                // Intento 3: Modelo √°gil de respaldo (gpt-4o-mini) con pausa para restablecer conexi√≥n
+                // Intento 3: Modelo ·gil de respaldo (gpt-4o-mini) con pausa para restablecer conexiÛn
                 if (modelForCall !== 'gpt-4o-mini') {
                     try {
-                        setIsAnalyzing(`Acelerando an√°lisis con modelo √°gil (${stageName})...`);
+                        setIsAnalyzing(`Acelerando an·lisis con modelo ·gil (${stageName})...`);
                         await new Promise(r => setTimeout(r, 600));
                         const fastRes = await attemptCall('gpt-4o-mini', 'https://api.openai.com/v1/chat/completions', activeKey, false);
                         if (fastRes.ok) {
@@ -4317,33 +4354,35 @@ ${isAdditive ? `
                         }
                     } catch (fastErr) {
                         lastErr = fastErr;
-                        console.warn("[AFC] Fallback gpt-4o-mini fall√≥:", fastErr.message);
+                        console.warn("[AFC] Fallback gpt-4o-mini fallÛ:", fastErr.message);
                     }
                 }
 
                 // Si todos los intentos fallaron, devolver error claro y amigable
                 if (lastErr && lastErr.message && (lastErr.message.includes('Failed to fetch') || lastErr.message.includes('NetworkError'))) {
-                    throw new Error(`No se pudo conectar con el servidor de an√°lisis cl√≠nico (${stageName}). Esto ocurre si la conexi√≥n a internet es inestable, si hay un bloqueador de red o si el servidor tard√≥ demasiado. Por favor verifica tu conexi√≥n y presiona de nuevo.`);
+                    throw new Error(`No se pudo conectar con el servidor de an·lisis clÌnico (${stageName}). Esto ocurre si la conexiÛn a internet es inestable, si hay un bloqueador de red o si el servidor tardÛ demasiado. Por favor verifica tu conexiÛn y presiona de nuevo.`);
                 }
-                throw lastErr || new Error(`Error de comunicaci√≥n en ${stageName}`);
+                throw lastErr || new Error(`Error de comunicaciÛn en ${stageName}`);
             };
 
             const payload1 = {
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: `Genera la FORMULACI√ìN CL√çNICA DE CASO en Modo Grafo Funcional (EXACTAMENTE entre 20 y 24 nodos nucleares y entre 32 y 48 conexiones) basada en el An√°lisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
+                    { role: 'user', content: `Genera la FORMULACI”N CLÕNICA DE CASO en Modo Grafo Funcional (EXACTAMENTE entre 20 y 24 nodos nucleares y entre 32 y 48 conexiones) basada en el An·lisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
 REGLAS ESENCIALES:
 - EXACTAMENTE entre 20 y 24 nodos nucleares estructurados en los 5 pilares funcionales:
-  1. Contexto & Detonantes (4-5 nodos: historical/social, clinical_role: 'antecedent')
-  2. Pensamientos & Creencias Nucleares (4-5 nodos: cognitive, clinical_role: 'cognitive')
-  3. Activaci√≥n Som√°tica & Emocional (3-4 nodos: physiological/biological, clinical_role: 'physiological')
-  4. Conductas de Evitaci√≥n & Escape (4-5 nodos: motor, clinical_role: 'motor')
-  5. Trampa de Mantenimiento & Costos (4-5 nodos: consequence, clinical_role: 'consequence')
+  1. Contexto & Operaciones Motivacionales (3-4 nodos: historical/social, clinical_role: 'context')
+  2. EstÌmulos Discriminativos (3-4 nodos: antecedent, clinical_role: 'antecedent')
+  3. Eventos Privados (4-5 nodos: cognitive/physiological, clinical_role: 'cognitive')
+  
+  4. Respuesta Operante (4-5 nodos: motor, clinical_role: 'motor')
+  5. Consecuencias (3-4 nodos: consequence, clinical_role: 'consequence')
+  6. FunciÛn del Bucle (2-3 nodos: function, clinical_role: 'function')
 - EXACTAMENTE entre 32 y 48 conexiones funcionales formando bucles cerrados de mantenimiento.
 - CERO PIVOTES O CONSEJOS INVENTADOS: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:". No inventes metas de coaching. Diagrama con absoluta fidelidad lo que el paciente realmente vive, piensa, siente en su cuerpo, hace y las consecuencias que lo mantienen atrapado.
-- CERO ALUCINACIONES: NUNCA inventes eventos biogr√°ficos no dichos (maltrato, violencia, divorcio) ni diagn√≥sticos m√©dicos o som√°ticos no referidos.
+- CERO ALUCINACIONES: NUNCA inventes eventos biogr·ficos no dichos (maltrato, violencia, divorcio) ni diagnÛsticos mÈdicos o som·ticos no referidos.
 - Cada nodo con su 'clinical_role', 'label' certero (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
-Datos cl√≠nicos del paciente:\n` + context }
+Datos clÌnicos del paciente:\n` + context }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.2
@@ -4351,10 +4390,10 @@ Datos cl√≠nicos del paciente:\n` + context }
 
             let parsedTopology;
             try {
-                const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topolog√≠a", 6500);
+                const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: TopologÌa", 6500);
                 parsedTopology = safeJSONParse(raw1);
             } catch(e) {
-                console.warn("[AFC] Etapa 1 de topolog√≠a no complet√≥ por red o IA. Ensamblando formulaci√≥n cl√≠nica de 5 columnas basada en datos del consultante:", e.message);
+                console.warn("[AFC] Etapa 1 de topologÌa no completÛ por red o IA. Ensamblando formulaciÛn clÌnica de 5 columnas basada en datos del consultante:", e.message);
                 parsedTopology = generateUniversalTopologyFromClinicalData(user, bioData, phenomData, pidData, clinicianNotesText);
             }
 
@@ -4370,7 +4409,7 @@ Datos cl√≠nicos del paciente:\n` + context }
             if (!Array.isArray(parsedTopology.nodes)) parsedTopology.nodes = [];
             if (!Array.isArray(parsedTopology.edges)) parsedTopology.edges = [];
             
-            // Sanitizar de inmediato los nodos para desinfectar cualquier etiqueta o s√≠ntoma alucinado y eliminar pivotes
+            // Sanitizar de inmediato los nodos para desinfectar cualquier etiqueta o sÌntoma alucinado y eliminar pivotes
             parsedTopology.nodes = parsedTopology.nodes
                 .filter(node => {
                     if (!node || !node.label) return false;
@@ -4379,21 +4418,21 @@ Datos cl√≠nicos del paciente:\n` + context }
                 })
                 .map(node => {
                     let cleanLabel = softenNodeLabel(node.label || '');
-                    if (/opresi[o√≥]n\s+tor[a√°]cica/i.test(cleanLabel)) cleanLabel = "Tensi√≥n por estr√©s";
+                    if (/opresi[oÛ]n\s+tor[a·]cica/i.test(cleanLabel)) cleanLabel = "TensiÛn por estrÈs";
                     if (/nudo\s+en\s+la\s+garganta/i.test(cleanLabel)) cleanLabel = "Incomodidad al expresarse";
-                    if (/respiraci[o√≥]n\s+corta/i.test(cleanLabel)) cleanLabel = "Inquietud y prisa";
-                    if (/inactividad\s+f[i√≠]sica/i.test(cleanLabel)) cleanLabel = "Pausa en las actividades";
-                    if (/alimentaci[o√≥]n\s+emocional/i.test(cleanLabel)) cleanLabel = "Comer por ansiedad";
+                    if (/respiraci[oÛ]n\s+corta/i.test(cleanLabel)) cleanLabel = "Inquietud y prisa";
+                    if (/inactividad\s+f[iÌ]sica/i.test(cleanLabel)) cleanLabel = "Pausa en las actividades";
+                    if (/alimentaci[oÛ]n\s+emocional/i.test(cleanLabel)) cleanLabel = "Comer por ansiedad";
                     if (/maltrato\s+materno|maltrato\s+paterno/i.test(cleanLabel)) cleanLabel = "Exigencia familiar del pasado";
-                    if (/violencia\s+familiar|violencia\s+intrafamiliar/i.test(cleanLabel)) cleanLabel = "Tensi√≥n familiar en la infancia";
+                    if (/violencia\s+familiar|violencia\s+intrafamiliar/i.test(cleanLabel)) cleanLabel = "TensiÛn familiar en la infancia";
                     if (/divorcio\s+de\s+padres/i.test(cleanLabel)) cleanLabel = "Separaciones del pasado";
 
                     let cleanDesc = (node.description || '');
-                    cleanDesc = cleanDesc.replace(/opresi[o√≥]n\s+tor[a√°]cica/gi, "tensi√≥n f√≠sica");
+                    cleanDesc = cleanDesc.replace(/opresi[oÛ]n\s+tor[a·]cica/gi, "tensiÛn fÌsica");
                     cleanDesc = cleanDesc.replace(/nudo\s+en\s+la\s+garganta/gi, "incomodidad al expresarse");
-                    cleanDesc = cleanDesc.replace(/respiraci[o√≥]n\s+corta/gi, "sensaci√≥n de prisa");
-                    cleanDesc = cleanDesc.replace(/alimentaci[o√≥]n\s+emocional/gi, "buscar alivio en la comida");
-                    cleanDesc = cleanDesc.replace(/inactividad\s+f[i√≠]sica/gi, "quedarse quieto sin avanzar");
+                    cleanDesc = cleanDesc.replace(/respiraci[oÛ]n\s+corta/gi, "sensaciÛn de prisa");
+                    cleanDesc = cleanDesc.replace(/alimentaci[oÛ]n\s+emocional/gi, "buscar alivio en la comida");
+                    cleanDesc = cleanDesc.replace(/inactividad\s+f[iÌ]sica/gi, "quedarse quieto sin avanzar");
 
                     const cleanNode = {
                         ...node,
@@ -4408,7 +4447,7 @@ Datos cl√≠nicos del paciente:\n` + context }
             const validNodeIds = new Set(parsedTopology.nodes.map(n => n.id));
             parsedTopology.edges = parsedTopology.edges.filter(e => e.source && e.target && e.source !== e.target && validNodeIds.has(e.source) && validNodeIds.has(e.target));
 
-            // Asegurar que se cierren los bucles funcionales de la formulaci√≥n si la densidad de edges es baja (< 32)
+            // Asegurar que se cierren los bucles funcionales de la formulaciÛn si la densidad de edges es baja (< 32)
             if (parsedTopology.nodes.length >= 10 && parsedTopology.edges.length < 32) {
                 const nodesByRole = {
                     antecedent: [],
@@ -4438,7 +4477,7 @@ Datos cl√≠nicos del paciente:\n` + context }
                     }
                 };
 
-                // 1. Antecedentes activan Pensamientos y/o Som√°tica
+                // 1. Antecedentes activan Pensamientos y/o Som·tica
                 (nodesByRole.antecedent || []).forEach((antId, i) => {
                     const targetCog = (nodesByRole.cognitive || [])[i % (nodesByRole.cognitive?.length || 1)];
                     if (targetCog) addEdgeSafe(antId, targetCog, 2);
@@ -4446,7 +4485,7 @@ Datos cl√≠nicos del paciente:\n` + context }
                     if (targetPhys && i % 2 === 0) addEdgeSafe(antId, targetPhys, 1);
                 });
 
-                // 2. Pensamientos activan Som√°tica y Conductas de Evitaci√≥n
+                // 2. Pensamientos activan Som·tica y Conductas de EvitaciÛn
                 (nodesByRole.cognitive || []).forEach((cogId, i) => {
                     const targetPhys = (nodesByRole.physiological || [])[i % (nodesByRole.physiological?.length || 1)];
                     if (targetPhys) addEdgeSafe(cogId, targetPhys, 2);
@@ -4454,13 +4493,13 @@ Datos cl√≠nicos del paciente:\n` + context }
                     if (targetMot) addEdgeSafe(cogId, targetMot, 2);
                 });
 
-                // 3. Activaci√≥n Som√°tica impulsa Conductas de Evitaci√≥n
+                // 3. ActivaciÛn Som·tica impulsa Conductas de EvitaciÛn
                 (nodesByRole.physiological || []).forEach((physId, i) => {
                     const targetMot = (nodesByRole.motor || [])[i % (nodesByRole.motor?.length || 1)];
                     if (targetMot) addEdgeSafe(physId, targetMot, 2);
                 });
 
-                // 4. Conductas de Evitaci√≥n conducen a Consecuencias (Alivio inmediato y Costos a largo plazo)
+                // 4. Conductas de EvitaciÛn conducen a Consecuencias (Alivio inmediato y Costos a largo plazo)
                 (nodesByRole.motor || []).forEach((motId, i) => {
                     const cons = nodesByRole.consequence || [];
                     if (cons.length > 0) {
@@ -4480,64 +4519,64 @@ Datos cl√≠nicos del paciente:\n` + context }
                 });
             }
 
-            setIsAnalyzing("Formulando hip√≥tesis cl√≠nicas y claves terap√©uticas (Etapa 2/2)...");
+            setIsAnalyzing("Formulando hipÛtesis clÌnicas y claves terapÈuticas (Etapa 2/2)...");
 
             const systemPromptInsights = `
-Eres un Psic√≥logo Cl√≠nico y Analista Existencial de Alto Nivel.
-ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la Etapa 1. Tu tarea es generar el an√°lisis escrito, hip√≥tesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
+Eres un PsicÛlogo ClÌnico y Analista Existencial de Alto Nivel.
+ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topologÌa del paciente generada en la Etapa 1. Tu tarea es generar el an·lisis escrito, hipÛtesis, puntos ciegos, patrones de dificultad y la firma de resonancia.
 
-=== REGLA DE TONO Y FIDELIDAD CL√çNICA ("HEY MIRA", NO "¬°¬°¬°HEY MIRA!!!") ===
-- Basa todo tu an√°lisis, hip√≥tesis y claves terap√©uticas EXCLUSIVAMENTE en la persona real del paciente (su historia, ocupaci√≥n real, vivencias y palabras). NUNCA asumas ni inventes conceptos no respaldados por sus datos.
-- Habla en un tono emp√°tico, ligero, l√∫cido y humano ("hey mira"), jam√°s acusatorio, hiperpatologizante ni catastr√≥fico ("¬°¬°¬°HEY MIRA!!!").
-- Evita jerga m√©dica intimidante o rimbombante.
+=== REGLA DE TONO Y FIDELIDAD CLÕNICA ("HEY MIRA", NO "°°°HEY MIRA!!!") ===
+- Basa todo tu an·lisis, hipÛtesis y claves terapÈuticas EXCLUSIVAMENTE en la persona real del paciente (su historia, ocupaciÛn real, vivencias y palabras). NUNCA asumas ni inventes conceptos no respaldados por sus datos.
+- Habla en un tono emp·tico, ligero, l˙cido y humano ("hey mira"), jam·s acusatorio, hiperpatologizante ni catastrÛfico ("°°°HEY MIRA!!!").
+- Evita jerga mÈdica intimidante o rimbombante.
 
 === ESTRUCTURA JSON REQUERIDA ===
-(CR√çTICO: Devuelve EXCLUSIVAMENTE un objeto JSON v√°lido)
+(CRÕTICO: Devuelve EXCLUSIVAMENTE un objeto JSON v·lido)
 {
   "firma_resonancia": {
-    "habitar": "Frase po√©tica pero cl√≠nica de m√°x. 12 palabras sobre c√≥mo la persona habita su cuerpo y espacio.",
-    "vinculo": "Frase de m√°x. 12 palabras sobre c√≥mo se conecta con otros o su barrera principal.",
-    "busqueda": "Frase de m√°x. 12 palabras sobre su anhelo existencial o motor oculto.",
+    "habitar": "Frase poÈtica pero clÌnica de m·x. 12 palabras sobre cÛmo la persona habita su cuerpo y espacio.",
+    "vinculo": "Frase de m·x. 12 palabras sobre cÛmo se conecta con otros o su barrera principal.",
+    "busqueda": "Frase de m·x. 12 palabras sobre su anhelo existencial o motor oculto.",
     "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   },
   "hypotheses": {
-    "mantenimiento": "An√°lisis cl√≠nico profundo (alrededor de 100 a 120 palabras, dividido en 2 p√°rrafos). Explica clara y fenomenol√≥gicamente c√≥mo el paciente perpet√∫a su bucle basado en sus vivencias reales.",
-    "solucion": "Propuesta estructurada (alrededor de 100 a 120 palabras, dividida en 2 p√°rrafos). Enfoque radical en la acci√≥n cl√≠nica y psicol√≥gica para romper el bucle."
+    "mantenimiento": "An·lisis clÌnico profundo (alrededor de 100 a 120 palabras, dividido en 2 p·rrafos). Explica clara y fenomenolÛgicamente cÛmo el paciente perpet˙a su bucle basado en sus vivencias reales.",
+    "solucion": "Propuesta estructurada (alrededor de 100 a 120 palabras, dividida en 2 p·rrafos). Enfoque radical en la acciÛn clÌnica y psicolÛgica para romper el bucle."
   },
-  "explicacion_sencilla": "Narraci√≥n emp√°tica y c√°lida (alrededor de 100 a 120 palabras, dividida en 2 p√°rrafos). Expl√≠cale c√≥mo funciona su bucle habl√°ndole directamente de 't√∫', conectando con sus experiencias reales.",
-  "claves_salida": "3 a 4 consejos pr√°cticos y cotidianos (en tono cercano de 't√∫'), separados por saltos de l√≠nea y comenzando con un guion (- consejo).",
+  "explicacion_sencilla": "NarraciÛn emp·tica y c·lida (alrededor de 100 a 120 palabras, dividida en 2 p·rrafos). ExplÌcale cÛmo funciona su bucle habl·ndole directamente de 't˙', conectando con sus experiencias reales.",
+  "claves_salida": "3 a 4 consejos pr·cticos y cotidianos (en tono cercano de 't˙'), separados por saltos de lÌnea y comenzando con un guion (- consejo).",
   "analysis_breakdown": {
-    "historical_evidence": "Evidencia hist√≥rica real del paciente.",
+    "historical_evidence": "Evidencia histÛrica real del paciente.",
     "mediators_evidence": "Evidencia de mediadores reales.",
     "conducts_evidence": "Evidencia de conductas reales.",
     "consequences_evidence": "Evidencia de consecuencias reales."
   },
   "blind_spots": [
-    // Entre 3 y 5 puntos ciegos cl√≠nicos personalizados que confronten con agudeza y empat√≠a
+    // Entre 3 y 5 puntos ciegos clÌnicos personalizados que confronten con agudeza y empatÌa
     // Cada punto ciego:
-    // - id: identificador √∫nico (ej. "vacio_vincular")
-    // - title: t√≠tulo de la brecha (m√°x. 6 palabras)
-    // - question: pregunta de confrontaci√≥n terap√©utica
+    // - id: identificador ˙nico (ej. "vacio_vincular")
+    // - title: tÌtulo de la brecha (m·x. 6 palabras)
+    // - question: pregunta de confrontaciÛn terapÈutica
     // - node: { id: "blind_spot_1", type: "dashed", label: "Nombre brecha", x: 50, y: 50 }
     // - edge: { source: "n1", target: "blind_spot_1", weight: 2, type: "unidirectional" } (usa IDs existentes de la etapa 1)
   ],
   "patrones_dificultad": [
-    // 1 a 2 patrones o circuitos cl√≠nicos clave identificados
-    // - id: string √∫nico
-    // - nombre: t√≠tulo cort√≠simo del ciclo (m√°ximo 4 palabras)
-    // - clave_salida: un consejo pr√°ctico y espec√≠fico para flexibilizar este circuito (m√°ximo 25 palabras)
+    // 1 a 2 patrones o circuitos clÌnicos clave identificados
+    // - id: string ˙nico
+    // - nombre: tÌtulo cortÌsimo del ciclo (m·ximo 4 palabras)
+    // - clave_salida: un consejo pr·ctico y especÌfico para flexibilizar este circuito (m·ximo 25 palabras)
   ]
 }
 `;
 
-            // Breve pausa para permitir al socket HTTP m√≥vil estabilizarse tras la etapa 1
+            // Breve pausa para permitir al socket HTTP mÛvil estabilizarse tras la etapa 1
             await new Promise(r => setTimeout(r, 450));
 
             const payload2 = {
                 model: 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: systemPromptInsights },
-                    { role: 'user', content: `Basado en los datos del paciente y esta topolog√≠a generada, redacta el an√°lisis profundo.\n\nDatos:\n${context}\n\nTopolog√≠a Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify((parsedTopology.nodes || []).map(n => ({ id: n.id, label: n.label, type: n.type })))}` }
+                    { role: 'user', content: `Basado en los datos del paciente y esta topologÌa generada, redacta el an·lisis profundo.\n\nDatos:\n${context}\n\nTopologÌa Generada (usa estos IDs para conectar tus patrones y puntos ciegos):\n${JSON.stringify((parsedTopology.nodes || []).map(n => ({ id: n.id, label: n.label, type: n.type })))}` }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.2
@@ -4545,10 +4584,10 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la
 
             let parsedInsights = null;
             try {
-                const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: An√°lisis Cl√≠nico", 2200);
+                const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: An·lisis ClÌnico", 2200);
                 parsedInsights = safeJSONParse(raw2);
             } catch(e) {
-                console.warn("[AFC] Etapa 2 de insights no complet√≥ por red. Ensamblando insights cl√≠nicos derivados de la topolog√≠a:", e.message);
+                console.warn("[AFC] Etapa 2 de insights no completÛ por red. Ensamblando insights clÌnicos derivados de la topologÌa:", e.message);
                 parsedInsights = generateFallbackInsightsFromTopology(parsedTopology, context, user);
             }
 
@@ -4580,9 +4619,9 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la
             setViewMode('dashboard');
         } catch (err) {
             console.error("Error generando AFC con IA:", err);
-            // Red de seguridad cl√≠nica universal: si ocurri√≥ un fallo inesperado, ensamblar formulaci√≥n directamente
+            // Red de seguridad clÌnica universal: si ocurriÛ un fallo inesperado, ensamblar formulaciÛn directamente
             try {
-                console.log("[AFC] Activando formulaci√≥n cl√≠nica de respaldo para", user);
+                console.log("[AFC] Activando formulaciÛn clÌnica de respaldo para", user);
                 const safeTopology = generateUniversalTopologyFromClinicalData(user, bioData, phenomData, pidData, clinicianNotesText);
                 const safeInsights = generateFallbackInsightsFromTopology(safeTopology, context, user);
                 const safeAfc = {
@@ -4597,8 +4636,8 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la
                 setSelectedBlindSpotIndex(0);
                 setViewMode('dashboard');
             } catch (fallbackErr) {
-                console.error("Error en formulaci√≥n cl√≠nica de respaldo:", fallbackErr);
-                alert("Ocurri√≥ un error al generar el an√°lisis funcional: " + err.message);
+                console.error("Error en formulaciÛn clÌnica de respaldo:", fallbackErr);
+                alert("OcurriÛ un error al generar el an·lisis funcional: " + err.message);
             }
         } finally {
             setIsAnalyzing(false);
@@ -4632,7 +4671,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la
                     if (keyUser === user) {
                         const answer = localStorage.getItem(key);
                         const question = localStorage.getItem(`oasis_blindspot_question_${user}__${spotId}`) || "Pregunta de punto ciego";
-                        const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || "Punto ciego cl√≠nico";
+                        const title = localStorage.getItem(`oasis_blindspot_title_${user}__${spotId}`) || "Punto ciego clÌnico";
                         if (answer) {
                             blindSpotAnswersContext += `- ${title} / Pregunta: "${question}" => Respuesta del paciente: "${answer}"\n`;
                         }
@@ -4645,27 +4684,27 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topolog√≠a del paciente generada en la
         const currentEdgesText = afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno";
 
         const systemPrompt = `
-Eres un Psic√≥logo Cl√≠nico y Analista Existencial de Nivel Experto.
-El paciente tiene un mapa conductual generado. Tu objetivo es generar EXACTAMENTE 10 Puntos Ciegos Cl√≠nicos (brechas anal√≠ticas) personalizados y profundos basados en la informaci√≥n existencial, biogr√°fica e integral del paciente.
+Eres un PsicÛlogo ClÌnico y Analista Existencial de Nivel Experto.
+El paciente tiene un mapa conductual generado. Tu objetivo es generar EXACTAMENTE 10 Puntos Ciegos ClÌnicos (brechas analÌticas) personalizados y profundos basados en la informaciÛn existencial, biogr·fica e integral del paciente.
 
 === INSTRUCCIONES ===
 1. Debes generar exactamente 10 elementos en la lista 'blind_spots' de tu JSON de salida.
-2. Cada punto ciego debe ser real, confrontativo, y proponer un nodo 'dashed' nuevo y una conexi√≥n para integrarlo al mapa conductual actual.
-3. Devuelve √∫nicamente el objeto JSON con la estructura:
+2. Cada punto ciego debe ser real, confrontativo, y proponer un nodo 'dashed' nuevo y una conexiÛn para integrarlo al mapa conductual actual.
+3. Devuelve ˙nicamente el objeto JSON con la estructura:
 {
   "blind_spots": [
      // Lista de exactamente 10 puntos ciegos
      // Cada uno tiene:
-     // - id: identificador √∫nico (ej. "vacio_cronologico").
-     // - title: t√≠tulo de la brecha.
-     // - question: la pregunta de confrontaci√≥n.
+     // - id: identificador ˙nico (ej. "vacio_cronologico").
+     // - title: tÌtulo de la brecha.
+     // - question: la pregunta de confrontaciÛn.
      // - node: el nodo "incompleto" o "dashed" propuesto: { id: "blind_spot_...", type, label, x, y }
-     // - edge: la conexi√≥n propuesta: { source, target, weight, type }
+     // - edge: la conexiÛn propuesta: { source, target, weight, type }
   ]
 }
 
 === DATOS DEL PACIENTE ===
-Diagn√≥stico Existencial: ${phenomData ? JSON.stringify(phenomData, null, 2) : "No hay datos."}
+DiagnÛstico Existencial: ${phenomData ? JSON.stringify(phenomData, null, 2) : "No hay datos."}
 Historia de Vida: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos."}
 Respuestas previas a puntos ciegos: ${blindSpotAnswersContext || "Ninguno."}
 Nodos actuales: ${currentNodesText}
@@ -4680,7 +4719,7 @@ Conexiones actuales: ${currentEdgesText}
                 model: model,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: "Por favor, genera un pool de exactamente 10 puntos ciegos cl√≠nicos reales y personalizados para mi perfil." }
+                    { role: 'user', content: "Por favor, genera un pool de exactamente 10 puntos ciegos clÌnicos reales y personalizados para mi perfil." }
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0.3,
@@ -4723,11 +4762,11 @@ Conexiones actuales: ${currentEdgesText}
                 setSelectedBlindSpotIndex(0);
                 alert("Se han generado 10 puntos ciegos personalizados con IA para tu perfil.");
             } else {
-                throw new Error("No se devolvi√≥ un pool v√°lido de puntos ciegos.");
+                throw new Error("No se devolviÛ un pool v·lido de puntos ciegos.");
             }
         } catch (err) {
             console.error("Error generating blind spots:", err);
-            alert("Ocurri√≥ un error al generar los puntos ciegos: " + err.message);
+            alert("OcurriÛ un error al generar los puntos ciegos: " + err.message);
         } finally {
             setIsGeneratingBlindSpots(false);
         }
@@ -4754,19 +4793,19 @@ Conexiones actuales: ${currentEdgesText}
             const currentEdgesText = afcData?.edges ? JSON.stringify(afcData.edges, null, 2) : "[]";
 
             const systemPrompt = `
-Eres un Psic√≥logo Cl√≠nico y Analista Existencial. El paciente te est√° compartiendo una actualizaci√≥n importante sobre su vida (avances, cambios, reca√≠das o logros).
-Tu tarea es actualizar su Mapa Conductual actual (An√°lisis Funcional). Puedes hacer dos cosas:
-1. A√ëADIR de 1 a 4 NUEVOS nodos que representen esta actualizaci√≥n y conectarlos al mapa existente.
-2. OPCIONALMENTE MODIFICAR los nodos existentes si la actualizaci√≥n implica que han cambiado (por ejemplo, si un mecanismo de defensa ya no se usa, o una creencia cognitiva cambi√≥). No elimines nodos, solo modif√≠calos si es absolutamente necesario para reflejar el avance.
+Eres un PsicÛlogo ClÌnico y Analista Existencial. El paciente te est· compartiendo una actualizaciÛn importante sobre su vida (avances, cambios, recaÌdas o logros).
+Tu tarea es actualizar su Mapa Conductual actual (An·lisis Funcional). Puedes hacer dos cosas:
+1. A—ADIR de 1 a 4 NUEVOS nodos que representen esta actualizaciÛn y conectarlos al mapa existente.
+2. OPCIONALMENTE MODIFICAR los nodos existentes si la actualizaciÛn implica que han cambiado (por ejemplo, si un mecanismo de defensa ya no se usa, o una creencia cognitiva cambiÛ). No elimines nodos, solo modifÌcalos si es absolutamente necesario para reflejar el avance.
 
-Devuelve √öNICAMENTE un objeto JSON con este formato exacto:
+Devuelve ⁄NICAMENTE un objeto JSON con este formato exacto:
 {
   "new_nodes": [
     {
       "id": "update_123",
       "type": "consequence", // puede ser historical, biological, social, cognitive, motor, physiological, consequence
-      "label": "T√≠tulo corto",
-      "description": "An√°lisis de este nuevo estado o avance",
+      "label": "TÌtulo corto",
+      "description": "An·lisis de este nuevo estado o avance",
       "challenge": "El reto existencial superado o a futuro",
       "x": 80, // coordenada X sugerida (0 a 100)
       "y": 80  // coordenada Y sugerida (-100 a 200)
@@ -4775,8 +4814,8 @@ Devuelve √öNICAMENTE un objeto JSON con este formato exacto:
   "modified_nodes": [
     {
       "id": "id_del_nodo_existente", // Debe coincidir exactamente con el ID de un nodo existente en el mapa
-      "label": "Nuevo t√≠tulo (si cambi√≥)",
-      "description": "Nueva descripci√≥n reflejando el cambio o avance",
+      "label": "Nuevo tÌtulo (si cambiÛ)",
+      "description": "Nueva descripciÛn reflejando el cambio o avance",
       "challenge": "Nuevo reto existencial (si aplica)"
     }
   ],
@@ -4788,14 +4827,14 @@ Devuelve √öNICAMENTE un objeto JSON con este formato exacto:
       "type": "progression"
     }
   ],
-  "mensaje_terapeutico": "Un mensaje emp√°tico, profundo y validante de 1 p√°rrafo para el paciente sobre su actualizaci√≥n."
+  "mensaje_terapeutico": "Un mensaje emp·tico, profundo y validante de 1 p·rrafo para el paciente sobre su actualizaciÛn."
 }
 
 MAPA ACTUAL:
 Nodos: ${currentNodesText}
 Conexiones: ${currentEdgesText}
 
-ACTUALIZACI√ìN DEL PACIENTE:
+ACTUALIZACI”N DEL PACIENTE:
 "${lifeUpdateText}"
 `;
 
@@ -4849,16 +4888,16 @@ ACTUALIZACI√ìN DEL PACIENTE:
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updatedAfc));
                 
                 if (parsed.mensaje_terapeutico) {
-                    alert("Mensaje Terap√©utico:\n\n" + parsed.mensaje_terapeutico);
+                    alert("Mensaje TerapÈutico:\n\n" + parsed.mensaje_terapeutico);
                 }
                 setLifeUpdateText("");
                 setMapViewTab('map');
             } else {
-                throw new Error("El modelo no devolvi√≥ nodos nuevos.");
+                throw new Error("El modelo no devolviÛ nodos nuevos.");
             }
         } catch (err) {
             console.error(err);
-            alert("Ocurri√≥ un error al procesar tu avance: " + err.message);
+            alert("OcurriÛ un error al procesar tu avance: " + err.message);
         } finally {
             setIsUpdatingMap(false);
         }
@@ -4878,9 +4917,9 @@ ACTUALIZACI√ìN DEL PACIENTE:
 
             const prompt = `
 Eres un psicoterapeuta avanzado analizando la Historia de Vida de un paciente.
-A continuaci√≥n te presento sus respuestas a la entrevista biogr√°fica.
-Para cada respuesta proporcionada, genera 2 o 3 preguntas estrat√©gicas de exploraci√≥n profunda (preguntas que sirvan para sacar a flote nuevos puntos de la historia cl√≠nica en la sesi√≥n, explorar defensas o investigar el origen del s√≠ntoma).
-Devuelve el resultado como un JSON donde las claves son exactamente los mismos √≠ndices (0, 1, 2...) de las preguntas respondidas, y el valor es un arreglo de strings (las preguntas de exploraci√≥n).
+A continuaciÛn te presento sus respuestas a la entrevista biogr·fica.
+Para cada respuesta proporcionada, genera 2 o 3 preguntas estratÈgicas de exploraciÛn profunda (preguntas que sirvan para sacar a flote nuevos puntos de la historia clÌnica en la sesiÛn, explorar defensas o investigar el origen del sÌntoma).
+Devuelve el resultado como un JSON donde las claves son exactamente los mismos Ìndices (0, 1, 2...) de las preguntas respondidas, y el valor es un arreglo de strings (las preguntas de exploraciÛn).
 
 === RESPUESTAS DEL PACIENTE ===
 ${Object.entries(bioData).map(([idx, text]) => `[Pregunta ${idx}] ${BIO_QUESTIONS[idx]?.text}:\n${text}`).join('\n\n')}
@@ -4897,7 +4936,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                     payload: {
                         model: model,
                         messages: [
-                            { role: 'system', content: "Genera JSON con preguntas estrat√©gicas de exploraci√≥n cl√≠nica." },
+                            { role: 'system', content: "Genera JSON con preguntas estratÈgicas de exploraciÛn clÌnica." },
                             { role: 'user', content: prompt }
                         ],
                         response_format: { type: "json_object" },
@@ -4907,7 +4946,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 })
             });
 
-            if (!res.ok) throw new Error("Error en la generaci√≥n de preguntas.");
+            if (!res.ok) throw new Error("Error en la generaciÛn de preguntas.");
             const data = await res.json();
             const aiContent = data.choices[0].message.content;
             let cleanContent = aiContent.trim();
@@ -4921,7 +4960,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             
         } catch (err) {
             console.error(err);
-            alert("Ocurri√≥ un error al generar las preguntas estrat√©gicas.");
+            alert("OcurriÛ un error al generar las preguntas estratÈgicas.");
         } finally {
             setIsGeneratingBioQuestions(false);
         }
@@ -4953,17 +4992,17 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
-            const replyPrompt = `Eres un psicoterapeuta cl√≠nico humano, emp√°tico, reflexivo y de profunda agudeza psicol√≥gica.
-El paciente est√° realizando una introspecci√≥n consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripci√≥n: ${currentNode.description || 'N/A'}).
+            const replyPrompt = `Eres un psicoterapeuta clÌnico humano, emp·tico, reflexivo y de profunda agudeza psicolÛgica.
+El paciente est· realizando una introspecciÛn consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, DescripciÛn: ${currentNode.description || 'N/A'}).
 
-Historial de esta reflexi√≥n:
+Historial de esta reflexiÛn:
 ${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
 
-INSTRUCCIONES CL√çNICAS:
-1. Responde de forma c√°lida, humana y sumamente perspicaz a lo que el paciente acaba de expresar.
-2. Devuelve UNA SOLA reflexi√≥n o devoluci√≥n cl√≠nica profunda (m√°ximo 2 a 3 oraciones en un √∫nico p√°rrafo fluido).
-3. Conecta su sentir con la ra√≠z o funci√≥n del patr√≥n sin usar vi√±etas, sin t√≠tulos, sin encabezados ni subdivisiones.
-4. NUNCA uses clich√©s, frases rob√≥ticas ni explicaciones te√≥ricas aburridas.`;
+INSTRUCCIONES CLÕNICAS:
+1. Responde de forma c·lida, humana y sumamente perspicaz a lo que el paciente acaba de expresar.
+2. Devuelve UNA SOLA reflexiÛn o devoluciÛn clÌnica profunda (m·ximo 2 a 3 oraciones en un ˙nico p·rrafo fluido).
+3. Conecta su sentir con la raÌz o funciÛn del patrÛn sin usar viÒetas, sin tÌtulos, sin encabezados ni subdivisiones.
+4. NUNCA uses clichÈs, frases robÛticas ni explicaciones teÛricas aburridas.`;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
@@ -4990,7 +5029,7 @@ INSTRUCCIONES CL√çNICAS:
                     [currentNode.id]: [...updatedChat, { role: 'assistant', content: aiReply, isAIGenerated: true }]
                 }));
             } else {
-                throw new Error("Respuesta vac√≠a");
+                throw new Error("Respuesta vacÌa");
             }
         } catch (err) {
             console.error("AI reply error:", err);
@@ -5014,7 +5053,7 @@ INSTRUCCIONES CL√çNICAS:
         
         let globalContext = "=== RESPUESTAS EXPLORADAS (MAPA DE NODOS) ===\n";
         if (afcData && afcData.nodes && nodeChats) {
-            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'Integraci√≥n'];
+            const threadLabels = ['Historia', 'Relaciones', 'Cuerpo', 'Valores', 'Conductas', 'Experimentos', 'IntegraciÛn'];
             afcData.nodes.forEach(node => {
                 const chats = nodeChats[node.id];
                 if (chats) {
@@ -5035,25 +5074,25 @@ INSTRUCCIONES CL√çNICAS:
             });
         }
 
-        const systemPrompt = `Eres un Experto en Conceptualizaci√≥n Cl√≠nica y An√°lisis Existencial.
-Tu objetivo es realizar una "Reformulaci√≥n Cl√≠nica" del caso del paciente bas√°ndote en la informaci√≥n original Y en las nuevas exploraciones detalladas de su mapa de nodos.
+        const systemPrompt = `Eres un Experto en ConceptualizaciÛn ClÌnica y An·lisis Existencial.
+Tu objetivo es realizar una "ReformulaciÛn ClÌnica" del caso del paciente bas·ndote en la informaciÛn original Y en las nuevas exploraciones detalladas de su mapa de nodos.
 
 === INFORME ORIGINAL DEL PACIENTE ===
-Diagn√≥stico: ${phenomData ? JSON.stringify(phenomData) : "No hay datos"}
-Biograf√≠a: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos"}
+DiagnÛstico: ${phenomData ? JSON.stringify(phenomData) : "No hay datos"}
+BiografÌa: ${bioData ? BIO_QUESTIONS.map((q, i) => `${q.text}: ${bioData[i] || ""}`).join('\n') : "No hay datos"}
 
 === NUEVAS EXPLORACIONES (MAPA DE NODOS) ===
 ${globalContext}
 
 === INSTRUCCIONES ===
-Analiza c√≥mo las nuevas respuestas del paciente (en la secci√≥n NUEVAS EXPLORACIONES) matizan, cambian o profundizan el entendimiento del caso original.
-Genera un documento estructurado de Conceptualizaci√≥n de Caso Actualizada que contenga:
-1. "titulo": T√≠tulo breve de la reformulaci√≥n.
-2. "sintesis": Un resumen de c√≥mo ha cambiado la comprensi√≥n del caso (2 o 3 p√°rrafos de redacci√≥n experta).
+Analiza cÛmo las nuevas respuestas del paciente (en la secciÛn NUEVAS EXPLORACIONES) matizan, cambian o profundizan el entendimiento del caso original.
+Genera un documento estructurado de ConceptualizaciÛn de Caso Actualizada que contenga:
+1. "titulo": TÌtulo breve de la reformulaciÛn.
+2. "sintesis": Un resumen de cÛmo ha cambiado la comprensiÛn del caso (2 o 3 p·rrafos de redacciÛn experta).
 3. "hallazgos": Una lista de 3 a 5 hallazgos clave descubiertos en las respuestas de los nodos.
-4. "citas_clave": 2 o 3 citas textuales del paciente (extra√≠das de las NUEVAS EXPLORACIONES) que fueron reveladoras, con una breve explicaci√≥n de su impacto cl√≠nico.
+4. "citas_clave": 2 o 3 citas textuales del paciente (extraÌdas de las NUEVAS EXPLORACIONES) que fueron reveladoras, con una breve explicaciÛn de su impacto clÌnico.
 
-Devuelve √öNICAMENTE un objeto JSON con esta estructura:
+Devuelve ⁄NICAMENTE un objeto JSON con esta estructura:
 {
   "titulo": "string",
   "sintesis": "string",
@@ -5082,7 +5121,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                 body: JSON.stringify({ provider: 'openai', endpoint: null, key: activeKey, payload: payload })
             });
 
-            if (!res.ok) throw new Error("Error en la petici√≥n a DeepSeek");
+            if (!res.ok) throw new Error("Error en la peticiÛn a DeepSeek");
             const data = await res.json();
             const content = data.choices[0].message.content.trim();
             let cleanContent = content;
@@ -5096,7 +5135,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
             setReformulationExpanded(true);
         } catch (err) {
             console.error(err);
-            alert("Error al generar la reformulaci√≥n cl√≠nica.");
+            alert("Error al generar la reformulaciÛn clÌnica.");
         } finally {
             setIsGeneratingReformulation(false);
         }
@@ -5253,7 +5292,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
         if (!container) return;
 
         const handleWheel = (e) => {
-            e.preventDefault(); // Bloquear el scroll de la p√°gina completa
+            e.preventDefault(); // Bloquear el scroll de la p·gina completa
             const scaleChange = e.deltaY * -0.0012;
             const prev = transformRef.current;
             const rect = container.getBoundingClientRect();
@@ -5569,7 +5608,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
             const current = transformRef.current;
             const prevScale = current.scale;
 
-            // Factor de zoom fluido seg√∫n el giro de la rueda
+            // Factor de zoom fluido seg˙n el giro de la rueda
             const zoomDelta = -e.deltaY * 0.0018;
             const minScale = window.innerWidth < 768 ? 0.08 : 0.15;
             const maxScale = 4.0;
@@ -5629,10 +5668,10 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                         <div>
                             <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                <FileText className="w-5 h-5" /> Formulaci√≥n de Caso Contextual
+                                <FileText className="w-5 h-5" /> FormulaciÛn de Caso Contextual
                             </h3>
                             <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
-                                Un informe cl√≠nico profesional y estructurado (ACT / An√°lisis Funcional) redactado por Kio con base en todos tus bucles y respuestas.
+                                Un informe clÌnico profesional y estructurado (ACT / An·lisis Funcional) redactado por Kio con base en todos tus bucles y respuestas.
                             </p>
                         </div>
                         <button
@@ -5660,7 +5699,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         type="text"
                                         value={improvementPrompt}
                                         onChange={(e) => setImprovementPrompt(e.target.value)}
-                                        placeholder="Ej: Cambia las t√©cnicas a modelo experiencial multimodal..."
+                                        placeholder="Ej: Cambia las tÈcnicas a modelo experiencial multimodal..."
                                         className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !isImprovingReport) {
@@ -5700,16 +5739,16 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                 
                 {/* AUTO-GENERATE BUTTON (Legacy Data) */}
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Datos Cl√≠nicos Desglosados</h3>
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Datos ClÌnicos Desglosados</h3>
                     <button
                         onClick={generateDynamicTraits}
                         disabled={isGeneratingDynamicTraits}
                         className="px-4 py-2 bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-widest rounded-lg border border-indigo-500/30 hover:bg-indigo-500/30 transition-all flex items-center gap-2"
                     >
                         {isGeneratingDynamicTraits ? (
-                            <><Aperture className="w-4 h-4 animate-spin" /> Analizando M√≥dulos...</>
+                            <><Aperture className="w-4 h-4 animate-spin" /> Analizando MÛdulos...</>
                         ) : (
-                            <><Sparkles className="w-4 h-4" /> Auto-Generar An√°lisis Profundo</>
+                            <><Sparkles className="w-4 h-4" /> Auto-Generar An·lisis Profundo</>
                         )}
                     </button>
                 </div>
@@ -5724,10 +5763,10 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                         </div>
                         <details className="mt-2 group">
         <summary className="text-[11px] text-zinc-500 cursor-pointer list-none flex items-center gap-1 hover:text-zinc-300 transition-colors">
-            <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" /> Dudas, rumiaci√≥n y autocr√≠tica...
+            <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" /> Dudas, rumiaciÛn y autocrÌtica...
         </summary>
         <div className="mt-2 text-xs text-zinc-300 leading-relaxed opacity-90 whitespace-pre-wrap pl-1 border-l border-white/10">
-            {treatmentPlan?.dynamicTraits?.malestarCognitivo || 'Haz clic en "Auto-Generar An√°lisis Profundo" para obtener la redacci√≥n cl√≠nica.'}
+            {treatmentPlan?.dynamicTraits?.malestarCognitivo || 'Haz clic en "Auto-Generar An·lisis Profundo" para obtener la redacciÛn clÌnica.'}
         </div>
     </details>
                         <div className="w-full bg-white/5 h-1 rounded-full mt-3 overflow-hidden">
@@ -5746,7 +5785,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
             <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" /> Evitaciones y conductas de escape...
         </summary>
         <div className="mt-2 text-xs text-zinc-300 leading-relaxed opacity-90 whitespace-pre-wrap pl-1 border-l border-white/10">
-            {treatmentPlan?.dynamicTraits?.malestarMotor || 'Haz clic en "Auto-Generar An√°lisis Profundo" para obtener la redacci√≥n cl√≠nica.'}
+            {treatmentPlan?.dynamicTraits?.malestarMotor || 'Haz clic en "Auto-Generar An·lisis Profundo" para obtener la redacciÛn clÌnica.'}
         </div>
     </details>
                         <div className="w-full bg-white/5 h-1 rounded-full mt-3 overflow-hidden">
@@ -5755,17 +5794,17 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                     </div>
 
                     <div className="bg-zinc-950/40 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 block mb-1">Malestar Fisiol√≥gico</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 block mb-1">Malestar FisiolÛgico</span>
                         <div className="flex items-baseline gap-2">
                             <span className="text-3xl font-black text-emerald-400">{afcData?.tripleModality?.physiological || 0}%</span>
-                            <span className="text-[10px] text-zinc-400 font-medium">Activaci√≥n</span>
+                            <span className="text-[10px] text-zinc-400 font-medium">ActivaciÛn</span>
                         </div>
                         <details className="mt-2 group">
         <summary className="text-[11px] text-zinc-500 cursor-pointer list-none flex items-center gap-1 hover:text-zinc-300 transition-colors">
-            <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" /> Tensi√≥n, insomnio y respuesta f√≠sica...
+            <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" /> TensiÛn, insomnio y respuesta fÌsica...
         </summary>
         <div className="mt-2 text-xs text-zinc-300 leading-relaxed opacity-90 whitespace-pre-wrap pl-1 border-l border-white/10">
-            {treatmentPlan?.dynamicTraits?.malestarFisiologico || 'Haz clic en "Auto-Generar An√°lisis Profundo" para obtener la redacci√≥n cl√≠nica.'}
+            {treatmentPlan?.dynamicTraits?.malestarFisiologico || 'Haz clic en "Auto-Generar An·lisis Profundo" para obtener la redacciÛn clÌnica.'}
         </div>
     </details>
                         <div className="w-full bg-white/5 h-1 rounded-full mt-3 overflow-hidden">
@@ -5785,7 +5824,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                 {pidIndices ? `${Math.round(Object.entries(pidIndices.raw).sort((a, b) => b[1] - a[1])[0][1] * 100)}%` : ""}
                             </span>
                         </div>
-                        <p className="text-[11px] text-zinc-500 mt-2 font-mono">Dimensi√≥n con mayor puntaje.</p>
+                        <p className="text-[11px] text-zinc-500 mt-2 font-mono">DimensiÛn con mayor puntaje.</p>
                         <div className="w-full bg-white/5 h-1 rounded-full mt-3 overflow-hidden">
                             <div className="bg-violet-400 h-full rounded-full" style={{ width: `${pidIndices ? (Object.entries(pidIndices.raw).sort((a, b) => b[1] - a[1])[0][1] * 100) : 0}%` }} />
                         </div>
@@ -5814,15 +5853,15 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                             </div>
                             <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
                                 <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">üåç</span> Habitar</span>
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">??</span> Habitar</span>
                                     <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.habitar}"</p>
                                 </div>
                                 <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">üîó</span> V√≠nculo</span>
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">??</span> VÌnculo</span>
                                     <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.vinculo}"</p>
                                 </div>
                                 <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">üß≠</span> B√∫squeda</span>
+                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">??</span> B˙squeda</span>
                                     <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.busqueda}"</p>
                                 </div>
                             </div>
@@ -5832,36 +5871,36 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
 
                 {/* 3. MAIN DASHBOARD CONTENT */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                    {/* COLUMNA IZQUIERDA (8 columnas): Hip√≥tesis y Desglose */}
+                    {/* COLUMNA IZQUIERDA (8 columnas): HipÛtesis y Desglose */}
                     <div className="xl:col-span-8 space-y-6">
 
-                        {/* CARD 1: Hip√≥tesis de Diagn√≥stico */}
+                        {/* CARD 1: HipÛtesis de DiagnÛstico */}
                         {afcData && afcData.hypotheses && (
                             <div className="bg-zinc-950/40 border border-white/5 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-6 opacity-[0.02] pointer-events-none"><ShieldAlert size={140} /></div>
-                                <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-5 flex items-center gap-2"><ShieldAlert className="text-rose-400" size={16} /> Hip√≥tesis Cl√≠nicas de Diagn√≥stico</h2>
+                                <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-5 flex items-center gap-2"><ShieldAlert className="text-rose-400" size={16} /> HipÛtesis ClÌnicas de DiagnÛstico</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="bg-rose-500/5 p-5 rounded-2xl border border-rose-500/10 flex flex-col justify-between">
                                         <div>
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-3 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" /> Hip√≥tesis de Mantenimiento
+                                                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" /> HipÛtesis de Mantenimiento
                                             </h3>
                                             <p className="text-xs text-zinc-300 leading-relaxed font-sans">{afcData.hypotheses.mantenimiento || 'Sin datos de mantenimiento.'}</p>
                                         </div>
                                         <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap gap-1.5">
                                             <span className="px-2 py-0.5 rounded bg-rose-500/10 text-[9px] font-mono text-rose-300 uppercase">Ciclo Vicioso</span>
-                                            <span className="px-2 py-0.5 rounded bg-rose-500/10 text-[9px] font-mono text-rose-300 uppercase">Evitaci√≥n</span>
+                                            <span className="px-2 py-0.5 rounded bg-rose-500/10 text-[9px] font-mono text-rose-300 uppercase">EvitaciÛn</span>
                                         </div>
                                     </div>
                                     <div className="bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10 flex flex-col justify-between">
                                         <div>
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Hip√≥tesis de Soluci√≥n
+                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> HipÛtesis de SoluciÛn
                                             </h3>
-                                            <p className="text-xs text-zinc-300 leading-relaxed font-sans">{afcData.hypotheses.solucion || 'Sin datos de soluci√≥n.'}</p>
+                                            <p className="text-xs text-zinc-300 leading-relaxed font-sans">{afcData.hypotheses.solucion || 'Sin datos de soluciÛn.'}</p>
                                         </div>
                                         <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap gap-1.5">
-                                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-[9px] font-mono text-emerald-300 uppercase">Intervenci√≥n</span>
+                                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-[9px] font-mono text-emerald-300 uppercase">IntervenciÛn</span>
                                             <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-[9px] font-mono text-emerald-300 uppercase">Reencuadre</span>
                                         </div>
                                     </div>
@@ -5869,22 +5908,22 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                             </div>
                         )}
 
-                        {/* CARD 2: Desglose Cl√≠nico */}
+                        {/* CARD 2: Desglose ClÌnico */}
                         <div className="bg-zinc-950/40 border border-white/5 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-6 opacity-[0.02] pointer-events-none"><Brain size={140} /></div>
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-5 flex items-center gap-2"><Brain className="text-accent" size={16} /> Desglose del An√°lisis Cl√≠nico</h2>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-5 flex items-center gap-2"><Brain className="text-accent" size={16} /> Desglose del An·lisis ClÌnico</h2>
 
                             {afcData && afcData.is_valid === false ? (
                                 <div className="flex flex-col items-center justify-center py-10 text-center">
                                     <ShieldAlert className="text-rose-500 mb-4" size={32} />
-                                    <h3 className="text-rose-400 font-medium mb-2">An√°lisis Cl√≠nico Denegado</h3>
+                                    <h3 className="text-rose-400 font-medium mb-2">An·lisis ClÌnico Denegado</h3>
                                     <p className="text-xs text-zinc-400 max-w-lg mx-auto leading-relaxed">{afcData.rejection_reason}</p>
                                 </div>
                             ) : afcData && afcData.analysis_breakdown ? (
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-black/30 p-5 rounded-2xl border border-blue-500/5 hover:border-blue-500/20 transition-all">
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rotate-45" /> Evidencia Hist√≥rica</h3>
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-3 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rotate-45" /> Evidencia HistÛrica</h3>
                                             <p className="text-xs text-zinc-300 leading-relaxed font-sans">{afcData.analysis_breakdown.historical_evidence}</p>
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-emerald-500/5 hover:border-emerald-500/20 transition-all">
@@ -5904,7 +5943,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-10 text-center">
                                     <Activity className="text-zinc-600 mb-4" size={32} />
-                                    <h3 className="text-zinc-400 font-medium mb-2">A√∫n no se ha generado un an√°lisis</h3>
+                                    <h3 className="text-zinc-400 font-medium mb-2">A˙n no se ha generado un an·lisis</h3>
                                 </div>
                             )}
                         </div>
@@ -5917,8 +5956,8 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                 
                                 <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <h2 className="text-sm font-black uppercase tracking-widest text-purple-400 mb-1 flex items-center gap-2"><Sparkles size={16} /> Plan de Tratamiento Cl√≠nico (IA)</h2>
-                                        <p className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Generaci√≥n automatizada de intervenciones</p>
+                                        <h2 className="text-sm font-black uppercase tracking-widest text-purple-400 mb-1 flex items-center gap-2"><Sparkles size={16} /> Plan de Tratamiento ClÌnico (IA)</h2>
+                                        <p className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">GeneraciÛn automatizada de intervenciones</p>
                                     </div>
                                     <button
                                         onClick={generateTreatmentPlan}
@@ -5930,7 +5969,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         }`}
                                     >
                                         {isGeneratingTreatmentPlan ? (
-                                            <><Activity className="w-3.5 h-3.5 animate-spin" /> Procesando Contexto Cl√≠nico...</>
+                                            <><Activity className="w-3.5 h-3.5 animate-spin" /> Procesando Contexto ClÌnico...</>
                                         ) : (
                                             <><Brain className="w-3.5 h-3.5" /> Generar Plan con IA</>
                                         )}
@@ -5941,7 +5980,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 md:col-span-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center justify-between">
-                                                Visi√≥n Cl√≠nica
+                                                VisiÛn ClÌnica
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.sessionAnalysis)}
@@ -5951,7 +5990,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 md:col-span-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-sky-400">
-                                                Preguntas Estrat√©gicas
+                                                Preguntas EstratÈgicas
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.strategicQuestions)}
@@ -5961,7 +6000,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 md:col-span-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-purple-400">
-                                                Objetivos Espec√≠ficos
+                                                Objetivos EspecÌficos
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.specificObjectives)}
@@ -5971,7 +6010,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-400">
-                                                Encadenamiento hacia Atr√°s
+                                                Encadenamiento hacia Atr·s
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.backwardChaining)}
@@ -5981,7 +6020,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-400">
-                                                Dise√±o de Exposici√≥n
+                                                DiseÒo de ExposiciÛn
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.exposureDesign)}
@@ -5991,7 +6030,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         </div>
                                         <div className="bg-black/30 p-5 rounded-2xl border border-white/5 space-y-2 md:col-span-2 group">
                                             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                                                Psicoeducaci√≥n
+                                                PsicoeducaciÛn
                                             </h3>
                                             <AutoResizeTextarea
                                                 value={formatTreatmentField(treatmentPlan.psychoeducation)}
@@ -6013,7 +6052,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                 ) : (
                                     <div className="mt-6 border border-dashed border-white/10 rounded-2xl py-12 flex flex-col items-center justify-center text-center">
                                         <Target className="text-zinc-600 mb-3" size={24} />
-                                        <p className="text-zinc-400 text-xs max-w-sm">A√∫n no se ha generado un plan de tratamiento. Presiona el bot√≥n de arriba para que la IA lo construya en base al informe actual.</p>
+                                        <p className="text-zinc-400 text-xs max-w-sm">A˙n no se ha generado un plan de tratamiento. Presiona el botÛn de arriba para que la IA lo construya en base al informe actual.</p>
                                     </div>
                                 )}
                             </div>
@@ -6021,11 +6060,11 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
 
                         {/* CARD 3: Transcripciones y Respuestas de Origen */}
                         <div className="bg-zinc-950/40 border border-white/5 rounded-[2rem] p-6 shadow-2xl">
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-4 flex items-center gap-2"><FileText size={16} /> Fuentes de Informaci√≥n y Respuestas Crudas</h2>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-4 flex items-center gap-2"><FileText size={16} /> Fuentes de InformaciÛn y Respuestas Crudas</h2>
                             <p className="text-xs text-zinc-500 mb-5 leading-relaxed">Registros originales y respuestas cualitativas recopiladas en las evaluaciones iniciales.</p>
 
                             <div className="space-y-4">
-                                {/* Diagn√≥stico Existencial Accordion */}
+                                {/* DiagnÛstico Existencial Accordion */}
                                 <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
                                     <div className="w-full flex items-center justify-between p-4 bg-zinc-950/20">
                                         <button
@@ -6033,7 +6072,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                             className="flex-1 flex items-center justify-between text-left hover:text-white transition-colors focus:outline-none"
                                         >
                                             <span className="text-[10px] font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Diagn√≥stico Existencial
+                                                <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> DiagnÛstico Existencial
                                             </span>
                                             <span className="text-zinc-500 hover:text-white transition-colors">
                                                 {phenomExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -6058,7 +6097,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                             {isEditingPhenom ? (
                                                 <div className="space-y-4">
                                                     <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Modo Edici√≥n Diagn√≥stico Existencial</span>
+                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Modo EdiciÛn DiagnÛstico Existencial</span>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => {
@@ -6085,9 +6124,9 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                     <div className="space-y-3">
                                                         {[
                                                             { key: 'antecedentes_origen', label: 'Antecedentes y Origen (Mecanismo y Origen)' },
-                                                            { key: 'experiencia_insuficiencia', label: 'Experiencia Ontol√≥gica de Insuficiencia' },
+                                                            { key: 'experiencia_insuficiencia', label: 'Experiencia OntolÛgica de Insuficiencia' },
                                                             { key: 'temporalidad_vivida', label: 'Temporalidad Vivida' },
-                                                            { key: 'premisa_realidad', label: 'Premisa Ontol√≥gica y Relaci√≥n con la Realidad' }
+                                                            { key: 'premisa_realidad', label: 'Premisa OntolÛgica y RelaciÛn con la Realidad' }
                                                         ].map((item) => (
                                                             <div key={item.key} className="bg-zinc-950/40 p-3.5 rounded-xl border border-white/5 flex flex-col gap-2">
                                                                 <span className="text-[9px] font-medium text-sky-300 leading-tight">{item.label}</span>
@@ -6099,7 +6138,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                                             [item.key]: e.target.value
                                                                         }));
                                                                     }}
-                                                                    placeholder="Ingrese la informaci√≥n aqu√≠..."
+                                                                    placeholder="Ingrese la informaciÛn aquÌ..."
                                                                     className="w-full bg-zinc-900/60 border border-white/5 rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-sky-500/50 transition-all min-h-[80px] resize-y font-sans leading-relaxed"
                                                                 />
                                                             </div>
@@ -6108,7 +6147,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                 </div>
                                             ) : !phenomData ? (
                                                 <div className="text-center py-6 space-y-4">
-                                                    <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">Este diagn√≥stico existencial no ha sido completado por el paciente.</p>
+                                                    <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">Este diagnÛstico existencial no ha sido completado por el paciente.</p>
                                                     {isEmbedded && (
                                                         <button
                                                             onClick={() => {
@@ -6117,7 +6156,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                             }}
                                                             className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all"
                                                         >
-                                                            Rellenar Diagn√≥stico Manual (Presencial)
+                                                            Rellenar DiagnÛstico Manual (Presencial)
                                                         </button>
                                                     )}
                                                 </div>
@@ -6125,9 +6164,9 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                 <div className="space-y-3">
                                                     {[
                                                         { key: 'antecedentes_origen', label: 'Antecedentes y Origen (Mecanismo y Origen)' },
-                                                        { key: 'experiencia_insuficiencia', label: 'Experiencia Ontol√≥gica de Insuficiencia' },
+                                                        { key: 'experiencia_insuficiencia', label: 'Experiencia OntolÛgica de Insuficiencia' },
                                                         { key: 'temporalidad_vivida', label: 'Temporalidad Vivida' },
-                                                        { key: 'premisa_realidad', label: 'Premisa Ontol√≥gica y Relaci√≥n con la Realidad' }
+                                                        { key: 'premisa_realidad', label: 'Premisa OntolÛgica y RelaciÛn con la Realidad' }
                                                     ].map((item) => {
                                                         const val = phenomData[item.key] || phenomData[item.label.toLowerCase()];
                                                         if (val === undefined || val === null) return null;
@@ -6186,7 +6225,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                             {isEditingBio ? (
                                                 <div className="space-y-4">
                                                     <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Modo Edici√≥n Cl√≠nico</span>
+                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Modo EdiciÛn ClÌnico</span>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => {
@@ -6222,7 +6261,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                                             [idx]: e.target.value
                                                                         }));
                                                                     }}
-                                                                    placeholder={q.placeholder || "Ingrese la respuesta aqu√≠..."}
+                                                                    placeholder={q.placeholder || "Ingrese la respuesta aquÌ..."}
                                                                     className="w-full bg-zinc-900/60 border border-white/5 rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-indigo-500/50 transition-all min-h-[80px] resize-y font-sans leading-relaxed"
                                                                 />
                                                             </div>
@@ -6252,10 +6291,10 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                                 <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
                                                                 <div>
                                                                     <span className="text-[10px] font-mono font-bold text-purple-300 uppercase tracking-wider block">
-                                                                        Fase II Desbloqueada: Pruebas de Cribaje Posteriores (Œ± &gt; 0.80)
+                                                                        Fase II Desbloqueada: Pruebas de Cribaje Posteriores (a &gt; 0.80)
                                                                     </span>
                                                                     <span className="text-[10px] text-zinc-400 font-sans">
-                                                                        El algoritmo ha seleccionado 3 instrumentos psicom√©tricos complementarios para este caso.
+                                                                        El algoritmo ha seleccionado 3 instrumentos psicomÈtricos complementarios para este caso.
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -6277,7 +6316,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                                     {isGeneratingBioQuestions ? (
                                                                         <><div className="w-2.5 h-2.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /> Analizando...</>
                                                                     ) : (
-                                                                        <><Sparkles size={11} /> Preguntas Estrat√©gicas</>
+                                                                        <><Sparkles size={11} /> Preguntas EstratÈgicas</>
                                                                     )}
                                                                 </button>
                                                             </div>
@@ -6297,12 +6336,12 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                                     <div className="mt-3 pt-3 border-t border-indigo-500/20 bg-indigo-950/10 rounded-lg p-3">
                                                                         <div className="flex items-center gap-2 mb-2">
                                                                             <Focus className="w-3.5 h-3.5 text-indigo-400" />
-                                                                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Preguntas Estrat√©gicas Generadas</span>
+                                                                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Preguntas EstratÈgicas Generadas</span>
                                                                         </div>
                                                                         <ul className="space-y-2">
                                                                             {Array.isArray(bioStrategicQuestions[idx]) && bioStrategicQuestions[idx].map((question, qIdx) => (
                                                                                 <li key={qIdx} className="text-[11px] text-indigo-200/90 font-serif italic leading-relaxed flex items-start gap-2">
-                                                                                    <span className="text-indigo-500 mt-0.5">√¢‚Ç¨¬¢</span>
+                                                                                    <span className="text-indigo-500 mt-0.5">‚Ä¢</span>
                                                                                     <span>{question}</span>
                                                                                 </li>
                                                                             ))}
@@ -6318,7 +6357,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                     )}
                                 </div>
 
-                                {/* Reformulaci√≥n Cl√≠nica Accordion */}
+                                {/* ReformulaciÛn ClÌnica Accordion */}
                                 <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
                                     <div className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-purple-900/10 to-transparent">
                                         <button
@@ -6326,7 +6365,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                             className="flex-1 flex items-center gap-2 text-left hover:text-white transition-colors focus:outline-none"
                                         >
                                             <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full" /> Reformulaci√≥n Cl√≠nica
+                                                <span className="w-1.5 h-1.5 bg-purple-400 rounded-full" /> ReformulaciÛn ClÌnica
                                             </span>
                                         </button>
                                         <div className="flex items-center gap-3">
@@ -6358,7 +6397,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                 <ul className="space-y-2 mt-2">
                                                     {reformulationData.hallazgos?.map((h, i) => (
                                                         <li key={i} className="text-[11px] text-zinc-400 leading-relaxed flex items-start gap-2">
-                                                            <span className="text-purple-500/50 mt-0.5">‚Ä¢</span>
+                                                            <span className="text-purple-500/50 mt-0.5">ï</span>
                                                             <span>{h}</span>
                                                         </li>
                                                     ))}
@@ -6400,7 +6439,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                     {blindSpotsExpanded && (
                                         <div className="p-4 border-t border-white/5 bg-black/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                                             {exploredNodes.length === 0 ? (
-                                                <p className="text-xs text-zinc-600 font-mono uppercase tracking-wider text-center py-4">Ninguna perspectiva explorada a√∫n.</p>
+                                                <p className="text-xs text-zinc-600 font-mono uppercase tracking-wider text-center py-4">Ninguna perspectiva explorada a˙n.</p>
                                             ) : (
                                                 <div className="space-y-4">
                                                     {exploredNodes.map((nodeData) => (
@@ -6434,14 +6473,14 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                 </div>
 
 
-                                {/* Observaciones Cl√≠nicas del Profesional Accordion */}
+                                {/* Observaciones ClÌnicas del Profesional Accordion */}
                                 <div className="border border-white/5 bg-black/25 rounded-2xl overflow-hidden">
                                     <button
                                         onClick={() => setClinicalNotesExpanded(!clinicalNotesExpanded)}
                                         className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors focus:outline-none"
                                     >
                                         <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Observaciones Cl√≠nicas del Profesional
+                                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Observaciones ClÌnicas del Profesional
                                         </span>
                                         <span className="text-zinc-500 hover:text-white transition-colors">
                                             {clinicalNotesExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -6461,7 +6500,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors focus:outline-none"
                                     >
                                         <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" /> Extras (Notas Espec√≠ficas del Paciente)
+                                            <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" /> Extras (Notas EspecÌficas del Paciente)
                                         </span>
                                         <span className="text-zinc-500 hover:text-white transition-colors">
                                             {extrasExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -6473,7 +6512,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                 value={treatmentPlan?.patientExtras || ''}
                                                 onChange={(e) => handleTreatmentPlanChange('patientExtras', e.target.value)}
                                                 className="w-full bg-zinc-900/50 text-zinc-300 text-xs p-4 rounded-xl border border-white/10 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all placeholder:text-zinc-700 font-sans"
-                                                placeholder="Escribe aqu√≠ notas adicionales o detalles espec√≠ficos que mencion√≥ el paciente m√°s all√° de la entrevista general..."
+                                                placeholder="Escribe aquÌ notas adicionales o detalles especÌficos que mencionÛ el paciente m·s all· de la entrevista general..."
                                             />
                                         </div>
                                     )}
@@ -6489,7 +6528,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                                     <Sparkles size={16} className="animate-pulse" /> Personalidad de Kio (IA)
                                                 </h2>
                                                 <p className="text-xs text-cyan-100/60 mt-1">
-                                                    Define las directrices de intervenci√≥n y memoria base que regir√°n c√≥mo Kio interact√∫a con este individuo.
+                                                    Define las directrices de intervenciÛn y memoria base que regir·n cÛmo Kio interact˙a con este individuo.
                                                 </p>
                                             </div>
                                             <button
@@ -6508,13 +6547,13 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="bg-black/40 p-5 rounded-2xl border border-cyan-500/10 space-y-2">
                                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-cyan-500">
-                                                    Directrices de Intervenci√≥n (Filtros)
+                                                    Directrices de IntervenciÛn (Filtros)
                                                 </h3>
                                                 <AutoResizeTextarea
                                                     value={formatTreatmentField(treatmentPlan?.kioDirectives || '')}
                                                     onChange={(e) => handleTreatmentPlanChange('kioDirectives', e.target.value)}
                                                     className="w-full text-xs text-cyan-50 leading-relaxed font-sans bg-transparent border border-transparent hover:border-cyan-500/30 focus:border-cyan-400/60 focus:bg-cyan-950/40 rounded-lg p-2 transition-all outline-none"
-                                                    placeholder="Ej: Si detecta malestar cognitivo, no preguntar '¬øQu√© pas√≥?', sino '¬øEsto que sientes nace de lo que t√∫ quieres o de lo que crees que el otro piensa?'"
+                                                    placeholder="Ej: Si detecta malestar cognitivo, no preguntar 'øQuÈ pasÛ?', sino 'øEsto que sientes nace de lo que t˙ quieres o de lo que crees que el otro piensa?'"
                                                 />
                                             </div>
                                             <div className="bg-black/40 p-5 rounded-2xl border border-cyan-500/10 space-y-3 flex flex-col max-h-[300px]">
@@ -6547,7 +6586,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                             </div>
                         </div>
                     </div>
-                    {/* COLUMNA DERECHA (4 columnas): Rasgos PID-5 y Focos de Regulaci√≥n */}
+                    {/* COLUMNA DERECHA (4 columnas): Rasgos PID-5 y Focos de RegulaciÛn */}
                     <div className="xl:col-span-4 space-y-6 animate-in fade-in duration-500">
                         {/* PID-5 Card */}
                         <div className="bg-zinc-950/40 border border-white/5 rounded-[2rem] p-6 shadow-2xl flex flex-col">
@@ -6561,7 +6600,7 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                                 <div className="flex-1 space-y-4">
                                     {[
                                         { id: 'reactividad', label: 'Reactividad' },
-                                        { id: 'conexion', label: 'Conexi√≥n' },
+                                        { id: 'conexion', label: 'ConexiÛn' },
                                         { id: 'asertividad', label: 'Asertividad' },
                                         { id: 'ritmo', label: 'Ritmo' },
                                         { id: 'singularidad', label: 'Singularidad' }
@@ -6587,31 +6626,31 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
                             )}
                         </div>
 
-                        {/* Focos Existenciales / Regulaci√≥n Cl√≠nico List Card */}
+                        {/* Focos Existenciales / RegulaciÛn ClÌnico List Card */}
                         <div className="bg-zinc-950/40 border border-white/5 rounded-[2rem] p-6 shadow-2xl flex flex-col">
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-4 flex items-center gap-2"><Sparkles size={16} className="text-indigo-400" /> Focos de Regulaci√≥n Existencial</h2>
-                            <p className="text-[11px] text-zinc-500 mb-4">Metas y prioridades cl√≠nicas derivadas del an√°lisis conductual integrado:</p>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-white/50 mb-4 flex items-center gap-2"><Sparkles size={16} className="text-indigo-400" /> Focos de RegulaciÛn Existencial</h2>
+                            <p className="text-[11px] text-zinc-500 mb-4">Metas y prioridades clÌnicas derivadas del an·lisis conductual integrado:</p>
 
                             <div className="space-y-3 font-sans">
                                 <div className="flex items-start gap-3 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl hover:bg-indigo-500/10 transition-colors">
                                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
                                     <div className="text-xs">
-                                        <p className="font-bold text-indigo-300">Modificaci√≥n de la Evitaci√≥n</p>
-                                        <p className="text-zinc-400 text-[10px] mt-0.5">Interrumpir las respuestas motoras de escape (ej. procrastinaci√≥n, aislamiento).</p>
+                                        <p className="font-bold text-indigo-300">ModificaciÛn de la EvitaciÛn</p>
+                                        <p className="text-zinc-400 text-[10px] mt-0.5">Interrumpir las respuestas motoras de escape (ej. procrastinaciÛn, aislamiento).</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3 p-3 bg-rose-500/5 border border-rose-500/10 rounded-xl hover:bg-rose-500/10 transition-colors">
                                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0" />
                                     <div className="text-xs">
-                                        <p className="font-bold text-rose-300">Flexibilizaci√≥n del Autocontrol</p>
-                                        <p className="text-zinc-400 text-[10px] mt-0.5">Disminuir el di√°logo autocr√≠tico excesivo y esquemas r√≠gidos de insuficiencia.</p>
+                                        <p className="font-bold text-rose-300">FlexibilizaciÛn del Autocontrol</p>
+                                        <p className="text-zinc-400 text-[10px] mt-0.5">Disminuir el di·logo autocrÌtico excesivo y esquemas rÌgidos de insuficiencia.</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl hover:bg-emerald-500/10 transition-colors">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
                                     <div className="text-xs">
-                                        <p className="font-bold text-emerald-300">Resignificaci√≥n de Din√°micas</p>
-                                        <p className="text-zinc-400 text-[10px] mt-0.5">Reencuadrar la historia biogr√°fica de invalidaci√≥n temprana en una narrativa resiliente.</p>
+                                        <p className="font-bold text-emerald-300">ResignificaciÛn de Din·micas</p>
+                                        <p className="text-zinc-400 text-[10px] mt-0.5">Reencuadrar la historia biogr·fica de invalidaciÛn temprana en una narrativa resiliente.</p>
                                     </div>
                                 </div>
                             </div>
@@ -6633,22 +6672,22 @@ Devuelve √öNICAMENTE un objeto JSON con esta estructura:
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
 
             const prompt = `
-Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento Cl√≠nico.
-Con base en TODO EL INFORME PSICOL√ìGICO del paciente, genera una visi√≥n cl√≠nica completa.
+Eres un psicoterapeuta avanzado estructurando un Plan de Tratamiento ClÌnico.
+Con base en TODO EL INFORME PSICOL”GICO del paciente, genera una visiÛn clÌnica completa.
 
-Informaci√≥n extra√≠da:
-- Respuestas Fenomenol√≥gicas: ${JSON.stringify(phenomData || {})}
-- Entrevista Biogr√°fica: ${JSON.stringify(bioData || [])}
+InformaciÛn extraÌda:
+- Respuestas FenomenolÛgicas: ${JSON.stringify(phenomData || {})}
+- Entrevista Biogr·fica: ${JSON.stringify(bioData || [])}
 - Sesiones Registradas: []
 
 Genera un JSON con los siguientes campos:
-1. "sessionAnalysis": Interpretaci√≥n cl√≠nica general y de evidencias observadas.
-2. "strategicQuestions": Preguntas estrat√©gicas para corroboraci√≥n y redirecci√≥n de significado.
-3. "specificObjectives": Objetivos espec√≠ficos y medibles para reducir frecuencia e intensidad de conductas meta.
-4. "backwardChaining": Encadenamiento hacia atr√°s (pasos incrementales desde la meta).
-5. "exposureDesign": Dise√±o de jerarqu√≠a de exposici√≥n y procesos de adaptaci√≥n.
-6. "psychoeducation": Conceptos y analog√≠as psicoeducativas para explicar al paciente y estructurar su autoconocimiento.
-7. "fourSessionRoute": Ruta guiada y detallada de 4 sesiones de terapia, marcando los procesos cl√≠nicos, metas y exploraciones recomendadas para cada sesi√≥n.
+1. "sessionAnalysis": InterpretaciÛn clÌnica general y de evidencias observadas.
+2. "strategicQuestions": Preguntas estratÈgicas para corroboraciÛn y redirecciÛn de significado.
+3. "specificObjectives": Objetivos especÌficos y medibles para reducir frecuencia e intensidad de conductas meta.
+4. "backwardChaining": Encadenamiento hacia atr·s (pasos incrementales desde la meta).
+5. "exposureDesign": DiseÒo de jerarquÌa de exposiciÛn y procesos de adaptaciÛn.
+6. "psychoeducation": Conceptos y analogÌas psicoeducativas para explicar al paciente y estructurar su autoconocimiento.
+7. "fourSessionRoute": Ruta guiada y detallada de 4 sesiones de terapia, marcando los procesos clÌnicos, metas y exploraciones recomendadas para cada sesiÛn.
 
 Devuelve estrictamente el JSON sin formato extra.
             `;
@@ -6684,7 +6723,7 @@ Devuelve estrictamente el JSON sin formato extra.
             
         } catch (err) {
             console.error(err);
-            alert("Ocurri√≥ un error al generar el plan de tratamiento con IA.");
+            alert("OcurriÛ un error al generar el plan de tratamiento con IA.");
         } finally {
             setIsGeneratingTreatmentPlan(false);
         }
@@ -6737,14 +6776,14 @@ Devuelve estrictamente el JSON sin formato extra.
                         <Activity className="animate-spin mb-6" size={48} style={{ color: accent }} />
                         <h2 className="text-2xl font-light text-white mb-3">{typeof isAnalyzing === "string" ? isAnalyzing : "Construyendo tu Mapa Conductual"}</h2>
                         <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed mb-6">
-                            Nuestra IA est√° analizando de forma segura tus respuestas en el Diagn√≥stico Existencial y la Historia de Vida para formular tus hip√≥tesis cl√≠nicas y estructurar el mapa de bucles.
+                            Nuestra IA est· analizando de forma segura tus respuestas en el DiagnÛstico Existencial y la Historia de Vida para formular tus hipÛtesis clÌnicas y estructurar el mapa de bucles.
                         </p>
                         <div className="bg-[#18181b] border border-orange-500/30 rounded-xl p-4 max-w-md w-full flex items-start gap-3 text-left">
                             <ShieldAlert className="text-orange-400 shrink-0 mt-0.5" size={18} />
                             <div>
-                                <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">An√°lisis Cl√≠nico Personalizado</h4>
+                                <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-1">An·lisis ClÌnico Personalizado</h4>
                                 <p className="text-[11px] text-zinc-400">
-                                    Estructurando la red funcional basada 100% en la historia real del paciente. Este proceso demorar√° entre <strong className="text-zinc-200">10 y 15 segundos</strong>.
+                                    Estructurando la red funcional basada 100% en la historia real del paciente. Este proceso demorar· entre <strong className="text-zinc-200">10 y 15 segundos</strong>.
                                 </p>
                             </div>
                         </div>
@@ -6752,16 +6791,16 @@ Devuelve estrictamente el JSON sin formato extra.
                 ) : viewMode === 'raw_data' ? renderRawData() : (
                     <div className="absolute inset-0 w-full h-full animate-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both pointer-events-none">
 
-                        {/* M√ìDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
+                        {/* M”DULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
                             {/* Top Header Badge */}
                             <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-none">
                                 <div className="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-zinc-950/80 border border-pink-400/25 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-                                    <span className="text-xs">‚ú®</span>
+                                    <span className="text-xs">?</span>
                                     <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
                                         Mapa de Bucles
                                     </h2>
-                                    <span className="text-[11px]">üçÉ</span>
+                                    <span className="text-[11px]">??</span>
                                     {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
                                 </div>
                             </div>
@@ -6792,17 +6831,17 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Action Buttons Toolbar (Top right on mobile, Bottom left on desktop) */}
                             <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
-                                {mapGenerationCount < 3 && (<button
+                                {isEmbedded && (<button
                                     onClick={(e) => handleGenerateMap(e, false)}
                                     className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
-                                    title="Generar An√°lisis Cl√≠nico"
+                                    title="Generar An·lisis ClÌnico"
                                 >
                                     <Sparkles size={11} />
                                 </button>)}
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                    title="Ajustar y alinear nodos (5 columnas)"
+                                    title="Ajustar y alinear nodos (6 columnas)"
                                     aria-label="Ajustar y alinear nodos"
                                 >
                                     <Network size={11} className="text-emerald-400" />
@@ -6810,7 +6849,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button
                                     onClick={startTour}
                                     className="p-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-white transition-all flex items-center justify-center active:scale-95"
-                                    title="Iniciar recorrido cl√≠nico guiado"
+                                    title="Iniciar recorrido clÌnico guiado"
                                 >
                                     <Compass size={11} />
                                 </button>
@@ -6828,7 +6867,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <button
                                             onClick={() => importFileInputRef.current?.click()}
                                             className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-emerald-400 hover:text-white flex items-center justify-center active:scale-95"
-                                            title="Importar Informe Cl√≠nico (.doc)"
+                                            title="Importar Informe ClÌnico (.doc)"
                                         >
                                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                         </button>
@@ -6842,7 +6881,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <button
                                             onClick={handleExportDoc}
                                             className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/30 transition-colors text-indigo-400 hover:text-white flex items-center justify-center active:scale-95"
-                                            title="Exportar Informe Cl√≠nico a Documento Word"
+                                            title="Exportar Informe ClÌnico a Documento Word"
                                         >
                                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                         </button>
@@ -6855,7 +6894,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button onClick={() => setMapViewTab('map')} title="El Mapa" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('avances')} title="Avances" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'avances' ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-500 hover:text-blue-400'}`}><MessageSquare size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('bucles')} title="Bucles" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'bucles' ? 'bg-purple-600 text-white shadow-md' : 'text-zinc-500 hover:text-purple-400'}`}><Compass size={16} className="sm:scale-110" /></button>
-                                <button onClick={() => setMapViewTab('loop')} title="Diagn√≥stico" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'loop' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-500 hover:text-emerald-400'}`}><Activity size={16} className="sm:scale-110" /></button>
+                                <button onClick={() => setMapViewTab('loop')} title="DiagnÛstico" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'loop' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-500 hover:text-emerald-400'}`}><Activity size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('exit_keys')} title="Claves" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'exit_keys' ? 'bg-orange-600 text-white shadow-md' : 'text-zinc-500 hover:text-orange-400'}`}><Sparkles size={16} className="sm:scale-110" /></button>
                             </div>
     <div
@@ -6873,7 +6912,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 onDragStart={(e) => e.preventDefault()}
                                 style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
                             >
-                                {/* Decoraci√≥n de fondo del lienzo (fija kawaii / dreamy constellation) */}
+                                {/* DecoraciÛn de fondo del lienzo (fija kawaii / dreamy constellation) */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                                     <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full  pointer-events-none" />
                                     <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full  pointer-events-none" />
@@ -6888,7 +6927,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <p className="text-sm font-mono text-zinc-500 uppercase tracking-widest px-6 py-3 rounded-xl bg-black/80 sm:bg-black/40 border border-white/5 sm:backdrop-blur-md">
                                             {afcData?.is_valid === false ? "No hay informaci\u00f3n suficiente" : "A\u00fan no hay datos"}
                                         </p>
-                                        {mapGenerationCount < 3 && (<button 
+                                        {isEmbedded && (<button 
                                             onClick={(e) => handleGenerateMap(e, false)}
                                             className="pointer-events-auto px-6 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold tracking-wide shadow-xl shadow-emerald-900/30 transition-all active:scale-95 border border-emerald-400/20"
                                         >
@@ -7142,7 +7181,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         )) || isNodeInPattern;
                                         const isDimmed = (activeNodeId || selectedPatternId) && !isConnected;
 
-                                        // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click r√°pido
+                                        // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click r·pido
                                         const handleNodeClick = (e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
@@ -7341,7 +7380,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             >
                                                                 <span className="text-[9px] leading-none">{theme.icon}</span>
                                                                 <span className="leading-none">{theme.category}</span>
-                                                                {isIntegrated && <span className="text-[7.5px] text-amber-300 ml-0.5">‚ú®</span>}
+                                                                {isIntegrated && <span className="text-[7.5px] text-amber-300 ml-0.5">?</span>}
                                                             </div>
 
                                                             {/* Node Label */}
@@ -7363,13 +7402,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {mapViewTab === 'loop' && (
                                     <div className="absolute inset-0 z-40 bg-[#050506]/95 p-6 pt-24 md:p-8 md:pt-28 overflow-y-auto no-scrollbar animate-in fade-in duration-300">
                                         <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-6 border-b border-white/5 pb-3 flex items-center gap-2 sticky top-0 bg-[#050506]/95 z-50">
-                                            <Brain size={14} /> ¬øC√≥mo funciona tu bucle? (En palabras sencillas)
+                                            <Brain size={14} /> øCÛmo funciona tu bucle? (En palabras sencillas)
                                         </h3>
                                         <div className="p-6 md:p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl w-full max-w-4xl mx-auto shadow-inner mb-32">
                                             <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans whitespace-pre-line">
                                                 {afcData?.explicacion_sencilla || (
                                                     afcData?.hypotheses?.mantenimiento
-                                                        ? "Tu mente y cuerpo han creado un patr√≥n autom√°tico: cuando enfrentas tensiones de tu entorno o recuerdos de tu historia, reaccionas con ciertos pensamientos y conductas de protecci√≥n. Aunque esto te da alivio inmediato, a largo plazo refuerza y mantiene el problema en el tiempo, impidi√©ndote avanzar."
+                                                        ? "Tu mente y cuerpo han creado un patrÛn autom·tico: cuando enfrentas tensiones de tu entorno o recuerdos de tu historia, reaccionas con ciertos pensamientos y conductas de protecciÛn. Aunque esto te da alivio inmediato, a largo plazo refuerza y mantiene el problema en el tiempo, impidiÈndote avanzar."
                                                         : "Procesando datos..."
                                                 )}
                                             </p>
@@ -7380,13 +7419,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                 {mapViewTab === 'exit_keys' && (
                                     <div className="absolute inset-0 z-40 bg-[#050506]/95 p-6 pt-24 md:p-8 md:pt-28 overflow-y-auto no-scrollbar animate-in fade-in duration-300">
                                         <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-6 border-b border-white/5 pb-3 flex items-center gap-2 sticky top-0 bg-[#050506]/95 z-50">
-                                            <Target size={14} /> Claves para salir de aqu√≠
+                                            <Target size={14} /> Claves para salir de aquÌ
                                         </h3>
                                         <div className="p-6 md:p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl w-full max-w-4xl mx-auto shadow-inner mb-32">
                                             <p className="text-sm md:text-base text-zinc-300 leading-relaxed font-sans whitespace-pre-line">
                                                 {afcData?.claves_salida || (
                                                     afcData?.hypotheses?.solucion
-                                                        ? `${afcData.hypotheses.solucion}. Explora el mapa para identificar qu√© pensamientos o conductas puedes empezar a flexibilizar.`
+                                                        ? `${afcData.hypotheses.solucion}. Explora el mapa para identificar quÈ pensamientos o conductas puedes empezar a flexibilizar.`
                                                         : "Procesando datos..."
                                                 )}
                                             </p>
@@ -7400,10 +7439,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                             <MessageSquare size={14} /> Registro de Avances y Cambios
                                         </h3>
                                         <div className="flex-1 w-full max-w-4xl mx-auto flex flex-col gap-4 pb-36">
-                                            <p className="text-xs text-zinc-400 mb-2">Escribe con total libertad sobre los cambios recientes en tu vida (ej. si lograste un avance, cambiaste un h√°bito o notaste algo distinto). La IA actualizar√° tu mapa de bucles de manera discreta con esta nueva informaci√≥n.</p>
+                                            <p className="text-xs text-zinc-400 mb-2">Escribe con total libertad sobre los cambios recientes en tu vida (ej. si lograste un avance, cambiaste un h·bito o notaste algo distinto). La IA actualizar· tu mapa de bucles de manera discreta con esta nueva informaciÛn.</p>
                                             <textarea
                                                 className="w-full flex-1 bg-zinc-950 border border-white/10 rounded-xl p-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 resize-none transition-colors"
-                                                placeholder="Ej. He logrado mantener un nuevo h√°bito desde hace un par de semanas y me siento diferente..."
+                                                placeholder="Ej. He logrado mantener un nuevo h·bito desde hace un par de semanas y me siento diferente..."
                                                 value={lifeUpdateText}
                                                 onChange={(e) => setLifeUpdateText(e.target.value)}
                                             />
@@ -7428,7 +7467,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </div>
                                 )}
                             </div>
-                            {/* M√ìDULO 1.5: ISLAS EXISTENCIALES (PATRONES CONDUCTUALES) ABAJO DEL MAPA */}
+                            {/* M”DULO 1.5: ISLAS EXISTENCIALES (PATRONES CONDUCTUALES) ABAJO DEL MAPA */}
                             {/* BUCLES PAGE (LIST FORMAT) */}
                             {mapViewTab === 'bucles' && (
                                 <div className="absolute inset-0 z-[100] bg-[#050506] overflow-y-auto custom-scroll p-3 md:p-6 animate-in fade-in duration-300 pointer-events-auto">
@@ -7438,9 +7477,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <div className="flex flex-col gap-0.5 pt-20 md:pt-24">
                                             <div className="flex items-center gap-2">
                                                 <Compass size={16} className="text-purple-500" />
-                                                <h2 className="text-sm font-black uppercase tracking-wider text-white">Tus Bucles Cl√≠nicos</h2>
+                                                <h2 className="text-sm font-black uppercase tracking-wider text-white">Tus Bucles ClÌnicos</h2>
                                             </div>
-                                            <p className="text-[9px] text-zinc-500 font-mono tracking-widest uppercase">An√°lisis y Secuencias Conductuales</p>
+                                            <p className="text-[9px] text-zinc-500 font-mono tracking-widest uppercase">An·lisis y Secuencias Conductuales</p>
                                         </div>
                                         
                                         {showUnlockNotification && (
@@ -7449,7 +7488,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     <Sparkles size={14} className="text-emerald-400 animate-pulse" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-emerald-400 font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5">¬°Nuevo Nivel Alcanzado!</h4>
+                                                    <h4 className="text-emerald-400 font-black uppercase tracking-widest text-[9px] flex items-center gap-1.5">°Nuevo Nivel Alcanzado!</h4>
                                                     <p className="text-emerald-200 text-[9px] font-medium mt-0.5">Has desbloqueado {recentlyUnlocked} nuevo(s) bucle(s) gracias a tu progreso.</p>
                                                 </div>
                                             </div>
@@ -7458,7 +7497,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         {/* List */}
                                         <div className="flex flex-col gap-2">
                                             {currentPatterns.length === 0 ? (
-                                                <div className="p-5 border border-white/5 border-dashed rounded-2xl flex items-center justify-center text-zinc-500 italic text-[10px]">No hay islas en este mapa cl√≠nico.</div>
+                                                <div className="p-5 border border-white/5 border-dashed rounded-2xl flex items-center justify-center text-zinc-500 italic text-[10px]">No hay islas en este mapa clÌnico.</div>
                                             ) : (
                                                 currentPatterns.map((pat, idx) => {
                                                     const isLocked = idx >= unlockedCount;
@@ -7529,7 +7568,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 
                                                 <div className="flex flex-col gap-2 mt-1 relative">
                                                     {pat.sortedNodes?.map((node, idx) => {
-                                                        const typeColors = {
+                                                        const typeColors = { function: 'border-red-400/30 bg-red-500/10 text-red-300', antecedent: 'border-orange-400/30 bg-orange-500/10 text-orange-300', context: 'border-indigo-400/30 bg-indigo-500/10 text-indigo-300', 
                                                             historical: "bg-amber-500/10 border-amber-500/20 text-amber-400",
                                                             biological: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
                                                             social: "bg-sky-500/10 border-sky-500/20 text-sky-400",
@@ -7539,13 +7578,13 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             consequence: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
                                                         };
 
-                                                        const typeShortLabels = {
-                                                            historical: "Hist√≥rico",
-                                                            biological: "Biol√≥gico",
+                                                        const typeShortLabels = { function: 'FUNC', antecedent: 'DETN', context: 'CONT', 
+                                                            historical: "HistÛrico",
+                                                            biological: "BiolÛgico",
                                                             social: "Social",
                                                             cognitive: "Cognitivo",
                                                             motor: "Motor",
-                                                            physiological: "Fisiol√≥gico",
+                                                            physiological: "FisiolÛgico",
                                                             consequence: "Consecuencia"
                                                         };
                                                         
@@ -7559,7 +7598,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 <div 
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        // Toggle local accordion ONLY ‚Äî no map navigation
+                                                                        // Toggle local accordion ONLY ó no map navigation
                                                                         setExpandedBucleNodeId(prev => prev === node.id ? null : node.id);
                                                                     }}
                                                                     className="flex flex-row items-center gap-3 p-3 cursor-pointer group/step"
@@ -7588,7 +7627,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         </p>
                                                                         
                                                                         <div className="mt-1 pt-3 border-t border-white/10 pl-3 border-l-[3px] border-white/20 bg-black/20 p-3 rounded-r-xl">
-                                                                            <p className="text-[9px] font-mono font-black uppercase tracking-widest text-zinc-400">Origen o Hip√≥tesis</p>
+                                                                            <p className="text-[9px] font-mono font-black uppercase tracking-widest text-zinc-400">Origen o HipÛtesis</p>
                                                                             <p className="text-[9.5px] text-zinc-400 italic leading-relaxed mt-1.5">
                                                                                 {getFallbackSource(node, bioData, phenomData, user)}
                                                                             </p>
@@ -7635,14 +7674,14 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                             <button
                                                 onClick={() => {
-                                                    const loopFlow = pat.sortedNodes?.map(n => `[${n.label} (${n.type})]`).join(' ‚Üí ') || '';
+                                                    const loopFlow = pat.sortedNodes?.map(n => `[${n.label} (${n.type})]`).join(' ? ') || '';
                                                     const prompt = `Hola Kio. Quiero profundizar y reinterpretar el bucle de mi mapa conductual llamado "${pat.nombre}".
-Este circuito est√° compuesto por la siguiente secuencia interconectada:
+Este circuito est· compuesto por la siguiente secuencia interconectada:
 ${loopFlow}
 
 Por favor, analicemos:
-1. ¬øC√≥mo se alimentan y sostienen estas variables entre s√≠?
-2. ¬øDe qu√© manera concreta puedo romper este encadenamiento conductual hoy?`;
+1. øCÛmo se alimentan y sostienen estas variables entre sÌ?
+2. øDe quÈ manera concreta puedo romper este encadenamiento conductual hoy?`;
                                                     
                                                     onOpenNodeChat?.(pat.primary_node_id, pat.nombre, prompt);
                                                 }}
@@ -7666,12 +7705,12 @@ Por favor, analicemos:
                             {mapViewTab === 'map' && tourActiveIndex !== null && sortedTourNodes[tourActiveIndex] && (() => {
                                 const currentNode = sortedTourNodes[tourActiveIndex];
                                 const typeCompactLabels = {
-                                    historical: "Hist√≥rico",
-                                    biological: "Biol√≥gico",
+                                    historical: "HistÛrico",
+                                    biological: "BiolÛgico",
                                     social: "Social",
                                     cognitive: "Cognitivo",
                                     motor: "Motor",
-                                    physiological: "Fisiol√≥gico",
+                                    physiological: "FisiolÛgico",
                                     consequence: "Consecuencia"
                                 };
                                 const typeIcons = {
@@ -7823,7 +7862,7 @@ Por favor, analicemos:
                                                     <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-hidden">
                                                         {editingNodeId === currentNode.id ? (
     <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1">
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1">T√≠tulo del Nodo</label>
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1">TÌtulo del Nodo</label>
         <input 
             value={editNodeForm.label}
             onChange={(e) => setEditNodeForm(prev => ({...prev, label: e.target.value}))}
@@ -7832,21 +7871,21 @@ Por favor, analicemos:
             onKeyDown={e => e.stopPropagation()}
             onMouseDown={e => e.stopPropagation()}
         />
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Descripci√≥n / Funci√≥n</label>
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">DescripciÛn / FunciÛn</label>
         <textarea
             value={editNodeForm.description}
             onChange={(e) => setEditNodeForm(prev => ({...prev, description: e.target.value}))}
             className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[45px] resize-none focus:outline-none focus:border-blue-500/50"
-            placeholder="Descripci√≥n o funci√≥n..."
+            placeholder="DescripciÛn o funciÛn..."
             onKeyDown={e => e.stopPropagation()}
             onMouseDown={e => e.stopPropagation()}
         />
-        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Pregunta de Reflexi√≥n (Opcional)</label>
+        <label className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest -mb-1 mt-1">Pregunta de ReflexiÛn (Opcional)</label>
         <textarea
             value={editNodeForm.question}
             onChange={(e) => setEditNodeForm(prev => ({...prev, question: e.target.value}))}
             className="bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-zinc-300 min-h-[35px] resize-none focus:outline-none focus:border-blue-500/50"
-            placeholder="Pregunta de reflexi√≥n..."
+            placeholder="Pregunta de reflexiÛn..."
             onKeyDown={e => e.stopPropagation()}
             onMouseDown={e => e.stopPropagation()}
         />
@@ -7919,7 +7958,7 @@ Por favor, analicemos:
                     <input 
                         id={`reflection-input-${currentNode.id}`}
                         type="text" 
-                        placeholder="Escribe tu reflexi√≥n..." 
+                        placeholder="Escribe tu reflexiÛn..." 
                         autoComplete="off"
                         className="flex-1 bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50"
                         onKeyDown={(e) => {
@@ -7970,32 +8009,32 @@ Por favor, analicemos:
 
                         </div>
 
-                        {/* M√ìDULO 2: RASGOS PID-5 E INTEGRACI√ìN CL√ç¬çNICA (Abajo del mapa) */}
+                        {/* M”DULO 2: RASGOS PID-5 E INTEGRACI”N CLÕçNICA (Abajo del mapa) */}
                         {false && (
-                            <div className="absolute top-[72px] bottom-[80px] md:bottom-6 right-4 md:right-6 w-[450px] max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)] z-[200] bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-6 overflow-y-auto animate-in slide-in-from-right-8 shadow-2xl pointer-events-auto custom-scroll flex flex-col gap-6"><div className="flex items-center justify-between shrink-0"><h3 className="text-lg font-black text-white">Diagn√≥stico Cl√≠nico</h3><button onClick={() => setMapViewTab('map')} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition-colors"><X size={16} /></button></div>
+                            <div className="absolute top-[72px] bottom-[80px] md:bottom-6 right-4 md:right-6 w-[450px] max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)] z-[200] bg-zinc-950/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-6 overflow-y-auto animate-in slide-in-from-right-8 shadow-2xl pointer-events-auto custom-scroll flex flex-col gap-6"><div className="flex items-center justify-between shrink-0"><h3 className="text-lg font-black text-white">DiagnÛstico ClÌnico</h3><button onClick={() => setMapViewTab('map')} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white transition-colors"><X size={16} /></button></div>
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
                                     <div>
                                         <h2 className="text-base font-black uppercase tracking-widest text-white/80 flex items-center gap-2">
-                                            <Target size={18} className="text-indigo-400" /> Perfil de Rasgos PID-5 e Integraci√≥n Funcional
+                                            <Target size={18} className="text-indigo-400" /> Perfil de Rasgos PID-5 e IntegraciÛn Funcional
                                         </h2>
                                         <p className="text-xs text-zinc-400 uppercase tracking-wider font-mono mt-1">
-                                            An√°lisis de correspondencia entre rasgos de personalidad y bucles de mantenimiento del mapa
+                                            An·lisis de correspondencia entre rasgos de personalidad y bucles de mantenimiento del mapa
                                         </p>
                                     </div>
                                     <div className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs font-mono text-indigo-300 uppercase tracking-wider font-bold">
-                                        Integraci√≥n Sist√©mica
+                                        IntegraciÛn SistÈmica
                                     </div>
                                 </div>
 
-                                {/* Grid de 2 Columnas: Izquierda Gr√°ficos de Rasgos, Derecha An√°lisis Conjunto */}
+                                {/* Grid de 2 Columnas: Izquierda Gr·ficos de Rasgos, Derecha An·lisis Conjunto */}
                                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                                     {/* Column 1: Progress Bars (xl:col-span-5) */}
                                     <div className="xl:col-span-5 space-y-3.5">
                                         {[
-                                            { id: 'reactividad', label: 'Reactividad', desc: 'Activaci√≥n fisiol√≥gica y alerta auton√≥mica.' },
-                                            { id: 'conexion', label: 'Conexi√≥n', desc: 'Aislamiento interpersonal vs red de apoyo.' },
-                                            { id: 'asertividad', label: 'Asertividad', desc: 'L√≠mites, auto-silenciamiento y sumisi√≥n.' },
-                                            { id: 'ritmo', label: 'Ritmo', desc: 'Impulsividad vs perfeccionismo/control r√≠gido.' },
+                                            { id: 'reactividad', label: 'Reactividad', desc: 'ActivaciÛn fisiolÛgica y alerta autonÛmica.' },
+                                            { id: 'conexion', label: 'ConexiÛn', desc: 'Aislamiento interpersonal vs red de apoyo.' },
+                                            { id: 'asertividad', label: 'Asertividad', desc: 'LÌmites, auto-silenciamiento y sumisiÛn.' },
+                                            { id: 'ritmo', label: 'Ritmo', desc: 'Impulsividad vs perfeccionismo/control rÌgido.' },
                                             { id: 'singularidad', label: 'Singularidad', desc: 'Procesamiento cognitivo e ideas de insuficiencia.' }
                                         ].map(dom => {
                                             const score = pidIndices.raw[dom.id];
@@ -8020,67 +8059,67 @@ Por favor, analicemos:
                                         })}
                                     </div>
 
-                                    {/* Column 2: An√°lisis Funcional Conjunto (xl:col-span-7) */}
+                                    {/* Column 2: An·lisis Funcional Conjunto (xl:col-span-7) */}
                                     <div className="xl:col-span-7 flex flex-col justify-between bg-black/20 border border-white/[0.02] rounded-2xl p-4.5">
                                         <div>
                                             <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-3 flex items-center gap-1.5">
-                                                <Brain size={14} /> An√°lisis de Correspondencia Funcional
+                                                <Brain size={14} /> An·lisis de Correspondencia Funcional
                                             </h3>
                                             <div className="space-y-4 text-xs md:text-sm text-zinc-300 leading-relaxed font-sans max-h-[380px] overflow-y-auto pr-2 custom-sidebar-scroll">
 
                                                 {/* Reactividad explanation */}
                                                 <div className="border-l-2 border-orange-500/50 pl-3">
                                                     <p className="font-bold text-orange-400 uppercase tracking-wider text-[10px] mb-0.5">
-                                                        Reactividad ({Math.round(pidIndices.raw.reactividad * 100)}%) &rarr; Vulnerabilidad Fisiol√≥gica
+                                                        Reactividad ({Math.round(pidIndices.raw.reactividad * 100)}%) &rarr; Vulnerabilidad FisiolÛgica
                                                     </p>
                                                     <p className="text-zinc-300 text-xs italic">
                                                         {pidIndices.raw.reactividad > 0.7
-                                                            ? "Vulnerabilidad fisiol√≥gica cr√≠tica. Funciona como el catalizador primario de tus arquitecturas de p√°nico. El sistema neurovegetativo hiper-responde ante umbrales m√≠nimos de estr√©s, forzando respuestas motoras de escape (evitaci√≥n) y sesgando la percepci√≥n cognitiva hacia la amenaza inminente, cerrando el bucle de mantenimiento."
+                                                            ? "Vulnerabilidad fisiolÛgica crÌtica. Funciona como el catalizador primario de tus arquitecturas de p·nico. El sistema neurovegetativo hiper-responde ante umbrales mÌnimos de estrÈs, forzando respuestas motoras de escape (evitaciÛn) y sesgando la percepciÛn cognitiva hacia la amenaza inminente, cerrando el bucle de mantenimiento."
                                                             : pidIndices.raw.reactividad > 0.4
-                                                                ? "Modulaci√≥n som√°tica selectiva. La tensi√≥n corporal no es una constante, pero act√∫a como un amplificador resonante en situaciones espec√≠ficas. Tus bucles se retroalimentan fisiol√≥gicamente solo bajo presi√≥n umbral interpersonal o de evaluaci√≥n."
-                                                                : "Resiliencia auton√≥mica estructural. El mantenimiento de tus patrones patol√≥gicos no depende de descargas som√°ticas severas. La carga del bucle se procesa casi enteramente en las esferas cognitivas y conductuales, preservando la homeostasis biol√≥gica."}
+                                                                ? "ModulaciÛn som·tica selectiva. La tensiÛn corporal no es una constante, pero act˙a como un amplificador resonante en situaciones especÌficas. Tus bucles se retroalimentan fisiolÛgicamente solo bajo presiÛn umbral interpersonal o de evaluaciÛn."
+                                                                : "Resiliencia autonÛmica estructural. El mantenimiento de tus patrones patolÛgicos no depende de descargas som·ticas severas. La carga del bucle se procesa casi enteramente en las esferas cognitivas y conductuales, preservando la homeostasis biolÛgica."}
                                                     </p>
                                                 </div>
 
-                                                {/* Conexi√≥n explanation */}
+                                                {/* ConexiÛn explanation */}
                                                 <div className="border-l-2 border-amber-500/50 pl-3">
                                                     <p className="font-bold text-amber-400 uppercase tracking-wider text-[10px] mb-0.5">
-                                                        Conexi√≥n ({Math.round(pidIndices.raw.conexion * 100)}%) &rarr; Dimensi√≥n Relacional
+                                                        ConexiÛn ({Math.round(pidIndices.raw.conexion * 100)}%) &rarr; DimensiÛn Relacional
                                                     </p>
                                                     <p className="text-zinc-300 text-xs italic">
                                                         {pidIndices.raw.conexion > 0.7
-                                                            ? "Desvinculaci√≥n sist√©mica profunda. Este rasgo estructura bucles de reforzamiento negativo a trav√©s del auto-aislamiento. La percepci√≥n distorsionada de hostilidad ambiental bloquea los canales de corregulaci√≥n externa, convirtiendo a la soledad en un mecanismo de seguridad paralizante."
+                                                            ? "DesvinculaciÛn sistÈmica profunda. Este rasgo estructura bucles de reforzamiento negativo a travÈs del auto-aislamiento. La percepciÛn distorsionada de hostilidad ambiental bloquea los canales de corregulaciÛn externa, convirtiendo a la soledad en un mecanismo de seguridad paralizante."
                                                             : pidIndices.raw.conexion > 0.4
-                                                                ? "Filtro relacional restrictivo. Operas bajo arquitecturas de vinculaci√≥n selectiva donde la confianza est√° condicionada. El mapa refleja bucles de evitaci√≥n preventiva para minimizar el impacto del desgaste interpersonal."
-                                                                : "Permeabilidad relacional funcional. Conservas alta plasticidad para vincularte. Los nodos de tu mapa conductual pueden ser reconfigurados utilizando tus redes de apoyo como infraestructura de contenci√≥n primaria frente al estr√©s."}
+                                                                ? "Filtro relacional restrictivo. Operas bajo arquitecturas de vinculaciÛn selectiva donde la confianza est· condicionada. El mapa refleja bucles de evitaciÛn preventiva para minimizar el impacto del desgaste interpersonal."
+                                                                : "Permeabilidad relacional funcional. Conservas alta plasticidad para vincularte. Los nodos de tu mapa conductual pueden ser reconfigurados utilizando tus redes de apoyo como infraestructura de contenciÛn primaria frente al estrÈs."}
                                                     </p>
                                                 </div>
 
                                                 {/* Asertividad explanation */}
                                                 <div className="border-l-2 border-emerald-500/50 pl-3">
                                                     <p className="font-bold text-emerald-400 uppercase tracking-wider text-[10px] mb-0.5">
-                                                        Asertividad ({Math.round(pidIndices.raw.asertividad * 100)}%) &rarr; Sumisi√≥n vs Oposici√≥n
+                                                        Asertividad ({Math.round(pidIndices.raw.asertividad * 100)}%) &rarr; SumisiÛn vs OposiciÛn
                                                     </p>
                                                     <p className="text-zinc-300 text-xs italic">
                                                         {pidIndices.raw.asertividad > 0.7
-                                                            ? "Oposici√≥n compensatoria cr√≥nica. La asertividad se ha hipertrofiado hacia la confrontaci√≥n preventiva. Tus bucles de mantenimiento utilizan el antagonismo o la rigidez defensiva como escudo motor para evitar la invalidaci√≥n emocional."
+                                                            ? "OposiciÛn compensatoria crÛnica. La asertividad se ha hipertrofiado hacia la confrontaciÛn preventiva. Tus bucles de mantenimiento utilizan el antagonismo o la rigidez defensiva como escudo motor para evitar la invalidaciÛn emocional."
                                                             : pidIndices.raw.asertividad > 0.4
-                                                                ? "Fluctuaci√≥n de l√≠mites estructurales. Experimentas intermitencia en la defensa del self. Bajo ciertos bucles, emerges proactivo; en otros, la asertividad colapsa, resultando en respuestas mixtas de sumisi√≥n-hostilidad pasiva."
-                                                                : "Inhibici√≥n volitiva y auto-silenciamiento. Rasgo nuclear que alimenta bucles de complacencia patol√≥gica y acumulaci√≥n som√°tica de resentimiento. El self cede su territorio constantemente, priorizando la reducci√≥n del conflicto externo a costa de la implosi√≥n psicol√≥gica."}
+                                                                ? "FluctuaciÛn de lÌmites estructurales. Experimentas intermitencia en la defensa del self. Bajo ciertos bucles, emerges proactivo; en otros, la asertividad colapsa, resultando en respuestas mixtas de sumisiÛn-hostilidad pasiva."
+                                                                : "InhibiciÛn volitiva y auto-silenciamiento. Rasgo nuclear que alimenta bucles de complacencia patolÛgica y acumulaciÛn som·tica de resentimiento. El self cede su territorio constantemente, priorizando la reducciÛn del conflicto externo a costa de la implosiÛn psicolÛgica."}
                                                     </p>
                                                 </div>
 
                                                 {/* Ritmo explanation */}
                                                 <div className="border-l-2 border-teal-500/50 pl-3">
                                                     <p className="font-bold text-teal-400 uppercase tracking-wider text-[10px] mb-0.5">
-                                                        Ritmo ({Math.round(pidIndices.raw.ritmo * 100)}%) &rarr; Regulaci√≥n de Impulso vs Rigidez
+                                                        Ritmo ({Math.round(pidIndices.raw.ritmo * 100)}%) &rarr; RegulaciÛn de Impulso vs Rigidez
                                                     </p>
                                                     <p className="text-zinc-300 text-xs italic">
                                                         {pidIndices.raw.ritmo > 0.7
-                                                            ? "Desregulaci√≥n de inhibici√≥n volitiva. Exceso de urgencia conductual que alimenta secuencias de gratificaci√≥n o resoluci√≥n inmediata. El bucle se acelera, saltando del gatillo cognitivo a la acci√≥n impulsiva sin procesamiento anal√≠tico intermedio."
+                                                            ? "DesregulaciÛn de inhibiciÛn volitiva. Exceso de urgencia conductual que alimenta secuencias de gratificaciÛn o resoluciÛn inmediata. El bucle se acelera, saltando del gatillo cognitivo a la acciÛn impulsiva sin procesamiento analÌtico intermedio."
                                                             : pidIndices.raw.ritmo > 0.4
-                                                                ? "Homeostasis ejecutiva fluctuante. Se observa un equilibrio razonable en la planificaci√≥n general, aunque el mapa de bucles revela 'puntos de quiebre' donde la urgencia domina ante estresores espec√≠ficos de alta carga."
-                                                                : "Rigidez ejecutiva y perfeccionismo inhibitorio. El control se ha convertido en una c√°rcel procedimental. Tus bucles se estancan en la rumiaci√≥n obsesiva y la par√°lisis por an√°lisis, prefiriendo la inacci√≥n al margen de error."}
+                                                                ? "Homeostasis ejecutiva fluctuante. Se observa un equilibrio razonable en la planificaciÛn general, aunque el mapa de bucles revela 'puntos de quiebre' donde la urgencia domina ante estresores especÌficos de alta carga."
+                                                                : "Rigidez ejecutiva y perfeccionismo inhibitorio. El control se ha convertido en una c·rcel procedimental. Tus bucles se estancan en la rumiaciÛn obsesiva y la par·lisis por an·lisis, prefiriendo la inacciÛn al margen de error."}
                                                     </p>
                                                 </div>
 
@@ -8091,10 +8130,10 @@ Por favor, analicemos:
                                                     </p>
                                                     <p className="text-zinc-300 text-xs italic">
                                                         {pidIndices.raw.singularidad > 0.7
-                                                            ? "Idiosincrasia cognitiva disonante. Estructuras esquemas de realidad altamente paralelos o exc√©ntricos. En el mapa conductual, esto genera interpretaciones an√≥malas que cristalizan en sistemas de creencias inflexibles (hiper-vigilancia, distorsiones de persecuci√≥n o insuficiencia estructural)."
+                                                            ? "Idiosincrasia cognitiva disonante. Estructuras esquemas de realidad altamente paralelos o excÈntricos. En el mapa conductual, esto genera interpretaciones anÛmalas que cristalizan en sistemas de creencias inflexibles (hiper-vigilancia, distorsiones de persecuciÛn o insuficiencia estructural)."
                                                             : pidIndices.raw.singularidad > 0.4
-                                                                ? "Procesamiento cognitivo divergente. La excentricidad adaptativa te provee √°ngulos de interpretaci√≥n √∫nicos, pero interfiere intermitentemente provocando que asumas responsabilidades imaginarias o percibas juicios donde no los hay."
-                                                                : "Integraci√≥n normativa del esquema. El procesamiento de la realidad est√° anclado en m√©tricas sist√©micas compartidas. Tus trampas cognitivas son ortodoxas (ej. autoexigencia est√°ndar) y responden a din√°micas convencionales de aprendizaje relacional."}
+                                                                ? "Procesamiento cognitivo divergente. La excentricidad adaptativa te provee ·ngulos de interpretaciÛn ˙nicos, pero interfiere intermitentemente provocando que asumas responsabilidades imaginarias o percibas juicios donde no los hay."
+                                                                : "IntegraciÛn normativa del esquema. El procesamiento de la realidad est· anclado en mÈtricas sistÈmicas compartidas. Tus trampas cognitivas son ortodoxas (ej. autoexigencia est·ndar) y responden a din·micas convencionales de aprendizaje relacional."}
                                                     </p>
                                                 </div>
 
@@ -8102,7 +8141,7 @@ Por favor, analicemos:
                                         </div>
 
                                         <div className="mt-4 pt-3 border-t border-white/5 text-[10px] text-zinc-500 font-mono italic">
-                                            Nota: Los porcentajes representan la presencia relativa de cada rasgo seg√∫n el test PID-5. Su manifestaci√≥n pr√°ctica est√° conectada din√°micamente con los nodos del mapa conductual superior.
+                                            Nota: Los porcentajes representan la presencia relativa de cada rasgo seg˙n el test PID-5. Su manifestaciÛn pr·ctica est· conectada din·micamente con los nodos del mapa conductual superior.
                                         </div>
                                     </div>
                                 </div>
