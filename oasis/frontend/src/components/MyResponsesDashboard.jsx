@@ -6833,7 +6833,7 @@ Devuelve estrictamente el JSON sin formato extra.
                             <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
                                 {isEmbedded && (<button
                                     onClick={(e) => handleGenerateMap(e, false)}
-                                    className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
+                                    className="p-1.5 rounded-lg bg-emerald-500/90 hover:bg-emerald-400 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20 id-regenerate-btn"
                                     title="Generar Análisis Clínico"
                                 >
                                     <Sparkles size={11} />
