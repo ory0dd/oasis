@@ -1338,11 +1338,7 @@ const getLocalItemCaseInsensitive = (prefix, u) => {
 };
 
 const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations = [], activeConversationId = null, onOpenNodeChat, isEmbedded = false, onNavigateTab }) => {
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => {
-        const timer = setTimeout(() => setIsMounted(true), 150);
-        return () => clearTimeout(timer);
-    }, []);
+    const [isMounted, setIsMounted] = useState(true);
 
     const [isMobileDevice, setIsMobileDevice] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
     useEffect(() => {

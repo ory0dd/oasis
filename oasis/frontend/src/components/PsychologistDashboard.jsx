@@ -1727,7 +1727,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
             setLogLens('ALL');
             setLogVisibility('ALL');
         }
-    }, [selectedPatient]);
+    }, [selectedPatient?.name]);
 
     useEffect(() => {
         let active = true;
@@ -1978,7 +1978,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
             active = false;
             activeUrls.forEach(url => URL.revokeObjectURL(url));
         };
-    }, [selectedPatient, selectedVersion]);
+    }, [selectedPatient?.name, selectedVersion]);
 
     const handleSaveClinicianNote = (clipId, value) => {
         const updated = { ...clinicianNotes, [clipId]: value };
@@ -5786,9 +5786,9 @@ Devuelve estrictamente el JSON sin formato extra.
                         <main className={`flex-1 ${isFullBleedTab ? 'overflow-hidden p-0 flex flex-col min-h-0' : 'overflow-y-auto p-4 md:p-10'} bg-[#060607]`}>
                             <div className={`${isFullBleedTab ? 'w-full max-w-full' : 'max-w-[100%] md:max-w-[95%] mx-auto'} w-full h-full flex flex-col min-h-0`}>
                                 {(activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT') && (
-                            <ViewErrorBoundary key={`eb-inicial-${reloadTrigger}`}>
+                            <ViewErrorBoundary key={`eb-inicial-${selectedPatient?.name || 'unknown'}`}>
                                 <MyResponsesDashboard 
-                                    key={reloadTrigger}
+                                    key={`dashboard-${selectedPatient?.name || 'unknown'}`}
                                     user={selectedPatient?.name || 'unknown'} 
                                     isEmbedded={true} 
                                     accent="#10b981" 
