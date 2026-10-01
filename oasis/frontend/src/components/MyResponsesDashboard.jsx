@@ -2904,6 +2904,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
     const mapDragged = useRef(false);
     const mapContainerRef = useRef(null);
     const nodeDraggedRef = useRef(false);
+    const nodeJustDraggedRef = useRef(false);
     const nodeClickedRef = useRef(false);
 
     useEffect(() => {
@@ -5383,6 +5384,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     const handleMapMouseMove = (e) => {
         if (draggingNodeId && mapContainerRef.current) {
             nodeDraggedRef.current = true;
+            nodeJustDraggedRef.current = true;
             const rect = mapContainerRef.current.getBoundingClientRect();
             const deltaX = e.clientX - lastPointerPos.current.x;
             const deltaY = e.clientY - lastPointerPos.current.y;
@@ -5430,6 +5432,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         isDraggingMapRef.current = false;
         if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
         if (draggingNodeId && nodeDraggedRef.current) {
+            setSelectedNode(null);
+            setSelectedPatternId(null);
             const adx = window._dragNodeAcc ? window._dragNodeAcc.dx : 0;
             const ady = window._dragNodeAcc ? window._dragNodeAcc.dy : 0;
             window._dragNodeAcc = { dx: 0, dy: 0 };
@@ -5458,6 +5462,9 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 return currentAfc;
             });
             nodeDraggedRef.current = false;
+            setTimeout(() => {
+                nodeJustDraggedRef.current = false;
+            }, 250);
         } else if (mapDragged.current) {
             setMapTransform({
                 x: transformRef.current.x,
@@ -5508,6 +5515,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             const touch = e.touches[0];
             if (draggingNodeId && mapContainerRef.current) {
                 nodeDraggedRef.current = true;
+                nodeJustDraggedRef.current = true;
                 const rect = mapContainerRef.current.getBoundingClientRect();
                 const deltaX = touch.clientX - lastPointerPos.current.x;
                 const deltaY = touch.clientY - lastPointerPos.current.y;
@@ -7260,8 +7268,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                             e.stopPropagation();
                                             e.preventDefault();
                                             nodeClickedRef.current = true;
-                                            if (nodeDraggedRef.current) {
+                                            if (nodeDraggedRef.current || nodeJustDraggedRef.current) {
                                                 nodeDraggedRef.current = false;
+                                                nodeJustDraggedRef.current = false;
                                                 return;
                                             }
                                             setExplorationModalOpen(false);
@@ -7375,6 +7384,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         const handleNodeMouseDown = (e) => {
                                             e.stopPropagation();
                                             nodeDraggedRef.current = false;
+                                            nodeJustDraggedRef.current = false;
                                             setDraggingNodeId(node.id);
                                             lastPointerPos.current = { x: e.clientX, y: e.clientY };
                                         };
@@ -7382,6 +7392,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         const handleNodeTouchStart = (e) => {
                                             e.stopPropagation();
                                             nodeDraggedRef.current = false;
+                                            nodeJustDraggedRef.current = false;
                                             setDraggingNodeId(node.id);
                                             if (e.touches.length === 1) {
                                                 const touch = e.touches[0];
