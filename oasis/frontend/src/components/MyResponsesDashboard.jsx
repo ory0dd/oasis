@@ -327,8 +327,8 @@ const resolveCollisions = (nodes) => {
     if (!nodes || nodes.length === 0) return nodes;
 
     const adjustedNodes = nodes.map(n => ({ ...n }));
-    const paddingX = 8.0; // Anisotropic padding: suave holgura horizontal (156px)
-    const paddingY = 9.8; // Espacio vertical generoso para evitar cualquier solapamiento de tarjetas (112px)
+    const paddingX = 5.2;
+    const paddingY = 5.2;
 
     let adjusted = true;
     let iterations = 0;
@@ -959,38 +959,22 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
     // 3. Activación Somática (50%) -> Respuesta Fisiológica / Somática (Rf)
     // 4. Conductas de Evitación (68%) -> Respuesta Motora / Operante (Rm)
     // 5. Trampa de Mantenimiento (86%) -> Consecuencias & Bucles (C)
-    const layers = [
-        { id: 'context', label: 'Contexto & Variables', baseX: 12 },
-        { id: 'antecedents', label: 'Detonantes Inmediatos', baseX: 27 },
-        { id: 'cognitive', label: 'Eventos Privados', baseX: 42 },
-        { id: 'motor', label: 'Respuesta Operante', baseX: 57 },
-        { id: 'consequence', label: 'Consecuencias', baseX: 72 },
-        { id: 'function', label: 'Funcin del Bucle', baseX: 87 }
-    ];
-
     const getLayerIndex = (n) => {
         const role = String(n.clinical_role || '').toLowerCase().trim();
         const type = String(n.type || '').toLowerCase().trim();
         const label = String(n.label || '').toLowerCase().trim();
 
-        // 6. Funcion (F)
         if (role === 'function' || role.includes('funci')) return 5;
-        // 5. Consecuencias (C)
         if (role === 'consequence' || role.includes('consec') || type === 'consequence') return 4;
-        // 4. Respuesta Operante (Rm)
         if (role === 'motor' || type === 'motor' || type === 'experiential_avoidance') return 3;
-        // 3. Eventos Privados (Rc/Rf)
         if (role === 'cognitive' || role === 'physiological' || type === 'cognitive' || type === 'physiological' || type === 'biological') return 2;
-        // 2. Detonantes Inmediatos (ED)
         if (role === 'antecedent' || type === 'antecedent' || label.includes('detonante')) return 1;
-        // 1. Contexto (OM)
         if (role === 'context' || type === 'historical' || type === 'social') return 0;
-        
         return 2;
     };
 
     const roleByLayer = ['context', 'antecedent', 'cognitive', 'motor', 'consequence', 'function'];
-    const layerNodes = layers.map(() => []);
+    const layerNodes = [[], [], [], [], [], []];
 
     newNodes.forEach(n => {
         const idx = getLayerIndex(n);
@@ -999,38 +983,93 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         layerNodes[idx].push(n);
     });
 
-    // First pass: assign preliminary Y coordinates (from center out)
-    layerNodes.forEach((nodesInLayer, layerIdx) => {
-        const layer = layers[layerIdx];
-        const slots = getStaggeredSlots(nodesInLayer.length, layer.baseX);
-        // Sort slots vertically from top to bottom
-        slots.sort((a, b) => a.y - b.y);
-        
-        // If it's not the first layer, sort the nodes based on the average Y of their incoming edges
-        // from already-placed nodes, to minimize line crossings!
-        if (layerIdx > 0 && rawEdges && rawEdges.length > 0) {
-            nodesInLayer.sort((nodeA, nodeB) => {
-                const getAvgIncomingY = (nodeId) => {
-                    const incomingEdges = rawEdges.filter(e => e.target === nodeId);
-                    let sumY = 0;
-                    let count = 0;
-                    incomingEdges.forEach(e => {
-                        const sourceNode = newNodes.find(n => n.id === e.source);
-                        if (sourceNode && sourceNode.y !== undefined) {
-                            sumY += sourceNode.y;
-                            count++;
-                        }
-                    });
-                    return count > 0 ? sumY / count : 50; // default to center if no incoming
-                };
-                return getAvgIncomingY(nodeA.id) - getAvgIncomingY(nodeB.id);
-            });
-        }
+    // Radial Spiderweb Geometry (Opens from center out)
+    const CX = 50;
+    const CY = 51;
 
-        nodesInLayer.forEach((n, idx) => {
-            n.x = Math.max(9, Math.min(91, slots[idx].x));
-            n.y = Math.max(14, Math.min(88, slots[idx].y));
+    // 1. Central Core: Private Events (layer 2) & Functions (layer 5)
+    const coreNodes = [...layerNodes[2], ...layerNodes[5]];
+    const coreCount = coreNodes.length;
+
+    coreNodes.forEach((node, i) => {
+        const isFunction = node.clinical_role === 'function';
+        if (isFunction && i % 2 === 0) {
+            node.x = CX + (Math.sin(i * 1.5) * 8);
+            node.y = 22 + (Math.cos(i * 1.2) * 3);
+        } else if (isFunction) {
+            node.x = CX + (Math.sin(i * 1.5) * 8);
+            node.y = 78 + (Math.cos(i * 1.2) * 3);
+        } else {
+            const angle = (i / Math.max(1, coreCount)) * 2 * Math.PI - (Math.PI / 2);
+            const radius = 7.5 + ((i % 3) * 3.8);
+            node.x = CX + Math.cos(angle) * radius * 1.35;
+            node.y = CY + Math.sin(angle) * radius * 0.95;
+        }
+    });
+
+    const sortNodesByConnectedCore = (nodesList) => {
+        if (!rawEdges || rawEdges.length === 0) return nodesList;
+        return [...nodesList].sort((nodeA, nodeB) => {
+            const getAvgCoreY = (id) => {
+                const connected = rawEdges.filter(e => e.source === id || e.target === id);
+                let sumY = 0;
+                let c = 0;
+                connected.forEach(e => {
+                    const otherId = e.source === id ? e.target : e.source;
+                    const peer = coreNodes.find(cn => cn.id === otherId);
+                    if (peer && peer.y !== undefined) {
+                        sumY += peer.y;
+                        c++;
+                    }
+                });
+                return c > 0 ? sumY / c : 50;
+            };
+            return getAvgCoreY(nodeA.id) - getAvgCoreY(nodeB.id);
         });
+    };
+
+    // 2. Left Middle Wing: Immediate Antecedents (125 deg to 235 deg)
+    const antecedents = sortNodesByConnectedCore(layerNodes[1]);
+    const antCount = antecedents.length;
+    antecedents.forEach((node, i) => {
+        const t = antCount > 1 ? i / (antCount - 1) : 0.5;
+        const angle = (125 + t * 110) * (Math.PI / 180);
+        const radius = 22 + (i % 2 === 0 ? -1.8 : 1.8);
+        node.x = Math.max(18, Math.min(36, CX + Math.cos(angle) * radius * 1.25));
+        node.y = Math.max(22, Math.min(80, CY + Math.sin(angle) * radius * 1.15));
+    });
+
+    // 3. Left Outer Wing: Context & Variables (100 deg to 260 deg)
+    const contextNodes = sortNodesByConnectedCore(layerNodes[0]);
+    const ctxCount = contextNodes.length;
+    contextNodes.forEach((node, i) => {
+        const t = ctxCount > 1 ? i / (ctxCount - 1) : 0.5;
+        const angle = (100 + t * 160) * (Math.PI / 180);
+        const radius = 34 + (i % 2 === 0 ? -2.2 : 2.2);
+        node.x = Math.max(7, Math.min(22, CX + Math.cos(angle) * radius * 1.18));
+        node.y = Math.max(14, Math.min(88, CY + Math.sin(angle) * radius * 1.12));
+    });
+
+    // 4. Right Middle Wing: Operant Response (-55 deg to +55 deg)
+    const motorNodes = sortNodesByConnectedCore(layerNodes[3]);
+    const motorCount = motorNodes.length;
+    motorNodes.forEach((node, i) => {
+        const t = motorCount > 1 ? i / (motorCount - 1) : 0.5;
+        const angle = (-55 + t * 110) * (Math.PI / 180);
+        const radius = 22 + (i % 2 === 0 ? -1.8 : 1.8);
+        node.x = Math.max(64, Math.min(82, CX + Math.cos(angle) * radius * 1.25));
+        node.y = Math.max(22, Math.min(80, CY + Math.sin(angle) * radius * 1.15));
+    });
+
+    // 5. Right Outer Wing: Consequences (-75 deg to +75 deg)
+    const consequenceNodes = sortNodesByConnectedCore(layerNodes[4]);
+    const consCount = consequenceNodes.length;
+    consequenceNodes.forEach((node, i) => {
+        const t = consCount > 1 ? i / (consCount - 1) : 0.5;
+        const angle = (-75 + t * 150) * (Math.PI / 180);
+        const radius = 34 + (i % 2 === 0 ? -2.2 : 2.2);
+        node.x = Math.max(78, Math.min(93, CX + Math.cos(angle) * radius * 1.18));
+        node.y = Math.max(14, Math.min(88, CY + Math.sin(angle) * radius * 1.12));
     });
 
     return resolveCollisions(newNodes);
@@ -6914,7 +6953,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                    title="Ajustar y alinear nodos (6 columnas)"
+                                    title="Reorganizar en Telarana Funcional"
                                     aria-label="Ajustar y alinear nodos"
                                 >
                                     <Network size={11} className="text-emerald-400" />
@@ -7019,19 +7058,19 @@ Devuelve estrictamente el JSON sin formato extra.
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
                                     <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+                                        {/* Radial Spiderweb Atmosphere */}
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-purple-600/[0.025] blur-[100px] pointer-events-none" />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
+
                                         {CLINICAL_COLUMNS.map((col) => (
                                             <div
                                                 key={col.id}
                                                 className="absolute top-0 bottom-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
                                                 style={{ left: `${col.baseX}%`, width: '280px' }}
                                             >
-                                                {/* Subtle luminous vertical lane guide */}
-                                                <div 
-                                                    className="absolute top-14 bottom-8 w-[1px] pointer-events-none opacity-40" 
-                                                    style={{
-                                                        background: `linear-gradient(to bottom, ${col.color}40, ${col.color}10 20%, rgba(255,255,255,0.03) 60%, transparent)`
-                                                    }}
-                                                />
+                                                
 
                                                 {/* Column Header Card */}
                                                 <div 
