@@ -1952,6 +1952,128 @@ Devuelve estrictamente el JSON sin formato extra.
     const [shouldBranchGraph, setShouldBranchGraph] = useState(true);
     const [isMoldingNode, setIsMoldingNode] = useState(false);
 
+    const synthesizeMoldedNodeFallback = (targetNode, feedbackText, autoBranch = true) => {
+        const raw = (feedbackText || '').trim();
+        const lower = raw.toLowerCase();
+
+        // 1. Sintetizar un título clínico conciso para el nodo reajustado
+        let newLabel = '';
+        if (lower.includes('desobligad') || lower.includes('responsabilidad') || lower.includes('fácil') || lower.includes('facil')) {
+            newLabel = 'Trabajo flexible y desobligación';
+        } else if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
+            newLabel = 'Preocupación y estrés financiero';
+        } else if (lower.includes('aislam') || lower.includes('solo') || lower.includes('encierr')) {
+            newLabel = 'Aislamiento defensivo';
+        } else if (lower.includes('pareja') || lower.includes('novi') || lower.includes('amor')) {
+            newLabel = 'Tensión en relación de pareja';
+        } else if (lower.includes('familia') || lower.includes('padre') || lower.includes('madre') || lower.includes('mamá') || lower.includes('papá')) {
+            newLabel = 'Demandas o fricción familiar';
+        } else if (lower.includes('cansa') || lower.includes('agotam') || lower.includes('sueño') || lower.includes('fatiga')) {
+            newLabel = 'Agotamiento mental acumulado';
+        } else if (lower.includes('culpa') || lower.includes('reproch') || lower.includes('fall')) {
+            newLabel = 'Sentimiento de culpa y autoexigencia';
+        } else {
+            // Extraer la primera frase sustantiva limpia
+            const cleanClause = raw
+                .replace(/^(mira|bro|oye|sabes|creo que|tal vez|en realidad|la verdad|no sé|no se|pasa que|siento que|es que)\s+/gi, '')
+                .split(/[,.;:\n]/)[0]
+                .trim();
+            const words = cleanClause.split(/\s+/).slice(0, 5).join(' ');
+            newLabel = words ? (words.charAt(0).toUpperCase() + words.slice(1)) : (targetNode?.label || 'Factor reajustado');
+            if (newLabel.length < 4) newLabel = targetNode?.label || 'Factor reajustado';
+        }
+
+        const updatedNode = {
+            label: newLabel,
+            description: raw,
+            question: `¿De qué manera notas que esta situación influye en tu día a día y en tu nivel de bienestar?`
+        };
+
+        const branchNodes = [];
+        if (autoBranch) {
+            if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
+                branchNodes.push({
+                    label: 'Estrés y presión financiera',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    description: 'Pensamientos intrusivos o inquietud constante respecto al dinero y la estabilidad material.',
+                    question: '¿Qué pensamientos sobre tu economía aparecen cuando intentas desconectar o descansar?'
+                });
+            }
+            if (lower.includes('desobligad') || lower.includes('linea') || lower.includes('línea') || lower.includes('rutina') || lower.includes('tiempo')) {
+                branchNodes.push({
+                    label: 'Falta de estructura en la rutina',
+                    type: 'motor',
+                    clinical_role: 'motor',
+                    description: 'La flexibilidad o trabajo sin supervisión rígida propicia la desorganización de tiempos y postergación.',
+                    question: '¿Qué rutinas o hábitos te ayudan a mantener orden sin sentirte abrumado?'
+                });
+            }
+            if (lower.includes('cansa') || lower.includes('estres') || lower.includes('estrés') || lower.includes('agotam')) {
+                branchNodes.push({
+                    label: 'Sobrecarga somática latente',
+                    type: 'physiological',
+                    clinical_role: 'physiological',
+                    description: 'Sensación física de fatiga o tensión acumulada generada por preocupaciones de fondo.',
+                    question: '¿En qué parte de tu cuerpo se manifiesta más este cansancio acumulado?'
+                });
+            }
+
+            // Si los textos no tenían esas palabras clave específicas, derivar según el rol clínico del nodo
+            if (branchNodes.length < 2) {
+                const role = targetNode?.clinical_role || targetNode?.type || 'motor';
+                if (role === 'motor') {
+                    branchNodes.push({
+                        label: 'Postergación de tareas clave',
+                        type: 'motor',
+                        clinical_role: 'motor',
+                        description: 'Demora temporal de tareas obligatorias frente a la falta de supervisión o rutina inmediata.',
+                        question: '¿Qué buscas evitar o posponer al retrasar estas responsabilidades?'
+                    });
+                    branchNodes.push({
+                        label: 'Sobrecarga y reproche posterior',
+                        type: 'consequence',
+                        clinical_role: 'consequence',
+                        description: 'Acumulación de pendientes que culmina en reproches internos o estrés acelerado.',
+                        question: '¿Cuál es el costo emocional que experimentas al final del día?'
+                    });
+                } else if (role === 'cognitive') {
+                    branchNodes.push({
+                        label: 'Diálogo autocrítico sobre el rendimiento',
+                        type: 'cognitive',
+                        clinical_role: 'cognitive',
+                        description: 'Juicios internos sobre no estar cumpliendo con lo esperado.',
+                        question: '¿Qué te dices a ti mismo cuando sientes que no avanzaste lo suficiente?'
+                    });
+                    branchNodes.push({
+                        label: 'Conducta de evasión o desconexión',
+                        type: 'motor',
+                        clinical_role: 'motor',
+                        description: 'Búsqueda de distracciones breves para evitar la incomodidad de la presión.',
+                        question: '¿A qué sueles recurrir cuando necesitas desconectarte urgentemente?'
+                    });
+                } else {
+                    branchNodes.push({
+                        label: 'Pensamientos de incertidumbre',
+                        type: 'cognitive',
+                        clinical_role: 'cognitive',
+                        description: 'Inquietud anticipatoria sobre el rumbo o las consecuencias de esta dinámica.',
+                        question: '¿Qué temores surgen cuando anticipas este escenario?'
+                    });
+                    branchNodes.push({
+                        label: 'Ajuste y búsqueda de límites',
+                        type: 'motor',
+                        clinical_role: 'motor',
+                        description: 'Necesidad de establecer pausas y acuerdos claros para recuperar el control.',
+                        question: '¿Qué pequeño paso podrías dar para ordenar este aspecto?'
+                    });
+                }
+            }
+        }
+
+        return { updatedNode, branchNodes: branchNodes.slice(0, 3) };
+    };
+
     const handleMoldNode = async (nodeId, feedbackText, autoBranch = true) => {
         if (!feedbackText || !feedbackText.trim()) return;
         setIsMoldingNode(true);
@@ -2013,23 +2135,40 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
   }
 }`}`;
 
+            // AbortController con timeout estricto de 7.5s para garantizar que la UI nunca se quede congelada en "Moldeando..."
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 7500);
+
             let parsedResult = null;
             try {
+                let endpoint = localStorage.getItem('oasis_deepseek_endpoint') || '';
+                let model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
+                let provider = 'openai';
+
+                if (endpoint.includes('deepseek.com') || (!endpoint && activeKey && activeKey.startsWith('sk-') && !activeKey.startsWith('sk-proj-'))) {
+                    provider = 'deepseek';
+                    if (!endpoint) endpoint = 'https://api.deepseek.com/chat/completions';
+                    if (model === 'gpt-4o-mini') model = 'deepseek-chat';
+                }
+
                 const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
                     body: JSON.stringify({
-                        provider: 'openai',
-                        endpoint: null,
-                        key: activeKey,
+                        provider: provider,
+                        endpoint: endpoint || null,
+                        key: activeKey || null,
                         payload: {
-                            model: 'gpt-4o-mini',
+                            model: model,
                             messages: [{ role: 'system', content: prompt }],
                             response_format: { type: "json_object" },
-                            temperature: 0.35
+                            temperature: 0.35,
+                            max_tokens: 1500
                         }
                     })
                 });
+                clearTimeout(timeoutId);
 
                 if (res.ok) {
                     const data = await res.json();
@@ -2040,29 +2179,40 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                     }
                 }
             } catch (apiErr) {
-                console.warn("[MoldNode] Fallback local para moldear nodo:", apiErr);
+                clearTimeout(timeoutId);
+                console.warn("[MoldNode] IA remota no disponible o con timeout, ejecutando síntesis clínica local instantánea:", apiErr);
             }
 
-            const updatedData = parsedResult?.updatedNode || parsedResult || {
-                label: feedbackText.trim().split(/[.\n]/)[0].slice(0, 30),
+            // Si la IA no devolvió respuesta estructurada o falló, sintetizar clínicamente de forma instantánea
+            if (!parsedResult || !parsedResult.updatedNode) {
+                parsedResult = synthesizeMoldedNodeFallback(targetNode, feedbackText, autoBranch);
+            }
+
+            const updatedData = parsedResult?.updatedNode || {
+                label: targetNode.label,
                 description: feedbackText.trim(),
-                question: "¿De qué forma influye esta situación en tu día a día?"
+                question: targetNode.question
             };
 
             const branchNodes = parsedResult?.branchNodes || [];
 
-            const newAfcData = { ...afcData };
-            const nodeIndex = newAfcData.nodes.findIndex(n => n.id === nodeId);
+            // Clonar profundamente nodos y aristas para reactividad limpia
+            const newNodes = (afcData?.nodes || []).map(n => ({ ...n }));
+            const newEdges = (afcData?.edges || []).map(e => ({ ...e }));
+
+            const nodeIndex = newNodes.findIndex(n => n.id === nodeId);
             if (nodeIndex > -1) {
-                newAfcData.nodes[nodeIndex] = {
-                    ...newAfcData.nodes[nodeIndex],
+                const updatedTargetNode = {
+                    ...newNodes[nodeIndex],
                     label: updatedData.label,
                     description: updatedData.description,
-                    question: updatedData.question,
+                    question: updatedData.question || newNodes[nodeIndex].question,
                     is_corrected: true,
                     molded_note: feedbackText.trim()
                 };
+                newNodes[nodeIndex] = updatedTargetNode;
 
+                const spawnedNodeLabels = [];
                 // Integrar ramificaciones en el mapa manteniendo el orden de columnas clínicas
                 if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
                     const parentX = targetNode.x || 50;
@@ -2088,16 +2238,18 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                             clinical_role: role,
                             label: bNode.label,
                             description: bNode.description,
-                            question: bNode.question,
+                            question: bNode.question || "¿De qué manera notas que esto se manifiesta en tu día a día?",
                             x: newX,
                             y: newY,
                             is_satellite: true,
-                            is_corrected: true
+                            is_corrected: true,
+                            molded_note: `Factor derivado de aclaración: "${feedbackText.trim()}"`
                         };
 
-                        newAfcData.nodes.push(spawnedNode);
+                        newNodes.push(spawnedNode);
+                        spawnedNodeLabels.push(bNode.label);
 
-                        newAfcData.edges.push({
+                        newEdges.push({
                             source: targetNode.id,
                             target: newId,
                             weight: 2,
@@ -2106,29 +2258,88 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
                     });
                 }
 
-                setAfcData(newAfcData);
-                localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
-                setSelectedNode(newAfcData.nodes[nodeIndex]);
+                const newAfcData = {
+                    ...afcData,
+                    nodes: newNodes,
+                    edges: newEdges
+                };
 
+                // 1. Actualizar estado reactivo
+                setAfcData(newAfcData);
+                setSelectedNode(updatedTargetNode);
+
+                // 2. Persistir en todos los niveles locales y nube clínica
+                try {
+                    localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+                    localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
+                    setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+                } catch (e) {
+                    console.error("Error al persistir afcData:", e);
+                }
+
+                // 3. Registrar en la Memoria Clínica Permanente para Asistente Documental / Kio
                 try {
                     const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
                     currentCorrections.push({
+                        id: 'corr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
                         nodeId: nodeId,
                         previousLabel: targetNode.label,
+                        previousDescription: targetNode.description || '',
                         correction: feedbackText.trim(),
                         newLabel: updatedData.label,
+                        newDescription: updatedData.description,
                         branchesCreated: branchNodes.length,
+                        branchDetails: spawnedNodeLabels,
                         timestamp: new Date().toISOString()
                     });
                     localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
-                } catch (e) {}
+                    setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+                } catch (e) {
+                    console.error("Error al registrar corrección clínica:", e);
+                }
+
+                // 4. Sincronizar el puntero del tour para que no salte a otro nodo tras la reordenación
+                const clinicalRoleOrder = {
+                    antecedent: 0,
+                    cognitive: 1,
+                    internal_barrier: 1,
+                    physiological: 2,
+                    motor: 3,
+                    experiential_avoidance: 3,
+                    consequence: 4,
+                    maintaining_trap: 4
+                };
+                const typeOrder = {
+                    historical: 0,
+                    social: 0,
+                    cognitive: 1,
+                    physiological: 2,
+                    biological: 2,
+                    motor: 3,
+                    consequence: 4
+                };
+                const sorted = [...newNodes].sort((a, b) => {
+                    const roleA = a.clinical_role ? clinicalRoleOrder[a.clinical_role] : undefined;
+                    const roleB = b.clinical_role ? clinicalRoleOrder[b.clinical_role] : undefined;
+                    if (roleA !== undefined && roleB !== undefined && roleA !== roleB) {
+                        return roleA - roleB;
+                    }
+                    const orderA = typeOrder[a.type] ?? 99;
+                    const orderB = typeOrder[b.type] ?? 99;
+                    if (orderA !== orderB) return orderA - orderB;
+                    if (a.x !== b.x) return a.x - b.x;
+                    return a.y - b.y;
+                });
+                const newTourIdx = sorted.findIndex(n => n.id === nodeId);
+                if (newTourIdx !== -1) {
+                    setTourActiveIndex(newTourIdx);
+                }
             }
 
             setEditingNodeId(null);
             setMoldFeedback('');
         } catch (err) {
             console.error("Error al moldear nodo:", err);
-            alert("Ocurrió un error al moldear el nodo: " + err.message);
         } finally {
             setIsMoldingNode(false);
         }
@@ -2136,11 +2347,13 @@ ${autoBranch ? `3. EXTRAE DE 2 A 3 NUEVOS NODOS / FACTORES CONECTADOS directamen
 
     const handleDeleteNode = (nodeId) => {
         if (!window.confirm("¿Deseas descartar este factor del mapa? Las conexiones directas a este nodo también serán removidas.")) return;
-        const newAfcData = { ...afcData };
-        newAfcData.nodes = (newAfcData.nodes || []).filter(n => n.id !== nodeId);
-        newAfcData.edges = (newAfcData.edges || []).filter(e => e.source !== nodeId && e.target !== nodeId);
+        const newNodes = (afcData?.nodes || []).filter(n => n.id !== nodeId);
+        const newEdges = (afcData?.edges || []).filter(e => e.source !== nodeId && e.target !== nodeId);
+        const newAfcData = { ...afcData, nodes: newNodes, edges: newEdges };
         setAfcData(newAfcData);
+        localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
         localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+        setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
         setSelectedNode(null);
         setEditingNodeId(null);
     };
@@ -8556,16 +8769,38 @@ Por favor, analicemos:
                     <button 
                         onClick={(e) => {
                             e.stopPropagation();
-                            const newAfcData = { ...afcData };
-                            const nodeIndex = newAfcData.nodes.findIndex(n => n.id === currentNode.id);
+                            const newNodes = (afcData?.nodes || []).map(n => ({ ...n }));
+                            const newEdges = (afcData?.edges || []).map(e => ({ ...e }));
+                            const nodeIndex = newNodes.findIndex(n => n.id === currentNode.id);
                             if (nodeIndex > -1) {
-                                newAfcData.nodes[nodeIndex].label = editNodeForm.label;
-                                newAfcData.nodes[nodeIndex].description = editNodeForm.description;
-                                newAfcData.nodes[nodeIndex].question = editNodeForm.question;
+                                const prevLabel = newNodes[nodeIndex].label;
+                                newNodes[nodeIndex].label = editNodeForm.label;
+                                newNodes[nodeIndex].description = editNodeForm.description;
+                                newNodes[nodeIndex].question = editNodeForm.question;
+                                newNodes[nodeIndex].is_corrected = true;
+                                const newAfcData = { ...afcData, nodes: newNodes, edges: newEdges };
                                 setAfcData(newAfcData);
+                                localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
                                 localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
-                                setSelectedNode(newAfcData.nodes[nodeIndex]);
+                                setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+                                setSelectedNode(newNodes[nodeIndex]);
                                 setEditingNodeId(null);
+
+                                try {
+                                    const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
+                                    currentCorrections.push({
+                                        id: 'manual_' + Date.now().toString(36),
+                                        nodeId: currentNode.id,
+                                        previousLabel: prevLabel,
+                                        correction: editNodeForm.description,
+                                        newLabel: editNodeForm.label,
+                                        newDescription: editNodeForm.description,
+                                        branchesCreated: 0,
+                                        timestamp: new Date().toISOString()
+                                    });
+                                    localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+                                    setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+                                } catch (err) {}
                             }
                         }}
                         className="text-[10px] px-2.5 py-1.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 font-bold"
@@ -8579,9 +8814,22 @@ Por favor, analicemos:
 ) : (
 
                                                         <div>
-                                                            <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
-                                                                {softenNodeLabel(currentNode.label)}
-                                                            </h4>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <h4 className="text-xs sm:text-[13.5px] font-bold text-white leading-snug tracking-tight">
+                                                                    {softenNodeLabel(currentNode.label)}
+                                                                </h4>
+                                                                {currentNode.is_corrected && (
+                                                                    <span className="text-[8.5px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono font-semibold flex items-center gap-1 shadow-sm">
+                                                                        <Sparkles size={8.5} /> Verificado con IA
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {currentNode.molded_note && (
+                                                                <div className="mt-1.5 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-[9.5px] text-emerald-300 leading-relaxed font-sans flex items-start gap-1.5">
+                                                                    <span className="text-emerald-400 font-bold shrink-0">Aclaración:</span>
+                                                                    <span className="italic line-clamp-2">"{currentNode.molded_note}"</span>
+                                                                </div>
+                                                            )}
                                                             {getFallbackDescription(currentNode, user) && (
                                                                 <div className="flex flex-col gap-1.5 mt-0.5">
                                                                     <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">

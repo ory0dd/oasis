@@ -456,6 +456,67 @@ ${PID5_ITEMS.map(item => {
             });
         }
 
+        // Actualización de Nodos del Mapa (Memoria Clínica Permanente)
+        const correctionsRaw = localStorage.getItem(`oasis_clinical_corrections_${patientName}`);
+        let parsedCorrections = [];
+        try {
+            if (correctionsRaw) {
+                const arr = JSON.parse(correctionsRaw);
+                if (Array.isArray(arr)) parsedCorrections = arr;
+            }
+        } catch (e) {}
+
+        const realAfcRaw = localStorage.getItem(`oasis_afc_real_data_${patientName}`) || localStorage.getItem(`oasis_afc_map_${patientName}`);
+        let afcMoldedNodes = [];
+        try {
+            if (realAfcRaw) {
+                const parsedAfc = JSON.parse(realAfcRaw);
+                if (parsedAfc && Array.isArray(parsedAfc.nodes)) {
+                    afcMoldedNodes = parsedAfc.nodes.filter(n => n.is_corrected || n.molded_note);
+                }
+            }
+        } catch(e) {}
+
+        if (parsedCorrections.length === 0 && afcMoldedNodes.length > 0) {
+            parsedCorrections = afcMoldedNodes.map((n, i) => ({
+                id: 'molded_' + n.id,
+                nodeId: n.id,
+                previousLabel: n.label,
+                correction: n.molded_note || n.description || 'Factor reajustado en el mapa interactivo',
+                newLabel: n.label,
+                newDescription: n.description,
+                branchesCreated: 0,
+                timestamp: new Date().toISOString()
+            }));
+        }
+
+        const totalCorrectionsCount = parsedCorrections.length;
+
+        const correctionsPromptContent = `MEMORIA CLÍNICA PERMANENTE: ACTUALIZACIONES Y REAJUSTES DEL MAPA CLÍNICO
+Esta fuente contiene las correcciones directas, aclaraciones de realidad empírica y desmentidos de suposiciones erróneas realizados por el paciente @${patientName} o su terapeuta sobre los factores de su red funcional.
+REGLA PRIORITARIA PARA KIO: Cualquier aclaración registrada aquí tiene PREVALENCIA ABSOLUTA sobre hipótesis o formulaciones teóricas previas. Utiliza esta verdad operativa en tus reflexiones, bucles e informes.
+
+${parsedCorrections.length > 0 ? parsedCorrections.map((c, idx) => `[Ajuste Clínico #${idx + 1}]
+- Factor previo o inexacto: "${c.previousLabel || 'Factor del mapa'}"
+- Aclaración y contexto real (Verdad del paciente): "${c.correction}"
+- Nueva formulación del factor: "${c.newLabel || 'Factor reajustado'}"
+${c.newDescription ? `- Descripción funcional: "${c.newDescription}"` : ''}
+${c.branchesCreated ? `- Factores orgánicos derivados en la red: ${c.branchesCreated} (${(c.branchDetails || []).join(', ') || 'Ramas integradas'})` : ''}
+- Fecha de registro: ${c.timestamp ? new Date(c.timestamp).toLocaleString() : 'Reciente'}
+--------------------------------------------------`).join('\n') : 'Memoria activa en espera de aclaraciones en el mapa interactivo.'}`;
+
+        availSources.push({
+            id: 'afc_corrections',
+            name: totalCorrectionsCount > 0 
+                ? `Actualización de Nodos del Mapa (${totalCorrectionsCount} ajuste${totalCorrectionsCount > 1 ? 's' : ''})` 
+                : 'Actualización de Nodos del Mapa (Memoria Activa)',
+            type: 'memoria clínica',
+            correctionsCount: totalCorrectionsCount,
+            corrections: parsedCorrections,
+            moldedNodes: afcMoldedNodes,
+            content: correctionsPromptContent
+        });
+
         // Completed Clinical Screening Tests (BAI, PHQ-9, COPE, DERS, AAQ-II, GAD-7, CDI-2, SCARED, SDQ, C-SSRS, EPDS)
         if (CLINICAL_TESTS) {
             Object.keys(CLINICAL_TESTS).forEach(tId => {
@@ -2912,6 +2973,133 @@ Inicia con un breve comentario introductorio de colega ("He recreado y desarroll
                             </div>
                         </div>
                     </div>
+                </div>
+            );
+        }
+
+        // 3.5 Actualización de Nodos del Mapa (Memoria Clínica Permanente)
+        if (source.id === 'afc_corrections') {
+            const corrections = Array.isArray(source.corrections) ? source.corrections : [];
+            const moldedNodes = Array.isArray(source.moldedNodes) ? source.moldedNodes : [];
+
+            return (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Header Banner */}
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-purple-950/20 to-black/60 border border-emerald-500/30 text-white space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                                    <Sparkles size={16} />
+                                </div>
+                                <div>
+                                    <h4 className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                                        <span>Memoria Clínica Permanente: Nodos del Mapa</span>
+                                        <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300">
+                                            {corrections.length} ajuste{corrections.length === 1 ? '' : 's'}
+                                        </span>
+                                    </h4>
+                                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                                        Reajustes dinámicos y aclaraciones de @{patientName}
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 font-bold hidden sm:inline-block">
+                                Verdad Empírica Activa
+                            </span>
+                        </div>
+
+                        <p className="text-[11px] text-zinc-300 font-sans leading-relaxed pt-1.5 border-t border-white/5">
+                            Cada aclaración queda guardada en la memoria clínica del caso para que las próximas formulaciones, bucles e informes recuerden esa verdad y descarten suposiciones erróneas.
+                        </p>
+                    </div>
+
+                    {/* Adjustments List */}
+                    {corrections.length === 0 && moldedNodes.length === 0 ? (
+                        <div className="p-8 rounded-xl bg-zinc-900/40 border border-white/5 text-center space-y-3">
+                            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-zinc-400">
+                                <Sparkles size={18} />
+                            </div>
+                            <div className="max-w-md mx-auto">
+                                <h5 className="text-xs font-bold text-zinc-200">Sin aclaraciones manuales aún</h5>
+                                <p className="text-[11px] text-zinc-400 font-sans mt-1 leading-relaxed">
+                                    Cuando moldees un nodo en el mapa clínico interactivo (usando la opción <strong className="text-emerald-400">"Moldear con IA"</strong>), todas las aclaraciones de la historia real del paciente se registrarán automáticamente aquí de forma acumulativa y permanente.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scroll">
+                            {corrections.map((corr, idx) => (
+                                <div key={corr.id || idx} className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/10 hover:border-emerald-500/30 transition-all space-y-2.5">
+                                    <div className="flex items-center justify-between text-[10px] font-mono">
+                                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                                            Ajuste #{idx + 1}
+                                        </span>
+                                        <span className="text-zinc-500 flex items-center gap-1">
+                                            <Clock size={10} />
+                                            {corr.timestamp ? new Date(corr.timestamp).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'Reciente'}
+                                        </span>
+                                    </div>
+
+                                    {/* Comparación: Antes vs Verdad del paciente */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                        <div className="p-2.5 rounded-lg bg-black/40 border border-red-500/20 space-y-1">
+                                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-red-400 block">
+                                                Factor Previo o Inexacto
+                                            </span>
+                                            <p className="text-zinc-300 font-semibold line-through decoration-red-400/60">
+                                                "{corr.previousLabel || 'Factor inicial'}"
+                                            </p>
+                                            {corr.previousDescription && (
+                                                <p className="text-[10px] text-zinc-500 italic line-clamp-2">
+                                                    {corr.previousDescription}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30 space-y-1">
+                                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">
+                                                Nueva Formulación Validada
+                                            </span>
+                                            <p className="text-white font-bold flex items-center gap-1.5">
+                                                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                                                <span>"{corr.newLabel || 'Factor reajustado'}"</span>
+                                            </p>
+                                            {corr.newDescription && (
+                                                <p className="text-[10px] text-zinc-300 leading-relaxed">
+                                                    {corr.newDescription}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Aclaración textual del consultante */}
+                                    <div className="p-2.5 rounded-lg bg-black/50 border border-white/5 space-y-1">
+                                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-purple-300 block">
+                                            Aclaración Textual y Realidad del Caso:
+                                        </span>
+                                        <p className="text-[11px] text-zinc-200 italic leading-relaxed font-sans bg-zinc-950/60 p-2 rounded border border-white/5">
+                                            "{corr.correction}"
+                                        </p>
+                                    </div>
+
+                                    {/* Ramas derivadas creadas */}
+                                    {corr.branchesCreated > 0 && (
+                                        <div className="flex items-center gap-2 text-[10px] text-emerald-400/90 font-mono bg-emerald-950/30 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg">
+                                            <Sparkles size={11} className="text-emerald-400" />
+                                            <span>
+                                                Se integraron <strong>{corr.branchesCreated} nuevos factores interconectados</strong> al mapa clínico
+                                                {Array.isArray(corr.branchDetails) && corr.branchDetails.length > 0 && (
+                                                    <span className="text-zinc-300 font-sans block text-[9.5px] mt-0.5">
+                                                        ({corr.branchDetails.join(' • ')})
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         }
