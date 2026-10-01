@@ -931,24 +931,23 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         if (count <= 0) return [];
         if (count === 1) return [{ x: baseX, y: 52 }];
 
-        // Incremented yStep significantly to spread nodes vertically and prevent clutter
         let yStep;
-        if (count === 2) yStep = 32;
-        else if (count === 3) yStep = 24;
-        else if (count === 4) yStep = 18;
-        else if (count === 5) yStep = 15;
-        else if (count === 6) yStep = 13;
-        else if (count <= 8) yStep = 11;
-        else yStep = Math.max(9, 75 / (count - 1));
+        if (count === 2) yStep = 30;
+        else if (count === 3) yStep = 22;
+        else if (count === 4) yStep = 17;
+        else if (count === 5) yStep = 14;
+        else if (count === 6) yStep = 12;
+        else if (count <= 8) yStep = 10;
+        else yStep = Math.max(7.2, 74 / (count - 1));
 
         const totalHeight = (count - 1) * yStep;
         const startY = 52 - (totalHeight / 2);
         const slots = [];
         for (let i = 0; i < count; i++) {
-            const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 0.8 : 0;
-            const altX = (i % 2 === 0 ? -0.8 : 0.8);
-            const x = Math.max(9, Math.min(91, baseX + altX + waveX));
-            const y = Math.max(16, Math.min(88, startY + (i * yStep)));
+            const waveX = count > 2 ? Math.sin((i / (count - 1)) * Math.PI) * 1.5 : 0;
+            const altX = (i % 2 === 0 ? -1.2 : 1.2);
+            const x = Math.max(8, Math.min(92, baseX + altX + waveX));
+            const y = Math.max(14, Math.min(90, startY + (i * yStep)));
             slots.push({ x, y });
         }
         return slots;
@@ -990,7 +989,7 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         return 2;
     };
 
-    const roleByLayer = ['antecedent', 'cognitive', 'physiological', 'motor', 'consequence'];
+    const roleByLayer = ['context', 'antecedent', 'cognitive', 'motor', 'consequence', 'function'];
     const layerNodes = layers.map(() => []);
 
     newNodes.forEach(n => {
@@ -4370,18 +4369,19 @@ ${isAdditive ? `
             const payload1 = {
                 messages: [
                     { role: 'system', content: systemPromptTopology },
-                    { role: 'user', content: `Genera la FORMULACION CLINICA DE CASO en Modo Grafo Funcional (EXACTAMENTE entre 20 y 24 nodos nucleares y entre 32 y 48 conexiones) basada en el Analisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
+                    { role: 'user', content: `Genera la FORMULACION CLINICA DE CASO en Modo Grafo Funcional como una RED DENSA Y EXTENSA (EXACTAMENTE entre 32 y 45 nodos nucleares y entre 48 y 75 conexiones) basada en el Analisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
 REGLAS ESENCIALES:
-- EXACTAMENTE entre 20 y 24 nodos nucleares estructurados en los 6 pilares funcionales:
-  1. Contexto & Variables (3-4 nodos: historical/social, clinical_role: 'context')
-  2. Detonantes Inmediatos (3-4 nodos: antecedent, clinical_role: 'antecedent')
-  3. Eventos Privados (4-5 nodos: cognitive/physiological, clinical_role: 'cognitive' o 'physiological')
-  4. Respuesta Operante (4-5 nodos: motor, clinical_role: 'motor')
-  5. Consecuencias (4-5 nodos: consequence, clinical_role: 'consequence')
-  6. Funcion del Bucle (2-3 nodos: function, clinical_role: 'function')
-- BUCLES MULTIPLES Y PARALELOS: NO hagas que todo converja en un solo gran problema. Las personas tienen multiples problemas (ej. un bucle para lo social, otro para lo laboral). Muestra estos distintos arboles de manera paralela.
+- RED EXPANSIVA Y RICA (Estilo Red Neuronal / Obsidian): Genera exactamente entre 32 y 45 nodos distribuidos en los 6 pilares:
+  1. Contexto & Variables (5-7 nodos: historical/social, clinical_role: 'context')
+  2. Detonantes Inmediatos (5-7 nodos: antecedent, clinical_role: 'antecedent')
+  3. Eventos Privados (8-11 nodos: pensamientos, emociones, sensaciones somáticas, clinical_role: 'cognitive' o 'physiological')
+  4. Respuesta Operante (6-9 nodos: conductas motoras, escape, hábitos, acciones, clinical_role: 'motor')
+  5. Consecuencias (5-8 nodos: consecuencias a corto y largo plazo, trampas de mantenimiento, clinical_role: 'consequence')
+  6. Funcion del Bucle (3-5 nodos: hipótesis de sentido/función nuclear, clinical_role: 'function')
+- BUCLES MULTIPLES Y PARALELOS: Identifica y mapea entre 3 y 5 bucles o islas funcionales que conviven en el paciente (ej. bucle de autoexigencia laboral, bucle de aislamiento social, bucle somático/insomnio, bucle de evitación afectiva).
+- ESTRUCTURA DE HUBS Y SATELITES: Algunos nodos clave deben ser conectores nucleares con 4 o más conexiones (hubs), mientras que otros nodos son satélites específicos con 1 o 2 conexiones.
 - LENGUAJE HIPOTETICO Y SUAVE: Este es un mapa de HIPOTESIS clinicas para explorar con el paciente. NUNCA uses etiquetas rigidas o acusatorias absolutas (ej. NO uses "Evitar el dolor", mejor usa "Posible evasion del malestar?", o "Intento de alivio?"). Usa signos de interrogacion o palabras como "Posible", "Aparente" para mantener una postura curiosa y no encasillar al paciente de forma injusta.
-- EXACTAMENTE entre 32 y 48 conexiones funcionales.
+- EXACTAMENTE entre 48 y 75 conexiones funcionales que enlacen los bucles entre sí y muestren su dinámica de retroalimentación.
 - CERO PIVOTES: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:".
 - Cada nodo con su 'clinical_role', 'label' certero e hipotetico (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
 Datos clinicos del paciente:\n` + context }
@@ -5337,6 +5337,49 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         mapDragged.current = false;
     };
 
+    const syncConnectedSvgEdges = (nodeId, curX, curY) => {
+        try {
+            const connectedEdges = document.querySelectorAll(`path[data-source="${nodeId}"], path[data-target="${nodeId}"]`);
+            for (let j = 0; j < connectedEdges.length; j++) {
+                const pathEl = connectedEdges[j];
+                const sId = pathEl.getAttribute('data-source');
+                const tId = pathEl.getAttribute('data-target');
+                const isSrc = sId === nodeId;
+
+                let x1, y1, x2, y2;
+                if (isSrc) {
+                    x1 = curX;
+                    y1 = curY;
+                    const tgtEl = document.getElementById(`afc-node-${tId}`);
+                    if (!tgtEl) continue;
+                    x2 = parseFloat(tgtEl.dataset.curx || tgtEl.dataset.basex || 0);
+                    y2 = parseFloat(tgtEl.dataset.cury || tgtEl.dataset.basey || 0);
+                } else {
+                    const srcEl = document.getElementById(`afc-node-${sId}`);
+                    if (!srcEl) continue;
+                    x1 = parseFloat(srcEl.dataset.curx || srcEl.dataset.basex || 0);
+                    y1 = parseFloat(srcEl.dataset.cury || srcEl.dataset.basey || 0);
+                    x2 = curX;
+                    y2 = curY;
+                }
+
+                const isFb = pathEl.getAttribute('data-isfeedback') === '1' || x2 < x1;
+                if (isFb) {
+                    const midY = (y1 + y2) / 2;
+                    const horizontalDist = Math.abs(x1 - x2);
+                    const bowDir = midY < 50 ? -1 : 1;
+                    const bowDepth = Math.min(13, Math.max(5, horizontalDist * 0.16));
+                    const cpOffset = Math.min(horizontalDist * 0.35, 12);
+                    pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1 - cpOffset} ${y1 + (bowDir * bowDepth * 0.85)}, ${x2 + cpOffset} ${y2 + (bowDir * bowDepth * 0.85)}, ${x2} ${y2}`);
+                } else {
+                    pathEl.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+                }
+            }
+        } catch (err) {
+            // silent fail on edge sync
+        }
+    };
+
     const handleMapMouseMove = (e) => {
         if (draggingNodeId && mapContainerRef.current) {
             nodeDraggedRef.current = true;
@@ -5352,13 +5395,18 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             window._dragNodeAcc.dx += dx;
             window._dragNodeAcc.dy += dy;
 
-            const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                        const el = document.getElementById(`afc-node-${draggingNodeId}`);
             if (el) {
                 // Extract base coords from dataset to avoid reading inline styles
                 const baseX = parseFloat(el.dataset.basex || 0);
                 const baseY = parseFloat(el.dataset.basey || 0);
-                el.style.left = `${baseX + window._dragNodeAcc.dx}%`;
-                el.style.top = `${baseY + window._dragNodeAcc.dy}%`;
+                const curX = baseX + window._dragNodeAcc.dx;
+                const curY = baseY + window._dragNodeAcc.dy;
+                el.style.left = `${curX}%`;
+                el.style.top = `${curY}%`;
+                el.dataset.curx = curX;
+                el.dataset.cury = curY;
+                syncConnectedSvgEdges(draggingNodeId, curX, curY);
             }
             return;
         }
@@ -5472,12 +5520,17 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 window._dragNodeAcc.dx += dx;
                 window._dragNodeAcc.dy += dy;
 
-                const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                                const el = document.getElementById(`afc-node-${draggingNodeId}`);
                 if (el) {
                     const baseX = parseFloat(el.dataset.basex || 0);
                     const baseY = parseFloat(el.dataset.basey || 0);
-                    el.style.left = `${baseX + window._dragNodeAcc.dx}%`;
-                    el.style.top = `${baseY + window._dragNodeAcc.dy}%`;
+                    const curX = baseX + window._dragNodeAcc.dx;
+                    const curY = baseY + window._dragNodeAcc.dy;
+                    el.style.left = `${curX}%`;
+                    el.style.top = `${curY}%`;
+                    el.dataset.curx = curX;
+                    el.dataset.cury = curY;
+                    syncConnectedSvgEdges(draggingNodeId, curX, curY);
                 }
             } else if (isDraggingMapRef.current) {
                 const deltaX = touch.clientX - lastPointerPos.current.x;
@@ -7171,6 +7224,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                             return (
                                                 <g key={i}>
                                                     <path
+                                                        id={`afc-edge-${source.id}-${target.id}`}
+                                                        data-source={source.id}
+                                                        data-target={target.id}
+                                                        data-isfeedback={isFeedback ? "1" : "0"}
                                                         d={pathData}
                                                         fill="none"
                                                         stroke={strokeColor}
@@ -7344,6 +7401,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 id={`afc-node-${node.id}`}
                                                 data-basex={node.x}
                                                 data-basey={node.y}
+                                                data-curx={node.x}
+                                                data-cury={node.y}
                                                 onClick={handleNodeClick}
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
