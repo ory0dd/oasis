@@ -3,6 +3,7 @@ import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldA
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
+import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph } from '../utils/sanitizeText';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -53,7 +54,7 @@ const MOCK_AFC_DATA = {
 
 export const softenNodeLabel = (label) => {
     if (!label || typeof label !== 'string') return label;
-    let s = label.trim();
+    let s = sanitizeSpanishText(label.trim());
 
     const transformations = [
         [/\bopresi[oó]n\s+tor[aá]cica\b/gi, "Tensión por estrés"],
@@ -109,7 +110,7 @@ export const softenNodeLabel = (label) => {
             s = s.replace(regex, replacement);
         }
     }
-    return s;
+    return sanitizeSpanishText(s);
 };
 
 export const softenNodeLabels = (nodes) => {
@@ -388,19 +389,19 @@ const getFallbackDescription = (node, user, bioData = null, phenomData = null) =
         const answer = localStorage.getItem(`oasis_blindspot_answer_${user}__${spotId}`);
         if (question && answer) {
             const baseDescription = node.description ? `${node.description}\n\n` : "";
-            return `${baseDescription}Pregunta de Introspección: ${question}\n\nTu respuesta y toma de conciencia: ${answer}`;
+            return sanitizeSpanishText(`${baseDescription}Pregunta de Introspección: ${question}\n\nTu respuesta y toma de conciencia: ${answer}`);
         }
     }
 
     // Si el nodo ya tiene una descripción clínica válida y sustancial (>= 20 caracteres)
     if (node && node.description && typeof node.description === 'string' && node.description.trim().length > 0 && !node.description.includes('Factor de tu mapa')) {
-        return node.description.trim();
+        return sanitizeSpanishText(node.description.trim());
     }
 
     // Si existe una mención directa del consultante en sus entrevistas, usarla como base
     const mention = findExactUserMention(node, bioData, phenomData);
     if (mention) {
-        return mention;
+        return sanitizeSpanishText(mention);
     }
 
     if (!node) return "";
@@ -1211,8 +1212,8 @@ const findExactUserMention = (node, bioData, phenomData) => {
 
 
 const getFallbackQuestion = (node) => {
-    if (node?.reflection_question) return node.reflection_question;
-    if (node?.challenge) return node.challenge;
+    if (node?.reflection_question) return sanitizeSpanishText(node.reflection_question);
+    if (node?.challenge) return sanitizeSpanishText(node.challenge);
     return null;
 };
 
@@ -3948,6 +3949,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         if (storedAfc) {
             try {
                 parsed = JSON.parse(storedAfc);
+                parsed = sanitizeAfcGraph(parsed);
             } catch (e) {
                 console.error("🔴 Error parsing afcData:", e);
             }
@@ -4027,9 +4029,17 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         } catch (e) {}
                     }
 
-                    const cloudAfc = cloudData[`oasis_afc_real_data_${user}`] || 
+                    const cloudAfcRaw = cloudData[`oasis_afc_real_data_${user}`] || 
                                      cloudData[`oasis_afc_real_data_${user.toLowerCase()}`];
+                    let cloudAfc = null;
+                    if (cloudAfcRaw) {
+                        try {
+                            cloudAfc = typeof cloudAfcRaw === 'string' ? JSON.parse(sanitizeSpanishText(cloudAfcRaw)) : cloudAfcRaw;
+                            cloudAfc = sanitizeAfcGraph(cloudAfc);
+                        } catch (e) {}
+                    }
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
+                        cloudAfc = sanitizeAfcGraph(cloudAfc);
                         const needsReorg = cloudAfc.layout_version !== 9 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
                         let updatedNodes;
                         let updatedEdges = cloudAfc.edges || [];
@@ -4044,6 +4054,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                         setAfcData(resolved);
                         try {
                             localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
+                            setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(resolved));
                         } catch (e) {}
                     }
                 })
@@ -8124,7 +8135,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                             ? 'text-[9.5px] font-medium text-emerald-300' 
                                                                             : 'text-[9px] text-zinc-300'
                                                                 } ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
-                                                                    {node.label}
+                                                                    {sanitizeSpanishText(node.label)}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -8349,7 +8360,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                     
                                                                     <div className="flex flex-col min-w-0 flex-1">
                                                                         <span className="text-[8px] font-mono uppercase tracking-widest text-zinc-500">{typeShortLabels[node.type]}</span>
-                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{node.is_corrected ? node.label : softenNodeLabel(node.label)}</span>
+                                                                        <span className={`text-[9.5px] font-black uppercase tracking-wide mt-0.5 leading-tight transition-colors ${isExpanded ? 'text-white' : 'text-zinc-300 group-hover/step:text-white'}`}>{sanitizeSpanishText(node.is_corrected ? node.label : softenNodeLabel(node.label))}</span>
                                                                     </div>
 
                                                                     <div className={`ml-auto shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-white' : 'text-zinc-600'}`}>
@@ -8808,7 +8819,7 @@ Por favor, analicemos:
                                                         <div>
                                                             <div className="flex items-center gap-2 flex-wrap mb-1">
                                                                 <h4 className="text-xs sm:text-[14px] font-bold text-white leading-snug tracking-tight">
-                                                                    {currentNode.is_corrected ? currentNode.label : softenNodeLabel(currentNode.label)}
+                                                                    {sanitizeSpanishText(currentNode.is_corrected ? currentNode.label : softenNodeLabel(currentNode.label))}
                                                                 </h4>
                                                                 {currentNode.is_corrected && (
                                                                     <span className="text-[8.5px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono font-bold flex items-center gap-1 shadow-[0_0_10px_rgba(52,211,153,0.25)]">
@@ -8857,7 +8868,7 @@ Por favor, analicemos:
                                                             {getFallbackDescription(currentNode, user) && (
                                                                 <div className="flex flex-col gap-1.5 mt-0.5">
                                                                     <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">
-                                                                        {getFallbackDescription(currentNode, user)}
+                                                                        {sanitizeSpanishText(getFallbackDescription(currentNode, user))}
                                                                     </p>
                                                                     <button
                                                                         onClick={(e) => {
@@ -8876,7 +8887,7 @@ Por favor, analicemos:
 {(getFallbackQuestion(currentNode)) && (
     <div className="mt-3 pt-3 border-t border-white/5">
         <p className="text-[10.5px] text-zinc-300 font-medium italic mb-2 leading-relaxed">
-            {getFallbackQuestion(currentNode)}
+            {sanitizeSpanishText(getFallbackQuestion(currentNode))}
         </p>
         {(() => {
             const chatData = nodeChats[currentNode.id];

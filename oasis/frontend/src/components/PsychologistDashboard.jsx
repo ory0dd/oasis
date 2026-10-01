@@ -4,7 +4,7 @@ import { Aperture, Mic,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon, Upload
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -18,6 +18,7 @@ import { ClinicalTestRunner } from './ClinicalTestRunner';
 import { safeJSONParse } from '../utils/jsonParser';
 import { extractTextFromPdf } from '../utils/pdfExtractor';
 import { API_URL, syncAllLocalPatientTestsToCloud, getSavedTestResult, getCompletedTestsCount } from '../utils/api';
+import { sanitizeSpanishText, sanitizeNodeObject } from '../utils/sanitizeText';
 
 // ErrorBoundary for embedded clinical views
 class ViewErrorBoundary extends React.Component {
@@ -1073,6 +1074,101 @@ Responde ÚNICAMENTE con un JSON válido.`;
     const [phenomVideos, setPhenomVideos] = useState({});
     const [phenomMetadata, setPhenomMetadata] = useState({});
     const [viewingConsentPhoto, setViewingConsentPhoto] = useState(null);
+    const [consentPhotoLoadError, setConsentPhotoLoadError] = useState(false);
+    const [isSyncingConsentPhoto, setIsSyncingConsentPhoto] = useState(false);
+
+    // Auto-resolve or download missing consent photo from cloud backend when lightbox opens
+    useEffect(() => {
+        if (!viewingConsentPhoto) {
+            setConsentPhotoLoadError(false);
+            return;
+        }
+
+        const pName = selectedPatient?.name;
+        if (!pName) return;
+
+        // If photo is missing or placeholder 'null'/'undefined', try to fetch it from backend immediately
+        if (!viewingConsentPhoto.photo || viewingConsentPhoto.photo === 'null' || viewingConsentPhoto.photo === 'undefined' || viewingConsentPhoto.photo.length < 50) {
+            const autoFetchPhoto = async () => {
+                setIsSyncingConsentPhoto(true);
+                try {
+                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(pName)}`, {
+                        headers: { 'X-Oasis-User': callerUser }
+                    });
+                    if (res.ok) {
+                        const cdata = await res.json();
+                        let freshPhoto = cdata[`oasis_consent_photo_${pName}`];
+                        if (!freshPhoto || freshPhoto.length < 50) {
+                            try {
+                                const rec = JSON.parse(cdata[`oasis_consent_record_${pName}`] || '{}');
+                                if (rec?.photo && rec.photo.length > 50) freshPhoto = rec.photo;
+                            } catch(e) {}
+                        }
+                        if (freshPhoto && freshPhoto.length > 50 && freshPhoto !== 'null') {
+                            setViewingConsentPhoto(prev => prev ? { ...prev, photo: freshPhoto } : null);
+                            setSelectedPatient(prev => ({
+                                ...prev,
+                                consentPhoto: freshPhoto,
+                                clinicalData: { ...(prev?.clinicalData || {}), ...cdata, [`oasis_consent_photo_${pName}`]: freshPhoto }
+                            }));
+                            try { localStorage.setItem(`oasis_consent_photo_${pName}`, freshPhoto); } catch(e) {}
+                            setConsentPhotoLoadError(false);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error auto-fetching consent photo:", err);
+                } finally {
+                    setIsSyncingConsentPhoto(false);
+                }
+            };
+            autoFetchPhoto();
+        }
+    }, [viewingConsentPhoto?.photo, selectedPatient?.name]);
+
+    const handleUploadConsentPhoto = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedPatient?.name) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const dataUrl = evt.target?.result;
+            if (!dataUrl) return;
+            const pName = selectedPatient.name;
+            try {
+                localStorage.setItem(`oasis_consent_photo_${pName}`, dataUrl);
+            } catch (err) {
+                console.warn("LocalStorage full, prioritizing in memory & cloud:", err);
+            }
+            setSelectedPatient(prev => ({
+                ...prev,
+                consentPhoto: dataUrl,
+                clinicalData: {
+                    ...(prev?.clinicalData || {}),
+                    [`oasis_consent_photo_${pName}`]: dataUrl
+                }
+            }));
+            setViewingConsentPhoto(prev => prev ? { ...prev, photo: dataUrl } : null);
+            setConsentPhotoLoadError(false);
+
+            // Sync to backend immediately
+            try {
+                const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(pName)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Oasis-User': callerUser
+                    },
+                    body: JSON.stringify({
+                        [`oasis_consent_photo_${pName}`]: dataUrl
+                    })
+                });
+            } catch (err) {
+                console.error("Error syncing uploaded consent photo to backend:", err);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     useEffect(() => {
         const handleGlobalMouseMove = (e) => {
@@ -1291,12 +1387,16 @@ Responde ÚNICAMENTE con un JSON válido.`;
                             window.isDownloadingClinicalData = true;
                             try {
                                 Object.keys(cData).forEach(key => {
-                                    localStorage.setItem(key, cData[key]);
-                                    if (key.includes('__')) {
-                                        localStorage.setItem(key.replace('__', '_'), cData[key]);
-                                    } else if (key.startsWith(`oasis_test_result_${uname}_`)) {
-                                        const sub = key.replace(`oasis_test_result_${uname}_`, '');
-                                        localStorage.setItem(`oasis_test_result_${uname}__${sub}`, cData[key]);
+                                    try {
+                                        localStorage.setItem(key, cData[key]);
+                                        if (key.includes('__')) {
+                                            localStorage.setItem(key.replace('__', '_'), cData[key]);
+                                        } else if (key.startsWith(`oasis_test_result_${uname}_`)) {
+                                            const sub = key.replace(`oasis_test_result_${uname}_`, '');
+                                            localStorage.setItem(`oasis_test_result_${uname}__${sub}`, cData[key]);
+                                        }
+                                    } catch (quotaErr) {
+                                        // Ignore localStorage quota limits gracefully so all 51 users continue loading
                                     }
                                 });
                             } finally {
@@ -1414,6 +1514,8 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 password: patientsMap[username]?.password,
                 date: new Date().toISOString().split('T')[0],
                 status: savedStatus,
+                clinicalData: patientsMap[username]?.clinicalData || {},
+                consentPhoto: patientsMap[username]?.clinicalData?.[`oasis_consent_photo_${username}`] || null,
                 phenomenology: phenomQual ? {
                     transcripts: {
                         "Antecedentes de Origen": phenomQual.antecedentes_origen || "",
@@ -1670,15 +1772,35 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     });
                     if (res.ok && active) {
                         const clinicalData = await res.json();
+                        const pName = selectedPatient.name;
+                        let pPhoto = clinicalData[`oasis_consent_photo_${pName}`];
+                        if (!pPhoto || pPhoto.length < 50) {
+                            try {
+                                const rec = JSON.parse(clinicalData[`oasis_consent_record_${pName}`] || '{}');
+                                if (rec?.photo && rec.photo.length > 50) pPhoto = rec.photo;
+                            } catch(e) {}
+                        }
+                        setSelectedPatient(prev => ({
+                            ...prev,
+                            clinicalData: {
+                                ...(prev?.clinicalData || {}),
+                                ...clinicalData
+                            },
+                            consentPhoto: pPhoto || prev?.consentPhoto || null
+                        }));
                         window.isDownloadingClinicalData = true;
                         try {
                             Object.keys(clinicalData).forEach(key => {
-                                localStorage.setItem(key, clinicalData[key]);
-                                if (key.includes('__')) {
-                                    localStorage.setItem(key.replace('__', '_'), clinicalData[key]);
-                                } else if (key.startsWith(`oasis_test_result_${selectedPatient.name}_`)) {
-                                    const sub = key.replace(`oasis_test_result_${selectedPatient.name}_`, '');
-                                    localStorage.setItem(`oasis_test_result_${selectedPatient.name}__${sub}`, clinicalData[key]);
+                                try {
+                                    localStorage.setItem(key, clinicalData[key]);
+                                    if (key.includes('__')) {
+                                        localStorage.setItem(key.replace('__', '_'), clinicalData[key]);
+                                    } else if (key.startsWith(`oasis_test_result_${selectedPatient.name}_`)) {
+                                        const sub = key.replace(`oasis_test_result_${selectedPatient.name}_`, '');
+                                        localStorage.setItem(`oasis_test_result_${selectedPatient.name}__${sub}`, clinicalData[key]);
+                                    }
+                                } catch (quotaErr) {
+                                    // Ignore localStorage quota errors safely
                                 }
                             });
                         } finally {
@@ -1817,7 +1939,12 @@ Responde ÚNICAMENTE con un JSON válido.`;
                 const savedEdges = localStorage.getItem(`oasis_canvas_edges_${selectedPatient.name}`);
                 
                 if (savedNodes) {
-                    setNodes(JSON.parse(savedNodes));
+                    try {
+                        const parsed = JSON.parse(savedNodes);
+                        setNodes(Array.isArray(parsed) ? parsed.map(sanitizeNodeObject) : parsed);
+                    } catch (e) {
+                        setNodes(JSON.parse(savedNodes));
+                    }
                 } else {
                     setNodes([{
                         id: 'root-1',
@@ -1992,7 +2119,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     <div className={`w-32 h-32 flex items-center justify-center rotate-45 bg-sky-950/30 border border-sky-500/40 hover:bg-sky-900/40 shadow-lg ${ringClass} transition-colors rounded-[1rem]`}>
                         <div className="-rotate-45 text-center p-2 flex items-center justify-center w-full h-full">
                             <textarea 
-                                value={node.label} 
+                                value={sanitizeSpanishText(node.label)} 
                                 onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
                                 className="bg-transparent border-none text-sky-200 text-[10px] font-bold uppercase tracking-wider text-center w-24 h-24 resize-none outline-none overflow-hidden pt-6 font-mono" 
                             />
@@ -2008,7 +2135,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     {labelBadge}
                     <div className={`${size} flex items-center justify-center rounded-full bg-emerald-950/30 border border-emerald-500/40 hover:bg-emerald-900/40 shadow-lg ${ringClass} transition-colors`}>
                         <textarea 
-                            value={node.label} 
+                            value={sanitizeSpanishText(node.label)} 
                             onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
                             className="bg-transparent border-none text-emerald-200 text-[10px] font-bold uppercase tracking-wider text-center w-3/4 h-3/4 resize-none outline-none overflow-hidden pt-8 font-mono" 
                         />
@@ -2022,7 +2149,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     {labelBadge}
                     <div className={`w-44 h-20 flex items-center justify-center rounded-2xl bg-red-950/30 border border-red-500/40 hover:bg-red-900/40 shadow-lg ${ringClass} transition-colors`}>
                         <textarea 
-                            value={node.label} 
+                            value={sanitizeSpanishText(node.label)} 
                             onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
                             className="bg-transparent border-none text-red-200 text-[10px] font-bold uppercase tracking-wider text-center w-[90%] h-3/4 resize-none outline-none overflow-hidden pt-4 font-mono" 
                         />
@@ -2036,7 +2163,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     {labelBadge}
                     <div className={`w-44 h-16 flex items-center justify-center rounded-full bg-zinc-900/80 border border-zinc-500 hover:bg-zinc-800 shadow-lg ${ringClass} transition-colors`}>
                         <textarea 
-                            value={node.label} 
+                            value={sanitizeSpanishText(node.label)} 
                             onChange={(e) => setNodes(nodes.map(n => n.id === node.id ? { ...n, label: e.target.value } : n))}
                             className="bg-transparent border-none text-zinc-300 text-[10px] font-bold uppercase tracking-wider text-center w-3/4 h-full resize-none outline-none overflow-hidden pt-4 font-mono" 
                         />
@@ -4440,12 +4567,12 @@ Varianza Interna Global: ${pidState.globalVariance}
                                         return (
                                             <div key={node.id} className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl space-y-1">
                                                 <div className="flex justify-between items-center">
-                                                    <span className="text-[9px] font-black text-white">{node.label}</span>
+                                                    <span className="text-[9px] font-black text-white">{sanitizeSpanishText(node.label)}</span>
                                                     <span className="text-[7px] font-mono uppercase bg-white/5 px-1.5 py-0.5 rounded text-zinc-400">{typeLabels[node.type] || node.type}</span>
                                                 </div>
                                                 {node.observations && (
                                                     <p className="text-[9px] text-zinc-400 leading-relaxed font-sans">
-                                                        {highlightClinicalText(node.observations)}
+                                                        {highlightClinicalText(sanitizeSpanishText(node.observations))}
                                                     </p>
                                                 )}
                                             </div>
@@ -5355,10 +5482,48 @@ Devuelve estrictamente el JSON sin formato extra.
                                 }`}>{selectedPatient.status}</span>
                             </div>
                             {(() => {
-                                const hasConsent = localStorage.getItem(`oasis_consent_accepted_${selectedPatient.name}`) === 'true';
-                                const consentSigner = localStorage.getItem(`oasis_consent_name_${selectedPatient.name}`);
-                                const consentDate = localStorage.getItem(`oasis_consent_date_${selectedPatient.name}`);
-                                const consentPhoto = localStorage.getItem(`oasis_consent_photo_${selectedPatient.name}`);
+                                const pName = selectedPatient.name;
+                                const cData = selectedPatient.clinicalData || {};
+                                
+                                const hasConsent = (
+                                    localStorage.getItem(`oasis_consent_accepted_${pName}`) === 'true' ||
+                                    cData[`oasis_consent_accepted_${pName}`] === 'true'
+                                );
+                                
+                                const consentSigner = (
+                                    localStorage.getItem(`oasis_consent_name_${pName}`) ||
+                                    cData[`oasis_consent_name_${pName}`] ||
+                                    selectedPatient.fullName ||
+                                    pName
+                                );
+                                
+                                const consentDate = (
+                                    localStorage.getItem(`oasis_consent_date_${pName}`) ||
+                                    cData[`oasis_consent_date_${pName}`]
+                                );
+                                
+                                let consentPhoto = (
+                                    cData[`oasis_consent_photo_${pName}`] ||
+                                    localStorage.getItem(`oasis_consent_photo_${pName}`) ||
+                                    selectedPatient.consentPhoto ||
+                                    null
+                                );
+                                
+                                if (!consentPhoto || consentPhoto === 'null' || consentPhoto === 'undefined' || consentPhoto.length < 50) {
+                                    const recordStr = cData[`oasis_consent_record_${pName}`] || localStorage.getItem(`oasis_consent_record_${pName}`);
+                                    if (recordStr) {
+                                        try {
+                                            const rec = typeof recordStr === 'string' ? JSON.parse(recordStr) : recordStr;
+                                            if (rec?.photo && rec.photo.length > 50 && rec.photo !== 'null' && rec.photo !== 'undefined') {
+                                                consentPhoto = rec.photo;
+                                            }
+                                        } catch (e) {}
+                                    }
+                                }
+                                
+                                if (consentPhoto === 'null' || consentPhoto === 'undefined' || !consentPhoto || (typeof consentPhoto === 'string' && consentPhoto.trim() === '')) {
+                                    consentPhoto = null;
+                                }
                                 return (
                                     <>
                                         <div className="flex justify-between items-center pt-1 border-t border-white/5">
@@ -5472,13 +5637,23 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     <FileText size={10} />
                                                     Generar PDF (Formato APA)
                                                 </button>
-                                                {consentPhoto && (
+                                                {consentPhoto ? (
                                                     <div 
-                                                        onClick={() => setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate })}
+                                                        onClick={() => {
+                                                            setConsentPhotoLoadError(false);
+                                                            setViewingConsentPhoto({ photo: consentPhoto, signer: consentSigner, date: consentDate });
+                                                        }}
                                                         className="group relative w-full h-14 rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 cursor-pointer transition-all bg-black/40 mt-0.5"
                                                         title="Clic para ver fotografía de firma ampliada"
                                                     >
-                                                        <img src={consentPhoto} alt="Foto de firma" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                        <img 
+                                                            src={consentPhoto} 
+                                                            alt="Foto de firma" 
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
                                                             <span className="text-[8px] font-mono text-purple-300 font-semibold flex items-center gap-1">
                                                                 <Camera size={9} />
@@ -5486,7 +5661,19 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             </span>
                                                         </div>
                                                     </div>
-                                                )}
+                                                ) : hasConsent ? (
+                                                    <button 
+                                                        onClick={() => {
+                                                            setConsentPhotoLoadError(false);
+                                                            setViewingConsentPhoto({ photo: null, signer: consentSigner, date: consentDate });
+                                                        }}
+                                                        className="mt-1 flex items-center justify-center gap-1.5 w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 py-1.5 rounded-xl text-[9px] font-mono font-bold uppercase transition-colors"
+                                                        title="Ver o sincronizar selfie de firma"
+                                                    >
+                                                        <Camera size={11} className="text-purple-400" />
+                                                        <span>Selfie de Firma Digital ✨</span>
+                                                    </button>
+                                                ) : null}
                                             </div>
                                         )}
                                     </>
@@ -5800,7 +5987,10 @@ Devuelve estrictamente el JSON sin formato extra.
             {/* Consent Photo Lightbox Modal */}
             {viewingConsentPhoto && (
                 <div 
-                    onClick={() => setViewingConsentPhoto(null)}
+                    onClick={() => {
+                        setViewingConsentPhoto(null);
+                        setConsentPhotoLoadError(false);
+                    }}
                     className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
                 >
                     <div 
@@ -5812,24 +6002,124 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <Camera size={16} className="text-purple-400" />
                                 <span>Selfie para Recordar el Momento ✨ (Firma Digital)</span>
                             </div>
-                            <button 
-                                onClick={() => setViewingConsentPhoto(null)}
-                                className="p-1.5 text-zinc-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                                <X size={16} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <label 
+                                    className="p-1.5 text-zinc-400 hover:text-purple-300 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/5 hover:border-purple-500/30 transition-all cursor-pointer flex items-center gap-1 text-[10px] font-mono"
+                                    title="Subir o actualizar fotografía"
+                                >
+                                    <Upload size={13} />
+                                    <span className="hidden sm:inline">Actualizar</span>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                        onChange={(e) => handleUploadConsentPhoto(e)} 
+                                    />
+                                </label>
+                                <button 
+                                    onClick={() => {
+                                        setViewingConsentPhoto(null);
+                                        setConsentPhotoLoadError(false);
+                                    }}
+                                    className="p-1.5 text-zinc-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
                         </div>
-                        <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-black aspect-[4/3] flex items-center justify-center shadow-lg">
-                            <img 
-                                src={viewingConsentPhoto.photo} 
-                                alt="Fotografía de consentimiento" 
-                                className="w-full h-full object-contain" 
-                            />
+
+                        <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-black aspect-[4/3] flex items-center justify-center shadow-lg relative group">
+                            {viewingConsentPhoto.photo && viewingConsentPhoto.photo.length > 50 && viewingConsentPhoto.photo !== 'null' && viewingConsentPhoto.photo !== 'undefined' && !consentPhotoLoadError ? (
+                                <img 
+                                    src={viewingConsentPhoto.photo} 
+                                    alt="Fotografía de consentimiento" 
+                                    className="w-full h-full object-contain" 
+                                    onError={() => {
+                                        console.warn("Consent photo load error, switching to fallback/retry...");
+                                        setConsentPhotoLoadError(true);
+                                    }}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-6 text-center gap-3 w-full">
+                                    <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner">
+                                        <Camera size={32} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-semibold text-zinc-200">
+                                            {isSyncingConsentPhoto ? 'Descargando fotografía del servidor...' : 'Fotografía pendiente de sincronización'}
+                                        </p>
+                                        <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+                                            {isSyncingConsentPhoto 
+                                                ? 'Recuperando la imagen de la selfie de firma desde la base de datos clínica.'
+                                                : 'El consentimiento está registrado formalmente pero la imagen requiere sincronización.'}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                                        <button
+                                            onClick={async () => {
+                                                const pName = selectedPatient?.name;
+                                                if (!pName) return;
+                                                setIsSyncingConsentPhoto(true);
+                                                try {
+                                                    const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+                                                    const res = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(pName)}`, {
+                                                        headers: { 'X-Oasis-User': callerUser }
+                                                    });
+                                                    if (res.ok) {
+                                                        const data = await res.json();
+                                                        let pPhoto = data[`oasis_consent_photo_${pName}`];
+                                                        if (!pPhoto || pPhoto.length < 50) {
+                                                            try {
+                                                                const rec = JSON.parse(data[`oasis_consent_record_${pName}`] || '{}');
+                                                                pPhoto = rec.photo;
+                                                            } catch (e) {}
+                                                        }
+                                                        if (pPhoto && pPhoto.length > 50) {
+                                                            try { localStorage.setItem(`oasis_consent_photo_${pName}`, pPhoto); } catch(e) {}
+                                                            setViewingConsentPhoto(prev => prev ? { ...prev, photo: pPhoto } : null);
+                                                            setSelectedPatient(prev => ({
+                                                                ...prev,
+                                                                consentPhoto: pPhoto,
+                                                                clinicalData: { ...(prev?.clinicalData || {}), ...data, [`oasis_consent_photo_${pName}`]: pPhoto }
+                                                            }));
+                                                            setConsentPhotoLoadError(false);
+                                                        } else {
+                                                            alert("No se encontró fotografía guardada en el servidor para este consultante. Puedes adjuntar una con el botón 'Subir Fotografía'.");
+                                                        }
+                                                    }
+                                                } catch(err) {
+                                                    console.error("Manual sync error:", err);
+                                                    alert("No se pudo conectar con el servidor para descargar la fotografía.");
+                                                } finally {
+                                                    setIsSyncingConsentPhoto(false);
+                                                }
+                                            }}
+                                            disabled={isSyncingConsentPhoto}
+                                            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                                        >
+                                            <RefreshCw size={13} className={isSyncingConsentPhoto ? 'animate-spin' : ''} />
+                                            <span>{isSyncingConsentPhoto ? 'Descargando...' : 'Descargar del Servidor'}</span>
+                                        </button>
+                                        
+                                        <label className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-white/5 active:scale-95">
+                                            <Upload size={13} />
+                                            <span>Subir Fotografía</span>
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                className="hidden" 
+                                                onChange={(e) => handleUploadConsentPhoto(e)} 
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+
                         <div className="flex flex-col gap-1.5 text-xs text-zinc-300 bg-white/[0.03] border border-white/5 p-3.5 rounded-2xl">
                             <div className="flex justify-between items-center">
                                 <span className="text-zinc-500 font-mono text-[10px] uppercase">Consultante:</span>
-                                <strong className="text-white font-semibold">{viewingConsentPhoto.signer || selectedPatient?.name}</strong>
+                                <strong className="text-white font-semibold">{viewingConsentPhoto.signer || selectedPatient?.fullName || selectedPatient?.name}</strong>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-zinc-500 font-mono text-[10px] uppercase">Fecha:</span>
