@@ -4373,16 +4373,17 @@ ${isAdditive ? `
                     { role: 'user', content: `Genera la FORMULACION CLINICA DE CASO en Modo Grafo Funcional (EXACTAMENTE entre 20 y 24 nodos nucleares y entre 32 y 48 conexiones) basada en el Analisis Funcional de la Conducta (E-O-R-C / TCC Contextual).
 REGLAS ESENCIALES:
 - EXACTAMENTE entre 20 y 24 nodos nucleares estructurados en los 6 pilares funcionales:
-  1. Contexto & Operaciones Motivacionales (3-4 nodos: historical/social, clinical_role: 'context')
+  1. Contexto & Variables (3-4 nodos: historical/social, clinical_role: 'context')
   2. Detonantes Inmediatos (3-4 nodos: antecedent, clinical_role: 'antecedent')
   3. Eventos Privados (4-5 nodos: cognitive/physiological, clinical_role: 'cognitive' o 'physiological')
   4. Respuesta Operante (4-5 nodos: motor, clinical_role: 'motor')
   5. Consecuencias (4-5 nodos: consequence, clinical_role: 'consequence')
   6. Funcion del Bucle (2-3 nodos: function, clinical_role: 'function')
-- EXACTAMENTE entre 32 y 48 conexiones funcionales formando bucles cerrados de retroalimentacion.
-- CERO PIVOTES O CONSEJOS INVENTADOS: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:". Diagrama con absoluta fidelidad lo que el paciente vive, piensa, siente, hace y las consecuencias funcionales.
-- CERO ALUCINACIONES: NUNCA inventes eventos biograficos no dichos.
-- Cada nodo con su 'clinical_role', 'label' certero (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
+- BUCLES MULTIPLES Y PARALELOS: NO hagas que todo converja en un solo gran problema. Las personas tienen multiples problemas (ej. un bucle para lo social, otro para lo laboral). Muestra estos distintos arboles de manera paralela.
+- LENGUAJE HIPOTETICO Y SUAVE: Este es un mapa de HIPOTESIS clinicas para explorar con el paciente. NUNCA uses etiquetas rigidas o acusatorias absolutas (ej. NO uses "Evitar el dolor", mejor usa "Posible evasion del malestar?", o "Intento de alivio?"). Usa signos de interrogacion o palabras como "Posible", "Aparente" para mantener una postura curiosa y no encasillar al paciente de forma injusta.
+- EXACTAMENTE entre 32 y 48 conexiones funcionales.
+- CERO PIVOTES: PROHIBIDO crear nodos que empiecen con "Pivote:" o "Valor:".
+- Cada nodo con su 'clinical_role', 'label' certero e hipotetico (2-4 palabras), 'description' funcional, 'source' real, 'challenge' y 'reflection_question'.
 Datos clinicos del paciente:\n` + context }
                 ],
                 response_format: { type: "json_object" },
