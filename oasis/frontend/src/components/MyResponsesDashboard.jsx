@@ -1000,9 +1000,34 @@ export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioDat
         layerNodes[idx].push(n);
     });
 
+    // First pass: assign preliminary Y coordinates (from center out)
     layerNodes.forEach((nodesInLayer, layerIdx) => {
         const layer = layers[layerIdx];
         const slots = getStaggeredSlots(nodesInLayer.length, layer.baseX);
+        // Sort slots vertically from top to bottom
+        slots.sort((a, b) => a.y - b.y);
+        
+        // If it's not the first layer, sort the nodes based on the average Y of their incoming edges
+        // from already-placed nodes, to minimize line crossings!
+        if (layerIdx > 0 && rawEdges && rawEdges.length > 0) {
+            nodesInLayer.sort((nodeA, nodeB) => {
+                const getAvgIncomingY = (nodeId) => {
+                    const incomingEdges = rawEdges.filter(e => e.target === nodeId);
+                    let sumY = 0;
+                    let count = 0;
+                    incomingEdges.forEach(e => {
+                        const sourceNode = newNodes.find(n => n.id === e.source);
+                        if (sourceNode && sourceNode.y !== undefined) {
+                            sumY += sourceNode.y;
+                            count++;
+                        }
+                    });
+                    return count > 0 ? sumY / count : 50; // default to center if no incoming
+                };
+                return getAvgIncomingY(nodeA.id) - getAvgIncomingY(nodeB.id);
+            });
+        }
+
         nodesInLayer.forEach((n, idx) => {
             n.x = Math.max(9, Math.min(91, slots[idx].x));
             n.y = Math.max(14, Math.min(88, slots[idx].y));

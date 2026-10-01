@@ -2064,17 +2064,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
             return matchesSearch;
         });
 
-        if (dashboardSubView === 'WHATSAPP_CRM') {
-            return (
-                <div className="w-full h-full flex-1 min-h-0 flex flex-col bg-[#050505] relative overflow-hidden">
-                    <WhatsAppCRM 
-                        clinicPatients={patients}
-                        currentUser={localStorage.getItem('oasis_user') || 'observador1'}
-                        onBackToClinical={() => setDashboardSubView('IDENTITIES')}
-                    />
-                </div>
-            );
-        }
+
 
         return (
             <div className="w-full flex-1 min-h-0 p-4 sm:p-8 md:p-12 overflow-y-auto overflow-x-hidden touch-pan-y overscroll-y-contain pb-36 sm:pb-24 relative bg-[#050505] selection:bg-emerald-500/30">
@@ -2227,7 +2217,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
 
                     {dashboardSubView === 'WHATSAPP_CRM' ? (
                         <div className="flex-1 w-full h-full min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-3xl overflow-hidden bg-black/20 border border-white/[0.02]">
-                            <WhatsAppCRM isEmbedded={true} />
+                            <WhatsAppCRM isEmbedded={true} clinicPatients={patients} currentUser={localStorage.getItem('oasis_user') || 'observador1'} onBackToClinical={() => setDashboardSubView('IDENTITIES')} />
                         </div>
                     ) : (
                         <>
