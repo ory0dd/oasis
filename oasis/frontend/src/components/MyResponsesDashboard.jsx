@@ -126,6 +126,49 @@ export const softenNodeLabels = (nodes) => {
     }));
 };
 
+export const compute3DEdgeGeometry = (sx, sy, sz, tx, ty, tz, isSourceHub, isTargetHub, isSourceCond, isTargetCond, hasMarker) => {
+    const dX = tx - sx;
+    const dY = ty - sy;
+    const dZ = tz - sz;
+    const dist3D = Math.hypot(dX, dY, dZ) || 1;
+
+    const sourceRadius = isSourceHub ? 13 : (isSourceCond ? 7 : 6);
+    const targetRadius = isTargetHub ? 13 : (isTargetCond ? 7 : 6);
+    const srcOffset = sourceRadius + 1;
+    const tgtOffset = targetRadius + (hasMarker ? 7 : 1);
+
+    let startX = sx, startY = sy, startZ = sz;
+    let endX = tx, endY = ty, endZ = tz;
+
+    if (dist3D > (srcOffset + tgtOffset + 4)) {
+        const uX = dX / dist3D;
+        const uY = dY / dist3D;
+        const uZ = dZ / dist3D;
+        startX = sx + uX * srcOffset;
+        startY = sy + uY * srcOffset;
+        startZ = sz + uZ * srcOffset;
+        endX = tx - uX * tgtOffset;
+        endY = ty - uY * tgtOffset;
+        endZ = tz - uZ * tgtOffset;
+    }
+
+    const vX = endX - startX;
+    const vY = endY - startY;
+    const vZ = endZ - startZ;
+    const len = Math.hypot(vX, vY, vZ) || 1;
+    const vXY = Math.hypot(vX, vY) || 0.0001;
+
+    const yaw = Math.atan2(vY, vX) * (180 / Math.PI);
+    const pitch = Math.atan2(vZ, vXY) * (180 / Math.PI);
+
+    return {
+        startX, startY, startZ,
+        len,
+        yaw,
+        pitch
+    };
+};
+
 export const CUTE_NODE_THEMES = {
     context: {
         icon: "🌍",
@@ -3079,6 +3122,7 @@ ESTRUCTURA JSON OBLIGATORIA:
             }
             const badgeSpan = document.querySelector(`#afc-zbadge-${nodeId} span.font-bold`);
             if (badgeSpan) badgeSpan.innerText = `${clampedZ}px`;
+            syncConnectedSvgEdges(nodeId, parseFloat(el.dataset.curx || el.dataset.basex || 0), parseFloat(el.dataset.cury || el.dataset.basey || 0), clampedZ);
         }
     }, [user]);
 
@@ -6307,8 +6351,9 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         }
     };
 
-    const syncConnectedSvgEdges = (nodeId, curX, curY) => {
+    const syncConnectedSvgEdges = (nodeId, curX, curY, curZ = null) => {
         try {
+            // 1. 2D SVG paths
             const connectedEdges = document.querySelectorAll(`path[data-source="${nodeId}"], path[data-target="${nodeId}"]`);
             for (let j = 0; j < connectedEdges.length; j++) {
                 const pathEl = connectedEdges[j];
@@ -6338,6 +6383,46 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 }
 
                 pathEl.setAttribute('d', `M ${px1} ${py1} L ${px2} ${py2}`);
+            }
+
+            // 2. 3D Spatial Beams
+            const connected3D = document.querySelectorAll(`.afc-edge-3d[data-source="${nodeId}"], .afc-edge-3d[data-target="${nodeId}"]`);
+            if (connected3D.length > 0) {
+                const movedNodeEl = document.getElementById(`afc-node-${nodeId}`);
+                const effectiveX = curX !== null && curX !== undefined ? curX : parseFloat(movedNodeEl?.dataset.curx || movedNodeEl?.dataset.basex || 0);
+                const effectiveY = curY !== null && curY !== undefined ? curY : parseFloat(movedNodeEl?.dataset.cury || movedNodeEl?.dataset.basey || 0);
+                const effectiveZ = curZ !== null && curZ !== undefined ? curZ : parseFloat(movedNodeEl?.dataset.curz || movedNodeEl?.dataset.basez || 50);
+
+                for (let k = 0; k < connected3D.length; k++) {
+                    const edgeEl = connected3D[k];
+                    const sId = edgeEl.getAttribute('data-source');
+                    const tId = edgeEl.getAttribute('data-target');
+                    const isSrc = sId === nodeId;
+
+                    const srcEl = document.getElementById(`afc-node-${sId}`);
+                    const tgtEl = document.getElementById(`afc-node-${tId}`);
+                    if (!srcEl || !tgtEl) continue;
+
+                    const sx = isSrc ? (effectiveX / 100) * VIRTUAL_WIDTH : (parseFloat(srcEl.dataset.curx || srcEl.dataset.basex || 0) / 100) * VIRTUAL_WIDTH;
+                    const sy = isSrc ? (effectiveY / 100) * VIRTUAL_HEIGHT : (parseFloat(srcEl.dataset.cury || srcEl.dataset.basey || 0) / 100) * VIRTUAL_HEIGHT;
+                    const sz = isSrc ? effectiveZ : parseFloat(srcEl.dataset.curz || srcEl.dataset.basez || 50);
+
+                    const tx = !isSrc ? (effectiveX / 100) * VIRTUAL_WIDTH : (parseFloat(tgtEl.dataset.curx || tgtEl.dataset.basex || 0) / 100) * VIRTUAL_WIDTH;
+                    const ty = !isSrc ? (effectiveY / 100) * VIRTUAL_HEIGHT : (parseFloat(tgtEl.dataset.cury || tgtEl.dataset.basey || 0) / 100) * VIRTUAL_HEIGHT;
+                    const tz = !isSrc ? effectiveZ : parseFloat(tgtEl.dataset.curz || tgtEl.dataset.basez || 50);
+
+                    const isSourceHub = srcEl.dataset.ishub === '1';
+                    const isTargetHub = tgtEl.dataset.ishub === '1';
+                    const isSourceCond = srcEl.dataset.iscond === '1';
+                    const isTargetCond = tgtEl.dataset.iscond === '1';
+                    const hasMarker = edgeEl.dataset.hasmarker === '1';
+
+                    const geo = compute3DEdgeGeometry(sx, sy, sz, tx, ty, tz, isSourceHub, isTargetHub, isSourceCond, isTargetCond, hasMarker);
+                    edgeEl.style.left = `${geo.startX}px`;
+                    edgeEl.style.top = `${geo.startY}px`;
+                    edgeEl.style.width = `${geo.len}px`;
+                    edgeEl.style.transform = `translate3d(0, -50%, ${geo.startZ}px) rotateZ(${geo.yaw}deg) rotateY(${-geo.pitch}deg)`;
+                }
             }
         } catch (err) {
             // silent fail on edge sync
@@ -6375,6 +6460,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
                     const badgeSpan = document.querySelector(`#afc-zbadge-${draggingNodeId} span.font-bold`);
                     if (badgeSpan) badgeSpan.innerText = `${curZ}px`;
+                    syncConnectedSvgEdges(draggingNodeId, parseFloat(el.dataset.curx || el.dataset.basex || 0), parseFloat(el.dataset.cury || el.dataset.basey || 0), curZ);
                 }
                 return;
             }
@@ -6589,6 +6675,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
                         const badgeSpan = document.querySelector(`#afc-zbadge-${draggingNodeId} span.font-bold`);
                         if (badgeSpan) badgeSpan.innerText = `${curZ}px`;
+                        syncConnectedSvgEdges(draggingNodeId, parseFloat(el.dataset.curx || el.dataset.basex || 0), parseFloat(el.dataset.cury || el.dataset.basey || 0), curZ);
                     }
                     return;
                 }
@@ -8371,6 +8458,16 @@ Devuelve estrictamente el JSON sin formato extra.
                                     perspectiveOrigin: '50% 50%'
                                 }}
                             >
+                                {/* Static Atmospheric Space Background (Fixed in screen viewport, does NOT tilt like a board) */}
+                                <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full pointer-events-none" />
+                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full pointer-events-none" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full pointer-events-none" />
+                                    {!is3DMode && (
+                                        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
+                                    )}
+                                </div>
+
                                 {/* 3D Perspective Rotator Canvas */}
                                 <div
                                     ref={rotator3DRef}
@@ -8382,15 +8479,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                         transition: isRotating3D || isDraggingMap ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
                                     }}
                                 >
-                                {/* Decoración de fondo del lienzo (fija kawaii / dreamy constellation) */}
-                                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full  pointer-events-none" />
-                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full  pointer-events-none" />
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full  pointer-events-none" />
-                                    <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
-                                </div>
-
-
 
                                 {(afcData?.is_mock || afcData?.is_valid === false) && (
                                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-500 gap-4">
@@ -8406,22 +8494,22 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </div>
                                 )}
 
-
-
                                 {/* Transform Container (Pan/Zoom applies here) */}
                                 <div
                                     ref={transformContainerRef}
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
                                     style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, transformStyle: is3DMode ? 'preserve-3d' : 'flat', textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
                                 >
-                                    {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
-                                    <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden" style={{ transform: is3DMode ? 'translateZ(-6px)' : 'none' }}>
-                                        {/* Radial Spiderweb Atmosphere */}
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-purple-600/[0.025] blur-[100px] pointer-events-none" />
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
-                                    </div>
+                                    {/* Case Formulation Column Architectural Guidelines & Watermark Headers (Only in 2D mode) */}
+                                    {!is3DMode && (
+                                        <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+                                            {/* Radial Spiderweb Atmosphere */}
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-purple-600/[0.025] blur-[100px] pointer-events-none" />
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
+                                        </div>
+                                    )}
 
                                     {/* SVG Edges & HTML Nodes */}
                                     {(() => {
@@ -8430,7 +8518,8 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                         return (
                                             <React.Fragment>
-                                                <svg viewBox={`0 0 ${VIRTUAL_WIDTH} ${VIRTUAL_HEIGHT}`} className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" style={{ shapeRendering: 'geometricPrecision', transform: is3DMode ? 'translateZ(0px)' : 'none' }}>
+                                                {!is3DMode && (
+                                                <svg viewBox={`0 0 ${VIRTUAL_WIDTH} ${VIRTUAL_HEIGHT}`} className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" style={{ shapeRendering: 'geometricPrecision' }}>
 
                                         <style>{`
                                                     @keyframes edgeStreamFlow {
@@ -8608,6 +8697,159 @@ Devuelve estrictamente el JSON sin formato extra.
                                             );
                                         })}
                                     </svg>
+                                    )}
+
+                                    {/* In 3D Mode: True 3D Volumetric Beams Connecting Nodes at Real (X, Y, Z) Altitudes */}
+                                    {is3DMode && (
+                                        <div className="absolute inset-0 pointer-events-none z-0" style={{ transformStyle: 'preserve-3d' }}>
+                                            {finalEdgesToRender.map((edge, i) => {
+                                                const source = nodesToRender.find(n => n.id === edge.source);
+                                                const target = nodesToRender.find(n => n.id === edge.target);
+                                                if (!source || !target) return null;
+
+                                                const spotNodeId = edge.source.startsWith("blind_spot_") ? edge.source : edge.target.startsWith("blind_spot_") ? edge.target : null;
+                                                const spotId = spotNodeId ? spotNodeId.substring("blind_spot_".length) : null;
+                                                const isClicked = spotId ? localStorage.getItem(`oasis_blindspot_clicked_${user}__${spotId}`) === 'true' : false;
+                                                const isBlindSpotEdge = spotNodeId && !isClicked;
+
+                                                const sx = (source.x / 100) * VIRTUAL_WIDTH;
+                                                const sy = (source.y / 100) * VIRTUAL_HEIGHT;
+                                                const sz = getNodeElevation(source, finalEdgesToRender);
+
+                                                const tx = (target.x / 100) * VIRTUAL_WIDTH;
+                                                const ty = (target.y / 100) * VIRTUAL_HEIGHT;
+                                                const tz = getNodeElevation(target, finalEdgesToRender);
+
+                                                const isSourceHub = Boolean(source.is_island_hub);
+                                                const isTargetHub = Boolean(target.is_island_hub);
+                                                const isSourceCond = Boolean(!isSourceHub && (source.type === 'antecedent' || source.clinical_role === 'antecedent' || (source.id && source.id.includes('cond'))));
+                                                const isTargetCond = Boolean(!isTargetHub && (target.type === 'antecedent' || target.clinical_role === 'antecedent' || (target.id && target.id.includes('cond'))));
+
+                                                const isFeedback = edge.type === 'feedback' || target.x < source.x;
+                                                const hasMarker = isFeedback || edge.type === 'unidirectional' || isBlindSpotEdge;
+
+                                                const geo = compute3DEdgeGeometry(sx, sy, sz, tx, ty, tz, isSourceHub, isTargetHub, isSourceCond, isTargetCond, hasMarker);
+
+                                                // Determine highlight state
+                                                const activeNodeId = selectedNode?.id || (tourActiveIndex !== null && sortedTourNodes[tourActiveIndex]?.id);
+                                                const isIncoming = activeNodeId === target.id;
+                                                const isOutgoing = activeNodeId === source.id;
+                                                const isEdgeInPattern = activePattern && activePattern.node_ids.includes(source.id) && activePattern.node_ids.includes(target.id);
+                                                const isHighlighted = (activeNodeId && (isIncoming || isOutgoing)) || isEdgeInPattern;
+                                                const isAnyNodeSelected = !!activeNodeId || !!selectedPatternId;
+
+                                                const isStageFocused = focusedStageIndex !== null;
+                                                const isEdgeInFocusedStage = !isStageFocused || (
+                                                    getClinicalLayerIndex(source) === focusedStageIndex ||
+                                                    getClinicalLayerIndex(target) === focusedStageIndex
+                                                );
+
+                                                let strokeColor = isFeedback ? "rgba(192, 132, 252, 0.75)" : "rgba(255, 255, 255, 0.32)";
+                                                let strokeGlow = isFeedback ? "rgba(192, 132, 252, 0.5)" : "rgba(255, 255, 255, 0.2)";
+                                                let strokeThickness = isFeedback ? 1.8 : 1.4;
+                                                let opacity = 0.85;
+                                                let arrowColor = isFeedback ? "#c084fc" : "rgba(255, 255, 255, 0.65)";
+
+                                                if (isStageFocused && !isEdgeInFocusedStage && !isHighlighted) {
+                                                    strokeColor = "rgba(255, 255, 255, 0.04)";
+                                                    strokeGlow = "transparent";
+                                                    strokeThickness = 0.8;
+                                                    opacity = 0.15;
+                                                    arrowColor = "transparent";
+                                                } else if (isAnyNodeSelected && !isHighlighted) {
+                                                    strokeColor = "rgba(255, 255, 255, 0.04)";
+                                                    strokeGlow = "transparent";
+                                                    strokeThickness = 0.8;
+                                                    opacity = 0.15;
+                                                    arrowColor = "transparent";
+                                                } else if (isEdgeInPattern) {
+                                                    strokeColor = "rgba(168, 85, 247, 1)";
+                                                    strokeGlow = "rgba(168, 85, 247, 0.8)";
+                                                    strokeThickness = 2.4;
+                                                    opacity = 1;
+                                                    arrowColor = "#c084fc";
+                                                } else if (isHighlighted) {
+                                                    if (isIncoming && isOutgoing) {
+                                                        strokeColor = "#a78bfa";
+                                                        arrowColor = "#a78bfa";
+                                                    } else if (isIncoming) {
+                                                        strokeColor = "#818cf8";
+                                                        arrowColor = "#818cf8";
+                                                    } else {
+                                                        strokeColor = "#fb7185";
+                                                        arrowColor = "#fb7185";
+                                                    }
+                                                    strokeGlow = strokeColor;
+                                                    strokeThickness = 2.6;
+                                                    opacity = 1;
+                                                } else if (edge.type === 'mini_chat_link') {
+                                                    strokeColor = "rgba(255, 255, 255, 0.4)";
+                                                    strokeThickness = 1.2;
+                                                    arrowColor = "transparent";
+                                                } else if (isBlindSpotEdge) {
+                                                    strokeColor = "#38bdf8";
+                                                    strokeGlow = "#38bdf8";
+                                                    strokeThickness = 2.0;
+                                                    arrowColor = "#38bdf8";
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={`edge3d-${source.id}-${target.id}`}
+                                                        id={`afc-edge3d-${source.id}-${target.id}`}
+                                                        data-source={source.id}
+                                                        data-target={target.id}
+                                                        data-hasmarker={hasMarker ? "1" : "0"}
+                                                        className="afc-edge-3d absolute pointer-events-none"
+                                                        style={{
+                                                            left: `${geo.startX}px`,
+                                                            top: `${geo.startY}px`,
+                                                            width: `${geo.len}px`,
+                                                            height: `${strokeThickness}px`,
+                                                            transformOrigin: '0 50%',
+                                                            transform: `translate3d(0, -50%, ${geo.startZ}px) rotateZ(${geo.yaw}deg) rotateY(${-geo.pitch}deg)`,
+                                                            transformStyle: 'preserve-3d',
+                                                            opacity,
+                                                            zIndex: isHighlighted ? 40 : 10
+                                                        }}
+                                                    >
+                                                        {/* Ribbon 1: Horizontal plane */}
+                                                        <div
+                                                            className="afc-ribbon-h absolute inset-0"
+                                                            style={{
+                                                                backgroundColor: strokeColor,
+                                                                boxShadow: strokeGlow !== 'transparent' ? `0 0 6px ${strokeGlow}` : 'none'
+                                                            }}
+                                                        />
+                                                        {/* Ribbon 2: Perpendicular plane (3D volumetric cross-beam) */}
+                                                        <div
+                                                            className="afc-ribbon-v absolute inset-0"
+                                                            style={{
+                                                                backgroundColor: strokeColor,
+                                                                boxShadow: strokeGlow !== 'transparent' ? `0 0 6px ${strokeGlow}` : 'none',
+                                                                transform: 'rotateX(90deg)'
+                                                            }}
+                                                        />
+                                                        {/* 3D Arrowhead at target */}
+                                                        {hasMarker && arrowColor !== 'transparent' && (
+                                                             <div
+                                                                className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                                style={{
+                                                                    width: 0,
+                                                                    height: 0,
+                                                                    borderTop: '3.5px solid transparent',
+                                                                    borderBottom: '3.5px solid transparent',
+                                                                    borderLeft: `6.5px solid ${arrowColor}`,
+                                                                    filter: `drop-shadow(0 0 4px ${arrowColor})`,
+                                                                    transform: 'rotateY(0deg)'
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
 
                                     {/* HTML Nodes */}
                                     {finalNodesToRender.map(node => {
@@ -8801,6 +9043,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 data-cury={node.y}
                                                 data-basez={nodeZ}
                                                 data-curz={nodeZ}
+                                                data-ishub={isHub ? "1" : "0"}
+                                                data-iscond={isCondition ? "1" : "0"}
                                                 onClick={handleNodeClick}
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
@@ -8833,52 +9077,24 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                                     return (
                                                         <React.Fragment>
-                                                            {/* 1. Floor Anchor Ring & Ambient Ground Shadow at Z = 0 */}
-                                                            {is3DMode && (
-                                                                <div 
-                                                                    className="absolute pointer-events-none rounded-full flex items-center justify-center transition-all duration-300"
-                                                                    style={{
-                                                                        transform: 'translate(-50%, -50%) translateZ(0px)',
-                                                                        left: '50%',
-                                                                        top: '50%',
-                                                                        width: `${Math.max(16, dotSize * 1.6)}px`,
-                                                                        height: `${Math.max(16, dotSize * 1.6)}px`,
-                                                                        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-                                                                        border: `1.5px dashed ${isHub ? 'rgba(255,255,255,0.45)' : isCondition ? 'rgba(52,211,153,0.5)' : 'rgba(148,163,184,0.4)'}`,
-                                                                        boxShadow: `0 0 16px ${isHub ? 'rgba(255,255,255,0.3)' : isCondition ? 'rgba(16,185,129,0.3)' : 'rgba(148,163,184,0.2)'}`,
-                                                                    }}
-                                                                >
-                                                                    <div 
-                                                                        className="rounded-full"
-                                                                        style={{
-                                                                            width: '3.5px',
-                                                                            height: '3.5px',
-                                                                            backgroundColor: fillColor,
-                                                                            boxShadow: `0 0 6px ${fillColor}`
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {/* 2. Vertical 3D Light Pillar / Stem (Z = 0 to Z = nodeZ) */}
-                                                            {is3DMode && nodeZ > 4 && (
+                                                            {/* Vertical Altitude Guide: Only during Z-Height adjustments */}
+                                                            {is3DMode && (dragMode3D === 'nodeZ' || isDraggingNodeZRef.current) && nodeZ > 4 && (
                                                                 <div
                                                                     id={`afc-pillar-${node.id}`}
                                                                     className="absolute pointer-events-none origin-top transition-[height] duration-75"
                                                                     style={{
                                                                         left: '50%',
                                                                         top: '50%',
-                                                                        width: isHub ? '2.5px' : '1.5px',
+                                                                        width: '1.5px',
                                                                         height: `${nodeZ}px`,
                                                                         transform: 'translateX(-50%) rotateX(-90deg)',
-                                                                        background: `linear-gradient(to bottom, ${isHub ? 'rgba(255,255,255,0.7)' : isCondition ? 'rgba(52,211,153,0.7)' : 'rgba(148,163,184,0.6)'}, ${fillColor})`,
-                                                                        boxShadow: `0 0 8px ${fillColor}70`,
-                                                                        opacity: isDimmed ? 0.2 : 0.85
+                                                                        background: `linear-gradient(to bottom, rgba(52,211,153,0.7), transparent)`,
+                                                                        opacity: 0.6
                                                                     }}
                                                                 />
                                                             )}
 
-                                                            {/* 3. Floating Node Head with Camera-Facing Billboarding (at Z = nodeZ) */}
+                                                            {/* Floating Node Head with Camera-Facing Billboarding (at Z = nodeZ) */}
                                                             <div
                                                                 id={`afc-float-${node.id}`}
                                                                 className="relative flex flex-col items-center"
@@ -8887,7 +9103,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                         ? `translateZ(var(--node-z-${node.id}, ${nodeZ}px)) rotateY(var(--inv-yaw, ${-tilt3D.yaw}deg)) rotateX(var(--inv-pitch, ${-tilt3D.pitch}deg))`
                                                                         : 'none',
                                                                     transformStyle: is3DMode ? 'preserve-3d' : 'flat',
-                                                                    filter: is3DMode ? 'drop-shadow(0 18px 16px rgba(0,0,0,0.85))' : undefined,
+                                                                    filter: undefined,
                                                                     transition: isDraggingNodeZRef.current ? 'none' : 'transform 0.12s ease-out'
                                                                 }}
                                                             >
