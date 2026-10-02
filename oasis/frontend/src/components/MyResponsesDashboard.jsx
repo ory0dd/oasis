@@ -1915,8 +1915,14 @@ Devuelve estrictamente el JSON sin formato extra.
         // Limit removed
         const newCount = mapGenerationCount + 1;
         setMapGenerationCount(newCount);
-        localStorage.setItem(`oasis_afc_gen_count_${user}`, newCount.toString());
-        localStorage.removeItem(`oasis_afc_attempted_${user}`);
+        try {
+            localStorage.setItem(`oasis_afc_gen_count_${user}`, newCount.toString());
+            localStorage.removeItem(`oasis_afc_attempted_${user}`);
+            if (user) {
+                localStorage.removeItem(`oasis_afc_attempted_${user.toLowerCase()}`);
+                localStorage.removeItem(`oasis_afc_attempted_${user.replace(/\s+/g, '')}`);
+            }
+        } catch (err) {}
         generateAFCAnalysis(isAdditive);
     };
     const [afcData, setAfcData] = useState(null);
@@ -7731,8 +7737,8 @@ Devuelve estrictamente el JSON sin formato extra.
 
                         {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
-                            {/* Top Header Badge */}
-                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-none">
+                            {/* Top Header Badge & Generate Button */}
+                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-auto">
                                 <div className="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-zinc-950/80 border border-pink-400/25 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                                     <span className="text-xs">✨</span>
                                     <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
@@ -7741,6 +7747,20 @@ Devuelve estrictamente el JSON sin formato extra.
                                     <span className="text-[11px]">🍃</span>
                                     {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
                                 </div>
+
+                                <button
+                                    onClick={(e) => handleGenerateMap(e, false)}
+                                    disabled={!!isAnalyzing}
+                                    className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl border backdrop-blur-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer pointer-events-auto ${
+                                        isAnalyzing
+                                            ? 'bg-zinc-900/80 border-white/10 text-zinc-500 cursor-not-allowed'
+                                            : 'bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-400/30 shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_24px_rgba(16,185,129,0.5)]'
+                                    }`}
+                                    title="Generar o recalcular Mapa de Bucles"
+                                >
+                                    <Sparkles size={13} className={isAnalyzing ? "text-zinc-500" : "text-emerald-200 animate-pulse"} />
+                                    <span>{isAnalyzing ? "Generando..." : "Generar Mapa"}</span>
+                                </button>
                             </div>
 
                             {/* Quick Column Navigation Pills (Desktop & Mobile) */}
@@ -7816,13 +7836,14 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Action Buttons Toolbar (Top right on mobile, Bottom left on desktop) */}
                             <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
-                                {isEmbedded && (<button
+                                <button
                                     onClick={(e) => handleGenerateMap(e, false)}
+                                    disabled={!!isAnalyzing}
                                     className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
                                     title="Generar Análisis Clínico"
                                 >
-                                    <Sparkles size={11} />
-                                </button>)}
+                                    <Sparkles size={11} className={isAnalyzing ? "animate-spin" : ""} />
+                                </button>
                                 <button
                                     onClick={() => reorganizeNodes()}
                                     className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
@@ -7912,12 +7933,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <p className="text-sm font-mono text-zinc-500 uppercase tracking-widest px-6 py-3 rounded-xl bg-black/80 sm:bg-black/40 border border-white/5 sm:backdrop-blur-md">
                                             {afcData?.is_valid === false ? "No hay información suficiente" : "Aún no hay datos"}
                                         </p>
-                                        {isEmbedded && (<button 
+                                        <button 
                                             onClick={(e) => handleGenerateMap(e, false)}
-                                            className="pointer-events-auto px-6 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold tracking-wide shadow-xl shadow-emerald-900/30 transition-all active:scale-95 border border-emerald-400/20"
+                                            disabled={!!isAnalyzing}
+                                            className="pointer-events-auto px-6 py-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold tracking-wide shadow-xl shadow-emerald-900/30 transition-all active:scale-95 border border-emerald-400/20 flex items-center gap-2"
                                         >
-                                            Generar Mapa
-                                        </button>)}
+                                            <Sparkles size={14} className={isAnalyzing ? "animate-spin" : "text-emerald-200 animate-pulse"} />
+                                            <span>{isAnalyzing ? "Generando..." : "Generar Mapa"}</span>
+                                        </button>
                                     </div>
                                 )}
 
