@@ -1408,9 +1408,13 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     const setLocalItem = useCallback((key, value) => {
         localStorage.setItem(key, value);
         if (user) {
+            const caller = localStorage.getItem('oasis_user') || 'observador1';
             fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Oasis-User': caller
+                },
                 body: JSON.stringify({ [key]: value })
             }).catch(e => console.error("Error syncing to backend:", e));
         }
@@ -1970,7 +1974,11 @@ Devuelve estrictamente el JSON sin formato extra.
 
         // 1. Sintetizar un título clínico conciso para el nodo reajustado
         let newLabel = '';
-        if (lower.includes('desobligad') || lower.includes('responsabilidad') || lower.includes('fácil') || lower.includes('facil')) {
+        if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('sobrepasa') || lower.includes('sobre pasa') || lower.includes('desborde') || lower.includes('impulsiv')) {
+            newLabel = 'Impulsividad por sobrecarga emocional';
+        } else if (lower.includes('criterio') || lower.includes('decisi') || lower.includes('identificar')) {
+            newLabel = 'Claridad y toma de decisiones';
+        } else if (lower.includes('desobligad') || lower.includes('responsabilidad') || lower.includes('fácil') || lower.includes('facil')) {
             newLabel = 'Trabajo flexible y desobligación';
         } else if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
             newLabel = 'Preocupación y estrés financiero';
@@ -1987,7 +1995,7 @@ Devuelve estrictamente el JSON sin formato extra.
         } else {
             // Extraer la primera frase sustantiva limpia
             const cleanClause = raw
-                .replace(/^(mira|bro|oye|sabes|creo que|tal vez|en realidad|la verdad|no sé|no se|pasa que|siento que|es que)\s+/gi, '')
+                .replace(/^(mira|bro|oye|sabes|creo que|creo queno|tal vez|en realidad|la verdad|no sé|no se|pasa que|siento que|es que)\s+/gi, '')
                 .split(/[,.;:\n]/)[0]
                 .trim();
             const words = cleanClause.split(/\s+/).slice(0, 5).join(' ');
@@ -2003,6 +2011,22 @@ Devuelve estrictamente el JSON sin formato extra.
 
         const branchNodes = [];
         if (autoBranch) {
+            if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('impulsiv') || lower.includes('sobrepasa') || lower.includes('sobre pasa')) {
+                branchNodes.push({
+                    label: 'Sobrecarga e impulsividad reactiva',
+                    type: 'motor',
+                    clinical_role: 'motor',
+                    description: 'Reacciones impulsivas ante momentos donde la intensidad emocional supera la pausa reflexiva.',
+                    question: '¿Qué señales corporales notas justo antes de reaccionar impulsivamente?'
+                });
+                branchNodes.push({
+                    label: 'Dificultad de autorregulación',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    description: 'Desafíos para identificar y encauzar el estado emocional bajo situaciones de tensión.',
+                    question: '¿Qué herramientas te permiten pausar y elegir cómo actuar en calma?'
+                });
+            }
             if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
                 branchNodes.push({
                     label: 'Estrés y presión financiera',
@@ -2187,9 +2211,13 @@ ESTRUCTURA JSON OBLIGATORIA:
                 const payloadKey = (activeKey && activeKey.length > 10) ? activeKey : null;
 
                 const makeAiCall = async (targetApiUrl) => {
+                    const caller = localStorage.getItem('oasis_user') || 'observador1';
                     return await fetch(`${targetApiUrl}/api/oasis/config/chat-completion`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Oasis-User': caller
+                        },
                         signal: controller.signal,
                         body: JSON.stringify({
                             provider: provider,
@@ -2360,11 +2388,16 @@ ESTRUCTURA JSON OBLIGATORIA:
                 localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
                 if (user) {
+                    const caller = localStorage.getItem('oasis_user') || 'observador1';
                     fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Oasis-User': caller
+                        },
                         body: JSON.stringify({
-                            [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData)
+                            [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData),
+                            [`oasis_afc_map_${user}`]: JSON.stringify(newAfcData)
                         })
                     }).catch(() => {});
                 }
@@ -4094,6 +4127,30 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                     }
                     if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
                         cloudAfc = sanitizeAfcGraph(cloudAfc);
+
+                        // Preservar nodos moldeados y satélites locales para que la nube nunca los sobreescriba
+                        const localRaw = localStorage.getItem(`oasis_afc_real_data_${user}`);
+                        let localAfc = null;
+                        try { localAfc = localRaw ? JSON.parse(localRaw) : null; } catch(e) {}
+                        if (localAfc && Array.isArray(localAfc.nodes)) {
+                            const localMolded = localAfc.nodes.filter(n => n.is_corrected || n.is_satellite || (n.id && n.id.startsWith('molded_')));
+                            if (localMolded.length > 0) {
+                                localMolded.forEach(mNode => {
+                                    const cIdx = cloudAfc.nodes.findIndex(n => n.id === mNode.id);
+                                    if (cIdx > -1) {
+                                        cloudAfc.nodes[cIdx] = { ...cloudAfc.nodes[cIdx], ...mNode };
+                                    } else {
+                                        cloudAfc.nodes.push(mNode);
+                                    }
+                                });
+                                (localAfc.edges || []).forEach(lEdge => {
+                                    if (!cloudAfc.edges.some(e => e.source === lEdge.source && e.target === lEdge.target)) {
+                                        cloudAfc.edges.push(lEdge);
+                                    }
+                                });
+                            }
+                        }
+
                         const needsReorg = cloudAfc.layout_version !== 9 || hasLegacyPivotes(cloudAfc) || !cloudAfc.nodes.some(n => n.clinical_role || Math.abs(n.x - 14) < 3.5);
                         let updatedNodes;
                         let updatedEdges = cloudAfc.edges || [];

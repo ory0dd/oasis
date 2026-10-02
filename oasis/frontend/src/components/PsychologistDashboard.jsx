@@ -1792,6 +1792,28 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         try {
                             Object.keys(clinicalData).forEach(key => {
                                 try {
+                                    if (key.startsWith('oasis_afc_real_data_') || key.startsWith('oasis_afc_map_')) {
+                                        const localVal = localStorage.getItem(key);
+                                        if (localVal && (localVal.includes('"is_corrected":true') || localVal.includes('"is_satellite":true') || localVal.includes('molded_'))) {
+                                            try {
+                                                const localObj = JSON.parse(localVal);
+                                                const cloudObj = JSON.parse(clinicalData[key]);
+                                                const localMolded = (localObj.nodes || []).filter(n => n.is_corrected || n.is_satellite || (n.id && n.id.startsWith('molded_')));
+                                                localMolded.forEach(m => {
+                                                    const idx = (cloudObj.nodes || []).findIndex(n => n.id === m.id);
+                                                    if (idx > -1) cloudObj.nodes[idx] = { ...cloudObj.nodes[idx], ...m };
+                                                    else cloudObj.nodes.push(m);
+                                                });
+                                                (localObj.edges || []).forEach(e => {
+                                                    if (!cloudObj.edges.some(ce => ce.source === e.source && ce.target === e.target)) {
+                                                        cloudObj.edges.push(e);
+                                                    }
+                                                });
+                                                localStorage.setItem(key, JSON.stringify(cloudObj));
+                                                return;
+                                            } catch(e) {}
+                                        }
+                                    }
                                     localStorage.setItem(key, clinicalData[key]);
                                     if (key.includes('__')) {
                                         localStorage.setItem(key.replace('__', '_'), clinicalData[key]);

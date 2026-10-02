@@ -1059,6 +1059,41 @@ namespace Oasis.Backend.Controllers
                 using var response = await _httpClient.SendAsync(request);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
+                // Si la llamada a DeepSeek falló (402, 429, 500, etc.), fallback transparente a OpenAI gpt-4o-mini
+                if (!response.IsSuccessStatusCode && provider == "deepseek")
+                {
+                    var openAiKey = _config["OpenAI:Key"] ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                    if (!string.IsNullOrEmpty(openAiKey) && !IsPlaceholderOrLegacyKey(openAiKey))
+                    {
+                        try
+                        {
+                            var openAiUrl = _config["OpenAI:BaseUrl"] ?? Environment.GetEnvironmentVariable("OPENAI_BASE_URL") ?? "https://api.openai.com/v1/chat/completions";
+                            using var fallbackReq = new HttpRequestMessage(HttpMethod.Post, openAiUrl);
+                            fallbackReq.Headers.Add("Authorization", $"Bearer {openAiKey}");
+                            var fallbackPayload = JsonSerializer.Serialize(req.Payload, JsonOptions)
+                                .Replace("\"deepseek-chat\"", "\"gpt-4o-mini\"")
+                                .Replace("\"deepseek-reasoner\"", "\"gpt-4o-mini\"");
+                            fallbackReq.Content = new StringContent(fallbackPayload, System.Text.Encoding.UTF8, "application/json");
+                            using var fallbackRes = await _httpClient.SendAsync(fallbackReq);
+                            if (fallbackRes.IsSuccessStatusCode)
+                            {
+                                var fallbackContent = await fallbackRes.Content.ReadAsStringAsync();
+                                if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                                {
+                                    Response.Headers.Append("Access-Control-Allow-Origin", "*");
+                                }
+                                return new ContentResult
+                                {
+                                    Content = fallbackContent,
+                                    ContentType = "application/json; charset=utf-8",
+                                    StatusCode = (int)fallbackRes.StatusCode
+                                };
+                            }
+                        }
+                        catch { /* Continuar con la respuesta original si el fallback también falla */ }
+                    }
+                }
+
                 if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
                 {
                     Response.Headers.Append("Access-Control-Allow-Origin", "*");
