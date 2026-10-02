@@ -202,7 +202,7 @@ namespace Oasis.Backend.Controllers
                 var supabaseUrl = config["Supabase:Url"];
                 var supabaseKey = config["Supabase:Key"];
                 var enableSyncStr = config["Supabase:EnableSync"] ?? "true";
-                bool enableSync = enableSyncStr == "true";
+                bool enableSync = bool.TryParse(enableSyncStr, out var es) ? es : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
 
                 if (enableSync && !string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                 {
@@ -464,7 +464,7 @@ namespace Oasis.Backend.Controllers
                             var supabaseUrl = config["Supabase:Url"];
                             var supabaseKey = config["Supabase:Key"];
                             var enableSyncStr = config["Supabase:EnableSync"] ?? "true";
-                            bool enableSync = enableSyncStr == "true";
+                            bool enableSync = bool.TryParse(enableSyncStr, out var es) ? es : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
 
                             if (enableSync && !string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                             {
@@ -771,18 +771,28 @@ namespace Oasis.Backend.Controllers
         {
             string caller = GetAuthenticatedUser();
             var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
-            bool isObserverOrAdmin = !string.IsNullOrEmpty(caller) && (
+            bool isAuthorized = !string.IsNullOrEmpty(caller) && (
                 caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
                 caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
                 caller.ToLower().Contains("observador") ||
                 caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
                 caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
-                (callerUser != null && (callerUser.Role == "admin" || callerUser.Role == "supervisor" || callerUser.Role == "observador"))
+                caller.Equals("yul", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("yuli", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("2112", StringComparison.OrdinalIgnoreCase) ||
+                (callerUser != null && (callerUser.Role == "admin" || callerUser.Role == "supervisor" || callerUser.Role == "observador" || callerUser.Role == "clinician"))
             );
 
-            if (string.IsNullOrEmpty(caller) || !isObserverOrAdmin)
+            if (string.IsNullOrEmpty(caller) || !isAuthorized)
             {
-                return Forbid();
+                return StatusCode(403, new { message = "Acceso denegado: solo clínicos y administradores pueden eliminar perfiles." });
+            }
+
+            // Proteger cuentas principales del sistema
+            var protectedAccounts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ory11", "observador1", "observador", "yul", "yuli", "2112" };
+            if (protectedAccounts.Contains(username))
+            {
+                return BadRequest(new { message = "No se pueden eliminar las cuentas principales del sistema." });
             }
 
             lock (StateLock)
@@ -794,6 +804,15 @@ namespace Oasis.Backend.Controllers
                 }
 
                 _state.Users.Remove(userToRemove);
+                if (_state.WhatsAppPatients != null)
+                {
+                    _state.WhatsAppPatients.RemoveAll(wp => 
+                        string.Equals(wp.Id, username, StringComparison.OrdinalIgnoreCase) || 
+                        string.Equals(wp.Name, username, StringComparison.OrdinalIgnoreCase) || 
+                        string.Equals(wp.LinkedIdentityId, username, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(wp.LinkedIdentityId, "PT-" + username, StringComparison.OrdinalIgnoreCase)
+                    );
+                }
                 SaveState();
                 return Ok(new { message = "User deleted successfully" });
             }

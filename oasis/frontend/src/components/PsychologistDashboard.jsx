@@ -1269,6 +1269,13 @@ Responde ÚNICAMENTE con un JSON válido.`;
     // Load Patient Profiles dynamically based on real localStorage data and backend users
     const loadPatients = async () => {
         const patientsMap = {};
+        let deletedUsers = [];
+        try {
+            deletedUsers = JSON.parse(localStorage.getItem('oasis_deleted_usernames') || '[]');
+            if (!Array.isArray(deletedUsers)) deletedUsers = [];
+        } catch(e) { deletedUsers = []; }
+        const deletedSet = new Set(deletedUsers.map(x => (x || '').toLowerCase().trim()));
+
         const cleanUsername = (keyName, prefix) => {
             let name = keyName.replace(prefix, '');
             name = name.replace(/_v\d+$/, '');
@@ -1278,6 +1285,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
         const isRogueUser = (u) => {
             if (!u) return true;
             const low = u.toLowerCase().trim();
+            if (deletedSet.has(low)) return true;
             if (low === 'asdad' || low === 'sda' || low === 'p' || low === 'testuser' || low === 'clinical_test' || low === 'somn' || low === 'susurro111') return true;
             if (low.startsWith('axel roben_') || low.startsWith('axel_')) return true;
             if (low.endsWith('_cdi2') || low.endsWith('_cssrs') || low.endsWith('_ders_a') || low.endsWith('_scared') || low.endsWith('_sdq') || low.endsWith('_sdq_adolescente') || low.endsWith('_test1')) return true;
@@ -1326,7 +1334,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     let rawUser = cleanUsername(key, p);
                     rawUser = normalizePatientUsername(rawUser);
 
-                    if (rawUser && !isRogueUser(rawUser) && !['ory11', 'observador1', 'observador', '2112'].includes(rawUser.toLowerCase())) {
+                    if (rawUser && !isRogueUser(rawUser) && !deletedSet.has(rawUser.toLowerCase()) && !['ory11', 'observador1', 'observador', '2112'].includes(rawUser.toLowerCase())) {
                         const isAxel = rawUser.toLowerCase() === 'axel roben';
                         patientsMap[rawUser] = patientsMap[rawUser] || {
                             name: rawUser,
@@ -1350,7 +1358,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
             if (res.ok) {
                 const backendUsers = await res.json();
                 
-                if (currentUser) {
+                if (currentUser && !deletedSet.has(currentUser.toLowerCase())) {
                     patientsMap[currentUser] = patientsMap[currentUser] || { name: currentUser, fullName: currentUser };
                 }
 
@@ -1358,7 +1366,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                     let uname = u.username || u.Username;
                     if (uname) {
                         uname = normalizePatientUsername(uname);
-                        if (isRogueUser(uname)) return;
+                        if (isRogueUser(uname) || deletedSet.has(uname.toLowerCase())) return;
 
                         const cData = u.clinicalData || u.ClinicalData || {};
                         const userRole = u.role || u.Role || (['yul', 'yuli', '2112'].includes(uname.toLowerCase()) ? 'clinician' : uname.toLowerCase().includes('observador') ? 'supervisor' : uname.toLowerCase() === 'ory11' ? 'admin' : 'patient');
@@ -1607,35 +1615,79 @@ Responde ÚNICAMENTE con un JSON válido.`;
 
     const handleDeleteUser = async (e, username) => {
         e.stopPropagation();
+        if (!username) return;
         if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
             return;
         }
 
         try {
-            const currentUser = localStorage.getItem('oasis_user') || 'observador';
-            const res = await fetch(`${API_URL}/api/oasis/users/${username}`, {
+            const currentUser = localStorage.getItem('oasis_user') || 'ory11';
+            const res = await fetch(`${API_URL}/api/oasis/users/${encodeURIComponent(username)}`, {
                 method: 'DELETE',
                 headers: {
                     'X-Oasis-User': currentUser
                 }
             });
-            if (res.ok) {
-                setPatients(prev => prev.filter(p => p.name !== username));
+
+            // Si el backend responde OK o 404 (ya no existe en la BD), procedemos a limpiar todo localmente
+            if (res.ok || res.status === 404) {
+                const uLow = username.toLowerCase().trim();
+
+                // 1. Remover de la lista de pacientes en UI
+                setPatients(prev => prev.filter(p => (p.name || '').toLowerCase() !== uLow));
+                if (selectedPatient && (selectedPatient.name || '').toLowerCase() === uLow) {
+                    setSelectedPatient(null);
+                }
+
+                // 2. Registrar en la lista negra local para evitar que vuelva a reaparecer si se recarga
+                try {
+                    let deletedList = JSON.parse(localStorage.getItem('oasis_deleted_usernames') || '[]');
+                    if (!Array.isArray(deletedList)) deletedList = [];
+                    if (!deletedList.includes(uLow)) {
+                        deletedList.push(uLow);
+                        localStorage.setItem('oasis_deleted_usernames', JSON.stringify(deletedList));
+                    }
+                } catch(e) {}
+
+                // 3. Limpieza exhaustiva de todas las claves de localStorage asociadas a este paciente
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key.endsWith(`_${username}`)) {
+                    if (!key) continue;
+                    const kLow = key.toLowerCase();
+                    if (
+                        kLow.endsWith(`_${uLow}`) ||
+                        kLow.includes(`_${uLow}_`) ||
+                        kLow.includes(`_${uLow}__`) ||
+                        kLow === `oasis_patient_status_${uLow}` ||
+                        kLow.startsWith(`oasis_test_result_${uLow}`) ||
+                        kLow.startsWith(`oasis_afc_real_data_${uLow}`) ||
+                        kLow.startsWith(`oasis_canvas_nodes_${uLow}`) ||
+                        kLow.startsWith(`oasis_node_chats_${uLow}`) ||
+                        kLow.startsWith(`oasis_bio_transcriptions_${uLow}`) ||
+                        kLow.startsWith(`oasis_phenom_qualitative_${uLow}`) ||
+                        kLow.startsWith(`oasis_pid_answers_${uLow}`) ||
+                        kLow.startsWith(`oasis_icar_answers_${uLow}`) ||
+                        kLow.startsWith(`oasis_treatment_plan_${uLow}`) ||
+                        kLow.startsWith(`oasis_contextual_report_${uLow}`) ||
+                        kLow.startsWith(`oasis_apa_clinical_report_${uLow}`)
+                    ) {
                         keysToRemove.push(key);
                     }
                 }
                 keysToRemove.forEach(k => localStorage.removeItem(k));
-                alert(`Usuario ${username} eliminado correctamente.`);
+                alert(`Perfil de ${username} eliminado correctamente.`);
             } else {
-                alert(`Error al eliminar usuario ${username}.`);
+                let errText = '';
+                try {
+                    const errData = await res.json();
+                    errText = errData.message || '';
+                } catch(e) {}
+                alert(`No se pudo eliminar al usuario ${username}.${errText ? ' ' + errText : ''}`);
             }
         } catch (err) {
             console.error(err);
-            alert(`Error al eliminar usuario ${username}.`);
+            alert(`Error al eliminar usuario ${username}: ${err.message}`);
         }
     };
 

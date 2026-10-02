@@ -1873,17 +1873,27 @@ Devuelve estrictamente el JSON sin formato extra.
         if (isAnalyzing) {
             wasAnalyzingRef.current = true;
             setIsFinishingLoading(false);
+            setLoadingProgress(12);
             interval = setInterval(() => {
                 setLoadingProgress(prev => {
-                    if (prev >= 92) return 92;
+                    if (prev >= 98.5) return 98.5;
                     let inc = 0;
-                    if (prev < 30) inc = (30 - prev) * 0.08 + Math.random() * 0.7;
-                    else if (prev < 60) inc = (60 - prev) * 0.045 + Math.random() * 0.45;
-                    else if (prev < 80) inc = (80 - prev) * 0.025 + Math.random() * 0.3;
-                    else inc = 0.05;
-                    return Math.min(92, prev + inc);
+                    if (prev < 28) {
+                        inc = 0.28 + Math.random() * 0.16;
+                    } else if (prev < 58) {
+                        inc = 0.18 + Math.random() * 0.12;
+                    } else if (prev < 78) {
+                        inc = 0.11 + Math.random() * 0.08;
+                    } else if (prev < 90) {
+                        inc = 0.06 + Math.random() * 0.04;
+                    } else if (prev < 96) {
+                        inc = 0.03 + Math.random() * 0.02;
+                    } else {
+                        inc = 0.01;
+                    }
+                    return Math.min(98.5, prev + inc);
                 });
-            }, 80);
+            }, 180);
         } else if (wasAnalyzingRef.current) {
             setIsFinishingLoading(true);
             setLoadingProgress(100);
@@ -1891,7 +1901,7 @@ Devuelve estrictamente el JSON sin formato extra.
                 wasAnalyzingRef.current = false;
                 setIsFinishingLoading(false);
                 setLoadingProgress(10);
-            }, 550);
+            }, 650);
             return () => clearTimeout(timer);
         }
         return () => {
@@ -5234,6 +5244,7 @@ Datos clinicos del paciente:\n` + context }
             try {
                 const raw1 = await executeAICallWithFallback(payload1, "Etapa 1: Topología", 6500);
                 parsedTopology = safeJSONParse(raw1);
+                setLoadingProgress(prev => Math.max(prev, 76));
             } catch(e) {
                 console.warn("[AFC] Etapa 1 de topologia no completo por red o IA:", e.message);
                 alert("AVISO: Fallo la conexion con la IA (Etapa 1). Mostrando mapa de respaldo basico. Error: " + e.message);
@@ -5430,6 +5441,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
             try {
                 const raw2 = await executeAICallWithFallback(payload2, "Etapa 2: Análisis Clínico", 2200);
                 parsedInsights = safeJSONParse(raw2);
+                setLoadingProgress(prev => Math.max(prev, 88));
             } catch(e) {
                 console.warn("[AFC] Etapa 2 de insights no completó por red. Ensamblando insights clínicos derivados de la topología:", e.message);
                 parsedInsights = generateFallbackInsightsFromTopology(parsedTopology, context, user);
@@ -5444,8 +5456,6 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 ...parsedInsights
             };
 
-            
-
             if (parsedAfc.is_valid && parsedAfc.nodes) {
                 if (!isAdditive) {
                     parsedAfc.nodes = layoutClinicalNodes(parsedAfc.nodes, parsedAfc.edges || [], user, bioData, phenomData);
@@ -5454,10 +5464,12 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                     parsedAfc.nodes = resolveCollisions(parsedAfc.nodes);
                     parsedAfc.layout_version = 9;
                 }
+                setLoadingProgress(prev => Math.max(prev, 96));
             }
 
             setAfcData(parsedAfc);
             setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(parsedAfc));
+            setLoadingProgress(prev => Math.max(prev, 98.5));
             setSelectedNode(null);
             setSelectedBlindSpotIndex(0);
             setViewMode('dashboard');
@@ -7667,13 +7679,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                         ? "¡Conexiones extraídas y sincronizadas con éxito!"
                                         : typeof isAnalyzing === "string" && !isAnalyzing.includes("bucles reales")
                                             ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '')
-                                            : loadingProgress < 30
+                                            : loadingProgress < 28
                                                 ? "Rastreando detonantes y contexto biográfico..."
-                                                : loadingProgress < 60
+                                                : loadingProgress < 58
                                                     ? "Identificando pensamientos y respuestas somáticas..."
-                                                    : loadingProgress < 85
+                                                    : loadingProgress < 82
                                                         ? "Conectando patrones conductuales y consecuencias..."
-                                                        : "Tejiendo la red funcional y topología..."}
+                                                        : loadingProgress < 95
+                                                            ? "Tejiendo la red funcional y topología clínica..."
+                                                            : "Finalizando y sincronizando mapa..."}
                                 </p>
                                 
                                 {/* Game-like Organic Progress Bar */}
