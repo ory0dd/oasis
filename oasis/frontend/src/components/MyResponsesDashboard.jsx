@@ -2574,16 +2574,64 @@ ESTRUCTURA JSON OBLIGATORIA:
     };
 
     const handleDeleteNode = (nodeId) => {
-        if (!window.confirm("¿Deseas descartar este factor del mapa? Las conexiones directas a este nodo también serán removidas.")) return;
+        const nodeToDelete = (afcData?.nodes || []).find(n => n.id === nodeId) || selectedNode;
+        const nodeLabel = nodeToDelete?.label || 'este factor';
+        if (!window.confirm(`¿Deseas descartar "${nodeLabel}" del mapa? Las conexiones directas a este factor también serán removidas.`)) return;
+
         const newNodes = (afcData?.nodes || []).filter(n => n.id !== nodeId);
         const newEdges = (afcData?.edges || []).filter(e => e.source !== nodeId && e.target !== nodeId);
         const newAfcData = { ...afcData, nodes: newNodes, edges: newEdges };
+
         setAfcData(newAfcData);
-        localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-        localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
-        setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
         setSelectedNode(null);
         setEditingNodeId(null);
+        setMoldFeedback('');
+        setMoldCustomTitle('');
+
+        if (tourActiveIndex !== null) {
+            if (newNodes.length === 0) {
+                setTourActiveIndex(null);
+            } else if (tourActiveIndex >= newNodes.length) {
+                setTourActiveIndex(newNodes.length - 1);
+            }
+        }
+
+        // Persistir en almacenamiento local y en la nube clínica permanente
+        try {
+            localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+            localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
+            setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
+            if (user) {
+                const caller = localStorage.getItem('oasis_user') || 'observador1';
+                fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Oasis-User': caller
+                    },
+                    body: JSON.stringify({
+                        [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData),
+                        [`oasis_afc_map_${user}`]: JSON.stringify(newAfcData)
+                    })
+                }).catch(() => {});
+            }
+        } catch (e) {
+            console.error("Error al persistir tras descartar factor:", e);
+        }
+
+        // Registrar en memoria clínica que fue descartado por el usuario
+        try {
+            const currentCorrections = JSON.parse(localStorage.getItem(`oasis_clinical_corrections_${user}`) || '[]');
+            currentCorrections.push({
+                id: 'del_' + Date.now().toString(36),
+                nodeId: nodeId,
+                previousLabel: nodeLabel,
+                action: 'discarded_by_user',
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+            setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
+        } catch (err) {}
     };
 
     const handleExportDoc = () => {
@@ -8816,6 +8864,16 @@ Por favor, analicemos:
     <Edit2 size={12} />
 </button>
 <button
+    onClick={(e) => {
+        e.stopPropagation();
+        handleDeleteNode(currentNode.id);
+    }}
+    className="p-1 text-zinc-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 ml-0.5"
+    title="Descartar o eliminar este factor del mapa"
+>
+    <Trash2 size={12} />
+</button>
+<button
     onClick={() => setIsTourMinimized(!isTourMinimized)}
                                                         className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 ml-0.5"
                                                         title={isTourMinimized ? "Maximizar" : "Minimizar"}
@@ -9142,18 +9200,30 @@ Por favor, analicemos:
                                                                     )}
                                                                     <div className="flex items-center justify-between pt-1 border-t border-emerald-500/15 text-[9px] text-zinc-400">
                                                                         <span className="italic text-[8.5px]">Factor reformulado en el mapa</span>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setEditingNodeId(currentNode.id);
-                                                                                setEditTab('mold');
-                                                                                setMoldFeedback(currentNode.molded_note || '');
-                                                                                setMoldCustomTitle('');
-                                                                            }}
-                                                                            className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 hover:underline"
-                                                                        >
-                                                                            <Edit2 size={9} /> Re-moldear
-                                                                        </button>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleDeleteNode(currentNode.id);
+                                                                                }}
+                                                                                className="text-zinc-500 hover:text-red-400 font-semibold flex items-center gap-1 hover:underline text-[8.5px] transition-colors"
+                                                                                title="Descartar este factor del mapa"
+                                                                            >
+                                                                                <Trash2 size={9} /> Descartar
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setEditingNodeId(currentNode.id);
+                                                                                    setEditTab('mold');
+                                                                                    setMoldFeedback(currentNode.molded_note || '');
+                                                                                    setMoldCustomTitle('');
+                                                                                }}
+                                                                                className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 hover:underline"
+                                                                            >
+                                                                                <Edit2 size={9} /> Re-moldear
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -9163,20 +9233,35 @@ Por favor, analicemos:
                                                                     <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">
                                                                         {sanitizeSpanishText(getFallbackDescription(currentNode, user))}
                                                                     </p>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setEditingNodeId(currentNode.id);
-                                                                            setEditTab('mold');
-                                                                            setMoldFeedback(currentNode.molded_note || '');
-                                                                            setMoldCustomTitle('');
-                                                                        }}
-                                                                        className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all mt-1 w-fit"
-                                                                        title="Dile a la IA qué está mal informado para que reformule el nodo y expanda la red"
-                                                                    >
-                                                                        <Sparkles size={11} className="text-emerald-400" />
-                                                                        <span>¿Información imprecisa? Moldear con IA</span>
-                                                                    </button>
+                                                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingNodeId(currentNode.id);
+                                                                                setEditTab('mold');
+                                                                                setMoldFeedback(currentNode.molded_note || '');
+                                                                                setMoldCustomTitle('');
+                                                                            }}
+                                                                            className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
+                                                                            title="Dile a la IA qué está mal informado para que reformule el nodo y expanda la red"
+                                                                        >
+                                                                            <Sparkles size={11} className="text-emerald-400" />
+                                                                            <span>¿Información imprecisa? Moldear con IA</span>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleDeleteNode(currentNode.id);
+                                                                            }}
+                                                                            className="inline-flex items-center gap-1 text-[10px] text-zinc-400 hover:text-red-400 bg-white/[0.03] hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
+                                                                            title="Descartar este factor y sus conexiones del mapa"
+                                                                        >
+                                                                            <Trash2 size={10} />
+                                                                            <span>Descartar nodo</span>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                                     
 {(getFallbackQuestion(currentNode)) && (
     <div className="mt-3 pt-3 border-t border-white/5">
@@ -9239,20 +9324,13 @@ Por favor, analicemos:
         })()}
     </div>
 )}
-
-
-
-
-
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    )}
-                                                    </div>
                                                 </>
                                             )}
                                         </div>
-                                        </div>
+                                    </div>
                                 );
                             })()}
 
