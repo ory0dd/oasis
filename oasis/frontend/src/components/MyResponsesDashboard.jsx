@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Box } from 'lucide-react';
+import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, ArrowUpDown, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Box } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -3013,17 +3013,92 @@ ESTRUCTURA JSON OBLIGATORIA:
         }
     }, []);
 
-    // --- 3D PERSPECTIVE ORBIT & TILT STATE ---
+    // --- 3D PERSPECTIVE ORBIT, TILT & VOLUMETRIC DEPTH STATE ---
     const rotator3DRef = useRef(null);
     const tilt3DRef = useRef({ pitch: 32, yaw: -16, roll: 0 });
     const [tilt3D, setTilt3D] = useState({ pitch: 32, yaw: -16, roll: 0 });
-    const [dragMode3D, setDragMode3D] = useState('rotate'); // 'rotate' | 'pan'
+    const [dragMode3D, setDragMode3D] = useState('rotate'); // 'rotate' | 'pan' | 'nodeZ'
     const [isRotating3D, setIsRotating3D] = useState(false);
     const isRotating3DRef = useRef(false);
+    const isDraggingNodeZRef = useRef(false);
+    const dragNodeZStart = useRef(0);
+    const draggingNodeZIdRef = useRef(null);
 
     const updateDOM3DTilt = useCallback((pitch, yaw) => {
         if (rotator3DRef.current) {
             rotator3DRef.current.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg)`;
+            rotator3DRef.current.style.setProperty('--pitch', `${pitch}deg`);
+            rotator3DRef.current.style.setProperty('--yaw', `${yaw}deg`);
+            rotator3DRef.current.style.setProperty('--inv-pitch', `${-pitch}deg`);
+            rotator3DRef.current.style.setProperty('--inv-yaw', `${-yaw}deg`);
+        }
+    }, []);
+
+    const getNodeElevation = useCallback((node, edges = []) => {
+        if (!node) return 45;
+        if (typeof node.z === 'number') return node.z;
+        const degree = (edges || []).filter(e => e && (e.source === node.id || e.target === node.id)).length;
+        const isHub = Boolean(node.is_island_hub || degree >= 4);
+        const isCondition = Boolean(!isHub && (node.type === 'antecedent' || node.clinical_role === 'antecedent' || (node.id && node.id.includes('cond'))));
+        const isCognitive = node.type === 'cognitive' || node.clinical_role === 'cognitive';
+        const isPhysiological = node.type === 'physiological' || node.clinical_role === 'physiological';
+
+        if (isHub) return 105;
+        if (isCognitive) return 78;
+        if (isPhysiological) return 62;
+        if (isCondition) return 46;
+        return 32;
+    }, []);
+
+    const updateNodeZ = useCallback((nodeId, newZ) => {
+        const clampedZ = Math.max(10, Math.min(220, Math.round(newZ)));
+        setAfcData(currentAfc => {
+            if (!currentAfc || !currentAfc.nodes) return currentAfc;
+            const updatedNodes = currentAfc.nodes.map(n => 
+                n.id === nodeId ? { ...n, z: clampedZ } : n
+            );
+            const updated = { ...currentAfc, nodes: updatedNodes };
+            if (user) {
+                setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
+            }
+            return updated;
+        });
+        setSelectedNode(prev => prev && prev.id === nodeId ? { ...prev, z: clampedZ } : prev);
+
+        // Immediate visual DOM update
+        const el = document.getElementById(`afc-node-${nodeId}`);
+        if (el) {
+            el.dataset.curz = clampedZ;
+            el.dataset.basez = clampedZ;
+            const pillarEl = document.getElementById(`afc-pillar-${nodeId}`);
+            if (pillarEl) pillarEl.style.height = `${clampedZ}px`;
+            const floatEl = document.getElementById(`afc-float-${nodeId}`);
+            if (floatEl) {
+                floatEl.style.setProperty(`--node-z-${nodeId}`, `${clampedZ}px`);
+                floatEl.style.transform = `translateZ(${clampedZ}px) rotateY(var(--inv-yaw, ${-tilt3DRef.current.yaw}deg)) rotateX(var(--inv-pitch, ${-tilt3DRef.current.pitch}deg))`;
+            }
+            const badgeSpan = document.querySelector(`#afc-zbadge-${nodeId} span.font-bold`);
+            if (badgeSpan) badgeSpan.innerText = `${clampedZ}px`;
+        }
+    }, [user]);
+
+    const startNodeZDrag = useCallback((e, nodeId) => {
+        isDraggingNodeZRef.current = true;
+        draggingNodeZIdRef.current = nodeId;
+        dragNodeZStart.current = e.clientY;
+        lastPointerPos.current = { x: e.clientX, y: e.clientY };
+        setDraggingNodeId(nodeId);
+        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'ns-resize';
+    }, []);
+
+    const startNodeZTouch = useCallback((e, nodeId) => {
+        if (e.touches && e.touches.length === 1) {
+            const touch = e.touches[0];
+            isDraggingNodeZRef.current = true;
+            draggingNodeZIdRef.current = nodeId;
+            dragNodeZStart.current = touch.clientY;
+            lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
+            setDraggingNodeId(nodeId);
         }
     }, []);
 
@@ -3031,8 +3106,8 @@ ESTRUCTURA JSON OBLIGATORIA:
         let newPitch = 32;
         let newYaw = -16;
         if (preset === 'isometric') {
-            newPitch = 32;
-            newYaw = -16;
+            newPitch = 34;
+            newYaw = -18;
         } else if (preset === 'front') {
             newPitch = 22;
             newYaw = 0;
@@ -3050,8 +3125,8 @@ ESTRUCTURA JSON OBLIGATORIA:
     }, [updateDOM3DTilt]);
 
     const nudge3DTilt = useCallback((dp, dy) => {
-        const nextPitch = Math.max(0, Math.min(65, tilt3DRef.current.pitch + dp));
-        const nextYaw = Math.max(-60, Math.min(60, tilt3DRef.current.yaw + dy));
+        const nextPitch = Math.max(0, Math.min(56, tilt3DRef.current.pitch + dp));
+        const nextYaw = Math.max(-50, Math.min(50, tilt3DRef.current.yaw + dy));
         const newTilt = { pitch: nextPitch, yaw: nextYaw, roll: 0 };
         tilt3DRef.current = newTilt;
         setTilt3D(newTilt);
@@ -3061,16 +3136,20 @@ ESTRUCTURA JSON OBLIGATORIA:
     useEffect(() => {
         if (is3DMode) {
             if (tilt3D.pitch === 0 && tilt3D.yaw === 0) {
-                const initTilt = { pitch: 32, yaw: -16, roll: 0 };
+                const initTilt = { pitch: 34, yaw: -18, roll: 0 };
                 tilt3DRef.current = initTilt;
                 setTilt3D(initTilt);
-                updateDOM3DTilt(32, -16);
+                updateDOM3DTilt(34, -18);
             } else {
                 updateDOM3DTilt(tilt3D.pitch, tilt3D.yaw);
             }
         } else {
             if (rotator3DRef.current) {
                 rotator3DRef.current.style.transform = 'none';
+                rotator3DRef.current.style.removeProperty('--pitch');
+                rotator3DRef.current.style.removeProperty('--yaw');
+                rotator3DRef.current.style.removeProperty('--inv-pitch');
+                rotator3DRef.current.style.removeProperty('--inv-yaw');
             }
         }
     }, [is3DMode, tilt3D.pitch, tilt3D.yaw, updateDOM3DTilt]);
@@ -6269,6 +6348,37 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         if (draggingNodeId && mapContainerRef.current) {
             nodeDraggedRef.current = true;
             nodeJustDraggedRef.current = true;
+
+            const isZDrag = isDraggingNodeZRef.current || (is3DMode && (e.shiftKey || dragMode3D === 'nodeZ'));
+            if (isZDrag) {
+                const deltaY = e.clientY - lastPointerPos.current.y;
+                lastPointerPos.current = { x: e.clientX, y: e.clientY };
+                const dz = -deltaY * 0.95;
+
+                if (!window._dragNodeZAcc) window._dragNodeZAcc = 0;
+                window._dragNodeZAcc += dz;
+
+                const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                if (el) {
+                    const baseZ = parseFloat(el.dataset.basez || 50);
+                    const curZ = Math.max(10, Math.min(220, Math.round(baseZ + window._dragNodeZAcc)));
+                    el.dataset.curz = curZ;
+
+                    const pillarEl = document.getElementById(`afc-pillar-${draggingNodeId}`);
+                    if (pillarEl) pillarEl.style.height = `${curZ}px`;
+
+                    const floatEl = document.getElementById(`afc-float-${draggingNodeId}`);
+                    if (floatEl) {
+                        floatEl.style.setProperty(`--node-z-${draggingNodeId}`, `${curZ}px`);
+                        floatEl.style.transform = `translateZ(${curZ}px) rotateY(var(--inv-yaw, ${-tilt3DRef.current.yaw}deg)) rotateX(var(--inv-pitch, ${-tilt3DRef.current.pitch}deg))`;
+                    }
+
+                    const badgeSpan = document.querySelector(`#afc-zbadge-${draggingNodeId} span.font-bold`);
+                    if (badgeSpan) badgeSpan.innerText = `${curZ}px`;
+                }
+                return;
+            }
+
             const rect = mapContainerRef.current.getBoundingClientRect();
             const deltaX = e.clientX - lastPointerPos.current.x;
             const deltaY = e.clientY - lastPointerPos.current.y;
@@ -6281,7 +6391,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             window._dragNodeAcc.dx += dx;
             window._dragNodeAcc.dy += dy;
 
-                        const el = document.getElementById(`afc-node-${draggingNodeId}`);
+            const el = document.getElementById(`afc-node-${draggingNodeId}`);
             if (el) {
                 // Extract base coords from dataset to avoid reading inline styles
                 const baseX = parseFloat(el.dataset.basex || 0);
@@ -6309,8 +6419,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             let newYaw = tilt3DRef.current.yaw + deltaX * 0.28;
             let newPitch = tilt3DRef.current.pitch - deltaY * 0.28;
 
-            newPitch = Math.max(0, Math.min(65, newPitch));
-            newYaw = Math.max(-60, Math.min(60, newYaw));
+            newPitch = Math.max(0, Math.min(56, newPitch));
+            newYaw = Math.max(-50, Math.min(50, newYaw));
 
             tilt3DRef.current = { pitch: newPitch, yaw: newYaw, roll: 0 };
             updateDOM3DTilt(newPitch, newYaw);
@@ -6341,6 +6451,22 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         isDraggingMapRef.current = false;
         if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
         if (draggingNodeId && nodeDraggedRef.current) {
+            const hasZDrag = isDraggingNodeZRef.current || (window._dragNodeZAcc !== undefined && window._dragNodeZAcc !== 0);
+            if (hasZDrag) {
+                const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                const finalZ = el ? parseFloat(el.dataset.curz || 50) : null;
+                window._dragNodeZAcc = 0;
+                isDraggingNodeZRef.current = false;
+                draggingNodeZIdRef.current = null;
+                if (finalZ !== null) {
+                    updateNodeZ(draggingNodeId, finalZ);
+                }
+                nodeDraggedRef.current = false;
+                setTimeout(() => { nodeJustDraggedRef.current = false; }, 60);
+                setDraggingNodeId(null);
+                if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
+                return;
+            }
             setSelectedNode(null);
             setSelectedPatternId(null);
             const adx = window._dragNodeAcc ? window._dragNodeAcc.dx : 0;
@@ -6436,6 +6562,37 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             if (draggingNodeId && mapContainerRef.current) {
                 nodeDraggedRef.current = true;
                 nodeJustDraggedRef.current = true;
+
+                const isZDrag = isDraggingNodeZRef.current || (is3DMode && dragMode3D === 'nodeZ');
+                if (isZDrag) {
+                    const deltaY = touch.clientY - lastPointerPos.current.y;
+                    lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
+                    const dz = -deltaY * 1.1;
+
+                    if (!window._dragNodeZAcc) window._dragNodeZAcc = 0;
+                    window._dragNodeZAcc += dz;
+
+                    const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                    if (el) {
+                        const baseZ = parseFloat(el.dataset.basez || 50);
+                        const curZ = Math.max(10, Math.min(220, Math.round(baseZ + window._dragNodeZAcc)));
+                        el.dataset.curz = curZ;
+
+                        const pillarEl = document.getElementById(`afc-pillar-${draggingNodeId}`);
+                        if (pillarEl) pillarEl.style.height = `${curZ}px`;
+
+                        const floatEl = document.getElementById(`afc-float-${draggingNodeId}`);
+                        if (floatEl) {
+                            floatEl.style.setProperty(`--node-z-${draggingNodeId}`, `${curZ}px`);
+                            floatEl.style.transform = `translateZ(${curZ}px) rotateY(var(--inv-yaw, ${-tilt3DRef.current.yaw}deg)) rotateX(var(--inv-pitch, ${-tilt3DRef.current.pitch}deg))`;
+                        }
+
+                        const badgeSpan = document.querySelector(`#afc-zbadge-${draggingNodeId} span.font-bold`);
+                        if (badgeSpan) badgeSpan.innerText = `${curZ}px`;
+                    }
+                    return;
+                }
+
                 const rect = mapContainerRef.current.getBoundingClientRect();
                 const deltaX = touch.clientX - lastPointerPos.current.x;
                 const deltaY = touch.clientY - lastPointerPos.current.y;
@@ -6474,8 +6631,8 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
                 let newYaw = tilt3DRef.current.yaw + deltaX * 0.35;
                 let newPitch = tilt3DRef.current.pitch - deltaY * 0.35;
-                newPitch = Math.max(0, Math.min(65, newPitch));
-                newYaw = Math.max(-60, Math.min(60, newYaw));
+                newPitch = Math.max(0, Math.min(56, newPitch));
+                newYaw = Math.max(-50, Math.min(50, newYaw));
 
                 tilt3DRef.current = { pitch: newPitch, yaw: newYaw, roll: 0 };
                 updateDOM3DTilt(newPitch, newYaw);
@@ -8051,11 +8208,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                         </div>
                                     </div>
 
-                                    {/* Drag Mode Toggle: Orbit / Pan */}
+                                    {/* Drag Mode Toggle: Orbit / Pan / Altura Z */}
                                     <div className="flex items-center bg-black/50 p-0.5 rounded-xl border border-white/5 gap-1">
                                         <button
                                             onClick={() => setDragMode3D('rotate')}
-                                            className={`flex-1 py-1 px-2 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
                                                 dragMode3D === 'rotate'
                                                     ? 'bg-emerald-600/90 text-white shadow-sm'
                                                     : 'text-zinc-400 hover:text-zinc-200'
@@ -8067,7 +8224,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         </button>
                                         <button
                                             onClick={() => setDragMode3D('pan')}
-                                            className={`flex-1 py-1 px-2 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
                                                 dragMode3D === 'pan'
                                                     ? 'bg-blue-600/90 text-white shadow-sm'
                                                     : 'text-zinc-400 hover:text-zinc-200'
@@ -8077,7 +8234,24 @@ Devuelve estrictamente el JSON sin formato extra.
                                             <Move size={11} />
                                             <span>Mover</span>
                                         </button>
+                                        <button
+                                            onClick={() => setDragMode3D('nodeZ')}
+                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                                dragMode3D === 'nodeZ'
+                                                    ? 'bg-amber-600/90 text-white shadow-sm ring-1 ring-amber-400/50'
+                                                    : 'text-zinc-400 hover:text-zinc-200'
+                                            }`}
+                                            title="Arrastrar puntos verticalmente para subir o bajar su altura 3D"
+                                        >
+                                            <ArrowUpDown size={11} />
+                                            <span>Altura Z</span>
+                                        </button>
                                     </div>
+                                    {dragMode3D === 'nodeZ' && (
+                                        <div className="text-[8px] font-mono text-amber-300/95 bg-amber-500/10 border border-amber-500/25 px-2 py-1 rounded-lg text-center leading-tight">
+                                            Arrastra cualquier punto verticalmente para regular su altura 3D
+                                        </div>
+                                    )}
 
                                     {/* Camera Angle Presets */}
                                     <div className="grid grid-cols-4 gap-1">
@@ -8577,6 +8751,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                             nodeJustDraggedRef.current = false;
                                             setDraggingNodeId(node.id);
                                             lastPointerPos.current = { x: e.clientX, y: e.clientY };
+                                            if (is3DMode && (e.shiftKey || dragMode3D === 'nodeZ')) {
+                                                isDraggingNodeZRef.current = true;
+                                                draggingNodeZIdRef.current = node.id;
+                                                dragNodeZStart.current = e.clientY;
+                                            } else {
+                                                isDraggingNodeZRef.current = false;
+                                                draggingNodeZIdRef.current = null;
+                                            }
                                         };
 
                                         const handleNodeTouchStart = (e) => {
@@ -8587,6 +8769,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                             if (e.touches.length === 1) {
                                                 const touch = e.touches[0];
                                                 lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
+                                                if (is3DMode && dragMode3D === 'nodeZ') {
+                                                    isDraggingNodeZRef.current = true;
+                                                    draggingNodeZIdRef.current = node.id;
+                                                    dragNodeZStart.current = touch.clientY;
+                                                } else {
+                                                    isDraggingNodeZRef.current = false;
+                                                    draggingNodeZIdRef.current = null;
+                                                }
                                             }
                                         };
 
@@ -8598,7 +8788,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         const degree = (finalEdgesToRender || []).filter(e => e && (e.source === node.id || e.target === node.id)).length;
                                         const isHub = Boolean(node.is_island_hub || degree >= 4);
                                         const isCondition = Boolean(!isHub && (node.type === 'antecedent' || node.clinical_role === 'antecedent' || (node.id && node.id.includes('cond'))));
-                                        const elevation = is3DMode ? (isHub ? 34 : isCondition ? 24 : 16) : 0;
+                                        const nodeZ = is3DMode ? getNodeElevation(node, finalEdgesToRender) : 0;
 
                                         return (
                                             
@@ -8609,6 +8799,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 data-basey={node.y}
                                                 data-curx={node.x}
                                                 data-cury={node.y}
+                                                data-basez={nodeZ}
+                                                data-curz={nodeZ}
                                                 onClick={handleNodeClick}
                                                 onMouseDown={handleNodeMouseDown}
                                                 onTouchStart={handleNodeTouchStart}
@@ -8617,9 +8809,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 style={{ 
                                                     left: `${node.x}%`, 
                                                     top: `${node.y}%`, 
-                                                    transform: is3DMode ? `translate(-50%, -50%) translateZ(${elevation}px)` : 'translate(-50%, -50%)', 
+                                                    transform: 'translate(-50%, -50%)', 
                                                     transformStyle: is3DMode ? 'preserve-3d' : 'flat',
-                                                    filter: is3DMode ? 'drop-shadow(0 14px 10px rgba(0,0,0,0.65))' : undefined,
                                                     userSelect: 'none',
                                                     transition: 'opacity 0.15s ease, filter 0.15s ease'
                                                 }}
@@ -8628,15 +8819,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                     const themeKey = (node.clinical_role === 'values_flexibility' || node.is_value) ? 'values' : node.type;
                                                     const theme = CUTE_NODE_THEMES[themeKey] || CUTE_NODE_THEMES[node.type] || CUTE_NODE_THEMES.cognitive;
 
-                                                    // Jerarquía Estilo Obsidian:
-                                                    // 1. Hubs = Islas Centrales Grandes Blancas (#ffffff)
-                                                    // 2. Condiciones = Nodos Verdes (#10b981)
-                                                    // 3. Satélites = Variaciones / Pétalos Grises (#94a3b8)
-                                                    const degree = (finalEdgesToRender || []).filter(e => e && (e.source === node.id || e.target === node.id)).length;
-                                                    const isHub = Boolean(node.is_island_hub || degree >= 4);
-                                                    const isCondition = Boolean(!isHub && (node.type === 'antecedent' || node.clinical_role === 'antecedent' || (node.id && node.id.includes('cond'))));
-
-                                                    const dotSize = isHub ? 26 : isCondition ? 13 : 11;
+                                                    const dotSize = isHub ? 26 : isCondition ? 14 : 12;
                                                     const dotSizePx = `${dotSize}px`;
                                                     const labelOffset = dotSize + 6;
 
@@ -8649,69 +8832,185 @@ Devuelve estrictamente el JSON sin formato extra.
                                                             : (isSelected || isConnected ? '0 0 16px #94a3b8' : '0 0 5px rgba(148,163,184,0.3)');
 
                                                     return (
-                                                        <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s ease-out' }}>
-                                                            {/* Halo exterior radiante para Islas Centrales (Hubs) */}
-                                                            {isHub && (
-                                                                <div className="absolute rounded-full pointer-events-none" style={{
-                                                                    width: `${dotSize * 2.8}px`,
-                                                                    height: `${dotSize * 2.8}px`,
-                                                                    top: '50%', left: '50%',
-                                                                    transform: 'translate(-50%, -50%)',
-                                                                    background: `radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%)`,
-                                                                }} />
+                                                        <React.Fragment>
+                                                            {/* 1. Floor Anchor Ring & Ambient Ground Shadow at Z = 0 */}
+                                                            {is3DMode && (
+                                                                <div 
+                                                                    className="absolute pointer-events-none rounded-full flex items-center justify-center transition-all duration-300"
+                                                                    style={{
+                                                                        transform: 'translate(-50%, -50%) translateZ(0px)',
+                                                                        left: '50%',
+                                                                        top: '50%',
+                                                                        width: `${Math.max(16, dotSize * 1.6)}px`,
+                                                                        height: `${Math.max(16, dotSize * 1.6)}px`,
+                                                                        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                                                                        border: `1.5px dashed ${isHub ? 'rgba(255,255,255,0.45)' : isCondition ? 'rgba(52,211,153,0.5)' : 'rgba(148,163,184,0.4)'}`,
+                                                                        boxShadow: `0 0 16px ${isHub ? 'rgba(255,255,255,0.3)' : isCondition ? 'rgba(16,185,129,0.3)' : 'rgba(148,163,184,0.2)'}`,
+                                                                    }}
+                                                                >
+                                                                    <div 
+                                                                        className="rounded-full"
+                                                                        style={{
+                                                                            width: '3.5px',
+                                                                            height: '3.5px',
+                                                                            backgroundColor: fillColor,
+                                                                            boxShadow: `0 0 6px ${fillColor}`
+                                                                        }}
+                                                                    />
+                                                                </div>
                                                             )}
-                                                            
-                                                            {/* El Punto Neuronal (Estilo Obsidian) */}
-                                                            <div 
-                                                                className="rounded-full transition-all duration-300 relative"
+
+                                                            {/* 2. Vertical 3D Light Pillar / Stem (Z = 0 to Z = nodeZ) */}
+                                                            {is3DMode && nodeZ > 4 && (
+                                                                <div
+                                                                    id={`afc-pillar-${node.id}`}
+                                                                    className="absolute pointer-events-none origin-top transition-[height] duration-75"
+                                                                    style={{
+                                                                        left: '50%',
+                                                                        top: '50%',
+                                                                        width: isHub ? '2.5px' : '1.5px',
+                                                                        height: `${nodeZ}px`,
+                                                                        transform: 'translateX(-50%) rotateX(-90deg)',
+                                                                        background: `linear-gradient(to bottom, ${isHub ? 'rgba(255,255,255,0.7)' : isCondition ? 'rgba(52,211,153,0.7)' : 'rgba(148,163,184,0.6)'}, ${fillColor})`,
+                                                                        boxShadow: `0 0 8px ${fillColor}70`,
+                                                                        opacity: isDimmed ? 0.2 : 0.85
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            {/* 3. Floating Node Head with Camera-Facing Billboarding (at Z = nodeZ) */}
+                                                            <div
+                                                                id={`afc-float-${node.id}`}
+                                                                className="relative flex flex-col items-center"
                                                                 style={{
-                                                                    width: dotSizePx,
-                                                                    height: dotSizePx,
-                                                                    border: `${isHub ? 2 : 1.5}px solid ${borderColor}`,
-                                                                    backgroundColor: fillColor,
-                                                                    boxShadow: glowShadow,
-                                                                    opacity: node.dashed ? 0.6 : 1,
-                                                                    animation: isHub && !isSelected && !isConnected ? `hubPulse ${3 + (degree % 3)}s ease-in-out infinite` : undefined,
-                                                                    transition: 'transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease'
+                                                                    transform: is3DMode
+                                                                        ? `translateZ(var(--node-z-${node.id}, ${nodeZ}px)) rotateY(var(--inv-yaw, ${-tilt3D.yaw}deg)) rotateX(var(--inv-pitch, ${-tilt3D.pitch}deg))`
+                                                                        : 'none',
+                                                                    transformStyle: is3DMode ? 'preserve-3d' : 'flat',
+                                                                    filter: is3DMode ? 'drop-shadow(0 18px 16px rgba(0,0,0,0.85))' : undefined,
+                                                                    transition: isDraggingNodeZRef.current ? 'none' : 'transform 0.12s ease-out'
                                                                 }}
                                                             >
-                                                                {/* Pulso ping en nodo seleccionado */}
-                                                                {(isSelected || isConnected) && (
-                                                                    <div className="absolute inset-0 rounded-full animate-ping opacity-35" style={{ backgroundColor: fillColor }} />
+                                                                {/* Interactive 3D Altitude Badge & Quick Controls */}
+                                                                {is3DMode && (isSelected || isConnected || dragMode3D === 'nodeZ') && (
+                                                                    <div 
+                                                                        id={`afc-zbadge-${node.id}`}
+                                                                        className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-zinc-950/95 border border-emerald-400/50 text-[8px] font-mono text-emerald-300 shadow-[0_4px_14px_rgba(0,0,0,0.9)] pointer-events-auto z-50 whitespace-nowrap"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <button 
+                                                                            onMouseDown={(e) => { e.stopPropagation(); startNodeZDrag(e, node.id); }}
+                                                                            onTouchStart={(e) => { e.stopPropagation(); startNodeZTouch(e, node.id); }}
+                                                                            className="cursor-ns-resize hover:text-white flex items-center gap-0.5 active:scale-95 text-emerald-400"
+                                                                            title="Arrastrar arriba/abajo para cambiar altura 3D"
+                                                                        >
+                                                                            <span>↕</span>
+                                                                            <span className="font-bold">{Math.round(nodeZ)}px</span>
+                                                                        </button>
+                                                                        <div className="flex items-center gap-0.5 border-l border-white/15 pl-1">
+                                                                            <button 
+                                                                                onClick={(e) => { e.stopPropagation(); updateNodeZ(node.id, nodeZ + 15); }}
+                                                                                className="hover:text-emerald-300 px-0.5 active:scale-90"
+                                                                                title="Subir +15px"
+                                                                            >
+                                                                                ▲
+                                                                            </button>
+                                                                            <button 
+                                                                                onClick={(e) => { e.stopPropagation(); updateNodeZ(node.id, nodeZ - 15); }}
+                                                                                className="hover:text-emerald-300 px-0.5 active:scale-90"
+                                                                                title="Bajar -15px"
+                                                                            >
+                                                                                ▼
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
                                                                 )}
-                                                            </div>
-                                                            
-                                                            {/* Etiqueta Flotante Minimalista */}
-                                                            <div 
-                                                                className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
-                                                                style={{ top: `${labelOffset}px`, width: isHub ? '135px' : isCondition ? '100px' : '92px' }}
-                                                            >
-                                                                {/* Badge sutil de rol */}
-                                                                <span 
-                                                                    className={`font-mono uppercase tracking-widest px-1.5 py-0.2 rounded-full border mb-0.5 text-[7px] ${
-                                                                        isHub 
-                                                                            ? 'text-white bg-white/10 border-white/20' 
-                                                                            : isCondition 
-                                                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
-                                                                                : 'text-zinc-400 bg-zinc-800/40 border-zinc-700/30'
-                                                                    }`}
-                                                                    style={{ textShadow: `0 1px 2px rgba(0,0,0,0.9)` }}
-                                                                >
-                                                                    {node.clinical_role || theme.category}
-                                                                </span>
+
+                                                                {/* Halo exterior radiante para Islas Centrales (Hubs) */}
+                                                                {isHub && (
+                                                                    <div className="absolute rounded-full pointer-events-none" style={{
+                                                                        width: `${dotSize * 2.8}px`,
+                                                                        height: `${dotSize * 2.8}px`,
+                                                                        top: '50%', left: '50%',
+                                                                        transform: 'translate(-50%, -50%)',
+                                                                        background: `radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)`,
+                                                                    }} />
+                                                                )}
                                                                 
-                                                                {/* Texto del nodo */}
-                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${
-                                                                    isHub 
-                                                                        ? 'text-[11px] font-bold text-white' 
-                                                                        : isCondition 
-                                                                            ? 'text-[9.5px] font-medium text-emerald-300' 
-                                                                            : 'text-[9px] text-zinc-300'
-                                                                } ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
-                                                                    {sanitizeSpanishText(node.label)}
-                                                                </span>
+                                                                {/* El Punto Neuronal con Cuerpo Volumétrico 3D (Estilo Obsidian con Esfera) */}
+                                                                <div 
+                                                                    className="rounded-full transition-all duration-300 relative"
+                                                                    style={{
+                                                                        width: dotSizePx,
+                                                                        height: dotSizePx,
+                                                                        border: `${isHub ? 2 : 1.5}px solid ${borderColor}`,
+                                                                        background: is3DMode
+                                                                            ? (isHub
+                                                                                ? 'radial-gradient(circle at 35% 28%, #ffffff 0%, #f1f5f9 40%, #cbd5e1 75%, #475569 100%)'
+                                                                                : isCondition
+                                                                                    ? 'radial-gradient(circle at 35% 28%, #a7f3d0 0%, #10b981 40%, #047857 80%, #064e3b 100%)'
+                                                                                    : 'radial-gradient(circle at 35% 28%, #f8fafc 0%, #94a3b8 45%, #475569 80%, #1e293b 100%)')
+                                                                            : fillColor,
+                                                                        boxShadow: is3DMode
+                                                                            ? `inset -2px -2px 5px rgba(0,0,0,0.65), inset 2px 2px 4px rgba(255,255,255,0.8), ${glowShadow}`
+                                                                            : glowShadow,
+                                                                        opacity: node.dashed ? 0.6 : 1,
+                                                                        animation: isHub && !isSelected && !isConnected ? `hubPulse ${3 + (degree % 3)}s ease-in-out infinite` : undefined,
+                                                                        transition: 'transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease'
+                                                                    }}
+                                                                >
+                                                                    {/* Destello de brillo especular para cuerpo de cristal 3D */}
+                                                                    {is3DMode && (
+                                                                        <div 
+                                                                            className="absolute rounded-full pointer-events-none"
+                                                                            style={{
+                                                                                top: '18%',
+                                                                                left: '22%',
+                                                                                width: '26%',
+                                                                                height: '26%',
+                                                                                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                                                                                filter: 'blur(0.3px)'
+                                                                            }}
+                                                                        />
+                                                                    )}
+                                                                    {/* Pulso ping en nodo seleccionado */}
+                                                                    {(isSelected || isConnected) && (
+                                                                        <div className="absolute inset-0 rounded-full animate-ping opacity-35" style={{ backgroundColor: fillColor }} />
+                                                                    )}
+                                                                </div>
+                                                                
+                                                                {/* Etiqueta Flotante Siempre de Frente (Billboard) */}
+                                                                <div 
+                                                                    className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
+                                                                    style={{ top: `${labelOffset}px`, width: isHub ? '135px' : isCondition ? '100px' : '92px' }}
+                                                                >
+                                                                    {/* Badge sutil de rol */}
+                                                                    <span 
+                                                                        className={`font-mono uppercase tracking-widest px-1.5 py-0.2 rounded-full border mb-0.5 text-[7px] ${
+                                                                            isHub 
+                                                                                ? 'text-white bg-white/10 border-white/20' 
+                                                                                : isCondition 
+                                                                                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
+                                                                                    : 'text-zinc-400 bg-zinc-800/40 border-zinc-700/30'
+                                                                        }`}
+                                                                        style={{ textShadow: `0 1px 2px rgba(0,0,0,0.9)` }}
+                                                                    >
+                                                                        {node.clinical_role || theme.category}
+                                                                    </span>
+                                                                    
+                                                                    {/* Texto del nodo (Siempre legible al girar) */}
+                                                                    <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${
+                                                                        isHub 
+                                                                            ? 'text-[11px] font-bold text-white' 
+                                                                            : isCondition 
+                                                                                ? 'text-[9.5px] font-medium text-emerald-300' 
+                                                                                : 'text-[9px] text-zinc-300'
+                                                                    } ${isSelected || isConnected ? 'text-white font-bold !text-zinc-50' : ''}`}>
+                                                                        {sanitizeSpanishText(node.label)}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        </React.Fragment>
                                                     );
                                                 })()}
                                             </div>
@@ -9554,6 +9853,89 @@ Por favor, analicemos:
                                                                             <Trash2 size={10} />
                                                                             <span>Descartar nodo</span>
                                                                         </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Control de Elevación 3D para el Nodo Seleccionado */}
+                                                            {is3DMode && (
+                                                                <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900/60 border border-emerald-500/25 space-y-2 select-none">
+                                                                    <div className="flex items-center justify-between text-[9.5px] font-mono">
+                                                                        <span className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                                                            <ArrowUpDown size={11} className="text-emerald-400" />
+                                                                            <span>Elevación 3D (Eje Z)</span>
+                                                                        </span>
+                                                                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[9px] border border-emerald-500/30">
+                                                                            {Math.round(getNodeElevation(currentNode, afcData?.edges))}px
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex items-center gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                const curZ = getNodeElevation(currentNode, afcData?.edges);
+                                                                                updateNodeZ(currentNode.id, curZ - 15);
+                                                                            }}
+                                                                            className="py-1 px-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 text-[9.5px] font-mono font-bold active:scale-95 transition-all"
+                                                                            title="Bajar -15px"
+                                                                        >
+                                                                            -15
+                                                                        </button>
+                                                                        <input
+                                                                            type="range"
+                                                                            min="10"
+                                                                            max="220"
+                                                                            step="5"
+                                                                            value={Math.round(getNodeElevation(currentNode, afcData?.edges))}
+                                                                            onChange={(e) => {
+                                                                                const newZ = Number(e.target.value);
+                                                                                updateNodeZ(currentNode.id, newZ);
+                                                                            }}
+                                                                            className="flex-1 accent-emerald-400 cursor-pointer h-1.5 bg-zinc-800 rounded-lg"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                const curZ = getNodeElevation(currentNode, afcData?.edges);
+                                                                                updateNodeZ(currentNode.id, curZ + 15);
+                                                                            }}
+                                                                            className="py-1 px-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 text-[9.5px] font-mono font-bold active:scale-95 transition-all"
+                                                                            title="Subir +15px"
+                                                                        >
+                                                                            +15
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-4 gap-1 pt-0.5">
+                                                                        {[
+                                                                            { label: 'Suelo', z: 25 },
+                                                                            { label: 'Bajo', z: 50 },
+                                                                            { label: 'Medio', z: 90 },
+                                                                            { label: 'Cénit', z: 150 },
+                                                                        ].map(preset => {
+                                                                            const curZ = getNodeElevation(currentNode, afcData?.edges);
+                                                                            const isActive = Math.abs(curZ - preset.z) < 14;
+                                                                            return (
+                                                                                <button
+                                                                                    key={preset.label}
+                                                                                    type="button"
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        updateNodeZ(currentNode.id, preset.z);
+                                                                                    }}
+                                                                                    className={`py-1 rounded-md text-[8.5px] font-mono font-bold border transition-all ${
+                                                                                        isActive
+                                                                                            ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                                                                                            : 'bg-black/50 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                                                                    }`}
+                                                                                >
+                                                                                    {preset.label}
+                                                                                </button>
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 </div>
                                                             )}
