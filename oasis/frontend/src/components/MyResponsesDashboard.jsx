@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye } from 'lucide-react';
+import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Box } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
 import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph, autoCorrectAndPolishSpanish } from '../utils/sanitizeText';
+import AfcNetwork3D from './AfcNetwork3D';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -1860,6 +1861,7 @@ Devuelve estrictamente el JSON sin formato extra.
     // UI State
     const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'raw_data'
     const [mapViewTab, setMapViewTab] = useState('map'); // 'map', 'loop', 'exit_keys', 'avances'
+    const [is3DMode, setIs3DMode] = useState(false);
     const [selectedNode, setSelectedNode] = useState(null);
     const [lifeUpdateText, setLifeUpdateText] = useState("");
     const [isUpdatingMap, setIsUpdatingMap] = useState(false);
@@ -7732,7 +7734,7 @@ Devuelve estrictamente el JSON sin formato extra.
                         {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
                             {/* Top Header Badge */}
-                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-none">
+                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-auto">
                                 <div className="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-zinc-950/80 border border-pink-400/25 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
                                     <span className="text-xs">✨</span>
                                     <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
@@ -7741,6 +7743,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                     <span className="text-[11px]">🍃</span>
                                     {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
                                 </div>
+
+                                {mapViewTab === 'map' && (
+                                    <button
+                                        onClick={() => setIs3DMode(prev => !prev)}
+                                        className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl border backdrop-blur-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer ${
+                                            is3DMode
+                                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-zinc-950 border-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.5)]'
+                                                : 'bg-zinc-950/80 border-white/10 text-zinc-300 hover:text-white hover:border-emerald-400/40'
+                                        }`}
+                                        title={is3DMode ? "Cambiar a Vista 2D" : "Ver en 3D Cosmos"}
+                                    >
+                                        <Box size={13} className={is3DMode ? "animate-pulse text-zinc-950" : "text-emerald-400"} />
+                                        <span>{is3DMode ? '3D Cosmos' : 'Ver 3D'}</span>
+                                    </button>
+                                )}
                             </div>
 
                             {/* Quick Column Navigation Pills (Desktop & Mobile) */}
@@ -7876,15 +7893,32 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Segmented Control Tabs (Bottom NavBar) */}
                             <div className={`absolute bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] md:bottom-6 left-1/2 transform -translate-x-1/2 z-[200] bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 w-max max-w-[95vw] gap-1 sm:gap-2 shadow-2xl pointer-events-auto overflow-x-auto no-scrollbar scale-90 md:scale-100 origin-bottom ${((selectedNode || tourActiveIndex !== null) && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden md:flex' : 'flex'}`}>
-                                <button onClick={() => setMapViewTab('map')} title="El Mapa" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
+                                <button onClick={() => { setMapViewTab('map'); setIs3DMode(false); }} title="El Mapa 2D" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' && !is3DMode ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
+                                <button onClick={() => { setMapViewTab('map'); setIs3DMode(true); }} title="Red 3D Cosmos" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' && is3DMode ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] font-bold' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'}`}><Box size={16} className={is3DMode ? "animate-pulse" : "sm:scale-110"} /></button>
                                 <button onClick={() => setMapViewTab('avances')} title="Avances" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'avances' ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-500 hover:text-blue-400'}`}><MessageSquare size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('bucles')} title="Bucles" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'bucles' ? 'bg-purple-600 text-white shadow-md' : 'text-zinc-500 hover:text-purple-400'}`}><Compass size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('loop')} title="Diagnóstico" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'loop' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-500 hover:text-emerald-400'}`}><Activity size={16} className="sm:scale-110" /></button>
                                 <button onClick={() => setMapViewTab('exit_keys')} title="Claves" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'exit_keys' ? 'bg-orange-600 text-white shadow-md' : 'text-zinc-500 hover:text-orange-400'}`}><Sparkles size={16} className="sm:scale-110" /></button>
                             </div>
-    <div
+
+                            {/* 3D WebGL Cosmos Network Interactive View */}
+                            {is3DMode && mapViewTab === 'map' && (
+                                <AfcNetwork3D
+                                    nodes={nodesToRender}
+                                    edges={edgesToRender}
+                                    selectedNode={selectedNode}
+                                    onSelectNode={(node) => {
+                                        setSelectedNode(node);
+                                    }}
+                                    focusedStageIndex={focusedStageIndex}
+                                    onStageSelect={handleStageSelect}
+                                    onClose3D={() => setIs3DMode(false)}
+                                />
+                            )}
+
+                            <div
                                 ref={mapContainerRef}
-                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
+                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${(is3DMode && mapViewTab === 'map') ? 'hidden' : 'block'} ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
                                 onClick={handleMapClick}
                                 onMouseDown={handleMapMouseDown}
                                 onMouseMove={handleMapMouseMove}
