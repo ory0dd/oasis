@@ -4,7 +4,6 @@ import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
 import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph, autoCorrectAndPolishSpanish } from '../utils/sanitizeText';
-import AfcNetwork3D from './AfcNetwork3D';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -3013,6 +3012,68 @@ ESTRUCTURA JSON OBLIGATORIA:
             transformContainerRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
         }
     }, []);
+
+    // --- 3D PERSPECTIVE ORBIT & TILT STATE ---
+    const rotator3DRef = useRef(null);
+    const tilt3DRef = useRef({ pitch: 32, yaw: -16, roll: 0 });
+    const [tilt3D, setTilt3D] = useState({ pitch: 32, yaw: -16, roll: 0 });
+    const [dragMode3D, setDragMode3D] = useState('rotate'); // 'rotate' | 'pan'
+    const [isRotating3D, setIsRotating3D] = useState(false);
+    const isRotating3DRef = useRef(false);
+
+    const updateDOM3DTilt = useCallback((pitch, yaw) => {
+        if (rotator3DRef.current) {
+            rotator3DRef.current.style.transform = `rotateX(${pitch}deg) rotateY(${yaw}deg)`;
+        }
+    }, []);
+
+    const applyTiltPreset = useCallback((preset) => {
+        let newPitch = 32;
+        let newYaw = -16;
+        if (preset === 'isometric') {
+            newPitch = 32;
+            newYaw = -16;
+        } else if (preset === 'front') {
+            newPitch = 22;
+            newYaw = 0;
+        } else if (preset === 'aerial') {
+            newPitch = 48;
+            newYaw = -24;
+        } else if (preset === 'flat') {
+            newPitch = 0;
+            newYaw = 0;
+        }
+        const newTilt = { pitch: newPitch, yaw: newYaw, roll: 0 };
+        tilt3DRef.current = newTilt;
+        setTilt3D(newTilt);
+        updateDOM3DTilt(newPitch, newYaw);
+    }, [updateDOM3DTilt]);
+
+    const nudge3DTilt = useCallback((dp, dy) => {
+        const nextPitch = Math.max(0, Math.min(65, tilt3DRef.current.pitch + dp));
+        const nextYaw = Math.max(-60, Math.min(60, tilt3DRef.current.yaw + dy));
+        const newTilt = { pitch: nextPitch, yaw: nextYaw, roll: 0 };
+        tilt3DRef.current = newTilt;
+        setTilt3D(newTilt);
+        updateDOM3DTilt(nextPitch, nextYaw);
+    }, [updateDOM3DTilt]);
+
+    useEffect(() => {
+        if (is3DMode) {
+            if (tilt3D.pitch === 0 && tilt3D.yaw === 0) {
+                const initTilt = { pitch: 32, yaw: -16, roll: 0 };
+                tilt3DRef.current = initTilt;
+                setTilt3D(initTilt);
+                updateDOM3DTilt(32, -16);
+            } else {
+                updateDOM3DTilt(tilt3D.pitch, tilt3D.yaw);
+            }
+        } else {
+            if (rotator3DRef.current) {
+                rotator3DRef.current.style.transform = 'none';
+            }
+        }
+    }, [is3DMode, tilt3D.pitch, tilt3D.yaw, updateDOM3DTilt]);
 
     useEffect(() => {
         transformRef.current = { ...mapTransform };
@@ -6146,10 +6207,25 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     }, [activeSpot?.id]);
 
     const handleMapMouseDown = (e) => {
-        isDraggingMapRef.current = true;
-        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
+        if (mapViewTab === 'bucles') return;
         lastPointerPos.current = { x: e.clientX, y: e.clientY };
         mapDragged.current = false;
+
+        const isRightClick = e.button === 2;
+        const isAltOrShift = e.altKey || e.shiftKey;
+        const shouldRotate = is3DMode && (isRightClick || isAltOrShift || dragMode3D === 'rotate');
+
+        if (shouldRotate) {
+            isRotating3DRef.current = true;
+            setIsRotating3D(true);
+            isDraggingMapRef.current = false;
+            if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
+        } else {
+            isRotating3DRef.current = false;
+            setIsRotating3D(false);
+            isDraggingMapRef.current = true;
+            if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
+        }
     };
 
     const syncConnectedSvgEdges = (nodeId, curX, curY) => {
@@ -6221,6 +6297,26 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             return;
         }
 
+        if (isRotating3DRef.current) {
+            const deltaX = e.clientX - lastPointerPos.current.x;
+            const deltaY = e.clientY - lastPointerPos.current.y;
+            lastPointerPos.current = { x: e.clientX, y: e.clientY };
+
+            if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+                mapDragged.current = true;
+            }
+
+            let newYaw = tilt3DRef.current.yaw + deltaX * 0.28;
+            let newPitch = tilt3DRef.current.pitch - deltaY * 0.28;
+
+            newPitch = Math.max(0, Math.min(65, newPitch));
+            newYaw = Math.max(-60, Math.min(60, newYaw));
+
+            tilt3DRef.current = { pitch: newPitch, yaw: newYaw, roll: 0 };
+            updateDOM3DTilt(newPitch, newYaw);
+            return;
+        }
+
         if (!isDraggingMapRef.current) return;
         const deltaX = e.clientX - lastPointerPos.current.x;
         const deltaY = e.clientY - lastPointerPos.current.y;
@@ -6237,6 +6333,11 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     };
 
     const handleDragEnd = () => {
+        if (isRotating3DRef.current) {
+            isRotating3DRef.current = false;
+            setIsRotating3D(false);
+            setTilt3D({ ...tilt3DRef.current });
+        }
         isDraggingMapRef.current = false;
         if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
         if (draggingNodeId && nodeDraggedRef.current) {
@@ -6305,12 +6406,23 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
     const handleMapTouchStart = (e) => {
         if (e.touches.length === 1) {
-            isDraggingMapRef.current = true;
             const touch = e.touches[0];
             lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
             mapDragged.current = false;
+
+            if (is3DMode && dragMode3D === 'rotate') {
+                isRotating3DRef.current = true;
+                setIsRotating3D(true);
+                isDraggingMapRef.current = false;
+            } else {
+                isRotating3DRef.current = false;
+                setIsRotating3D(false);
+                isDraggingMapRef.current = true;
+            }
         } else if (e.touches.length === 2) {
             isDraggingMapRef.current = false;
+            isRotating3DRef.current = false;
+            setIsRotating3D(false);
             const t1 = e.touches[0];
             const t2 = e.touches[1];
             const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -6336,7 +6448,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 window._dragNodeAcc.dx += dx;
                 window._dragNodeAcc.dy += dy;
 
-                                const el = document.getElementById(`afc-node-${draggingNodeId}`);
+                const el = document.getElementById(`afc-node-${draggingNodeId}`);
                 if (el) {
                     const baseX = parseFloat(el.dataset.basex || 0);
                     const baseY = parseFloat(el.dataset.basey || 0);
@@ -6348,7 +6460,29 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                     el.dataset.cury = curY;
                     syncConnectedSvgEdges(draggingNodeId, curX, curY);
                 }
-            } else if (isDraggingMapRef.current) {
+                return;
+            }
+
+            if (isRotating3DRef.current) {
+                const deltaX = touch.clientX - lastPointerPos.current.x;
+                const deltaY = touch.clientY - lastPointerPos.current.y;
+                lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
+
+                if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+                    mapDragged.current = true;
+                }
+
+                let newYaw = tilt3DRef.current.yaw + deltaX * 0.35;
+                let newPitch = tilt3DRef.current.pitch - deltaY * 0.35;
+                newPitch = Math.max(0, Math.min(65, newPitch));
+                newYaw = Math.max(-60, Math.min(60, newYaw));
+
+                tilt3DRef.current = { pitch: newPitch, yaw: newYaw, roll: 0 };
+                updateDOM3DTilt(newPitch, newYaw);
+                return;
+            }
+
+            if (isDraggingMapRef.current) {
                 const deltaX = touch.clientX - lastPointerPos.current.x;
                 const deltaY = touch.clientY - lastPointerPos.current.y;
                 lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
@@ -7901,24 +8035,148 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button onClick={() => setMapViewTab('exit_keys')} title="Claves" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'exit_keys' ? 'bg-orange-600 text-white shadow-md' : 'text-zinc-500 hover:text-orange-400'}`}><Sparkles size={16} className="sm:scale-110" /></button>
                             </div>
 
-                            {/* 3D WebGL Cosmos Network Interactive View */}
+                            {/* Minimalist Floating 3D Perspective Controls */}
                             {is3DMode && mapViewTab === 'map' && (
-                                <AfcNetwork3D
-                                    nodes={nodesToRender}
-                                    edges={edgesToRender}
-                                    selectedNode={selectedNode}
-                                    onSelectNode={(node) => {
-                                        setSelectedNode(node);
-                                    }}
-                                    focusedStageIndex={focusedStageIndex}
-                                    onStageSelect={handleStageSelect}
-                                    onClose3D={() => setIs3DMode(false)}
-                                />
+                                <div className={`absolute bottom-20 md:bottom-24 right-4 md:right-6 z-[140] pointer-events-auto flex flex-col gap-2 p-3 rounded-2xl bg-zinc-950/90 backdrop-blur-xl border border-emerald-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-200 select-none max-w-[280px] ${(selectedNode && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden' : 'flex'}`}>
+                                    {/* Header & Status */}
+                                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/10">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+                                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300">Perspectiva 3D</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[9px] font-mono text-zinc-400">
+                                            <span>{Math.round(tilt3D.pitch)}°</span>
+                                            <span>/</span>
+                                            <span>{Math.round(tilt3D.yaw)}°</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Drag Mode Toggle: Orbit / Pan */}
+                                    <div className="flex items-center bg-black/50 p-0.5 rounded-xl border border-white/5 gap-1">
+                                        <button
+                                            onClick={() => setDragMode3D('rotate')}
+                                            className={`flex-1 py-1 px-2 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                                dragMode3D === 'rotate'
+                                                    ? 'bg-emerald-600/90 text-white shadow-sm'
+                                                    : 'text-zinc-400 hover:text-zinc-200'
+                                            }`}
+                                            title="Arrastrar el lienzo para rotar la perspectiva 3D"
+                                        >
+                                            <RotateCw size={11} className={dragMode3D === 'rotate' ? 'animate-spin-slow' : ''} />
+                                            <span>Rotar</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setDragMode3D('pan')}
+                                            className={`flex-1 py-1 px-2 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
+                                                dragMode3D === 'pan'
+                                                    ? 'bg-blue-600/90 text-white shadow-sm'
+                                                    : 'text-zinc-400 hover:text-zinc-200'
+                                            }`}
+                                            title="Arrastrar el lienzo para desplazar el mapa"
+                                        >
+                                            <Move size={11} />
+                                            <span>Mover</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Camera Angle Presets */}
+                                    <div className="grid grid-cols-4 gap-1">
+                                        <button
+                                            onClick={() => applyTiltPreset('isometric')}
+                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
+                                                Math.abs(tilt3D.pitch - 32) < 3 && Math.abs(tilt3D.yaw - (-16)) < 3
+                                                    ? 'bg-white/20 border-white/40 text-white'
+                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                            }`}
+                                            title="Vista Isométrica 3D clásica"
+                                        >
+                                            Isométr.
+                                        </button>
+                                        <button
+                                            onClick={() => applyTiltPreset('front')}
+                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
+                                                Math.abs(tilt3D.pitch - 22) < 3 && Math.abs(tilt3D.yaw) < 3
+                                                    ? 'bg-white/20 border-white/40 text-white'
+                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                            }`}
+                                            title="Vista Frontal con inclinación sutil"
+                                        >
+                                            Frontal
+                                        </button>
+                                        <button
+                                            onClick={() => applyTiltPreset('aerial')}
+                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
+                                                Math.abs(tilt3D.pitch - 48) < 3
+                                                    ? 'bg-white/20 border-white/40 text-white'
+                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                            }`}
+                                            title="Vista Cenital / Aérea"
+                                        >
+                                            Vuelo
+                                        </button>
+                                        <button
+                                            onClick={() => applyTiltPreset('flat')}
+                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
+                                                tilt3D.pitch === 0 && tilt3D.yaw === 0
+                                                    ? 'bg-white/20 border-white/40 text-white'
+                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                                            }`}
+                                            title="Plano 2D horizontal"
+                                        >
+                                            2D
+                                        </button>
+                                    </div>
+
+                                    {/* Nudge Tilt Arrows & Reset */}
+                                    <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/5">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => nudge3DTilt(0, -10)}
+                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
+                                                title="Girar a la izquierda (-10°)"
+                                            >
+                                                ↺
+                                            </button>
+                                            <button
+                                                onClick={() => nudge3DTilt(0, 10)}
+                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
+                                                title="Girar a la derecha (+10°)"
+                                            >
+                                                ↻
+                                            </button>
+                                            <button
+                                                onClick={() => nudge3DTilt(8, 0)}
+                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
+                                                title="Inclinar más (+8°)"
+                                            >
+                                                ▲
+                                            </button>
+                                            <button
+                                                onClick={() => nudge3DTilt(-8, 0)}
+                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
+                                                title="Aplanar (-8°)"
+                                            >
+                                                ▼
+                                            </button>
+                                        </div>
+                                        <button
+                                            onClick={() => applyTiltPreset('isometric')}
+                                            className="px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5 active:scale-95 text-[9px] font-mono transition-all"
+                                            title="Restablecer ángulo isométrica"
+                                        >
+                                            Restablecer
+                                        </button>
+                                    </div>
+
+                                    <p className="text-[7.5px] text-zinc-500 font-mono text-center">
+                                        Arrastra el lienzo • Rueda para zoom
+                                    </p>
+                                </div>
                             )}
 
                             <div
                                 ref={mapContainerRef}
-                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${(is3DMode && mapViewTab === 'map') ? 'hidden' : 'block'} ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
+                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap || isRotating3D ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
                                 onClick={handleMapClick}
                                 onMouseDown={handleMapMouseDown}
                                 onMouseMove={handleMapMouseMove}
@@ -7928,9 +8186,28 @@ Devuelve estrictamente el JSON sin formato extra.
                                 onTouchMove={handleMapTouchMove}
                                 onTouchEnd={handleMapTouchEnd}
                                 onTouchCancel={handleMapTouchEnd}
+                                onContextMenu={(e) => { if (is3DMode) e.preventDefault(); }}
                                 onDragStart={(e) => e.preventDefault()}
-                                style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
+                                style={{
+                                    touchAction: 'none',
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    WebkitUserDrag: 'none',
+                                    perspective: is3DMode ? '1400px' : 'none',
+                                    perspectiveOrigin: '50% 50%'
+                                }}
                             >
+                                {/* 3D Perspective Rotator Canvas */}
+                                <div
+                                    ref={rotator3DRef}
+                                    className="w-full h-full relative"
+                                    style={{
+                                        transformStyle: is3DMode ? 'preserve-3d' : 'flat',
+                                        transform: is3DMode ? `rotateX(${tilt3D.pitch}deg) rotateY(${tilt3D.yaw}deg)` : 'none',
+                                        transformOrigin: '50% 50%',
+                                        transition: isRotating3D || isDraggingMap ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)'
+                                    }}
+                                >
                                 {/* Decoración de fondo del lienzo (fija kawaii / dreamy constellation) */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                                     <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full  pointer-events-none" />
@@ -7961,10 +8238,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <div
                                     ref={transformContainerRef}
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
-                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
+                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, transformStyle: is3DMode ? 'preserve-3d' : 'flat', textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
-                                    <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
+                                    <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden" style={{ transform: is3DMode ? 'translateZ(-6px)' : 'none' }}>
                                         {/* Radial Spiderweb Atmosphere */}
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-purple-600/[0.025] blur-[100px] pointer-events-none" />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
@@ -7979,7 +8256,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                         return (
                                             <React.Fragment>
-                                                <svg viewBox={`0 0 ${VIRTUAL_WIDTH} ${VIRTUAL_HEIGHT}`} className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" style={{ shapeRendering: 'geometricPrecision' }}>
+                                                <svg viewBox={`0 0 ${VIRTUAL_WIDTH} ${VIRTUAL_HEIGHT}`} className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible" style={{ shapeRendering: 'geometricPrecision', transform: is3DMode ? 'translateZ(0px)' : 'none' }}>
 
                                         <style>{`
                                                     @keyframes edgeStreamFlow {
@@ -8318,6 +8595,11 @@ Devuelve estrictamente el JSON sin formato extra.
                                         nodeClass += isSelected ? "scale-110 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] z-30 " : (draggingNodeId === node.id ? "scale-110 z-30 " : "hover:scale-105 hover:z-30 ");
                                         nodeClass += isDimmed ? "opacity-30 " : "opacity-100 drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] ";
 
+                                        const degree = (finalEdgesToRender || []).filter(e => e && (e.source === node.id || e.target === node.id)).length;
+                                        const isHub = Boolean(node.is_island_hub || degree >= 4);
+                                        const isCondition = Boolean(!isHub && (node.type === 'antecedent' || node.clinical_role === 'antecedent' || (node.id && node.id.includes('cond'))));
+                                        const elevation = is3DMode ? (isHub ? 34 : isCondition ? 24 : 16) : 0;
+
                                         return (
                                             
                                             <div
@@ -8335,7 +8617,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 style={{ 
                                                     left: `${node.x}%`, 
                                                     top: `${node.y}%`, 
-                                                    transform: 'translate(-50%, -50%)', 
+                                                    transform: is3DMode ? `translate(-50%, -50%) translateZ(${elevation}px)` : 'translate(-50%, -50%)', 
+                                                    transformStyle: is3DMode ? 'preserve-3d' : 'flat',
+                                                    filter: is3DMode ? 'drop-shadow(0 14px 10px rgba(0,0,0,0.65))' : undefined,
                                                     userSelect: 'none',
                                                     transition: 'opacity 0.15s ease, filter 0.15s ease'
                                                 }}
@@ -8437,6 +8721,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 )
                                 })()}
                                 </div>
+                                </div> {/* End rotator3DRef */}
 
                                 {/* Text Overlays for tabs */}
                                 {mapViewTab === 'loop' && (
