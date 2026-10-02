@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, ArrowUpDown, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Box } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
+import AfcNetwork3D from './AfcNetwork3D';
 import { safeJSONParse } from '../utils/jsonParser';
 import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph, autoCorrectAndPolishSpanish } from '../utils/sanitizeText';
 
@@ -3124,6 +3125,33 @@ ESTRUCTURA JSON OBLIGATORIA:
             if (badgeSpan) badgeSpan.innerText = `${clampedZ}px`;
             syncConnectedSvgEdges(nodeId, parseFloat(el.dataset.curx || el.dataset.basex || 0), parseFloat(el.dataset.cury || el.dataset.basey || 0), clampedZ);
         }
+    }, [user]);
+
+    const handleUpdateNodePosition3D = useCallback((nodeId, { x, y, z }) => {
+        setAfcData(currentAfc => {
+            if (!currentAfc || !currentAfc.nodes) return currentAfc;
+            const updatedNodes = currentAfc.nodes.map(n => {
+                if (n.id !== nodeId) return n;
+                const updated = { ...n };
+                if (x !== undefined) updated.x = Math.max(2, Math.min(98, Math.round(x * 10) / 10));
+                if (y !== undefined) updated.y = Math.max(2, Math.min(98, Math.round(y * 10) / 10));
+                if (z !== undefined) updated.z = Math.max(10, Math.min(220, Math.round(z)));
+                return updated;
+            });
+            const updated = { ...currentAfc, nodes: updatedNodes };
+            if (user) {
+                setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
+            }
+            return updated;
+        });
+        setSelectedNode(prev => {
+            if (!prev || prev.id !== nodeId) return prev;
+            const updated = { ...prev };
+            if (x !== undefined) updated.x = Math.max(2, Math.min(98, Math.round(x * 10) / 10));
+            if (y !== undefined) updated.y = Math.max(2, Math.min(98, Math.round(y * 10) / 10));
+            if (z !== undefined) updated.z = Math.max(10, Math.min(220, Math.round(z)));
+            return updated;
+        });
     }, [user]);
 
     const startNodeZDrag = useCallback((e, nodeId) => {
@@ -8279,165 +8307,27 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <button onClick={() => setMapViewTab('exit_keys')} title="Claves" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'exit_keys' ? 'bg-orange-600 text-white shadow-md' : 'text-zinc-500 hover:text-orange-400'}`}><Sparkles size={16} className="sm:scale-110" /></button>
                             </div>
 
-                            {/* Minimalist Floating 3D Perspective Controls */}
+                            {/* 3D WebGL Cosmos Network Interactive View (Three.js real 3D engine) */}
                             {is3DMode && mapViewTab === 'map' && (
-                                <div className={`absolute bottom-20 md:bottom-24 right-4 md:right-6 z-[140] pointer-events-auto flex flex-col gap-2 p-3 rounded-2xl bg-zinc-950/90 backdrop-blur-xl border border-emerald-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-200 select-none max-w-[280px] ${(selectedNode && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden' : 'flex'}`}>
-                                    {/* Header & Status */}
-                                    <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/10">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-                                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-300">Perspectiva 3D</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-[9px] font-mono text-zinc-400">
-                                            <span>{Math.round(tilt3D.pitch)}°</span>
-                                            <span>/</span>
-                                            <span>{Math.round(tilt3D.yaw)}°</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Drag Mode Toggle: Orbit / Pan / Altura Z */}
-                                    <div className="flex items-center bg-black/50 p-0.5 rounded-xl border border-white/5 gap-1">
-                                        <button
-                                            onClick={() => setDragMode3D('rotate')}
-                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
-                                                dragMode3D === 'rotate'
-                                                    ? 'bg-emerald-600/90 text-white shadow-sm'
-                                                    : 'text-zinc-400 hover:text-zinc-200'
-                                            }`}
-                                            title="Arrastrar el lienzo para rotar la perspectiva 3D"
-                                        >
-                                            <RotateCw size={11} className={dragMode3D === 'rotate' ? 'animate-spin-slow' : ''} />
-                                            <span>Rotar</span>
-                                        </button>
-                                        <button
-                                            onClick={() => setDragMode3D('pan')}
-                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
-                                                dragMode3D === 'pan'
-                                                    ? 'bg-blue-600/90 text-white shadow-sm'
-                                                    : 'text-zinc-400 hover:text-zinc-200'
-                                            }`}
-                                            title="Arrastrar el lienzo para desplazar el mapa"
-                                        >
-                                            <Move size={11} />
-                                            <span>Mover</span>
-                                        </button>
-                                        <button
-                                            onClick={() => setDragMode3D('nodeZ')}
-                                            className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition-all ${
-                                                dragMode3D === 'nodeZ'
-                                                    ? 'bg-amber-600/90 text-white shadow-sm ring-1 ring-amber-400/50'
-                                                    : 'text-zinc-400 hover:text-zinc-200'
-                                            }`}
-                                            title="Arrastrar puntos verticalmente para subir o bajar su altura 3D"
-                                        >
-                                            <ArrowUpDown size={11} />
-                                            <span>Altura Z</span>
-                                        </button>
-                                    </div>
-                                    {dragMode3D === 'nodeZ' && (
-                                        <div className="text-[8px] font-mono text-amber-300/95 bg-amber-500/10 border border-amber-500/25 px-2 py-1 rounded-lg text-center leading-tight">
-                                            Arrastra cualquier punto verticalmente para regular su altura 3D
-                                        </div>
-                                    )}
-
-                                    {/* Camera Angle Presets */}
-                                    <div className="grid grid-cols-4 gap-1">
-                                        <button
-                                            onClick={() => applyTiltPreset('isometric')}
-                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
-                                                Math.abs(tilt3D.pitch - 32) < 3 && Math.abs(tilt3D.yaw - (-16)) < 3
-                                                    ? 'bg-white/20 border-white/40 text-white'
-                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                                            }`}
-                                            title="Vista Isométrica 3D clásica"
-                                        >
-                                            Isométr.
-                                        </button>
-                                        <button
-                                            onClick={() => applyTiltPreset('front')}
-                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
-                                                Math.abs(tilt3D.pitch - 22) < 3 && Math.abs(tilt3D.yaw) < 3
-                                                    ? 'bg-white/20 border-white/40 text-white'
-                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                                            }`}
-                                            title="Vista Frontal con inclinación sutil"
-                                        >
-                                            Frontal
-                                        </button>
-                                        <button
-                                            onClick={() => applyTiltPreset('aerial')}
-                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
-                                                Math.abs(tilt3D.pitch - 48) < 3
-                                                    ? 'bg-white/20 border-white/40 text-white'
-                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                                            }`}
-                                            title="Vista Cenital / Aérea"
-                                        >
-                                            Vuelo
-                                        </button>
-                                        <button
-                                            onClick={() => applyTiltPreset('flat')}
-                                            className={`py-1 px-1.5 rounded-lg border text-[8.5px] font-mono font-bold transition-all text-center ${
-                                                tilt3D.pitch === 0 && tilt3D.yaw === 0
-                                                    ? 'bg-white/20 border-white/40 text-white'
-                                                    : 'bg-zinc-900/80 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                                            }`}
-                                            title="Plano 2D horizontal"
-                                        >
-                                            2D
-                                        </button>
-                                    </div>
-
-                                    {/* Nudge Tilt Arrows & Reset */}
-                                    <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/5">
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => nudge3DTilt(0, -10)}
-                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
-                                                title="Girar a la izquierda (-10°)"
-                                            >
-                                                ↺
-                                            </button>
-                                            <button
-                                                onClick={() => nudge3DTilt(0, 10)}
-                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
-                                                title="Girar a la derecha (+10°)"
-                                            >
-                                                ↻
-                                            </button>
-                                            <button
-                                                onClick={() => nudge3DTilt(8, 0)}
-                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
-                                                title="Inclinar más (+8°)"
-                                            >
-                                                ▲
-                                            </button>
-                                            <button
-                                                onClick={() => nudge3DTilt(-8, 0)}
-                                                className="p-1 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/5 active:scale-95 transition-all text-[9px]"
-                                                title="Aplanar (-8°)"
-                                            >
-                                                ▼
-                                            </button>
-                                        </div>
-                                        <button
-                                            onClick={() => applyTiltPreset('isometric')}
-                                            className="px-2 py-0.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-white/5 active:scale-95 text-[9px] font-mono transition-all"
-                                            title="Restablecer ángulo isométrica"
-                                        >
-                                            Restablecer
-                                        </button>
-                                    </div>
-
-                                    <p className="text-[7.5px] text-zinc-500 font-mono text-center">
-                                        Arrastra el lienzo • Rueda para zoom
-                                    </p>
-                                </div>
+                                <AfcNetwork3D
+                                    nodes={nodesToRender}
+                                    edges={edgesToRender}
+                                    selectedNode={selectedNode}
+                                    onSelectNode={(node) => {
+                                        setSelectedNode(node);
+                                    }}
+                                    onUpdateNodePosition={handleUpdateNodePosition3D}
+                                    onUpdateNodeZ={(nodeId, z) => updateNodeZ(nodeId, z)}
+                                    focusedStageIndex={focusedStageIndex}
+                                    onStageSelect={handleStageSelect}
+                                    onClose3D={() => setIs3DMode(false)}
+                                    getNodeElevation={getNodeElevation}
+                                />
                             )}
 
                             <div
                                 ref={mapContainerRef}
-                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap || isRotating3D ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
+                                className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${(is3DMode && mapViewTab === 'map') ? 'hidden' : 'block'} ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap || isRotating3D ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
                                 onClick={handleMapClick}
                                 onMouseDown={handleMapMouseDown}
                                 onMouseMove={handleMapMouseMove}
