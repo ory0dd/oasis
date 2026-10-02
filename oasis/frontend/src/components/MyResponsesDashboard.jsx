@@ -7922,44 +7922,6 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
-
-                                        {CLINICAL_COLUMNS.map((col, idx) => {
-                                            const isStageFocused = focusedStageIndex === idx;
-                                            return (
-                                                <div
-                                                    key={col.id}
-                                                    className="absolute top-0 bottom-0 -translate-x-1/2 flex flex-col items-center pointer-events-none"
-                                                    style={{ left: `${col.baseX}%`, width: '280px' }}
-                                                >
-                                                    {/* Column Header Card */}
-                                                    <div 
-                                                        onClick={() => handleStageSelect(idx)}
-                                                        className={`mt-3.5 px-3.5 py-1.5 rounded-2xl border backdrop-blur-xl shadow-lg flex flex-col items-center gap-0.5 pointer-events-auto cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 ${isStageFocused ? 'ring-2 ring-white/30' : ''}`}
-                                                        style={{
-                                                            backgroundColor: isStageFocused ? 'rgba(25, 27, 44, 0.95)' : 'rgba(10, 11, 18, 0.80)',
-                                                            borderColor: isStageFocused ? col.color : `${col.color}35`,
-                                                            boxShadow: isStageFocused ? `0 0 32px ${col.color}70` : `0 8px 24px -4px ${col.color}20`
-                                                        }}
-                                                        title={`Clic para enfocar Etapa ${col.num}: ${col.title}`}
-                                                    >
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs leading-none">{col.icon}</span>
-                                                            <span className="text-[10.5px] font-black tracking-wider uppercase font-mono" style={{ color: col.color }}>
-                                                                {col.num}. {col.title}
-                                                            </span>
-                                                            {isStageFocused && (
-                                                                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[8px] bg-white/20 text-white font-sans font-bold">
-                                                                    Activo
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-[8px] text-zinc-400 font-medium tracking-tight">
-                                                            {col.subtitle}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
                                     </div>
 
                                     {/* SVG Edges & HTML Nodes */}
