@@ -4263,72 +4263,7 @@ const ProfileView = ({
                         {/* RIGHT COLUMN: MOMENTOS DESTACADOS, VITRINA CREATIVA Y GALERÍA */}
                         <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-                            {/* 1. SECCIÓN DE MOMENTOS DESTACADOS */}
-                            <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <Sparkles size={11} className="text-accent" />
-                                        <span>Momentos Destacados</span>
-                                    </span>
-                                    <button
-                                        onClick={() => setIsHighlightModalOpen(true)}
-                                        className="text-[9px] font-mono text-accent hover:underline flex items-center gap-1 transition-all"
-                                    >
-                                        <Plus size={10} /> Añadir
-                                    </button>
-                                </div>
 
-                                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
-                                    {/* Botón Nuevo Destacado */}
-                                    <div
-                                        className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
-                                        onClick={() => setIsHighlightModalOpen(true)}
-                                    >
-                                        <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-dashed border-white/20 group-hover:border-accent p-[2px] transition-all flex items-center justify-center bg-white/5 group-hover:bg-accent/10">
-                                            <Plus size={16} className="text-zinc-400 group-hover:text-accent transition-colors" />
-                                        </div>
-                                        <span className="text-[9px] text-zinc-400 font-mono">Nuevo</span>
-                                    </div>
-
-                                    {/* Lista de Destacados */}
-                                    {(feed || []).filter(b => b.username === user && b.type === 'highlight').map((h, i) => (
-                                        <div
-                                            key={i}
-                                            className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
-                                            onClick={() => setSelectedHighlight(h)}
-                                        >
-                                            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-white/15 group-hover:border-accent p-[2px] transition-all shadow-md">
-                                                <div className="w-full h-full rounded-full bg-zinc-950 overflow-hidden flex items-center justify-center">
-                                                    {h.metadata?.thumbnail ? (
-                                                        <img
-                                                            onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
-                                                            src={formatUrl(h.metadata.thumbnail)}
-                                                            className="w-full h-full object-cover opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-accent/10 flex items-center justify-center text-accent">
-                                                            <Sparkles size={14} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span className="text-[9px] text-zinc-300 font-medium truncate max-w-[56px] text-center">
-                                                {typeof h.content === 'string' ? h.content : 'Destacado'}
-                                            </span>
-                                        </div>
-                                    ))}
-
-                                    {(feed || []).filter(b => b.username === user && b.type === 'highlight').length === 0 && (
-                                        <div
-                                            onClick={() => setIsHighlightModalOpen(true)}
-                                            className="flex-1 py-2 px-3 border border-dashed border-white/10 rounded-xl flex items-center gap-2 cursor-pointer hover:border-white/20 transition-all text-zinc-500 hover:text-zinc-300"
-                                        >
-                                            <Sparkles size={12} className="shrink-0 text-accent/60" />
-                                            <span className="text-[9px] font-mono leading-tight">Inmortaliza tus mejores notas o recuerdos en tu perfil</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
 
                             {/* 2. VITRINA CREATIVA // ENLACES Y PRODUCTOS */}
                             {(() => {
@@ -4338,28 +4273,28 @@ const ProfileView = ({
                                     <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <ShoppingBag size={12} className="text-accent" />
+                                                <LinkIcon size={12} className="text-accent" />
                                                 <span className="text-[10px] font-mono text-zinc-300 uppercase tracking-widest font-bold">
-                                                    Vitrina Creativa & Enlaces
+                                                    Enlaces
                                                 </span>
                                                 <span className="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[8px] font-mono">
                                                     {linkedPosts.length}
                                                 </span>
                                             </div>
-                                            <span className="text-[8px] font-mono text-zinc-500">Obras y enlaces públicos</span>
+                                            <span className="text-[8px] font-mono text-zinc-500">Públicos</span>
                                         </div>
 
                                         {linkedPosts.length === 0 ? (
-                                            /* Tarjeta Cool de Vitrina Vacía */
+                                            /* Tarjeta Cool de Enlaces Vacíos */
                                             <div className="w-full bg-gradient-to-r from-zinc-950/80 to-zinc-900/40 border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 text-accent mt-0.5">
-                                                        <Sparkles size={16} />
+                                                        <LinkIcon size={16} />
                                                     </div>
                                                     <div className="space-y-1 text-center sm:text-left">
-                                                        <h4 className="text-xs font-bold text-white tracking-wide">Tu vitrina está lista para exhibir</h4>
+                                                        <h4 className="text-xs font-bold text-white tracking-wide">Sin enlaces por ahora</h4>
                                                         <p className="text-[9px] text-zinc-400 font-sans leading-relaxed max-w-md">
-                                                            Asigna un precio (<span className="text-accent">$</span>) o enlace de compra a cualquier nota en el pizarrón para exhibirla aquí como pieza, producto o servicio.
+                                                            Asigna un enlace o precio a cualquier nota en el pizarrón para exhibirla aquí.
                                                         </p>
                                                     </div>
                                                 </div>
