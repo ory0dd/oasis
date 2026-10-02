@@ -635,6 +635,139 @@ export const getClinicalTheme = (node) => {
     return 'general';
 };
 
+export const buildNodeClinicalExploration = (node, incomingNodes = [], outgoingNodes = [], user = '') => {
+    if (!node) return null;
+
+    const theme = getClinicalTheme(node);
+    const label = sanitizeSpanishText(node.is_corrected ? node.label : softenNodeLabel(node.label || ''));
+    const isVacio = /vac[ií]o/i.test(label) || /vac[ií]o/i.test(node.description || '');
+
+    const incomingLabels = (incomingNodes || [])
+        .map(n => sanitizeSpanishText(softenNodeLabel(n?.label || '')))
+        .filter(Boolean);
+    const outgoingLabels = (outgoingNodes || [])
+        .map(n => sanitizeSpanishText(softenNodeLabel(n?.label || '')))
+        .filter(Boolean);
+
+    let connectionSummary = '';
+    if (incomingLabels.length > 0 && outgoingLabels.length > 0) {
+        connectionSummary = `Noto que este factor se nutre de ${incomingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}, y tiende a desembocar en ${outgoingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}.`;
+    } else if (incomingLabels.length > 0) {
+        connectionSummary = `Noto que este factor surge principalmente como respuesta a ${incomingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}.`;
+    } else if (outgoingLabels.length > 0) {
+        connectionSummary = `Noto que cuando este factor se activa, suele alimentar ${outgoingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')} en tu circuito.`;
+    } else {
+        connectionSummary = `Este factor opera como un nodo activo y sensible en este punto de tu mapa.`;
+    }
+
+    let hypothesis = '';
+    let question = '';
+    let pills = [];
+
+    if (isVacio || theme === 'purpose') {
+        hypothesis = "Pienso que tal vez pase esto: cuando la mente se desgasta o se acumula tensión y rumiación, este vacío no surge como un fallo, sino como una especie de anestesia o desconexión para no colapsar ni sentir el peso acumulado... No sé si en tu vivencia sea así...";
+        question = "¿Qué significa principalmente para ti sentir este vacío en tu día a día?";
+        pills = [
+            { text: "Es una anestesia para no sentir dolor o sobrecarga", icon: "🛡️" },
+            { text: "Es soledad profunda o falta de conexión real con otros", icon: "🌧️" },
+            { text: "Es sentir que no tengo rumbo ni claridad de qué quiero", icon: "🌫️" },
+            { text: "Es agotamiento mental después de sobrepensar tanto", icon: "⚡" }
+        ];
+    } else if (theme === 'overthinking') {
+        hypothesis = "Pienso que tal vez pase esto: cuando aparece incertidumbre o temor a equivocarte, tu mente intenta protegerte analizando cada detalle una y otra vez para tener la ilusión de control, aunque termine dejándote exhausto... No sé si en tu caso lo sientas así...";
+        question = "¿Qué estás intentando controlar o prevenir en el fondo cuando se dispara este sobrepensar?";
+        pills = [
+            { text: "Es un intento desesperado de no equivocarme ni fallar", icon: "🎯" },
+            { text: "Es miedo a lo que los demás puedan opinar de mí", icon: "👥" },
+            { text: "Es un bucle mental automático que me cuesta mucho frenar", icon: "🔄" },
+            { text: "Es una forma de distraerme de lo que realmente me duele", icon: "🧠" }
+        ];
+    } else if (theme === 'avoidance') {
+        hypothesis = "Pienso que tal vez pase esto: cuando las demandas del entorno o la sobrecarga emocional te sobrepasan, replegarte y aislarte funciona como un refugio necesario para recuperar aire, aunque con el tiempo aumente la distancia con los demás... No sé si te resuene así...";
+        question = "¿De qué sientes que te estás protegiendo principalmente cuando te repliegas o te aíslas?";
+        pills = [
+            { text: "Es un refugio necesario para no sobrecargarme con nadie", icon: "🛖" },
+            { text: "Es temor a ser juzgado, criticado o incomprendido", icon: "🚪" },
+            { text: "Es simplemente falta de energía física y emocional", icon: "🔋" },
+            { text: "Es una forma de evitar conflictos que no sé manejar", icon: "🕊️" }
+        ];
+    } else if (theme === 'perfectionism') {
+        hypothesis = "Pienso que tal vez pase esto: detrás de esta autoexigencia implacable hay una voz interna que cree que solo si todo es impecable estarás a salvo de la crítica o serás digno de afecto... No sé si en tu vivencia sea así...";
+        question = "¿Qué temes que pase contigo si por un día bajas la guardia y dejas de exigirte tanto?";
+        pills = [
+            { text: "Siento que si no soy impecable, no valgo nada", icon: "⚖️" },
+            { text: "Es terror a defraudar las expectativas de los demás", icon: "🎭" },
+            { text: "Es la única forma que conozco para sentirme seguro", icon: "🛡️" },
+            { text: "Es una voz crítica muy antigua que no he podido apagar", icon: "🗣️" }
+        ];
+    } else if (theme === 'anxiety') {
+        hypothesis = "Pienso que tal vez pase esto: tu sistema nervioso aprendió a mantenerse en hiperalerta anticipando catástrofes para que nada te tome por sorpresa, interpretando cualquier cambio como peligro... No sé si lo sientas de esa manera...";
+        question = "¿Qué es lo peor que tu mente teme que ocurra cuando la alarma de la ansiedad se enciende?";
+        pills = [
+            { text: "Es una alarma corporal anticipada de que algo va a salir mal", icon: "🚨" },
+            { text: "Es miedo intenso a perder el control de la situación", icon: "🌪️" },
+            { text: "Es incapacidad de relajarme y confiar en el proceso", icon: "⚡" },
+            { text: "Es una necesidad urgente de certezas y garantías inmediatas", icon: "🔮" }
+        ];
+    } else if (theme === 'somatic') {
+        hypothesis = "Pienso que tal vez pase esto: el cuerpo está cargando en tensión muscular y agotamiento lo que la mente ha intentado resolver o reprimir en silencio, como un freno de mano que pide tregua... No sé si tu cuerpo lo exprese así...";
+        question = "¿Qué te está pidiendo a gritos tu cuerpo en esos momentos de tensión que aún no le concedes?";
+        pills = [
+            { text: "Es tensión física acumulada en el pecho y cuello", icon: "🫀" },
+            { text: "Es agotamiento de sostener responsabilidades sin descansar", icon: "🛌" },
+            { text: "Es una alarma somática que me avisa antes que la mente", icon: "🛑" },
+            { text: "Es la factura que me pasa el cuerpo por tanto estrés", icon: "⚡" }
+        ];
+    } else if (theme === 'insecurity') {
+        hypothesis = "Pienso que tal vez pase esto: hay una duda persistente sobre tu propio criterio que te lleva a minimizar lo que sabes o a necesitar validación externa para sentirte tranquilo... No sé si sea así como lo vives...";
+        question = "¿Qué crees que necesitas validar antes de permitirte confiar en tu propio criterio?";
+        pills = [
+            { text: "Dudo de mí si no recibo aprobación o confirmación externa", icon: "🪞" },
+            { text: "Siento que los demás están más preparados que yo", icon: "👥" },
+            { text: "Tengo miedo a equivocarme y quedar expuesto ante todos", icon: "🙈" },
+            { text: "Me cuesta mucho reconocer y validar mis propios logros", icon: "📉" }
+        ];
+    } else if (theme === 'attachment') {
+        hypothesis = "Pienso que tal vez pase esto: hay una necesidad muy humana de sentirte visto y seguro con los demás, y cuando percibes frialdad o silencio, tu mente interpreta esa distancia como un rechazo inminente... No sé si te ocurra de ese modo...";
+        question = "¿Qué herida o temor se despierta en ti cuando sientes frialdad o desconexión en una relación?";
+        pills = [
+            { text: "Es miedo profundo a ser abandonado o dejado de lado", icon: "💔" },
+            { text: "Es una necesidad urgente de saber que todo está bien", icon: "🔍" },
+            { text: "Es una sensación de soledad que me angustia profundamente", icon: "🌧️" },
+            { text: "Es la sensación de que no le importo a las personas", icon: "👤" }
+        ];
+    } else if (theme === 'anger') {
+        hypothesis = "Pienso que tal vez pase esto: la rabia o frustración aparece como un escudo de defensa cuando sientes que un límite importante fue vulnerado o ante una situación de impotencia... No sé si sea así en tu vivencia...";
+        question = "¿Qué límite o sensación de injusticia hay debajo de esa rabia cuando se dispara?";
+        pills = [
+            { text: "Es impotencia acumulada ante situaciones que no puedo cambiar", icon: "🔥" },
+            { text: "Es una reacción ante sentir que no me respetan o no me escuchan", icon: "🛑" },
+            { text: "Es una explosión después de callar y aguantar demasiado tiempo", icon: "💥" },
+            { text: "Es frustración por expectativas que no se cumplieron", icon: "⚡" }
+        ];
+    } else {
+        hypothesis = `Pienso que tal vez pase esto: "${label}" no es un fallo o defecto en ti, sino una respuesta adaptativa que tu sistema aprendió a activar en momentos de sobrecarga para intentar protegerte... No sé si en tu vivencia real se sienta exactamente así...`;
+        question = `¿Qué significa principalmente para ti "${label}" cuando se activa en tu día a día?`;
+        pills = [
+            { text: "Es una defensa que aprendí en el pasado para protegerme", icon: "🛡️" },
+            { text: "Es un hábito automático que me cuesta mucho pausar", icon: "🔄" },
+            { text: "Es una señal de que necesito poner límites claros", icon: "🛑" },
+            { text: "Es una carga que vengo arrastrando desde hace tiempo", icon: "⚖️" }
+        ];
+    }
+
+    return {
+        theme,
+        cleanLabel: label,
+        incomingLabels,
+        outgoingLabels,
+        connectionSummary,
+        hypothesis,
+        question,
+        pills
+    };
+};
+
 export const getNodeOriginContext = (node, edges = [], allNodes = []) => {
     if (!node || !Array.isArray(edges) || edges.length === 0) {
         return null;
@@ -5835,13 +5968,14 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         setExplorationResponse('');
         setIsGeneratingExplorations(true);
 
-        const currentChat = getSafeCurrentChat(currentNode.id, 0);
+        const rawChat = getSafeCurrentChat(currentNode.id, 0);
+        const currentChat = rawChat.filter(m => m && !m.isLoading && !(m.role === 'assistant' && (m.content?.includes('Generando') || isStaleOrRoboticQuestion(m.content))));
         const updatedChat = [...currentChat, { role: 'user', content: userText }];
 
         // Optimistically update chat with user response + typing placeholder
         setNodeChats(prev => ({
             ...prev,
-            [currentNode.id]: [...updatedChat, { role: 'assistant', content: 'Reflexionando sobre lo que compartes...', isLoading: true }]
+            [currentNode.id]: [...updatedChat, { role: 'assistant', content: 'Reflexionando con agudeza clínica sobre tu vivencia...', isLoading: true }]
         }));
 
         try {
@@ -5854,17 +5988,28 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
-            const replyPrompt = `Eres un psicoterapeuta clínico humano, empático, reflexivo y de profunda agudeza psicológica.
-El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripción: ${currentNode.description || 'N/A'}).
+            const incomingLabels = (afcData?.edges || [])
+                .filter(e => e && e.target === currentNode.id)
+                .map(e => (afcData?.nodes || []).find(n => n && n.id === e.source)?.label)
+                .filter(Boolean);
+            const outgoingLabels = (afcData?.edges || [])
+                .filter(e => e && e.source === currentNode.id)
+                .map(e => (afcData?.nodes || []).find(n => n && n.id === e.target)?.label)
+                .filter(Boolean);
 
-Historial de esta reflexión:
-${updatedChat.map(m => `${m.role === 'user' ? 'Paciente' : 'Terapeuta'}: ${m.content}`).join('\n')}
+            const replyPrompt = `Eres un psicoterapeuta clínico humano, cálido, empático, reflexivo y de profunda agudeza psicológica.
+El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripción: ${currentNode.description || 'N/A'}).
+${incomingLabels.length > 0 ? `Este factor se nutre de: ${incomingLabels.join(', ')}.` : ''}
+${outgoingLabels.length > 0 ? `Este factor tiende a desencadenar o alimentar: ${outgoingLabels.join(', ')}.` : ''}
+
+El paciente acaba de compartir su vivencia íntima sobre qué significa este factor para él:
+"${userText}"
 
 INSTRUCCIONES CLÍNICAS:
-1. Responde de forma cálida, humana y sumamente perspicaz a lo que el paciente acaba de expresar.
-2. Devuelve UNA SOLA reflexión o devolución clínica profunda (máximo 2 a 3 oraciones en un único párrafo fluido).
-3. Conecta su sentir con la raíz o función del patrón sin usar viñetas, sin títulos, sin encabezados ni subdivisiones.
-4. NUNCA uses clichés, frases robóticas ni explicaciones teóricas aburridas.`;
+1. Responde de forma cálida, humana y sumamente perspicaz a lo que el paciente acaba de expresar. Habla de tú a tú ("Entiendo perfectamente...", "Tiene todo el sentido...").
+2. Explica brevemente la función protectora o adaptativa de este patrón (por ejemplo, cómo el vacío o la desconexión actúa como anestesia ante el sobrepensar y la sobrecarga).
+3. Devuelve UNA SOLA reflexión o devolución clínica profunda (máximo 2 a 3 oraciones en un único párrafo fluido).
+4. NUNCA uses viñetas, títulos, listas ni lenguaje robótico de manual.`;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
@@ -5895,9 +6040,14 @@ INSTRUCCIONES CLÍNICAS:
             }
         } catch (err) {
             console.error("AI reply error:", err);
+            const isVacio = /vac[ií]o/i.test(currentNode.label || '') || /vac[ií]o/i.test(currentNode.description || '');
+            const fallbackReply = isVacio
+                ? "Tiene todo el sentido del mundo. Cuando la mente se satura de sobrepensar y sostener exigencia, desconectarse en forma de vacío no es indolencia, sino una anestesia de emergencia para no colapsar. Nombrarlo es el primer paso para empezar a escuchar qué agotamiento lo está pidiendo."
+                : `Tiene mucho sentido lo que compartes. Reconocer que "${currentNode.label}" opera de esa forma en tu sistema es el primer paso fundamental para quitarle juicio y empezar a darle una salida más compasiva y consciente.`;
+
             setNodeChats(prev => ({
                 ...prev,
-                [currentNode.id]: updatedChat
+                [currentNode.id]: [...updatedChat, { role: 'assistant', content: fallbackReply, isAIGenerated: true }]
             }));
         } finally {
             setIsGeneratingExplorations(false);
@@ -7626,14 +7776,21 @@ Devuelve estrictamente el JSON sin formato extra.
     return (
         <div className={isEmbedded
             ? "relative w-full h-full font-sans text-zinc-100 flex flex-col"
-            : "fixed inset-0 z-[100] bg-transparent overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-700 flex flex-col pointer-events-none"
+            : "fixed inset-0 z-[100] bg-[#050506]/85 backdrop-blur-md overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-700 flex flex-col pointer-events-none"
         }>
-            {/* Background Effects */}
+            {/* Background Effects & High-Contrast Overlay */}
             {!isEmbedded && (
                 <div className="fixed inset-0 pointer-events-none z-0">
+                    <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
                     <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent/5 blur-[150px] rounded-full  transform translate-x-1/3 -translate-y-1/3" style={{ backgroundColor: accent }} />
                     <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full  transform -translate-x-1/3 translate-y-1/3" />
-                    <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+                    <div className="absolute inset-0 opacity-[0.05]" style={{
+                        backgroundImage: `
+                            linear-gradient(to right, #444 1px, transparent 1px),
+                            linear-gradient(to bottom, #444 1px, transparent 1px)
+                        `,
+                        backgroundSize: '40px 40px'
+                    }} />
                 </div>
             )}
 
@@ -7765,7 +7922,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Quick Column Navigation Pills (Desktop & Mobile) */}
                             {mapViewTab === 'map' && (
-                                <div className="absolute top-[48px] md:top-3.5 left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto">
+                                <div className={`absolute ${isEmbedded ? 'top-[48px] md:top-3.5' : 'top-[78px] sm:top-[82px] md:top-[88px]'} left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto`}>
                                     <button
                                         onClick={() => { setFocusedStageIndex(null); setActiveColumnIndex(null); resetMapTransform(isMobileDevice ? 'readable' : 'overview'); }}
                                         className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
@@ -7803,7 +7960,7 @@ Devuelve estrictamente el JSON sin formato extra.
 
                             {/* Floating Step-by-Step Abordaje Banner */}
                             {mapViewTab === 'map' && focusedStageIndex !== null && (
-                                <div className="absolute top-[88px] md:top-14 left-1/2 -translate-x-1/2 z-[125] flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-950/95 border border-indigo-500/30 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.8)] pointer-events-auto animate-in fade-in duration-200">
+                                <div className={`absolute ${isEmbedded ? 'top-[88px] md:top-14' : 'top-[126px] sm:top-[130px] md:top-[138px]'} left-1/2 -translate-x-1/2 z-[125] flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-950/95 border border-indigo-500/30 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.8)] pointer-events-auto animate-in fade-in duration-200`}>
                                     <button
                                         onClick={() => handleStageSelect(Math.max(0, focusedStageIndex - 1))}
                                         disabled={focusedStageIndex === 0}
@@ -8773,7 +8930,7 @@ Por favor, analicemos:
 
                                 return (
                                     <div
-                                        className={`fixed md:absolute top-1/2 md:top-6 left-1/2 md:left-auto md:right-6 md:bottom-auto z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-top-4' : ''}`}
+                                        className={`fixed md:absolute top-1/2 ${isEmbedded ? 'md:top-6' : 'md:top-20'} left-1/2 md:left-auto md:right-6 md:bottom-auto z-[150] pointer-events-auto ${!isDraggingTour ? 'transition-transform duration-200 ease-out animate-in slide-in-from-top-4' : ''}`}
                                         style={{ transform: typeof window !== 'undefined' && window.innerWidth < 768 ? `translate(calc(-50% + ${tourModalPos.x}px), calc(-50% + ${tourModalPos.y}px)) scale(0.92)` : `translate(${tourModalPos.x}px, ${tourModalPos.y}px)`, transformOrigin: 'top right' }}
                                         onClick={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
@@ -8784,7 +8941,7 @@ Por favor, analicemos:
                                         onTouchEnd={e => e.stopPropagation()}
                                     >
                                         <div 
-                                            className="bg-zinc-950/85 border border-white/15 rounded-[1.75rem] p-3.5 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-2.5 w-[350px] sm:w-[380px] max-w-[94vw] max-h-[82vh] md:max-h-[510px] overflow-hidden relative transition-all duration-300"
+                                            className="bg-zinc-950/85 border border-white/15 rounded-[1.75rem] p-3.5 sm:p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-2.5 w-[360px] sm:w-[410px] max-w-[95vw] max-h-[84vh] md:max-h-[560px] overflow-hidden relative transition-all duration-300"
                                             style={{
                                                 boxShadow: `0 20px 50px rgba(0,0,0,0.8), 0 0 35px ${currentTheme.color}15`
                                             }}
@@ -9155,18 +9312,17 @@ Por favor, analicemos:
         )}
     </div>
 ) : (
-
-                                                        <div>
+                                                        <div className="flex flex-col gap-2.5 flex-1 min-h-0 overflow-y-auto custom-scroll pr-1 pb-1">
                                                             {/* Banner de confirmación cuando el nodo activo acaba de ser moldeado */}
                                                             {moldSuccessToast && moldSuccessToast.nodeId === currentNode.id && (
-                                                                <div className="mb-2.5 p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 to-zinc-900/80 border border-emerald-500/50 flex items-center gap-2.5 text-emerald-300 animate-in fade-in shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                                                                <div className="mb-1 p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 to-zinc-900/80 border border-emerald-500/50 flex items-center gap-2.5 text-emerald-300 animate-in fade-in shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                                                                     <Sparkles size={14} className="text-emerald-400 shrink-0 animate-pulse" />
                                                                     <span className="text-[10.5px] font-medium leading-snug">
                                                                         Factor reformulado exitosamente y red expandida. Se adaptaron también los factores corporales y emocionales vinculados.
                                                                     </span>
                                                                 </div>
                                                             )}
-                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
                                                                 <h4 className="text-xs sm:text-[14px] font-bold text-white leading-snug tracking-tight">
                                                                     {sanitizeSpanishText(currentNode.is_corrected ? currentNode.label : softenNodeLabel(currentNode.label))}
                                                                 </h4>
@@ -9179,7 +9335,7 @@ Por favor, analicemos:
 
                                                             {/* Apartado Destacado: Ajuste Clínico del Consultante / Terapeuta */}
                                                             {(currentNode.molded_note || currentNode.is_corrected) && (
-                                                                <div className="my-2.5 p-3 rounded-xl bg-gradient-to-br from-emerald-950/60 via-zinc-900/80 to-black/80 border border-emerald-500/40 space-y-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
+                                                                <div className="my-1.5 p-3 rounded-xl bg-gradient-to-br from-emerald-950/60 via-zinc-900/80 to-black/80 border border-emerald-500/40 space-y-2 shadow-[0_0_18px_rgba(16,185,129,0.12)]">
                                                                     <div className="flex items-center justify-between text-[9.5px] font-mono">
                                                                         <span className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                                                                             <Sparkles size={11} className="text-emerald-400 animate-pulse" />
@@ -9229,10 +9385,10 @@ Por favor, analicemos:
 
                                                             {getFallbackDescription(currentNode, user) && (
                                                                 <div className="flex flex-col gap-1.5 mt-0.5">
-                                                                    <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed line-clamp-3">
+                                                                    <p className="text-[10px] sm:text-[10.5px] text-zinc-400 font-sans leading-relaxed">
                                                                         {sanitizeSpanishText(getFallbackDescription(currentNode, user))}
                                                                     </p>
-                                                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -9241,10 +9397,10 @@ Por favor, analicemos:
                                                                                 setMoldFeedback(currentNode.molded_note || '');
                                                                                 setMoldCustomTitle('');
                                                                             }}
-                                                                            className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
+                                                                            className="inline-flex items-center gap-1.5 text-[9.5px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
                                                                             title="Dile a la IA qué está mal informado para que reformule el nodo y expanda la red"
                                                                         >
-                                                                            <Sparkles size={11} className="text-emerald-400" />
+                                                                            <Sparkles size={10} className="text-emerald-400" />
                                                                             <span>¿Información imprecisa? Moldear con IA</span>
                                                                         </button>
                                                                         <button
@@ -9252,78 +9408,243 @@ Por favor, analicemos:
                                                                                 e.stopPropagation();
                                                                                 handleDeleteNode(currentNode.id);
                                                                             }}
-                                                                            className="inline-flex items-center gap-1 text-[10px] text-zinc-400 hover:text-red-400 bg-white/[0.03] hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
+                                                                            className="inline-flex items-center gap-1 text-[9.5px] text-zinc-400 hover:text-red-400 bg-white/[0.03] hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 px-2 py-0.5 rounded-md transition-all w-fit"
                                                                             title="Descartar este factor y sus conexiones del mapa"
                                                                         >
-                                                                            <Trash2 size={10} />
+                                                                            <Trash2 size={9.5} />
                                                                             <span>Descartar nodo</span>
                                                                         </button>
                                                                     </div>
                                                                 </div>
                                                             )}
-                                                                    
-{(getFallbackQuestion(currentNode)) && (
-    <div className="mt-3 pt-3 border-t border-white/5">
-        <p className="text-[10.5px] text-zinc-300 font-medium italic mb-2 leading-relaxed">
-            {sanitizeSpanishText(getFallbackQuestion(currentNode))}
-        </p>
-        {(() => {
-            const chatData = nodeChats[currentNode.id];
-            let chatArray = [];
-            if (Array.isArray(chatData)) {
-                chatArray = Array.isArray(chatData[0]) ? chatData[0] : chatData;
-            } else if (chatData && typeof chatData === 'object') {
-                chatArray = chatData[0] || [];
-            }
-            const userMsg = chatArray.find(m => m?.role === 'user');
-            
-            if (userMsg) {
-                return (
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-md">
-                        <p className="text-[9.5px] text-emerald-300 leading-relaxed italic">
-                            "{userMsg.content}"
-                        </p>
-                    </div>
-                );
-            }
-            return (
-                <div className="flex gap-2">
-                    <input 
-                        id={`reflection-input-${currentNode.id}`}
-                        type="text" 
-                        placeholder="Escribe tu reflexión..." 
-                        autoComplete="off"
-                        className="flex-1 bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50"
-                        onKeyDown={(e) => {
-                            e.stopPropagation();
-                            if (e.key === 'Enter' && e.target.value.trim()) {
-                                const val = e.target.value.trim();
-                                setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: val }] }));
-                            }
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                    />
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            const input = document.getElementById(`reflection-input-${currentNode.id}`);
-                            if (input && input.value.trim()) {
-                                setNodeChats(prev => ({ ...prev, [currentNode.id]: [{ role: 'user', content: input.value.trim() }] }));
-                            }
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 py-1.5 px-3 rounded-md transition-colors border border-emerald-500/30 font-semibold"
-                    >
-                        Responder
-                    </button>
-                </div>
-            );
-        })()}
-    </div>
-)}
-                                                                </div>
+
+                                                            {/* 🌟 SECCIÓN DE EXPLORACIÓN PROFUNDA E HIPÓTESIS INTUITIVA */}
+                                                            {(() => {
+                                                                const nodeIncoming = (afcData?.edges || [])
+                                                                    .filter(e => e && e.target === currentNode.id)
+                                                                    .map(e => (afcData?.nodes || []).find(n => n && n.id === e.source))
+                                                                    .filter(Boolean);
+                                                                const nodeOutgoing = (afcData?.edges || [])
+                                                                    .filter(e => e && e.source === currentNode.id)
+                                                                    .map(e => (afcData?.nodes || []).find(n => n && n.id === e.target))
+                                                                    .filter(Boolean);
+                                                                const clinicalExploration = buildNodeClinicalExploration(currentNode, nodeIncoming, nodeOutgoing, user);
+
+                                                                const chatData = nodeChats[currentNode.id];
+                                                                let chatArray = [];
+                                                                if (Array.isArray(chatData)) {
+                                                                    chatArray = Array.isArray(chatData[0]) ? chatData[0] : chatData;
+                                                                } else if (chatData && typeof chatData === 'object') {
+                                                                    chatArray = chatData[0] || [];
+                                                                }
+                                                                const userMessages = chatArray.filter(m => m?.role === 'user');
+                                                                const lastUserMsg = userMessages[userMessages.length - 1];
+                                                                const assistantMessages = chatArray.filter(m => m?.role === 'assistant' && (m.isAIGenerated || m.isLoading));
+                                                                const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
+
+                                                                return (
+                                                                    <div className="mt-2 p-3 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-zinc-900/60 to-black/80 border border-indigo-500/30 space-y-2.5 shadow-[0_0_20px_rgba(99,102,241,0.08)]">
+                                                                        {/* Header de la exploración */}
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                                                                                <Compass size={11} className="text-indigo-400 animate-pulse" />
+                                                                                Lectura e Hipótesis del Mapa
+                                                                            </span>
+                                                                            {clinicalExploration?.incomingLabels?.length > 0 && (
+                                                                                <span className="text-[8px] font-mono text-zinc-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+                                                                                    {clinicalExploration.incomingLabels.length} antecedente{clinicalExploration.incomingLabels.length > 1 ? 's' : ''}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Conexión causal e hipótesis explicada */}
+                                                                        <div className="text-[9.5px] text-zinc-400 leading-snug bg-black/40 p-2.5 rounded-xl border border-white/5 space-y-1.5">
+                                                                            <p className="text-indigo-300 font-medium">
+                                                                                {clinicalExploration?.connectionSummary}
+                                                                            </p>
+                                                                            <p className="text-zinc-300 italic pt-1 border-t border-white/5 font-sans leading-relaxed">
+                                                                                "{clinicalExploration?.hypothesis}"
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Pregunta íntima específica */}
+                                                                        <div className="space-y-1">
+                                                                            <p className="text-[11px] text-white font-semibold leading-relaxed flex items-start gap-1.5">
+                                                                                <span className="text-indigo-400 font-mono text-xs mt-0.5">💬</span>
+                                                                                <span>{clinicalExploration?.question || getFallbackQuestion(currentNode)}</span>
+                                                                            </p>
+                                                                        </div>
+
+                                                                        {/* Interacción: Conversación / Devolución Clínica o Píldoras */}
+                                                                        {lastUserMsg ? (
+                                                                            <div className="space-y-2 pt-1 border-t border-white/10">
+                                                                                {/* Mensaje del consultante */}
+                                                                                <div className="bg-emerald-950/40 border border-emerald-500/30 p-2.5 rounded-xl space-y-1">
+                                                                                    <div className="flex items-center justify-between text-[8.5px] font-mono text-emerald-400">
+                                                                                        <span className="font-bold flex items-center gap-1">
+                                                                                            <Heart size={10} /> Tu vivencia
+                                                                                        </span>
+                                                                                        <span className="text-zinc-500 text-[8px]">Reflexión guardada</span>
+                                                                                    </div>
+                                                                                    <p className="text-[11px] text-emerald-200 leading-relaxed italic">
+                                                                                        "{lastUserMsg.content}"
+                                                                                    </p>
+                                                                                </div>
+
+                                                                                {/* Cargando respuesta IA */}
+                                                                                {isGeneratingExplorations && (
+                                                                                    <div className="bg-zinc-900/70 border border-indigo-500/30 p-2.5 rounded-xl flex items-center gap-2.5 text-indigo-300 animate-pulse">
+                                                                                        <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                                                                                        <span className="text-[10px] font-medium leading-snug">
+                                                                                            Kio está reflexionando con agudeza clínica sobre tu vivencia...
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Devolución de la IA */}
+                                                                                {!isGeneratingExplorations && lastAssistantMsg && lastAssistantMsg.content && (
+                                                                                    <div className="bg-black/60 border border-indigo-500/25 p-2.5 rounded-xl space-y-1.5 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
+                                                                                        <div className="flex items-center justify-between text-[8.5px] font-mono text-indigo-300">
+                                                                                            <span className="font-bold flex items-center gap-1">
+                                                                                                <Brain size={10} className="text-indigo-400" /> Devolución Clínica
+                                                                                            </span>
+                                                                                            <span className="text-zinc-500 text-[8px]">Kio IA</span>
+                                                                                        </div>
+                                                                                        <p className="text-[10.5px] text-zinc-100 font-sans leading-relaxed">
+                                                                                            {lastAssistantMsg.content}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Botón para adaptar factor con esta vivencia */}
+                                                                                <div className="pt-0.5">
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setEditingNodeId(currentNode.id);
+                                                                                            setEditTab('mold');
+                                                                                            setMoldFeedback(lastUserMsg.content);
+                                                                                            setMoldCustomTitle('');
+                                                                                        }}
+                                                                                        className="w-full flex items-center justify-center gap-1.5 text-[9.5px] py-1.5 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold transition-all"
+                                                                                        title="Reformular este factor en el mapa usando tu respuesta"
+                                                                                    >
+                                                                                        <Sparkles size={11} className="text-emerald-400" />
+                                                                                        <span>Moldear el factor con esta vivencia</span>
+                                                                                    </button>
+                                                                                </div>
+
+                                                                                {/* Input para seguir profundizando */}
+                                                                                <div className="flex gap-1.5 pt-1">
+                                                                                    <input
+                                                                                        id={`reflection-followup-${currentNode.id}`}
+                                                                                        type="text"
+                                                                                        placeholder="Profundizar o matizar algo más..."
+                                                                                        autoComplete="off"
+                                                                                        disabled={isGeneratingExplorations}
+                                                                                        className="flex-1 bg-black/50 border border-white/10 rounded-lg px-2.5 py-1 text-[10px] text-white focus:outline-none focus:border-indigo-500/50 placeholder:text-zinc-500"
+                                                                                        onKeyDown={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            if (e.key === 'Enter' && e.target.value.trim() && !isGeneratingExplorations) {
+                                                                                                const val = e.target.value.trim();
+                                                                                                e.target.value = '';
+                                                                                                sendNodeReflection(currentNode, val);
+                                                                                            }
+                                                                                        }}
+                                                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                                                        onTouchStart={(e) => e.stopPropagation()}
+                                                                                    />
+                                                                                    <button
+                                                                                        disabled={isGeneratingExplorations}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            const input = document.getElementById(`reflection-followup-${currentNode.id}`);
+                                                                                            if (input && input.value.trim() && !isGeneratingExplorations) {
+                                                                                                const val = input.value.trim();
+                                                                                                input.value = '';
+                                                                                                sendNodeReflection(currentNode, val);
+                                                                                            }
+                                                                                        }}
+                                                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                                                        onTouchStart={(e) => e.stopPropagation()}
+                                                                                        className="text-[9.5px] bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg transition-colors font-semibold disabled:opacity-40"
+                                                                                    >
+                                                                                        Enviar
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="space-y-2 pt-1">
+                                                                                {/* Píldoras de resonancia rápida */}
+                                                                                {clinicalExploration?.pills?.length > 0 && (
+                                                                                    <div className="flex flex-col gap-1.5">
+                                                                                        <span className="text-[8.5px] font-mono uppercase tracking-wider text-zinc-400">
+                                                                                            Opciones de resonancia rápida (toca una para explorar):
+                                                                                        </span>
+                                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                                            {clinicalExploration.pills.map((pill, idx) => (
+                                                                                                <button
+                                                                                                    key={idx}
+                                                                                                    disabled={isGeneratingExplorations}
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        sendNodeReflection(currentNode, pill.text);
+                                                                                                    }}
+                                                                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/40 text-[9.5px] text-zinc-300 hover:text-emerald-200 text-left transition-all group disabled:opacity-50 active:scale-95"
+                                                                                                >
+                                                                                                    <span className="text-xs group-hover:scale-110 transition-transform">{pill.icon}</span>
+                                                                                                    <span className="leading-snug">{pill.text}</span>
+                                                                                                </button>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Input libre para escribir con sus propias palabras */}
+                                                                                <div className="flex gap-2 pt-1 border-t border-white/5">
+                                                                                    <input
+                                                                                        id={`reflection-input-${currentNode.id}`}
+                                                                                        type="text"
+                                                                                        placeholder="O escribe con tus propias palabras qué significa para ti..."
+                                                                                        autoComplete="off"
+                                                                                        disabled={isGeneratingExplorations}
+                                                                                        className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50 placeholder:text-zinc-500"
+                                                                                        onKeyDown={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            if (e.key === 'Enter' && e.target.value.trim() && !isGeneratingExplorations) {
+                                                                                                const val = e.target.value.trim();
+                                                                                                e.target.value = '';
+                                                                                                sendNodeReflection(currentNode, val);
+                                                                                            }
+                                                                                        }}
+                                                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                                                        onTouchStart={(e) => e.stopPropagation()}
+                                                                                    />
+                                                                                    <button
+                                                                                        disabled={isGeneratingExplorations}
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            const input = document.getElementById(`reflection-input-${currentNode.id}`);
+                                                                                            if (input && input.value.trim() && !isGeneratingExplorations) {
+                                                                                                const val = input.value.trim();
+                                                                                                input.value = '';
+                                                                                                sendNodeReflection(currentNode, val);
+                                                                                            }
+                                                                                        }}
+                                                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                                                        onTouchStart={(e) => e.stopPropagation()}
+                                                                                        className="text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 py-1.5 px-3 rounded-xl transition-all border border-emerald-500/30 font-semibold disabled:opacity-50 flex items-center gap-1 shrink-0"
+                                                                                    >
+                                                                                        <Sparkles size={11} className="text-emerald-400" />
+                                                                                        <span>Responder</span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
                                                             )}
                                                         </div>
                                                 </>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import BitacoraExistencial from './components/BitacoraExistencial';
 import { createPortal } from 'react-dom';
 import {
@@ -2573,6 +2573,11 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 }
             }}
             onClick={handleNodeClick}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+            }}
         >
             <div
                 className={`relative flex flex-col ${isChildNote ? 'rounded-[1.25rem]' : (isMediaNode ? 'rounded-xl' : 'rounded-[2.5rem]')} border ${camScale > 0.5 ? 'shadow-[0_10px_40px_rgba(0,0,0,0.8)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : (isMediaNode ? 'bg-transparent border-transparent' : 'bg-gradient-to-br from-[#121214] to-[#080809] border-white/5'))))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-accent ring-1 ring-accent/20' : (isActive ? `border-accent ${camScale > 0.5 ? 'shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/5 hover:border-white/10')))} ${(!isMobileViewport() && draggingId !== block.id && !hasConnections && camScale > 0.5) ? 'ctr-node-float' : ''}`}
@@ -3076,12 +3081,36 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             })()}
                         </div>
                     ) : isImage ? (
-                        <div className="flex-1 w-full h-full relative">
+                        <div className="flex-1 w-full h-full relative group/media">
                             <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(block.content)} className="absolute inset-0 w-full h-full object-cover rounded-xl pointer-events-none" draggable={false} />
+                            {!showDeleteConfirm && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowDeleteConfirm(true);
+                                    }}
+                                    className="absolute top-2 right-2 z-30 p-2 rounded-xl bg-black/85 hover:bg-red-600 border border-white/20 hover:border-red-500 text-white/90 hover:text-white transition-all shadow-xl backdrop-blur-md opacity-0 group-hover/media:opacity-100 active:scale-95 pointer-events-auto"
+                                    title="Eliminar imagen del lienzo (Click derecho también disponible)"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            )}
                         </div>
                     ) : isVideo ? (
-                        <div className="flex-1 w-full h-full relative">
+                        <div className="flex-1 w-full h-full relative group/media">
                             <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover rounded-xl pointer-events-none" src={formatUrl(block.content)} draggable={false} />
+                            {!showDeleteConfirm && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowDeleteConfirm(true);
+                                    }}
+                                    className="absolute top-2 right-2 z-30 p-2 rounded-xl bg-black/85 hover:bg-red-600 border border-white/20 hover:border-red-500 text-white/90 hover:text-white transition-all shadow-xl backdrop-blur-md opacity-0 group-hover/media:opacity-100 active:scale-95 pointer-events-auto"
+                                    title="Eliminar video del lienzo (Click derecho también disponible)"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            )}
                         </div>
                     ) : null}
                 </div>
@@ -3257,36 +3286,48 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
 
-                {/* CONFIRMATION DIALOG */}
+                {/* CONFIRMATION DIALOG - GRANDE Y VISIBLE */}
                 {showDeleteConfirm && (
                     <div
-                        className="absolute inset-0 bg-black/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+                        className="absolute inset-0 bg-black/92 backdrop-blur-lg z-[200] flex flex-col items-center justify-center p-3 sm:p-5 animate-in fade-in zoom-in-95 duration-150 border border-red-500/40 rounded-inherit pointer-events-auto"
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="text-center space-y-4 max-w-[240px] px-2">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 leading-relaxed">
-                                ¿Eliminar esta nota del mural?
+                        <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 mb-2.5 shadow-[0_0_25px_rgba(239,68,68,0.25)] shrink-0">
+                            <Trash2 size={24} className="animate-pulse" />
+                        </div>
+
+                        <div className="text-center space-y-1 max-w-[280px] px-1 mb-3">
+                            <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide">
+                                {isImage ? '¿Eliminar imagen?' : (isVideo ? '¿Eliminar video?' : '¿Eliminar del lienzo?')}
+                            </h4>
+                            <p className="text-[10px] sm:text-[11px] text-zinc-400 leading-snug">
+                                Se quitará permanentemente este elemento de tu pizarra.
                             </p>
-                            <div className="flex gap-2 justify-center pt-2">
-                                <button
-                                    onPointerDown={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }}
-                                    className="px-4 py-2 border border-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onPointerDown={(e) => {
-                                        e.stopPropagation();
-                                        onDelete(block.id);
-                                        setShowDeleteConfirm(false);
-                                    }}
-                                    className="px-4 py-2 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
-                                    style={{ backgroundColor: '#dc2626' }}
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2 w-full max-w-[220px]">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(block.id);
+                                    setShowDeleteConfirm(false);
+                                }}
+                                className="flex-1 py-2 sm:py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white text-[11px] sm:text-xs font-bold rounded-xl shadow-lg shadow-red-950/60 uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 border border-red-400/30"
+                            >
+                                <Trash2 size={13} />
+                                <span>Eliminar</span>
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteConfirm(false);
+                                }}
+                                className="py-2 sm:py-2.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[11px] sm:text-xs font-bold rounded-xl shadow border border-white/10 uppercase tracking-wider transition-all active:scale-95"
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 )}
@@ -3437,6 +3478,7 @@ const ProfileView = ({
 
     const [activePurchasingId, setActivePurchasingId] = useState(null);
     const [activeSuccessId, setActiveSuccessId] = useState(null);
+    const [isFirmaExpanded, setIsFirmaExpanded] = useState(false);
 
     React.useEffect(() => {
         if (isEditingProfile) return; // No sobreescribir mientras el usuario edita
@@ -3882,7 +3924,7 @@ const ProfileView = ({
 
     return (
         <div
-            className="fixed inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-md text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
+            className="fixed inset-x-0 md:inset-x-4 lg:inset-x-8 xl:inset-x-12 top-[68px] md:top-[80px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
             onTouchStart={(e) => {
                 e.stopPropagation();
                 const touch = e.touches[0];
@@ -3967,409 +4009,587 @@ const ProfileView = ({
                     />
                 </div>
 
-                {/* IG STYLE PROFILE (CONSOLIDATED) */}
+                {/* MODERN ASYMMETRICAL LEFT-ALIGNED PROFILE */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-[100px] sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-20 sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
                 >
-                    <div className="w-full max-w-4xl mx-auto px-4 sm:px-4 md:px-8 flex flex-col pointer-events-auto">
+                    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-8 xl:gap-10 pointer-events-auto">
 
-                        {/* Top Stats Section */}
-                        <div className="flex items-center gap-4 sm:gap-6 md:gap-10 mb-4 sm:mb-6 mt-4">
-                            {/* Avatar */}
-                            <div className="relative shrink-0">
-                                <div className={`w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar`} onClick={(e) => {
-                                    if (hasActiveStories && !isEditingProfile) {
-                                        setViewing24hStories(user24hStories);
-                                    } else {
-                                        handleAvatarClick(e);
-                                    }
-                                }}>
-                                    <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900">
-                                        <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(avatar)} className="w-full h-full object-cover" />
-                                    </div>
-                                    {isEditingProfile && (
-                                        <div className="absolute inset-0 m-[2px] rounded-full bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
-                                            <Camera size={12} className="text-white mb-0.5" />
-                                            <span className="text-[5px] font-black uppercase tracking-widest text-white">Cambiar</span>
+                        {/* LEFT COLUMN: IDENTIDAD, BIO, FIRMA COMPACTA Y ACCIONES */}
+                        <div className="w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col gap-4">
+
+                            {/* Card Principal de Identidad */}
+                            <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
+                                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+
+                                <div className="flex items-center gap-4">
+                                    {/* Avatar */}
+                                    <div className="relative shrink-0">
+                                        <div
+                                            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full p-[2.5px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-gradient-to-tr from-white/20 to-white/5'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all`}
+                                            onClick={(e) => {
+                                                if (hasActiveStories && !isEditingProfile) {
+                                                    setViewing24hStories(user24hStories);
+                                                } else {
+                                                    handleAvatarClick(e);
+                                                }
+                                            }}
+                                        >
+                                            <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900">
+                                                <img
+                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                    src={formatUrl(avatar)}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            {isEditingProfile && (
+                                                <div className="absolute inset-0 m-[2.5px] rounded-full bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                    <Camera size={14} className="text-white mb-0.5" />
+                                                    <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                                <div onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }} className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white transition-colors z-10 shadow-lg">
-                                    <Plus size={10} strokeWidth={3} className="sm:w-3.5 sm:h-3.5" />
-                                </div>
-                            </div>
+                                        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
+                                        <div
+                                            onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
+                                            className="absolute bottom-0 right-0 w-6 h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
+                                            title="Subir historia"
+                                        >
+                                            <Plus size={11} strokeWidth={3} />
+                                        </div>
+                                    </div>
 
-                            {/* Stats */}
-                            <div className="flex-1 flex justify-around md:justify-start md:gap-12 items-center">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">{(feed || []).filter(b => b.username === user).length}</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">publicaciones</span>
+                                    {/* Nombre & Badges */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <h2 className="text-base sm:text-lg font-bold text-white leading-tight truncate">{fullName || user}</h2>
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
+                                        </div>
+                                        <span className="text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{user}</span>
+                                        <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
+                                            <Sparkles size={8} className="text-accent" />
+                                            <span>Creador // Explorador</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">resonancias</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-sm sm:text-base md:text-xl font-bold">0</span>
-                                    <span className="text-[9px] sm:text-[10px] md:text-xs text-zinc-400">conexiones</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Bio and Highlights Side-by-Side Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 mb-4 sm:mb-6 mt-4 sm:mt-2">
-                            {/* Biography Card (curved rectangle module) */}
-                            <div className="md:col-span-8 bg-zinc-900/60 border border-white/5 rounded-xl p-3 sm:p-4 backdrop-blur-sm shadow-lg flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-1 sm:mb-0.5">
+                                {/* Bio & Links */}
+                                {isEditingProfile ? (
+                                    <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
                                         <div>
-                                            <h2 className="text-sm sm:text-sm font-bold text-white leading-tight">{user}</h2>
-                                            <span className="text-[10px] sm:text-[10px] text-zinc-500 font-mono tracking-wider uppercase leading-tight block mt-0.5">Creador / Explorador</span>
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Nombre para mostrar</span>
+                                            <input
+                                                type="text"
+                                                value={fullName}
+                                                onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans"
+                                                placeholder="Tu nombre o alias..."
+                                            />
                                         </div>
-                                    </div>
-                                    {isEditingProfile ? (
-                                        <div className="flex flex-col gap-1 mt-1">
+                                        <div>
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Biografía</span>
                                             <textarea
                                                 value={bio}
                                                 onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[8px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[40px]"
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[60px]"
                                                 placeholder="Descripción o biografía..."
                                             />
+                                        </div>
+                                        <div>
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Enlace o sitio web</span>
                                             <div className="flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden focus-within:border-white/30 transition-all">
-                                                <div className="pl-1.5 pr-1 text-zinc-500"><LinkIcon size={8} /></div>
+                                                <div className="pl-2 pr-1 text-zinc-500"><LinkIcon size={11} /></div>
                                                 <input
                                                     type="url"
                                                     value={profileLink}
                                                     onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
-                                                    className="w-full bg-transparent p-1 text-[8px] text-accent outline-none font-sans"
+                                                    className="w-full bg-transparent p-2 text-xs text-accent outline-none font-sans"
                                                     placeholder="https://tupagina.com"
                                                 />
                                             </div>
                                         </div>
-                                    ) : (
-                                        <>
-                                            <p className="text-[8px] sm:text-xs leading-snug text-zinc-300 font-sans mt-1 mb-1 sm:mb-3 whitespace-pre-wrap">
-                                                {bio || 'Explorando el ruido interior.'}
-                                            </p>
-                                            {profileLink && (
-                                                <a href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5 break-all mt-auto">
-                                                    <LinkIcon size={12} className="shrink-0 scale-90 sm:scale-100" />
-                                                    {profileLink.replace(/^https?:\/\//, '')}
-                                                </a>
-                                            )}
-                                            {(() => {
-                                                let resonanceData = null;
-                                                try {
-                                                    const saved = localStorage.getItem(`oasis_public_traits_${user}`);
-                                                    if (saved) {
-                                                        const parsed = JSON.parse(saved);
-                                                        if (parsed?.sintesis || parsed?.Sintesis) {
-                                                            resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
-                                                        } else if (parsed?.habitar || parsed?.Habitar) {
-                                                            resonanceData = {
-                                                                habitar: parsed?.habitar || parsed?.Habitar,
-                                                                vinculo: parsed?.vinculo || parsed?.Vinculo || '',
-                                                                busqueda: parsed?.busqueda || parsed?.Busqueda || ''
-                                                            };
-                                                        }
-                                                    }
-                                                } catch(e) {}
-                                                if (!resonanceData) return null;
-                                                return (
-                                                    <div className="mt-2 pt-2 border-t border-white/5 w-full space-y-2">
-                                                        <div className="flex items-center gap-1.5 mb-1">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                                            <span className="text-[8px] sm:text-[9px] font-bold text-zinc-300 tracking-wide uppercase font-mono">Firma de Resonancia Existencial</span>
-                                                        </div>
-                                                        {resonanceData.sintesis ? (
-                                                            <p className="text-[9px] sm:text-[11px] text-zinc-300 font-sans leading-normal italic pr-2 border-l-2 border-white/10 pl-2.5 py-1">"{resonanceData.sintesis}"</p>
-                                                        ) : (
-                                                            <>
-                                                                <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">âŠ™</span> Habitar</span>
-                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.habitar}"</p>
-                                                                </div>
-                                                                <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">â˜</span> Vínculo</span>
-                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.vinculo}"</p>
-                                                                </div>
-                                                                <div className="space-y-0.5">
-                                                                    <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1"><span className="text-[10px]">âŒ–</span> Búsqueda</span>
-                                                                    <p className="text-[8px] sm:text-[10px] text-zinc-300 font-sans leading-normal italic pr-2">"{resonanceData.busqueda}"</p>
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Highlights Card (new highlighted stories next to Bio) */}
-                            <div className="md:col-span-4 bg-zinc-900/40 border border-white/5 rounded-xl py-1.5 px-3 sm:p-4 backdrop-blur-sm shadow-md flex flex-col">
-                                <span className="text-[8px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1 sm:mb-3">Destacados</span>
-                                <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5 flex-1">
-                                    <div className="flex flex-col items-center gap-0.5 shrink-0 cursor-pointer group" onClick={() => setIsHighlightModalOpen(true)}>
-                                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border border-white/10 p-[1.5px] group-hover:border-white/30 transition-colors">
-                                            <div className="w-full h-full rounded-full bg-zinc-950 overflow-hidden flex items-center justify-center">
-                                                <Plus size={14} className="text-zinc-500 group-hover:text-white transition-colors" />
-                                            </div>
-                                        </div>
-                                        <span className="text-[8px] text-zinc-400 font-medium">Nuevo</span>
                                     </div>
-                                    {(feed || []).filter(b => b.username === user && b.type === 'highlight').map((h, i) => (
-                                        <div key={i} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group" onClick={() => setSelectedHighlight(h)}>
-                                            <div className="w-12 h-12 rounded-full border border-white/10 p-[1.5px] group-hover:border-white/30 transition-colors">
-                                                <div className="w-full h-full rounded-full bg-zinc-950 overflow-hidden flex items-center justify-center">
-                                                    {h.metadata?.thumbnail ? <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(h.metadata.thumbnail)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" /> : <div className="w-full h-full bg-accent/10" />}
-                                                </div>
-                                            </div>
-                                            <span className="text-[9px] text-zinc-400 font-medium truncate max-w-[48px]">{typeof h.content === 'string' ? h.content : ''}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                                ) : (
+                                    <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                                        <p className="text-xs leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap">
+                                            {bio || 'Explorando el ruido interior.'}
+                                        </p>
+                                        {profileLink && (
+                                            <a
+                                                href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5 break-all group/link"
+                                            >
+                                                <LinkIcon size={12} className="shrink-0 group-hover/link:rotate-45 transition-transform" />
+                                                <span>{profileLink.replace(/^https?:\/\//, '')}</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 mb-2 sm:mb-6">
-                            <button
-                                onClick={() => {
-                                    if (isEditingProfile && onSaveProfile) {
-                                        onSaveProfile({ fullName, bio, profileLink });
-                                    }
-                                    setIsEditingProfile(!isEditingProfile);
-                                }}
-                                className={`flex-1 py-1.5 rounded-lg text-[10px] sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${isEditingProfile ? 'bg-accent text-black' : 'bg-white/10 hover:bg-white/15'}`}
-                            >
-                                {isEditingProfile ? 'Guardar Cambios' : 'Editar perfil'}
-                            </button>
-
-
-                            <button onClick={() => setIsSettingsOpen(true)} className="px-2.5 bg-white/10 hover:bg-white/15 py-0.5 sm:py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center justify-center">
-                                <Settings size={16} />
-                            </button>
-                        </div>
-
-                        {/* Carta de Vibracion Existencial (Personal) */}
-
-
-                        {/* Products Showcase (New section replacing old Highlights) */}
-                        {(() => {
-                            const linkedPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight' && ((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
-                            return (
-                                <div className="mb-4 sm:mb-8">
-                                    <div className="flex items-center justify-between mb-1.5 sm:mb-3 px-1">
-                                        <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                                            <ShoppingBag size={10} className="text-zinc-500" />
-                                            <span>Productos & Enlaces ({linkedPosts.length})</span>
+                                {/* Barra de Estadísticas */}
+                                <div className="grid grid-cols-3 gap-1 bg-black/40 border border-white/5 rounded-xl p-2 text-center">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-sm font-bold text-white font-mono">{(feed || []).filter(b => b.username === user).length}</span>
+                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Posts</span>
+                                    </div>
+                                    <div className="flex flex-col items-center border-x border-white/5">
+                                        <span className="text-sm font-bold text-accent font-mono">
+                                            {(feed || []).filter(b => b.username === user && (b.metadata?.resonanceScore > 0 || (b.content && typeof b.content === 'string' && b.content.includes('[resonancia]')))).length}
                                         </span>
+                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Resonancias</span>
                                     </div>
-
-                                    {linkedPosts.length === 0 ? (
-                                        <div className="w-full py-4 border border-dashed border-white/5 bg-zinc-950/40 rounded-xl flex items-center justify-center text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                                            No hay productos publicados por ahora
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-3 gap-2 pb-2">
-                                            {linkedPosts.map((prod) => {
-                                                const id = prod.id;
-
-                                                // Extract data
-                                                let title = prod.caption || '';
-                                                if (!title && prod.content && typeof prod.content === 'string') {
-                                                    title = prod.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().substring(0, 32);
-                                                }
-                                                if (!title) title = 'Producto';
-
-                                                let price = prod.metadata?.price;
-                                                if (!price && prod.content && typeof prod.content === 'string') {
-                                                    const match = prod.content.match(/\$\d+(?:\.\d{2})?/);
-                                                    if (match) price = match[0];
-                                                }
-                                                if (!price) price = 'Ver';
-
-                                                const link = prod.metadata?.buyLink;
-                                                const postImg = getBlockPreviewImage(prod);
-                                                const postVid = getBlockPreviewVideo(prod);
-
-                                                return (
-                                                    <div
-                                                        key={id}
-                                                        className="w-full aspect-square rounded-xl border border-white/5 relative group/prod-card overflow-hidden"
-                                                    >
-                                                        {postImg ? (
-                                                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={postImg} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/prod-card:scale-105" />
-                                                        ) : postVid ? (
-                                                            <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={postVid} className="absolute inset-0 w-full h-full object-cover" muted loop playsInline autoPlay />
-                                                        ) : (
-                                                            <div className="absolute inset-0 bg-[#0d0d10]" />
-                                                        )}
-                                                        {postVid && (
-                                                            <div className="absolute top-1 right-1 p-0.5 bg-black/60 rounded text-white z-10">
-                                                                <Film size={8} />
-                                                            </div>
-                                                        )}
-
-                                                        {/* Elegant Dark Overlay with Content */}
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-black/10 flex flex-col justify-between p-2">
-                                                            {/* Top row - Price Badge */}
-                                                            <span className="self-start px-1.5 py-0.5 rounded bg-black/75 border border-white/5 text-[7px] md:text-[8px] font-mono font-bold text-accent">
-                                                                {price}
-                                                            </span>
-
-                                                            {/* Bottom row - Title and Button */}
-                                                            <div className="flex flex-col gap-1 w-full">
-                                                                <h4 className="text-[8px] md:text-[9px] font-bold text-white tracking-tight line-clamp-1 text-center w-full">
-                                                                    {title}
-                                                                </h4>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleProductBuyClick(id, link);
-                                                                    }}
-                                                                    disabled={activePurchasingId === id}
-                                                                    className={`w-full py-1 rounded-md text-[7px] md:text-[8px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1 ${activeSuccessId === id
-                                                                        ? 'bg-emerald-500 text-white'
-                                                                        : (activePurchasingId === id
-                                                                            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                                                            : 'bg-white/10 hover:bg-accent text-white hover:text-black border border-white/10 hover:border-transparent hover:scale-[1.02] active:scale-[0.98] shadow-lg')
-                                                                        }`}
-                                                                >
-                                                                    {activePurchasingId === id && (
-                                                                        <div className="w-2 h-2 border border-zinc-500 border-t-zinc-300 rounded-full animate-spin" />
-                                                                    )}
-                                                                    {activeSuccessId === id ? 'Listo' : (activePurchasingId === id ? '...' : 'Comprar')}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-sm font-bold text-white font-mono">{(soulPieces || []).length || 0}</span>
+                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Conexiones</span>
+                                    </div>
                                 </div>
-                            );
-                        })()}
 
+                                {/* Botones de Acción */}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            if (isEditingProfile && onSaveProfile) {
+                                                onSaveProfile({ fullName, bio, profileLink });
+                                            }
+                                            setIsEditingProfile(!isEditingProfile);
+                                        }}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${isEditingProfile ? 'bg-accent text-black hover:bg-accent/90' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
+                                    >
+                                        {isEditingProfile ? (
+                                            <>
+                                                <Check size={13} strokeWidth={2.5} /> Guardar Cambios
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Edit2 size={13} /> Editar perfil
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setIsSettingsOpen(true)}
+                                        className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-zinc-300 hover:text-white transition-all shadow-lg"
+                                        title="Ajustes de cuenta"
+                                    >
+                                        <Settings size={15} />
+                                    </button>
+                                </div>
+                            </div>
 
-                        {/* Tabs */}
-                        <div className="flex items-center justify-around border-t border-white/10 w-full">
-                            <button
-                                onClick={() => setReleaseTab('posts')}
-                                className={`flex-1 flex justify-center py-2 sm:py-3 border-t-2 transition-all ${releaseTab === 'posts' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-white'}`}
-                            >
-                                <LayoutGrid size={16} className="sm:w-5 sm:h-5" />
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setReleaseTab('saved');
-                                    reloadSaved();
-                                }}
-                                className={`flex-1 flex justify-center py-3 border-t-2 transition-all ${releaseTab === 'saved' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-white'}`}
-                            >
-                                <Bookmark size={16} className="sm:w-5 sm:h-5" />
-                            </button>
-                            <button
-                                onClick={() => setReleaseTab('resonance')}
-                                className={`flex-1 flex justify-center py-3 border-t-2 transition-all ${releaseTab === 'resonance' ? 'border-white text-white' : 'border-transparent text-zinc-500 hover:text-white'}`}
-                            >
-                                <Sparkles size={16} className="sm:w-5 sm:h-5" />
-                            </button>
-                        </div>
-
-                        {/* Grid */}
-                        <div className="w-full pb-10">
+                            {/* FIRMA DE RESONANCIA EXISTENCIAL (COMPACTA Y DESPLEGABLE) */}
                             {(() => {
-                                const userPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight');
-                                let tabFilteredPosts = userPosts;
-                                if (releaseTab === 'posts') {
-                                    tabFilteredPosts = userPosts.filter(b => !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
-                                } else if (releaseTab === 'linked') {
-                                    tabFilteredPosts = userPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
-                                } else if (releaseTab === 'saved') {
-                                    tabFilteredPosts = (feed || []).filter(b => savedPostIds.includes(b.id));
-                                } else if (releaseTab === 'resonance') {
-                                    tabFilteredPosts = userPosts.filter(b => {
-                                        const hasScore = b.metadata?.resonanceScore > 0;
-                                        const hasTag = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                        return (hasScore || hasTag) && !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
-                                    });
-                                }
+                                let resonanceData = null;
+                                try {
+                                    const saved = localStorage.getItem(`oasis_public_traits_${user}`);
+                                    if (saved) {
+                                        const parsed = JSON.parse(saved);
+                                        if (parsed?.sintesis || parsed?.Sintesis) {
+                                            resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
+                                        } else if (parsed?.habitar || parsed?.Habitar) {
+                                            resonanceData = {
+                                                habitar: parsed?.habitar || parsed?.Habitar,
+                                                vinculo: parsed?.vinculo || parsed?.Vinculo || '',
+                                                busqueda: parsed?.busqueda || parsed?.Busqueda || ''
+                                            };
+                                        }
+                                    }
+                                } catch(e) {}
+                                if (!resonanceData) return null;
 
-                                if (tabFilteredPosts.length === 0) {
-                                    return (
-                                        <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[9px] uppercase tracking-widest gap-2 py-16">
-                                            <span>Sin publicaciones en esta categoría</span>
-                                        </div>
-                                    );
-                                }
+                                const previewSnippet = resonanceData.sintesis
+                                    ? resonanceData.sintesis
+                                    : [resonanceData.habitar, resonanceData.vinculo].filter(Boolean).join(' · ');
 
                                 return (
-                                    <div className="grid grid-cols-3 gap-1 md:gap-1.5 w-full">
-                                        {tabFilteredPosts.map((post, index) => {
-                                            const postImg = getBlockPreviewImage(post);
-                                            const postVid = getBlockPreviewVideo(post);
-                                            const cleanText = post.metadata?.feedText || ((post.content && typeof post.content === 'string') ? post.content.split('\n').filter(l => typeof l === 'string' && !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n') : '') || '';
+                                    <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-md transition-all">
+                                        <div
+                                            className="flex items-center justify-between cursor-pointer select-none group"
+                                            onClick={() => setIsFirmaExpanded(!isFirmaExpanded)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                                <span className="text-[9px] font-bold text-zinc-300 tracking-wider uppercase font-mono group-hover:text-white transition-colors">
+                                                    Firma de Resonancia
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[8px] font-mono text-zinc-400 group-hover:border-white/20 transition-all">
+                                                <span>{isFirmaExpanded ? 'Ocultar' : 'Ver firma'}</span>
+                                                <ChevronDown size={11} className={`transition-transform duration-300 ${isFirmaExpanded ? 'rotate-180' : ''}`} />
+                                            </div>
+                                        </div>
 
-                                            return (
-                                                <div
-                                                    key={post.id || index}
-                                                    onClick={() => {
-                                                        if (onNavigateToFeedPost) {
-                                                            onNavigateToFeedPost(post.id);
-                                                        }
-                                                    }}
-                                                    className="aspect-square w-full bg-zinc-900 relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-transform duration-300"
-                                                >
-                                                    {postImg ? (
-                                                        <>
-                                                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={postImg} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                                                            {postVid && (
-                                                                <div className="absolute top-2 right-2 text-white drop-shadow-md">
-                                                                    <Film size={16} fill="white" />
-                                                                </div>
-                                                            )}
-                                                            {(post.metadata?.buyLink || post.metadata?.price) && (
-                                                                <div className="absolute bottom-2 left-2 text-white drop-shadow-md">
-                                                                    <ShoppingBag size={14} fill="white" />
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    ) : postVid ? (
-                                                        <>
-                                                            <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={postVid} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" muted loop playsInline onMouseEnter={e => e.target.play().catch(() => { })} onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }} />
-                                                            <div className="absolute top-2 right-2 text-white drop-shadow-md">
-                                                                <Film size={16} fill="white" />
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <div className="w-full h-full flex flex-col justify-between p-2 relative bg-zinc-800">
-                                                            <div className="absolute top-2 right-2 text-white/50">
-                                                                <FileText size={14} />
-                                                            </div>
-                                                            <p className="text-[8px] md:text-[10px] font-sans text-white/90 line-clamp-5 md:line-clamp-6 leading-relaxed mt-2">
-                                                                {cleanText}
-                                                            </p>
+                                        {/* Estado Compacto (Previa de 1 línea) */}
+                                        {!isFirmaExpanded && (
+                                            <p
+                                                onClick={() => setIsFirmaExpanded(true)}
+                                                className="text-[9px] text-zinc-400 font-sans italic mt-1.5 line-clamp-1 cursor-pointer hover:text-zinc-200 transition-colors"
+                                            >
+                                                "{previewSnippet}"
+                                            </p>
+                                        )}
+
+                                        {/* Estado Expandido Completo */}
+                                        {isFirmaExpanded && (
+                                            <div className="mt-3 pt-2.5 border-t border-white/5 space-y-2 animate-in fade-in duration-300">
+                                                {resonanceData.sintesis ? (
+                                                    <p className="text-[10px] text-zinc-300 font-sans leading-relaxed italic border-l-2 border-accent/40 pl-2.5 py-1">
+                                                        "{resonanceData.sintesis}"
+                                                    </p>
+                                                ) : (
+                                                    <div className="space-y-1.5">
+                                                        <div className="space-y-0.5">
+                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">⊙ Habitar</span>
+                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.habitar}"</p>
                                                         </div>
-                                                    )}
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
-                                                        {post.metadata?.resonanceScore > 0 && (
-                                                            <div className="flex items-center gap-1 text-white text-xs font-bold">
-                                                                <Activity size={14} /> {post.metadata.resonanceScore}
-                                                            </div>
-                                                        )}
+                                                        <div className="space-y-0.5">
+                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">∼ Vínculo</span>
+                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.vinculo}"</p>
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">⌖ Búsqueda</span>
+                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.busqueda}"</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })()}
+                        </div>
+
+                        {/* RIGHT COLUMN: MOMENTOS DESTACADOS, VITRINA CREATIVA Y GALERÍA */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-6">
+
+                            {/* 1. SECCIÓN DE MOMENTOS DESTACADOS */}
+                            <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <Sparkles size={11} className="text-accent" />
+                                        <span>Momentos Destacados</span>
+                                    </span>
+                                    <button
+                                        onClick={() => setIsHighlightModalOpen(true)}
+                                        className="text-[9px] font-mono text-accent hover:underline flex items-center gap-1 transition-all"
+                                    >
+                                        <Plus size={10} /> Añadir
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
+                                    {/* Botón Nuevo Destacado */}
+                                    <div
+                                        className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                                        onClick={() => setIsHighlightModalOpen(true)}
+                                    >
+                                        <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-dashed border-white/20 group-hover:border-accent p-[2px] transition-all flex items-center justify-center bg-white/5 group-hover:bg-accent/10">
+                                            <Plus size={16} className="text-zinc-400 group-hover:text-accent transition-colors" />
+                                        </div>
+                                        <span className="text-[9px] text-zinc-400 font-mono">Nuevo</span>
+                                    </div>
+
+                                    {/* Lista de Destacados */}
+                                    {(feed || []).filter(b => b.username === user && b.type === 'highlight').map((h, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                                            onClick={() => setSelectedHighlight(h)}
+                                        >
+                                            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border-2 border-white/15 group-hover:border-accent p-[2px] transition-all shadow-md">
+                                                <div className="w-full h-full rounded-full bg-zinc-950 overflow-hidden flex items-center justify-center">
+                                                    {h.metadata?.thumbnail ? (
+                                                        <img
+                                                            onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                            src={formatUrl(h.metadata.thumbnail)}
+                                                            className="w-full h-full object-cover opacity-85 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-accent/10 flex items-center justify-center text-accent">
+                                                            <Sparkles size={14} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] text-zinc-300 font-medium truncate max-w-[56px] text-center">
+                                                {typeof h.content === 'string' ? h.content : 'Destacado'}
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                    {(feed || []).filter(b => b.username === user && b.type === 'highlight').length === 0 && (
+                                        <div
+                                            onClick={() => setIsHighlightModalOpen(true)}
+                                            className="flex-1 py-2 px-3 border border-dashed border-white/10 rounded-xl flex items-center gap-2 cursor-pointer hover:border-white/20 transition-all text-zinc-500 hover:text-zinc-300"
+                                        >
+                                            <Sparkles size={12} className="shrink-0 text-accent/60" />
+                                            <span className="text-[9px] font-mono leading-tight">Inmortaliza tus mejores notas o recuerdos en tu perfil</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 2. VITRINA CREATIVA // ENLACES Y PRODUCTOS */}
+                            {(() => {
+                                const linkedPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight' && ((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
+
+                                return (
+                                    <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <ShoppingBag size={12} className="text-accent" />
+                                                <span className="text-[10px] font-mono text-zinc-300 uppercase tracking-widest font-bold">
+                                                    Vitrina Creativa & Enlaces
+                                                </span>
+                                                <span className="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[8px] font-mono">
+                                                    {linkedPosts.length}
+                                                </span>
+                                            </div>
+                                            <span className="text-[8px] font-mono text-zinc-500">Obras y enlaces públicos</span>
+                                        </div>
+
+                                        {linkedPosts.length === 0 ? (
+                                            /* Tarjeta Cool de Vitrina Vacía */
+                                            <div className="w-full bg-gradient-to-r from-zinc-950/80 to-zinc-900/40 border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 text-accent mt-0.5">
+                                                        <Sparkles size={16} />
+                                                    </div>
+                                                    <div className="space-y-1 text-center sm:text-left">
+                                                        <h4 className="text-xs font-bold text-white tracking-wide">Tu vitrina está lista para exhibir</h4>
+                                                        <p className="text-[9px] text-zinc-400 font-sans leading-relaxed max-w-md">
+                                                            Asigna un precio (<span className="text-accent">$</span>) o enlace de compra a cualquier nota en el pizarrón para exhibirla aquí como pieza, producto o servicio.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setView('canvas')}
+                                                    className="px-3.5 py-2 bg-white/10 hover:bg-accent hover:text-black border border-white/15 hover:border-transparent rounded-xl text-[9px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 shrink-0 shadow-lg"
+                                                >
+                                                    <Compass size={11} /> Ir al Pizarrón
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {linkedPosts.map((prod) => {
+                                                    const id = prod.id;
+                                                    let title = prod.caption || '';
+                                                    if (!title && prod.content && typeof prod.content === 'string') {
+                                                        title = prod.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().substring(0, 32);
+                                                    }
+                                                    if (!title) title = 'Creación';
+
+                                                    let price = prod.metadata?.price;
+                                                    if (!price && prod.content && typeof prod.content === 'string') {
+                                                        const match = prod.content.match(/\$\d+(?:\.\d{2})?/);
+                                                        if (match) price = match[0];
+                                                    }
+                                                    if (!price) price = 'Ver';
+
+                                                    const link = prod.metadata?.buyLink;
+                                                    const postImg = getBlockPreviewImage(prod);
+                                                    const postVid = getBlockPreviewVideo(prod);
+
+                                                    return (
+                                                        <div
+                                                            key={id}
+                                                            className="w-full aspect-[4/3] rounded-xl border border-white/10 hover:border-accent/40 relative group/prod-card overflow-hidden shadow-lg transition-all duration-300"
+                                                        >
+                                                            {postImg ? (
+                                                                <img
+                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                                    src={postImg}
+                                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/prod-card:scale-105"
+                                                                />
+                                                            ) : postVid ? (
+                                                                <video
+                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
+                                                                    src={postVid}
+                                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                                    muted loop playsInline autoPlay
+                                                                />
+                                                            ) : (
+                                                                <div className="absolute inset-0 bg-[#0d0d10]" />
+                                                            )}
+                                                            {postVid && (
+                                                                <div className="absolute top-1.5 right-1.5 p-1 bg-black/60 backdrop-blur-sm rounded-md text-white z-10">
+                                                                    <Film size={9} />
+                                                                </div>
+                                                            )}
+
+                                                            {/* Overlay con Información y Acción */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-between p-2.5">
+                                                                <span className="self-start px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[8px] font-mono font-bold text-accent shadow-md">
+                                                                    {price}
+                                                                </span>
+
+                                                                <div className="flex flex-col gap-1.5 w-full">
+                                                                    <h4 className="text-[10px] font-bold text-white tracking-tight line-clamp-1">
+                                                                        {title}
+                                                                    </h4>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleProductBuyClick(id, link);
+                                                                        }}
+                                                                        disabled={activePurchasingId === id}
+                                                                        className={`w-full py-1.5 rounded-lg text-[8px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1 ${
+                                                                            activeSuccessId === id
+                                                                                ? 'bg-emerald-500 text-white'
+                                                                                : (activePurchasingId === id
+                                                                                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                                                                                    : 'bg-white/15 hover:bg-accent text-white hover:text-black border border-white/10 hover:border-transparent shadow-lg')
+                                                                        }`}
+                                                                    >
+                                                                        {activePurchasingId === id && (
+                                                                            <div className="w-2.5 h-2.5 border border-zinc-400 border-t-white rounded-full animate-spin" />
+                                                                        )}
+                                                                        {activeSuccessId === id ? 'Listo' : (activePurchasingId === id ? '...' : (link ? 'Visitar' : 'Comprar'))}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* 3. GALERÍA Y ARCHIVO DE PUBLICACIONES */}
+                            <div className="flex flex-col gap-3">
+                                {/* Navegación de Pestañas Estilo Píldora */}
+                                <div className="flex items-center gap-2 p-1 bg-zinc-900/60 border border-white/10 rounded-2xl backdrop-blur-md">
+                                    <button
+                                        onClick={() => setReleaseTab('posts')}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'posts' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    >
+                                        <LayoutGrid size={13} />
+                                        <span>Publicaciones</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setReleaseTab('saved');
+                                            reloadSaved();
+                                        }}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'saved' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    >
+                                        <Bookmark size={13} />
+                                        <span>Guardados</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setReleaseTab('resonance')}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'resonance' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    >
+                                        <Sparkles size={13} />
+                                        <span>Resonancias</span>
+                                    </button>
+                                </div>
+
+                                {/* Grilla de Contenido */}
+                                <div className="w-full pb-10">
+                                    {(() => {
+                                        const userPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight');
+                                        let tabFilteredPosts = userPosts;
+                                        if (releaseTab === 'posts') {
+                                            tabFilteredPosts = userPosts.filter(b => !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
+                                        } else if (releaseTab === 'linked') {
+                                            tabFilteredPosts = userPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
+                                        } else if (releaseTab === 'saved') {
+                                            tabFilteredPosts = (feed || []).filter(b => savedPostIds.includes(b.id));
+                                        } else if (releaseTab === 'resonance') {
+                                            tabFilteredPosts = userPosts.filter(b => {
+                                                const hasScore = b.metadata?.resonanceScore > 0;
+                                                const hasTag = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
+                                                return (hasScore || hasTag) && !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
+                                            });
+                                        }
+
+                                        if (tabFilteredPosts.length === 0) {
+                                            return (
+                                                <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[9px] uppercase tracking-widest gap-2 py-16 bg-zinc-950/20 border border-dashed border-white/5 rounded-2xl">
+                                                    <Sparkles size={16} className="text-zinc-600" />
+                                                    <span>Sin publicaciones en esta categoría</span>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+                                                {tabFilteredPosts.map((post, index) => {
+                                                    const postImg = getBlockPreviewImage(post);
+                                                    const postVid = getBlockPreviewVideo(post);
+                                                    const cleanText = post.metadata?.feedText || ((post.content && typeof post.content === 'string') ? post.content.split('\n').filter(l => typeof l === 'string' && !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n') : '') || '';
+
+                                                    return (
+                                                        <div
+                                                            key={post.id || index}
+                                                            onClick={() => {
+                                                                if (onNavigateToFeedPost) {
+                                                                    onNavigateToFeedPost(post.id);
+                                                                }
+                                                            }}
+                                                            className="aspect-square w-full bg-zinc-900 border border-white/5 rounded-xl relative overflow-hidden cursor-pointer group hover:scale-[1.02] hover:border-white/20 transition-all duration-300 shadow-md"
+                                                        >
+                                                            {postImg ? (
+                                                                <>
+                                                                    <img
+                                                                        onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                                        src={postImg}
+                                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                    />
+                                                                    {postVid && (
+                                                                        <div className="absolute top-2 right-2 text-white drop-shadow-md">
+                                                                            <Film size={14} fill="white" />
+                                                                        </div>
+                                                                    )}
+                                                                    {(post.metadata?.buyLink || post.metadata?.price) && (
+                                                                        <div className="absolute bottom-2 left-2 text-white drop-shadow-md">
+                                                                            <ShoppingBag size={13} fill="white" />
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            ) : postVid ? (
+                                                                <>
+                                                                    <video
+                                                                        onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
+                                                                        src={postVid}
+                                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                        muted loop playsInline
+                                                                        onMouseEnter={e => e.target.play().catch(() => { })}
+                                                                        onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                                                    />
+                                                                    <div className="absolute top-2 right-2 text-white drop-shadow-md">
+                                                                        <Film size={14} fill="white" />
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="w-full h-full flex flex-col justify-between p-3 relative bg-zinc-800/80">
+                                                                    <div className="absolute top-2 right-2 text-white/50">
+                                                                        <FileText size={13} />
+                                                                    </div>
+                                                                    <p className="text-[9px] sm:text-[10px] font-sans text-white/90 line-clamp-5 leading-relaxed mt-2">
+                                                                        {cleanText}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                                                                {post.metadata?.resonanceScore > 0 && (
+                                                                    <div className="flex items-center gap-1 text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-full border border-white/10">
+                                                                        <Activity size={13} className="text-accent" /> {post.metadata.resonanceScore}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
