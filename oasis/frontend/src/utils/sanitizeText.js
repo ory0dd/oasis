@@ -312,3 +312,116 @@ export function sanitizeAfcGraph(graph) {
     nodes: Array.isArray(graph.nodes) ? graph.nodes.map(sanitizeNodeObject) : graph.nodes
   };
 }
+
+export function autoCorrectAndPolishSpanish(text) {
+  if (typeof text !== 'string' || !text) return '';
+  let str = sanitizeSpanishText(text.trim());
+
+  // Corrections for frequent typos, mobile phone keyboard slips and informal contractions
+  const corrections = [
+    [/\bflokoj\b/gi, 'flojo'],
+    [/\bfloko\b/gi, 'flojo'],
+    [/\bflocoj\b/gi, 'flojo'],
+    [/\bqueno\b/gi, 'que no'],
+    [/\bdodua\b/gi, 'duda'],
+    [/\bduda\s+osbre\b/gi, 'duda sobre'],
+    [/\bosbre\b/gi, 'sobre'],
+    [/\blepropio\b/gi, 'el propio'],
+    [/\benomoentos\b/gi, 'en momentos'],
+    [/\benmomentos\b/gi, 'en momentos'],
+    [/\bdondede\b/gi, 'donde'],
+    [/\btemirna\b/gi, 'termina'],
+    [/\bteeindo\b/gi, 'teniendo'],
+    [/\btenindo\b/gi, 'teniendo'],
+    [/\bproblams\b/gi, 'problemas'],
+    [/\bprobleams\b/gi, 'problemas'],
+    [/\batuando\b/gi, 'actuando'],
+    [/\btrnaquilidad\b/gi, 'tranquilidad'],
+    [/\btranquildad\b/gi, 'tranquilidad'],
+    [/\bsesaicnion\b/gi, 'sensación'],
+    [/\bsensacion\b/gi, 'sensación'],
+    [/\bnuedo\b/gi, 'nudo'],
+    [/\bcerqutias\b/gi, 'muy cerca'],
+    [/\bmuy cerqutias\b/gi, 'muy cerca'],
+    [/\bttmapoc\b/gi, 'tampoco'],
+    [/\btampoc\b/gi, 'tampoco'],
+    [/\btmapoc\b/gi, 'tampoco'],
+    [/\bexpnsion\b/gi, 'expansión'],
+    [/\bexpancion\b/gi, 'expansión'],
+    [/\bndoso\b/gi, 'nodos'],
+    [/\bndos\b/gi, 'nodos'],
+    [/\bocmo\b/gi, 'como'],
+    [/\bseria\b/gi, 'sería'],
+    [/\bpodria\b/gi, 'podría'],
+    [/\bm ejor\b/gi, 'mejor'],
+    [/\bmeojr\b/gi, 'mejor'],
+    [/\bnose\b/gi, 'no sé'],
+    [/\bno se\b/gi, 'no sé'],
+    [/\bvdd\b/gi, 'verdad'],
+    [/\bpk\b/gi, 'porque'],
+    [/\bpq\b/gi, 'porque'],
+    [/\bpor que\b/gi, 'porque'],
+    [/\btmb\b/gi, 'también'],
+    [/\btb\b/gi, 'también'],
+    [/\btambien\b/gi, 'también'],
+    [/\bami\b/gi, 'a mí'],
+    [/\ba mi\b/gi, 'a mí'],
+    [/\basi\b/gi, 'así'],
+    [/\bmuxo\b/gi, 'mucho'],
+    [/\bmxo\b/gi, 'mucho'],
+    [/\bmuxos\b/gi, 'muchos'],
+    [/\bpar que\b/gi, 'para que'],
+    [/\bpa que\b/gi, 'para que'],
+    [/\bscribi\b/gi, 'escribí'],
+    [/\bescribi\b/gi, 'escribí'],
+    [/\bentenido\b/gi, 'entendido'],
+    [/\bantendido\b/gi, 'entendido'],
+    [/\banalsiis\b/gi, 'análisis'],
+    [/\banalisis\b/gi, 'análisis'],
+    [/\bopcion\b/gi, 'opción'],
+    [/\bmodear\b/gi, 'moldear'],
+    [/\bmodelar\b/gi, 'moldear'],
+    [/\bdela\b/gi, 'de la'],
+    [/\bdelos\b/gi, 'de los'],
+    [/\balos\b/gi, 'a los'],
+    [/\balas\b/gi, 'a las'],
+    [/\bdas cuenta\b/gi, 'das cuenta'],
+    [/\bdespues\b/gi, 'después'],
+    [/\bmas\b/gi, 'más'],
+    [/\bdia\b/gi, 'día'],
+    [/\bdias\b/gi, 'días'],
+    [/\bfacil\b/gi, 'fácil'],
+    [/\bdificil\b/gi, 'difícil'],
+    [/\bautocritica\b/gi, 'autocrítica'],
+    [/\bautocritico\b/gi, 'autocrítico'],
+    [/\bpexo\b/gi, 'pecho'],
+    [/\bcorazon\b/gi, 'corazón'],
+    [/\bdesicion\b/gi, 'decisión'],
+    [/\bdesiciones\b/gi, 'decisiones'],
+    [/\bautoexijencia\b/gi, 'autoexigencia']
+  ];
+
+  for (let i = 0; i < corrections.length; i++) {
+    str = str.replace(corrections[i][0], corrections[i][1]);
+  }
+
+  // Clean spacing around punctuation
+  str = str.replace(/\s+/g, ' ');
+  str = str.replace(/\s*,\s*/g, ', ');
+  str = str.replace(/\s*\.\s*/g, '. ');
+  str = str.replace(/\s*;\s*/g, '; ');
+  str = str.replace(/\s*:\s*/g, ': ');
+  str = str.replace(/\s*\?\s*/g, '? ');
+  str = str.replace(/\s*!\s*/g, '! ');
+  str = str.replace(/\.{2,}/g, '...');
+  str = str.replace(/,\s*,+/g, ',');
+
+  // Capitalize first letter of string
+  str = str.charAt(0).toUpperCase() + str.slice(1);
+
+  // Capitalize letter following sentence punctuation (. ! ?)
+  str = str.replace(/([.!?]\s+)([a-zñáéíóú])/g, (m, p1, p2) => p1 + p2.toUpperCase());
+
+  return str.trim();
+}
+

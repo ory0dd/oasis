@@ -3,7 +3,7 @@ import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldA
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
-import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph } from '../utils/sanitizeText';
+import { sanitizeSpanishText, sanitizeNodeObject, sanitizeAfcGraph, autoCorrectAndPolishSpanish } from '../utils/sanitizeText';
 
 const MOCK_AFC_DATA = {
     is_mock: true,
@@ -1964,22 +1964,29 @@ Devuelve estrictamente el JSON sin formato extra.
     const [editNodeForm, setEditNodeForm] = useState({ label: '', description: '', question: '' });
     const [editTab, setEditTab] = useState('mold');
     const [moldFeedback, setMoldFeedback] = useState('');
+    const [moldCustomTitle, setMoldCustomTitle] = useState('');
+    const [shouldAutoCorrect, setShouldAutoCorrect] = useState(true);
     const [shouldBranchGraph, setShouldBranchGraph] = useState(true);
     const [isMoldingNode, setIsMoldingNode] = useState(false);
     const [moldSuccessToast, setMoldSuccessToast] = useState(null);
 
-    const synthesizeMoldedNodeFallback = (targetNode, feedbackText, autoBranch = true) => {
+    const synthesizeMoldedNodeFallback = (targetNode, feedbackText, autoBranch = true, customTitle = '') => {
         const raw = (feedbackText || '').trim();
         const lower = raw.toLowerCase();
+        const polishedFeedback = autoCorrectAndPolishSpanish(raw);
 
-        // 1. Sintetizar un título clínico conciso para el nodo reajustado
+        // 1. Sintetizar o respetar el título clínico del factor reajustado
         let newLabel = '';
-        if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('sobrepasa') || lower.includes('sobre pasa') || lower.includes('desborde') || lower.includes('impulsiv')) {
+        if (customTitle && customTitle.trim()) {
+            newLabel = autoCorrectAndPolishSpanish(customTitle.trim());
+        } else if (lower.includes('criterio') || lower.includes('dodua') || lower.includes('duda') || lower.includes('insegur') || lower.includes('decisi')) {
+            newLabel = 'Duda sobre el propio criterio';
+        } else if (lower.includes('pecho') || lower.includes('nuedo') || lower.includes('nudo') || lower.includes('opresion') || lower.includes('opresión') || lower.includes('presion')) {
+            newLabel = 'Opresión somática y tensión';
+        } else if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('sobrepasa') || lower.includes('sobre pasa') || lower.includes('desborde') || lower.includes('impulsiv')) {
             newLabel = 'Impulsividad por sobrecarga emocional';
-        } else if (lower.includes('criterio') || lower.includes('decisi') || lower.includes('identificar')) {
-            newLabel = 'Claridad y toma de decisiones';
-        } else if (lower.includes('desobligad') || lower.includes('responsabilidad') || lower.includes('fácil') || lower.includes('facil')) {
-            newLabel = 'Trabajo flexible y desobligación';
+        } else if (lower.includes('desobligad') || lower.includes('responsabilidad') || lower.includes('fácil') || lower.includes('facil') || lower.includes('linea') || lower.includes('línea')) {
+            newLabel = 'Flexibilidad y desorganización de rutina';
         } else if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
             newLabel = 'Preocupación y estrés financiero';
         } else if (lower.includes('aislam') || lower.includes('solo') || lower.includes('encierr')) {
@@ -1993,124 +2000,162 @@ Devuelve estrictamente el JSON sin formato extra.
         } else if (lower.includes('culpa') || lower.includes('reproch') || lower.includes('fall')) {
             newLabel = 'Sentimiento de culpa y autoexigencia';
         } else {
-            // Extraer la primera frase sustantiva limpia
-            const cleanClause = raw
-                .replace(/^(mira|bro|oye|sabes|creo que|creo queno|tal vez|en realidad|la verdad|no sé|no se|pasa que|siento que|es que)\s+/gi, '')
+            // Extraer concepto semántico representativo en lugar de cortar palabras en bruto
+            const cleanClause = polishedFeedback
+                .replace(/^(mira|bro|oye|sabes|creo que|creo que no|tal vez|en realidad|la verdad|no sé|pasa que|siento que|es que|yo soy muy flojo|muchas veces|para escribir bien)\s+/gi, '')
                 .split(/[,.;:\n]/)[0]
                 .trim();
-            const words = cleanClause.split(/\s+/).slice(0, 5).join(' ');
+            const words = cleanClause.split(/\s+/).slice(0, 4).join(' ');
             newLabel = words ? (words.charAt(0).toUpperCase() + words.slice(1)) : (targetNode?.label || 'Factor reajustado');
             if (newLabel.length < 4) newLabel = targetNode?.label || 'Factor reajustado';
         }
 
         const updatedNode = {
             label: newLabel,
-            description: raw,
-            question: `¿De qué manera notas que esta situación influye en tu día a día y en tu nivel de bienestar?`
+            description: polishedFeedback,
+            question: `¿De qué manera notas que "${newLabel.toLowerCase()}" influye en tu día a día y en tu nivel de bienestar?`
         };
 
+        // Construir un camino funcional estable (Gatillante Somático -> Factor Central -> Respuesta Reactiva -> Vía de Estabilización)
         const branchNodes = [];
         if (autoBranch) {
-            if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('impulsiv') || lower.includes('sobrepasa') || lower.includes('sobre pasa')) {
+            if (lower.includes('criterio') || lower.includes('dodua') || lower.includes('duda') || lower.includes('insegur') || lower.includes('pecho') || lower.includes('nudo')) {
                 branchNodes.push({
-                    label: 'Sobrecarga e impulsividad reactiva',
+                    label: 'Sensación de nudo en el pecho',
+                    type: 'physiological',
+                    clinical_role: 'physiological',
+                    path_role: 'antecedent',
+                    description: 'Tensión somática opresiva que emerge en situaciones donde se requiere validar el juicio o la decisión.',
+                    question: '¿En qué momentos específicos sientes que este nudo en el pecho se activa con más fuerza?'
+                });
+                branchNodes.push({
+                    label: 'Búsqueda reactiva de validación',
                     type: 'motor',
                     clinical_role: 'motor',
-                    description: 'Reacciones impulsivas ante momentos donde la intensidad emocional supera la pausa reflexiva.',
-                    question: '¿Qué señales corporales notas justo antes de reaccionar impulsivamente?'
+                    path_role: 'consequence',
+                    description: 'Tendencia a preguntar o consultar excesivamente a terceros para calmar la incertidumbre interna.',
+                    question: '¿Qué alivio momentáneo consigues cuando alguien más toma o valida la decisión por ti?'
                 });
                 branchNodes.push({
-                    label: 'Dificultad de autorregulación',
+                    label: 'Pausa y anclaje de criterio propio',
                     type: 'cognitive',
                     clinical_role: 'cognitive',
-                    description: 'Desafíos para identificar y encauzar el estado emocional bajo situaciones de tensión.',
-                    question: '¿Qué herramientas te permiten pausar y elegir cómo actuar en calma?'
+                    path_role: 'stabilizer',
+                    description: 'Vía de estabilización: espacio de registro reflexivo para sostener la propia postura con autovalidación.',
+                    question: '¿Qué pequeña decisión cotidiana podrías tomar hoy respaldando tu propia intuición?'
                 });
-            }
-            if (lower.includes('dinero') || lower.includes('financier') || lower.includes('económ') || lower.includes('econom')) {
+            } else if (lower.includes('emocion') || lower.includes('emoción') || lower.includes('impulsiv') || lower.includes('sobrepasa') || lower.includes('sobre pasa')) {
                 branchNodes.push({
-                    label: 'Estrés y presión financiera',
-                    type: 'cognitive',
-                    clinical_role: 'cognitive',
-                    description: 'Pensamientos intrusivos o inquietud constante respecto al dinero y la estabilidad material.',
-                    question: '¿Qué pensamientos sobre tu economía aparecen cuando intentas desconectar o descansar?'
+                    label: 'Sobrecarga somática reactiva',
+                    type: 'physiological',
+                    clinical_role: 'physiological',
+                    path_role: 'antecedent',
+                    description: 'Aceleración física e hiperactivación ante momentos donde la carga emocional se acumula.',
+                    question: '¿Qué señales corporales notas justo antes de sentir que la emoción te sobrepasa?'
                 });
-            }
-            if (lower.includes('desobligad') || lower.includes('linea') || lower.includes('línea') || lower.includes('rutina') || lower.includes('tiempo')) {
                 branchNodes.push({
-                    label: 'Falta de estructura en la rutina',
+                    label: 'Descarga o conducta impulsiva',
                     type: 'motor',
                     clinical_role: 'motor',
-                    description: 'La flexibilidad o trabajo sin supervisión rígida propicia la desorganización de tiempos y postergación.',
-                    question: '¿Qué rutinas o hábitos te ayudan a mantener orden sin sentirte abrumado?'
+                    path_role: 'consequence',
+                    description: 'Reacción precipitada o desconexión abrupta en respuesta al malestar intenso.',
+                    question: '¿Hacia qué conductas sueles volcarte cuando buscas apagar la intensidad del momento?'
                 });
-            }
-            if (lower.includes('cansa') || lower.includes('estres') || lower.includes('estrés') || lower.includes('agotam')) {
+                branchNodes.push({
+                    label: 'Pausa de autorregulación guiada',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    path_role: 'stabilizer',
+                    description: 'Vía de estabilización: anclaje somático y respiración para recuperar la ventana de tolerancia.',
+                    question: '¿Qué anclaje o práctica te ayuda a sostener la calma sin actuar de forma reactiva?'
+                });
+            } else if (lower.includes('desobligad') || lower.includes('linea') || lower.includes('línea') || lower.includes('rutina') || lower.includes('tiempo') || lower.includes('facil') || lower.includes('fácil')) {
+                branchNodes.push({
+                    label: 'Ausencia de límites en la rutina',
+                    type: 'antecedent',
+                    clinical_role: 'antecedent',
+                    path_role: 'antecedent',
+                    description: 'La flexibilidad desregulada difumina los inicios y cierres de las responsabilidades diarias.',
+                    question: '¿Cómo afecta a tu motivación no tener horarios o límites claros?'
+                });
+                branchNodes.push({
+                    label: 'Postergación y dispersión activa',
+                    type: 'motor',
+                    clinical_role: 'motor',
+                    path_role: 'consequence',
+                    description: 'Desplazamiento de tareas clave hacia el ocio temporal, acumulando estrés diferido.',
+                    question: '¿A qué distracciones sueles recurrir cuando evitas iniciar una tarea?'
+                });
+                branchNodes.push({
+                    label: 'Micro-rutina de enfoque sostenible',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    path_role: 'stabilizer',
+                    description: 'Vía de estabilización: bloques breves y predecibles de acción con recompensas claras.',
+                    question: '¿Cuál es el bloque más pequeño y alcanzable de enfoque que podrías comprometer hoy?'
+                });
+            } else if (lower.includes('cansa') || lower.includes('estres') || lower.includes('estrés') || lower.includes('agotam')) {
                 branchNodes.push({
                     label: 'Sobrecarga somática latente',
                     type: 'physiological',
                     clinical_role: 'physiological',
-                    description: 'Sensación física de fatiga o tensión acumulada generada por preocupaciones de fondo.',
+                    path_role: 'antecedent',
+                    description: 'Sensación física de fatiga y tensión acumulada generada por hipervigilancia continua.',
                     question: '¿En qué parte de tu cuerpo se manifiesta más este cansancio acumulado?'
                 });
-            }
-
-            // Si los textos no tenían esas palabras clave específicas, derivar según el rol clínico del nodo
-            if (branchNodes.length < 2) {
-                const role = targetNode?.clinical_role || targetNode?.type || 'motor';
-                if (role === 'motor') {
-                    branchNodes.push({
-                        label: 'Postergación de tareas clave',
-                        type: 'motor',
-                        clinical_role: 'motor',
-                        description: 'Demora temporal de tareas obligatorias frente a la falta de supervisión o rutina inmediata.',
-                        question: '¿Qué buscas evitar o posponer al retrasar estas responsabilidades?'
-                    });
-                    branchNodes.push({
-                        label: 'Sobrecarga y reproche posterior',
-                        type: 'consequence',
-                        clinical_role: 'consequence',
-                        description: 'Acumulación de pendientes que culmina en reproches internos o estrés acelerado.',
-                        question: '¿Cuál es el costo emocional que experimentas al final del día?'
-                    });
-                } else if (role === 'cognitive') {
-                    branchNodes.push({
-                        label: 'Diálogo autocrítico sobre el rendimiento',
-                        type: 'cognitive',
-                        clinical_role: 'cognitive',
-                        description: 'Juicios internos sobre no estar cumpliendo con lo esperado.',
-                        question: '¿Qué te dices a ti mismo cuando sientes que no avanzaste lo suficiente?'
-                    });
-                    branchNodes.push({
-                        label: 'Conducta de evasión o desconexión',
-                        type: 'motor',
-                        clinical_role: 'motor',
-                        description: 'Búsqueda de distracciones breves para evitar la incomodidad de la presión.',
-                        question: '¿A qué sueles recurrir cuando necesitas desconectarte urgentemente?'
-                    });
-                } else {
-                    branchNodes.push({
-                        label: 'Pensamientos de incertidumbre',
-                        type: 'cognitive',
-                        clinical_role: 'cognitive',
-                        description: 'Inquietud anticipatoria sobre el rumbo o las consecuencias de esta dinámica.',
-                        question: '¿Qué temores surgen cuando anticipas este escenario?'
-                    });
-                    branchNodes.push({
-                        label: 'Ajuste y búsqueda de límites',
-                        type: 'motor',
-                        clinical_role: 'motor',
-                        description: 'Necesidad de establecer pausas y acuerdos claros para recuperar el control.',
-                        question: '¿Qué pequeño paso podrías dar para ordenar este aspecto?'
-                    });
-                }
+                branchNodes.push({
+                    label: 'Resistencia a parar o desconectar',
+                    type: 'motor',
+                    clinical_role: 'motor',
+                    path_role: 'consequence',
+                    description: 'Incapacidad de descanso genuino por exigencia mental o rumiación permanente.',
+                    question: '¿Qué pensamientos te impiden relajarte verdaderamente cuando no estás produciendo?'
+                });
+                branchNodes.push({
+                    label: 'Pausa reparadora sin juicio',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    path_role: 'stabilizer',
+                    description: 'Vía de estabilización: descanso intencional legitimado como necesidad biológica.',
+                    question: '¿Cómo cambiaría tu día si te permitieras 10 minutos de pausa libre de culpa?'
+                });
+            } else {
+                // Camino funcional estándar según el rol del nodo
+                branchNodes.push({
+                    label: 'Disparador de malestar somático',
+                    type: 'physiological',
+                    clinical_role: 'physiological',
+                    path_role: 'antecedent',
+                    description: 'Resonancia corporal y activación fisiológica asociada a este factor.',
+                    question: '¿Dónde se refleja físicamente en tu cuerpo la tensión vinculada a este punto?'
+                });
+                branchNodes.push({
+                    label: 'Patrón reactivo de respuesta',
+                    type: 'motor',
+                    clinical_role: 'motor',
+                    path_role: 'consequence',
+                    description: 'Conducta compensatoria o de evitación frente a la dificultad.',
+                    question: '¿Qué sueles hacer de manera automática cuando este patrón se activa?'
+                });
+                branchNodes.push({
+                    label: 'Vía de estabilización y foco',
+                    type: 'cognitive',
+                    clinical_role: 'cognitive',
+                    path_role: 'stabilizer',
+                    description: 'Vía de estabilización: recurso reflexivo o acción adaptativa para recuperar el balance.',
+                    question: '¿Qué paso compasivo y consciente te permitiría responder con mayor serenidad?'
+                });
             }
         }
 
-        return { updatedNode, branchNodes: branchNodes.slice(0, 3) };
+        return { 
+            updatedNode, 
+            correctedFeedback: polishedFeedback, 
+            branchNodes: branchNodes.slice(0, 3) 
+        };
     };
 
-    const handleMoldNode = async (nodeId, feedbackText, autoBranch = true) => {
+    const handleMoldNode = async (nodeId, feedbackText, autoBranch = true, customTitle = '', autoCorrect = true) => {
         if (!feedbackText || !feedbackText.trim()) return;
         setIsMoldingNode(true);
         
@@ -2161,19 +2206,26 @@ ${neighborsContext}
 
 ACLARACIÓN Y CONTEXTO REAL DADO POR EL USUARIO:
 "${feedbackText.trim()}"
+${customTitle && customTitle.trim() ? `TÍTULO PREFERIDO O SUGERIDO POR EL USUARIO: "${customTitle.trim()}"` : ''}
 
 OBJETIVOS CLÍNICOS EXACTOS:
-1. REFORMULAR EL NODO PRINCIPAL: Reemplaza el título "${targetNode.label}" por un título completamente nuevo, conciso (2 a 5 palabras) y clínicamente preciso que refleje fielmente lo que ocurre según la aclaración del usuario. NUNCA devuelvas el mismo título antiguo si la aclaración lo contradice o matiza. Redacta una descripción clara y empática (máximo 2-3 líneas) y una pregunta existencial o reflexiva empática.
-2. RESIGNIFICAR FACTORES CONECTADOS EXISTENTES ("affectedConnectedNodes"): Si la aclaración cambia la función, causa o interpretación de alguno de los factores conectados existentes en la lista previa (ej. sensaciones somáticas como nudo en el pecho o tensión, conductas o pensamientos vinculados), incluye en "affectedConnectedNodes" los ajustes necesarios (nuevo título o descripción resignificada) para que la constelación completa guarde armonía y veracidad.
-${autoBranch ? `3. GENERAR FACTORES DERIVADOS CERCANOS ("branchNodes"): Extrae de 2 a 3 nuevos factores satélites (derivados directos) que completen la red funcional a partir de la aclaración (ej. sensaciones corporales, conductas de desconexión o costos emocionales).` : ''}
+1. REFORMULAR EL NODO PRINCIPAL: ${customTitle && customTitle.trim() ? `Utiliza y adapta el título preferido "${customTitle.trim()}" con precisión clínica.` : `Sintetiza un título clínico altamente organizado y conciso (2 a 4 palabras) que capture la esencia exacta de lo que entendiste de lo que escribió el usuario (ejemplos: "Duda sobre el propio criterio", "Sobrecarga por flexibilidad laboral", "Opresión somática y tensión", etc.). NUNCA devuelvas fragmentos de texto en bruto ni el título antiguo si fue contradicho.`} Redacta una descripción clara y empática (máximo 2-3 líneas) y una pregunta existencial o reflexiva empática.
+2. CORREGIR ORTOGRAFÍA Y REDACCIÓN ("correctedFeedback"): Corrige minuciosamente todas las faltas ortográficas, tildes, signos y errores de tipeo del texto escrito por el usuario (ej. convertir "flokoj" a "flojo", "queno" a "que no", "dodua" a "duda", "enomoentos" a "en momentos", etc.), conservando fielmente su significado y autenticidad pero con redacción digna y limpia.
+3. RESIGNIFICAR FACTORES CONECTADOS EXISTENTES ("affectedConnectedNodes"): Si la aclaración cambia la función, causa o interpretación de factores conectados existentes (ej. sensaciones somáticas como nudo en el pecho, conductas o pensamientos), incluye sus ajustes en "affectedConnectedNodes".
+${autoBranch ? `4. CONSTRUIR UN CAMINO FUNCIONAL ESTABLE ("branchNodes"):
+Genera exactamente 3 nuevos factores interconectados que construyan una trayectoria funcional coherente y armónica:
+- Factor 1: Señal Somática o Disparador (ej. nudo en el pecho o tensión inicial, rol "physiological" o "antecedent").
+- Factor 2: Respuesta Reactiva o Costo (ej. conducta compensatoria, postergación o búsqueda de validación, rol "motor" o "consequence").
+- Factor 3: Vía de Estabilización o Recurso (ej. pausa de anclaje, validación interna o límite saludable, rol "cognitive").` : ''}
 
 ESTRUCTURA JSON OBLIGATORIA:
 {
   "updatedNode": {
-    "label": "Nuevo título clínico conciso (2-5 palabras)",
-    "description": "Descripción clara, empática y ajustada a la realidad",
+    "label": "Título clínico conciso (2-4 palabras)",
+    "description": "Descripción clara y empática ajustada a la realidad",
     "question": "¿Pregunta reflexiva empática para explorar este factor?"
   },
+  "correctedFeedback": "Texto aclaratorio del usuario corregido con ortografía, tildes y redacción impecables",
   "affectedConnectedNodes": [
     {
       "id": "ID_del_nodo_conectado_existente",
@@ -2183,9 +2235,10 @@ ESTRUCTURA JSON OBLIGATORIA:
   ],
   "branchNodes": [
     {
-      "label": "Título del nuevo factor derivado",
-      "type": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
-      "clinical_role": "motor" | "cognitive" | "physiological" | "consequence" | "antecedent",
+      "label": "Título del nuevo factor",
+      "type": "physiological" | "motor" | "cognitive" | "consequence" | "antecedent",
+      "clinical_role": "physiological" | "motor" | "cognitive" | "consequence" | "antecedent",
+      "path_role": "antecedent" | "consequence" | "stabilizer",
       "description": "Descripción clínica breve de este factor",
       "question": "¿Pregunta reflexiva sobre este nuevo factor?"
     }
@@ -2266,12 +2319,31 @@ ESTRUCTURA JSON OBLIGATORIA:
 
             // Si la IA no devolvió respuesta estructurada o falló, sintetizar clínicamente de forma instantánea
             if (!parsedResult || !parsedResult.updatedNode || !parsedResult.updatedNode.label) {
-                parsedResult = synthesizeMoldedNodeFallback(targetNode, feedbackText, autoBranch);
+                parsedResult = synthesizeMoldedNodeFallback(targetNode, feedbackText, autoBranch, customTitle);
+            }
+
+            // Determinar texto con ortografía corregida y título organizado
+            let finalCleanFeedback = feedbackText.trim();
+            if (autoCorrect) {
+                if (parsedResult?.correctedFeedback) {
+                    finalCleanFeedback = sanitizeSpanishText(parsedResult.correctedFeedback);
+                } else {
+                    finalCleanFeedback = autoCorrectAndPolishSpanish(feedbackText);
+                }
+            }
+
+            let finalLabel = '';
+            if (customTitle && customTitle.trim()) {
+                finalLabel = sanitizeSpanishText(autoCorrect ? autoCorrectAndPolishSpanish(customTitle.trim()) : customTitle.trim());
+            } else if (parsedResult?.updatedNode?.label) {
+                finalLabel = sanitizeSpanishText(parsedResult.updatedNode.label);
+            } else {
+                finalLabel = sanitizeSpanishText(targetNode.label);
             }
 
             const updatedData = {
-                label: sanitizeSpanishText(parsedResult?.updatedNode?.label || targetNode.label),
-                description: sanitizeSpanishText(parsedResult?.updatedNode?.description || feedbackText.trim()),
+                label: finalLabel,
+                description: sanitizeSpanishText(parsedResult?.updatedNode?.description || finalCleanFeedback),
                 question: sanitizeSpanishText(parsedResult?.updatedNode?.question || targetNode.question)
             };
 
@@ -2292,7 +2364,7 @@ ESTRUCTURA JSON OBLIGATORIA:
                     description: updatedData.description,
                     question: updatedData.question || newNodes[nodeIndex].question,
                     is_corrected: true,
-                    molded_note: feedbackText.trim()
+                    molded_note: finalCleanFeedback
                 };
                 newNodes[nodeIndex] = updatedTargetNode;
             } else {
@@ -2302,7 +2374,7 @@ ESTRUCTURA JSON OBLIGATORIA:
                     description: updatedData.description,
                     question: updatedData.question || targetNode.question,
                     is_corrected: true,
-                    molded_note: feedbackText.trim()
+                    molded_note: finalCleanFeedback
                 };
                 newNodes.push(updatedTargetNode);
             }
@@ -2317,27 +2389,39 @@ ESTRUCTURA JSON OBLIGATORIA:
                             label: aff.label ? sanitizeSpanishText(aff.label) : newNodes[affIdx].label,
                             description: aff.description ? sanitizeSpanishText(aff.description) : newNodes[affIdx].description,
                             is_corrected: true,
-                            molded_note: `Resignificado en coherencia con "${updatedData.label}": "${feedbackText.trim()}"`
+                            molded_note: `Resignificado en coherencia con "${updatedData.label}": "${finalCleanFeedback}"`
                         };
                     }
                 });
             }
 
             const spawnedNodeLabels = [];
-            // 3. Integrar ramificaciones MUY CERQUITAS del nodo padre (satélites compactos en órbita cerrada)
+            // 3. Integrar ramificaciones en un CAMINO FUNCIONAL ESTABLE
             if (autoBranch && Array.isArray(branchNodes) && branchNodes.length > 0) {
                 const parentX = targetNode.x || 50;
                 const parentY = targetNode.y || 50;
-                const totalBranches = branchNodes.length;
+
+                // Trayectoria direccional equilibrada para camino estable:
+                // Paso 0 (Disparador / Somático): Entrada izquierda / superior [-6.0, -3.8]
+                // Paso 1 (Respuesta reactiva / Consecuencia): Salida derecha / inferior [+6.2, +3.8]
+                // Paso 2 (Vía de estabilización / Recurso): Salida derecha / superior [+5.5, -4.2]
+                const trajectoryOffsets = [
+                    { dx: -6.0, dy: -3.8 },
+                    { dx: +6.2, dy: +3.8 },
+                    { dx: +5.5, dy: -4.2 }
+                ];
+
+                const spawnedNodes = [];
 
                 branchNodes.forEach((bNode, idx) => {
                     const role = bNode.clinical_role || bNode.type || 'cognitive';
-                    // Radio orbital compacto: 4.8% horizontal y 4.2% vertical para que queden inmediatamente adyacentes
-                    const angle = (idx * (2 * Math.PI / Math.max(1, totalBranches))) + (Math.PI / 4);
-                    const radiusX = 4.8;
-                    const radiusY = 4.2;
-                    const newX = Math.max(6, Math.min(94, parentX + Math.cos(angle) * radiusX));
-                    const newY = Math.max(8, Math.min(92, parentY + Math.sin(angle) * radiusY));
+                    const offset = trajectoryOffsets[idx] || {
+                        dx: (idx + 1) * 3.5 * (idx % 2 === 0 ? 1 : -1),
+                        dy: (idx + 1) * 3.0
+                    };
+
+                    const newX = Math.max(6, Math.min(94, parentX + offset.dx));
+                    const newY = Math.max(8, Math.min(92, parentY + offset.dy));
                     const newId = 'molded_' + Date.now().toString(36) + '_' + idx;
 
                     const spawnedNode = {
@@ -2352,19 +2436,52 @@ ESTRUCTURA JSON OBLIGATORIA:
                         is_satellite: true,
                         is_corrected: true,
                         parent_id: targetNode.id,
-                        molded_note: `Factor derivado de aclaración: "${feedbackText.trim()}"`
+                        path_role: bNode.path_role || (idx === 0 ? 'antecedent' : idx === 1 ? 'consequence' : 'stabilizer'),
+                        molded_note: `Factor del camino funcional derivado de: "${finalCleanFeedback}"`
                     };
 
                     newNodes.push(spawnedNode);
+                    spawnedNodes.push(spawnedNode);
                     spawnedNodeLabels.push(spawnedNode.label);
+                });
 
+                // Construcción de conexiones para el camino estable:
+                // 1. Antecedente / Disparador somático -> Nodo central (alimenta el factor)
+                if (spawnedNodes[0]) {
                     newEdges.push({
-                        source: targetNode.id,
-                        target: newId,
+                        source: spawnedNodes[0].id,
+                        target: targetNode.id,
                         weight: 2,
                         type: 'unidirectional'
                     });
-                });
+                }
+                // 2. Nodo central -> Respuesta reactiva / Consecuencia (desencadenamiento)
+                if (spawnedNodes[1]) {
+                    newEdges.push({
+                        source: targetNode.id,
+                        target: spawnedNodes[1].id,
+                        weight: 2,
+                        type: 'unidirectional'
+                    });
+                }
+                // 3. Nodo central -> Vía de estabilización (recurso adaptativo)
+                if (spawnedNodes[2]) {
+                    newEdges.push({
+                        source: targetNode.id,
+                        target: spawnedNodes[2].id,
+                        weight: 2,
+                        type: 'unidirectional'
+                    });
+                    // Enlace de regulación puente: de la respuesta reactiva hacia la estabilización
+                    if (spawnedNodes[1]) {
+                        newEdges.push({
+                            source: spawnedNodes[1].id,
+                            target: spawnedNodes[2].id,
+                            weight: 1,
+                            type: 'unidirectional'
+                        });
+                    }
+                }
             }
 
             const resolvedNodes = resolveCollisions(newNodes);
@@ -2413,7 +2530,8 @@ ESTRUCTURA JSON OBLIGATORIA:
                     nodeId: nodeId,
                     previousLabel: targetNode.label,
                     previousDescription: targetNode.description || '',
-                    correction: feedbackText.trim(),
+                    correction: finalCleanFeedback,
+                    rawCorrection: feedbackText.trim(),
                     newLabel: updatedData.label,
                     newDescription: updatedData.description,
                     branchesCreated: branchNodes.length,
@@ -2434,7 +2552,8 @@ ESTRUCTURA JSON OBLIGATORIA:
             setMoldSuccessToast({
                 nodeId: updatedTargetNode.id,
                 label: updatedData.label,
-                branches: branchNodes.length
+                branches: branchNodes.length,
+                message: `Factor reformulado como "${updatedData.label}" y camino funcional de ${branchNodes.length} factores integrado con ortografía corregida.`
             });
             setTimeout(() => setMoldSuccessToast(null), 6500);
 
@@ -2445,6 +2564,7 @@ ESTRUCTURA JSON OBLIGATORIA:
 
             setEditingNodeId(null);
             setMoldFeedback('');
+            setMoldCustomTitle('');
         } catch (err) {
             console.error("Error al moldear nodo:", err);
             alert("Ocurrió un error al moldear el factor. Por favor inténtalo de nuevo.");
@@ -8683,6 +8803,7 @@ Por favor, analicemos:
         setEditingNodeId(currentNode.id);
         setEditTab('mold');
         setMoldFeedback(currentNode.molded_note || '');
+        setMoldCustomTitle('');
         setEditNodeForm({
             label: currentNode.label || '',
             description: currentNode.description || '',
@@ -8766,6 +8887,42 @@ Por favor, analicemos:
                     </p>
                 </div>
 
+                {/* Opción de título sugerido u organizado por IA */}
+                <div className="flex flex-col gap-1 text-left">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                            <span>🏷️ Título del factor:</span>
+                        </label>
+                        <span className="text-[8.5px] text-emerald-400 font-mono">
+                            {moldCustomTitle.trim() ? 'Personalizado' : '✨ Síntesis automática por IA'}
+                        </span>
+                    </div>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={moldCustomTitle}
+                            onChange={(e) => setMoldCustomTitle(e.target.value)}
+                            className="w-full bg-black/50 border border-emerald-500/30 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-400 placeholder:text-zinc-600 leading-normal pr-7"
+                            placeholder="Dejar vacío para que la IA organice el título automáticamente..."
+                            onKeyDown={e => e.stopPropagation()}
+                            onMouseDown={e => e.stopPropagation()}
+                        />
+                        {moldCustomTitle && (
+                            <button
+                                type="button"
+                                onClick={() => setMoldCustomTitle('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs px-1"
+                                title="Borrar para que la IA sintetice el título automáticamente"
+                            >
+                                ×
+                            </button>
+                        )}
+                    </div>
+                    <p className="text-[8.5px] text-zinc-500 italic">
+                        La IA organizará un título conciso según lo que escribas abajo, o puedes fijar uno propio.
+                    </p>
+                </div>
+
                 <div className="flex flex-col gap-1 text-left">
                     <label className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">
                         Tu aclaración o contexto real:
@@ -8774,25 +8931,41 @@ Por favor, analicemos:
                         value={moldFeedback}
                         onChange={(e) => setMoldFeedback(e.target.value)}
                         className="bg-black/50 border border-emerald-500/30 rounded-lg px-2.5 py-2 text-[11px] text-white min-h-[70px] resize-none focus:outline-none focus:border-emerald-400 placeholder:text-zinc-600 leading-relaxed custom-scroll"
-                        placeholder="Ej: Su trabajo es en línea y relajado, pero eso mismo lo hace medio desobligado; la tarea es fácil pero le cansan otras cosas..."
+                        placeholder="Ej: No duda sobre su propio criterio en momentos tranquilos, pero ante sobrecarga le cuesta pausar y actúa impulsivamente..."
                         onKeyDown={e => e.stopPropagation()}
                         onMouseDown={e => e.stopPropagation()}
                         autoFocus
                     />
                 </div>
 
-                {/* Opción de ramificar y expandir como constelación */}
-                <label className="flex items-center gap-2 cursor-pointer select-none px-1 text-left">
-                    <input 
-                        type="checkbox"
-                        checked={shouldBranchGraph}
-                        onChange={(e) => setShouldBranchGraph(e.target.checked)}
-                        className="rounded bg-black/60 border-emerald-500/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
-                    />
-                    <span className="text-[10px] text-zinc-300 font-sans">
-                        🌿 <strong className="text-emerald-400 font-semibold">Expandir mapa:</strong> generar 2-3 factores derivados dentro del orden clínico
-                    </span>
-                </label>
+                {/* Opciones clínicas */}
+                <div className="flex flex-col gap-1.5 px-0.5 text-left bg-black/30 border border-white/5 rounded-lg p-2">
+                    {/* Opción de corrección ortográfica y redacción */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                            type="checkbox"
+                            checked={shouldAutoCorrect}
+                            onChange={(e) => setShouldAutoCorrect(e.target.checked)}
+                            className="rounded bg-black/60 border-emerald-500/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] text-zinc-300 font-sans">
+                            ✍️ <strong className="text-emerald-400 font-semibold">Pulir ortografía y redacción:</strong> corregir automáticamente faltas y tipeos al guardar
+                        </span>
+                    </label>
+
+                    {/* Opción de expandir red y construir camino estable */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                            type="checkbox"
+                            checked={shouldBranchGraph}
+                            onChange={(e) => setShouldBranchGraph(e.target.checked)}
+                            className="rounded bg-black/60 border-emerald-500/40 text-emerald-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] text-zinc-300 font-sans">
+                            🌿 <strong className="text-emerald-400 font-semibold">Construir camino funcional estable:</strong> conectar gatillante somático → factor → respuesta → estabilización
+                        </span>
+                    </label>
+                </div>
 
                 <div className="flex items-center justify-between gap-2 mt-1">
                     <button
@@ -8824,19 +8997,19 @@ Por favor, analicemos:
                             disabled={!moldFeedback.trim() || isMoldingNode}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                handleMoldNode(currentNode.id, moldFeedback, shouldBranchGraph);
+                                handleMoldNode(currentNode.id, moldFeedback, shouldBranchGraph, moldCustomTitle, shouldAutoCorrect);
                             }}
                             className="text-[10.5px] px-3 py-1.5 rounded-md bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5 shadow-[0_0_12px_rgba(52,211,153,0.4)] transition-all"
                         >
                             {isMoldingNode ? (
                                 <>
                                     <div className="w-3 h-3 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Moldeando...</span>
+                                    <span>Construyendo camino...</span>
                                 </>
                             ) : (
                                 <>
                                     <Sparkles size={11} />
-                                    <span>{shouldBranchGraph ? 'Moldear y Expandir Red' : 'Moldear e Integrar'}</span>
+                                    <span>{shouldBranchGraph ? 'Moldear y Construir Camino Estable' : 'Moldear e Integrar'}</span>
                                 </>
                             )}
                         </button>
@@ -8975,6 +9148,7 @@ Por favor, analicemos:
                                                                                 setEditingNodeId(currentNode.id);
                                                                                 setEditTab('mold');
                                                                                 setMoldFeedback(currentNode.molded_note || '');
+                                                                                setMoldCustomTitle('');
                                                                             }}
                                                                             className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 hover:underline"
                                                                         >
@@ -8995,6 +9169,7 @@ Por favor, analicemos:
                                                                             setEditingNodeId(currentNode.id);
                                                                             setEditTab('mold');
                                                                             setMoldFeedback(currentNode.molded_note || '');
+                                                                            setMoldCustomTitle('');
                                                                         }}
                                                                         className="inline-flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-emerald-300 bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/30 px-2 py-0.5 rounded-md transition-all mt-1 w-fit"
                                                                         title="Dile a la IA qué está mal informado para que reformule el nodo y expanda la red"
