@@ -7776,21 +7776,14 @@ Devuelve estrictamente el JSON sin formato extra.
     return (
         <div className={isEmbedded
             ? "relative w-full h-full font-sans text-zinc-100 flex flex-col"
-            : "fixed inset-0 z-[100] bg-[#050506]/85 backdrop-blur-md overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-700 flex flex-col pointer-events-none"
+            : "fixed inset-0 z-[100] bg-black/40 backdrop-blur-md overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-700 flex flex-col pointer-events-none"
         }>
-            {/* Background Effects & High-Contrast Overlay */}
+            {/* Background Effects */}
             {!isEmbedded && (
                 <div className="fixed inset-0 pointer-events-none z-0">
-                    <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
                     <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent/5 blur-[150px] rounded-full  transform translate-x-1/3 -translate-y-1/3" style={{ backgroundColor: accent }} />
                     <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full  transform -translate-x-1/3 translate-y-1/3" />
-                    <div className="absolute inset-0 opacity-[0.05]" style={{
-                        backgroundImage: `
-                            linear-gradient(to right, #444 1px, transparent 1px),
-                            linear-gradient(to bottom, #444 1px, transparent 1px)
-                        `,
-                        backgroundSize: '40px 40px'
-                    }} />
+                    <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
                 </div>
             )}
 

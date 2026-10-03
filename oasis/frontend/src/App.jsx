@@ -3924,7 +3924,7 @@ const ProfileView = ({
 
     return (
         <div
-            className="fixed inset-x-0 md:inset-x-4 lg:inset-x-8 xl:inset-x-12 top-[68px] md:top-[80px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/95 backdrop-blur-xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
+            className="fixed inset-x-0 md:inset-x-4 lg:inset-x-8 xl:inset-x-12 top-[68px] md:top-[80px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/55 backdrop-blur-lg text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
             onTouchStart={(e) => {
                 e.stopPropagation();
                 const touch = e.touches[0];
@@ -4012,22 +4012,22 @@ const ProfileView = ({
                 {/* MODERN ASYMMETRICAL LEFT-ALIGNED PROFILE */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-20 sm:pt-20 md:pt-16 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-4 sm:pt-6 md:pt-10 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
                 >
-                    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-8 xl:gap-10 pointer-events-auto">
+                    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8 pointer-events-auto">
 
                         {/* LEFT COLUMN: IDENTIDAD, BIO, FIRMA COMPACTA Y ACCIONES */}
-                        <div className="w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col gap-4">
+                        <div className="w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col gap-3.5">
 
                             {/* Card Principal de Identidad */}
-                            <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md shadow-xl flex flex-col gap-4 relative overflow-hidden">
+                            <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md shadow-xl flex flex-col gap-3.5 relative overflow-hidden">
                                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
 
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3.5">
                                     {/* Avatar */}
-                                    <div className="relative shrink-0">
+                                    <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 aspect-square">
                                         <div
-                                            className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full p-[2.5px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-gradient-to-tr from-white/20 to-white/5'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all`}
+                                            className={`w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-gradient-to-tr from-white/20 to-white/5'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -4036,15 +4036,15 @@ const ProfileView = ({
                                                 }
                                             }}
                                         >
-                                            <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900">
+                                            <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
                                                     src={formatUrl(avatar)}
-                                                    className="w-full h-full object-cover"
+                                                    className="w-full h-full object-cover rounded-full"
                                                 />
                                             </div>
                                             {isEditingProfile && (
-                                                <div className="absolute inset-0 m-[2.5px] rounded-full bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                <div className="absolute inset-0 m-[2px] rounded-full bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                                                     <Camera size={14} className="text-white mb-0.5" />
                                                     <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
                                                 </div>
@@ -4053,20 +4053,20 @@ const ProfileView = ({
                                         <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
                                         <div
                                             onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                            className="absolute bottom-0 right-0 w-6 h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
+                                            className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
                                             title="Subir historia"
                                         >
-                                            <Plus size={11} strokeWidth={3} />
+                                            <Plus size={10} strokeWidth={3} className="sm:size-[11px]" />
                                         </div>
                                     </div>
 
                                     {/* Nombre & Badges */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            <h2 className="text-base sm:text-lg font-bold text-white leading-tight truncate">{fullName || user}</h2>
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
+                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{fullName || user}</h2>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
                                         </div>
-                                        <span className="text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{user}</span>
+                                        <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{user}</span>
                                         <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
                                             <Sparkles size={8} className="text-accent" />
                                             <span>Creador // Explorador</span>
@@ -13285,7 +13285,7 @@ ${afcMapContext}
                                     ) :
                                         <>
                                             {renderCanvasView()}
-                                            <div className="fixed inset-0 z-[1399] bg-[#050506]/60 backdrop-blur-md transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
+                                            <div className="fixed inset-0 z-[1399] bg-black/25 backdrop-blur-[2px] transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
                                             <ProfileView
                                                 user={user}
                                                 soulPieces={soulPieces}
