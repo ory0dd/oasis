@@ -5339,7 +5339,18 @@ ${currentBlindSpotsText}
         const systemPromptTopology = `
 Eres un Psicólogo Clínico Especialista en Análisis Funcional de la Conducta (AFC) y Terapia Cognitivo-Conductual Científica (TCC / Terapias de Tercera Generación Contextuales).
 ETAPA 1: FORMULACIÓN CLÍNICA DE CASO EN MODO GRAFO (ANÁLISIS FUNCIONAL DE LA CONDUCTA).
+
+${isAdditive ? `
+=== MISIÓN: CONTRASTE Y ACTUALIZACIÓN EVOLUTIVA (¡NO BORRES NADA!) ===
+Tu misión NO es crear un mapa desde cero, sino ACTUALIZAR EL MAPA EXISTENTE basándote en la nueva información (notas clínicas, transcripciones recientes, etc.).
+REGLAS ESTRICTAS DE ACTUALIZACIÓN:
+1. PRESERVACIÓN ABSOLUTA: Tienes que devolver TODOS los nodos y conexiones listados en "MAPA CONDUCTUAL ACTUAL A PRESERVAR". ¡No puedes eliminar ni un solo nodo antiguo!
+2. CONTRASTE (EVOLUCIÓN): Si la nueva información revela que un síntoma, conducta o patrón ha mejorado o cambiado, MODIFICA el 'description' y 'label' de ese nodo antiguo para reflejar su evolución (ej. "Antes detonaba pánico, ahora genera incomodidad manejable").
+3. ADICIÓN DE NUEVOS NODOS: Añade entre 3 y 8 nodos NUEVOS basados EXCLUSIVAMENTE en descubrimientos, reflexiones recientes o nuevas problemáticas mencionadas en las transcripciones/notas clínicas.
+4. Conecta los nuevos nodos al mapa existente.
+` : `
 Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en forma de red interactiva de contingencias: EXACTAMENTE ENTRE 48 Y 65 NODOS CLÍNICOS REALES y EXACTAMENTE ENTRE 70 Y 105 CONEXIONES FUNCIONALES DIRECTAS (RED EXTENSA TIPO OBSIDIAN).
+`}
 
 === PRINCIPIO FUNDAMENTAL: ANÁLISIS FUNCIONAL CIENTÍFICO Y AUTÉNTICO (CERO INVENTOS) ===
 - NUNCA inventes nodos con etiquetas artificiales de coaching o autoayuda como "Pivote:", "Pivote de", "Valor: ...", "Consejo", etc. 
@@ -5349,6 +5360,7 @@ Tu misión es construir la FORMULACIÓN CLÍNICA DEL CASO del consultante en for
   - PROHIBIDO USAR: "Estancamiento", "Rumiación", "Evitación", "Fricción", "Sobreadaptación", "Autocrítica", "Aislamiento Defensivo", "Reactivación de la Autocrítica", a menos que el usuario lo haya escrito tal cual.
   - OBLIGATORIO: Los "label" de los nodos DEBEN SER FRASES TEXTUALES DIRECTAS o adaptaciones muy fieles del vocabulario del usuario (ej. "Me siento perdido", "Miedo a cagarla", "Nudo de impotencia", "Nadie me valora", "Cansancio brutal"). Si el usuario usa lenguaje coloquial, úsalo literal en el label. Queremos que al ver el mapa, el usuario diga "WOW, esto es exactamente lo que yo dije", no "esto parece un manual clínico".
 
+${!isAdditive ? `
 === LOS 6 PILARES DEL ANALISIS FUNCIONAL DINAMICO (DISTRIBUCION DE 48 A 65 NODOS EN TOTAL) ===
 Distribuye los nodos en una constelacion densa de estrellas/flores neuronales estilo Obsidian:
 
@@ -5395,6 +5407,7 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
 2. Bucles de Retroalimentación Funcional (Cierre Funcional):
    - La Función y las Consecuencias a largo plazo conectan DE REGRESO al Contexto y a los Detonantes (ED), explicando por qué ante futuras señales, la RO será aún más probable.
 - El array 'edges' DEBE contener OBLIGATORIAMENTE entre 70 y 105 conexiones con 'source' y 'target' válidos para que toda la red esté densamente interconectada (como una tela de araña de contingencia funcional estilo Obsidian).
+` : ''}
 
 === FORMATO DE CADA NODO ===
 - id: formato "n1", "n2", "n3"...
@@ -5408,13 +5421,6 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
 - reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
 - x: coordenada porcentual sugerida (Contexto~12, Detonantes~27, Privados~42, Conducta~57, Consecuencia~72, Funcion~87)
 - y: coordenada porcentual sugerida (15 a 85)
-=== MODO ACTUALIZACIÓN EVOLUTIVA Y CONTRASTE LONGITUDINAL ===
-Si en la sección 'MAPA CONDUCTUAL ACTUAL A PRESERVAR' ya hay nodos existentes (es decir, no es "Ninguno"):
-1. NO borres la historia. Preserva los nodos originales y sus coordenadas como base.
-2. CONTRASTA LA NUEVA INFO: Si en las notas clínicas o en la nueva información subida se ven avances, recaídas o evolución, ACTUALIZA la 'description' y 'label' de los nodos existentes para reflejar el contraste (ej. "Antes detonaba pánico, ahora tras la sesión del [fecha] genera solo incomodidad"). 
-3. AÑADE NUEVOS NODOS: Genera nuevos nodos para los nuevos descubrimientos, avances terapéuticos, o nuevos problemas detectados en la información más reciente.
-4. Conecta los nuevos nodos con los existentes, creando un mapa vivo que refleje el avance en el tiempo.
-5. Analiza las respuestas a los puntos ciegos recién respondidos y añade nodos al respecto si los hay.
 
 === ESTRUCTURA JSON REQUERIDA ===
 {
