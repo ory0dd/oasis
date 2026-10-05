@@ -649,16 +649,58 @@ export const buildNodeClinicalExploration = (node, incomingNodes = [], outgoingN
         .map(n => sanitizeSpanishText(softenNodeLabel(n?.label || '')))
         .filter(Boolean);
 
+    const incJoined = incomingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ');
+    const outJoined = outgoingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ');
+
     let connectionSummary = '';
     if (incomingLabels.length > 0 && outgoingLabels.length > 0) {
-        connectionSummary = `Noto que este factor se nutre de ${incomingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}, y tiende a desembocar en ${outgoingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}.`;
+        connectionSummary = `En tu mapa, esto no aparece solo: se alimenta de ${incJoined}, y a su vez parece llevarte hacia ${outJoined}.`;
     } else if (incomingLabels.length > 0) {
-        connectionSummary = `Noto que este factor surge principalmente como respuesta a ${incomingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')}.`;
+        connectionSummary = `En tu mapa, esto parece haberse ido formando a partir de ${incJoined}.`;
     } else if (outgoingLabels.length > 0) {
-        connectionSummary = `Noto que cuando este factor se activa, suele alimentar ${outgoingLabels.slice(0, 2).map(l => `"${l}"`).join(' y ')} en tu circuito.`;
+        connectionSummary = `En tu mapa, cuando esto se activa suele abrir paso a ${outJoined}.`;
     } else {
-        connectionSummary = `Este factor opera como un nodo activo y sensible en este punto de tu mapa.`;
+        connectionSummary = `Por ahora esto aparece como un punto sensible y aislado en tu mapa; tu respuesta nos ayudará a ver con qué se conecta.`;
     }
+
+    // 👂 "Lo que te escuché": devolver el relato con las propias palabras del consultante
+    const rawDesc = sanitizeSpanishText(node.description || '').trim();
+    const userWords = [];
+    const quoteRegex = /["“«'‘]([^"”»'’]{2,60})["”»'’]/g;
+    let qm;
+    while ((qm = quoteRegex.exec(rawDesc)) !== null) {
+        const w = qm[1].trim();
+        if (w && !userWords.includes(w)) userWords.push(w);
+    }
+    let heardSummary = '';
+    if (rawDesc.length > 5) {
+        const reportMatch = rawDesc.match(/^(mencionaste|comentaste|dijiste|expresaste|compartiste|contaste|señalaste|refieres|refieriste|describiste|indicaste)\s+(que\s+)?/i);
+        if (reportMatch) {
+            const clause = rawDesc.slice(reportMatch[0].length).replace(/\.$/, '');
+            heardSummary = `Te escuché decir que ${clause}.`;
+        } else {
+            const clean = rawDesc.replace(/\.$/, '');
+            heardSummary = `Lo que me quedó de lo que compartiste: ${clean.charAt(0).toLowerCase() + clean.slice(1)}.`;
+        }
+    }
+
+    // 💗 Eco emocional: nombrar lo que se alcanza a percibir debajo del relato
+    const echoSource = `${rawDesc} ${label}`.toLowerCase();
+    const echoCatalog = [
+        { re: /raro|diferente|distint|no encaj|fuera de lugar|bicho/, felt: 'la sensación de ser distinto a los demás o de no terminar de encajar', pill: 'Me hace sentir distinto, como si no encajara del todo', icon: '🧩' },
+        { re: /complet|incomplet|me falta|falta algo|a medias|rot[oa]/, felt: 'un anhelo de sentirte completo, como si alguna pieza se hubiera quedado en el camino', pill: 'Siento que me falta una pieza para estar completo', icon: '🧷' },
+        { re: /sol[oa]\b|soledad|nadie/, felt: 'algo de soledad, de haber tenido que sostener cosas por tu cuenta', pill: 'Lo he cargado bastante solo', icon: '🌧️' },
+        { re: /culpa/, felt: 'una culpa que quizá no te corresponde cargar entera', pill: 'Me genera culpa, aunque no sé bien de qué', icon: '🪨' },
+        { re: /cansad|agotad|harto|exhaust/, felt: 'cansancio de llevar esto durante mucho tiempo', pill: 'Ya estoy cansado de cargar con esto', icon: '🔋' },
+        { re: /complej|complicad|difícil|dificil|dur[oa]/, felt: 'el peso de una historia que no ha sido sencilla y que pocos conocen completa', pill: 'Siento que pocos conocen mi historia completa', icon: '📖' },
+        { re: /miedo|ansie|temor/, felt: 'un miedo de fondo que se mantiene alerta', pill: 'Hay un miedo de fondo que no se apaga', icon: '🚨' },
+        { re: /estrict|exig|presi[oó]n|control/, felt: 'la presión de haber tenido que estar a la altura', pill: 'Aprendí que tenía que estar a la altura', icon: '⚖️' },
+        { re: /madre|padre|famil|mam[aá]|pap[aá]/, felt: 'heridas o vacíos en los vínculos más tempranos', pill: 'Tiene mucho que ver con cómo fue mi familia', icon: '🏠' }
+    ];
+    const echoes = echoCatalog.filter(e => e.re.test(echoSource) || incomingLabels.some(l => e.re.test(l.toLowerCase()))).slice(0, 2);
+    const feltSense = echoes.length > 0
+        ? `Debajo de esto alcanzo a percibir ${echoes.map(e => e.felt).join(', y también ')}.`
+        : '';
 
     let hypothesis = '';
     let question = '';
@@ -746,26 +788,178 @@ export const buildNodeClinicalExploration = (node, incomingNodes = [], outgoingN
             { text: "Es frustración por expectativas que no se cumplieron", icon: "⚡" }
         ];
     } else {
-        hypothesis = `Pienso que tal vez pase esto: "${label}" no es un fallo o defecto en ti, sino una respuesta adaptativa que tu sistema aprendió a activar en momentos de sobrecarga para intentar protegerte... No sé si en tu vivencia real se sienta exactamente así...`;
-        question = `¿Qué significa principalmente para ti "${label}" cuando se activa en tu día a día?`;
+        if (incomingLabels.length > 0 && outgoingLabels.length > 0) {
+            hypothesis = `Me pregunto si "${label}" es, en parte, la huella de lo vivido con ${incJoined}: cosas que quizá tuviste que procesar por tu cuenta y antes de tiempo. Y que ${outJoined} pueda ser una de las formas que encontraste para darle sentido, salida o un lugar propio. No quiero darlo por hecho; tú lo conoces mejor que nadie.`;
+        } else if (incomingLabels.length > 0) {
+            hypothesis = `Me pregunto si "${label}" es, en parte, la huella de lo vivido con ${incJoined}, y si en el camino tu sistema aprendió a adaptarse como pudo para protegerte. No quiero darlo por hecho; tú lo conoces mejor que nadie.`;
+        } else if (outgoingLabels.length > 0) {
+            hypothesis = `Me pregunto si "${label}" es algo que llevas tiempo cargando, y si ${outJoined} aparece como una forma de responder a ese peso o de buscarle salida. No quiero darlo por hecho; tú lo conoces mejor que nadie.`;
+        } else {
+            hypothesis = `Me pregunto si "${label}" no es un defecto tuyo, sino una forma en que tu sistema aprendió a sostenerse en momentos difíciles. No quiero darlo por hecho; tú lo conoces mejor que nadie.`;
+        }
+        question = incomingLabels.length > 0
+            ? `De todo lo que hace que "${label}" pese, ¿qué es lo que más te gustaría que alguien entendiera de verdad, sin que tuvieras que justificarlo?`
+            : `Cuando "${label}" aparece en tu día a día, ¿qué es lo que más te gustaría que alguien entendiera de verdad, sin que tuvieras que justificarlo?`;
         pills = [
             { text: "Es una defensa que aprendí en el pasado para protegerme", icon: "🛡️" },
-            { text: "Es un hábito automático que me cuesta mucho pausar", icon: "🔄" },
-            { text: "Es una señal de que necesito poner límites claros", icon: "🛑" },
             { text: "Es una carga que vengo arrastrando desde hace tiempo", icon: "⚖️" }
         ];
     }
+
+    // 🧭 Preguntas guía: ayudan a responder con más cuerpo (momento concreto + necesidad)
+    const subQuestions = [];
+    if (userWords.length > 0) {
+        subQuestions.push(`Cuando te describes como "${userWords[0]}", ¿qué estás queriendo decir con eso exactamente?`);
+    }
+    if (incomingLabels.length > 0) {
+        subQuestions.push(`¿Qué parte de ${incJoined} sientes que todavía se asoma hoy?`);
+    }
+    if (outgoingLabels.length > 0) {
+        subQuestions.push(`¿Qué te da o te quita ${outJoined} en relación con esto?`);
+    }
+    subQuestions.push('¿Recuerdas un momento reciente en que lo hayas sentido con claridad? ¿Qué pasó?');
+
+    // 🎯 Opciones personalizadas: antecedentes + ecos emocionales primero, luego las del tema
+    const personalPills = [];
+    echoes.forEach(e => personalPills.push({ text: e.pill, icon: e.icon }));
+    if (incomingLabels[0]) {
+        personalPills.push({ text: `Tiene mucho que ver con "${incomingLabels[0]}"`, icon: '🌱' });
+    }
+    if (outgoingLabels[0]) {
+        personalPills.push({ text: `"${outgoingLabels[0]}" es parte de cómo lo sobrellevo`, icon: '🎨' });
+    }
+    const seen = new Set();
+    pills = [...personalPills, ...pills]
+        .filter(p => {
+            const k = p.text.toLowerCase();
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+        })
+        .slice(0, 5);
+
+    // 💬 Apertura conversacional local (respaldo si la IA no responde)
+    let openingHeard = '';
+    if (heardSummary.startsWith('Te escuché decir que ')) {
+        openingHeard = `Oye, me contaste que ${heardSummary.slice('Te escuché decir que '.length)}`;
+    } else if (rawDesc.length > 5) {
+        openingHeard = `Oye, me quedé pensando en algo que compartiste: ${rawDesc.replace(/\.$/, '')}.`;
+    } else {
+        openingHeard = `Oye, me quedé pensando en "${label}".`;
+    }
+    let openingThought = '';
+    if (incomingLabels.length > 0) {
+        openingThought = ` Y yo pienso que quizá tenga mucho que ver con lo que viviste con ${incJoined}${outgoingLabels.length > 0 ? `, y que ${outJoined} haya sido una forma de darle salida` : ''}.`;
+    } else if (echoes.length > 0) {
+        openingThought = ` Y me da la impresión de que debajo hay ${echoes[0].felt}.`;
+    }
+    const openingFallback = `${openingHeard}${openingThought} ¿Es algo así? Me gustaría entender mejor cómo lo vives tú.`;
 
     return {
         theme,
         cleanLabel: label,
         incomingLabels,
         outgoingLabels,
+        heardSummary,
+        userWords,
+        feltSense,
+        openingFallback,
         connectionSummary,
         hypothesis,
         question,
+        subQuestions: subQuestions.slice(0, 3),
         pills
     };
+};
+
+// 💬 Apertura conversacional por nodo (generada con IA y cacheada por sesión)
+export const nodeOpeningCache = {};
+
+const getOasisApiUrl = () => import.meta.env.VITE_API_URL ||
+    ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
+        ? `http://${window.location.hostname}:5046`
+        : 'https://oasis-production-6303.up.railway.app');
+
+export const NodeOpeningMessage = ({ node, incomingLabels = [], outgoingLabels = [], fallbackText = '' }) => {
+    const cacheKey = node ? `${node.id}::${node.label || ''}::${node.description || ''}` : '';
+    const [text, setText] = useState(() => nodeOpeningCache[cacheKey] || '');
+    const [loading, setLoading] = useState(() => !nodeOpeningCache[cacheKey]);
+
+    useEffect(() => {
+        if (!node) return;
+        if (nodeOpeningCache[cacheKey]) {
+            setText(nodeOpeningCache[cacheKey]);
+            setLoading(false);
+            return;
+        }
+        let cancelled = false;
+        setText('');
+        setLoading(true);
+
+        const prompt = `Eres un terapeuta cercano y cálido conversando con alguien sobre un aspecto de su vida que aparece en su mapa personal.
+
+Aspecto: "${node.label}"
+Lo que la persona contó sobre esto: ${node.description ? `"${node.description}"` : '(sin detalle)'}
+${incomingLabels.length > 0 ? `Viene de / se alimenta de: ${incomingLabels.map(l => `"${l}"`).join(', ')}` : ''}
+${outgoingLabels.length > 0 ? `Lleva hacia: ${outgoingLabels.map(l => `"${l}"`).join(', ')}` : ''}
+
+Escribe un mensaje breve (2 a 4 oraciones, un solo párrafo) que siga esta idea, con tus propias palabras y de forma natural:
+"Oye, me cuentas que [lo que dijo, retomando alguna expresión suya literal]... y yo pienso que [una hipótesis sencilla y tentativa que conecte con lo que viene antes o después en su mapa]. ¿Es algo así? Me gustaría conocer más de [algo concreto]."
+
+Reglas:
+- Habla de tú, como alguien que de verdad escuchó; tono humano y relajado, nada clínico.
+- Sin títulos, listas, comillas alrededor de todo el mensaje ni tecnicismos.
+- No uses "Entiendo perfectamente", "Tiene todo el sentido", "es válido" ni frases de autoayuda.
+- Devuelve solo el mensaje.`;
+
+        (async () => {
+            try {
+                const apiKey = localStorage.getItem('oasis_deepseek_key') || localStorage.getItem('oasis_openai_key') || '';
+                const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+                const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
+                const res = await fetch(`${getOasisApiUrl()}/api/oasis/config/chat-completion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint,
+                        key: apiKey || null,
+                        payload: { model, messages: [{ role: 'user', content: prompt }], temperature: 0.8, max_tokens: 250 }
+                    })
+                });
+                if (!res.ok) throw new Error('bad response');
+                const data = await res.json();
+                const reply = data?.choices?.[0]?.message?.content?.trim().replace(/^["'“]|["'”]$/g, '');
+                if (!reply) throw new Error('empty');
+                nodeOpeningCache[cacheKey] = reply;
+                nodeOpeningCache[node.id] = reply;
+                if (!cancelled) setText(reply);
+            } catch (err) {
+                if (!cancelled) setText(fallbackText);
+                if (fallbackText) nodeOpeningCache[node.id] = fallbackText;
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cacheKey]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center gap-1 px-1 py-1 text-zinc-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/70 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/70 animate-bounce [animation-delay:120ms]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/70 animate-bounce [animation-delay:240ms]" />
+            </div>
+        );
+    }
+
+    return (
+        <p className="text-[11.5px] text-zinc-100 leading-relaxed whitespace-pre-line">
+            {text || fallbackText}
+        </p>
+    );
 };
 
 export const getNodeOriginContext = (node, edges = [], allNodes = []) => {
@@ -5094,8 +5288,19 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         const privateNotesText = getLocalItemCaseInsensitive('oasis_private_notes', user) || "";
         const allNotes = [treatmentPlan?.patientExtras, clinicianNotesText, privateNotesText].filter(Boolean).join('\n---\n');
 
-        const currentNodesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.nodes || [], null, 2) : "Ninguno (generación desde cero)";
-        const currentEdgesText = isAdditive && afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno (generación desde cero)";
+        let transcriptionsText = "";
+        try {
+            const rawT = getLocalItemCaseInsensitive('oasis_transcriptions_', user);
+            if (rawT) {
+                const tArray = JSON.parse(rawT);
+                if (Array.isArray(tArray)) {
+                    transcriptionsText = tArray.map(t => `[${t.date}] ${t.filename}:\n${t.text}`).join('\n\n');
+                }
+            }
+        } catch(e) {}
+
+        const currentNodesText = afcData && !afcData.is_mock ? JSON.stringify(afcData.nodes || [], null, 2) : "Ninguno (generación desde cero)";
+        const currentEdgesText = afcData && !afcData.is_mock ? JSON.stringify(afcData.edges || [], null, 2) : "Ninguno (generación desde cero)";
         const currentBlindSpotsText = afcData && afcData.blind_spots ? JSON.stringify(afcData.blind_spots, null, 2) : "Ninguno";
 
         const context = `
@@ -5110,6 +5315,9 @@ ${getLocalItemCaseInsensitive('oasis_clinical_report_text_', user) || "No hay in
 
 === NOTAS CLÍNICAS / OBSERVACIONES DEL ESPECIALISTA ===
 ${allNotes || "No hay notas adicionales."}
+
+=== TRANSCRIPCIONES DE SESIONES Y EVOLUCIÓN ===
+${transcriptionsText || "No hay audios transcritos."}
 
 === RASGOS PID-5 ===
 ${pidIndices ? JSON.stringify(pidIndices.status, null, 2) : "No evaluado aún."}
@@ -5200,12 +5408,13 @@ Reglas clínicas de conexión de contingencia funcional (Formando la Red Dinámi
 - reflection_question: PREGUNTA EXISTENCIAL PROFUNDA Y DISRUPTIVA (10 a 20 palabras). Olvida las preguntas de psicólogo de manual. Genera preguntas filosóficas, amorosamente confrontativas, que provoquen un 'WOW, nunca me había preguntado esto para ser mejor persona'. Deben golpear directo al núcleo del engaño o evasión del usuario.
 - x: coordenada porcentual sugerida (Contexto~12, Detonantes~27, Privados~42, Conducta~57, Consecuencia~72, Funcion~87)
 - y: coordenada porcentual sugerida (15 a 85)
-${isAdditive ? `
-=== MODO ACTUALIZACIÓN ADITIVA ===
-1. Copia EXACTAMENTE todos los nodos de 'Nodos actuales' en tu lista 'nodes' de salida. Conserva intactos sus atributos y coordenadas.
-2. Copia EXACTAMENTE todas las conexiones de 'Conexiones actuales'.
-3. Analiza las respuestas a los puntos ciegos recién respondidos y añade de 1 a 3 NUEVOS nodos y conexiones reales basados en lo que respondió el paciente.
-` : ''}
+=== MODO ACTUALIZACIÓN EVOLUTIVA Y CONTRASTE LONGITUDINAL ===
+Si en la sección 'MAPA CONDUCTUAL ACTUAL A PRESERVAR' ya hay nodos existentes (es decir, no es "Ninguno"):
+1. NO borres la historia. Preserva los nodos originales y sus coordenadas como base.
+2. CONTRASTA LA NUEVA INFO: Si en las notas clínicas o en la nueva información subida se ven avances, recaídas o evolución, ACTUALIZA la 'description' y 'label' de los nodos existentes para reflejar el contraste (ej. "Antes detonaba pánico, ahora tras la sesión del [fecha] genera solo incomodidad"). 
+3. AÑADE NUEVOS NODOS: Genera nuevos nodos para los nuevos descubrimientos, avances terapéuticos, o nuevos problemas detectados en la información más reciente.
+4. Conecta los nuevos nodos con los existentes, creando un mapa vivo que refleje el avance en el tiempo.
+5. Analiza las respuestas a los puntos ciegos recién respondidos y añade nodos al respecto si los hay.
 
 === ESTRUCTURA JSON REQUERIDA ===
 {
@@ -5961,7 +6170,7 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
         }
     };
 
-    const sendNodeReflection = async (currentNode, userResponseText) => {
+    const sendNodeReflection = async (currentNode, userResponseText, options = {}) => {
         if (!currentNode || !userResponseText?.trim() || isGeneratingExplorations) return;
         
         const userText = userResponseText.trim();
@@ -5997,19 +6206,35 @@ Devuelve estrictamente el JSON, sin formato extra ni Markdown.
                 .map(e => (afcData?.nodes || []).find(n => n && n.id === e.target)?.label)
                 .filter(Boolean);
 
-            const replyPrompt = `Eres un psicoterapeuta clínico humano, cálido, empático, reflexivo y de profunda agudeza psicológica.
-El paciente está realizando una introspección consciente sobre el nodo de su mapa: "${currentNode.label}" (Tipo: ${currentNode.type || 'conductual'}, Descripción: ${currentNode.description || 'N/A'}).
-${incomingLabels.length > 0 ? `Este factor se nutre de: ${incomingLabels.join(', ')}.` : ''}
-${outgoingLabels.length > 0 ? `Este factor tiende a desencadenar o alimentar: ${outgoingLabels.join(', ')}.` : ''}
+            const priorTurns = currentChat
+                .filter(m => m && m.content && (m.role === 'user' || m.isAIGenerated))
+                .slice(-6)
+                .map(m => `${m.role === 'user' ? 'Consultante' : 'Terapeuta'}: ${m.content}`)
+                .join('\n');
 
-El paciente acaba de compartir su vivencia íntima sobre qué significa este factor para él:
+            const replyPrompt = `Eres un psicoterapeuta humano, cálido y muy perspicaz. Tu meta principal en esta respuesta es que la persona se sienta ESCUCHADA, PERCIBIDA y COMPRENDIDA de verdad, no evaluada.
+
+CONTEXTO DEL FACTOR DE SU MAPA
+- Factor: "${currentNode.label}" (tipo: ${currentNode.type || 'conductual'})
+- Lo que la persona había contado originalmente sobre esto: ${currentNode.description ? `"${currentNode.description}"` : 'N/A'}
+${incomingLabels.length > 0 ? `- Se alimenta de: ${incomingLabels.map(l => `"${l}"`).join(', ')}` : ''}
+${outgoingLabels.length > 0 ? `- Tiende a llevar hacia: ${outgoingLabels.map(l => `"${l}"`).join(', ')}` : ''}
+${priorTurns ? `\nCONVERSACIÓN PREVIA SOBRE ESTE FACTOR\n${priorTurns}\n` : ''}
+LO QUE ACABA DE RESPONDER
 "${userText}"
+${options.fromPill ? '(Nota: eligió esta frase de una lista de opciones sugeridas; no la escribió con sus palabras. No la trates como un relato detallado: valida que haya elegido eso y ayúdale a ponerlo en sus propias palabras.)' : ''}
 
-INSTRUCCIONES CLÍNICAS:
-1. Responde de forma cálida, humana y sumamente perspicaz a lo que el paciente acaba de expresar. Habla de tú a tú ("Entiendo perfectamente...", "Tiene todo el sentido...").
-2. Explica brevemente la función protectora o adaptativa de este patrón (por ejemplo, cómo el vacío o la desconexión actúa como anestesia ante el sobrepensar y la sobrecarga).
-3. Devuelve UNA SOLA reflexión o devolución clínica profunda (máximo 2 a 3 oraciones en un único párrafo fluido).
-4. NUNCA uses viñetas, títulos, listas ni lenguaje robótico de manual.`;
+CÓMO RESPONDER
+1. Refleja con precisión lo que dijo, retomando entre comillas al menos una expresión literal suya (de esta respuesta o de su relato original). Nada de paráfrasis genéricas.
+2. Nombra, de forma tentativa ("me suena a…", "quizá…", "alcanzo a percibir…"), la emoción o necesidad que hay debajo (p. ej., querer ser visto, cansancio de cargar solo, miedo a no encajar, deseo de sentirse completo).
+3. Conecta concretamente con al menos uno de los factores relacionados del mapa, nombrándolo, y explica el puente en una frase sencilla.
+4. Valida sin dramatizar ni minimizar; reconoce lo que le ha costado.
+5. Cierra con UNA sola pregunta abierta, concreta y anclada a lo que dijo, que invite a contar un momento, ejemplo o sensación específica.
+
+FORMATO
+- 4 a 6 oraciones en prosa natural, en 1 o 2 párrafos cortos, hablando de tú.
+- Sin viñetas, títulos, tecnicismos ni diagnósticos.
+- PROHIBIDO usar: "Entiendo perfectamente", "Tiene todo el sentido", "es el primer paso", "es normal", "es válido sentir", ni frases de manual de autoayuda.`;
 
             const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
@@ -6020,8 +6245,8 @@ INSTRUCCIONES CLÍNICAS:
                     payload: {
                         model: model,
                         messages: [{ role: 'user', content: replyPrompt }],
-                        temperature: 0.6,
-                        max_tokens: 400
+                        temperature: 0.7,
+                        max_tokens: 550
                     }
                 })
             });
@@ -6040,10 +6265,17 @@ INSTRUCCIONES CLÍNICAS:
             }
         } catch (err) {
             console.error("AI reply error:", err);
-            const isVacio = /vac[ií]o/i.test(currentNode.label || '') || /vac[ií]o/i.test(currentNode.description || '');
-            const fallbackReply = isVacio
-                ? "Tiene todo el sentido del mundo. Cuando la mente se satura de sobrepensar y sostener exigencia, desconectarse en forma de vacío no es indolencia, sino una anestesia de emergencia para no colapsar. Nombrarlo es el primer paso para empezar a escuchar qué agotamiento lo está pidiendo."
-                : `Tiene mucho sentido lo que compartes. Reconocer que "${currentNode.label}" opera de esa forma en tu sistema es el primer paso fundamental para quitarle juicio y empezar a darle una salida más compasiva y consciente.`;
+            const fbIncoming = (afcData?.edges || [])
+                .filter(e => e && e.target === currentNode.id)
+                .map(e => (afcData?.nodes || []).find(n => n && n.id === e.source)?.label)
+                .filter(Boolean);
+            const shortText = userText.length > 140 ? `${userText.slice(0, 140).trim()}…` : userText;
+            const bridge = fbIncoming.length > 0
+                ? ` Y me hace pensar en cómo esto puede estar enlazado con "${sanitizeSpanishText(softenNodeLabel(fbIncoming[0]))}", que aparece justo antes en tu mapa.`
+                : '';
+            const fallbackReply = options.fromPill
+                ? `Elegiste "${shortText}", y me quedo con eso: no es algo menor reconocerlo.${bridge}\n\nSi lo pusieras en tus propias palabras, ¿cómo lo dirías? ¿Hay algún momento reciente en que lo hayas sentido así?`
+                : `Gracias por ponerlo así: "${shortText}". Alcanzo a percibir que no es algo que se diga a la ligera, y que detrás hay algo que has venido sosteniendo durante tiempo.${bridge}\n\n¿Me cuentas algún momento concreto en que lo hayas sentido con más fuerza? ¿Qué pasaba alrededor y qué necesitabas en ese instante?`;
 
             setNodeChats(prev => ({
                 ...prev,
@@ -7906,11 +8138,26 @@ Devuelve estrictamente el JSON sin formato extra.
                                             ? 'bg-zinc-900/80 border-white/10 text-zinc-500 cursor-not-allowed'
                                             : 'bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-400/30 shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_24px_rgba(16,185,129,0.5)]'
                                     }`}
-                                    title="Generar o recalcular Mapa de Bucles"
+                                    title="Generar o recalcular Mapa de Bucles desde cero"
                                 >
                                     <Sparkles size={13} className={isAnalyzing ? "text-zinc-500" : "text-emerald-200 animate-pulse"} />
-                                    <span>{isAnalyzing ? "Generando..." : "Generar Mapa"}</span>
+                                    <span>{isAnalyzing ? "Generando..." : "Generar Nuevo"}</span>
                                 </button>
+                                {afcData && !afcData.is_mock && (
+                                    <button
+                                        onClick={(e) => handleGenerateMap(e, true)}
+                                        disabled={!!isAnalyzing}
+                                        className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl border backdrop-blur-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer pointer-events-auto ${
+                                            isAnalyzing
+                                                ? 'bg-zinc-900/80 border-white/10 text-zinc-500 cursor-not-allowed'
+                                                : 'bg-indigo-600/90 hover:bg-indigo-500 text-white border-indigo-400/30 shadow-[0_0_18px_rgba(99,102,241,0.35)] hover:shadow-[0_0_24px_rgba(99,102,241,0.5)]'
+                                        }`}
+                                        title="Actualiza el mapa contrastando los audios y reportes nuevos con el mapa actual"
+                                    >
+                                        <Activity size={13} className={isAnalyzing ? "text-zinc-500" : "text-indigo-200 animate-pulse"} />
+                                        <span>{isAnalyzing ? "Actualizando..." : "Contrastar Info"}</span>
+                                    </button>
+                                )}
                             </div>
 
                             {/* Quick Column Navigation Pills (Desktop & Mobile) */}
@@ -9436,77 +9683,38 @@ Por favor, analicemos:
                                                                 const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
 
                                                                 return (
-                                                                    <div className="mt-2 p-3 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-zinc-900/60 to-black/80 border border-indigo-500/30 space-y-2.5 shadow-[0_0_20px_rgba(99,102,241,0.08)]">
-                                                                        {/* Header de la exploración */}
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-                                                                                <Compass size={11} className="text-indigo-400 animate-pulse" />
-                                                                                Lectura e Hipótesis del Mapa
-                                                                            </span>
-                                                                            {clinicalExploration?.incomingLabels?.length > 0 && (
-                                                                                <span className="text-[8px] font-mono text-zinc-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
-                                                                                    {clinicalExploration.incomingLabels.length} antecedente{clinicalExploration.incomingLabels.length > 1 ? 's' : ''}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-
-                                                                        {/* Conexión causal e hipótesis explicada */}
-                                                                        <div className="text-[9.5px] text-zinc-400 leading-snug bg-black/40 p-2.5 rounded-xl border border-white/5 space-y-1.5">
-                                                                            <p className="text-indigo-300 font-medium">
-                                                                                {clinicalExploration?.connectionSummary}
-                                                                            </p>
-                                                                            <p className="text-zinc-300 italic pt-1 border-t border-white/5 font-sans leading-relaxed">
-                                                                                "{clinicalExploration?.hypothesis}"
-                                                                            </p>
-                                                                        </div>
-
-                                                                        {/* Pregunta íntima específica */}
-                                                                        <div className="space-y-1">
-                                                                            <p className="text-[11px] text-white font-semibold leading-relaxed flex items-start gap-1.5">
-                                                                                <span className="text-indigo-400 font-mono text-xs mt-0.5">💬</span>
-                                                                                <span>{clinicalExploration?.question || getFallbackQuestion(currentNode)}</span>
-                                                                            </p>
-                                                                        </div>
-
+                                                                    <div className="mt-2 p-3 rounded-2xl bg-gradient-to-br from-indigo-950/30 via-zinc-900/50 to-black/70 border border-indigo-500/20 space-y-2.5">
+                                                                        {/* Mensaje de apertura conversacional generado con IA */}
+                                                                        <NodeOpeningMessage
+                                                                            node={currentNode}
+                                                                            incomingLabels={clinicalExploration?.incomingLabels || []}
+                                                                            outgoingLabels={clinicalExploration?.outgoingLabels || []}
+                                                                            fallbackText={clinicalExploration?.openingFallback || ''}
+                                                                        />
                                                                         {/* Interacción: Conversación / Devolución Clínica o Píldoras */}
                                                                         {lastUserMsg ? (
                                                                             <div className="space-y-2 pt-1 border-t border-white/10">
                                                                                 {/* Mensaje del consultante */}
-                                                                                <div className="bg-emerald-950/40 border border-emerald-500/30 p-2.5 rounded-xl space-y-1">
-                                                                                    <div className="flex items-center justify-between text-[8.5px] font-mono text-emerald-400">
-                                                                                        <span className="font-bold flex items-center gap-1">
-                                                                                            <Heart size={10} /> Tu vivencia
-                                                                                        </span>
-                                                                                        <span className="text-zinc-500 text-[8px]">Reflexión guardada</span>
-                                                                                    </div>
-                                                                                    <p className="text-[11px] text-emerald-200 leading-relaxed italic">
-                                                                                        "{lastUserMsg.content}"
+                                                                                <div className="flex justify-end">
+                                                                                    <p className="max-w-[90%] bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-2xl rounded-br-sm text-[11px] text-emerald-100 leading-relaxed">
+                                                                                        {lastUserMsg.content}
                                                                                     </p>
                                                                                 </div>
 
                                                                                 {/* Cargando respuesta IA */}
                                                                                 {isGeneratingExplorations && (
-                                                                                    <div className="bg-zinc-900/70 border border-indigo-500/30 p-2.5 rounded-xl flex items-center gap-2.5 text-indigo-300 animate-pulse">
-                                                                                        <div className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin shrink-0"></div>
-                                                                                        <span className="text-[10px] font-medium leading-snug">
-                                                                                            Kio está reflexionando con agudeza clínica sobre tu vivencia...
-                                                                                        </span>
+                                                                                    <div className="flex items-center gap-1 px-1 text-zinc-500">
+                                                                                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce" />
+                                                                                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce [animation-delay:120ms]" />
+                                                                                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce [animation-delay:240ms]" />
                                                                                     </div>
                                                                                 )}
 
                                                                                 {/* Devolución de la IA */}
                                                                                 {!isGeneratingExplorations && lastAssistantMsg && lastAssistantMsg.content && (
-                                                                                    <div className="bg-black/60 border border-indigo-500/25 p-2.5 rounded-xl space-y-1.5 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
-                                                                                        <div className="flex items-center justify-between text-[8.5px] font-mono text-indigo-300">
-                                                                                            <span className="font-bold flex items-center gap-1">
-                                                                                                <Brain size={10} className="text-indigo-400" /> Devolución Clínica
-                                                                                            </span>
-                                                                                            <span className="text-zinc-500 text-[8px]">Kio IA</span>
-                                                                                        </div>
-                                                                                        <p className="text-[10.5px] text-zinc-100 font-sans leading-relaxed">
-                                                                                            {lastAssistantMsg.content}
-                                                                                        </p>
-                                                                                    </div>
+                                                                                    <p className="text-[11px] text-zinc-100 leading-relaxed whitespace-pre-line">
+                                                                                        {lastAssistantMsg.content}
+                                                                                    </p>
                                                                                 )}
 
                                                                                 {/* Botón para adaptar factor con esta vivencia */}
@@ -9519,11 +9727,11 @@ Por favor, analicemos:
                                                                                             setMoldFeedback(lastUserMsg.content);
                                                                                             setMoldCustomTitle('');
                                                                                         }}
-                                                                                        className="w-full flex items-center justify-center gap-1.5 text-[9.5px] py-1.5 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold transition-all"
+                                                                                        className="flex items-center gap-1 text-[9px] text-zinc-500 hover:text-emerald-300 transition-colors"
                                                                                         title="Reformular este factor en el mapa usando tu respuesta"
                                                                                     >
-                                                                                        <Sparkles size={11} className="text-emerald-400" />
-                                                                                        <span>Moldear el factor con esta vivencia</span>
+                                                                                        <Sparkles size={10} />
+                                                                                        <span>Ajustar este factor con lo que dije</span>
                                                                                     </button>
                                                                                 </div>
 
@@ -9568,37 +9776,12 @@ Por favor, analicemos:
                                                                             </div>
                                                                         ) : (
                                                                             <div className="space-y-2 pt-1">
-                                                                                {/* Píldoras de resonancia rápida */}
-                                                                                {clinicalExploration?.pills?.length > 0 && (
-                                                                                    <div className="flex flex-col gap-1.5">
-                                                                                        <span className="text-[8.5px] font-mono uppercase tracking-wider text-zinc-400">
-                                                                                            Opciones de resonancia rápida (toca una para explorar):
-                                                                                        </span>
-                                                                                        <div className="flex flex-wrap gap-1.5">
-                                                                                            {clinicalExploration.pills.map((pill, idx) => (
-                                                                                                <button
-                                                                                                    key={idx}
-                                                                                                    disabled={isGeneratingExplorations}
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        sendNodeReflection(currentNode, pill.text);
-                                                                                                    }}
-                                                                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/40 text-[9.5px] text-zinc-300 hover:text-emerald-200 text-left transition-all group disabled:opacity-50 active:scale-95"
-                                                                                                >
-                                                                                                    <span className="text-xs group-hover:scale-110 transition-transform">{pill.icon}</span>
-                                                                                                    <span className="leading-snug">{pill.text}</span>
-                                                                                                </button>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-
                                                                                 {/* Input libre para escribir con sus propias palabras */}
-                                                                                <div className="flex gap-2 pt-1 border-t border-white/5">
+                                                                                <div className="flex gap-2 pt-1">
                                                                                     <input
                                                                                         id={`reflection-input-${currentNode.id}`}
                                                                                         type="text"
-                                                                                        placeholder="O escribe con tus propias palabras qué significa para ti..."
+                                                                                        placeholder="Cuéntame, con tus palabras..."
                                                                                         autoComplete="off"
                                                                                         disabled={isGeneratingExplorations}
                                                                                         className="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-1.5 text-[10px] text-white focus:outline-none focus:border-emerald-500/50 placeholder:text-zinc-500"

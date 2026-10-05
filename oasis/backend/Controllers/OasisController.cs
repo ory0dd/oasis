@@ -3162,6 +3162,9 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
                 var groqKey = Environment.GetEnvironmentVariable("GROQ_KEY");
                 if (!string.IsNullOrEmpty(groqKey)) {
+                    if (audioBytes.Length > 24 * 1024 * 1024) {
+                        return StatusCode(413, "El archivo supera los 25 MB permitidos por Groq. Por favor, comprímelo a 32 kbps o divídelo en partes.");
+                    }
                     using var groqClient = new System.Net.Http.HttpClient();
                     groqClient.Timeout = TimeSpan.FromMinutes(5);
                     groqClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", groqKey);
