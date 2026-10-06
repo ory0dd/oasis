@@ -903,8 +903,9 @@ Lo que la persona contó sobre esto: ${node.description ? `"${node.description}"
 ${incomingNodes.length > 0 ? `Viene de / se alimenta de:\n${incomingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
 ${outgoingNodes.length > 0 ? `Lleva hacia:\n${outgoingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
 
-Escribe un mensaje breve (2 a 4 oraciones, un solo párrafo) que siga esta idea, con tus propias palabras y de forma natural:
-"Oye, me cuentas que [lo que dijo, retomando alguna expresión suya literal]... y yo pienso que [una hipótesis sencilla y tentativa que conecte con lo que viene antes o después en su mapa]. ¿Es algo así? Me gustaría conocer más de [algo concreto]."
+Escribe un mensaje breve (2 a 4 oraciones, un solo párrafo) para iniciar la conversación sobre este aspecto y cómo se conecta con el resto de su mapa. 
+CRÍTICO: Inventa siempre una forma NUEVA y FRESCA de iniciar y estructurar tu mensaje. NUNCA uses formatos repetitivos ni plantillas (prohibido usar la estructura "Oye, me cuentas que... y yo pienso que..."). 
+Usa tu creatividad: a veces haz una observación curiosa, otras veces pregúntale directamente cómo percibe esa conexión, o dale una nueva perspectiva que le haga pensar. Que se sienta como una charla natural que fluye libremente.
 
 Reglas:
 - Habla de tú, como alguien que de verdad escuchó; tono humano y relajado, nada clínico.
