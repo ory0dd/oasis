@@ -903,8 +903,7 @@ ${incomingNodes.length > 0 ? `Conexiones previas: ${incomingNodes.map(n => n.lab
 ${outgoingNodes.length > 0 ? `Lleva hacia: ${outgoingNodes.map(n => n.label).join(', ')}` : ''}
 
 Comparte una breve percepción sobre esto y haz una pregunta sencilla para que la persona reflexione, sin sonar metiche, clínico o de autoayuda. Pregunta algo casual sobre cómo lo percibe o si cree que podría ser distinto.
-Sé muy natural, en un solo párrafo corto de 1 a 3 oraciones.
-No uses muletillas repetitivas ("Oye", "Me cuentas que", "Entiendo"). Ve directo al grano.`;
+Sé muy natural, en un solo párrafo corto de 1 a 3 oraciones. Ve directo al grano, sin rodeos de saludo.`;
 
         (async () => {
             try {
