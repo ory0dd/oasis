@@ -880,7 +880,7 @@ const getOasisApiUrl = () => import.meta.env.VITE_API_URL ||
         ? `http://${window.location.hostname}:5046`
         : 'https://oasis-production-6303.up.railway.app');
 
-export const NodeOpeningMessage = ({ node, incomingLabels = [], outgoingLabels = [], fallbackText = '' }) => {
+export const NodeOpeningMessage = ({ node, incomingNodes = [], outgoingNodes = [], fallbackText = '' }) => {
     const cacheKey = node ? `${node.id}::${node.label || ''}::${node.description || ''}` : '';
     const [text, setText] = useState(() => nodeOpeningCache[cacheKey] || '');
     const [loading, setLoading] = useState(() => !nodeOpeningCache[cacheKey]);
@@ -900,8 +900,8 @@ export const NodeOpeningMessage = ({ node, incomingLabels = [], outgoingLabels =
 
 Aspecto: "${node.label}"
 Lo que la persona contó sobre esto: ${node.description ? `"${node.description}"` : '(sin detalle)'}
-${incomingLabels.length > 0 ? `Viene de / se alimenta de: ${incomingLabels.map(l => `"${l}"`).join(', ')}` : ''}
-${outgoingLabels.length > 0 ? `Lleva hacia: ${outgoingLabels.map(l => `"${l}"`).join(', ')}` : ''}
+${incomingNodes.length > 0 ? `Viene de / se alimenta de:\n${incomingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
+${outgoingNodes.length > 0 ? `Lleva hacia:\n${outgoingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
 
 Escribe un mensaje breve (2 a 4 oraciones, un solo párrafo) que siga esta idea, con tus propias palabras y de forma natural:
 "Oye, me cuentas que [lo que dijo, retomando alguna expresión suya literal]... y yo pienso que [una hipótesis sencilla y tentativa que conecte con lo que viene antes o después en su mapa]. ¿Es algo así? Me gustaría conocer más de [algo concreto]."
@@ -9693,8 +9693,8 @@ Por favor, analicemos:
                                                                         {/* Mensaje de apertura conversacional generado con IA */}
                                                                         <NodeOpeningMessage
                                                                             node={currentNode}
-                                                                            incomingLabels={clinicalExploration?.incomingLabels || []}
-                                                                            outgoingLabels={clinicalExploration?.outgoingLabels || []}
+                                                                            incomingNodes={nodeIncoming || []}
+                                                                            outgoingNodes={nodeOutgoing || []}
                                                                             fallbackText={clinicalExploration?.openingFallback || ''}
                                                                         />
                                                                         {/* Interacción: Conversación / Devolución Clínica o Píldoras */}
