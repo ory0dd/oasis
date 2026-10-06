@@ -1417,8 +1417,8 @@ DATOS DEL CASO:
 - Consultante: ${(patientName || 'Consultante').toUpperCase()}
 - Evaluador: Luis Esteban Briones Canziales
 - Pruebas Registradas (Utiliza EXCLUSIVAMENTE estas pruebas en el reporte, NO inventes otras):
-${completedTestsList.length > 0 ? completedTestsList.map(t => \`• \${t.sigla}: \${t.nombre} | \${t.informante} | Puntaje: \${t.score} | Nivel: \${t.nivel}\`).join('\n') : '• Batería psicométrica de entrevistas preliminares y cribado clínico.'}
-${pidDetails ? \`• Perfil Dimensional PID-5: \${pidDetails}\` : ''}
+${completedTestsList.length > 0 ? completedTestsList.map(t => `• ${t.sigla}: ${t.nombre} | ${t.informante} | Puntaje: ${t.score} | Nivel: ${t.nivel}`).join('\n') : '• Batería psicométrica de entrevistas preliminares y cribado clínico.'}
+${pidDetails ? `• Perfil Dimensional PID-5: ${pidDetails}` : ''}
 
 FUENTES DOCUMENTALES Y BIOGRÁFICAS DISPONIBLES:
 ${contextData || 'Datos documentales de entrevistas iniciales y notas de campo.'}
