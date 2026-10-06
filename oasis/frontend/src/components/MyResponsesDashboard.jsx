@@ -841,19 +841,19 @@ export const buildNodeClinicalExploration = (node, incomingNodes = [], outgoingN
     // 💬 Apertura conversacional local (respaldo si la IA no responde)
     let openingHeard = '';
     if (heardSummary.startsWith('Te escuché decir que ')) {
-        openingHeard = `Oye, me contaste que ${heardSummary.slice('Te escuché decir que '.length)}`;
+        openingHeard = `Me quedé pensando en que ${heardSummary.slice('Te escuché decir que '.length)}`;
     } else if (rawDesc.length > 5) {
-        openingHeard = `Oye, me quedé pensando en algo que compartiste: ${rawDesc.replace(/\.$/, '')}.`;
+        openingHeard = `Revisando tu mapa, noté algo sobre lo que compartiste: ${rawDesc.replace(/\.$/, '')}.`;
     } else {
-        openingHeard = `Oye, me quedé pensando en "${label}".`;
+        openingHeard = `Estaba viendo el punto sobre "${label}".`;
     }
     let openingThought = '';
     if (incomingLabels.length > 0) {
-        openingThought = ` Y yo pienso que quizá tenga mucho que ver con lo que viviste con ${incJoined}${outgoingLabels.length > 0 ? `, y que ${outJoined} haya sido una forma de darle salida` : ''}.`;
+        openingThought = ` Me pregunto si esto se conecta de alguna forma con ${incJoined}${outgoingLabels.length > 0 ? `, o si influye en ${outJoined}` : ''}.`;
     } else if (echoes.length > 0) {
-        openingThought = ` Y me da la impresión de que debajo hay ${echoes[0].felt}.`;
+        openingThought = ` Y da la impresión de que en el fondo se relaciona con ${echoes[0].felt}.`;
     }
-    const openingFallback = `${openingHeard}${openingThought} ¿Es algo así? Me gustaría entender mejor cómo lo vives tú.`;
+    const openingFallback = `${openingHeard}${openingThought} ¿Cómo lo percibes tú?`;
 
     return {
         theme,
