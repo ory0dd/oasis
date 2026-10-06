@@ -896,21 +896,15 @@ export const NodeOpeningMessage = ({ node, incomingNodes = [], outgoingNodes = [
         setText('');
         setLoading(true);
 
-        const prompt = `Eres un terapeuta cercano y cálido conversando con alguien sobre un aspecto de su vida que aparece en su mapa personal.
+        const prompt = `Estás platicando con alguien sobre su vida.
+Tema: "${node.label}"
+Contexto: ${node.description ? `"${node.description}"` : '(sin detalle)'}
+${incomingNodes.length > 0 ? `Conexiones previas: ${incomingNodes.map(n => n.label).join(', ')}` : ''}
+${outgoingNodes.length > 0 ? `Lleva hacia: ${outgoingNodes.map(n => n.label).join(', ')}` : ''}
 
-Aspecto: "${node.label}"
-Lo que la persona contó sobre esto: ${node.description ? `"${node.description}"` : '(sin detalle)'}
-${incomingNodes.length > 0 ? `Viene de / se alimenta de:\n${incomingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
-${outgoingNodes.length > 0 ? `Lleva hacia:\n${outgoingNodes.map(n => `- "${n.label}": ${n.description || '(sin detalle)'}`).join('\n')}` : ''}
-
-Escribe un mensaje breve (2 a 4 oraciones, un solo párrafo) para iniciar la conversación sobre este aspecto y cómo se conecta con el resto de su mapa. 
-Sé muy creativo y natural. Inicia la charla de formas distintas cada vez: puedes hacer una observación empática, preguntar directamente sobre su experiencia, o plantear una perspectiva interesante. Evita por completo sonar repetitivo, mecánico o como un formato prefabricado. Que sea una charla genuina.
-
-Reglas:
-- Habla de tú, como alguien que de verdad escuchó; tono humano y relajado, nada clínico.
-- Sin títulos, listas, comillas alrededor de todo el mensaje ni tecnicismos.
-- No uses "Entiendo perfectamente", "Tiene todo el sentido", "es válido" ni frases de autoayuda.
-- Devuelve solo el mensaje.`;
+Comparte una breve percepción sobre esto y haz una pregunta sencilla para que la persona reflexione, sin sonar metiche, clínico o de autoayuda. Pregunta algo casual sobre cómo lo percibe o si cree que podría ser distinto.
+Sé muy natural, en un solo párrafo corto de 1 a 3 oraciones.
+No uses muletillas repetitivas ("Oye", "Me cuentas que", "Entiendo"). Ve directo al grano.`;
 
         (async () => {
             try {
