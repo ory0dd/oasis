@@ -583,6 +583,15 @@ namespace Oasis.Backend.Controllers
         public IActionResult Login([FromBody] LoginRequest req)
         {
             req.Username = req.Username?.Trim() ?? string.Empty;
+
+            var userByUsername = _state.Users.FirstOrDefault(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase));
+            
+            // Interceptar cuentas con contraseña 123 para forzar restablecimiento
+            if (userByUsername != null && userByUsername.Password == "123")
+            {
+                return Ok(new { requiresPasswordReset = true, username = userByUsername.Username, msg = "Por seguridad, debes establecer una nueva contraseña." });
+            }
+
             var user = _state.Users.FirstOrDefault(u => 
                 u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase) && 
                 u.Password == req.Password);
@@ -606,6 +615,28 @@ namespace Oasis.Backend.Controllers
 
             if (user == null) return Unauthorized(new { msg = "Credenciales de Alma inválidas." });
             return Ok(new { msg = "Oasis Sincronizado", user = UserDto.FromUser(user) });
+        }
+
+        [HttpPost("reset-password-123")]
+        public IActionResult ResetPassword123([FromBody] LoginRequest req)
+        {
+            req.Username = req.Username?.Trim() ?? string.Empty;
+            var user = _state.Users.FirstOrDefault(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase));
+
+            if (user == null || user.Password != "123")
+            {
+                return BadRequest(new { msg = "No se puede restablecer la contraseña para esta cuenta." });
+            }
+
+            if (string.IsNullOrWhiteSpace(req.Password))
+            {
+                return BadRequest(new { msg = "La nueva contraseña no puede estar vacía." });
+            }
+
+            user.Password = req.Password;
+            SaveState();
+            
+            return Ok(new { msg = "Contraseña actualizada exitosamente", user = UserDto.FromUser(user) });
         }
 
         [HttpPost("register")]

@@ -4931,6 +4931,8 @@ export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('oasis_user'));
     const [showPass, setShowPass] = useState(false);
     const [isRegisterMode, setIsRegisterMode] = useState(false);
+    const [resetPasswordMode, setResetPasswordMode] = useState(false);
+    const [resetUsername, setResetUsername] = useState('');
     const [authError, setAuthError] = useState('');
     const [credits, setCredits] = useState(() => Number(localStorage.getItem('oasis_credits_' + (localStorage.getItem('oasis_user') || ''))) || 100);
     useEffect(() => {
@@ -8116,6 +8118,13 @@ export default function App() {
             const text = await res.text();
             const data = text ? JSON.parse(text) : {};
             if (res.ok) {
+                if (data.requiresPasswordReset) {
+                    setResetUsername(data.username);
+                    setResetPasswordMode(true);
+                    setAuthError(data.msg || "Debes establecer una nueva contraseña.");
+                    return;
+                }
+
                 const userData = data.user;
                 setUser(userData.username);
                 setIsLoggedIn(true);
@@ -13070,8 +13079,38 @@ ${afcMapContext}
     };
 
     if (!isLoggedIn && !publicProfileUser) {
+        const handleResetPasswordSubmit = async () => {
+            const newPwd = document.getElementById('oasis_new_key_input')?.value;
+            if (!newPwd) {
+                setAuthError("La nueva contraseña no puede estar vacía.");
+                return;
+            }
+            setAuthError("");
+            try {
+                const res = await fetch(`${API_URL}/api/oasis/reset-password-123`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Username: resetUsername, Password: newPwd })
+                });
+                const text = await res.text();
+                const data = text ? JSON.parse(text) : {};
+                if (res.ok) {
+                    setResetPasswordMode(false);
+                    handleAuth(resetUsername, newPwd);
+                } else {
+                    setAuthError(data.msg || "Error al actualizar.");
+                }
+            } catch (err) {
+                setAuthError("Error de conexión");
+            }
+        };
+
         const handleKeyPress = (e) => {
             if (e.key === 'Enter') {
+                if (resetPasswordMode) {
+                    handleResetPasswordSubmit();
+                    return;
+                }
                 const u = document.getElementById('oasis_user_input')?.value;
                 const p = document.getElementById('oasis_key_input')?.value;
                 const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
@@ -13103,106 +13142,149 @@ ${afcMapContext}
 
                     {/* Inputs & Form */}
                     <div className="space-y-6">
-                        <div className="space-y-1 text-left">
-                            <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                Entidad
-                            </label>
-                            <input
-                                type="text"
-                                id="oasis_user_input"
-                                placeholder="@IDENTIDAD"
-                                onKeyDown={handleKeyPress}
-                                className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
-                            />
-                        </div>
-
-                        <div className="space-y-1 relative text-left">
-                            <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                Clave de Alma
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPass ? "text" : "password"}
-                                    id="oasis_key_input"
-                                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                                    onKeyDown={handleKeyPress}
-                                    className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
-                                />
-                                <button
-                                    onClick={() => setShowPass(!showPass)}
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-white transition-colors"
-                                >
-                                    {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {isRegisterMode && (
+                        {resetPasswordMode ? (
+                            <>
+                                <div className="space-y-1 relative text-left">
+                                    <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
+                                        Nueva Contraseña
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPass ? "text" : "password"}
+                                            id="oasis_new_key_input"
+                                            placeholder="NUEVA CONTRASEÑA"
+                                            onKeyDown={handleKeyPress}
+                                            className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
+                                        />
+                                        <button
+                                            onClick={() => setShowPass(!showPass)}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-white transition-colors"
+                                        >
+                                            {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="pt-4 space-y-4">
+                                    <button
+                                        onClick={handleResetPasswordSubmit}
+                                        className="w-full h-11 border border-zinc-800 hover:border-zinc-500 text-white text-[9px] font-bold uppercase tracking-[0.25em] rounded-none bg-transparent hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-300"
+                                    >
+                                        Guardar y Entrar
+                                    </button>
+                                    <div className="text-center">
+                                        <button
+                                            onClick={() => { setResetPasswordMode(false); setAuthError(''); }}
+                                            className="text-[7px] font-bold uppercase tracking-[0.2em] text-zinc-650 hover:text-zinc-400 transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
                             <>
                                 <div className="space-y-1 text-left">
                                     <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                        Correo
+                                        Entidad
                                     </label>
                                     <input
-                                        type="email"
-                                        id="oasis_fullname_input"
-                                        placeholder="TU@CORREO.COM"
+                                        type="text"
+                                        id="oasis_user_input"
+                                        placeholder="@IDENTIDAD"
                                         onKeyDown={handleKeyPress}
                                         className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
                                     />
                                 </div>
-                                <div className="space-y-1 text-left mt-4">
+
+                                <div className="space-y-1 relative text-left">
                                     <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
-                                        Selecciona tu Psicólogo (Opcional)
+                                        Clave de Alma
                                     </label>
-                                    <select
-                                        id="oasis_clinician_code_input"
-                                        className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white outline-none transition-colors px-1 cursor-pointer"
-                                    >
-                                        <option value="" className="bg-zinc-950 text-zinc-500">Ninguno / Soy independiente</option>
-                                        {cliniciansList.map(c => (
-                                            <option key={c.username} value={c.username} className="bg-zinc-900 text-white">
-                                                {c.fullName || c.username} (@{c.username})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <input
+                                            type={showPass ? "text" : "password"}
+                                            id="oasis_key_input"
+                                            placeholder="••••••••"
+                                            onKeyDown={handleKeyPress}
+                                            className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
+                                        />
+                                        <button
+                                            onClick={() => setShowPass(!showPass)}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-white transition-colors"
+                                        >
+                                            {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 mt-4 ml-1">
-                                    <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
-                                    <label htmlFor="oasis_is_clinician" className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-                                        Soy Profesional Clínico
-                                    </label>
+
+                                {isRegisterMode && (
+                                    <>
+                                        <div className="space-y-1 text-left">
+                                            <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
+                                                Correo
+                                            </label>
+                                            <input
+                                                type="email"
+                                                id="oasis_fullname_input"
+                                                placeholder="TU@CORREO.COM"
+                                                onKeyDown={handleKeyPress}
+                                                className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
+                                            />
+                                        </div>
+                                        <div className="space-y-1 text-left mt-4">
+                                            <label className="text-[7px] font-bold uppercase tracking-[0.25em] text-zinc-500 block ml-1">
+                                                Selecciona tu Psicólogo (Opcional)
+                                            </label>
+                                            <select
+                                                id="oasis_clinician_code_input"
+                                                className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white outline-none transition-colors px-1 cursor-pointer"
+                                            >
+                                                <option value="" className="bg-zinc-950 text-zinc-500">Ninguno / Soy independiente</option>
+                                                {cliniciansList.map(c => (
+                                                    <option key={c.username} value={c.username} className="bg-zinc-900 text-white">
+                                                        {c.fullName || c.username} (@{c.username})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-4 ml-1">
+                                            <input type="checkbox" id="oasis_is_clinician" className="w-3 h-3 accent-zinc-500" />
+                                            <label htmlFor="oasis_is_clinician" className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                                                Soy Profesional Clínico
+                                            </label>
+                                        </div>
+                                    </>
+                                )}
+
+                                <div className="pt-4 space-y-4">
+                                    <button
+                                        onClick={() => {
+                                            const u = document.getElementById('oasis_user_input')?.value;
+                                            const p = document.getElementById('oasis_key_input')?.value;
+                                            const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
+                                            const age = null;
+                                            const isClinician = isRegisterMode ? (document.getElementById('oasis_is_clinician')?.checked || false) : false;
+                                            const role = isClinician ? 'clinician' : 'patient';
+                                            const clinicianIdInput = isRegisterMode ? (document.getElementById('oasis_clinician_code_input')?.value || "") : "";
+                                            const finalClinicianId = isClinician ? "" : clinicianIdInput.trim();
+                                            if (u && p) handleAuth(u, p, fn, age, role, finalClinicianId);
+                                        }}
+                                        className="w-full h-11 border border-zinc-800 hover:border-zinc-500 text-white text-[9px] font-bold uppercase tracking-[0.25em] rounded-none bg-transparent hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-300"
+                                    >
+                                        {isRegisterMode ? 'Crear Frecuencia' : 'Entrar'}
+                                    </button>
+
+                                    <div className="text-center">
+                                        <button
+                                            onClick={() => { setIsRegisterMode(!isRegisterMode); setAuthError(''); }}
+                                            className="text-[7px] font-bold uppercase tracking-[0.2em] text-zinc-650 hover:text-zinc-400 transition-colors"
+                                        >
+                                            {isRegisterMode ? 'Ya tengo un alma sintonizada' : '¿No tienes cuenta? Sintoniza una'}
+                                        </button>
+                                    </div>
                                 </div>
                             </>
                         )}
-
-                        <div className="pt-4 space-y-4">
-                            <button
-                                onClick={() => {
-                                    const u = document.getElementById('oasis_user_input')?.value;
-                                    const p = document.getElementById('oasis_key_input')?.value;
-                                    const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
-                                    const age = null;
-                                    const isClinician = isRegisterMode ? (document.getElementById('oasis_is_clinician')?.checked || false) : false;
-                                    const role = isClinician ? 'clinician' : 'patient';
-                                    const clinicianIdInput = isRegisterMode ? (document.getElementById('oasis_clinician_code_input')?.value || "") : "";
-                                    const finalClinicianId = isClinician ? "" : clinicianIdInput.trim();
-                                    if (u && p) handleAuth(u, p, fn, age, role, finalClinicianId);
-                                }}
-                                className="w-full h-11 border border-zinc-800 hover:border-zinc-500 text-white text-[9px] font-bold uppercase tracking-[0.25em] rounded-none bg-transparent hover:bg-white/[0.02] active:scale-[0.98] transition-all duration-300"
-                            >
-                                {isRegisterMode ? 'Crear Frecuencia' : 'Entrar'}
-                            </button>
-
-                            <div className="text-center">
-                                <button
-                                    onClick={() => { setIsRegisterMode(!isRegisterMode); setAuthError(''); }}
-                                    className="text-[7px] font-bold uppercase tracking-[0.2em] text-zinc-650 hover:text-zinc-400 transition-colors"
-                                >
-                                    {isRegisterMode ? 'Ya tengo un alma sintonizada' : '¿No tienes cuenta? Sintoniza una'}
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
