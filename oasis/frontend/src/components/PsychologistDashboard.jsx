@@ -5504,7 +5504,10 @@ Devuelve estrictamente el JSON sin formato extra.
     };
     // --- Profile Workspace (Split layout with Sidebar navigation) ---
     const renderProfileWorkspace = () => {
-        if (!selectedPatient) return null;
+        if (!selectedPatient) {
+            setTimeout(() => setCurrentModule('DASHBOARD'), 0);
+            return null;
+        }
 
         return (
             <div className={`w-full flex-1 min-h-0 h-full flex flex-col md:flex-row animate-in fade-in duration-300 relative z-10 ${dashboardBg ? 'bg-[#030304]/80' : 'bg-[#030304]'}`}>
