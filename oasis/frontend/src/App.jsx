@@ -42,7 +42,7 @@ class ErrorBoundary extends React.Component {
     }
     componentDidCatch(error, errorInfo) {
         this.setState({ errorInfo });
-        console.error('ðŸ”´ ErrorBoundary caught:', error, errorInfo);
+        console.error('🔴 ErrorBoundary caught:', error, errorInfo);
     }
     render() {
         if (this.state.hasError) {
@@ -53,7 +53,7 @@ class ErrorBoundary extends React.Component {
                     flexDirection: 'column', gap: '24px', padding: '32px', fontFamily: 'Inter, system-ui, sans-serif'
                 }}>
                     <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '20px' }}>âš </span>
+                        <span style={{ fontSize: '20px' }}>⚠️</span>
                     </div>
                     <h2 style={{ color: '#e4e4e7', fontSize: '16px', fontWeight: 600, margin: 0 }}>Algo salió mal</h2>
                     <p style={{ color: '#71717a', fontSize: '12px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', margin: 0 }}>

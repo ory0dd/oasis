@@ -314,6 +314,20 @@ export default function WhatsAppCRM({ isEmbedded = false,
         setTimeout(() => setCopiedPhoneId(null), 2000);
     };
 
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'Constante':
+                return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            case 'Nueva':
+                return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            case 'Por confirmar':
+                return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+            case 'Inactivo':
+            default:
+                return 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+        }
+    };
+
     const filteredPatients = useMemo(() => {
         return patients.filter(p => {
             const matchesQuery = 
@@ -384,9 +398,17 @@ export default function WhatsAppCRM({ isEmbedded = false,
                 </div>
             )}
             
-            {/* Si está embeddido, solo mostramos el botón de añadir paciente alineado a la derecha */}
+            {/* Si está embeddido, mostramos barra minimalista con volver al Directorio y añadir paciente */}
             {isEmbedded && (
-                <div className="flex justify-end mb-2">
+                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-white/[0.08]">
+                    {onBackToClinical ? (
+                        <button
+                            onClick={onBackToClinical}
+                            className="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white font-mono text-xs transition-colors flex items-center gap-1.5"
+                        >
+                            <span>← Directorio</span>
+                        </button>
+                    ) : <div />}
                     <button
                         onClick={() => handleOpenModal()}
                         className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
