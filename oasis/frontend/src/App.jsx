@@ -11,7 +11,7 @@ import {
     Paperclip, Send, ChevronLeft, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid, Headphones,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
-    Bookmark, UserSquare, Link as LinkIcon, ServerCrash, Home,
+    Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
     MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -1827,7 +1827,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
 
 };
 
-const SimpleNarrativeRenderer = React.memo(({ content, isChild = false }) => {
+const SimpleNarrativeRenderer = React.memo(({ content, isChild = false, cleanMinimal = false }) => {
     if (!content) return null;
 
     // Pre-process content to handle legacy Oasis blocks or AI-specific tags
@@ -1836,7 +1836,7 @@ const SimpleNarrativeRenderer = React.memo(({ content, isChild = false }) => {
     const blocks = content.split(new RegExp(regexStr, 'g'));
 
     return (
-        <div className={`prose prose-invert max-w-none ${isChild ? 'text-[8.5px] leading-tight prose-p:my-0.5 prose-headings:my-0.5 font-sans' : 'text-[12px] md:text-[13px] leading-relaxed font-serif'} italic text-white/90 selection:bg-accent/20`}>
+        <div className={`prose prose-invert max-w-none ${isChild ? 'text-[8.5px] leading-tight prose-p:my-0.5 prose-headings:my-0.5 font-sans' : cleanMinimal ? 'text-[13px] leading-relaxed font-sans not-italic text-zinc-400' : 'text-[12px] md:text-[13px] leading-relaxed font-serif italic text-white/90'} selection:bg-accent/20`}>
             {blocks.map((block, i) => {
                 const trimmed = block.trim();
                 if (!trimmed) return null;
@@ -2671,22 +2671,23 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             {/* MILANOTE EMERALD KICKER + QUICK ACTIONS FOR TEXT CARDS */}
                             {block.type === 'text' && (
                                 <div className="flex items-center justify-between gap-2 mb-1.5 shrink-0">
-                                    <span
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const nextCat = window.prompt('Categoría o etiqueta de la nota:', block.metadata?.category || 'DIRECCIÓN DE ARTE');
-                                            if (nextCat !== null && onUpdateBlock) {
+                                    <input
+                                        type="text"
+                                        value={block.metadata?.category ?? (isResonanceAny ? 'RESONANCIA' : 'DIRECCIÓN DE ARTE')}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            if (onUpdateBlock) {
                                                 onUpdateBlock({
                                                     ...block,
-                                                    metadata: { ...(block.metadata || {}), category: nextCat.trim() || 'DIRECCIÓN DE ARTE' }
+                                                    metadata: { ...(block.metadata || {}), category: e.target.value }
                                                 });
                                             }
                                         }}
-                                        className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-[#10b981] hover:text-emerald-300 cursor-pointer truncate transition-colors"
-                                        title="Clic para cambiar categoría"
-                                    >
-                                        {block.metadata?.category || (isResonanceAny ? 'RESONANCIA' : 'DIRECCIÓN DE ARTE')}
-                                    </span>
+                                        placeholder="DIRECCIÓN DE ARTE"
+                                        className="bg-transparent text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-[#10b981] hover:text-emerald-300 focus:text-emerald-300 focus:outline-none truncate transition-colors w-full max-w-[160px]"
+                                        title="Editar categoría"
+                                    />
                                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                         {block.groupId && (
                                             <button
@@ -3086,10 +3087,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                         )
                                     }
                                     ) : (
-                                        <>
-                                            <SimpleNarrativeRenderer content={block.type === 'insight' ? `[insight] ${block.content}` : block.content} isChild={isChildNote} />
-                                            {!hasMedia && <div className={`absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t ${isInsight || isResonanceAny ? 'from-[#0d0d0e]' : (isDiaryAny ? 'from-[#0e0906]' : 'from-[#0b0b0c]')} to-transparent pointer-events-none`} />}
-                                        </>
+                                        <SimpleNarrativeRenderer content={block.type === 'insight' ? `[insight] ${block.content}` : block.content} isChild={isChildNote} cleanMinimal={true} />
                                     )}
                                 </div>
                             )}
@@ -3114,19 +3112,19 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
                             {/* MILANOTE IMAGE HEADER */}
                             <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5 shrink-0">
-                                <span
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const nextTitle = window.prompt('Título de la imagen:', block.caption || 'Silueta & Guantes Vinilo');
-                                        if (nextTitle !== null && onUpdateBlock) {
-                                            onUpdateBlock({ ...block, caption: nextTitle.trim() || 'Referencia Visual' });
+                                <input
+                                    type="text"
+                                    value={block.caption ?? 'Silueta & Guantes Vinilo'}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: e.target.value });
                                         }
                                     }}
-                                    className="text-[11px] font-mono text-zinc-300 hover:text-white truncate cursor-pointer transition-colors"
-                                    title="Clic para editar título"
-                                >
-                                    {block.caption || 'Silueta & Guantes Vinilo'}
-                                </span>
+                                    placeholder="Título de imagen..."
+                                    className="bg-transparent text-[11px] font-mono text-zinc-300 hover:text-white focus:text-white focus:outline-none truncate w-full transition-colors"
+                                />
                                 {!showDeleteConfirm && (
                                     <button
                                         onClick={(e) => {
@@ -3157,38 +3155,39 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             </div>
 
                             {/* MILANOTE BOTTOM CAPTION */}
-                            <div
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const nextDesc = window.prompt('Descripción o nota al pie:', block.metadata?.description || 'Brillo húmedo y textura filamentosa.');
-                                    if (nextDesc !== null && onUpdateBlock) {
+                            <input
+                                type="text"
+                                value={block.metadata?.description ?? 'Brillo húmedo y textura filamentosa.'}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                    if (onUpdateBlock) {
                                         onUpdateBlock({
                                             ...block,
-                                            metadata: { ...(block.metadata || {}), description: nextDesc.trim() }
+                                            metadata: { ...(block.metadata || {}), description: e.target.value }
                                         });
                                     }
                                 }}
-                                className="pt-2.5 px-0.5 text-[12px] text-zinc-400 hover:text-zinc-200 leading-snug truncate cursor-pointer transition-colors shrink-0"
-                                title="Clic para editar descripción"
-                            >
-                                {block.metadata?.description || 'Brillo húmedo y textura filamentosa.'}
-                            </div>
+                                placeholder="Añadir nota al pie..."
+                                className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug truncate w-full transition-colors shrink-0"
+                            />
                         </div>
                     ) : isVideo ? (
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
                             <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5 shrink-0">
-                                <span
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const nextTitle = window.prompt('Título del video:', block.caption || 'Secuencia Visual');
-                                        if (nextTitle !== null && onUpdateBlock) {
-                                            onUpdateBlock({ ...block, caption: nextTitle.trim() || 'Secuencia Visual' });
+                                <input
+                                    type="text"
+                                    value={block.caption ?? 'Secuencia Visual'}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: e.target.value });
                                         }
                                     }}
-                                    className="text-[11px] font-mono text-zinc-300 hover:text-white truncate cursor-pointer transition-colors"
-                                >
-                                    {block.caption || 'Secuencia Visual'}
-                                </span>
+                                    placeholder="Título del video..."
+                                    className="bg-transparent text-[11px] font-mono text-zinc-300 hover:text-white focus:text-white focus:outline-none truncate w-full transition-colors"
+                                />
                                 {!showDeleteConfirm && (
                                     <button
                                         onClick={(e) => {
@@ -3219,26 +3218,28 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     draggable={false}
                                 />
                             </div>
-                            <div
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const nextDesc = window.prompt('Descripción del video:', block.metadata?.description || ' Atmósfera en movimiento.');
-                                    if (nextDesc !== null && onUpdateBlock) {
+                            <input
+                                type="text"
+                                value={block.metadata?.description ?? 'Atmósfera en movimiento.'}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                    if (onUpdateBlock) {
                                         onUpdateBlock({
                                             ...block,
-                                            metadata: { ...(block.metadata || {}), description: nextDesc.trim() }
+                                            metadata: { ...(block.metadata || {}), description: e.target.value }
                                         });
                                     }
                                 }}
-                                className="pt-2.5 px-0.5 text-[12px] text-zinc-400 hover:text-zinc-200 leading-snug truncate cursor-pointer transition-colors shrink-0"
-                            >
-                                {block.metadata?.description || 'Atmósfera en movimiento.'}
-                            </div>
+                                placeholder="Añadir nota al pie..."
+                                className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug truncate w-full transition-colors shrink-0"
+                            />
                         </div>
                     ) : isColorSwatch ? (
                         <div className="flex-1 w-full h-full flex items-center gap-3.5 select-none">
                             <label
                                 onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 className="w-11 h-11 rounded-xl shrink-0 border border-white/15 shadow-inner cursor-pointer relative overflow-hidden group/swatch transition-transform hover:scale-105"
                                 style={{ backgroundColor: block.color || '#254E3A' }}
                                 title="Cambiar color de muestra"
@@ -3256,19 +3257,19 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                 />
                             </label>
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <div
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const nextName = window.prompt('Nombre de la muestra de color:', block.caption || 'Verde Bosque Muted');
-                                        if (nextName !== null && onUpdateBlock) {
-                                            onUpdateBlock({ ...block, caption: nextName.trim() || 'Muestra de Color' });
+                                <input
+                                    type="text"
+                                    value={block.caption ?? 'Verde Bosque Muted'}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: e.target.value });
                                         }
                                     }}
-                                    className="text-[14px] font-bold text-white truncate cursor-pointer hover:text-emerald-300 transition-colors"
-                                    title="Clic para renombrar color"
-                                >
-                                    {block.caption || 'Verde Bosque Muted'}
-                                </div>
+                                    placeholder="Nombre del color..."
+                                    className="bg-transparent text-[14px] font-bold text-white truncate focus:outline-none hover:text-emerald-300 transition-colors w-full"
+                                />
                                 <div className="text-[11px] font-mono font-semibold text-[#10b981] tracking-wider uppercase mt-0.5">
                                     {(block.color || '#254E3A').toUpperCase()}
                                 </div>
@@ -3288,9 +3289,9 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         const items = Array.isArray(block.metadata?.items)
                             ? block.metadata.items
                             : [
-                                { id: 't1', text: 'Scouting carretera nocturna', done: true },
-                                { id: 't2', text: 'Prueba de geles verde/ciano', done: true },
-                                { id: 't3', text: 'Selección de vestuario vinilo', done: false }
+                                { id: 't1', text: 'Scouting locación interestatal 191', done: true },
+                                { id: 't2', text: 'Prenda Raspberry Hills vintage', done: true },
+                                { id: 't3', text: 'Prueba de luces cálidas y tungsteno', done: false }
                             ];
                         const toggleTodoItem = (itemId) => {
                             const updatedItems = items.map(it => it.id === itemId ? { ...it, done: !it.done } : it);
@@ -3301,10 +3302,19 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                 });
                             }
                         };
+                        const updateTodoItemText = (itemId, newText) => {
+                            const updatedItems = items.map(it => it.id === itemId ? { ...it, text: newText } : it);
+                            if (onUpdateBlock) {
+                                onUpdateBlock({
+                                    ...block,
+                                    metadata: { ...(block.metadata || {}), items: updatedItems }
+                                });
+                            }
+                        };
                         const addTodoItem = (text) => {
                             if (!text || !text.trim()) return;
                             const updatedItems = [...items, { id: `td-${Date.now()}`, text: text.trim(), done: false }];
-                            const nextH = Math.max(block.height || 210, 120 + updatedItems.length * 36);
+                            const nextH = Math.max(block.height || 210, 125 + updatedItems.length * 36);
                             if (onUpdateBlock) {
                                 onUpdateBlock({
                                     ...block,
@@ -3325,20 +3335,20 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         };
                         return (
                             <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
-                                <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
-                                    <span
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const nextTitle = window.prompt('Título de la lista To-do:', block.caption || 'ENTREGABLES LOOKBOOK');
-                                            if (nextTitle !== null && onUpdateBlock) {
-                                                onUpdateBlock({ ...block, caption: nextTitle.trim().toUpperCase() || 'LISTA DE TAREAS' });
+                                <div className="flex items-center justify-between gap-2 mb-3.5 shrink-0">
+                                    <input
+                                        type="text"
+                                        value={block.caption ?? 'ENTREGABLES LOOKBOOK'}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            if (onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: e.target.value.toUpperCase() });
                                             }
                                         }}
-                                        className="text-[11px] font-mono font-semibold uppercase tracking-[0.12em] text-zinc-400 hover:text-white cursor-pointer truncate transition-colors"
-                                        title="Clic para editar título"
-                                    >
-                                        {block.caption || 'ENTREGABLES LOOKBOOK'}
-                                    </span>
+                                        placeholder="LISTA DE TAREAS"
+                                        className="bg-transparent text-[11px] font-mono font-semibold uppercase tracking-[0.12em] text-zinc-400 hover:text-white focus:text-white focus:outline-none truncate w-full transition-colors"
+                                    />
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -3355,34 +3365,40 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     {items.map((item) => (
                                         <div
                                             key={item.id}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleTodoItem(item.id);
-                                            }}
-                                            className="flex items-center gap-3 group/todo cursor-pointer py-0.5"
+                                            className="flex items-center gap-3 group/todo py-0.5"
                                         >
-                                            <div
-                                                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all ${item.done
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleTodoItem(item.id);
+                                                }}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                className={`w-5 h-5 rounded-[6px] flex items-center justify-center shrink-0 transition-all ${item.done
                                                     ? 'bg-[#10b981] text-black shadow-[0_0_12px_rgba(16,185,129,0.35)]'
-                                                    : 'bg-white/[0.03] border border-white/20 group-hover/todo:border-[#10b981]/60'
+                                                    : 'bg-transparent border border-white/20 hover:border-[#10b981]/60'
                                                     }`}
                                             >
                                                 {item.done && <Check size={13} strokeWidth={3} />}
-                                            </div>
-                                            <span
-                                                className={`text-[13px] flex-1 leading-snug transition-colors ${item.done
+                                            </button>
+                                            <input
+                                                type="text"
+                                                value={item.text}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onChange={(e) => updateTodoItemText(item.id, e.target.value)}
+                                                className={`bg-transparent text-[13px] flex-1 leading-snug focus:outline-none transition-colors w-full ${item.done
                                                     ? 'line-through text-zinc-500'
                                                     : 'text-zinc-100 font-medium'
                                                     }`}
-                                            >
-                                                {item.text}
-                                            </span>
+                                            />
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     removeTodoItem(item.id);
                                                 }}
-                                                className="opacity-0 group-hover/todo:opacity-100 text-zinc-600 hover:text-red-400 p-0.5 transition-opacity"
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                className="opacity-0 group-hover/todo:opacity-100 text-zinc-600 hover:text-red-400 p-0.5 transition-opacity shrink-0"
                                                 title="Quitar tarea"
                                             >
                                                 <X size={11} />
@@ -3407,44 +3423,46 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                 addTodoItem(newTodoText);
                                             }
                                         }}
-                                        placeholder="Añadir tarea..."
+                                        placeholder="Añadir tarea y presiona Enter..."
                                         className="w-full bg-transparent text-[12px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none"
                                     />
                                 </div>
                             </div>
                         );
                     })() : isLinkCard ? (
-                        <div className="flex-1 w-full h-full flex flex-col justify-between min-h-0 select-none">
-                            <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-8 h-8 rounded-xl bg-[#10b981]/10 border border-[#10b981]/25 flex items-center justify-center text-[#10b981] shrink-0">
-                                        <Link2 size={15} />
+                        <div className="flex-1 w-full h-full flex flex-col justify-center min-h-0 select-none">
+                            <div className="flex items-center justify-between gap-2.5">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="w-9 h-9 rounded-xl bg-[#10b981]/10 border border-[#10b981]/25 flex items-center justify-center text-[#10b981] shrink-0">
+                                        <Link2 size={16} />
                                     </div>
-                                    <div className="min-w-0">
-                                        <div
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const nextCaption = window.prompt('Título del enlace:', block.caption || 'Referencia Externa');
-                                                if (nextCaption !== null && onUpdateBlock) {
-                                                    onUpdateBlock({ ...block, caption: nextCaption.trim() || 'Referencia Externa' });
+                                    <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                                        <input
+                                            type="text"
+                                            value={block.caption ?? 'Referencia Visual'}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onChange={(e) => {
+                                                if (onUpdateBlock) {
+                                                    onUpdateBlock({ ...block, caption: e.target.value });
                                                 }
                                             }}
-                                            className="text-[14px] font-bold text-white truncate hover:text-[#10b981] cursor-pointer transition-colors"
-                                        >
-                                            {block.caption || 'Referencia Externa'}
-                                        </div>
-                                        <div
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const nextUrl = window.prompt('URL del enlace:', block.content || 'https://');
-                                                if (nextUrl !== null && onUpdateBlock) {
-                                                    onUpdateBlock({ ...block, content: nextUrl.trim() });
+                                            placeholder="Título del enlace..."
+                                            className="bg-transparent text-[14px] font-bold text-white truncate focus:outline-none hover:text-[#10b981] transition-colors w-full"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={block.content ?? 'https://'}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onChange={(e) => {
+                                                if (onUpdateBlock) {
+                                                    onUpdateBlock({ ...block, content: e.target.value });
                                                 }
                                             }}
-                                            className="text-[11px] font-mono text-[#10b981] truncate cursor-pointer hover:underline"
-                                        >
-                                            {block.content || 'https://milanote.com'}
-                                        </div>
+                                            placeholder="https://pega-tu-enlace.com"
+                                            className="bg-transparent text-[11px] font-mono text-[#10b981] truncate focus:outline-none w-full"
+                                        />
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
@@ -3453,10 +3471,11 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={(e) => e.stopPropagation()}
-                                        className="p-1 rounded-lg bg-white/5 hover:bg-[#10b981]/20 text-zinc-400 hover:text-[#10b981] transition-colors"
-                                        title="Abrir enlace"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="p-1.5 rounded-lg bg-white/5 hover:bg-[#10b981]/20 text-zinc-400 hover:text-[#10b981] transition-colors"
+                                        title="Abrir enlace en pestaña nueva"
                                     >
-                                        <ArrowUpRight size={13} />
+                                        <ArrowUpRight size={14} />
                                     </a>
                                     <button
                                         onClick={(e) => {
@@ -3472,26 +3491,44 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         </div>
                     ) : isSubBoardCard ? (
                         <div className="flex-1 w-full h-full flex items-center justify-between gap-3 select-none">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-11 h-11 rounded-2xl bg-[#10b981]/12 border border-[#10b981]/30 flex items-center justify-center text-[#10b981] shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-                                    <FolderKanban size={20} />
-                                </div>
-                                <div className="min-w-0">
-                                    <div
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const nextName = window.prompt('Nombre del sub-tablero:', block.caption || 'Sub-Tablero');
-                                            if (nextName !== null && onUpdateBlock) {
-                                                onUpdateBlock({ ...block, caption: nextName.trim() || 'Sub-Tablero' });
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-Tablero');
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="w-11 h-11 rounded-2xl bg-[#10b981]/12 border border-[#10b981]/30 hover:bg-[#10b981]/25 flex items-center justify-center text-[#10b981] shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all"
+                                    title="Entrar al tablero"
+                                >
+                                    <LayoutGrid size={19} />
+                                </button>
+                                <div className="min-w-0 flex-1">
+                                    <input
+                                        type="text"
+                                        value={block.caption ?? 'Escena II • Bosque'}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            if (onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: e.target.value });
                                             }
                                         }}
-                                        className="text-[15px] font-bold text-white truncate hover:text-[#10b981] cursor-pointer transition-colors"
+                                        placeholder="Nombre del tablero..."
+                                        className="bg-transparent text-[15px] font-bold text-white truncate focus:outline-none hover:text-[#10b981] transition-colors w-full"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-Tablero');
+                                        }}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="text-[10px] font-mono uppercase tracking-wider text-[#10b981] hover:underline flex items-center gap-1 mt-0.5"
                                     >
-                                        {block.caption || 'Nuevo Tablero'}
-                                    </div>
-                                    <div className="text-[10px] font-mono uppercase tracking-wider text-[#10b981]">
                                         {(blocks || []).filter(b => b.canvasId === block.id).length} elementos • Abrir →
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
                             <button
@@ -3507,20 +3544,21 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     ) : isColumnCard ? (
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
                             <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-white/[0.08] shrink-0">
-                                <div className="flex items-center gap-2 min-w-0">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
                                     <Columns size={13} className="text-[#10b981] shrink-0" />
-                                    <span
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const nextCol = window.prompt('Título de la columna:', block.caption || 'COLUMNA CREATIVA');
-                                            if (nextCol !== null && onUpdateBlock) {
-                                                onUpdateBlock({ ...block, caption: nextCol.trim().toUpperCase() || 'COLUMNA CREATIVA' });
+                                    <input
+                                        type="text"
+                                        value={block.caption ?? 'COLUMNA CREATIVA'}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            if (onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: e.target.value.toUpperCase() });
                                             }
                                         }}
-                                        className="text-[11px] font-mono font-bold uppercase tracking-[0.15em] text-[#10b981] truncate cursor-pointer"
-                                    >
-                                        {block.caption || 'COLUMNA CREATIVA'}
-                                    </span>
+                                        placeholder="COLUMNA CREATIVA"
+                                        className="bg-transparent text-[11px] font-mono font-bold uppercase tracking-[0.15em] text-[#10b981] truncate focus:outline-none w-full"
+                                    />
                                 </div>
                                 <button
                                     onClick={(e) => {
@@ -11437,9 +11475,9 @@ ${afcMapContext}
                     {/* SUB-BARRA DE HERRAMIENTAS MILANOTE */}
                     {isMilanoteToolsOpen && (
                         <div
-                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-3 py-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-1 sm:gap-1.5 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-200"
+                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-4 sm:px-6 py-2.5 sm:py-3 rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.88)] flex items-center gap-2 sm:gap-4 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-200"
                             style={{
-                                bottom: window.innerWidth >= 768 ? '92px' : '86px'
+                                bottom: window.innerWidth >= 768 ? '94px' : '86px'
                             }}
                             onMouseDown={e => e.stopPropagation()}
                             onTouchStart={e => e.stopPropagation()}
@@ -11456,29 +11494,26 @@ ${afcMapContext}
                                         metadata: { category: 'DIRECCIÓN DE ARTE', timestamp: new Date().toISOString() }
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <AlignLeft size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">Nota</span>
+                                <AlignLeft size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Nota</span>
                             </button>
 
                             {/* 2. Enlace */}
                             <button
                                 onClick={() => {
-                                    const url = window.prompt('URL del enlace:', 'https://');
-                                    if (!url) return;
-                                    const title = window.prompt('Título para el enlace:', 'Referencia Visual') || 'Referencia Visual';
                                     spawnMilanoteBlock('link', {
-                                        caption: title.trim(),
-                                        content: url.trim(),
-                                        width: 260,
-                                        height: 105
+                                        caption: 'Referencia Visual',
+                                        content: 'https://milanote.com',
+                                        width: 265,
+                                        height: 98
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <Link2 size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">Enlace</span>
+                                <Link2 size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Enlace</span>
                             </button>
 
                             {/* 3. To-do */}
@@ -11487,21 +11522,21 @@ ${afcMapContext}
                                     spawnMilanoteBlock('todo', {
                                         caption: 'ENTREGABLES LOOKBOOK',
                                         content: '',
-                                        width: 270,
-                                        height: 210,
+                                        width: 285,
+                                        height: 215,
                                         metadata: {
                                             items: [
-                                                { id: `td-${Date.now()}-1`, text: 'Scouting carretera nocturna', done: true },
-                                                { id: `td-${Date.now()}-2`, text: 'Prueba de geles verde/ciano', done: true },
-                                                { id: `td-${Date.now()}-3`, text: 'Selección de vestuario vinilo', done: false }
+                                                { id: `td-${Date.now()}-1`, text: 'Scouting locación interestatal 191', done: true },
+                                                { id: `td-${Date.now()}-2`, text: 'Prenda Raspberry Hills vintage', done: true },
+                                                { id: `td-${Date.now()}-3`, text: 'Prueba de luces cálidas y tungsteno', done: false }
                                             ]
                                         }
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <CheckSquare size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">To-do</span>
+                                <ListTodo size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">To-do</span>
                             </button>
 
                             {/* 4. Línea (Conectar tarjetas) */}
@@ -11510,31 +11545,27 @@ ${afcMapContext}
                                     setIsLinking(prev => !prev);
                                     setLinkSource(null);
                                 }}
-                                className={`flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl transition-all group ${isLinking ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30' : 'hover:bg-white/[0.06] text-zinc-400 hover:text-white'}`}
+                                className={`flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all group ${isLinking ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30' : 'hover:bg-white/[0.06] text-zinc-400 hover:text-white'}`}
                                 title="Haz clic en dos tarjetas para conectarlas con una línea punteada"
                             >
-                                <ArrowUpRight size={15} className={isLinking ? 'text-[#10b981]' : 'group-hover:text-[#10b981] transition-colors'} />
-                                <span className="text-[9px] font-mono tracking-tight">Línea</span>
+                                <ArrowUpRight size={16} className={isLinking ? 'text-[#10b981]' : 'group-hover:text-[#10b981] transition-colors'} />
+                                <span className="text-[10px] font-mono tracking-tight">Línea</span>
                             </button>
-
-                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
 
                             {/* 5. Tablero */}
                             <button
                                 onClick={() => {
-                                    const name = window.prompt('Nombre del nuevo sub-tablero:', 'Escena II • Bosque');
-                                    if (!name) return;
                                     spawnMilanoteBlock('sub_board', {
-                                        caption: name.trim(),
+                                        caption: 'Escena II • Bosque',
                                         content: '',
-                                        width: 230,
+                                        width: 235,
                                         height: 86
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <FolderKanban size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">Tablero</span>
+                                <LayoutGrid size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Tablero</span>
                             </button>
 
                             {/* 6. Columna */}
@@ -11547,21 +11578,19 @@ ${afcMapContext}
                                         height: 340
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <Columns size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">Columna</span>
+                                <Columns size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Columna</span>
                             </button>
-
-                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
 
                             {/* 7. Imagen */}
                             <button
                                 onClick={triggerCanvasImageUpload}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <ImageIcon size={15} className="group-hover:text-[#10b981] transition-colors" />
-                                <span className="text-[9px] font-mono tracking-tight">Imagen</span>
+                                <ImageIcon size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Imagen</span>
                             </button>
 
                             {/* 8. Color Swatch */}
@@ -11575,13 +11604,11 @@ ${afcMapContext}
                                         height: 76
                                     });
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <div className="w-3.5 h-3.5 rounded-[4px] bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                <span className="text-[9px] font-mono tracking-tight">Color</span>
+                                <div className="w-4 h-4 rounded-[4px] bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[10px] font-mono tracking-tight">Color</span>
                             </button>
-
-                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
 
                             {/* 9. Vaciar */}
                             <button
@@ -11598,10 +11625,10 @@ ${afcMapContext}
                                         });
                                     }
                                 }}
-                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-all group"
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-all group"
                             >
-                                <Trash2 size={15} />
-                                <span className="text-[9px] font-mono tracking-tight">Vaciar</span>
+                                <Trash2 size={16} />
+                                <span className="text-[10px] font-mono tracking-tight">Vaciar</span>
                             </button>
                         </div>
                     )}
@@ -11758,7 +11785,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => setIsMilanoteToolsOpen(prev => !prev)}
-                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/15 text-white border border-white/20' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/10 text-white ring-2 ring-white shadow-[0_0_16px_rgba(255,255,255,0.25)]' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
                             title="Más herramientas (Milanote)"
                         >
                             <MoreHorizontal size={16} />
