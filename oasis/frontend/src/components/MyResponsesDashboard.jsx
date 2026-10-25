@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye } from 'lucide-react';
+import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, ArrowLeft, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Menu } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -1725,8 +1725,42 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
         reader.readAsText(file);
     };
 
+    const safeSetLocalStorage = useCallback((key, value) => {
+        try {
+            localStorage.setItem(key, value);
+        } catch (quotaErr) {
+            try {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k) continue;
+                    if (
+                        k.startsWith('oasis_consent_photo_') ||
+                        k.startsWith('oasis_consent_record_') ||
+                        k.startsWith('oasis_afc_map_') ||
+                        (user && (
+                            k.startsWith('oasis_afc_real_data_') ||
+                            k.startsWith('oasis_transcriptions_') ||
+                            k.startsWith('oasis_contextual_report_') ||
+                            k.startsWith('oasis_apa_clinical_report_') ||
+                            k.startsWith('oasis_bio_transcriptions_')
+                        ) && !k.toLowerCase().includes(user.toLowerCase()))
+                    ) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(k => {
+                    try { localStorage.removeItem(k); } catch (e) {}
+                });
+                localStorage.setItem(key, value);
+            } catch (retryErr) {
+                console.warn("[Oasis Storage] No se pudo guardar en localStorage por límite de cuota; sincronizando en la nube:", key);
+            }
+        }
+    }, [user]);
+
     const setLocalItem = useCallback((key, value) => {
-        localStorage.setItem(key, value);
+        safeSetLocalStorage(key, value);
         if (user) {
             const caller = localStorage.getItem('oasis_user') || 'observador1';
             fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
@@ -1738,7 +1772,7 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
                 body: JSON.stringify({ [key]: value })
             }).catch(e => console.error("Error syncing to backend:", e));
         }
-    }, [user]);
+    }, [user, safeSetLocalStorage]);
 
     const [completedTrackerTasks, setCompletedTrackerTasks] = useState(0);
     const [unlockedCount, setUnlockedCount] = useState(6);
@@ -2025,7 +2059,7 @@ Devuelve ÚNICAMENTE el código HTML crudo. No devuelvas Markdown. No incluyas \
                 contentStr = contentStr.replace(/^[\s\n]*```(?:html)?[\s\n]*/i, '').replace(/[\s\n]*```[\s\n]*$/i, '');
                 
                 setContextualReportHtml(contentStr);
-                localStorage.setItem(`oasis_contextual_report_${user}`, contentStr);
+                setLocalItem(`oasis_contextual_report_${user}`, contentStr);
             }
         } catch (e) {
             console.error("Error generating Contextual Report:", e);
@@ -2180,6 +2214,7 @@ Devuelve estrictamente el JSON sin formato extra.
     // UI State
     const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'raw_data'
     const [mapViewTab, setMapViewTab] = useState('map'); // 'map', 'loop', 'exit_keys', 'avances'
+    const [isMapMenuOpen, setIsMapMenuOpen] = useState(false);
     const [selectedNode, setSelectedNode] = useState(null);
     const [lifeUpdateText, setLifeUpdateText] = useState("");
     const [isUpdatingMap, setIsUpdatingMap] = useState(false);
@@ -2837,23 +2872,7 @@ ESTRUCTURA JSON OBLIGATORIA:
 
             // 6. Persistir en todos los niveles locales y nube clínica permanente
             try {
-                localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-                localStorage.setItem(`oasis_afc_map_${user}`, JSON.stringify(newAfcData));
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-                if (user) {
-                    const caller = localStorage.getItem('oasis_user') || 'observador1';
-                    fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'X-Oasis-User': caller
-                        },
-                        body: JSON.stringify({
-                            [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData),
-                            [`oasis_afc_map_${user}`]: JSON.stringify(newAfcData)
-                        })
-                    }).catch(() => {});
-                }
             } catch (e) {
                 console.error("Error al persistir afcData:", e);
             }
@@ -2874,7 +2893,6 @@ ESTRUCTURA JSON OBLIGATORIA:
                     branchDetails: spawnedNodeLabels,
                     timestamp: new Date().toISOString()
                 });
-                localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
                 setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
             } catch (e) {
                 console.error("Error al registrar corrección clínica:", e);
@@ -2934,23 +2952,7 @@ ESTRUCTURA JSON OBLIGATORIA:
 
         // Persistir en almacenamiento local y en la nube clínica permanente
         try {
-            localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-            localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
             setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-            if (user) {
-                const caller = localStorage.getItem('oasis_user') || 'observador1';
-                fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Oasis-User': caller
-                    },
-                    body: JSON.stringify({
-                        [`oasis_afc_real_data_${user}`]: JSON.stringify(newAfcData),
-                        [`oasis_afc_map_${user}`]: JSON.stringify(newAfcData)
-                    })
-                }).catch(() => {});
-            }
         } catch (e) {
             console.error("Error al persistir tras descartar factor:", e);
         }
@@ -2965,7 +2967,6 @@ ESTRUCTURA JSON OBLIGATORIA:
                 action: 'discarded_by_user',
                 timestamp: new Date().toISOString()
             });
-            localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
             setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
         } catch (err) {}
     };
@@ -6814,6 +6815,40 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         return resolvedNodes;
     }, [afcData, user, bioData, phenomData, triggerProgrammaticTransition, resetMapTransform, isMobileDevice]);
 
+    useEffect(() => {
+        const handleMapCommand = (e) => {
+            const detail = e?.detail || {};
+            if (detail.viewMode) {
+                setViewMode(detail.viewMode);
+            }
+            if (detail.mapViewTab) {
+                setViewMode('dashboard');
+                setMapViewTab(detail.mapViewTab);
+            }
+            if (detail.action === 'generate') {
+                setViewMode('dashboard');
+                handleGenerateMap(null, false);
+            } else if (detail.action === 'contrast') {
+                setViewMode('dashboard');
+                handleGenerateMap(null, true);
+            } else if (detail.action === 'reorganize') {
+                setViewMode('dashboard');
+                setMapViewTab('map');
+                reorganizeNodes();
+            } else if (detail.action === 'tour') {
+                setViewMode('dashboard');
+                setMapViewTab('map');
+                startTour();
+            } else if (detail.action === 'export_doc') {
+                handleExportDoc();
+            } else if (detail.action === 'import_doc') {
+                if (importFileInputRef.current) importFileInputRef.current.click();
+            }
+        };
+        window.addEventListener('oasis-map-command', handleMapCommand);
+        return () => window.removeEventListener('oasis-map-command', handleMapCommand);
+    }, [reorganizeNodes, startTour, afcData, user]);
+
     const handleZoom = (amount) => {
         if (!mapContainerRef.current) return;
         const rect = mapContainerRef.current.getBoundingClientRect();
@@ -8040,72 +8075,46 @@ Devuelve estrictamente el JSON sin formato extra.
 
                 {(isAnalyzing || isFinishingLoading) ? (
                     <div className={`absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050505] transition-opacity duration-300 pointer-events-auto ${isFinishingLoading && loadingProgress >= 100 ? 'opacity-95' : 'opacity-100'}`}>
-                        <div className="flex flex-col items-center gap-6 text-center max-w-sm w-full px-6 animate-in fade-in duration-300">
-                            {/* Neural Core Animation */}
-                            <div className="relative flex items-center justify-center w-18 h-18">
-                                <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-xl animate-pulse"></div>
-                                <div className="absolute -inset-1.5 rounded-full border border-dashed border-emerald-400/30 animate-spin" style={{ animationDuration: '12s' }}></div>
-                                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-400/90 border-r-emerald-400/60 animate-spin" style={{ animationDuration: isFinishingLoading ? '0.6s' : '1.8s' }}></div>
-                                <div className="relative w-12 h-12 rounded-full bg-zinc-950/90 border border-emerald-500/40 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(52,211,153,0.3)]">
-                                    <Network className={`text-emerald-400 ${isFinishingLoading ? 'scale-110' : 'animate-pulse'}`} size={22} />
-                                </div>
-                            </div>
-                            
-                            <div className="flex flex-col gap-2 w-full items-center">
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-[10px] font-mono text-emerald-300 tracking-wider uppercase">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                    Diseñando mapa de conexiones
-                                </div>
+                        <div className="flex flex-col items-center gap-5 text-center max-w-xs w-full px-6">
+                            {/* Minimalist static icon as in Image 1 */}
+                            <Network className="text-emerald-400" size={24} strokeWidth={1.75} />
 
-                                <h2 className="text-[14px] font-bold text-white tracking-wide">
-                                    Extrayendo conexiones dentro de tu historia
+                            <div className="flex flex-col gap-1.5 w-full items-center">
+                                <h2 className="text-[13px] font-mono font-semibold text-zinc-100 tracking-wide">
+                                    {isFinishingLoading || loadingProgress >= 100
+                                        ? "síntesis completada"
+                                        : "extrayendo conexiones dentro de tu historia"}
                                 </h2>
 
-                                <p className="text-[11px] text-zinc-400 font-mono tracking-tight min-h-[16px]">
+                                <p className="text-[11px] text-zinc-500 font-mono tracking-tight min-h-[16px]">
                                     {isFinishingLoading || loadingProgress >= 100
-                                        ? "¡Conexiones extraídas y sincronizadas con éxito!"
+                                        ? "informe clínico listo para consulta"
                                         : typeof isAnalyzing === "string" && !isAnalyzing.includes("bucles reales")
-                                            ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '')
+                                            ? isAnalyzing.replace('(Etapa 1/2)...', '').replace('(Etapa 2/2)...', '').toLowerCase()
                                             : loadingProgress < 28
-                                                ? "Rastreando detonantes y contexto biográfico..."
+                                                ? "rastreando detonantes y contexto biográfico..."
                                                 : loadingProgress < 58
-                                                    ? "Identificando pensamientos y respuestas somáticas..."
+                                                    ? "identificando pensamientos y respuestas somáticas..."
                                                     : loadingProgress < 82
-                                                        ? "Conectando patrones conductuales y consecuencias..."
+                                                        ? "conectando patrones conductuales y consecuencias..."
                                                         : loadingProgress < 95
-                                                            ? "Tejiendo la red funcional y topología clínica..."
-                                                            : "Finalizando y sincronizando mapa..."}
+                                                            ? "tejiendo la red funcional y topología clínica..."
+                                                            : "finalizando y sincronizando mapa..."}
                                 </p>
-                                
-                                {/* Game-like Organic Progress Bar */}
-                                <div className="w-full max-w-[280px] flex flex-col gap-2 mt-2">
-                                    <div className="w-full h-[6px] bg-zinc-900/90 border border-white/10 rounded-full overflow-hidden relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-                                        <div 
-                                            className={`h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 relative transition-all shadow-[0_0_12px_rgba(52,211,153,0.85)] ${isFinishingLoading ? 'brightness-125' : ''}`}
-                                            style={{ 
-                                                width: `${Math.round(loadingProgress)}%`,
-                                                transition: isFinishingLoading ? 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'width 0.15s ease-out'
-                                            }}
-                                        >
-                                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
-                                        </div>
 
-                                        {loadingProgress > 3 && loadingProgress < 99 && (
-                                            <div 
-                                                className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_#ffffff,0_0_14px_#34d399] pointer-events-none transition-all duration-100"
-                                                style={{ left: `calc(${Math.round(loadingProgress)}% - 5px)` }}
-                                            >
-                                                <div className="absolute inset-0 rounded-full bg-emerald-300 animate-ping opacity-75"></div>
-                                            </div>
-                                        )}
+                                {/* Minimalist Progress Bar without excessive animations */}
+                                <div className="w-full max-w-[220px] flex flex-col gap-1.5 mt-3">
+                                    <div className="w-full h-[3px] bg-zinc-900 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-emerald-400 rounded-full transition-[width] duration-200 ease-out"
+                                            style={{ width: `${Math.round(loadingProgress)}%` }}
+                                        />
                                     </div>
-
-                                    <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500 px-0.5">
-                                        <span className="flex items-center gap-1.5 text-zinc-400">
-                                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${isFinishingLoading ? 'bg-emerald-400 animate-bounce' : 'bg-emerald-500/70 animate-pulse'}`}></span>
-                                            {isFinishingLoading || loadingProgress >= 100 ? 'SINCRONIZADO' : 'EXTRAYENDO'}
+                                    <div className="flex justify-between items-center text-[10px] font-mono text-zinc-600">
+                                        <span>
+                                            {isFinishingLoading || loadingProgress >= 100 ? 'listo' : 'procesando'}
                                         </span>
-                                        <span className={`font-bold tabular-nums tracking-wider ${isFinishingLoading || loadingProgress >= 100 ? 'text-emerald-300 scale-105' : 'text-emerald-400'} transition-transform`}>
+                                        <span className="text-emerald-400/90 tabular-nums">
                                             {Math.round(loadingProgress)}%
                                         </span>
                                     </div>
@@ -8113,192 +8122,114 @@ Devuelve estrictamente el JSON sin formato extra.
                             </div>
                         </div>
                     </div>
-                ) : viewMode === 'raw_data' ? renderRawData() : (
-                    <div className="absolute inset-0 w-full h-full animate-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both pointer-events-none">
+                ) : viewMode === 'raw_data' ? (
+                    <div className="w-full h-full overflow-y-auto px-4 sm:px-8 pt-16 pb-16 pointer-events-auto">
+                        <div className="max-w-6xl mx-auto mb-4 flex items-center justify-between">
+                            <button
+                                onClick={() => setViewMode('dashboard')}
+                                className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                                <ArrowLeft size={13} />
+                                <span>volver al mapa</span>
+                            </button>
+                        </div>
+                        {renderRawData()}
+                    </div>
+                ) : (
+                    <div className="absolute inset-0 w-full h-full animate-in fade-in duration-300 pointer-events-none">
 
-                        {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (100% width on top) */}
+                        {/* MÓDULO 1: LIENZO INTERACTIVO DEL AFC (Minimalist Full-Bleed View) */}
                         <div className="absolute inset-0 z-0 flex flex-col w-full h-full pointer-events-auto">
-                            {/* Top Header Badge & Generate Button */}
-                            <div className="absolute top-3 md:top-6 left-3 md:left-6 z-[120] flex items-center gap-2 pointer-events-auto">
-                                <div className="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl bg-zinc-950/80 border border-pink-400/25 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-                                    <span className="text-xs">✨</span>
-                                    <h2 className="text-xs font-bold tracking-wide bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
-                                        Mapa de Bucles
-                                    </h2>
-                                    <span className="text-[11px]">🍃</span>
-                                    {afcData?.is_mock && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-pink-500/10 text-[9px] uppercase font-bold text-pink-300 border border-pink-400/20">Plantilla</span>}
-                                </div>
+                            {/* Hidden File Input for Word (.doc) Import */}
+                            <input
+                                type="file"
+                                accept=".doc,.html"
+                                ref={importFileInputRef}
+                                onChange={handleImportDoc}
+                                style={{ display: 'none' }}
+                            />
 
-                                <button
-                                    onClick={(e) => handleGenerateMap(e, false)}
-                                    disabled={!!isAnalyzing}
-                                    className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl border backdrop-blur-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer pointer-events-auto ${
-                                        isAnalyzing
-                                            ? 'bg-zinc-900/80 border-white/10 text-zinc-500 cursor-not-allowed'
-                                            : 'bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-400/30 shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_24px_rgba(16,185,129,0.5)]'
-                                    }`}
-                                    title="Generar o recalcular Mapa de Bucles desde cero"
-                                >
-                                    <Sparkles size={13} className={isAnalyzing ? "text-zinc-500" : "text-emerald-200 animate-pulse"} />
-                                    <span>{isAnalyzing ? "Generando..." : "Generar Nuevo"}</span>
-                                </button>
-                                {afcData && !afcData.is_mock && (
+                            {/* Standalone Minimalist Menu Button (when not inside PsychologistDashboard, which has its own unified menu button at top-4 left-4) */}
+                            {!isEmbedded && (
+                                <div className="absolute top-4 left-4 z-[250] pointer-events-auto">
                                     <button
-                                        onClick={(e) => handleGenerateMap(e, true)}
-                                        disabled={!!isAnalyzing}
-                                        className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl border backdrop-blur-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer pointer-events-auto ${
-                                            isAnalyzing
-                                                ? 'bg-zinc-900/80 border-white/10 text-zinc-500 cursor-not-allowed'
-                                                : 'bg-indigo-600/90 hover:bg-indigo-500 text-white border-indigo-400/30 shadow-[0_0_18px_rgba(99,102,241,0.35)] hover:shadow-[0_0_24px_rgba(99,102,241,0.5)]'
-                                        }`}
-                                        title="Actualiza el mapa contrastando los audios y reportes nuevos con el mapa actual"
+                                        onClick={() => setIsMapMenuOpen(prev => !prev)}
+                                        className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
+                                        title="Menú de apartados"
                                     >
-                                        <Activity size={13} className={isAnalyzing ? "text-zinc-500" : "text-indigo-200 animate-pulse"} />
-                                        <span>{isAnalyzing ? "Actualizando..." : "Contrastar Info"}</span>
+                                        <Menu size={14} />
+                                        <span>menú</span>
                                     </button>
-                                )}
-                            </div>
 
-                            {/* Quick Column Navigation Pills (Desktop & Mobile) */}
-                            {mapViewTab === 'map' && (
-                                <div className={`absolute ${isEmbedded ? 'top-[48px] md:top-3.5' : 'top-[78px] sm:top-[82px] md:top-[88px]'} left-1/2 -translate-x-1/2 z-[130] flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-950/90 border border-white/10 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.7)] max-w-[96vw] overflow-x-auto no-scrollbar pointer-events-auto`}>
-                                    <button
-                                        onClick={() => { setFocusedStageIndex(null); setActiveColumnIndex(null); resetMapTransform(isMobileDevice ? 'readable' : 'overview'); }}
-                                        className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
-                                            focusedStageIndex === null
-                                                ? 'bg-white/20 text-white shadow-sm border border-white/30' 
-                                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                                        }`}
-                                        title="Ver todo el mapa funcional"
-                                    >
-                                        <Eye size={11} />
-                                        <span>Ver Todo</span>
-                                    </button>
-                                    <div className="w-[1px] h-3 bg-white/15 mx-0.5 shrink-0" />
-                                    {CLINICAL_COLUMNS.map((col, idx) => {
-                                        const isActive = focusedStageIndex === idx;
-                                        return (
+                                    {isMapMenuOpen && (
+                                        <div className="mt-2 w-56 rounded-xl bg-[#08080a]/95 border border-white/10 backdrop-blur-xl shadow-2xl p-2 font-mono text-xs text-zinc-300 space-y-1">
+                                            <div className="px-2 py-1 text-[10px] text-zinc-500 uppercase tracking-wider">Apartados</div>
+                                            {[
+                                                { id: 'map', label: 'el mapa', icon: <Network size={13} /> },
+                                                { id: 'loop', label: 'diagnóstico', icon: <Activity size={13} /> },
+                                                { id: 'bucles', label: 'bucles', icon: <Compass size={13} /> },
+                                                { id: 'exit_keys', label: 'claves', icon: <Sparkles size={13} /> },
+                                                { id: 'avances', label: 'avances', icon: <MessageSquare size={13} /> }
+                                            ].map(item => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => { setMapViewTab(item.id); setIsMapMenuOpen(false); }}
+                                                    className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 transition-colors ${mapViewTab === item.id ? 'bg-emerald-500/15 text-emerald-400' : 'hover:bg-white/5 text-zinc-400 hover:text-white'}`}
+                                                >
+                                                    {item.icon}
+                                                    <span>{item.label}</span>
+                                                </button>
+                                            ))}
+                                            <div className="border-t border-white/5 my-1 pt-1 px-2 text-[10px] text-zinc-500 uppercase tracking-wider">Acciones</div>
                                             <button
-                                                key={col.id}
-                                                onClick={() => handleStageSelect(idx)}
-                                                className={`px-2.5 py-1 rounded-xl text-[9px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
-                                                    isActive 
-                                                        ? 'bg-white/20 text-white shadow-sm border border-white/30 font-extrabold' 
-                                                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-                                                }`}
-                                                style={isActive ? { borderColor: `${col.color}80`, color: col.color, boxShadow: `0 0 12px ${col.color}40` } : {}}
-                                                title={`Paso ${col.num}: ${col.title}`}
+                                                onClick={(e) => { setIsMapMenuOpen(false); handleGenerateMap(e, false); }}
+                                                disabled={!!isAnalyzing}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-emerald-400 transition-colors"
                                             >
-                                                <span className="text-[10px]">{col.icon}</span>
-                                                <span>{col.num}. {col.title.split(' ')[0]}</span>
+                                                <Sparkles size={13} />
+                                                <span>{isAnalyzing ? 'generando...' : 'generar mapa'}</span>
                                             </button>
-                                        );
-                                    })}
+                                            {afcData && !afcData.is_mock && (
+                                                <button
+                                                    onClick={(e) => { setIsMapMenuOpen(false); handleGenerateMap(e, true); }}
+                                                    disabled={!!isAnalyzing}
+                                                    className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-indigo-400 transition-colors"
+                                                >
+                                                    <Activity size={13} />
+                                                    <span>contrastar info</span>
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => { setIsMapMenuOpen(false); reorganizeNodes(); }}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+                                            >
+                                                <Network size={13} />
+                                                <span>reorganizar red</span>
+                                            </button>
+                                            <button
+                                                onClick={() => { setIsMapMenuOpen(false); startTour(); }}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+                                            >
+                                                <Compass size={13} />
+                                                <span>recorrido guiado</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Floating Step-by-Step Abordaje Banner */}
-                            {mapViewTab === 'map' && focusedStageIndex !== null && (
-                                <div className={`absolute ${isEmbedded ? 'top-[88px] md:top-14' : 'top-[126px] sm:top-[130px] md:top-[138px]'} left-1/2 -translate-x-1/2 z-[125] flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-950/95 border border-indigo-500/30 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.8)] pointer-events-auto animate-in fade-in duration-200`}>
+                            {/* Active Sub-View Pill (when viewing Diagnóstico / Bucles / Claves / Avances so user can return to El Mapa with 1 click) */}
+                            {mapViewTab !== 'map' && (
+                                <div className="absolute top-4 right-4 z-[220] pointer-events-auto">
                                     <button
-                                        onClick={() => handleStageSelect(Math.max(0, focusedStageIndex - 1))}
-                                        disabled={focusedStageIndex === 0}
-                                        className="p-1 rounded-full text-zinc-400 hover:text-white disabled:opacity-25 hover:bg-white/10 transition-colors"
-                                        title="Paso anterior"
+                                        onClick={() => setMapViewTab('map')}
+                                        className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
                                     >
-                                        <ChevronLeft size={13} />
-                                    </button>
-                                    <div className="flex items-center gap-1.5 text-center">
-                                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-300">
-                                            Paso {focusedStageIndex + 1}/6:
-                                        </span>
-                                        <span className="text-[10.5px] font-bold text-white">
-                                            {CLINICAL_COLUMNS[focusedStageIndex].title}
-                                        </span>
-                                        <span className="text-[9px] text-zinc-400 hidden sm:inline">
-                                            • {CLINICAL_COLUMNS[focusedStageIndex].subtitle}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => handleStageSelect(Math.min(5, focusedStageIndex + 1))}
-                                        disabled={focusedStageIndex === 5}
-                                        className="p-1 rounded-full text-zinc-400 hover:text-white disabled:opacity-25 hover:bg-white/10 transition-colors"
-                                        title="Paso siguiente"
-                                    >
-                                        <ChevronRight size={13} />
+                                        <ArrowLeft size={13} />
+                                        <span>volver al mapa</span>
                                     </button>
                                 </div>
                             )}
-
-                            {/* Action Buttons Toolbar (Top right on mobile, Bottom left on desktop) */}
-                            <div className={`absolute top-3 right-3 md:top-auto md:bottom-6 md:left-6 md:right-auto z-[120] flex items-center gap-1.5 pointer-events-auto p-1 rounded-xl bg-black/60 md:bg-black/40 border border-white/10 backdrop-blur-md shadow-lg ${(selectedNode || tourActiveIndex !== null) ? 'hidden' : 'flex'}`}>
-                                <button
-                                    onClick={(e) => handleGenerateMap(e, false)}
-                                    disabled={!!isAnalyzing}
-                                    className="p-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-950/20"
-                                    title="Generar Análisis Clínico"
-                                >
-                                    <Sparkles size={11} className={isAnalyzing ? "animate-spin" : ""} />
-                                </button>
-                                <button
-                                    onClick={() => reorganizeNodes()}
-                                    className="p-1.5 rounded-lg bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all flex items-center justify-center active:scale-95"
-                                    title="Reorganizar en Red de Análisis Funcional (AFC)"
-                                    aria-label="Ajustar y alinear nodos"
-                                >
-                                    <Network size={11} className="text-emerald-400" />
-                                </button>
-                                <button
-                                    onClick={startTour}
-                                    className="p-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-white transition-all flex items-center justify-center active:scale-95"
-                                    title="Iniciar recorrido clínico guiado"
-                                >
-                                    <Compass size={11} />
-                                </button>
-                                {isEmbedded && (
-                                    <button
-                                        onClick={() => setViewMode(viewMode === 'dashboard' ? 'raw_data' : 'dashboard')}
-                                        className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-white flex items-center justify-center active:scale-95"
-                                        title={viewMode === 'dashboard' ? 'Ver informe completo escrito' : 'Ver mapa interactivo de bucles'}
-                                    >
-                                        <FileText size={11} />
-                                    </button>
-                                )}
-                                {isEmbedded && (
-                                    <>
-                                        <button
-                                            onClick={() => importFileInputRef.current?.click()}
-                                            className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-emerald-400 hover:text-white flex items-center justify-center active:scale-95"
-                                            title="Importar Informe Clínico (.doc)"
-                                        >
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                        </button>
-                                        <input 
-                                            type="file" 
-                                            accept=".doc,.html" 
-                                            ref={importFileInputRef} 
-                                            onChange={handleImportDoc} 
-                                            style={{ display: 'none' }} 
-                                        />
-                                        <button
-                                            onClick={handleExportDoc}
-                                            className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/30 transition-colors text-indigo-400 hover:text-white flex items-center justify-center active:scale-95"
-                                            title="Exportar Informe Clínico a Documento Word"
-                                        >
-                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Segmented Control Tabs (Bottom NavBar) */}
-                            <div className={`absolute bottom-[calc(env(safe-area-inset-bottom,0px)+24px)] md:bottom-6 left-1/2 transform -translate-x-1/2 z-[200] bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 w-max max-w-[95vw] gap-1 sm:gap-2 shadow-2xl pointer-events-auto overflow-x-auto no-scrollbar scale-90 md:scale-100 origin-bottom ${((selectedNode || tourActiveIndex !== null) && typeof window !== 'undefined' && window.innerWidth < 768) ? 'hidden md:flex' : 'flex'}`}>
-                                <button onClick={() => setMapViewTab('map')} title="El Mapa" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'map' ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}><Network size={16} className="sm:scale-110" /></button>
-                                <button onClick={() => setMapViewTab('avances')} title="Avances" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'avances' ? 'bg-blue-600 text-white shadow-md' : 'text-zinc-500 hover:text-blue-400'}`}><MessageSquare size={16} className="sm:scale-110" /></button>
-                                <button onClick={() => setMapViewTab('bucles')} title="Bucles" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'bucles' ? 'bg-purple-600 text-white shadow-md' : 'text-zinc-500 hover:text-purple-400'}`}><Compass size={16} className="sm:scale-110" /></button>
-                                <button onClick={() => setMapViewTab('loop')} title="Diagnóstico" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'loop' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-500 hover:text-emerald-400'}`}><Activity size={16} className="sm:scale-110" /></button>
-                                <button onClick={() => setMapViewTab('exit_keys')} title="Claves" className={`p-2.5 sm:p-3 shrink-0 rounded-xl transition-all flex items-center justify-center ${mapViewTab === 'exit_keys' ? 'bg-orange-600 text-white shadow-md' : 'text-zinc-500 hover:text-orange-400'}`}><Sparkles size={16} className="sm:scale-110" /></button>
-                            </div>
     <div
                                 ref={mapContainerRef}
                                 className={`absolute inset-0 z-0 bg-transparent overflow-hidden group select-none ${mapViewTab === 'bucles' ? 'pointer-events-none' : 'pointer-events-auto'} ${isDraggingMap ? 'cursor-grabbing' : (draggingNodeId ? 'cursor-grabbing' : 'cursor-grab')}`}
@@ -9519,8 +9450,6 @@ Por favor, analicemos:
                                 newNodes[nodeIndex].is_corrected = true;
                                 const newAfcData = { ...afcData, nodes: newNodes, edges: newEdges };
                                 setAfcData(newAfcData);
-                                localStorage.setItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
-                                localStorage.setItem('oasis_afc_map_' + user, JSON.stringify(newAfcData));
                                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(newAfcData));
                                 setSelectedNode(newNodes[nodeIndex]);
                                 setEditingNodeId(null);
@@ -9537,7 +9466,6 @@ Por favor, analicemos:
                                         branchesCreated: 0,
                                         timestamp: new Date().toISOString()
                                     });
-                                    localStorage.setItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
                                     setLocalItem(`oasis_clinical_corrections_${user}`, JSON.stringify(currentCorrections));
                                 } catch (err) {}
                             }

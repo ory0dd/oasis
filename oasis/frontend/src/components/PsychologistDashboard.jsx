@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Aperture, Mic,  
+import { Aperture, Mic, Network,
     Search, Filter, Activity, Brain, Clock, AlertTriangle, 
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
@@ -1394,7 +1394,27 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         if (cData && Object.keys(cData).length > 0) {
                             window.isDownloadingClinicalData = true;
                             try {
+                                // Free localStorage quota from heavy base64 photos or duplicate map keys
+                                for (let i = localStorage.length - 1; i >= 0; i--) {
+                                    const existingKey = localStorage.key(i);
+                                    if (
+                                        existingKey &&
+                                        (existingKey.startsWith('oasis_consent_photo_') ||
+                                         existingKey.startsWith('oasis_consent_record_') ||
+                                         existingKey.startsWith('oasis_afc_map_'))
+                                    ) {
+                                        try { localStorage.removeItem(existingKey); } catch (e) {}
+                                    }
+                                }
                                 Object.keys(cData).forEach(key => {
+                                    // Keep heavy base64 consent photos and legacy duplicate maps in memory/cloud only
+                                    if (
+                                        key.startsWith('oasis_consent_photo_') ||
+                                        key.startsWith('oasis_consent_record_') ||
+                                        key.startsWith('oasis_afc_map_')
+                                    ) {
+                                        return;
+                                    }
                                     try {
                                         localStorage.setItem(key, cData[key]);
                                         if (key.includes('__')) {
@@ -1404,7 +1424,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                             localStorage.setItem(`oasis_test_result_${uname}__${sub}`, cData[key]);
                                         }
                                     } catch (quotaErr) {
-                                        // Ignore localStorage quota limits gracefully so all 51 users continue loading
+                                        // Ignore localStorage quota limits gracefully so all users continue loading
                                     }
                                 });
                             } finally {
@@ -5275,29 +5295,42 @@ Devuelve estrictamente el JSON sin formato extra.
             return null;
         }
 
+        const dispatchMapCommand = (detail) => {
+            setActiveTab('VISION_GENERAL');
+            setIsSidebarOpen(false);
+            setSelectedNode(null);
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('oasis-map-command', { detail }));
+            }, 30);
+        };
+
         return (
             <div className={`w-full flex-1 min-h-0 h-full flex flex-col md:flex-row animate-in fade-in duration-300 relative z-10 ${dashboardBg ? 'bg-[#030304]/80' : 'bg-[#030304]'}`}>
-                {/* Left Clinical Sidebar */}
-                <div className={`w-full ${isSidebarOpen ? 'md:w-80 h-full' : 'md:w-[84px] h-auto md:h-full'} bg-zinc-950/60 border-b md:border-b-0 md:border-r border-white/5 flex flex-col shrink-0 transition-all duration-300 overflow-visible md:overflow-x-hidden z-[50]`}>
-                    <div className="p-3 md:p-6 space-y-3 md:space-y-6 relative flex flex-col h-full overflow-y-auto no-scrollbar">
-                        {/* Mobile Header / Desktop Menu Button */}
-                        <div className={`flex items-center justify-between md:flex md:mb-2 ${isSidebarOpen ? 'md:justify-end' : 'md:justify-center'}`}>
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-950 border border-white/5 text-zinc-400 hover:text-white transition-all`}>
-                                <Menu size={16} />
-                            </button>
-                            
-                            {/* Mobile-only current tab indicator (when closed) */}
-                            {!isSidebarOpen && (
-                                <div className="md:hidden flex-1 text-center pr-8">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                                        {activeTab}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                {/* Single Minimalist Menu Button (Always accessible, never clutters the canvas) */}
+                <button
+                    onClick={() => setIsSidebarOpen(prev => !prev)}
+                    className="fixed top-4 left-4 z-[360] px-3 py-1.5 rounded-lg bg-[#08080a]/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
+                    title="Abrir menú de apartados"
+                >
+                    {isSidebarOpen ? <X size={14} /> : <Menu size={14} />}
+                    <span>{isSidebarOpen ? 'cerrar' : 'menú'}</span>
+                </button>
+
+                {/* Backdrop when menu drawer is open */}
+                {isSidebarOpen && (
+                    <div
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-[340] animate-in fade-in duration-200"
+                    />
+                )}
+
+                {/* Minimalist Overlay Clinical Drawer (Only visible when opened via the single menu button) */}
+                {isSidebarOpen && (
+                <div className="fixed top-0 left-0 bottom-0 w-72 sm:w-80 bg-[#070709]/95 border-r border-white/10 backdrop-blur-xl flex flex-col shrink-0 z-[350] shadow-2xl animate-in slide-in-from-left-4 duration-200">
+                    <div className="pt-14 px-4 pb-4 space-y-5 relative flex flex-col h-full overflow-y-auto no-scrollbar">
 
                         {/* Patient Badge */}
-                        <div className={`bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all ${!isSidebarOpen ? 'hidden md:block opacity-0 h-0 pointer-events-none p-0 overflow-hidden mt-0' : 'mt-3'}`}>
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-4 space-y-2 transition-all">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
@@ -5310,10 +5343,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                 </div>
                                 <button 
                                     onClick={() => {
+                                        setIsSidebarOpen(false);
                                         setSelectedPatient(null);
                                         setCurrentModule('DASHBOARD');
                                     }}
-                                    className="md:hidden p-2 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0 hover:bg-rose-500/20 transition-colors"
+                                    className="p-2 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0 hover:bg-rose-500/20 transition-colors"
+                                    title="Salir al Directorio"
                                 >
                                     <LogOut size={14} />
                                 </button>
@@ -5525,61 +5560,127 @@ Devuelve estrictamente el JSON sin formato extra.
                         </div>
 
                         {/* Navigation Structure */}
-                        <nav className={`flex-col pb-1 md:pb-0 w-full transition-all ${!isSidebarOpen ? 'hidden md:flex items-center space-y-8' : 'flex space-y-6 mt-6 md:mt-0'}`}>
-                            {/* SECCIÓN: CASO CLÍNICO */}
-                            <div className="space-y-2 w-full">
-                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Caso Clínico</span>}
+                        <nav className="flex flex-col space-y-5 w-full font-mono">
+                            {/* SECCIÓN: APARTADOS DEL CASO */}
+                            <div className="space-y-1.5 w-full">
+                                <span className="text-[9px] text-zinc-500 uppercase font-black tracking-widest pl-2">Apartados del Caso</span>
                                 <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('VISION_GENERAL'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <FileText className="w-5 h-5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Visión General</span>}
+                                    <button
+                                        onClick={() => dispatchMapCommand({ viewMode: 'dashboard', mapViewTab: 'map' })}
+                                        className={`w-full text-left px-3 py-2 rounded-xl border flex gap-2.5 items-center text-xs transition-all ${activeTab === 'VISION_GENERAL' || activeTab === 'INFORME_INICIAL' || activeTab === 'CLINICAL_REPORT' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]'}`}
+                                    >
+                                        <Network className="w-4 h-4 shrink-0" />
+                                        <span>Mapa de Conexiones</span>
                                     </button>
-                                    <button onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Activity className="w-5 h-5 shrink-0 text-purple-400" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Pruebas Posteriores</span>}
+                                    <button
+                                        onClick={() => dispatchMapCommand({ viewMode: 'raw_data' })}
+                                        className="w-full text-left px-3 py-2 rounded-xl border border-transparent flex gap-2.5 items-center text-xs text-zinc-400 hover:text-white hover:bg-white/[0.03] transition-all"
+                                    >
+                                        <FileText className="w-4 h-4 shrink-0 text-emerald-400" />
+                                        <span>Informe Clínico Escrito</span>
                                     </button>
-                                    
-                                    {/* Boton Llenar con IA (Subir PDF) integrado en Sidebar */}
-                                    <label className={`w-full text-left p-2.5 rounded-xl border border-indigo-500/30 flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 font-bold transition-all cursor-pointer`}>
-                                        <div className="w-5 h-5 shrink-0 flex items-center justify-center">
-                                            {isExtractingPDF ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <span className="font-bold text-lg leading-none">+</span>}
+                                    <button
+                                        onClick={() => { setActiveTab('PRUEBAS_POSTERIORES'); setIsSidebarOpen(false); setSelectedNode(null); }}
+                                        className={`w-full text-left px-3 py-2 rounded-xl border flex gap-2.5 items-center text-xs transition-all ${activeTab === 'PRUEBAS_POSTERIORES' ? 'bg-purple-500/10 border-purple-500/25 text-purple-400 font-bold' : 'bg-transparent border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]'}`}
+                                    >
+                                        <Activity className="w-4 h-4 shrink-0 text-purple-400" />
+                                        <span>Pruebas Posteriores</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTab('EXPLORACION_DOCS'); setIsSidebarOpen(false); setSelectedNode(null); }}
+                                        className={`w-full text-left px-3 py-2 rounded-xl border flex gap-2.5 items-center text-xs transition-all ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]'}`}
+                                    >
+                                        <Folder className="w-4 h-4 shrink-0 text-sky-400" />
+                                        <span>Asistente Kio (Docs)</span>
+                                    </button>
+                                    <button 
+                                        onClick={handleOpenChatGPT}
+                                        onContextMenu={handleOpenChatGPT}
+                                        title="Click Izquierdo: Abrir ChatGPT | Click Derecho: Editar Link"
+                                        className="w-full text-left px-3 py-2 rounded-xl border border-transparent flex gap-2.5 items-center text-xs text-zinc-400 hover:text-emerald-400 hover:bg-white/[0.03] transition-all"
+                                    >
+                                        <MessageSquare className="w-4 h-4 shrink-0" />
+                                        <span>Caso en ChatGPT</span>
+                                    </button>
+                                    <label className="w-full text-left px-3 py-2 rounded-xl border border-indigo-500/25 flex gap-2.5 items-center bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-xs transition-all cursor-pointer">
+                                        <div className="w-4 h-4 shrink-0 flex items-center justify-center">
+                                            {isExtractingPDF ? <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div> : <span className="font-bold text-base leading-none">+</span>}
                                         </div>
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">{isExtractingPDF ? 'Procesando...' : 'Llenar con Informe PDF'}</span>}
+                                        <span>{isExtractingPDF ? 'Procesando...' : 'Llenar con Informe PDF'}</span>
                                         <input type="file" accept=".pdf" className="hidden" onChange={handlePDFUploadForInterview} disabled={isExtractingPDF} />
                                     </label>
                                 </div>
                             </div>
 
-                            {/* SECCIÓN: ESPACIO DE EXPLORACIÓN */}
-                            <div className="space-y-2 w-full">
-                                {isSidebarOpen && <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest pl-2">Espacio de Exploración</span>}
-                                <div className="space-y-1">
-                                    <button onClick={() => { setActiveTab('EXPLORACION_DOCS'); if(window.innerWidth < 768) setIsSidebarOpen(false); setSelectedNode(null); }} className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${activeTab === 'EXPLORACION_DOCS' || activeTab === 'DOCUMENTOS' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'} transition-all`}>
-                                        <Folder className="w-5 h-5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Asistente Kio (Docs)</span>}
-                                    </button>
-                                    {/* Boton Externo ChatGPT */}
-                                    <button 
-                                        onClick={handleOpenChatGPT}
-                                        onContextMenu={handleOpenChatGPT}
-                                        title="Click Izquierdo: Abrir ChatGPT | Click Derecho: Editar Link"
-                                        className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} bg-transparent border-transparent text-zinc-500 hover:text-emerald-400 hover:bg-white/[0.02] transition-all`}
+                            {/* SECCIÓN: VISTAS Y ACCIONES DEL MAPA */}
+                            <div className="space-y-1.5 w-full">
+                                <span className="text-[9px] text-zinc-500 uppercase font-black tracking-widest pl-2">Vistas y Acciones del Mapa</span>
+                                <div className="grid grid-cols-2 gap-1">
+                                    {[
+                                        { id: 'map', label: 'El Mapa' },
+                                        { id: 'loop', label: 'Diagnóstico' },
+                                        { id: 'bucles', label: 'Bucles' },
+                                        { id: 'exit_keys', label: 'Claves' },
+                                        { id: 'avances', label: 'Avances' }
+                                    ].map(v => (
+                                        <button
+                                            key={v.id}
+                                            onClick={() => dispatchMapCommand({ mapViewTab: v.id })}
+                                            className="text-left px-2.5 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/10 text-[11px] text-zinc-300 hover:text-white transition-all"
+                                        >
+                                            {v.label}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => dispatchMapCommand({ action: 'tour' })}
+                                        className="text-left px-2.5 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/10 text-[11px] text-zinc-300 hover:text-white transition-all"
                                     >
-                                        <MessageSquare className="w-5 h-5 shrink-0" />
-                                        {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Caso en ChatGPT</span>}
+                                        Recorrido
                                     </button>
                                 </div>
-
+                                <div className="pt-1 space-y-1">
+                                    <button
+                                        onClick={() => dispatchMapCommand({ action: 'generate' })}
+                                        className="w-full text-left px-3 py-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/20 text-[11px] text-emerald-300 flex items-center gap-2 transition-all"
+                                    >
+                                        <Sparkles size={12} />
+                                        <span>Generar Mapa Clínico</span>
+                                    </button>
+                                    <button
+                                        onClick={() => dispatchMapCommand({ action: 'contrast' })}
+                                        className="w-full text-left px-3 py-1.5 rounded-lg border border-indigo-500/25 bg-indigo-500/10 hover:bg-indigo-500/20 text-[11px] text-indigo-300 flex items-center gap-2 transition-all"
+                                    >
+                                        <Activity size={12} />
+                                        <span>Contrastar Info Nueva</span>
+                                    </button>
+                                    <div className="grid grid-cols-3 gap-1 pt-0.5">
+                                        <button
+                                            onClick={() => dispatchMapCommand({ action: 'reorganize' })}
+                                            className="px-2 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/10 text-[10px] text-zinc-400 hover:text-white text-center transition-all"
+                                        >
+                                            Reorganizar
+                                        </button>
+                                        <button
+                                            onClick={() => dispatchMapCommand({ action: 'import_doc' })}
+                                            className="px-2 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/10 text-[10px] text-zinc-400 hover:text-white text-center transition-all"
+                                        >
+                                            Importar .doc
+                                        </button>
+                                        <button
+                                            onClick={() => dispatchMapCommand({ action: 'export_doc' })}
+                                            className="px-2 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/10 text-[10px] text-zinc-400 hover:text-white text-center transition-all"
+                                        >
+                                            Exportar .doc
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* SECCIÓN: SESIONES Y AUDIOS */}
-                            <div className="space-y-2 w-full">
-                                {isSidebarOpen && (
-                                    <div className="flex items-center justify-between pl-2 pr-1">
-                                        <span className="text-[9px] font-mono text-zinc-500 uppercase font-black tracking-widest">Sesiones y Audios</span>
-                                        <button onClick={() => { /* maybe add new session */ }} className="text-zinc-600 hover:text-emerald-400 transition-colors"><Plus size={12} /></button>
-                                    </div>
-                                )}
+                            <div className="space-y-1.5 w-full">
+                                <div className="flex items-center justify-between pl-2 pr-1">
+                                    <span className="text-[9px] text-zinc-500 uppercase font-black tracking-widest">Sesiones y Audios</span>
+                                </div>
                                 <div className="space-y-1">
                                     {Array.from({ length: totalVersions }).map((_, idx) => {
                                         const v = idx + 1;
@@ -5590,37 +5691,38 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 onClick={() => {
                                                     setSelectedVersion(v);
                                                     setActiveTab(`SESION_${v}`);
-                                                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                                                    setIsSidebarOpen(false);
                                                 }}
-                                                className={`w-full text-left p-2.5 rounded-xl border flex gap-3 items-center ${isSidebarOpen ? "justify-start" : "justify-center"} ${
-                                                    isSelected ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.02]'
+                                                className={`w-full text-left px-3 py-2 rounded-xl border flex gap-2.5 items-center text-xs ${
+                                                    isSelected ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 font-bold' : 'bg-transparent border-transparent text-zinc-400 hover:text-white hover:bg-white/[0.03]'
                                                 } transition-all`}
                                             >
-                                                <Mic className="w-5 h-5 shrink-0" />
-                                                {isSidebarOpen && <span className="text-[11px] font-black uppercase tracking-wider">Sesión {v}</span>}
+                                                <Mic className="w-4 h-4 shrink-0" />
+                                                <span>Sesión {v}</span>
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
-
                         </nav>
                     </div>
 
                     {/* Sidebar Footer */}
-                    <div className="hidden md:flex p-6 border-t border-white/5 mt-auto shrink-0">
+                    <div className="flex p-4 border-t border-white/5 mt-auto shrink-0">
                         <button
                             onClick={() => {
+                                setIsSidebarOpen(false);
                                 setSelectedPatient(null);
                                 setCurrentModule('DASHBOARD');
                             }}
-                            className="w-full px-4 py-3 rounded-xl border border-white/5 bg-zinc-900/10 text-zinc-500 hover:text-white hover:border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest font-mono"
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-zinc-900/40 text-zinc-400 hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-2 text-xs font-mono"
                         >
-                            <LogOut className="w-4 h-4" />
-                            {isSidebarOpen && "Salir del Caso"}
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            <span>volver al directorio</span>
                         </button>
                     </div>
                 </div>
+                )}
 
                 {/* Right Clinical Area */}
                 {(() => {
