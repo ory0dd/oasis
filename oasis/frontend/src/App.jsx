@@ -11276,7 +11276,7 @@ ${afcMapContext}
 
     const renderCanvasView = () => (
         <div
-            className={`w-full h-full relative overflow-hidden bg-[#060908] cursor-move active:cursor-grabbing touch-none ${isMuralMode ? 'hidden' : ''}`}
+            className={`w-full h-full relative overflow-hidden bg-black/40 backdrop-blur-md cursor-move active:cursor-grabbing touch-none ${isMuralMode ? 'hidden' : ''}`}
             onMouseDown={(e) => handleStart(e, 'canvas')}
             onTouchStart={(e) => handleStart(e, 'canvas')}
             onWheel={(e) => {
@@ -11300,26 +11300,13 @@ ${afcMapContext}
             }}
 
         >
-            {/* ATMÓSFERA NOCTURNA ESMERALDA + MATRIZ DE PUNTOS MILANOTE */}
-            <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                    background: 'radial-gradient(ellipse 90% 60% at 50% 65%, rgba(16, 68, 52, 0.24) 0%, rgba(7, 18, 15, 0.65) 55%, rgba(5, 7, 7, 0.96) 100%)'
-                }}
-            />
+            {/* MATRIZ DE PUNTOS MILANOTE (SOBRE EL FONDO PERSONALIZADO DEL USUARIO) */}
             <div
                 className="absolute inset-0 pointer-events-none opacity-[0.22]"
                 style={{
-                    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)',
+                    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.25) 1px, transparent 1px)',
                     backgroundSize: `${24 * cam.scale}px ${24 * cam.scale}px`,
                     backgroundPosition: `${cam.x}px ${cam.y}px`
-                }}
-            />
-            {/* SILUETA DE NIEBLA Y BOSQUE INFERIOR */}
-            <div
-                className="absolute inset-x-0 bottom-0 h-56 pointer-events-none opacity-45"
-                style={{
-                    background: 'linear-gradient(to top, rgba(3, 6, 5, 0.95) 0%, rgba(10, 35, 27, 0.28) 50%, transparent 100%)'
                 }}
             />
 
