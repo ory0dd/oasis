@@ -11,7 +11,8 @@ import {
     Paperclip, Send, ChevronLeft, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid, Headphones,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
-    Bookmark, UserSquare, Link as LinkIcon, ServerCrash, Home
+    Bookmark, UserSquare, Link as LinkIcon, ServerCrash, Home,
+    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -309,12 +310,18 @@ const getBWidth = (block, isPoint) => {
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
     if (block.width || block.w) return block.width || block.w;
-    if (block.type === 'audio') return 250;
+    if (block.type === 'color_swatch') return 230;
+    if (block.type === 'sub_board') return 220;
+    if (block.type === 'link') return 260;
+    if (block.type === 'todo') return 310;
+    if (block.type === 'column') return 320;
+    if (block.type === 'image' || block.type === 'video' || block.type === 'relic') return 300;
+    if (block.type === 'audio') return 280;
     if (block.type === 'loop_map_mini') return 850;
     if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 480;
     const hasMedia = block.content && typeof block.content === 'string' && (block.content.includes('[img]') || block.content.includes('[vid]'));
-    if (hasMedia) return 420;
-    return block.metadata?.parentId ? 160 : 288;
+    if (hasMedia) return 360;
+    return block.metadata?.parentId ? 180 : 300;
 };
 
 const getBHeight = (block, isPoint) => {
@@ -322,12 +329,18 @@ const getBHeight = (block, isPoint) => {
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
     if (block.height || block.h) return block.height || block.h;
+    if (block.type === 'color_swatch') return 82;
+    if (block.type === 'sub_board') return 110;
+    if (block.type === 'link') return 120;
+    if (block.type === 'todo') return 210;
+    if (block.type === 'column') return 380;
+    if (block.type === 'image' || block.type === 'video' || block.type === 'relic') return 380;
     if (block.type === 'audio') return 100;
     if (block.type === 'loop_map_mini') return 700;
     if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 600;
     const hasMedia = block.content && typeof block.content === 'string' && (block.content.includes('[img]') || block.content.includes('[vid]'));
-    if (hasMedia) return 420;
-    return block.metadata?.parentId ? 160 : 288;
+    if (hasMedia) return 380;
+    return block.metadata?.parentId ? 160 : 220;
 };
 
 const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale = 1) => {
@@ -377,76 +390,17 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
     const dy = p2.y - p1.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Deep gravity sag based on distance, maintaining a gorgeous hanging loop!
-    const dip = Math.max(90, distance * 0.35 + 80);
-
-    // Continuous 3D breathing wave (elliptical orbit)
-    const time = performance.now() * 0.0025;
-
-    const velocity = window.dragVelocity || { x: 0, y: 0 };
-    const vx = velocity.x / scale;
-    const vy = velocity.y / scale;
-
-    let cp1WaveX = isMobileViewport() ? 0 : Math.sin(time) * 20;
-    let cp1WaveY = isMobileViewport() ? 0 : Math.cos(time) * 10;
-    let cp2WaveX = isMobileViewport() ? 0 : Math.sin(time + 2.5) * 20;
-    let cp2WaveY = isMobileViewport() ? 0 : Math.cos(time + 2.5) * 10;
-
-    // Apply springy physical drag lag (sway) in opposite direction of motion
-    if (draggingId && !isMobileViewport()) {
-        if (b1.id === draggingId) {
-            cp1WaveX -= vx * 5.2;
-            cp1WaveY -= vy * 2.5;
-        } else if (!isB2Point && b2.id === draggingId) {
-            cp2WaveX -= vx * 5.2;
-            cp2WaveY -= vy * 2.5;
-        }
-    }
-
-    // Apply release SPRING BOUNCE (Damped Harmonic Oscillator)
-    if (window.lastRelease && !isMobileViewport()) {
-        const timeSinceRelease = (performance.now() - window.lastRelease.time) / 1000;
-        if (timeSinceRelease < 1.6) {
-            const decay = 4.2; // Damping rate (how fast it stops)
-            const freq = 18.0; // Bounce frequency (how fast it wobbles)
-            const amp = Math.exp(-decay * timeSinceRelease) * Math.cos(freq * timeSinceRelease);
-
-            const rvx = window.lastRelease.vx / scale;
-            const rvy = window.lastRelease.vy / scale;
-
-            if (b1.id === window.lastRelease.nodeId) {
-                cp1WaveX -= rvx * 5.2 * amp;
-                cp1WaveY -= rvy * 2.5 * amp;
-            }
-            if (!isB2Point && b2.id === window.lastRelease.nodeId) {
-                cp2WaveX -= rvx * 5.2 * amp;
-                cp2WaveY -= rvy * 2.5 * amp;
-            }
-        }
-    }
-
     let cp1, cp2;
     const isHorizontal = !isB2Point && Math.abs(b2.x - b1.x) > Math.abs(b2.y - b1.y);
 
     if (isHorizontal) {
         const dir = Math.sign(p2.x - p1.x) || 1;
-        const sag = distance * 0.2; // Real physics gravity sag for horizontal cables
-        cp1 = { x: p1.x + dir * (distance * 0.35) + cp1WaveX, y: p1.y + sag + cp1WaveY };
-        cp2 = { x: p2.x - dir * (distance * 0.35) + cp2WaveX, y: p2.y + sag + cp2WaveY };
+        cp1 = { x: p1.x + dir * (distance * 0.25), y: p1.y };
+        cp2 = { x: p2.x - dir * (distance * 0.25), y: p2.y };
     } else {
-        let cp1Dip, cp2Dip;
-        if (isB2Point) {
-            // When drawing a new link, p1 is the bottom port and p2 is the mouse
-            cp1Dip = dip;
-            cp2Dip = -dip * 0.8;
-        } else {
-            const dir = Math.sign(p2.y - p1.y) || 1;
-            // Push cp1 outward from p1 face, push cp2 outward from p2 face
-            cp1Dip = dir * dip;
-            cp2Dip = -dir * dip;
-        }
-        cp1 = { x: p1.x + cp1WaveX, y: p1.y + cp1Dip + cp1WaveY };
-        cp2 = { x: p2.x + cp2WaveX, y: p2.y + cp2Dip + cp2WaveY };
+        const dir = Math.sign(p2.y - p1.y) || 1;
+        cp1 = { x: p1.x, y: p1.y + dir * (distance * 0.25) };
+        cp2 = { x: p2.x, y: p2.y - dir * (distance * 0.25) };
     }
 
     return { p1, p2, cp1, cp2 };
@@ -2157,16 +2111,23 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
     );
 };
 
-const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit }) => {
+const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit }) => {
     const isImage = block.type === 'image' || block.type === 'relic';
     const isVideo = block.type === 'video';
     const isAudio = block.type === 'audio';
     const isMediaNode = isImage || isVideo;
+    const isColorSwatch = block.type === 'color_swatch';
+    const isTodoCard = block.type === 'todo';
+    const isLinkCard = block.type === 'link';
+    const isSubBoardCard = block.type === 'sub_board';
+    const isColumnCard = block.type === 'column';
+    const isMilanoteSpecial = isColorSwatch || isTodoCard || isLinkCard || isSubBoardCard || isColumnCard;
     const isInsight = block.type === 'insight';
     const isConversation = block.type === 'conversation';
     const hasMedia = block.content?.includes('[img]') || block.content?.includes('[vid]') || block.content?.includes('[aud]');
     const isActive = activeNoteId === block.id;
     const isChildNote = !!block.metadata?.parentId;
+    const [newTodoText, setNewTodoText] = useState('');
 
     const isDiaryEntry = block.entries && block.entries.length > 0;
     const isResonanceEntry = block.content && typeof block.content === 'string' && block.content.includes('[resonancia]');
@@ -2244,8 +2205,16 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     }
                 } else if (block.type === 'loop_map_mini') {
                     return; // No-op, its own button handles opening the archive
-                } else if (isImage || isVideo) {
-                    return; // No-op, images/videos directly on canvas do not open editor
+                } else if (isImage || isVideo || isColorSwatch || isTodoCard || isColumnCard) {
+                    return; // No-op, inline controls handle interaction
+                } else if (isSubBoardCard) {
+                    if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-tablero');
+                    return;
+                } else if (isLinkCard) {
+                    if (block.content && (block.content.startsWith('http://') || block.content.startsWith('https://'))) {
+                        window.open(block.content, '_blank', 'noopener,noreferrer');
+                    }
+                    return;
                 } else {
                     onSelect(block); // Click: edit
                 }
@@ -2580,12 +2549,12 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             }}
         >
             <div
-                className={`relative flex flex-col ${isChildNote ? 'rounded-[1.25rem]' : (isMediaNode ? 'rounded-xl' : 'rounded-[2.5rem]')} border ${camScale > 0.5 ? 'shadow-[0_10px_40px_rgba(0,0,0,0.8)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : (isMediaNode ? 'bg-transparent border-transparent' : 'bg-gradient-to-br from-[#121214] to-[#080809] border-white/5'))))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-accent ring-1 ring-accent/20' : (isActive ? `border-accent ${camScale > 0.5 ? 'shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/5 hover:border-white/10')))} ${(!isMobileViewport() && draggingId !== block.id && !hasConnections && camScale > 0.5) ? 'ctr-node-float' : ''}`}
+                className={`relative flex flex-col ${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`}
                 style={{
                     width: localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`,
                     height: localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`,
-                    minWidth: isChildNote ? '160px' : (isMediaNode ? '100px' : '288px'),
-                    minHeight: isChildNote ? '160px' : (isMediaNode ? '100px' : '288px'),
+                    minWidth: isColorSwatch ? '210px' : (isSubBoardCard ? '200px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
+                    minHeight: isColorSwatch ? '72px' : (isSubBoardCard ? '80px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
                     maxWidth: undefined,
                     maxHeight: undefined,
                     willChange: 'transform',
@@ -2594,8 +2563,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     '--accent-rgb': hexToRgb(displayColor)
                 }}
             >
-                {/* OP HEADER (SUBTLE TERMINAL STYLE) */}
-                {!isMediaNode && (
+                {/* OP HEADER (ONLY FOR SYSTEM / CONVERSATION / DIARY / INSIGHT / RESONANCE NODES) */}
+                {!isMediaNode && !isMilanoteSpecial && block.type !== 'text' && (
                     <div className={`${isChildNote ? 'h-4 px-2 bg-black/60' : 'h-6 px-4 bg-black/40'} flex items-center justify-between border-b border-white/5`} style={{ borderTop: `2px solid ${isInsight || isResonanceAny ? 'var(--insight-purple)' : displayColor}` }}>
                         <div className="flex items-center gap-2">
                             {block.groupId && (
@@ -2648,7 +2617,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
 
-                <div className={`${isMediaNode ? 'p-0' : (isChildNote ? 'p-2.5' : 'p-6')} flex-1 flex flex-col min-h-0`}>
+                <div className={`${isColorSwatch ? 'p-3.5' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
                     {isConversation ? (() => {
                         let parsedMsgs = [];
                         try {
@@ -2699,9 +2668,70 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         );
                     })() : block.type === 'text' || block.type === 'insight' || block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'loop_map_mini' || block.type === 'conversation_notebook' ? (
                         <div className="relative group/text flex-1 flex flex-col min-h-0">
-                            {/* TITULO DE LA NOTA (GRANDE) */}
-                            <h3 className={`${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'} truncate shrink-0`}>
-                                {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || 'Fragmento Interior')}
+                            {/* MILANOTE EMERALD KICKER + QUICK ACTIONS FOR TEXT CARDS */}
+                            {block.type === 'text' && (
+                                <div className="flex items-center justify-between gap-2 mb-1.5 shrink-0">
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const nextCat = window.prompt('Categoría o etiqueta de la nota:', block.metadata?.category || 'DIRECCIÓN DE ARTE');
+                                            if (nextCat !== null && onUpdateBlock) {
+                                                onUpdateBlock({
+                                                    ...block,
+                                                    metadata: { ...(block.metadata || {}), category: nextCat.trim() || 'DIRECCIÓN DE ARTE' }
+                                                });
+                                            }
+                                        }}
+                                        className="text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-[#10b981] hover:text-emerald-300 cursor-pointer truncate transition-colors"
+                                        title="Clic para cambiar categoría"
+                                    >
+                                        {block.metadata?.category || (isResonanceAny ? 'RESONANCIA' : 'DIRECCIÓN DE ARTE')}
+                                    </span>
+                                    <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        {block.groupId && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onAnalyzeGroup?.(block.groupId); }}
+                                                className="px-1.5 py-0.5 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[7px] font-mono uppercase text-[#10b981]"
+                                                title="Analizar Grupo"
+                                            >
+                                                Grupo
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onAnalyzeBlock?.(block.id); }}
+                                            className="p-1 hover:bg-[#10b981]/15 rounded-md text-zinc-400 hover:text-[#10b981] transition-colors"
+                                            title="Analizar con IA"
+                                        >
+                                            <Sparkles size={11} className={isAnalyzing ? 'animate-spin text-[#10b981]' : ''} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setIsMobileResizing(prev => !prev); }}
+                                            className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-colors"
+                                            title="Ajustar Tamaño"
+                                        >
+                                            <Maximize2 size={10} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onSelect(block); }}
+                                            className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-colors"
+                                            title="Editar Nota"
+                                        >
+                                            <Edit2 size={10} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+                                            className="p-1 hover:bg-red-500/20 rounded-md text-zinc-400 hover:text-red-400 transition-colors"
+                                            title="Eliminar Nota"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TITULO DE LA NOTA */}
+                            <h3 className={`${block.type === 'text' ? (isChildNote ? 'text-sm mb-1.5 font-bold tracking-tight text-white' : 'text-[19px] mb-2 font-bold tracking-tight leading-snug text-white') : `${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'}`} truncate shrink-0`}>
+                                {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || 'Estética Nocturna')}
                             </h3>
 
                             {block.muralBlocks && block.muralBlocks.length > 0 && (
@@ -3081,60 +3111,456 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             })()}
                         </div>
                     ) : isImage ? (
-                        <div className="flex-1 w-full h-full relative group/media">
-                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(block.content)} className="absolute inset-0 w-full h-full object-cover rounded-xl pointer-events-none" draggable={false} />
-                            {!showDeleteConfirm && (
-                                <button
+                        <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
+                            {/* MILANOTE IMAGE HEADER */}
+                            <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5 shrink-0">
+                                <span
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setShowDeleteConfirm(true);
+                                        const nextTitle = window.prompt('Título de la imagen:', block.caption || 'Silueta & Guantes Vinilo');
+                                        if (nextTitle !== null && onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: nextTitle.trim() || 'Referencia Visual' });
+                                        }
                                     }}
-                                    className="absolute top-2 right-2 z-30 p-2 rounded-xl bg-black/85 hover:bg-red-600 border border-white/20 hover:border-red-500 text-white/90 hover:text-white transition-all shadow-xl backdrop-blur-md opacity-0 group-hover/media:opacity-100 active:scale-95 pointer-events-auto"
-                                    title="Eliminar imagen del lienzo (Click derecho también disponible)"
+                                    className="text-[11px] font-mono text-zinc-300 hover:text-white truncate cursor-pointer transition-colors"
+                                    title="Clic para editar título"
                                 >
-                                    <Trash2 size={15} />
-                                </button>
-                            )}
+                                    {block.caption || 'Silueta & Guantes Vinilo'}
+                                </span>
+                                {!showDeleteConfirm && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors pointer-events-auto shrink-0"
+                                        title="Eliminar imagen"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* ROUNDED INNER IMAGE */}
+                            <div className="relative flex-1 w-full min-h-[130px] rounded-2xl overflow-hidden bg-black/50 border border-white/[0.05]">
+                                <img
+                                    onError={(e) => {
+                                        if (!e.target.dataset.failed) {
+                                            e.target.dataset.failed = true;
+                                            e.target.src = 'https://placehold.co/400x300/0a0d0c/10b981?text=Referencia+Visual';
+                                        }
+                                    }}
+                                    src={formatUrl(block.content)}
+                                    className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                                    draggable={false}
+                                />
+                            </div>
+
+                            {/* MILANOTE BOTTOM CAPTION */}
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const nextDesc = window.prompt('Descripción o nota al pie:', block.metadata?.description || 'Brillo húmedo y textura filamentosa.');
+                                    if (nextDesc !== null && onUpdateBlock) {
+                                        onUpdateBlock({
+                                            ...block,
+                                            metadata: { ...(block.metadata || {}), description: nextDesc.trim() }
+                                        });
+                                    }
+                                }}
+                                className="pt-2.5 px-0.5 text-[12px] text-zinc-400 hover:text-zinc-200 leading-snug truncate cursor-pointer transition-colors shrink-0"
+                                title="Clic para editar descripción"
+                            >
+                                {block.metadata?.description || 'Brillo húmedo y textura filamentosa.'}
+                            </div>
                         </div>
                     ) : isVideo ? (
-                        <div className="flex-1 w-full h-full relative group/media">
-                            <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover rounded-xl pointer-events-none" src={formatUrl(block.content)} draggable={false} />
-                            {!showDeleteConfirm && (
+                        <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
+                            <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5 shrink-0">
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const nextTitle = window.prompt('Título del video:', block.caption || 'Secuencia Visual');
+                                        if (nextTitle !== null && onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: nextTitle.trim() || 'Secuencia Visual' });
+                                        }
+                                    }}
+                                    className="text-[11px] font-mono text-zinc-300 hover:text-white truncate cursor-pointer transition-colors"
+                                >
+                                    {block.caption || 'Secuencia Visual'}
+                                </span>
+                                {!showDeleteConfirm && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors pointer-events-auto shrink-0"
+                                        title="Eliminar video"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+                            <div className="relative flex-1 w-full min-h-[130px] rounded-2xl overflow-hidden bg-black/50 border border-white/[0.05]">
+                                <video
+                                    onError={(e) => {
+                                        if (!e.target.dataset.failed) {
+                                            e.target.dataset.failed = true;
+                                            e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video';
+                                        }
+                                    }}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                                    src={formatUrl(block.content)}
+                                    draggable={false}
+                                />
+                            </div>
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const nextDesc = window.prompt('Descripción del video:', block.metadata?.description || ' Atmósfera en movimiento.');
+                                    if (nextDesc !== null && onUpdateBlock) {
+                                        onUpdateBlock({
+                                            ...block,
+                                            metadata: { ...(block.metadata || {}), description: nextDesc.trim() }
+                                        });
+                                    }
+                                }}
+                                className="pt-2.5 px-0.5 text-[12px] text-zinc-400 hover:text-zinc-200 leading-snug truncate cursor-pointer transition-colors shrink-0"
+                            >
+                                {block.metadata?.description || 'Atmósfera en movimiento.'}
+                            </div>
+                        </div>
+                    ) : isColorSwatch ? (
+                        <div className="flex-1 w-full h-full flex items-center gap-3.5 select-none">
+                            <label
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-11 h-11 rounded-xl shrink-0 border border-white/15 shadow-inner cursor-pointer relative overflow-hidden group/swatch transition-transform hover:scale-105"
+                                style={{ backgroundColor: block.color || '#254E3A' }}
+                                title="Cambiar color de muestra"
+                            >
+                                <input
+                                    type="color"
+                                    value={block.color || '#254E3A'}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, color: e.target.value.toUpperCase() });
+                                        }
+                                    }}
+                                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                />
+                            </label>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <div
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const nextName = window.prompt('Nombre de la muestra de color:', block.caption || 'Verde Bosque Muted');
+                                        if (nextName !== null && onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: nextName.trim() || 'Muestra de Color' });
+                                        }
+                                    }}
+                                    className="text-[14px] font-bold text-white truncate cursor-pointer hover:text-emerald-300 transition-colors"
+                                    title="Clic para renombrar color"
+                                >
+                                    {block.caption || 'Verde Bosque Muted'}
+                                </div>
+                                <div className="text-[11px] font-mono font-semibold text-[#10b981] tracking-wider uppercase mt-0.5">
+                                    {(block.color || '#254E3A').toUpperCase()}
+                                </div>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteConfirm(true);
+                                }}
+                                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+                                title="Eliminar muestra"
+                            >
+                                <X size={13} />
+                            </button>
+                        </div>
+                    ) : isTodoCard ? (() => {
+                        const items = Array.isArray(block.metadata?.items)
+                            ? block.metadata.items
+                            : [
+                                { id: 't1', text: 'Scouting carretera nocturna', done: true },
+                                { id: 't2', text: 'Prueba de geles verde/ciano', done: true },
+                                { id: 't3', text: 'Selección de vestuario vinilo', done: false }
+                            ];
+                        const toggleTodoItem = (itemId) => {
+                            const updatedItems = items.map(it => it.id === itemId ? { ...it, done: !it.done } : it);
+                            if (onUpdateBlock) {
+                                onUpdateBlock({
+                                    ...block,
+                                    metadata: { ...(block.metadata || {}), items: updatedItems }
+                                });
+                            }
+                        };
+                        const addTodoItem = (text) => {
+                            if (!text || !text.trim()) return;
+                            const updatedItems = [...items, { id: `td-${Date.now()}`, text: text.trim(), done: false }];
+                            const nextH = Math.max(block.height || 210, 120 + updatedItems.length * 36);
+                            if (onUpdateBlock) {
+                                onUpdateBlock({
+                                    ...block,
+                                    height: nextH,
+                                    metadata: { ...(block.metadata || {}), items: updatedItems }
+                                });
+                            }
+                            setNewTodoText('');
+                        };
+                        const removeTodoItem = (itemId) => {
+                            const updatedItems = items.filter(it => it.id !== itemId);
+                            if (onUpdateBlock) {
+                                onUpdateBlock({
+                                    ...block,
+                                    metadata: { ...(block.metadata || {}), items: updatedItems }
+                                });
+                            }
+                        };
+                        return (
+                            <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
+                                <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const nextTitle = window.prompt('Título de la lista To-do:', block.caption || 'ENTREGABLES LOOKBOOK');
+                                            if (nextTitle !== null && onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: nextTitle.trim().toUpperCase() || 'LISTA DE TAREAS' });
+                                            }
+                                        }}
+                                        className="text-[11px] font-mono font-semibold uppercase tracking-[0.12em] text-zinc-400 hover:text-white cursor-pointer truncate transition-colors"
+                                        title="Clic para editar título"
+                                    >
+                                        {block.caption || 'ENTREGABLES LOOKBOOK'}
+                                    </span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors shrink-0"
+                                        title="Eliminar lista"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-0.5">
+                                    {items.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleTodoItem(item.id);
+                                            }}
+                                            className="flex items-center gap-3 group/todo cursor-pointer py-0.5"
+                                        >
+                                            <div
+                                                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all ${item.done
+                                                    ? 'bg-[#10b981] text-black shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                                                    : 'bg-white/[0.03] border border-white/20 group-hover/todo:border-[#10b981]/60'
+                                                    }`}
+                                            >
+                                                {item.done && <Check size={13} strokeWidth={3} />}
+                                            </div>
+                                            <span
+                                                className={`text-[13px] flex-1 leading-snug transition-colors ${item.done
+                                                    ? 'line-through text-zinc-500'
+                                                    : 'text-zinc-100 font-medium'
+                                                    }`}
+                                            >
+                                                {item.text}
+                                            </span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    removeTodoItem(item.id);
+                                                }}
+                                                className="opacity-0 group-hover/todo:opacity-100 text-zinc-600 hover:text-red-400 p-0.5 transition-opacity"
+                                                title="Quitar tarea"
+                                            >
+                                                <X size={11} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div
+                                    className="pt-2.5 mt-2 border-t border-white/[0.06] flex items-center gap-2 shrink-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                    <Plus size={12} className="text-[#10b981] shrink-0" />
+                                    <input
+                                        type="text"
+                                        value={newTodoText}
+                                        onChange={(e) => setNewTodoText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addTodoItem(newTodoText);
+                                            }
+                                        }}
+                                        placeholder="Añadir tarea..."
+                                        className="w-full bg-transparent text-[12px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })() : isLinkCard ? (
+                        <div className="flex-1 w-full h-full flex flex-col justify-between min-h-0 select-none">
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-8 h-8 rounded-xl bg-[#10b981]/10 border border-[#10b981]/25 flex items-center justify-center text-[#10b981] shrink-0">
+                                        <Link2 size={15} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const nextCaption = window.prompt('Título del enlace:', block.caption || 'Referencia Externa');
+                                                if (nextCaption !== null && onUpdateBlock) {
+                                                    onUpdateBlock({ ...block, caption: nextCaption.trim() || 'Referencia Externa' });
+                                                }
+                                            }}
+                                            className="text-[14px] font-bold text-white truncate hover:text-[#10b981] cursor-pointer transition-colors"
+                                        >
+                                            {block.caption || 'Referencia Externa'}
+                                        </div>
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const nextUrl = window.prompt('URL del enlace:', block.content || 'https://');
+                                                if (nextUrl !== null && onUpdateBlock) {
+                                                    onUpdateBlock({ ...block, content: nextUrl.trim() });
+                                                }
+                                            }}
+                                            className="text-[11px] font-mono text-[#10b981] truncate cursor-pointer hover:underline"
+                                        >
+                                            {block.content || 'https://milanote.com'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                    <a
+                                        href={block.content?.startsWith('http') ? block.content : `https://${block.content || ''}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-1 rounded-lg bg-white/5 hover:bg-[#10b981]/20 text-zinc-400 hover:text-[#10b981] transition-colors"
+                                        title="Abrir enlace"
+                                    >
+                                        <ArrowUpRight size={13} />
+                                    </a>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        className="p-1 rounded-lg hover:bg-white/10 text-zinc-500 hover:text-white transition-colors"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : isSubBoardCard ? (
+                        <div className="flex-1 w-full h-full flex items-center justify-between gap-3 select-none">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-11 h-11 rounded-2xl bg-[#10b981]/12 border border-[#10b981]/30 flex items-center justify-center text-[#10b981] shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                                    <FolderKanban size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const nextName = window.prompt('Nombre del sub-tablero:', block.caption || 'Sub-Tablero');
+                                            if (nextName !== null && onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: nextName.trim() || 'Sub-Tablero' });
+                                            }
+                                        }}
+                                        className="text-[15px] font-bold text-white truncate hover:text-[#10b981] cursor-pointer transition-colors"
+                                    >
+                                        {block.caption || 'Nuevo Tablero'}
+                                    </div>
+                                    <div className="text-[10px] font-mono uppercase tracking-wider text-[#10b981]">
+                                        {(blocks || []).filter(b => b.canvasId === block.id).length} elementos • Abrir →
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowDeleteConfirm(true);
+                                }}
+                                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+                            >
+                                <X size={13} />
+                            </button>
+                        </div>
+                    ) : isColumnCard ? (
+                        <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
+                            <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-white/[0.08] shrink-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Columns size={13} className="text-[#10b981] shrink-0" />
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const nextCol = window.prompt('Título de la columna:', block.caption || 'COLUMNA CREATIVA');
+                                            if (nextCol !== null && onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: nextCol.trim().toUpperCase() || 'COLUMNA CREATIVA' });
+                                            }
+                                        }}
+                                        className="text-[11px] font-mono font-bold uppercase tracking-[0.15em] text-[#10b981] truncate cursor-pointer"
+                                    >
+                                        {block.caption || 'COLUMNA CREATIVA'}
+                                    </span>
+                                </div>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setShowDeleteConfirm(true);
                                     }}
-                                    className="absolute top-2 right-2 z-30 p-2 rounded-xl bg-black/85 hover:bg-red-600 border border-white/20 hover:border-red-500 text-white/90 hover:text-white transition-all shadow-xl backdrop-blur-md opacity-0 group-hover/media:opacity-100 active:scale-95 pointer-events-auto"
-                                    title="Eliminar video del lienzo (Click derecho también disponible)"
+                                    className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors shrink-0"
                                 >
-                                    <Trash2 size={15} />
+                                    <X size={13} />
                                 </button>
-                            )}
+                            </div>
+                            <textarea
+                                value={block.content || ''}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                    if (onUpdateBlock) {
+                                        onUpdateBlock({ ...block, content: e.target.value });
+                                    }
+                                }}
+                                placeholder="Escribe notas estructuradas, ideas de escena o secuencia aquí..."
+                                className="flex-1 w-full bg-white/[0.02] border border-dashed border-white/[0.08] rounded-xl p-3 text-[13px] text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none focus:border-[#10b981]/40 leading-relaxed"
+                            />
                         </div>
                     ) : null}
                 </div>
-                {/* NÚCLEO DE SINCRONÍA (PORT) - CONDITIONAL */}
+                {/* NÚCLEO DE SINCRONÍA (PORT) - SUBTLE EMERALD MILANOTE CONNECTOR */}
                 {showConnections && (
-                    <div className={`${isChildNote ? 'py-1' : 'py-3'} flex justify-center items-center border-t border-white/5 bg-black/40 mt-auto shrink-0`}>
-                        <div
-                            className="port group/port flex flex-col items-center gap-1 cursor-crosshair relative"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onStartConnecting(block.id);
-                            }}
-                        >
-                            <div className="w-4 h-4 rounded-full bg-zinc-900 border-2 border-white/20 group-hover/port:border-accent group-hover/port:scale-125 transition-all shadow-lg flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-accent opacity-40 group-hover/port:opacity-100 animate-pulse" />
-                            </div>
-                            <span className="text-[5px] font-black tracking-[0.3em] text-zinc-600 group-hover/port:text-accent uppercase select-none">Relacionar</span>
-
-                            {/* Feedback visual de conexión activa */}
-                            {isLinking && draggingId === block.id && (
-                                <div className="absolute inset-0 -m-1 rounded-full border border-accent animate-ping opacity-30" />
-                            )}
+                    <div
+                        className={`absolute -bottom-3 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-200 ${isLinking ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            onStartConnecting(block.id);
+                        }}
+                        title="Conectar tarjeta (Línea)"
+                    >
+                        <div className="w-5 h-5 rounded-full bg-[#121316] border border-[#10b981]/50 hover:border-[#10b981] hover:scale-125 transition-all shadow-[0_0_12px_rgba(16,185,129,0.4)] flex items-center justify-center cursor-crosshair">
+                            <div className="w-2 h-2 rounded-full bg-[#10b981]" />
                         </div>
                     </div>
                 )}
@@ -4548,62 +4974,34 @@ const ProfileView = ({
 
 const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camScale, accent, linkSource, mouseCanvasPos, removeConnection }) => {
     return (
-        <svg className="absolute inset-0 pointer-events-none -translate-x-[5000px] -translate-y-[5000px] overflow-visible" style={{ width: '10000px', height: '10000px', zIndex: 60 }}>
+        <svg className="absolute inset-0 pointer-events-none -translate-x-[5000px] -translate-y-[5000px] overflow-visible" style={{ width: '10000px', height: '10000px', zIndex: 5 }}>
             {links.map((link, idx) => {
                 const from = blocks.find(b => b.id === link.from);
                 const to = blocks.find(b => b.id === link.to);
                 if (!from || !to) return null;
 
-                // Evitar dibujar enlaces a bloques de sistema, inválidos o ubicados en el infinito (ej. profile_settings o user_settings)
                 if (from.x === 99999 || from.y === 99999 || to.x === 99999 || to.y === 99999) return null;
                 if (from.x === undefined || from.y === undefined || to.x === undefined || to.y === undefined) return null;
                 if (from.id === to.id) return null;
 
                 const { p1, p2, cp1, cp2 } = getConnectionPoints(from, to, false, draggingId, camScale);
                 const path = `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
-                const color = link.color || (from.color && from.color !== '#bef264' ? from.color : accent);
+                const color = link.color || '#10b981';
 
                 return (
                     <g key={`canvas-${link.from}-${link.to}-${idx}`} className="pointer-events-auto cursor-pointer group/link-canvas" onClick={(e) => {
                         e.stopPropagation();
                         removeConnection(link.from, link.to);
                     }}>
-                        <path d={path} stroke="transparent" strokeWidth="28" fill="none" />
-
-                        {/* Glow Halo */}
-                        {camScale > 0.5 && (
-                            <path
-                                d={path}
-                                stroke={color}
-                                strokeWidth="6"
-                                fill="none"
-                                className="opacity-30 transition-opacity duration-300 group-hover/link-canvas:opacity-60"
-                            />
-                        )}
-
-                        {/* Core Rope */}
+                        <path d={path} stroke="transparent" strokeWidth="22" fill="none" />
                         <path
                             d={path}
                             stroke={color}
-                            strokeWidth="3.5"
+                            strokeWidth="1.8"
+                            strokeDasharray="4, 5"
                             fill="none"
-                            className="opacity-80 transition-opacity duration-300 group-hover/link-canvas:opacity-100"
+                            className="opacity-55 transition-opacity duration-200 group-hover/link-canvas:opacity-100"
                         />
-
-                        {/* Twisted Thread Illusion */}
-                        {camScale > 0.5 && !isMobileViewport() && (
-                            <path
-                                d={path}
-                                stroke="white"
-                                strokeWidth="1.2"
-                                strokeDasharray="4, 4"
-                                fill="none"
-                                className="opacity-50 pointer-events-none transition-opacity duration-300 group-hover/link-canvas:opacity-80"
-                            />
-                        )}
-
-                        {/* Hover Indicator */}
-                        <path d={path} stroke="white" strokeWidth="1" fill="none" className="opacity-0 group-hover/link-canvas:opacity-50 transition-opacity" />
                     </g>
                 );
             })}
@@ -4619,27 +5017,17 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 
                 const { p1, p2, cp1, cp2 } = getConnectionPoints(from, mousePt, true, draggingId, camScale);
                 const path = `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
-                const color = from.color && from.color !== '#bef264' ? from.color : accent;
 
                 return (
                     <g>
                         <path
                             d={path}
-                            stroke={color}
-                            strokeWidth="6"
+                            stroke="#10b981"
+                            strokeWidth="1.8"
+                            strokeDasharray="4, 5"
                             fill="none"
-                            className={`opacity-30 ${!isMobileViewport() ? 'animate-pulse' : ''}`}
+                            className="opacity-85"
                         />
-                        {!isMobileViewport() && (
-                            <path
-                                d={path}
-                                stroke="white"
-                                strokeWidth="2"
-                                strokeDasharray="5, 5"
-                                fill="none"
-                                className="opacity-80"
-                            />
-                        )}
                     </g>
                 );
             })()}
@@ -4653,6 +5041,9 @@ export default function App() {
     const isInitialClinician = initialRole === 'clinician' || initialUser === 'observador1' || initialUser === 'observador';
     const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
     const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
+    const [isMilanoteToolsOpen, setIsMilanoteToolsOpen] = useState(false);
+    const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Extraños Movimientos');
+    const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isStoryUploadModalOpen, setIsStoryUploadModalOpen] = useState(false);
@@ -10790,9 +11181,102 @@ ${afcMapContext}
         console.error(`Fallo en el Núcleo Cognitivo. Último error: ${lastError}`);
     };
 
+    const handleInlineBlockUpdate = (updatedBlock) => {
+        setBlocks(prev => {
+            const next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
+            if (typeof syncBlocks === 'function') syncBlocks(next);
+            return next;
+        });
+    };
+
+    const spawnMilanoteBlock = (type, overrides = {}) => {
+        const jitterX = (Math.random() - 0.5) * 90;
+        const jitterY = (Math.random() - 0.5) * 70;
+        const baseX = (-cam.x / cam.scale) + jitterX;
+        const baseY = (-cam.y / cam.scale) + jitterY;
+        const newBlock = {
+            id: `${type}-${Date.now()}`,
+            type,
+            x: baseX,
+            y: baseY,
+            isPublic: false,
+            createdAt: new Date().toISOString(),
+            canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined,
+            ...overrides
+        };
+        setBlocks(prev => {
+            const updated = [...prev, newBlock];
+            if (typeof syncBlocks === 'function') syncBlocks(updated);
+            return updated;
+        });
+    };
+
+    const triggerCanvasImageUpload = () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*,video/*';
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const isVid = file.type.startsWith('video/');
+
+            let w = 260;
+            let h = 290;
+            if (!isVid) {
+                const localUrl = URL.createObjectURL(file);
+                const img = new Image();
+                img.src = localUrl;
+                await new Promise(r => img.onload = r);
+                const ratio = img.naturalHeight / (img.naturalWidth || 1);
+                w = 270;
+                h = Math.min(420, Math.max(240, Math.round(220 * ratio) + 75));
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('user', user || 'default');
+
+            const xhr = new XMLHttpRequest();
+            const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
+            xhr.open('POST', `${apiUrl}/api/oasis/upload`);
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.url) {
+                            const cleanName = file.name.replace(/\.[^/.]+$/, '');
+                            const newBlock = {
+                                id: `img-${Date.now()}`,
+                                type: isVid ? 'video' : 'image',
+                                content: data.url,
+                                caption: cleanName || 'Silueta & Guantes Vinilo',
+                                metadata: { description: 'Brillo húmedo y textura filamentosa.' },
+                                x: -cam.x / cam.scale,
+                                y: -cam.y / cam.scale,
+                                width: w,
+                                height: h,
+                                isPublic: false,
+                                createdAt: new Date().toISOString(),
+                                canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                            };
+                            setBlocks(prev => {
+                                const updated = [...prev, newBlock];
+                                if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                return updated;
+                            });
+                        }
+                    } catch (err) { }
+                }
+            };
+            xhr.send(formData);
+        };
+        fileInput.click();
+    };
+
     const renderCanvasView = () => (
         <div
-            className={`w-full h-full relative overflow-hidden bg-black/40 backdrop-blur-md cursor-move active:cursor-grabbing touch-none ${isMuralMode ? 'hidden' : ''}`}
+            className={`w-full h-full relative overflow-hidden bg-[#060908] cursor-move active:cursor-grabbing touch-none ${isMuralMode ? 'hidden' : ''}`}
             onMouseDown={(e) => handleStart(e, 'canvas')}
             onTouchStart={(e) => handleStart(e, 'canvas')}
             onWheel={(e) => {
@@ -10816,25 +11300,32 @@ ${afcMapContext}
             }}
 
         >
-            {/* CUADRICULA TÉCNICA (TOUCHDESIGNER STYLE) */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.15]" style={{
-                backgroundImage: `
-            linear-gradient(to right, #444 1px, transparent 1px),
-            linear-gradient(to bottom, #444 1px, transparent 1px),
-            linear-gradient(to right, #222 1px, transparent 1px),
-            linear-gradient(to bottom, #222 1px, transparent 1px)
-          `,
-                backgroundSize: `${100 * cam.scale}px ${100 * cam.scale}px, ${100 * cam.scale}px ${100 * cam.scale}px, ${20 * cam.scale}px ${20 * cam.scale}px, ${20 * cam.scale}px ${20 * cam.scale}px`,
-                backgroundPosition: `${cam.x}px ${cam.y}px`
-            }} />
-
-            {/* EJES CENTRALES */}
-            <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 pointer-events-none" style={{ transform: `translateY(${cam.y}px)` }} />
-            <div className="absolute left-1/2 top-0 h-full w-px bg-white/5 pointer-events-none" style={{ transform: `translateX(${cam.x}px)` }} />
+            {/* ATMÓSFERA NOCTURNA ESMERALDA + MATRIZ DE PUNTOS MILANOTE */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    background: 'radial-gradient(ellipse 90% 60% at 50% 65%, rgba(16, 68, 52, 0.24) 0%, rgba(7, 18, 15, 0.65) 55%, rgba(5, 7, 7, 0.96) 100%)'
+                }}
+            />
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.22]"
+                style={{
+                    backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)',
+                    backgroundSize: `${24 * cam.scale}px ${24 * cam.scale}px`,
+                    backgroundPosition: `${cam.x}px ${cam.y}px`
+                }}
+            />
+            {/* SILUETA DE NIEBLA Y BOSQUE INFERIOR */}
+            <div
+                className="absolute inset-x-0 bottom-0 h-56 pointer-events-none opacity-45"
+                style={{
+                    background: 'linear-gradient(to top, rgba(3, 6, 5, 0.95) 0%, rgba(10, 35, 27, 0.28) 50%, transparent 100%)'
+                }}
+            />
 
             <div className={`absolute top-1/2 left-1/2 w-0 h-0`} style={{ transform: `translate3d(${cam.x}px, ${cam.y}px, 0) scale(${cam.scale})`, willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
 
-                {/* VINCULOS SVG (CUERDAS CON PESO Y MICRO-PUNTOS) */}
+                {/* VINCULOS SVG (LÍNEAS PUNTEADAS ESMERALDA MILANOTE) */}
                 <AnimatedCanvasConnections
                     links={links}
                     blocks={blocks.filter(b => {
@@ -10884,6 +11375,11 @@ ${afcMapContext}
                             activeNoteId={activeNoteId}
                             onStart={handleStart}
                             onSelect={editBlock}
+                            onUpdateBlock={handleInlineBlockUpdate}
+                            onOpenSubBoard={(boardId, boardTitle) => {
+                                setActiveCanvasId(boardId);
+                                if (boardTitle) setCanvasBoardTitle(boardTitle);
+                            }}
                             onSelectNote={handleSelectNote}
                             onSelectGroup={handleAnalyzeGroup}
                             onAnalyzeBlock={handleAnalyzeBlock}
@@ -10919,10 +11415,6 @@ ${afcMapContext}
                 })}
             </div>
 
-            {/* El botón de Resonancia fue removido a petición del usuario por redundancia */}
-
-
-
             {/* LINK COLOR MENU */}
             {activeLinkMenu && (
                 <>
@@ -10932,7 +11424,7 @@ ${afcMapContext}
                         style={{ left: activeLinkMenu.x, top: activeLinkMenu.y - 40, transform: 'translateX(-50%)' }}
                     >
                         <div className="flex gap-2">
-                            {['#4287f5', '#6366f1', '#a855f7', '#22d3ee', '#bef264', '#f43f5e', '#fbbf24', '#ffffff'].map(c => (
+                            {['#10b981', '#4287f5', '#6366f1', '#a855f7', '#22d3ee', '#bef264', '#f43f5e', '#fbbf24', '#ffffff'].map(c => (
                                 <button
                                     key={c}
                                     onClick={() => {
@@ -10952,170 +11444,369 @@ ${afcMapContext}
                 </>
             )}
 
-
-            {/* CANVAS BOTTOM NAV PARA SUBIR IMAGENES DIRECTAS */}
+            {/* BARRA SECUNDARIA MILANOTE + DOCK PRINCIPAL INFERIOR */}
             {view === 'canvas' && (
-                <div
-                    className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-black/80 backdrop-blur-sm border border-white/10 p-2 sm:p-3 rounded-[2rem] sm:rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
-                    style={{ 
-                        top: window.innerWidth < 768 ? `${(viewportStats.visualHeight || window.innerHeight) - 80}px` : 'auto',
-                        bottom: window.innerWidth >= 768 ? '96px' : 'auto' 
-                    }}
-                    onMouseDown={e => e.stopPropagation()}
-                    onTouchStart={e => e.stopPropagation()}
-                    onWheel={e => e.stopPropagation()}
-                >
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Bitácora Existencial">{isBitacoraOpen ? <ChevronDown size={16} className="sm:scale-110 text-accent" style={{ color: accent }} /> : <ChevronUp size={16} className="sm:scale-110" />}</button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Crear Nota"><Pencil size={15} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Chat IA"><MessageSquare size={15} className="sm:scale-110" /></button>
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Ruido"><Sparkles size={15} className="sm:scale-110" /></button>
+                <>
+                    {/* SUB-BARRA DE HERRAMIENTAS MILANOTE */}
+                    {isMilanoteToolsOpen && (
+                        <div
+                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-3 py-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-1 sm:gap-1.5 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-200"
+                            style={{
+                                bottom: window.innerWidth >= 768 ? '92px' : '86px'
+                            }}
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
+                            onWheel={e => e.stopPropagation()}
+                        >
+                            {/* 1. Nota */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('text', {
+                                        caption: 'Estética Nocturna',
+                                        content: 'Exploración de texturas brillantes bajo luz fría de bosque. El contraste entre lo sintético y la niebla orgánica genera una tensión silenciosa.',
+                                        width: 280,
+                                        height: 195,
+                                        metadata: { category: 'DIRECCIÓN DE ARTE', timestamp: new Date().toISOString() }
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <AlignLeft size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">Nota</span>
+                            </button>
 
-                    <button onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all" title="Publicar en Feed"><Rss size={15} className="sm:scale-110" /></button>
+                            {/* 2. Enlace */}
+                            <button
+                                onClick={() => {
+                                    const url = window.prompt('URL del enlace:', 'https://');
+                                    if (!url) return;
+                                    const title = window.prompt('Título para el enlace:', 'Referencia Visual') || 'Referencia Visual';
+                                    spawnMilanoteBlock('link', {
+                                        caption: title.trim(),
+                                        content: url.trim(),
+                                        width: 260,
+                                        height: 105
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <Link2 size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">Enlace</span>
+                            </button>
 
-                    <div className="w-[1px] h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0"></div>
-
-                    <button onClick={() => {
-                        const fileInput = document.createElement('input');
-                        fileInput.type = 'file';
-                        fileInput.accept = 'image/*,video/*';
-                        fileInput.onchange = async (e) => {
-                            const file = e.target.files[0];
-                            if (!file) return;
-
-                            const isVid = file.type.startsWith('video/');
-
-                            let w = 420;
-                            let h = 420;
-                            if (!isVid) {
-                                const localUrl = URL.createObjectURL(file);
-                                const img = new Image();
-                                img.src = localUrl;
-                                await new Promise(r => img.onload = r);
-                                w = img.naturalWidth;
-                                h = img.naturalHeight;
-                                if (w > 1200) {
-                                    h = (1200 / w) * h;
-                                    w = 1200;
-                                }
-                            }
-
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            formData.append('user', user || 'default');
-
-                            const xhr = new XMLHttpRequest();
-                            const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
-                            xhr.open('POST', `${apiUrl}/api/oasis/upload`);
-                            xhr.onload = () => {
-                                if (xhr.status >= 200 && xhr.status < 300) {
-                                    try {
-                                        const data = JSON.parse(xhr.responseText);
-                                        if (data.url) {
-                                            const newBlock = {
-                                                id: `img-${Date.now()}`,
-                                                type: isVid ? 'video' : 'image',
-                                                content: data.url,
-                                                x: -cam.x / cam.scale,
-                                                y: -cam.y / cam.scale,
-                                                width: w,
-                                                height: h,
-                                                isPublic: false,
-                                                createdAt: new Date().toISOString(),
-                                                canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
-                                            };
-                                            setBlocks(prev => {
-                                                const updated = [...prev, newBlock];
-                                                if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                                return updated;
-                                            });
+                            {/* 3. To-do */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('todo', {
+                                        caption: 'ENTREGABLES LOOKBOOK',
+                                        content: '',
+                                        width: 270,
+                                        height: 210,
+                                        metadata: {
+                                            items: [
+                                                { id: `td-${Date.now()}-1`, text: 'Scouting carretera nocturna', done: true },
+                                                { id: `td-${Date.now()}-2`, text: 'Prueba de geles verde/ciano', done: true },
+                                                { id: `td-${Date.now()}-3`, text: 'Selección de vestuario vinilo', done: false }
+                                            ]
                                         }
-                                    } catch (err) { }
-                                }
-                            };
-                            xhr.send(formData);
-                        };
-                        fileInput.click();
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Imagen al Lienzo">
-                        <Paperclip size={16} className="sm:scale-110" />
-                    </button>
-                    <button onClick={() => {
-                        const fileInput = document.createElement('input');
-                        fileInput.type = 'file';
-                        fileInput.accept = 'audio/*';
-                        fileInput.onchange = (e) => {
-                            const file = e.target.files[0];
-                            if (!file) return;
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            const xhr = new XMLHttpRequest();
-                            const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
-                            xhr.open('POST', `${apiUrl}/api/oasis/upload`);
-                            xhr.onload = () => {
-                                if (xhr.status >= 200 && xhr.status < 300) {
-                                    try {
-                                        const data = JSON.parse(xhr.responseText);
-                                        if (data.url) {
-                                            const newBlock = {
-                                                id: `audio-${Date.now()}`,
-                                                type: 'audio',
-                                                content: data.url,
-                                                caption: file.name,
-                                                x: -cam.x / cam.scale,
-                                                y: -cam.y / cam.scale,
-                                                width: 300,
-                                                height: 50,
-                                                isPublic: false,
-                                                createdAt: new Date().toISOString(),
-                                                canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
-                                            };
-                                            setBlocks(prev => {
-                                                const updated = [...prev, newBlock];
-                                                if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                                return updated;
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <CheckSquare size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">To-do</span>
+                            </button>
+
+                            {/* 4. Línea (Conectar tarjetas) */}
+                            <button
+                                onClick={() => {
+                                    setIsLinking(prev => !prev);
+                                    setLinkSource(null);
+                                }}
+                                className={`flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl transition-all group ${isLinking ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30' : 'hover:bg-white/[0.06] text-zinc-400 hover:text-white'}`}
+                                title="Haz clic en dos tarjetas para conectarlas con una línea punteada"
+                            >
+                                <ArrowUpRight size={15} className={isLinking ? 'text-[#10b981]' : 'group-hover:text-[#10b981] transition-colors'} />
+                                <span className="text-[9px] font-mono tracking-tight">Línea</span>
+                            </button>
+
+                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
+
+                            {/* 5. Tablero */}
+                            <button
+                                onClick={() => {
+                                    const name = window.prompt('Nombre del nuevo sub-tablero:', 'Escena II • Bosque');
+                                    if (!name) return;
+                                    spawnMilanoteBlock('sub_board', {
+                                        caption: name.trim(),
+                                        content: '',
+                                        width: 230,
+                                        height: 86
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <FolderKanban size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">Tablero</span>
+                            </button>
+
+                            {/* 6. Columna */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('column', {
+                                        caption: 'COLUMNA CREATIVA',
+                                        content: '',
+                                        width: 290,
+                                        height: 340
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <Columns size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">Columna</span>
+                            </button>
+
+                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
+
+                            {/* 7. Imagen */}
+                            <button
+                                onClick={triggerCanvasImageUpload}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <ImageIcon size={15} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[9px] font-mono tracking-tight">Imagen</span>
+                            </button>
+
+                            {/* 8. Color Swatch */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('color_swatch', {
+                                        caption: 'Verde Bosque Muted',
+                                        color: '#254E3A',
+                                        content: '#254E3A',
+                                        width: 235,
+                                        height: 76
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <div className="w-3.5 h-3.5 rounded-[4px] bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[9px] font-mono tracking-tight">Color</span>
+                            </button>
+
+                            <div className="w-px h-7 bg-white/[0.08] mx-0.5 shrink-0" />
+
+                            {/* 9. Vaciar */}
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('¿Deseas vaciar las tarjetas de este tablero actual? (Tus diarios, conversaciones y notas públicas se conservarán intactos).')) {
+                                        setBlocks(prev => {
+                                            const remaining = prev.filter(b => {
+                                                if (b.type === 'insight' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook' || b.type === 'settings' || b.type === 'canvas' || b.type === 'note' || b.isPublic || b.type === 'profile_settings' || b.type === 'user_settings' || b.type === 'diary' || (b.entries && b.entries.length > 0)) return true;
+                                                const belongsToCurrent = b.canvasId ? b.canvasId === activeCanvasId : activeCanvasId === 'canvas_default';
+                                                return !belongsToCurrent;
                                             });
-                                        }
-                                    } catch (err) { }
-                                }
-                            };
-                            xhr.send(formData);
-                        };
-                        fileInput.click();
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Audio al Lienzo">
-                        <Headphones size={16} className="sm:scale-110" />
-                    </button>
-                    <button
-                        onClick={toggleCanvasRecording}
-                        className={`w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/10 text-zinc-400 hover:text-white'}`}
-                        title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
+                                            if (typeof syncBlocks === 'function') syncBlocks(remaining);
+                                            return remaining;
+                                        });
+                                    }
+                                }}
+                                className="flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-all group"
+                            >
+                                <Trash2 size={15} />
+                                <span className="text-[9px] font-mono tracking-tight">Vaciar</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* DOCK PRINCIPAL INFERIOR */}
+                    <div
+                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-2 sm:px-3 sm:py-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
+                        style={{
+                            bottom: window.innerWidth >= 768 ? '24px' : '16px'
+                        }}
+                        onMouseDown={e => e.stopPropagation()}
+                        onTouchStart={e => e.stopPropagation()}
+                        onWheel={e => e.stopPropagation()}
                     >
-                        <Mic size={16} className="sm:scale-110" />
-                    </button>
-                    <button onClick={() => {
-                        setTitlePrompt({
-                            defaultValue: '',
-                            onConfirm: (titleText) => {
-                                if (!titleText || !titleText.trim()) return;
-                                const newBlock = {
-                                    id: `title-${Date.now()}`,
-                                    type: 'canvas_title',
-                                    content: titleText.trim(),
-                                    x: -cam.x / cam.scale,
-                                    y: -cam.y / cam.scale,
-                                    isPublic: false,
-                                    createdAt: new Date().toISOString(),
-                                    canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-[#10b981]/20 border-[#10b981] text-[#10b981]' : 'bg-white/[0.03] border-[#10b981]/40 text-[#10b981] hover:bg-[#10b981]/15'}`}
+                            title="Bitácora Existencial"
+                        >
+                            {isBitacoraOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Crear Nota"
+                        >
+                            <Pencil size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Chat IA"
+                        >
+                            <MessageSquare size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Ruido"
+                        >
+                            <Sparkles size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#10b981]/15 border border-[#10b981]/40 hover:bg-[#10b981]/25 flex items-center justify-center text-[#10b981] shadow-[0_0_18px_rgba(16,185,129,0.25)] transition-all"
+                            title="Publicar en Feed"
+                        >
+                            <Activity size={15} />
+                        </button>
+
+                        <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+
+                        <button
+                            onClick={triggerCanvasImageUpload}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Imagen al Lienzo"
+                        >
+                            <Paperclip size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const fileInput = document.createElement('input');
+                                fileInput.type = 'file';
+                                fileInput.accept = 'audio/*';
+                                fileInput.onchange = (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    const xhr = new XMLHttpRequest();
+                                    const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
+                                    xhr.open('POST', `${apiUrl}/api/oasis/upload`);
+                                    xhr.onload = () => {
+                                        if (xhr.status >= 200 && xhr.status < 300) {
+                                            try {
+                                                const data = JSON.parse(xhr.responseText);
+                                                if (data.url) {
+                                                    const newBlock = {
+                                                        id: `audio-${Date.now()}`,
+                                                        type: 'audio',
+                                                        content: data.url,
+                                                        caption: file.name,
+                                                        x: -cam.x / cam.scale,
+                                                        y: -cam.y / cam.scale,
+                                                        width: 300,
+                                                        height: 50,
+                                                        isPublic: false,
+                                                        createdAt: new Date().toISOString(),
+                                                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                                    };
+                                                    setBlocks(prev => {
+                                                        const updated = [...prev, newBlock];
+                                                        if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                                        return updated;
+                                                    });
+                                                }
+                                            } catch (err) { }
+                                        }
+                                    };
+                                    xhr.send(formData);
                                 };
-                                setBlocks(prev => {
-                                    const updated = [...prev, newBlock];
-                                    if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                    return updated;
+                                fileInput.click();
+                            }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Audio al Lienzo"
+                        >
+                            <Headphones size={15} />
+                        </button>
+
+                        <button
+                            onClick={toggleCanvasRecording}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
+                        >
+                            <Mic size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setTitlePrompt({
+                                    defaultValue: '',
+                                    onConfirm: (titleText) => {
+                                        if (!titleText || !titleText.trim()) return;
+                                        const newBlock = {
+                                            id: `title-${Date.now()}`,
+                                            type: 'canvas_title',
+                                            content: titleText.trim(),
+                                            x: -cam.x / cam.scale,
+                                            y: -cam.y / cam.scale,
+                                            isPublic: false,
+                                            createdAt: new Date().toISOString(),
+                                            canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                        };
+                                        setBlocks(prev => {
+                                            const updated = [...prev, newBlock];
+                                            if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                            return updated;
+                                        });
+                                    }
                                 });
-                            }
-                        });
-                    }} className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 rounded-full hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all relative group" title="Añadir Texto al Pizarrón">
-                        <Type size={16} className="sm:scale-110" />
-                    </button>
-                </div>
+                            }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Título al Pizarrón"
+                        >
+                            <Type size={15} />
+                        </button>
+
+                        <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+
+                        <button
+                            onClick={() => setIsMilanoteToolsOpen(prev => !prev)}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/15 text-white border border-white/20' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            title="Más herramientas (Milanote)"
+                        >
+                            <MoreHorizontal size={16} />
+                        </button>
+                    </div>
+
+                    {/* PÍLDORA DE ZOOM EN ESQUINA INFERIOR DERECHA (- 100% +) */}
+                    <div
+                        className="fixed bottom-6 right-6 z-[2400] hidden sm:flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.75)] text-zinc-400 font-mono text-[11px] pointer-events-auto select-none"
+                        onMouseDown={e => e.stopPropagation()}
+                        onTouchStart={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setCam(prev => ({ ...prev, scale: Math.max(0.15, +(prev.scale - 0.1).toFixed(2)) }))}
+                            className="hover:text-white px-1 transition-colors"
+                            title="Alejar"
+                        >
+                            -
+                        </button>
+                        <button
+                            onClick={() => setCam({ x: 0, y: 0, scale: 1 })}
+                            className="text-zinc-300 hover:text-[#10b981] min-w-[38px] text-center transition-colors"
+                            title="Restablecer vista al 100%"
+                        >
+                            {Math.round(cam.scale * 100)}%
+                        </button>
+                        <button
+                            onClick={() => setCam(prev => ({ ...prev, scale: Math.min(4, +(prev.scale + 0.1).toFixed(2)) }))}
+                            className="hover:text-white px-1 transition-colors"
+                            title="Acercar"
+                        >
+                            +
+                        </button>
+                    </div>
+                </>
             )}
 
             {/* FLOATING AUDIO RECORDING INDICATOR */}
@@ -13932,13 +14623,13 @@ ${afcMapContext}
                 </div>
             )}
 
-            {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) */}
+            {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) + TÍTULO MILANOTE DEL LIENZO */}
             {(view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && !publicProfileUser && (
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2 bg-[#050506]/60 backdrop-blur-sm border border-white/10 rounded-full shadow-[0_40px_100px_rgba(0,0,0,0.9)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
-                    style={{ top: 'max(12px, calc(env(safe-area-inset-top) + 8px))' }}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    style={{ top: 'max(14px, calc(env(safe-area-inset-top) + 10px))' }}
                 >
                     {/* 1. Perfil */}
                     <button
@@ -13955,15 +14646,13 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('profile');
                         }}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Perfil"
                     >
-                        <User size={16} className="sm:scale-110 hover-float-icon" />
+                        <User size={15} />
                     </button>
 
-
-                    {/* Mi Expediente */}
+                    {/* 2. Mi Expediente */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -13978,14 +14667,13 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('my_responses');
                         }}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Mi Expediente"
                     >
-                        <RefreshCw size={16} className="sm:scale-110 hover-float-icon" />
+                        <RefreshCw size={15} />
                     </button>
 
-                    {/* 6. Lienzo Principal */}
+                    {/* 3. Lienzo Principal */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -14000,14 +14688,13 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('canvas');
                         }}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_22px_rgba(16,185,129,0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Lienzo Principal"
                     >
-                        <Pencil size={16} className="sm:scale-110 hover-float-icon" />
+                        <Pencil size={15} />
                     </button>
 
-                    {/* 7. Feed Público */}
+                    {/* 4. Feed Público */}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
@@ -14022,13 +14709,62 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('feed');
                         }}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-black border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]' : 'bg-[#18181b] border-white/5 text-zinc-400 hover:text-white hover:bg-[#2a2a2e] hover:border-white/30'}`}
-                        style={view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? { backgroundColor: accent, borderColor: accent, color: '#000' } : undefined}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Feed Público"
                     >
-                        <Home size={16} className="sm:scale-110 hover-float-icon" />
+                        <Home size={15} />
                     </button>
 
+                    {/* TÍTULO Y SUBTÍTULO DEL TABLERO MILANOTE CUANDO ESTÁS EN EL LIENZO */}
+                    {view === 'canvas' && !activeNotebook && !isChatOpen && (
+                        <>
+                            <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
+                            {activeCanvasId !== 'canvas_default' && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveCanvasId('canvas_default');
+                                        setCanvasBoardTitle(localStorage.getItem('oasis_board_title') || 'Extraños Movimientos');
+                                    }}
+                                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-mono text-[#10b981] flex items-center gap-1 transition-colors shrink-0"
+                                    title="Volver al lienzo principal"
+                                >
+                                    <ArrowLeft size={12} /> Raíz
+                                </button>
+                            )}
+                            <div className="flex items-center gap-2.5 pr-3 pl-1 select-none shrink-0">
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const nextTitle = window.prompt('Nombre del tablero creativo:', canvasBoardTitle);
+                                        if (nextTitle && nextTitle.trim()) {
+                                            setCanvasBoardTitle(nextTitle.trim());
+                                            localStorage.setItem('oasis_board_title', nextTitle.trim());
+                                        }
+                                    }}
+                                    className="text-[13px] sm:text-[14px] font-bold text-white hover:text-[#10b981] tracking-tight cursor-pointer transition-colors whitespace-nowrap"
+                                    title="Clic para renombrar tablero"
+                                >
+                                    {canvasBoardTitle}
+                                </span>
+                                <span
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const nextSub = window.prompt('Subtítulo o código de proyecto:', canvasBoardSubtitle);
+                                        if (nextSub !== null) {
+                                            const clean = nextSub.trim() || 'Carretera 191';
+                                            setCanvasBoardSubtitle(clean);
+                                            localStorage.setItem('oasis_board_subtitle', clean);
+                                        }
+                                    }}
+                                    className="text-[11px] sm:text-[12px] font-mono text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors whitespace-nowrap"
+                                    title="Clic para editar subtítulo"
+                                >
+                                    {canvasBoardSubtitle}
+                                </span>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
