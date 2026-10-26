@@ -310,7 +310,7 @@ const getBWidth = (block, isPoint) => {
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
     if (block.width || block.w) return block.width || block.w;
-    if (block.type === 'color_swatch') return 230;
+    if (block.type === 'color_swatch') return 215;
     if (block.type === 'sub_board') return 220;
     if (block.type === 'link') return 260;
     if (block.type === 'todo') return 310;
@@ -329,7 +329,7 @@ const getBHeight = (block, isPoint) => {
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
     if (block.height || block.h) return block.height || block.h;
-    if (block.type === 'color_swatch') return 82;
+    if (block.type === 'color_swatch') return 205;
     if (block.type === 'sub_board') return 110;
     if (block.type === 'link') return 120;
     if (block.type === 'todo') return 210;
@@ -2553,8 +2553,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 style={{
                     width: localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`,
                     height: localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`,
-                    minWidth: isColorSwatch ? '210px' : (isSubBoardCard ? '200px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
-                    minHeight: isColorSwatch ? '72px' : (isSubBoardCard ? '80px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
+                    minWidth: isColorSwatch ? '175px' : (isSubBoardCard ? '200px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
+                    minHeight: isColorSwatch ? '170px' : (isSubBoardCard ? '80px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
                     maxWidth: undefined,
                     maxHeight: undefined,
                     willChange: 'transform',
@@ -2617,7 +2617,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
 
-                <div className={`${isColorSwatch ? 'p-3.5' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
+                <div className={`${isColorSwatch ? 'p-0' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
                     {isConversation ? (() => {
                         let parsedMsgs = [];
                         try {
@@ -3235,57 +3235,92 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                 className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug truncate w-full transition-colors shrink-0"
                             />
                         </div>
-                    ) : isColorSwatch ? (
-                        <div className="flex-1 w-full h-full flex items-center gap-3.5 select-none">
-                            <label
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                className="w-11 h-11 rounded-xl shrink-0 border border-white/15 shadow-inner cursor-pointer relative overflow-hidden group/swatch transition-transform hover:scale-105"
-                                style={{ backgroundColor: block.color || '#254E3A' }}
-                                title="Cambiar color de muestra"
-                            >
-                                <input
-                                    type="color"
-                                    value={block.color || '#254E3A'}
-                                    onChange={(e) => {
-                                        e.stopPropagation();
-                                        if (onUpdateBlock) {
-                                            onUpdateBlock({ ...block, color: e.target.value.toUpperCase() });
-                                        }
-                                    }}
-                                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                                />
-                            </label>
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <input
-                                    type="text"
-                                    value={block.caption ?? 'Verde Bosque Muted'}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                        if (onUpdateBlock) {
-                                            onUpdateBlock({ ...block, caption: e.target.value });
-                                        }
-                                    }}
-                                    placeholder="Nombre del color..."
-                                    className="bg-transparent text-[14px] font-bold text-white truncate focus:outline-none hover:text-emerald-300 transition-colors w-full"
-                                />
-                                <div className="text-[11px] font-mono font-semibold text-[#10b981] tracking-wider uppercase mt-0.5">
-                                    {(block.color || '#254E3A').toUpperCase()}
+                    ) : isColorSwatch ? (() => {
+                        const rawHex = block.color || '#366354';
+                        const validHex = /^#[0-9A-Fa-f]{6}$/.test(rawHex)
+                            ? rawHex
+                            : (/^[0-9A-Fa-f]{6}$/.test(rawHex) ? `#${rawHex}` : '#366354');
+                        return (
+                            <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none group/swatch">
+                                {/* BLOQUE SUPERIOR DE COLOR CON CÓDIGO HEX EDITABLE */}
+                                <div
+                                    className="flex-1 w-full relative p-4 flex flex-col justify-between transition-colors duration-200"
+                                    style={{ backgroundColor: validHex }}
+                                >
+                                    <div className="flex items-start justify-between gap-2 z-10">
+                                        <input
+                                            type="text"
+                                            value={rawHex}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onChange={(e) => {
+                                                let val = e.target.value.trim().toUpperCase();
+                                                if (val && !val.startsWith('#')) val = `#${val}`;
+                                                if (onUpdateBlock) {
+                                                    onUpdateBlock({ ...block, color: val, content: val });
+                                                }
+                                            }}
+                                            placeholder="#366354"
+                                            maxLength={7}
+                                            className="bg-transparent text-[15px] font-bold font-mono tracking-wide text-white placeholder:text-white/60 drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)] focus:outline-none focus:bg-black/20 rounded px-1 -ml-1 w-28 uppercase transition-colors"
+                                            title="Escribe o pega un código HEX (ej. #366354)"
+                                        />
+
+                                        <div className="flex items-center gap-1 opacity-0 group-hover/swatch:opacity-100 transition-opacity">
+                                            <label
+                                                onClick={(e) => e.stopPropagation()}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                className="p-1 rounded-lg bg-black/25 hover:bg-black/45 text-white/90 hover:text-white cursor-pointer backdrop-blur-sm transition-colors relative"
+                                                title="Elegir color en selector visual"
+                                            >
+                                                <Palette size={13} />
+                                                <input
+                                                    type="color"
+                                                    value={validHex}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        const picked = e.target.value.toUpperCase();
+                                                        if (onUpdateBlock) {
+                                                            onUpdateBlock({ ...block, color: picked, content: picked });
+                                                        }
+                                                    }}
+                                                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                                />
+                                            </label>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowDeleteConfirm(true);
+                                                }}
+                                                className="p-1 rounded-lg bg-black/25 hover:bg-black/45 text-white/90 hover:text-white backdrop-blur-sm transition-colors"
+                                                title="Eliminar muestra"
+                                            >
+                                                <X size={13} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* FRANJA INFERIOR CON NOMBRE EDITABLE */}
+                                <div className="h-12 px-4 bg-[#121316] border-t border-white/[0.06] flex items-center justify-between shrink-0">
+                                    <input
+                                        type="text"
+                                        value={block.caption ?? 'Stromboli'}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            if (onUpdateBlock) {
+                                                onUpdateBlock({ ...block, caption: e.target.value });
+                                            }
+                                        }}
+                                        placeholder="Nombre del color..."
+                                        className="bg-transparent text-[13px] font-medium text-zinc-200 placeholder:text-zinc-500 focus:text-white focus:outline-none truncate w-full"
+                                        title="Editar nombre del color"
+                                    />
                                 </div>
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowDeleteConfirm(true);
-                                }}
-                                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
-                                title="Eliminar muestra"
-                            >
-                                <X size={13} />
-                            </button>
-                        </div>
-                    ) : isTodoCard ? (() => {
+                        );
+                    })() : isTodoCard ? (() => {
                         const items = Array.isArray(block.metadata?.items)
                             ? block.metadata.items
                             : [
@@ -11597,11 +11632,11 @@ ${afcMapContext}
                             <button
                                 onClick={() => {
                                     spawnMilanoteBlock('color_swatch', {
-                                        caption: 'Verde Bosque Muted',
-                                        color: '#254E3A',
-                                        content: '#254E3A',
-                                        width: 235,
-                                        height: 76
+                                        caption: 'Stromboli',
+                                        color: '#366354',
+                                        content: '#366354',
+                                        width: 215,
+                                        height: 205
                                     });
                                 }}
                                 className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
