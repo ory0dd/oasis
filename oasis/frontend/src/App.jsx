@@ -4729,7 +4729,7 @@ const ProfileView = ({
 
     return (
         <div
-            className="fixed inset-x-0 md:inset-x-4 lg:inset-x-8 xl:inset-x-12 top-[68px] md:top-[80px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/10 z-[1500] flex flex-col bg-[#050506]/55 backdrop-blur-lg text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden animate-in fade-in slide-in-from-bottom-[60%] duration-500 transition-all pointer-events-auto"
+            className={`fixed inset-0 z-[1500] flex flex-col bg-[#08080a] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[70px] md:inset-x-6 md:bottom-2 md:rounded-3xl border-t border-white/10'}`}
             onTouchStart={(e) => {
                 e.stopPropagation();
                 const touch = e.touches[0];
@@ -4789,12 +4789,21 @@ const ProfileView = ({
             <div className="absolute top-4 sm:top-8 left-4 right-4 md:left-10 md:right-10 flex justify-between items-center pointer-events-none z-50">
                 <div className="flex gap-2 pointer-events-auto">
                     {!isOwnProfile ? (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
-                            className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
-                        >
-                            <ArrowLeft size={13} /> Volver
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {user ? (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
+                                    className="px-4 py-2 bg-black/75 backdrop-blur-md rounded-full border border-white/15 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+                                >
+                                    <ArrowLeft size={13} /> Volver al feed
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 shadow-xl">
+                                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                                    <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-300 font-bold">Ruido Interior</span>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         isEditingProfile && (
                             <button
@@ -4806,7 +4815,16 @@ const ProfileView = ({
                         )
                     )}
                 </div>
-                <div className="flex gap-2 pointer-events-auto">
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    {!user && (
+                        <a
+                            href="/"
+                            className="px-4 py-2 bg-accent hover:brightness-110 text-black rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <Sparkles size={11} />
+                            <span>Crear mi página</span>
+                        </a>
+                    )}
                     <button
                         onClick={handleShareProfile}
                         className={`px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer ${copiedLink ? 'border-accent text-accent' : 'border-white/10 hover:border-white/30 text-white'}`}
@@ -4959,10 +4977,18 @@ const ProfileView = ({
                                                 href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5 break-all group/link"
+                                                className="mt-2 w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-accent/20 via-accent/10 to-transparent border border-accent/40 hover:border-accent text-white font-mono text-xs flex items-center justify-between group/linktree shadow-[0_0_20px_rgba(var(--accent-rgb),0.12)] hover:shadow-[0_0_25px_rgba(var(--accent-rgb),0.3)] transition-all active:scale-[0.99] cursor-pointer"
                                             >
-                                                <LinkIcon size={12} className="shrink-0 group-hover/link:rotate-45 transition-transform" />
-                                                <span>{profileLink.replace(/^https?:\/\//, '')}</span>
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="w-8 h-8 rounded-lg bg-accent/25 border border-accent/40 flex items-center justify-center text-accent shrink-0 shadow-sm">
+                                                        <ExternalLink size={14} />
+                                                    </div>
+                                                    <div className="flex flex-col text-left truncate">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-white">Sitio Oficial / Tienda</span>
+                                                        <span className="text-[9px] text-accent font-mono truncate">{profileLink.replace(/^https?:\/\//, '')}</span>
+                                                    </div>
+                                                </div>
+                                                <ArrowUpRight size={15} className="text-accent group-hover/linktree:translate-x-0.5 group-hover/linktree:-translate-y-0.5 transition-transform shrink-0" />
                                             </a>
                                         )}
                                     </div>
@@ -5481,7 +5507,20 @@ function OasisApp() {
         const currentUser = localStorage.getItem('oasis_user') || '';
         localStorage.setItem('oasis_active_canvas_' + currentUser, activeCanvasId);
     }, [activeCanvasId]);
-    const [publicProfileUser, setPublicProfileUser] = useState(null);
+    const [publicProfileUser, setPublicProfileUser] = useState(() => {
+        if (typeof window === 'undefined') return null;
+        const params = new URLSearchParams(window.location.search);
+        const u = params.get('u');
+        if (u) return u.replace('@', '');
+        const path = window.location.pathname;
+        if (path !== '/' && path !== '' && path !== '/index.html') {
+            const potential = path.substring(1).replace('/', '').replace('@', '');
+            if (potential && !potential.startsWith('api') && potential !== 'index.html') {
+                return potential;
+            }
+        }
+        return null;
+    });
     const [publicProfileTab, setPublicProfileTab] = useState('posts');
     const [selectedPublicPost, setSelectedPublicPost] = useState(null);
     const [focusedFeedPostId, setFocusedFeedPostId] = useState(null);
@@ -8716,7 +8755,20 @@ function OasisApp() {
                 return b;
             });
             if (user) {
-                localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(cleanBlocks));
+                try {
+                    localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(cleanBlocks));
+                } catch (quotaErr) {
+                    console.warn("Storage quota exceeded on localStorage. Storing trimmed version.", quotaErr);
+                    try {
+                        const lightBlocks = cleanBlocks.map(b => {
+                            if (b.type === 'image' && typeof b.content === 'string' && b.content.startsWith('data:image/') && b.content.length > 50000) {
+                                return { ...b, content: '' };
+                            }
+                            return b;
+                        });
+                        localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(lightBlocks));
+                    } catch (e2) {}
+                }
                 // Trigger offline background sync preparation
                 if (window.guardarBlocksLocales) {
                     window.guardarBlocksLocales(user, cleanBlocks).then(() => {
@@ -11341,53 +11393,84 @@ ${afcMapContext}
                         const blob = item.getAsFile();
                         if (!blob) continue;
 
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            const dataUrl = ev.target.result;
-                            const img = new Image();
-                            img.onload = () => {
-                                const naturalW = img.naturalWidth || 300;
-                                const naturalH = img.naturalHeight || 300;
-                                const maxDim = 320;
-                                let w = naturalW;
-                                let h = naturalH;
-                                if (w > maxDim || h > maxDim) {
-                                    if (w > h) {
-                                        h = Math.round((h * maxDim) / w);
-                                        w = maxDim;
-                                    } else {
-                                        w = Math.round((w * maxDim) / h);
-                                        h = maxDim;
-                                    }
+                        const objectUrl = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.onload = () => {
+                            URL.revokeObjectURL(objectUrl);
+                            const naturalW = img.naturalWidth || 300;
+                            const naturalH = img.naturalHeight || 300;
+                            const maxCanvasDim = 800;
+                            let renderW = naturalW;
+                            let renderH = naturalH;
+                            if (renderW > maxCanvasDim || renderH > maxCanvasDim) {
+                                if (renderW > renderH) {
+                                    renderH = Math.round((renderH * maxCanvasDim) / renderW);
+                                    renderW = maxCanvasDim;
+                                } else {
+                                    renderW = Math.round((renderW * maxCanvasDim) / renderH);
+                                    renderH = maxCanvasDim;
                                 }
+                            }
 
-                                const jitterX = (Math.random() - 0.5) * 60;
-                                const jitterY = (Math.random() - 0.5) * 60;
-                                const spawnX = (-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX;
-                                const spawnY = (-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY;
+                            const offCanvas = document.createElement('canvas');
+                            offCanvas.width = renderW;
+                            offCanvas.height = renderH;
+                            const ctx = offCanvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, renderW, renderH);
+                            const compressedDataUrl = offCanvas.toDataURL('image/png');
 
-                                const newBlock = {
-                                    id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-                                    type: 'image',
-                                    content: dataUrl,
-                                    x: Math.round(spawnX),
-                                    y: Math.round(spawnY),
-                                    w: Math.round(w),
-                                    h: Math.round(h),
-                                    width: Math.round(w),
-                                    height: Math.round(h),
-                                    rotation: 0,
-                                    username: user,
-                                    timestamp: new Date().toISOString(),
-                                    canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
-                                };
+                            const maxDim = 320;
+                            let w = naturalW;
+                            let h = naturalH;
+                            if (w > maxDim || h > maxDim) {
+                                if (w > h) {
+                                    h = Math.round((h * maxDim) / w);
+                                    w = maxDim;
+                                } else {
+                                    w = Math.round((w * maxDim) / h);
+                                    h = maxDim;
+                                }
+                            }
 
-                                syncBlocks(prev => [newBlock, ...prev]);
-                                setSelectedBlockId(newBlock.id);
+                            const jitterX = (Math.random() - 0.5) * 60;
+                            const jitterY = (Math.random() - 0.5) * 60;
+                            const spawnX = (-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX;
+                            const spawnY = (-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY;
+
+                            const newBlockId = `img-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+                            const newBlock = {
+                                id: newBlockId,
+                                type: 'image',
+                                content: compressedDataUrl,
+                                x: Math.round(spawnX),
+                                y: Math.round(spawnY),
+                                w: Math.round(w),
+                                h: Math.round(h),
+                                width: Math.round(w),
+                                height: Math.round(h),
+                                rotation: 0,
+                                username: user,
+                                timestamp: new Date().toISOString(),
+                                canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
                             };
-                            img.src = dataUrl;
+
+                            syncBlocks(prev => [newBlock, ...prev]);
+                            setSelectedBlockId(newBlock.id);
+
+                            // Background upload to Supabase for permanent lightweight CDN link
+                            const formData = new FormData();
+                            formData.append('file', blob, 'collage-cutout.png');
+                            formData.append('user', user || 'default');
+                            fetch(`${API_URL}/api/oasis/upload`, {
+                                method: 'POST',
+                                body: formData
+                            }).then(r => r.json()).then(data => {
+                                if (data && data.url) {
+                                    syncBlocks(prev => prev.map(b => b.id === newBlockId ? { ...b, content: data.url } : b));
+                                }
+                            }).catch(() => {});
                         };
-                        reader.readAsDataURL(blob);
+                        img.src = objectUrl;
                         return;
                     }
                 }
