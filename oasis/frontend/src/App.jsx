@@ -4564,6 +4564,14 @@ const ProfileView = ({
         if (!url || typeof url !== 'string') return '';
         url = url.replace(/\[\/?(img|vid|aud)\]/gi, '').trim();
 
+        // Mapear permanentemente assets a Supabase CDN
+        if (url.includes('5f151b24-cdf5-4652-affe-cc506e05bcb2')) {
+            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+        }
+        if (url.includes('47d7e72a-e82c-4f48-8f06-709bbbde053a')) {
+            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+        }
+
         const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.'));
 
         if (!isLocal && typeof url === 'string' && url.includes('localhost:5046')) {
@@ -4913,23 +4921,47 @@ const ProfileView = ({
             </div>
 
             <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll pb-20 sm:pb-32">
-                {/* 1. TOP COVER BANNER */}
-                <div className="absolute top-0 left-0 w-full h-[60vh] z-0 pointer-events-none overflow-hidden" style={{ maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }}>
+                {/* AMBIENTE LUMINOSO Y COLORIDO (ELIMINA PÁGINA OSCURA/ABURRIDA) */}
+                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
                     <div
-                        className="absolute inset-0 transition-all duration-700 ease-in-out"
-                        style={{
-                            backgroundImage: `url(${formatUrl(coverImage)})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center center',
-                            opacity: 0.15
-                        }}
+                        className="absolute -inset-10 bg-cover bg-center opacity-35 blur-3xl scale-110 transition-all duration-1000"
+                        style={{ backgroundImage: `url(${formatUrl(coverImage)})` }}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#08080a]/30 via-[#08080a]/75 to-[#08080a]" />
+                    <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
+                </div>
+
+                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR */}
+                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-1 z-10 relative pointer-events-auto">
+                    <div className="w-full h-40 sm:h-56 md:h-64 rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md">
+                        <img
+                            src={formatUrl(coverImage)}
+                            alt="Foto de fondo"
+                            className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-700"
+                            onError={(e) => {
+                                if (!e.target.dataset.failed) {
+                                    e.target.dataset.failed = 'true';
+                                    e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+                                }
+                            }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+                        {isOwnProfile && (
+                            <button
+                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                            >
+                                <Camera size={11} />
+                                <span>Cambiar fondo</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* MODERN ASYMMETRICAL LEFT-ALIGNED PROFILE */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-4 sm:pt-6 md:pt-10 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-2 sm:pt-4 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
                 >
                     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8 pointer-events-auto">
 
@@ -15270,54 +15302,41 @@ ${afcMapContext}
             }
         } catch (e) {}
 
-        const similarSouls = publicUsers
+        // Mostrar todos los otros usuarios de la comunidad ("Otras Almas")
+        const cleanCurrentU = (user || '').replace('@', '').toLowerCase();
+        const otherSouls = (publicUsers || [])
             .filter(u => {
-                const username = u.Username || u.username;
-                if (!username || username === user || username === `@${user}`) return false;
-                return feed.some(f => f.username === username || f.metadata?.feedUsername === username || f.username === `@${username}` || f.metadata?.feedUsername === `@${username}`);
+                const uname = (u.Username || u.username || '').replace('@', '').toLowerCase();
+                return uname && uname !== cleanCurrentU && uname !== 'anon' && !uname.startsWith('test_');
             })
-            .map(u => {
-                let theirTraits = [];
-                let theirResonance = null;
-                try {
-                    if (u.publicTraits) {
-                        const parsed = typeof u.publicTraits === 'string' ? JSON.parse(u.publicTraits) : u.publicTraits;
-                        if (Array.isArray(parsed)) theirTraits = parsed;
-                        else if (parsed && parsed.keywords) {
-                            theirTraits = parsed.keywords;
-                            theirResonance = parsed;
-                        }
-                    }
-                } catch(e) {}
-                
-                let score = 0;
-                if (myTraits.length > 0 && theirTraits.length > 0) {
-                    myTraits.forEach(mt => {
-                        theirTraits.forEach(tt => {
-                            if (mt.toLowerCase() === tt.toLowerCase()) score += 10;
-                            else if (mt.toLowerCase().includes(tt.toLowerCase().split(' ')[0])) score += 2;
-                        });
-                    });
+            .map((u, idx) => {
+                const currentUsername = (u.Username || u.username || '').replace('@', '');
+                let currentFullName = u.FullName || u.fullName || currentUsername;
+                if (currentFullName.includes('@') && currentFullName.includes('.')) {
+                    currentFullName = currentUsername;
                 }
-                score += Math.random(); // Fallback randomness
-                return { ...u, score, theirResonance };
-            })
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 10).map((u, idx) => {
-                const currentUsername = u.Username || u.username;
-                const currentFullName = u.FullName || u.fullName || currentUsername;
-                const userPosts = (feed || []).filter(f => f.username === currentUsername || f.metadata?.feedUsername === currentUsername);
-                const userAvatar = userPosts.find(f => f.metadata?.userAvatar)?.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentUsername}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+
+                // Buscar avatar en feed o usar DiceBear pixel art
+                let userAvatar = u.avatar || u.Avatar;
+                if (!userAvatar) {
+                    const postWithAv = (feed || []).find(f => {
+                        const fu = (f.username || f.metadata?.feedUsername || '').replace('@', '').toLowerCase();
+                        return fu === currentUsername.toLowerCase() && f.metadata?.userAvatar;
+                    });
+                    if (postWithAv) userAvatar = postWithAv.metadata.userAvatar;
+                }
+                if (!userAvatar) {
+                    userAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(currentUsername)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+                }
 
                 return {
-                    id: idx,
+                    id: u.id || idx,
                     username: currentUsername,
                     name: currentFullName,
-                    img: userAvatar,
-                    resonance: u.theirResonance,
-                    matchScore: Math.min(99, Math.max(70, Math.floor(u.score * 10) + 70)) // Pseudo-score for UI
+                    img: userAvatar
                 };
             });
+        const similarSouls = otherSouls;
 
         const FeedAutoScroller = () => {
             React.useEffect(() => {
@@ -15343,7 +15362,10 @@ ${afcMapContext}
                     <div className="w-full relative z-20 pt-[110px] pb-6 px-4 bg-gradient-to-b from-black/80 to-transparent snap-start shrink-0 pointer-events-auto border-b border-white/5">
                         <div className="max-w-xl mx-auto w-full">
                             <div className="flex items-center justify-between mb-4 px-2">
-                                <h3 className="text-white font-bold text-lg tracking-tight">Almas Afines</h3>
+                                <h3 className="text-white font-bold text-base md:text-lg tracking-tight flex items-center gap-2">
+                                    <span>Otras Almas</span>
+                                    <span className="text-[10px] font-mono text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30 font-bold">{similarSouls.length}</span>
+                                </h3>
                                 <button className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition-colors">
                                     Ver todas
                                 </button>
