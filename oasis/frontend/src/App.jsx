@@ -5108,7 +5108,7 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
     );
 });
 
-export default function App() {
+function OasisApp() {
     const initialUser = localStorage.getItem('oasis_user') || '';
     const initialRole = localStorage.getItem('oasis_role_' + initialUser) || 'patient';
     const isInitialClinician = initialRole === 'clinician' || initialUser === 'observador1' || initialUser === 'observador';
@@ -11597,6 +11597,15 @@ ${afcMapContext}
         setIsTemplatePickerOpen(false);
     };
 
+    const openSubBoardWorkspace = (boardId, boardTitle) => {
+        if (!boardId) return;
+        setActiveCanvasId(boardId);
+        setCam({ x: 0, y: 0, scale: 1 });
+        const existingInBoard = (blocks || []).filter(b => b.canvasId === boardId);
+        setIsTemplatePickerOpen(existingInBoard.length === 0);
+        setIsMilanoteToolsOpen(false);
+    };
+
     const handleInlineBlockUpdate = (updatedBlock) => {
         setBlocks(prev => {
             const next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
@@ -17792,6 +17801,15 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
         </div>
     );
 }
+
+export default function App() {
+    return (
+        <ErrorBoundary>
+            <OasisApp />
+        </ErrorBoundary>
+    );
+}
+
 
 
 
