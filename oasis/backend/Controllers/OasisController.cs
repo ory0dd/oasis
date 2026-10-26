@@ -1374,8 +1374,8 @@ namespace Oasis.Backend.Controllers
             {
                 var supabaseUrl = _config["Supabase:Url"] ?? _config["Supabase__Url"] ?? _config["Supabase_Url"] ?? _config["SUPABASE_URL"];
                 var supabaseKey = _config["Supabase:Key"] ?? _config["Supabase__Key"] ?? _config["Supabase_Key"] ?? _config["SUPABASE_KEY"];
-                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC");
-                bool enableSync = enableSyncStr == "true";
+                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC") ?? "true";
+                bool enableSync = bool.TryParse(enableSyncStr, out var es) ? es : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
                 
                 if (enableSync && !string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
                 {
@@ -2561,8 +2561,8 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
             try
             {
-                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC");
-                bool enableSync = enableSyncStr == "true";
+                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC") ?? "true";
+                bool enableSync = bool.TryParse(enableSyncStr, out var es) ? es : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
                 if (!enableSync) return;
 
                 var supabaseUrl = _config["Supabase:Url"];
@@ -2695,8 +2695,8 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
 
             try
             {
-                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC");
-                bool enableSync = enableSyncStr == "true";
+                var enableSyncStr = _config["Supabase:EnableSync"] ?? Environment.GetEnvironmentVariable("SUPABASE_ENABLE_SYNC") ?? "true";
+                bool enableSync = bool.TryParse(enableSyncStr, out var es) ? es : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
                 if (!enableSync) return;
 
                 var supabaseUrl = _config["Supabase:Url"];
@@ -2797,7 +2797,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                 var supabaseUrl = _config["Supabase:Url"];
                 var supabaseKey = _config["Supabase:Key"];
                 var enableSyncStr = _config["Supabase:EnableSync"] ?? "true";
-                bool enableSync = enableSyncStr == "true";
+                bool enableSync = bool.TryParse(enableSyncStr, out var es2) ? es2 : string.Equals(enableSyncStr, "true", StringComparison.OrdinalIgnoreCase);
 
                 if (!enableSync || string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
                 {

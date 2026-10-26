@@ -1376,7 +1376,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
         if (slide.type === 'image') {
             return (
                 <div key={index} className="w-full relative flex-shrink-0 bg-black/60 flex items-center justify-center">
-                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={slide.url} className="w-full h-auto max-h-[70vh] object-contain" alt={slide.caption} />
+                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={slide.url} className="w-full h-auto max-h-[70vh] object-contain" alt={slide.caption} />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0d] via-transparent to-transparent opacity-75 pointer-events-none" />
                     {slide.caption && (
                         <div className="absolute bottom-4 left-6 right-6 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 text-[9px] font-bold text-white/90">
@@ -1524,7 +1529,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full border-2 border-white/30 overflow-hidden shrink-0">
-                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={f.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${f.username || 'anon'}`} className="w-full h-full object-cover rounded-full" />
+                                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={f.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${f.username || 'anon'}`} className="w-full h-full object-cover rounded-full" />
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow">
@@ -1668,7 +1678,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         >
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden shrink-0">
-                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
+                                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
                                 </div>
                                 <div>
                                     <span className="text-[9px] font-black uppercase tracking-widest text-white block">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
@@ -1870,7 +1885,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         }}
                     >
                         <div className="w-8 h-8 rounded-full border border-accent/20 p-0.5 bg-black/40 overflow-hidden shrink-0 group-hover/author:border-accent transition-all">
-                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
+                            <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
                         </div>
                         <div className="flex flex-col text-left">
                             <span className="text-[9px] font-black uppercase tracking-widest text-white group-hover/author:text-accent transition-colors">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
@@ -1948,7 +1968,12 @@ const SimpleNarrativeRenderer = React.memo(({ content, isChild = false, cleanMin
 
                 if (trimmed.startsWith('[img]')) {
                     const url = formatUrl(trimmed.replace(/\[\/?img\]/g, '').trim());
-                    return <div key={i} className="my-6 rounded-xl overflow-hidden border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-700 bg-black/20"><img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={url} className="w-full h-auto object-cover max-h-[400px]" /></div>;
+                    return <div key={i} className="my-6 rounded-xl overflow-hidden border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-700 bg-black/20"><img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={url} className="w-full h-auto object-cover max-h-[400px]" /></div>;
                 }
                 if (trimmed.startsWith('[vid]')) {
                     const url = formatUrl(trimmed.replace(/\[\/?vid\]/g, '').trim());
@@ -2163,7 +2188,12 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
                         return (
                             <div key={idx} style={bgStyle} className="overflow-hidden bg-zinc-100 border border-zinc-200 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
                                 {mb.content ? (
-                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(mb.content)} className="w-full h-full object-cover pointer-events-none" />
+                                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={formatUrl(mb.content)} className="w-full h-full object-cover pointer-events-none" />
                                 ) : (
                                     <div className="w-full h-full bg-zinc-200" />
                                 )}
@@ -4199,14 +4229,30 @@ const ProfileView = ({
     }, [isOwnProfile, avatar, publicProfileData, feed, effectiveUser]);
 
     const targetUserPosts = useMemo(() => {
-        const target = effectiveUser.toLowerCase();
-        return (feed || []).filter(b => {
+        const target = (effectiveUser || '').replace('@', '').toLowerCase();
+        const feedPosts = (feed || []).filter(b => {
             if (!b || b.type === 'story' || b.type === 'highlight') return false;
             const u1 = (b.username || '').replace('@', '').toLowerCase();
             const u2 = (b.metadata?.feedUsername || '').replace('@', '').toLowerCase();
             return u1 === target || u2 === target;
         });
-    }, [feed, effectiveUser]);
+
+        const canvasPosts = (blocks || []).filter(b => {
+            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings') return false;
+            const u = (b.username || user || '').replace('@', '').toLowerCase();
+            if (u !== target) return false;
+            return b.isPublic || (b.metadata && (b.metadata.buyLink || b.metadata.price)) || b.type === 'note' || b.type === 'image';
+        });
+
+        const combined = [...feedPosts];
+        canvasPosts.forEach(cp => {
+            if (!combined.some(p => p.id === cp.id || p.id === `feed_${cp.id}` || `feed_${p.id}` === cp.id)) {
+                combined.push(cp);
+            }
+        });
+
+        return combined;
+    }, [feed, blocks, effectiveUser, user]);
 
     const linkedPosts = useMemo(() => {
         return targetUserPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
@@ -4308,10 +4354,39 @@ const ProfileView = ({
             }
         }
 
-        setBio(localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
-        setFullName(cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
-        setCoverImage(localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
-        setProfileLink(localStorage.getItem('oasis_profilelink_' + user) || '');
+        const targetU = effectiveUser || user;
+        const storedBio = localStorage.getItem('oasis_bio_' + targetU);
+        if (storedBio) setBio(storedBio);
+        const targetStoredFn = localStorage.getItem('oasis_fullname_' + targetU);
+        if (targetStoredFn && !targetStoredFn.includes('@')) setFullName(cleanDisplayName(targetStoredFn, targetU || 'Oasis Explorer'));
+        const storedCover = localStorage.getItem('oasis_cover_' + targetU);
+        if (storedCover) setCoverImage(storedCover);
+        const storedLink = localStorage.getItem('oasis_profilelink_' + targetU);
+        if (storedLink) setProfileLink(storedLink);
+
+        // Fetch de respaldo directo desde el backend para garantizar que bio, link, portada y avatar nunca falten
+        if (targetU) {
+            fetch(`${API_URL}/api/oasis/blocks?user=${targetU}`)
+                .then(r => r.json())
+                .then(srvBlocks => {
+                    const pBlock = Array.isArray(srvBlocks) ? srvBlocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings') : null;
+                    if (pBlock) {
+                        try {
+                            const parsed = JSON.parse(pBlock.content || pBlock.Content || '{}');
+                            const bBio = parsed.bio || parsed.Bio;
+                            const bLink = parsed.profileLink || parsed.ProfileLink;
+                            const bFn = parsed.fullName || parsed.FullName;
+                            const bCover = parsed.coverImage || parsed.CoverImage;
+                            const bAv = parsed.avatar || parsed.Avatar;
+                            if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
+                            if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
+                            if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
+                            if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
+                            if (bAv && setAvatar && isOwnProfile) { setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
+                        } catch(e) {}
+                    }
+                }).catch(() => {});
+        }
     }, [user, effectiveUser, isOwnProfile, publicProfileData, blocks, setAvatar, isEditingProfile, feed]);
 
     const [releaseTab, setReleaseTab] = useState('posts');
@@ -4880,7 +4955,12 @@ const ProfileView = ({
                                         >
                                             <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
-                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                    onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                                                     src={formatUrl(displayAvatar)}
                                                     className="w-full h-full object-cover rounded-full"
                                                 />
@@ -5241,7 +5321,12 @@ const ProfileView = ({
                                                         >
                                                             {postImg ? (
                                                                  <img
-                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                                    onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                                                                     src={postImg}
                                                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/prod-card:scale-105"
                                                                 />
@@ -5330,7 +5415,7 @@ const ProfileView = ({
                                     {(() => {
                                         let tabFilteredPosts = targetUserPosts;
                                         if (releaseTab === 'posts') {
-                                            tabFilteredPosts = targetUserPosts.filter(b => !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
+                                            tabFilteredPosts = targetUserPosts;
                                         } else if (releaseTab === 'saved') {
                                             tabFilteredPosts = (feed || []).filter(b => savedPostIds.includes(b.id));
                                         } else if (releaseTab === 'resonance') {
@@ -5369,7 +5454,12 @@ const ProfileView = ({
                                                         >
                                                             {postImg ? (
                                                                 <img
-                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                                    onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                                                                     src={postImg}
                                                                     className="w-full h-full object-cover group-hover/grid-card:scale-105 transition-transform duration-500"
                                                                 />
@@ -8337,20 +8427,7 @@ function OasisApp() {
                             }
                         }
                         if (!gotBg) {
-                            try {
-                                const templatesRes = await fetch(`${API_URL}/api/oasis/backgrounds/templates`);
-                                if (templatesRes.ok) {
-                                    const templatesData = await templatesRes.json();
-                                    if (templatesData && templatesData.length > 0) {
-                                        const firstTemplate = templatesData[0];
-                                        setBgType(firstTemplate.type); setBgValue(firstTemplate.value); setIsTiled(firstTemplate.isTiled);
-                                        fetch(`${API_URL}/api/oasis/background?user=${user}`, {
-                                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ type: firstTemplate.type, value: firstTemplate.value, isTiled: firstTemplate.isTiled, opacity: 0.8 })
-                                        }).catch(() => { });
-                                    }
-                                }
-                            } catch (err) { }
+                            // Mantener fondo previo del usuario sin sobreescribir destructivamente con plantillas
                         }
 
                         // --- 2. Conversations & Folders ---
@@ -8939,9 +9016,47 @@ function OasisApp() {
 
     const fetchFeed = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/oasis/feed?t=${Date.now()}`);
-            const data = await res.json();
-            if (data) {
+            let data = null;
+            try {
+                const res = await fetch(`${API_URL}/api/oasis/feed?t=${Date.now()}`);
+                if (res.ok) {
+                    data = await res.json();
+                }
+            } catch (backendErr) {
+                console.warn("[Feed] Backend feed unavailable, checking Supabase...", backendErr);
+            }
+
+            // Supabase fallback si el backend devolvió vacío o falló
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                try {
+                    const sbRes = await fetch('https://mxxasrhqwzpbcuzglzif.supabase.co/rest/v1/oasis_feed?select=*', {
+                        headers: {
+                            'apikey': 'sb_publishable_ol0sZk1O3ClTMECU5yRgPw_YlbDN8Mm',
+                            'Authorization': 'Bearer sb_publishable_ol0sZk1O3ClTMECU5yRgPw_YlbDN8Mm'
+                        }
+                    });
+                    if (sbRes.ok) {
+                        const sbData = await sbRes.json();
+                        if (Array.isArray(sbData) && sbData.length > 0) {
+                            data = sbData.map(item => ({
+                                id: item.id || '',
+                                username: item.username || '',
+                                content: item.content || '',
+                                caption: item.caption || '',
+                                type: item.type || 'note',
+                                color: item.color || '',
+                                isPublic: true,
+                                timestamp: item.created_at || new Date().toISOString(),
+                                metadata: item.metadata || {}
+                            }));
+                        }
+                    }
+                } catch (sbErr) {
+                    console.warn("[Feed] Supabase direct fallback error:", sbErr);
+                }
+            }
+
+            if (data && Array.isArray(data)) {
                 setFeed(data);
                 // Pre-cache avatars and names from feed posts so they load instantly in profiles
                 data.forEach(post => {
@@ -13533,7 +13648,12 @@ ${afcMapContext}
                     onClick={() => setZoomedImage(imageUrl)}
                     className="w-full h-32 sm:h-38 md:h-44 bg-zinc-950/80 border border-white/5 rounded-2xl p-2 flex items-center justify-center shadow-inner overflow-hidden cursor-zoom-in group hover:border-white/20 transition-all duration-300 relative"
                 >
-                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                         src={imageUrl}
                         alt={`Reactivo ${qNum} - Estímulo ICAR16`}
                         className="max-h-full max-w-full object-contain opacity-95 group-hover:scale-[1.03] transition-all duration-300"
@@ -15235,7 +15355,12 @@ ${afcMapContext}
                                         setPublicProfileUser(soul.username);
                                     }}>
                                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-white/20 transition-all shadow-xl bg-zinc-900 relative">
-                                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(soul.img)} alt={soul.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
+                                            <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={formatUrl(soul.img)} alt={soul.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
                                             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all" />
                                         </div>
                                         <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-16 md:w-20 text-center">{soul.name}</span>
@@ -15536,11 +15661,21 @@ ${afcMapContext}
                                 activeIsTiled ? (
                                     <div key={`tiled-${activeBgValue}`} className="absolute inset-0 w-full h-full opacity-80 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-0">
                                         {Array.from({ length: 24 }).map((_, i) => (
-                                            <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} key={`tile-img-${i}`} src={formatUrl(activeBgValue)} className="w-full h-full object-cover" />
+                                            <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} key={`tile-img-${i}`} src={formatUrl(activeBgValue)} className="w-full h-full object-cover" />
                                         ))}
                                     </div>
                                 ) : (
-                                    <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} key={activeBgValue} src={formatUrl(activeBgValue)} className="absolute inset-0 w-full h-full object-cover opacity-80 transition-all duration-1000" alt="Background" />
+                                    <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} key={activeBgValue} src={formatUrl(activeBgValue)} className="absolute inset-0 w-full h-full object-cover opacity-80 transition-all duration-1000" alt="Background" />
                                 )
                             )}
                             {activeBgType === 'video' && (
@@ -15786,7 +15921,12 @@ ${afcMapContext}
                                             className="group relative h-24 rounded-[1.5rem] overflow-hidden border border-white/5 hover:border-accent/40 transition-all text-left"
                                         >
                                             {template.type === 'image' && (
-                                                <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={formatUrl(template.value)} alt={template.name} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} />
+                                                <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }} src={formatUrl(template.value)} alt={template.name} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} />
                                             )}
                                             {template.type === 'video' && (
                                                 <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={formatUrl(template.value)} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} autoPlay muted loop playsInline />
@@ -16692,7 +16832,12 @@ ${afcMapContext}
                             </svg>
                         </button>
 
-                        <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                        <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                             src={zoomedImage}
                             alt="Estímulo ampliado"
                             className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-white/5 shadow-2xl transition-transform duration-300"
@@ -18233,7 +18378,12 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                             borderRadius: (block.mask && block.mask !== 'none') ? 'none' : `${block.borderRadius !== undefined ? block.borderRadius : 24}px`
                                         }}
                                     >
-                                        <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                        <img onError={(e) => {
+        if (!e.target.dataset.failed) {
+            e.target.dataset.failed = 'true';
+            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+        }
+    }}
                                             src={block.content}
                                             alt="Editorial element"
                                             className="w-full h-full pointer-events-none select-none"
