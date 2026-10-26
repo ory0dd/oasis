@@ -27,6 +27,7 @@ import icarRationale from './data/icar16_rationale.json';
 import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
 import { BiographicInterview } from './components/BiographicInterview';
 import PublishNoteSelector from './components/PublishNoteSelector';
+import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
@@ -2282,6 +2283,38 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
     const localAudioRef = useRef(null);
     const [isMobileResizing, setIsMobileResizing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const startTitleWidthResize = (e, direction) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const startClientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const initialWidth = localSize.width || (block.width && block.width !== 'auto' ? block.width : 550);
+        const scale = camScale || 1;
+        let lastW = initialWidth;
+
+        const onPointerMove = (ev) => {
+            const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+            const dx = (clientX - startClientX) / scale;
+            const factor = direction === 'right' ? 2 : -2;
+            const nextW = Math.max(160, Math.min(2400, Math.round(initialWidth + dx * factor)));
+            lastW = nextW;
+            setLocalSize(prev => ({ ...prev, width: nextW }));
+        };
+
+        const onPointerUp = () => {
+            window.removeEventListener('mousemove', onPointerMove);
+            window.removeEventListener('mouseup', onPointerUp);
+            window.removeEventListener('touchmove', onPointerMove);
+            window.removeEventListener('touchend', onPointerUp);
+            if (onUpdateBlock) {
+                onUpdateBlock({ ...block, width: lastW, isSingleLine: false });
+            }
+        };
+
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+        window.addEventListener('touchmove', onPointerMove);
+        window.addEventListener('touchend', onPointerUp);
+    };
     const deleteModalRef = useRef(null);
     const longPressTimer = useRef(null);
     const touchStartPos = useRef({ x: 0, y: 0 });
@@ -2382,83 +2415,164 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
-    return (block.type && block.type.toLowerCase() === 'canvas_title') ? (
-        <div
-            className={`select-none cursor-move active:cursor-grabbing group z-10 ${draggingId ? (draggingId === block.id ? 'transition-none scale-105 z-50' : 'transition-none z-10') : 'transition-transform duration-300 scale-100 hover:scale-105'} ${isLinking ? 'hover:scale-105 ring-4 ring-transparent hover:ring-accent/40 rounded-3xl' : ''} ${useInternalPosition ? 'absolute' : 'relative'} flex flex-col items-center justify-center`}
-            style={useInternalPosition ? { left: block.x, top: block.y, transform: `translate(-50%, -50%)`, willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' } : { willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-            onMouseDown={(e) => {
-                if (showDeleteConfirm) { e.stopPropagation(); return; }
-                e.stopPropagation();
-                handleNodeMouseDown(e);
-                onStart(e, block.id);
-            }}
-            onTouchStart={(e) => {
-                if (showDeleteConfirm) { e.stopPropagation(); return; }
-                e.stopPropagation();
-                onStart(e, block.id);
-                if (e.touches && e.touches.length === 1) {
-                    touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-                    longPressTimer.current = setTimeout(() => {
-                        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-                        setShowDeleteConfirm(true);
-                    }, 600);
-                }
-            }}
-            onTouchEnd={(e) => {
-                if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
-            }}
-            onClick={(e) => {
-                const dist = Math.hypot(e.clientX - mouseDownPos.current.x, e.clientY - mouseDownPos.current.y);
-                if (dist < 5) {
-                    e.stopPropagation();
-                    if (showDeleteConfirm) return;
-                    if (isLinking && onStartConnecting) {
-                        onStartConnecting(block.id);
-                        return;
-                    }
-                    if (onRequestTitleEdit) {
-                        onRequestTitleEdit(block.id, block.content);
-                    }
-                }
-            }}
-        >
+    return (block.type && block.type.toLowerCase() === 'canvas_title') ? (() => {
+        const titleFontFamilyCSS = getFontFamilyCSS(block.fontFamily || 'outfit');
+        const titleFontSize = block.fontSize || 64;
+        const titleColor = block.color || '#ffffff';
+        const titleHasStroke = block.hasStroke !== false;
+        const titleStrokeWidth = block.strokeWidth !== undefined ? block.strokeWidth : 2.5;
+        const titleStrokeColor = block.strokeColor || '#000000';
+        const titleHasShadow = block.hasShadow !== false;
+        const titleLineHeight = block.lineHeight !== undefined ? block.lineHeight : 1.1;
+        const titleTextAlign = block.textAlign || 'center';
+        const titleIsSingleLine = !!block.isSingleLine;
+        const effectiveWidth = localSize.width || (block.width && block.width !== 'auto' ? block.width : null);
+        const isTitleSelected = selectedBlockId === block.id || draggingId === block.id;
+
+        return (
             <div
-                className="text-4xl md:text-5xl lg:text-[5rem] text-center whitespace-pre-wrap leading-tight p-4 pointer-events-none"
-                style={{
-                    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontWeight: '800',
-                    color: '#ffffff',
-                    WebkitTextFillColor: '#ffffff',
-                    WebkitTextStroke: '2.5px black',
-                    textShadow: '0px 2px 0px #000, 0px 4px 0px #000, 2px 4px 0px #000, -2px 4px 0px #000, 3px 3px 0px #000, -3px 3px 0px #000, 0px 15px 40px rgba(0,0,0,0.6)'
+                className={`select-none cursor-move active:cursor-grabbing group z-10 ${draggingId ? (draggingId === block.id ? 'transition-none scale-105 z-50' : 'transition-none z-10') : 'transition-transform duration-300 scale-100 hover:scale-105'} ${isLinking ? 'hover:scale-105 ring-4 ring-transparent hover:ring-accent/40 rounded-3xl' : ''} ${isTitleSelected ? 'ring-2 ring-accent/60 ring-offset-4 ring-offset-transparent rounded-2xl' : ''} ${useInternalPosition ? 'absolute' : 'relative'} flex flex-col items-center justify-center`}
+                style={useInternalPosition ? { left: block.x, top: block.y, transform: `translate(-50%, -50%)`, willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' } : { willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                onMouseDown={(e) => {
+                    if (showDeleteConfirm) { e.stopPropagation(); return; }
+                    e.stopPropagation();
+                    handleNodeMouseDown(e);
+                    onStart(e, block.id);
+                }}
+                onTouchStart={(e) => {
+                    if (showDeleteConfirm) { e.stopPropagation(); return; }
+                    e.stopPropagation();
+                    onStart(e, block.id);
+                    if (e.touches && e.touches.length === 1) {
+                        touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                        longPressTimer.current = setTimeout(() => {
+                            if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+                            setShowDeleteConfirm(true);
+                        }, 600);
+                    }
+                }}
+                onTouchEnd={(e) => {
+                    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+                }}
+                onClick={(e) => {
+                    const dist = Math.hypot(e.clientX - mouseDownPos.current.x, e.clientY - mouseDownPos.current.y);
+                    if (dist < 5) {
+                        e.stopPropagation();
+                        if (showDeleteConfirm) return;
+                        if (isLinking && onStartConnecting) {
+                            onStartConnecting(block.id);
+                            return;
+                        }
+                        if (onSelectBlockId) onSelectBlockId(block.id);
+                        if (onRequestTitleEdit) {
+                            onRequestTitleEdit(block);
+                        }
+                    }
                 }}
             >
-                {block.content}
-            </div>
-            {showDeleteConfirm && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 flex gap-2 pointer-events-auto">
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(block.id); setShowDeleteConfirm(false); }} className="px-4 py-2 bg-red-500 text-white font-bold rounded-full shadow-xl text-[10px] uppercase tracking-widest hover:bg-red-400 transition-colors">Eliminar</button>
-                    <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }} className="px-4 py-2 bg-zinc-800 text-white font-bold rounded-full shadow-xl text-[10px] uppercase tracking-widest hover:bg-zinc-700 transition-colors">Cancelar</button>
-                </div>
-            )}
-            {!showDeleteConfirm && (
+                {/* FLOATING ACTION TOOLBAR WHEN SELECTED */}
+                {isTitleSelected && !showDeleteConfirm && (
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/90 backdrop-blur-md border border-white/20 rounded-full px-3 py-1 shadow-2xl z-40 pointer-events-auto animate-in fade-in zoom-in-95 duration-150">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onRequestTitleEdit) onRequestTitleEdit(block);
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-bold text-white hover:text-accent transition-colors px-1"
+                            title="Modificar estilo y texto"
+                        >
+                            <Pencil size={12} className="text-accent" />
+                            <span>Editar Estilo</span>
+                        </button>
+                        <div className="w-px h-3 bg-white/20 mx-0.5" />
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const nextWidth = !effectiveWidth || effectiveWidth < 800 ? (effectiveWidth ? effectiveWidth + 250 : 700) : 380;
+                                setLocalSize(prev => ({ ...prev, width: nextWidth }));
+                                if (onUpdateBlock) onUpdateBlock({ ...block, width: nextWidth, isSingleLine: false });
+                            }}
+                            className="text-[10px] font-mono font-bold text-zinc-300 hover:text-white transition-colors px-1"
+                            title="Estirar ancho rápido"
+                        >
+                            ↔ {effectiveWidth ? `${effectiveWidth}px` : 'Auto'}
+                        </button>
+                    </div>
+                )}
+
+                {/* STRETCH RESIZE HANDLES (LEFT AND RIGHT) */}
+                {isTitleSelected && !showDeleteConfirm && (
+                    <>
+                        <div
+                            onMouseDown={(e) => startTitleWidthResize(e, 'left')}
+                            onTouchStart={(e) => startTitleWidthResize(e, 'left')}
+                            className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-4 h-12 rounded-full bg-accent text-black border border-white/40 flex items-center justify-center cursor-ew-resize shadow-xl z-30 hover:scale-110 active:scale-95 transition-transform"
+                            title="Arrastra para estirar ancho (Izquierda)"
+                        >
+                            <div className="w-1 h-3 rounded-full bg-black/70" />
+                        </div>
+                        <div
+                            onMouseDown={(e) => startTitleWidthResize(e, 'right')}
+                            onTouchStart={(e) => startTitleWidthResize(e, 'right')}
+                            className="absolute -right-3.5 top-1/2 -translate-y-1/2 w-4 h-12 rounded-full bg-accent text-black border border-white/40 flex items-center justify-center cursor-ew-resize shadow-xl z-30 hover:scale-110 active:scale-95 transition-transform"
+                            title="Arrastra para estirar ancho (Derecha)"
+                        >
+                            <div className="w-1 h-3 rounded-full bg-black/70" />
+                        </div>
+                    </>
+                )}
+
                 <div
-                    className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer group/port pointer-events-auto opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (onStartConnecting) onStartConnecting(block.id);
+                    className="p-4 pointer-events-none select-none"
+                    style={{
+                        fontFamily: titleFontFamilyCSS,
+                        fontSize: `${titleFontSize}px`,
+                        fontWeight: block.fontWeight || '800',
+                        color: titleColor,
+                        WebkitTextFillColor: titleColor,
+                        WebkitTextStroke: titleHasStroke && titleStrokeWidth > 0 ? `${titleStrokeWidth}px ${titleStrokeColor}` : '0px transparent',
+                        textShadow: titleHasStroke && titleHasShadow && titleStrokeWidth > 0
+                            ? `0px 2px 0px ${titleStrokeColor}, 0px 4px 0px ${titleStrokeColor}, 2px 4px 0px ${titleStrokeColor}, -2px 4px 0px ${titleStrokeColor}, 3px 3px 0px ${titleStrokeColor}, -3px 3px 0px ${titleStrokeColor}, 0px 15px 40px rgba(0,0,0,0.6)`
+                            : (titleHasShadow ? '0px 10px 30px rgba(0,0,0,0.6)' : 'none'),
+                        lineHeight: titleLineHeight,
+                        letterSpacing: block.letterSpacing || 'normal',
+                        textAlign: titleTextAlign,
+                        width: titleIsSingleLine ? 'max-content' : (effectiveWidth ? `${effectiveWidth}px` : 'auto'),
+                        maxWidth: titleIsSingleLine ? 'none' : (effectiveWidth ? `${effectiveWidth}px` : '900px'),
+                        whiteSpace: titleIsSingleLine ? 'nowrap' : 'pre-wrap',
+                        wordBreak: 'break-word'
                     }}
                 >
-                    <div className="w-4 h-4 rounded-full bg-zinc-900 border-2 border-white/20 group-hover/port:border-accent group-hover/port:scale-125 transition-all shadow-lg flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-accent opacity-40 group-hover/port:opacity-100 animate-pulse" />
-                    </div>
-                    <span className="text-[5px] font-black tracking-[0.3em] text-zinc-600 group-hover/port:text-accent uppercase select-none">Relacionar</span>
+                    {block.content}
                 </div>
-            )}
-        </div>
-    ) : isAudio ? (
+
+                {showDeleteConfirm && (
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 flex gap-2 pointer-events-auto">
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(block.id); setShowDeleteConfirm(false); }} className="px-4 py-2 bg-red-500 text-white font-bold rounded-full shadow-xl text-[10px] uppercase tracking-widest hover:bg-red-400 transition-colors">Eliminar</button>
+                        <button onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(false); }} className="px-4 py-2 bg-zinc-800 text-white font-bold rounded-full shadow-xl text-[10px] uppercase tracking-widest hover:bg-zinc-700 transition-colors">Cancelar</button>
+                    </div>
+                )}
+                {!showDeleteConfirm && (
+                    <div
+                        className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer group/port pointer-events-auto opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            if (onStartConnecting) onStartConnecting(block.id);
+                        }}
+                    >
+                        <div className="w-4 h-4 rounded-full bg-zinc-900 border-2 border-white/20 group-hover/port:border-accent group-hover/port:scale-125 transition-all shadow-lg flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent opacity-40 group-hover/port:opacity-100 animate-pulse" />
+                        </div>
+                        <span className="text-[5px] font-black tracking-[0.3em] text-zinc-600 group-hover/port:text-accent uppercase select-none">Relacionar</span>
+                    </div>
+                )}
+            </div>
+        );
+    })() : isAudio ? (
         <div
             className={`select-none cursor-move active:cursor-grabbing group z-10 ${draggingId ? (draggingId === block.id ? 'transition-none scale-105 z-50' : 'transition-none z-10') : 'transition-transform duration-300 scale-100 hover:scale-105'} ${isLinking ? 'hover:scale-105 ring-4 ring-transparent hover:ring-accent/40 rounded-3xl' : ''} ${useInternalPosition ? 'absolute' : 'relative'} flex flex-col items-center justify-center pointer-events-auto`}
             style={useInternalPosition ? { left: block.x, top: block.y, transform: `translate(-50%, -50%)`, willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' } : { willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
@@ -13112,16 +13226,44 @@ ${afcMapContext}
                     const hasConnections = Array.isArray(links) && links.some(l => l.from === b.id || l.to === b.id);
                     return (
                         <MemoNode
-                            onRequestTitleEdit={(blockId, currentText) => {
+                            onRequestTitleEdit={(targetBlock) => {
+                                const b = (typeof targetBlock === 'object' && targetBlock !== null) 
+                                    ? targetBlock 
+                                    : (blocks.find(x => x.id === targetBlock) || { content: '' });
                                 setTitlePrompt({
-                                    defaultValue: currentText,
-                                    onConfirm: (newText) => {
-                                        if (newText && newText.trim() && newText !== currentText) {
-                                            const b = blocks.find(x => x.id === blockId);
-                                            if (b) {
-                                                onSelect({ ...b, content: newText.trim(), type: 'canvas_title' });
-                                            }
-                                        }
+                                    block: b,
+                                    defaultValue: b.content || '',
+                                    fontFamily: b.fontFamily || 'outfit',
+                                    fontSize: b.fontSize || 64,
+                                    color: b.color || '#ffffff',
+                                    hasStroke: b.hasStroke !== undefined ? b.hasStroke : true,
+                                    strokeWidth: b.strokeWidth !== undefined ? b.strokeWidth : 2.5,
+                                    strokeColor: b.strokeColor || '#000000',
+                                    hasShadow: b.hasShadow !== undefined ? b.hasShadow : true,
+                                    lineHeight: b.lineHeight !== undefined ? b.lineHeight : 1.1,
+                                    textAlign: b.textAlign || 'center',
+                                    width: b.width !== undefined ? b.width : 550,
+                                    isSingleLine: b.isSingleLine || false,
+                                    onConfirm: (data) => {
+                                        const text = typeof data === 'string' ? data : data.content;
+                                        if (!text || !text.trim()) return;
+                                        const updatedBlock = {
+                                            ...b,
+                                            type: 'canvas_title',
+                                            content: text.trim(),
+                                            fontFamily: data.fontFamily || b.fontFamily || 'outfit',
+                                            fontSize: data.fontSize || b.fontSize || 64,
+                                            color: data.color || b.color || '#ffffff',
+                                            hasStroke: data.hasStroke !== undefined ? data.hasStroke : (b.hasStroke !== undefined ? b.hasStroke : true),
+                                            strokeWidth: data.strokeWidth !== undefined ? data.strokeWidth : (b.strokeWidth !== undefined ? b.strokeWidth : 2.5),
+                                            strokeColor: data.strokeColor || b.strokeColor || '#000000',
+                                            hasShadow: data.hasShadow !== undefined ? data.hasShadow : (b.hasShadow !== undefined ? b.hasShadow : true),
+                                            lineHeight: data.lineHeight !== undefined ? data.lineHeight : (b.lineHeight !== undefined ? b.lineHeight : 1.1),
+                                            textAlign: data.textAlign || b.textAlign || 'center',
+                                            width: data.width !== undefined ? data.width : b.width,
+                                            isSingleLine: data.isSingleLine !== undefined ? data.isSingleLine : false
+                                        };
+                                        handleInlineBlockUpdate(updatedBlock);
                                     }
                                 });
                             }}
@@ -13506,12 +13648,35 @@ ${afcMapContext}
                             onClick={() => {
                                 setTitlePrompt({
                                     defaultValue: '',
-                                    onConfirm: (titleText) => {
+                                    fontFamily: 'outfit',
+                                    fontSize: 64,
+                                    color: '#ffffff',
+                                    hasStroke: true,
+                                    strokeWidth: 2.5,
+                                    strokeColor: '#000000',
+                                    hasShadow: true,
+                                    lineHeight: 1.1,
+                                    textAlign: 'center',
+                                    width: 550,
+                                    isSingleLine: false,
+                                    onConfirm: (data) => {
+                                        const titleText = typeof data === 'string' ? data : data.content;
                                         if (!titleText || !titleText.trim()) return;
                                         const newBlock = {
                                             id: `title-${Date.now()}`,
                                             type: 'canvas_title',
                                             content: titleText.trim(),
+                                            fontFamily: data.fontFamily || 'outfit',
+                                            fontSize: data.fontSize || 64,
+                                            color: data.color || '#ffffff',
+                                            hasStroke: data.hasStroke !== undefined ? data.hasStroke : true,
+                                            strokeWidth: data.strokeWidth !== undefined ? data.strokeWidth : 2.5,
+                                            strokeColor: data.strokeColor || '#000000',
+                                            hasShadow: data.hasShadow !== undefined ? data.hasShadow : true,
+                                            lineHeight: data.lineHeight !== undefined ? data.lineHeight : 1.1,
+                                            textAlign: data.textAlign || 'center',
+                                            width: data.width || 550,
+                                            isSingleLine: data.isSingleLine || false,
                                             x: -cam.x / cam.scale,
                                             y: -cam.y / cam.scale,
                                             isPublic: false,
@@ -16771,34 +16936,11 @@ ${afcMapContext}
             )}
 
             {titlePrompt && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setTitlePrompt(null)}>
-                    <div className="bg-[#121214] border border-white/10 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-white text-lg font-black uppercase tracking-widest mb-4">{titlePrompt.defaultValue ? 'Editar Título' : 'Añadir Título'}</h3>
-                        <input
-                            type="text"
-                            autoFocus
-                            defaultValue={titlePrompt.defaultValue}
-                            placeholder="Escribe el texto aquí..."
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-accent transition-colors mb-6"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    titlePrompt.onConfirm(e.currentTarget.value);
-                                    setTitlePrompt(null);
-                                }
-                                if (e.key === 'Escape') setTitlePrompt(null);
-                            }}
-                            id="title-prompt-input"
-                        />
-                        <div className="flex gap-3 justify-end">
-                            <button onClick={() => setTitlePrompt(null)} className="px-5 py-2.5 rounded-xl border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 font-bold text-xs uppercase tracking-widest transition-all">Cancelar</button>
-                            <button onClick={() => {
-                                const input = document.getElementById('title-prompt-input');
-                                titlePrompt.onConfirm(input.value);
-                                setTitlePrompt(null);
-                            }} className="px-5 py-2.5 rounded-xl bg-accent text-accent-foreground font-black text-xs uppercase tracking-widest hover:brightness-110 transition-all">Aceptar</button>
-                        </div>
-                    </div>
-                </div>
+                <CanvasTextEditorModal
+                    titlePrompt={titlePrompt}
+                    onClose={() => setTitlePrompt(null)}
+                    accent={accent}
+                />
             )}
             {isHighlightModalOpen && (
                 <HighlightModal
