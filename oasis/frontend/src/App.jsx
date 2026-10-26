@@ -309,9 +309,9 @@ const getBWidth = (block, isPoint) => {
     if (isPoint) return 0;
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
+    if (block.type === 'sub_board') return 170;
     if (block.width || block.w) return block.width || block.w;
     if (block.type === 'color_swatch') return 215;
-    if (block.type === 'sub_board') return 220;
     if (block.type === 'link') return 260;
     if (block.type === 'todo') return 310;
     if (block.type === 'column') return 320;
@@ -328,9 +328,9 @@ const getBHeight = (block, isPoint) => {
     if (isPoint) return 0;
     if (block.type === 'canvas_title') return 0;
     if (block.isPublic || block.type === 'insight') return 0;
+    if (block.type === 'sub_board') return 155;
     if (block.height || block.h) return block.height || block.h;
     if (block.type === 'color_swatch') return 205;
-    if (block.type === 'sub_board') return 110;
     if (block.type === 'link') return 120;
     if (block.type === 'todo') return 210;
     if (block.type === 'column') return 380;
@@ -2549,12 +2549,12 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             }}
         >
             <div
-                className={`relative flex flex-col ${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId ? 'transition-none' : 'transition-all duration-300'} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`}
+                className={`relative flex flex-col ${isSubBoardCard ? 'rounded-3xl border-transparent bg-transparent shadow-none overflow-visible' : `${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`} ${draggingId ? 'transition-none' : 'transition-all duration-300'}`}
                 style={{
-                    width: localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`,
-                    height: localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`,
-                    minWidth: isColorSwatch ? '175px' : (isSubBoardCard ? '200px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
-                    minHeight: isColorSwatch ? '170px' : (isSubBoardCard ? '80px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
+                    width: isSubBoardCard ? '180px' : (localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`),
+                    height: isSubBoardCard ? '160px' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`),
+                    minWidth: isSubBoardCard ? '180px' : (isColorSwatch ? '175px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
+                    minHeight: isSubBoardCard ? '160px' : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
                     maxWidth: undefined,
                     maxHeight: undefined,
                     willChange: 'transform',
@@ -2617,7 +2617,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
 
-                <div className={`${isColorSwatch ? 'p-0' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
+                <div className={`${isColorSwatch || isSubBoardCard ? 'p-0' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
                     {isConversation ? (() => {
                         let parsedMsgs = [];
                         try {
@@ -3524,59 +3524,119 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                 </div>
                             </div>
                         </div>
-                    ) : isSubBoardCard ? (
-                        <div className="flex-1 w-full h-full flex items-center justify-between gap-3 select-none">
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-Tablero');
-                                    }}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    className="w-11 h-11 rounded-2xl bg-[#10b981]/12 border border-[#10b981]/30 hover:bg-[#10b981]/25 flex items-center justify-center text-[#10b981] shrink-0 shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all"
-                                    title="Entrar al tablero"
-                                >
-                                    <LayoutGrid size={19} />
-                                </button>
-                                <div className="min-w-0 flex-1">
-                                    <input
-                                        type="text"
-                                        value={block.caption ?? 'Escena II • Bosque'}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        onChange={(e) => {
-                                            if (onUpdateBlock) {
-                                                onUpdateBlock({ ...block, caption: e.target.value });
-                                            }
-                                        }}
-                                        placeholder="Nombre del tablero..."
-                                        className="bg-transparent text-[15px] font-bold text-white truncate focus:outline-none hover:text-[#10b981] transition-colors w-full"
-                                    />
+                    ) : isSubBoardCard ? (() => {
+                        const boardPalette = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#366354'];
+                        const boardColor = block.color && block.color !== '#bef264' ? block.color : '#3b82f6';
+                        const childCount = (blocks || []).filter(b => b.canvasId === block.id).length;
+
+                        return (
+                            <div className="flex-1 w-full h-full flex flex-col items-center justify-center select-none group/board relative">
+                                {/* BLOQUE / ICONO CENTRAL DE TABLERO (ESTÉTICA PORTAL / MILANOTE) */}
+                                <div className="relative mb-2.5">
+                                    {/* Botón flotante para cambiar el color del tablero */}
                                     <button
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-Tablero');
+                                            const idx = boardPalette.indexOf(boardColor);
+                                            const nextColor = boardPalette[(idx + 1) % boardPalette.length];
+                                            if (onUpdateBlock) {
+                                                onUpdateBlock({ ...block, color: nextColor });
+                                            }
                                         }}
                                         onMouseDown={(e) => e.stopPropagation()}
-                                        className="text-[10px] font-mono uppercase tracking-wider text-[#10b981] hover:underline flex items-center gap-1 mt-0.5"
+                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -left-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-300 hover:text-white hover:scale-110 transition-all shadow-lg"
+                                        title="Cambiar color del tablero"
                                     >
-                                        {(blocks || []).filter(b => b.canvasId === block.id).length} elementos • Abrir →
+                                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: boardColor }} />
+                                    </button>
+
+                                    {/* Botón flotante para eliminar el tablero */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDeleteConfirm(true);
+                                        }}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-400 hover:text-red-400 hover:scale-110 transition-all shadow-lg"
+                                        title="Eliminar tablero"
+                                    >
+                                        <X size={12} />
+                                    </button>
+
+                                    {/* Squircle Principal del Tablero */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero');
+                                        }}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="w-[84px] h-[84px] rounded-[24px] flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover/board:-translate-y-1 group-hover/board:scale-[1.04] active:scale-95 border border-white/20"
+                                        style={{
+                                            backgroundColor: boardColor,
+                                            boxShadow: `0 16px 36px -8px ${boardColor}66, inset 0 1px 1px rgba(255,255,255,0.35)`
+                                        }}
+                                        title="Abrir tablero"
+                                    >
+                                        {/* Brillo sutil diagonal */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/25 pointer-events-none" />
+
+                                        {/* Tarjeta trasera inclinada (efecto de profundidad/capas) */}
+                                        <div className="absolute w-[38px] h-[44px] rounded-[9px] bg-white/25 -rotate-6 -translate-x-1 -translate-y-0.5 transition-transform duration-300 group-hover/board:-rotate-12 group-hover/board:-translate-x-1.5" />
+
+                                        {/* Mini-lienzo interior (inspirado en Milanote pero con mini-retícula Oasis) */}
+                                        <div className="relative w-[40px] h-[46px] rounded-[10px] bg-white shadow-[0_6px_16px_rgba(0,0,0,0.28)] flex flex-col overflow-hidden transition-transform duration-300 group-hover/board:scale-105">
+                                            <div className="flex-1 p-1.5 grid grid-cols-2 gap-1 bg-white">
+                                                <div className="rounded-[3px] bg-zinc-200/90" />
+                                                <div className="rounded-[3px]" style={{ backgroundColor: `${boardColor}30` }} />
+                                                <div className="col-span-2 rounded-[3px] bg-zinc-100" />
+                                            </div>
+                                            <div
+                                                className="h-3 w-full flex items-center justify-center"
+                                                style={{ backgroundColor: `${boardColor}45` }}
+                                            >
+                                                <div
+                                                    className="w-3.5 h-1 rounded-full"
+                                                    style={{ backgroundColor: boardColor }}
+                                                />
+                                            </div>
+                                        </div>
                                     </button>
                                 </div>
+
+                                {/* TÍTULO CENTRADO DEBAJO DEL ICONO */}
+                                <input
+                                    type="text"
+                                    value={block.caption ?? 'Nuevo Tablero'}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, caption: e.target.value });
+                                        }
+                                    }}
+                                    placeholder="Nuevo Tablero"
+                                    className="bg-transparent text-[14px] font-bold text-white text-center truncate focus:outline-none focus:bg-black/35 rounded-md px-1.5 py-0.5 w-full drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] transition-colors"
+                                    title="Clic para renombrar tablero"
+                                />
+
+                                {/* CONTADOR DE TARJETAS DEBAJO DEL TÍTULO */}
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero');
+                                    }}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="text-[12px] font-medium text-zinc-400 hover:text-white transition-colors mt-0.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                                >
+                                    {childCount} {childCount === 1 ? 'tarjeta' : 'tarjetas'}
+                                </button>
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowDeleteConfirm(true);
-                                }}
-                                className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
-                            >
-                                <X size={13} />
-                            </button>
-                        </div>
-                    ) : isColumnCard ? (
+                        );
+                    })() : isColumnCard ? (
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
                             <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-white/[0.08] shrink-0">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -3638,6 +3698,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
                 {/* Resize Handle */}
+                {!isSubBoardCard && (
                 <div
                     className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-50 flex items-end justify-end p-2 opacity-0 hover:opacity-100 transition-opacity pointer-events-auto"
                     onMouseDown={(e) => {
@@ -3699,6 +3760,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500 hover:text-white"><polyline points="21 15 21 21 15 21"></polyline><line x1="21" y1="21" x2="15" y2="15"></line><polyline points="9 3 3 3 3 9"></polyline><line x1="3" y1="3" x2="9" y2="9"></line></svg>
                 </div>
+                )}
 
                 {/* MOBILE RESIZE/STRETCH OVERLAY */}
                 {isMobileResizing && (
@@ -11946,11 +12008,12 @@ ${afcMapContext}
                                         id: newBoardId,
                                         type: 'sub_board',
                                         caption: 'Nuevo Tablero',
+                                        color: '#3b82f6',
                                         content: '',
                                         x: (-cam.x / cam.scale) + jitterX,
                                         y: (-cam.y / cam.scale) + jitterY,
-                                        width: 235,
-                                        height: 86,
+                                        width: 180,
+                                        height: 160,
                                         isPublic: false,
                                         createdAt: new Date().toISOString(),
                                         canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
@@ -15263,7 +15326,13 @@ ${afcMapContext}
                                         <span className="text-zinc-600 font-mono text-xs">/</span>
 
                                         <div className="flex items-center gap-1.5">
-                                            <span className="w-3 h-3 rounded-[3px] bg-[#3b82f6] shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.45)]" />
+                                            <span
+                                                className="w-3 h-3 rounded-[3px] shrink-0"
+                                                style={{
+                                                    backgroundColor: activeSubBoardBlock?.color || '#3b82f6',
+                                                    boxShadow: `0 0 8px ${(activeSubBoardBlock?.color || '#3b82f6')}70`
+                                                }}
+                                            />
                                             <input
                                                 type="text"
                                                 value={activeSubBoardBlock?.caption ?? 'Nuevo Tablero'}
