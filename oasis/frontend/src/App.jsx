@@ -15290,6 +15290,14 @@ ${afcMapContext}
         );
     };
 
+    if (!isLoggedIn && publicProfileUser) {
+        return (
+            <div className="fixed inset-0 w-screen h-[100dvh] bg-[#08080a] text-zinc-100 overflow-hidden select-none">
+                {renderPublicProfileView()}
+            </div>
+        );
+    }
+
     if (!isLoggedIn && !publicProfileUser) {
         const handleResetPasswordSubmit = async () => {
             const newPwd = document.getElementById('oasis_new_key_input')?.value;
@@ -15649,7 +15657,7 @@ ${afcMapContext}
                                             />
                                         </>
                                     )}
-                    {publicProfileUser && renderPublicProfileView()}
+                    {publicProfileUser && (<div className="fixed inset-0 z-[3000] pointer-events-auto bg-[#08080a]">{renderPublicProfileView()}</div>)}
                 </div>
             </ErrorBoundary>
 
@@ -16394,7 +16402,7 @@ ${afcMapContext}
             )}
 
             {/* UNIFIED MODAL BACKDROP */}
-            {(isComposerOpen || isSimpleNotesOpen || activeNotebook || isChatOpen || isBitacoraOpen || isUnifiedCreatorOpen || isPublishSelectorOpen) && (
+            {!publicProfileUser && (isComposerOpen || isSimpleNotesOpen || activeNotebook || isChatOpen || isBitacoraOpen || isUnifiedCreatorOpen || isPublishSelectorOpen) && (
                 <div
                     className="fixed inset-0 z-[1399] bg-[#050506]/60 backdrop-blur-md transition-all duration-700 animate-in fade-in"
                     onPointerDown={(e) => e.stopPropagation()}
