@@ -41,7 +41,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
         titlePrompt.hasStroke !== undefined ? titlePrompt.hasStroke : (initialBlock.hasStroke !== undefined ? initialBlock.hasStroke : true)
     );
     const [strokeWidth, setStrokeWidth] = useState(
-        titlePrompt.strokeWidth !== undefined ? titlePrompt.strokeWidth : (initialBlock.strokeWidth !== undefined ? initialBlock.strokeWidth : 2.5)
+        titlePrompt.strokeWidth !== undefined ? titlePrompt.strokeWidth : (initialBlock.strokeWidth !== undefined ? initialBlock.strokeWidth : 1.8)
     );
     const [strokeColor, setStrokeColor] = useState(titlePrompt.strokeColor || initialBlock.strokeColor || '#000000');
     const [hasShadow, setHasShadow] = useState(
@@ -147,6 +147,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
                                     fontWeight: '800',
                                     color: color,
                                     WebkitTextFillColor: color,
+                                    paintOrder: 'stroke fill',
                                     WebkitTextStroke: hasStroke && strokeWidth > 0 ? `${strokeWidth}px ${strokeColor}` : '0px transparent',
                                     textShadow: hasStroke && hasShadow && strokeWidth > 0
                                         ? `0px 2px 0px ${strokeColor}, 0px 4px 0px ${strokeColor}, 2px 4px 0px ${strokeColor}, -2px 4px 0px ${strokeColor}, 3px 3px 0px ${strokeColor}, -3px 3px 0px ${strokeColor}, 0px 10px 25px rgba(0,0,0,0.6)`
@@ -221,9 +222,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
                                     </div>
                                     <div className="flex gap-2">
                                         {[
-                                            { label: 'Fino', val: 1.5 },
-                                            { label: 'Medio', val: 2.5 },
-                                            { label: 'Grueso', val: 4.5 }
+                                            { label: 'Fino', val: 1.2 }, { label: 'Medio', val: 1.8 }, { label: 'Grueso', val: 2.8 }
                                         ].map(preset => (
                                             <button
                                                 key={preset.val}

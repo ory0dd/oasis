@@ -2533,6 +2533,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         fontWeight: block.fontWeight || '800',
                         color: titleColor,
                         WebkitTextFillColor: titleColor,
+                        paintOrder: 'stroke fill',
                         WebkitTextStroke: titleHasStroke && titleStrokeWidth > 0 ? `${titleStrokeWidth}px ${titleStrokeColor}` : '0px transparent',
                         textShadow: titleHasStroke && titleHasShadow && titleStrokeWidth > 0
                             ? `0px 2px 0px ${titleStrokeColor}, 0px 4px 0px ${titleStrokeColor}, 2px 4px 0px ${titleStrokeColor}, -2px 4px 0px ${titleStrokeColor}, 3px 3px 0px ${titleStrokeColor}, -3px 3px 0px ${titleStrokeColor}, 0px 15px 40px rgba(0,0,0,0.6)`
@@ -3814,14 +3815,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     </button>
 
                                     {/* Squircle Principal del Tablero */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero');
-                                        }}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        className="w-[84px] h-[84px] rounded-[24px] flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover/board:-translate-y-1 group-hover/board:scale-[1.04] active:scale-95 border border-white/20"
+                                    <div onClick={(e) => { const dist = Math.hypot(e.clientX - mouseDownPos.current.x, e.clientY - mouseDownPos.current.y); if (dist < 6) { e.stopPropagation(); if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero'); } }} className="w-[84px] h-[84px] rounded-[24px] flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover/board:-translate-y-1 group-hover/board:scale-[1.04] active:scale-95 border border-white/20"
                                         style={{
                                             backgroundColor: boardColor,
                                             boxShadow: `0 16px 36px -8px ${boardColor}66, inset 0 1px 1px rgba(255,255,255,0.35)`
@@ -3851,7 +3845,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                                 />
                                             </div>
                                         </div>
-                                    </button>
+                                    </div>
                                 </div>
 
                                 {/* TÍTULO CENTRADO DEBAJO DEL ICONO */}
@@ -4322,6 +4316,7 @@ const ProfileView = ({
     const user24hStories = useMemo(() => {
         return (feed || []).filter(b => {
             if (!b || b.type !== 'story') return false;
+            if (b.isPublic === false) return false;
             const u1 = (b.username || '').replace('@', '').toLowerCase();
             const u2 = (b.metadata?.feedUsername || '').replace('@', '').toLowerCase();
             return (u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase()) && b.timestamp > twentyFourHoursAgo;
@@ -4355,7 +4350,8 @@ const ProfileView = ({
             if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings') return false;
             const u = (b.username || user || '').replace('@', '').toLowerCase();
             if (u !== target) return false;
-            return b.isPublic || (b.metadata && (b.metadata.buyLink || b.metadata.price)) || b.type === 'note' || b.type === 'image';
+            // STRICT PRIVACY: Only explicitly published notes or shop items with a price/buyLink
+            return b.isPublic === true || !!(b.metadata && (b.metadata.buyLink || b.metadata.price));
         });
 
         const combined = [...feedPosts];
@@ -12059,10 +12055,13 @@ ${afcMapContext}
                 });
 
                 // Pop up the color menu automatically at the target node's position on screen
+                const fromNode = blocks.find(b => b.id === linkSource);
                 const targetNode = blocks.find(b => b.id === targetId);
                 if (targetNode) {
-                    const screenX = targetNode.x * cam.scale + cam.x;
-                    const screenY = targetNode.y * cam.scale + cam.y;
+                    const midX = fromNode ? (fromNode.x + targetNode.x) / 2 : targetNode.x;
+                    const midY = fromNode ? (fromNode.y + targetNode.y) / 2 : targetNode.y;
+                    const screenX = Math.max(160, Math.min(window.innerWidth - 160, window.innerWidth / 2 + cam.x + midX * cam.scale));
+                    const screenY = Math.max(80, Math.min(window.innerHeight - 80, window.innerHeight / 2 + cam.y + midY * cam.scale));
                     setActiveLinkMenu({ from: linkSource, to: targetId, x: screenX, y: screenY });
                 }
             }
@@ -13652,7 +13651,7 @@ ${afcMapContext}
                                     fontSize: 64,
                                     color: '#ffffff',
                                     hasStroke: true,
-                                    strokeWidth: 2.5,
+                                    strokeWidth: 1.8,
                                     strokeColor: '#000000',
                                     hasShadow: true,
                                     lineHeight: 1.1,
