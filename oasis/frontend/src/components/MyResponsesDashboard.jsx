@@ -3088,9 +3088,10 @@ ESTRUCTURA JSON OBLIGATORIA:
     const [newSessionNote, setNewSessionNote] = useState('');
 
     // Determine active blind spot (dynamic AI generation first, fallback to config if empty)
-    const availableSpots = afcData?.blind_spots || BLIND_SPOTS_CONFIG || [];
+    const rawSpots = afcData?.blind_spots || BLIND_SPOTS_CONFIG || [];
+    const availableSpots = Array.isArray(rawSpots) ? rawSpots : BLIND_SPOTS_CONFIG;
     const unresolvedSpots = availableSpots.filter(spot => {
-        return localStorage.getItem(`oasis_blindspot_resolved_${user}__${spot.id}`) !== 'true';
+        return spot && localStorage.getItem(`oasis_blindspot_resolved_${user}__${spot.id}`) !== 'true';
     });
 
     // Safety clamp index within range
@@ -3100,10 +3101,10 @@ ESTRUCTURA JSON OBLIGATORIA:
 
     // Inject active blind spot node into the graph if not resolved
     const { nodesToRender, edgesToRender } = useMemo(() => {
-        let nodes = afcData?.nodes || [];
-        let edges = afcData?.edges || [];
+        let nodes = Array.isArray(afcData?.nodes) ? afcData.nodes : [];
+        let edges = Array.isArray(afcData?.edges) ? afcData.edges : [];
 
-        if (activeSpot && afcData && afcData.nodes && afcData.nodes.length > 0) {
+        if (activeSpot && afcData && Array.isArray(afcData.nodes) && afcData.nodes.length > 0) {
             const isSolidifying = solidifyingBlindSpotId === activeSpot.id;
             const isClicked = localStorage.getItem(`oasis_blindspot_clicked_${user}__${activeSpot.id}`) === 'true';
             const activeNode = activeSpot.node || { id: `blind_spot_${activeSpot.id}`, type: "cognitive", label: activeSpot.title };
@@ -3596,12 +3597,15 @@ ESTRUCTURA JSON OBLIGATORIA:
         // Prevent concurrent or duplicate in-flight requests
         if (fetchingPerspectivesRef.current && fetchingPerspectivesRef.current.has(fetchKey)) return;
 
-        const currentChat = nodeChats[node.id]?.[safeIdx];
-        const isCurrentlyLoading = currentChat && currentChat.some(m => m.isLoading);
+        const rawNodeChat = nodeChats[node.id];
+        const currentChat = Array.isArray(rawNodeChat)
+            ? rawNodeChat
+            : (Array.isArray(rawNodeChat?.[safeIdx]) ? rawNodeChat[safeIdx] : []);
+        const isCurrentlyLoading = currentChat.some(m => m && m.isLoading);
         if (isCurrentlyLoading) return;
 
-        const userHasAnswered = currentChat && currentChat.some(m => m.role === 'user');
-        const firstAssistant = currentChat && currentChat.find(m => m.role === 'assistant');
+        const userHasAnswered = currentChat.some(m => m && m.role === 'user');
+        const firstAssistant = currentChat.find(m => m && m.role === 'assistant');
         const isStale = firstAssistant ? isStaleOrRoboticQuestion(firstAssistant.content) : true;
         const isAIGen = firstAssistant?.isAIGenerated === true;
         
@@ -3983,17 +3987,25 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 if (parsed && typeof parsed === 'object') {
                     let hasRepaired = false;
                     Object.keys(parsed).forEach(nodeId => {
-                        const threads = parsed[nodeId];
+                        let threads = parsed[nodeId];
+                        if (Array.isArray(threads)) {
+                            parsed[nodeId] = { 0: threads };
+                            threads = parsed[nodeId];
+                            hasRepaired = true;
+                        }
                         if (threads && typeof threads === 'object') {
                             Object.keys(threads).forEach(tIdx => {
                                 const thread = threads[tIdx];
                                 if (Array.isArray(thread) && thread.length >= 1) {
-                                    const userAns = thread.some(m => m.role === 'user');
-                                    const firstAss = thread.find(m => m.role === 'assistant');
+                                    const userAns = thread.some(m => m && m.role === 'user');
+                                    const firstAss = thread.find(m => m && m.role === 'assistant');
                                     if (!userAns && firstAss && isStaleOrRoboticQuestion(firstAss.content)) {
                                         delete threads[tIdx];
                                         hasRepaired = true;
                                     }
+                                } else if (!Array.isArray(thread)) {
+                                    delete threads[tIdx];
+                                    hasRepaired = true;
                                 }
                             });
                         }
@@ -4430,7 +4442,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 const spotEdge = spot.edge || { source: "historical", target: spotNode.id };
 
                 // Add the node if not already present, make sure it is not dashed
-                if (updatedAfc.nodes) {
+                if (Array.isArray(updatedAfc.nodes)) {
                     const renderedNode = nodesToRender.find(n => n.id === spotNode.id);
                     const solidNode = {
                         ...(renderedNode || spotNode),
@@ -4444,7 +4456,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                 }
 
                 // Add the edge if not already present
-                if (updatedAfc.edges) {
+                if (Array.isArray(updatedAfc.edges) && Array.isArray(updatedAfc.nodes)) {
                     const matchedEdge = { ...spotEdge };
                     const sourceExists = updatedAfc.nodes.some(n => n.id === matchedEdge.source);
                     const targetExists = updatedAfc.nodes.some(n => n.id === matchedEdge.target);
@@ -4630,8 +4642,9 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                             cloudAfc = sanitizeAfcGraph(cloudAfc);
                         } catch (e) {}
                     }
-                    if (cloudAfc && cloudAfc.nodes && cloudAfc.nodes.length > 0) {
+                    if (cloudAfc && Array.isArray(cloudAfc.nodes) && cloudAfc.nodes.length > 0) {
                         cloudAfc = sanitizeAfcGraph(cloudAfc);
+                        if (!Array.isArray(cloudAfc.edges)) cloudAfc.edges = [];
 
                         // Preservar nodos moldeados y satélites locales para que la nube nunca los sobreescriba
                         const localRaw = localStorage.getItem(`oasis_afc_real_data_${user}`);
@@ -4648,7 +4661,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
                                         cloudAfc.nodes.push(mNode);
                                     }
                                 });
-                                (localAfc.edges || []).forEach(lEdge => {
+                                (Array.isArray(localAfc.edges) ? localAfc.edges : []).forEach(lEdge => {
                                     if (!cloudAfc.edges.some(e => e.source === lEdge.source && e.target === lEdge.target)) {
                                         cloudAfc.edges.push(lEdge);
                                     }
@@ -6407,7 +6420,11 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             setLocalItem(titleKey, spot.title);
 
             if (afcData) {
-                const updatedAfc = { ...afcData };
+                const updatedAfc = {
+                    ...afcData,
+                    nodes: Array.isArray(afcData.nodes) ? [...afcData.nodes] : [],
+                    edges: Array.isArray(afcData.edges) ? [...afcData.edges] : []
+                };
 
                 const childCount = updatedAfc.edges.filter(ed => ed.source === nodeId).length;
                 const angle = ((childCount * 60 + 45) * Math.PI) / 180;
@@ -8481,7 +8498,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                         const isNodeInPattern = activePattern && activePattern.node_ids.includes(node.id);
                                         const isConnected = (activeNodeId && (
                                             node.id === activeNodeId ||
-                                            (edgesToRender && edgesToRender.some(e =>
+                                            (Array.isArray(edgesToRender) && edgesToRender.some(e =>
                                                 (e.source === activeNodeId && e.target === node.id) ||
                                                 (e.target === activeNodeId && e.source === node.id)
                                             ))

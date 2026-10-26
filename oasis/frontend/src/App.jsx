@@ -736,7 +736,7 @@ const ChatSidebar = ({
                 {activeTab === 'chats' ? (
                     <>
                         {/* PINNED */}
-                        {conversations.some(c => c.isPinned) && (
+                        {Array.isArray(conversations) && conversations.some(c => c.isPinned) && (
                             <div className="space-y-4">
                                 <h3 className="text-[8px] font-black uppercase tracking-[0.4em] text-accent/40 flex items-center gap-2">
                                     <Star size={10} /> Destacados
@@ -2552,9 +2552,9 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 className={`relative flex flex-col ${isSubBoardCard ? 'rounded-3xl border-transparent bg-transparent shadow-none overflow-visible' : `${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`} ${draggingId ? 'transition-none' : 'transition-all duration-300'}`}
                 style={{
                     width: isSubBoardCard ? '180px' : (localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`),
-                    height: isSubBoardCard ? '160px' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`),
+                    height: isSubBoardCard ? '160px' : ((block.type === 'text' || isTodoCard) ? 'auto' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`)),
                     minWidth: isSubBoardCard ? '180px' : (isColorSwatch ? '175px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
-                    minHeight: isSubBoardCard ? '160px' : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))),
+                    minHeight: isSubBoardCard ? '160px' : (localSize.height ? `${localSize.height}px` : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px')))))),
                     maxWidth: undefined,
                     maxHeight: undefined,
                     willChange: 'transform',
@@ -2731,7 +2731,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             )}
 
                             {/* TITULO DE LA NOTA */}
-                            <h3 className={`${block.type === 'text' ? (isChildNote ? 'text-sm mb-1.5 font-bold tracking-tight text-white' : 'text-[19px] mb-2 font-bold tracking-tight leading-snug text-white') : `${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'}`} truncate shrink-0`}>
+                            <h3 className={`${block.type === 'text' ? (isChildNote ? 'text-sm mb-1.5 font-bold tracking-tight text-white break-words' : 'text-[18px] mb-2 font-bold tracking-tight leading-snug text-white break-words') : `${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none truncate ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'}`} shrink-0`}>
                                 {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || 'Estética Nocturna')}
                             </h3>
 
@@ -2802,7 +2802,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-hidden relative opacity-90 group-hover/text:opacity-100 transition-opacity">
+                                <div className="flex-1 overflow-y-auto no-scrollbar relative opacity-90 group-hover/text:opacity-100 transition-opacity">
                                     {block.type === 'diary_notebook' ? (
                                         <div className="flex flex-col h-full w-full relative group/notebook pointer-events-auto">
                                             <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2">
@@ -3155,8 +3155,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             </div>
 
                             {/* MILANOTE BOTTOM CAPTION */}
-                            <input
-                                type="text"
+                            <textarea
+                                rows={2}
                                 value={block.metadata?.description ?? 'Brillo húmedo y textura filamentosa.'}
                                 onClick={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
@@ -3169,7 +3169,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                     }
                                 }}
                                 placeholder="Añadir nota al pie..."
-                                className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug truncate w-full transition-colors shrink-0"
+                                className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug resize-none overflow-hidden w-full transition-colors shrink-0"
                             />
                         </div>
                     ) : isVideo ? (
@@ -3680,23 +3680,6 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         </div>
                     ) : null}
                 </div>
-                {/* NÚCLEO DE SINCRONÍA (PORT) - SUBTLE EMERALD MILANOTE CONNECTOR */}
-                {showConnections && (
-                    <div
-                        className={`absolute -bottom-3 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-200 ${isLinking ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            onStartConnecting(block.id);
-                        }}
-                        title="Conectar tarjeta (Línea)"
-                    >
-                        <div className="w-5 h-5 rounded-full bg-[#121316] border border-[#10b981]/50 hover:border-[#10b981] hover:scale-125 transition-all shadow-[0_0_12px_rgba(16,185,129,0.4)] flex items-center justify-center cursor-crosshair">
-                            <div className="w-2 h-2 rounded-full bg-[#10b981]" />
-                        </div>
-                    </div>
-                )}
                 {/* Resize Handle */}
                 {!isSubBoardCard && (
                 <div
@@ -3893,6 +3876,25 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
             </div>
+            {/* NÚCLEO DE SINCRONÍA (PORT) - SUBTLE EMERALD MILANOTE CONNECTOR (OUTSIDE OVERFLOW-HIDDEN SO IT NEVER CLIPS) */}
+            {showConnections && !showDeleteConfirm && (
+                <div
+                    className={`absolute -bottom-3 left-1/2 -translate-x-1/2 z-[60] pointer-events-auto transition-all duration-200 ${isLinking || isActive ? 'opacity-100 scale-105' : 'opacity-0 group-hover:opacity-100'}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (onStartConnecting) onStartConnecting(block.id);
+                    }}
+                    title="Conectar tarjeta (Hilo)"
+                >
+                    <div className="w-6 h-6 rounded-full bg-[#121316] border-2 border-[#10b981]/70 hover:border-[#10b981] hover:scale-125 transition-all shadow-[0_4px_14px_rgba(0,0,0,0.85),0_0_12px_rgba(16,185,129,0.45)] flex items-center justify-center cursor-crosshair">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 });// NekronomikronFull has been refactored to src/components/Nekronomikron.jsx
@@ -4032,9 +4034,16 @@ const ProfileView = ({
     const user24hStories = (feed || []).filter(b => b.username === user && b.type === 'story' && b.timestamp > twentyFourHoursAgo);
     const hasActiveStories = user24hStories.length > 0;
 
+    const cleanDisplayName = (val, fallback) => {
+        if (!val || typeof val !== 'string') return fallback;
+        const trimmed = val.trim();
+        if (!trimmed || trimmed.includes('@')) return fallback;
+        return trimmed;
+    };
+
     const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
     const [profileLink, setProfileLink] = useState(() => localStorage.getItem('oasis_profilelink_' + user) || '');
-    const [fullName, setFullName] = useState(() => localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
+    const [fullName, setFullName] = useState(() => cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
     const [coverImage, setCoverImage] = useState(() => localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
 
     const [activePurchasingId, setActivePurchasingId] = useState(null);
@@ -4043,6 +4052,12 @@ const ProfileView = ({
 
     React.useEffect(() => {
         if (isEditingProfile) return; // No sobreescribir mientras el usuario edita
+
+        // Limpiar cualquier correo accidentalmente guardado como nombre de usuario (ej. por autocompletado de registro)
+        const storedFn = localStorage.getItem('oasis_fullname_' + user);
+        if (storedFn && storedFn.includes('@')) {
+            localStorage.setItem('oasis_fullname_' + user, user || '');
+        }
 
         const profileBlock = blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings');
         if (profileBlock) {
@@ -4055,8 +4070,9 @@ const ProfileView = ({
                 }
                 if (data.fullName !== undefined || data.FullName !== undefined) {
                     const fnVal = data.fullName !== undefined ? data.fullName : data.FullName;
-                    setFullName(fnVal || '');
-                    localStorage.setItem('oasis_fullname_' + user, fnVal || '');
+                    const safeFn = cleanDisplayName(fnVal, cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
+                    setFullName(safeFn);
+                    localStorage.setItem('oasis_fullname_' + user, safeFn);
                 }
                 if (data.coverImage !== undefined || data.CoverImage !== undefined) {
                     const coverVal = data.coverImage !== undefined ? data.coverImage : data.CoverImage;
@@ -4080,7 +4096,7 @@ const ProfileView = ({
         }
 
         setBio(localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
-        setFullName(localStorage.getItem('oasis_fullname_' + user) || user || 'Oasis Explorer');
+        setFullName(cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
         setCoverImage(localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
         setProfileLink(localStorage.getItem('oasis_profilelink_' + user) || '');
     }, [user, blocks, setAvatar, isEditingProfile]);
@@ -4624,7 +4640,7 @@ const ProfileView = ({
                                     {/* Nombre & Badges */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{fullName || user}</h2>
+                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{cleanDisplayName(fullName, user)}</h2>
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
                                         </div>
                                         <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{user}</span>
@@ -4642,6 +4658,8 @@ const ProfileView = ({
                                             <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Nombre para mostrar</span>
                                             <input
                                                 type="text"
+                                                name="oasis_display_name"
+                                                autoComplete="off"
                                                 value={fullName}
                                                 onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans"
@@ -8050,6 +8068,7 @@ function OasisApp() {
                                     'oasis_facts_',
                                     'oasis_style_profile_',
                                     'oasis_avatar_',
+                                    'oasis_fullname_',
                                     'oasis_credits_',
                                     'oasis_public_traits_',
                                     'oasis_afc_attempted_',
@@ -8082,7 +8101,18 @@ function OasisApp() {
                             if (clinicalRes && clinicalRes.ok) {
                                 const serverData = await clinicalRes.json();
                                 window.isDownloadingClinicalData = true;
-                                try { Object.keys(serverData).forEach(key => localStorage.setItem(key, serverData[key])); }
+                                try {
+                                    Object.keys(serverData).forEach(key => {
+                                        const val = serverData[key];
+                                        if (key.startsWith('oasis_fullname_') && typeof val === 'string' && val.includes('@')) {
+                                            const cleanUser = key.replace('oasis_fullname_', '') || user;
+                                            localStorage.setItem('oasis_email_' + cleanUser, val);
+                                            localStorage.setItem(key, cleanUser);
+                                            return;
+                                        }
+                                        localStorage.setItem(key, val);
+                                    });
+                                }
                                 finally { window.isDownloadingClinicalData = false; }
                             }
 
@@ -8432,7 +8462,11 @@ function OasisApp() {
         // Actualizar local storage inmediatamente para evitar esperas
         if (updates.avatar !== undefined) localStorage.setItem('oasis_avatar_' + user, updates.avatar);
         if (updates.coverImage !== undefined) localStorage.setItem('oasis_cover_' + user, updates.coverImage);
-        if (updates.fullName !== undefined) localStorage.setItem('oasis_fullname_' + user, updates.fullName);
+        if (updates.fullName !== undefined) {
+            const safeUpdateFn = (typeof updates.fullName === 'string' && !updates.fullName.includes('@') && updates.fullName.trim() !== '') ? updates.fullName.trim() : user;
+            updates.fullName = safeUpdateFn;
+            localStorage.setItem('oasis_fullname_' + user, safeUpdateFn);
+        }
         if (updates.bio !== undefined) localStorage.setItem('oasis_bio_' + user, updates.bio);
         if (updates.profileLink !== undefined) localStorage.setItem('oasis_profilelink_' + user, updates.profileLink);
 
@@ -8442,17 +8476,24 @@ function OasisApp() {
             const updated = [...prev];
             const idx = updated.findIndex(b => b.id === 'profile_settings');
 
+            const storedFnRaw = localStorage.getItem('oasis_fullname_' + user) || '';
+            const safeStoredFn = (!storedFnRaw.includes('@') && storedFnRaw.trim() !== '') ? storedFnRaw.trim() : (user || '');
+
             let currentProfile = {
                 avatar: localStorage.getItem('oasis_avatar_' + user) || '',
                 coverImage: localStorage.getItem('oasis_cover_' + user) || '',
-                fullName: localStorage.getItem('oasis_fullname_' + user) || user || '',
+                fullName: safeStoredFn,
                 bio: localStorage.getItem('oasis_bio_' + user) || '',
                 profileLink: localStorage.getItem('oasis_profilelink_' + user) || ''
             };
 
             if (idx > -1) {
                 try {
-                    currentProfile = { ...currentProfile, ...JSON.parse(updated[idx].content) };
+                    const parsedExisting = JSON.parse(updated[idx].content);
+                    if (parsedExisting.fullName && parsedExisting.fullName.includes('@')) {
+                        parsedExisting.fullName = safeStoredFn;
+                    }
+                    currentProfile = { ...currentProfile, ...parsedExisting };
                 } catch (e) {
                     console.error("Error parsing profile settings block:", e);
                 }
@@ -8661,12 +8702,22 @@ function OasisApp() {
                 window.isDownloadingClinicalData = true;
                 try {
                     localStorage.setItem('oasis_user', userData.username);
-                    localStorage.setItem('oasis_fullname_' + userData.username, userData.fullName || '');
+                    if (userData.fullName && userData.fullName.includes('@')) {
+                        localStorage.setItem('oasis_email_' + userData.username, userData.fullName);
+                        localStorage.setItem('oasis_fullname_' + userData.username, userData.username);
+                    } else {
+                        localStorage.setItem('oasis_fullname_' + userData.username, userData.fullName || userData.username);
+                    }
                     localStorage.setItem('oasis_age_' + userData.username, userData.age !== undefined && userData.age !== null ? userData.age.toString() : '');
                     localStorage.setItem('oasis_role_' + userData.username, userData.role || 'patient');
                     if (userData.clinicalData) {
                         Object.keys(userData.clinicalData).forEach(key => {
-                            localStorage.setItem(key, userData.clinicalData[key]);
+                            const val = userData.clinicalData[key];
+                            if (key.startsWith('oasis_fullname_') && typeof val === 'string' && val.includes('@')) {
+                                localStorage.setItem('oasis_email_' + userData.username, val);
+                                return;
+                            }
+                            localStorage.setItem(key, val);
                         });
                     }
                     setHasAcceptedConsent(localStorage.getItem('oasis_consent_accepted_' + userData.username) === 'true');
@@ -11319,190 +11370,41 @@ ${afcMapContext}
         console.error(`Fallo en el Núcleo Cognitivo. Último error: ${lastError}`);
     };
 
-    const applySubBoardTemplate = (templateId, targetCanvasId, withExample = true) => {
+    const applySubBoardTemplate = (templateId, targetCanvasId, withExample = true, closePicker = true) => {
         if (!targetCanvasId || targetCanvasId === 'canvas_default') return;
         const ts = Date.now();
         let newBlocks = [];
         let newLinks = [];
 
         if (templateId === 'empty') {
-            setIsTemplatePickerOpen(false);
+            setBlocks(prev => {
+                const removedIds = new Set(prev.filter(b => b.canvasId === targetCanvasId).map(b => b.id));
+                const filtered = prev.filter(b => b.canvasId !== targetCanvasId);
+                if (typeof syncBlocks === 'function') syncBlocks(filtered);
+                if (removedIds.size > 0) {
+                    setLinks(prevLinks => {
+                        const filteredLinks = (Array.isArray(prevLinks) ? prevLinks : []).filter(l => !removedIds.has(l.from) && !removedIds.has(l.to));
+                        if (typeof syncLinks === 'function') syncLinks(filteredLinks);
+                        return filteredLinks;
+                    });
+                }
+                return filtered;
+            });
+            if (closePicker) setIsTemplatePickerOpen(false);
             return;
         } else if (templateId === 'character_profile') {
-            const b1 = `${ts}-cp-1`, b2 = `${ts}-cp-2`, b3 = `${ts}-cp-3`, b4 = `${ts}-cp-4`, b5 = `${ts}-cp-5`, b6 = `${ts}-cp-6`;
+            const b1 = `${ts}-cp-1`, b2 = `${ts}-cp-2`, b3 = `${ts}-cp-3`, b4 = `${ts}-cp-4`, b5 = `${ts}-cp-5`;
+            const b6 = `${ts}-cp-6`, b7 = `${ts}-cp-7`, b8 = `${ts}-cp-8`, b9 = `${ts}-cp-9`, b10 = `${ts}-cp-10`;
             newBlocks = [
                 {
                     id: b1,
                     type: 'image',
-                    caption: 'Perfil • Retrato Principal',
+                    caption: withExample ? 'Det. Olivia Morales' : 'Retrato del Personaje',
                     content: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
-                    metadata: { description: withExample ? 'Nombre: Det. Olivia Morales • 22 Feb 1972, Escocia. Hija única.' : 'Datos biográficos y retrato del personaje.' },
-                    x: -360,
-                    y: -90,
+                    metadata: { description: withExample ? 'Perfil • Retrato principal e identidad visual' : 'Agrega una fotografía o referencia del personaje' },
+                    x: -540,
+                    y: -260,
                     width: 260,
-                    height: 310,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b2,
-                    type: 'text',
-                    caption: withExample ? 'Seria y sensible' : 'Rasgo Principal',
-                    content: withExample ? 'Aparenta ser una persona seria y puede parecer distante. Descubre sus fortalezas y debilidades al volverse más tranquila.' : 'Describe las características psicológicas principales...',
-                    metadata: { category: 'CARACTERÍSTICAS' },
-                    x: -50,
-                    y: -140,
-                    width: 270,
-                    height: 195,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b3,
-                    type: 'text',
-                    caption: withExample ? 'Historia previa' : 'Trasfondo',
-                    content: withExample ? 'Recientemente jubilada tras 27 años como detective. Tuvo una beca para la academia tras graduarse con honores.' : 'Escribe el pasado y eventos que marcaron al personaje...',
-                    metadata: { category: 'HISTORIA PREVIA' },
-                    x: -50,
-                    y: 110,
-                    width: 270,
-                    height: 205,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b4,
-                    type: 'todo',
-                    caption: 'MANÍAS Y DEFECTOS',
-                    content: '',
-                    metadata: {
-                        items: withExample ? [
-                            { id: `${ts}-i1`, text: 'Suele mirar al cielo antes de hablar', done: true },
-                            { id: `${ts}-i2`, text: 'Se expone al peligro con facilidad', done: true },
-                            { id: `${ts}-i3`, text: 'Se frustra cuando preguntan su origen', done: false }
-                        ] : [
-                            { id: `${ts}-i1`, text: 'Hábito o manía recurrente', done: false }
-                        ]
-                    },
-                    x: 260,
-                    y: -120,
-                    width: 280,
-                    height: 215,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b5,
-                    type: 'text',
-                    caption: withExample ? 'Comienza siendo...' : 'Estado Inicial',
-                    content: withExample ? 'Un personaje duro y a menudo hostil que protege celosamente su espacio personal.' : 'Punto de partida emocional del personaje.',
-                    metadata: { category: 'ARCO INICIAL' },
-                    x: 220,
-                    y: 145,
-                    width: 245,
-                    height: 165,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b6,
-                    type: 'text',
-                    caption: withExample ? 'Se convierte en...' : 'Transformación',
-                    content: withExample ? 'Alguien capaz de confiar y abrirse tras enfrentar la verdad del caso.' : 'Evolución al final de la historia.',
-                    metadata: { category: 'ARCO FINAL' },
-                    x: 520,
-                    y: 95,
-                    width: 245,
-                    height: 165,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                }
-            ];
-            newLinks = [{ from: b5, to: b6, color: '#10b981' }];
-        } else if (templateId === 'novel_plan') {
-            const b1 = `${ts}-np-1`, b2 = `${ts}-np-2`, b3 = `${ts}-np-3`, b4 = `${ts}-np-4`;
-            newBlocks = [
-                {
-                    id: b1,
-                    type: 'text',
-                    caption: withExample ? 'Premisa Central' : 'Premisa',
-                    content: withExample ? 'Dos desconocidos quedan atrapados en una estación de carretera durante una tormenta geomagnética que altera los recuerdos.' : 'Escribe la idea central de tu obra en dos oraciones.',
-                    metadata: { category: 'CONCEPTO // LOGLINE' },
-                    x: -310,
-                    y: -110,
-                    width: 280,
-                    height: 195,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b2,
-                    type: 'column',
-                    caption: 'ESTRUCTURA EN 3 ACTOS',
-                    content: withExample ? 'ACTO I: El hallazgo en la Carretera 191.\n\nACTO II: La anomalía acústica y el aislamiento.\n\nACTO III: La reconstrucción del origen.' : 'Organiza aquí los actos y capítulos...',
-                    x: 10,
-                    y: -30,
-                    width: 290,
-                    height: 340,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b3,
-                    type: 'todo',
-                    caption: 'OBJETIVOS DE ESCRITURA',
-                    content: '',
-                    metadata: {
-                        items: [
-                            { id: `${ts}-n1`, text: 'Definir conflicto principal y antagonista', done: true },
-                            { id: `${ts}-n2`, text: 'Escribir escaleta del Primer Acto', done: false },
-                            { id: `${ts}-n3`, text: 'Investigar locaciones y atmósfera', done: false }
-                        ]
-                    },
-                    x: 330,
-                    y: -90,
-                    width: 280,
-                    height: 215,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                },
-                {
-                    id: b4,
-                    type: 'color_swatch',
-                    caption: 'Atmósfera Nocturna',
-                    color: '#254E3A',
-                    content: '#254E3A',
-                    x: -310,
-                    y: 135,
-                    width: 215,
-                    height: 205,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                }
-            ];
-            newLinks = [{ from: b1, to: b2, color: '#10b981' }];
-        } else if (templateId === 'moodboard') {
-            const b1 = `${ts}-mb-1`, b2 = `${ts}-mb-2`, b3 = `${ts}-mb-3`, b4 = `${ts}-mb-4`;
-            newBlocks = [
-                {
-                    id: b1,
-                    type: 'image',
-                    caption: 'Referencia de Luz & Sombra',
-                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
-                    metadata: { description: 'Contraste alto y grano cinematográfico 35mm.' },
-                    x: -290,
-                    y: -40,
-                    width: 270,
                     height: 300,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
@@ -11510,28 +11412,32 @@ ${afcMapContext}
                 },
                 {
                     id: b2,
-                    type: 'color_swatch',
-                    caption: 'Stromboli',
-                    color: '#366354',
-                    content: '#366354',
-                    x: 20,
-                    y: -90,
-                    width: 215,
-                    height: 205,
+                    type: 'text',
+                    caption: withExample ? 'Datos Biográficos' : 'Ficha Biográfica',
+                    content: withExample
+                        ? 'Nombre: Det. Olivia Morales\nFecha de nacimiento: 22 de febrero de 1972, Escocia\nPadres: Adam y Flora McMaugh\nHermanos: Hija única\nEstado civil: Soltera'
+                        : 'Nombre:\nFecha de nacimiento:\nLugar de origen:\nFamilia:\nOcupación:',
+                    metadata: { category: 'PERFIL // BIOGRAFÍA' },
+                    x: -540,
+                    y: 75,
+                    width: 260,
+                    height: 235,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
                 },
                 {
                     id: b3,
-                    type: 'color_swatch',
-                    caption: 'Obsidiana Fría',
-                    color: '#182226',
-                    content: '#182226',
-                    x: 260,
-                    y: -90,
-                    width: 215,
-                    height: 205,
+                    type: 'text',
+                    caption: withExample ? 'Seria y sensible' : 'Personalidad',
+                    content: withExample
+                        ? 'Aparenta ser una persona seria y puede parecer distante. Descubre sus fortalezas y debilidades cuando se vuelve más tranquila y reflexiva.'
+                        : 'Describe el temperamento, actitud interior y cómo se relaciona con los demás...',
+                    metadata: { category: 'CARACTERÍSTICAS' },
+                    x: -230,
+                    y: -260,
+                    width: 270,
+                    height: 175,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
@@ -11539,60 +11445,117 @@ ${afcMapContext}
                 {
                     id: b4,
                     type: 'text',
-                    caption: 'Dirección Visual',
-                    content: 'Texturas orgánicas combinadas con iluminación verde ciano y silencios espaciales.',
-                    metadata: { category: 'MOODBOARD // NOTAS' },
-                    x: 130,
+                    caption: withExample ? 'Atlética y autoritaria' : 'Apariencia Física',
+                    content: withExample
+                        ? 'De complexión atlética, postura firme y mirada penetrante. Su presencia impone autoridad sin necesidad de alzar la voz.'
+                        : 'Describe los rasgos físicos, vestimenta habitual, gestos y lenguaje corporal...',
+                    metadata: { category: 'RASGOS FÍSICOS' },
+                    x: -230,
+                    y: -55,
+                    width: 270,
+                    height: 170,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
+                    type: 'text',
+                    caption: withExample ? 'Historia previa' : 'Trasfondo',
+                    content: withExample
+                        ? 'Recientemente jubilada tras 27 años como detective. Obtuvo una beca completa para la academia tras graduarse con honores y resolver su primer caso frío.'
+                        : 'Escribe el pasado, infancia, formación y los eventos que marcaron al personaje...',
+                    metadata: { category: 'HISTORIA PREVIA' },
+                    x: -230,
                     y: 145,
-                    width: 290,
-                    height: 175,
-                    isPublic: false,
-                    createdAt: new Date().toISOString(),
-                    canvasId: targetCanvasId
-                }
-            ];
-            newLinks = [{ from: b1, to: b4, color: '#10b981' }];
-        } else if (templateId === 'story_outline') {
-            const b1 = `${ts}-so-1`, b2 = `${ts}-so-2`, b3 = `${ts}-so-3`;
-            newBlocks = [
-                {
-                    id: b1,
-                    type: 'text',
-                    caption: '1. El Incidente Incitador',
-                    content: 'El evento que rompe el equilibrio cotidiano del protagonista y lo obliga a cruzar el umbral.',
-                    metadata: { category: 'APERTURA' },
-                    x: -320,
-                    y: -20,
-                    width: 265,
+                    width: 270,
                     height: 185,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
                 },
                 {
-                    id: b2,
+                    id: b6,
                     type: 'text',
-                    caption: '2. Punto Medio & Giro',
-                    content: 'Una revelación cambia la comprensión del problema; ya no hay vuelta atrás.',
-                    metadata: { category: 'NUDO' },
-                    x: 0,
-                    y: -20,
-                    width: 265,
-                    height: 185,
+                    caption: withExample ? 'Soñadora marcada por el pasado' : 'Psicología & Conflicto Interno',
+                    content: withExample
+                        ? 'Detrás de su coraza analítica guarda una nostalgia profunda por los casos inconclusos y una lealtad inquebrantable hacia quienes protege.'
+                        : 'Motivaciones ocultas, miedos profundos y contradicciones internas...',
+                    metadata: { category: 'MUNDO INTERIOR' },
+                    x: 90,
+                    y: -260,
+                    width: 280,
+                    height: 180,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
                 },
                 {
-                    id: b3,
+                    id: b7,
+                    type: 'todo',
+                    caption: 'MANÍAS Y DEFECTOS',
+                    content: '',
+                    metadata: {
+                        items: withExample ? [
+                            { id: `${ts}-i1`, text: 'Suele mirar al cielo antes de hablar', done: true },
+                            { id: `${ts}-i2`, text: 'Se expone al peligro con facilidad', done: true },
+                            { id: `${ts}-i3`, text: 'Se frustra cuando preguntan por su origen', done: false },
+                            { id: `${ts}-i4`, text: 'Anota pistas en servilletas de café', done: false }
+                        ] : [
+                            { id: `${ts}-i1`, text: 'Hábito o manía recurrente', done: false },
+                            { id: `${ts}-i2`, text: 'Punto ciego o debilidad emocional', done: false }
+                        ]
+                    },
+                    x: 90,
+                    y: -45,
+                    width: 280,
+                    height: 245,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b8,
+                    type: 'image',
+                    caption: withExample ? 'Archivo • Academia de Policía' : 'Referencia Secundaria',
+                    content: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Promoción División Criminal, 2002.' : 'Vestuario, objetos clave o época.' },
+                    x: 420,
+                    y: -260,
+                    width: 260,
+                    height: 260,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b9,
                     type: 'text',
-                    caption: '3. Clímax y Resolución',
-                    content: 'El enfrentamiento final con la verdad interna y el nuevo equilibrio alcanzado.',
-                    metadata: { category: 'DESENLACE' },
-                    x: 320,
-                    y: -20,
-                    width: 265,
-                    height: 185,
+                    caption: withExample ? 'Comienza siendo...' : 'Estado Inicial',
+                    content: withExample
+                        ? 'Un personaje duro y a menudo hostil que protege celosamente su espacio personal.'
+                        : 'Punto de partida emocional del personaje al iniciar la obra.',
+                    metadata: { category: 'ARCO INICIAL' },
+                    x: 410,
+                    y: 45,
+                    width: 245,
+                    height: 165,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b10,
+                    type: 'text',
+                    caption: withExample ? 'Se convierte en...' : 'Transformación',
+                    content: withExample
+                        ? 'Alguien capaz de confiar y abrirse emocionalmente tras enfrentar la verdad en Montrose.'
+                        : 'Evolución y aprendizaje del personaje al final de la historia.',
+                    metadata: { category: 'ARCO FINAL' },
+                    x: 700,
+                    y: 45,
+                    width: 245,
+                    height: 165,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
@@ -11600,63 +11563,704 @@ ${afcMapContext}
             ];
             newLinks = [
                 { from: b1, to: b2, color: '#10b981' },
-                { from: b2, to: b3, color: '#10b981' }
+                { from: b9, to: b10, color: '#10b981' }
             ];
-        } else if (templateId === 'weekly_plan') {
+        } else if (templateId === 'novel_plan') {
+            const b1 = `${ts}-np-1`, b2 = `${ts}-np-2`, b3 = `${ts}-np-3`, b4 = `${ts}-np-4`, b5 = `${ts}-np-5`;
+            const b6 = `${ts}-np-6`, b7 = `${ts}-np-7`, b8 = `${ts}-np-8`, b9 = `${ts}-np-9`, b10 = `${ts}-np-10`;
+            const b11 = `${ts}-np-11`, b12 = `${ts}-np-12`, b13 = `${ts}-np-13`, b14 = `${ts}-np-14`, b15 = `${ts}-np-15`, b16 = `${ts}-np-16`;
             newBlocks = [
+                // Columna 1: Inspiración, Sinopsis, Sub-tableros de Investigación y Tareas
                 {
-                    id: `${ts}-wp-1`,
+                    id: b1,
+                    type: 'text',
+                    caption: withExample ? 'Sinopsis: "Los Devotos"' : 'Premisa & Sinopsis Central',
+                    content: withExample
+                        ? 'Tras jubilarse, la detective Olivia McMaugh se muda al aislado pueblo de Montrose en busca de paz. Cuando un niño desaparece en medio de una tormenta y ningún habitante parece inmutarse, descubre una antigua red de devoción y silencio.'
+                        : 'Escribe el resumen ejecutivo de tu novela: protagonista, incidente incitador, conflicto central y lo que está en juego.',
+                    metadata: { category: 'INSPIRACIÓN // PREMISA' },
+                    x: -580,
+                    y: -270,
+                    width: 280,
+                    height: 215,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'sub_board',
+                    caption: 'Investigación',
+                    content: '',
+                    metadata: { itemCount: 5, accentColor: '#38bdf8' },
+                    x: -580,
+                    y: -25,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'sub_board',
+                    caption: 'Lluvia de ideas',
+                    content: '',
+                    metadata: { itemCount: 8, accentColor: '#f59e0b' },
+                    x: -435,
+                    y: -25,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'sub_board',
+                    caption: 'Moodboard',
+                    content: '',
+                    metadata: { itemCount: 10, accentColor: '#ec4899' },
+                    x: -580,
+                    y: 130,
+                    width: 280,
+                    height: 125,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
                     type: 'todo',
-                    caption: 'PRIORIDADES DE LA SEMANA',
+                    caption: 'TAREAS DE ESCRITURA',
                     content: '',
                     metadata: {
-                        items: [
-                            { id: `${ts}-w1`, text: 'Completar bocetos principales', done: true },
-                            { id: `${ts}-w2`, text: 'Revisión de referencias visuales', done: false },
-                            { id: `${ts}-w3`, text: 'Entrega de corte preliminar', done: false }
+                        items: withExample ? [
+                            { id: `${ts}-n1`, text: 'Completar perfiles de personajes principales', done: true },
+                            { id: `${ts}-n2`, text: 'Mapear las ubicaciones clave de Montrose', done: true },
+                            { id: `${ts}-n3`, text: 'Investigar procedimientos policiales rurales', done: false },
+                            { id: `${ts}-n4`, text: 'Escribir borrador del Capítulo 1', done: false }
+                        ] : [
+                            { id: `${ts}-n1`, text: 'Definir conflicto principal y antagonista', done: false },
+                            { id: `${ts}-n2`, text: 'Diseñar escaleta de capítulos', done: false },
+                            { id: `${ts}-n3`, text: 'Investigar locaciones y atmósfera', done: false }
                         ]
                     },
-                    x: -220,
-                    y: -30,
+                    x: -580,
+                    y: 275,
+                    width: 280,
+                    height: 235,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 2: Estructura, Trama, Construcción del Mundo y Primer Borrador
+                {
+                    id: b6,
+                    type: 'sub_board',
+                    caption: 'Estructura',
+                    content: '',
+                    metadata: { itemCount: 6, accentColor: '#10b981' },
+                    x: -255,
+                    y: -270,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b7,
+                    type: 'sub_board',
+                    caption: 'Trama',
+                    content: '',
+                    metadata: { itemCount: 9, accentColor: '#a855f7' },
+                    x: -110,
+                    y: -270,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b8,
+                    type: 'sub_board',
+                    caption: 'Construcción del mundo',
+                    content: '',
+                    metadata: { itemCount: 7, accentColor: '#14b8a6' },
+                    x: -255,
+                    y: -115,
+                    width: 280,
+                    height: 125,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b9,
+                    type: 'text',
+                    caption: withExample ? 'Bienvenidos a Montrose — Cap. 1' : 'Borrador de Apertura',
+                    content: withExample
+                        ? 'La niebla descendía sobre los pinos de Montrose como un telón húmedo. Olivia apagó el motor de su camioneta frente a la cabaña alquilada.\n\nNo imaginaba que en menos de cuarenta y ocho horas el silencio del valle se volvería su principal sospechoso.'
+                        : 'Escribe aquí las primeras líneas o el tono narrativo del capítulo inicial de tu historia...',
+                    metadata: { category: 'MANUSCRITO // APERTURA' },
+                    x: -255,
+                    y: 35,
+                    width: 280,
+                    height: 245,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 3: Personajes y Tema Visual
+                {
+                    id: b10,
+                    type: 'sub_board',
+                    caption: withExample ? 'Olivia McMaugh' : 'Protagonista',
+                    content: '',
+                    metadata: { itemCount: 10, accentColor: '#10b981' },
+                    x: 70,
+                    y: -270,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b11,
+                    type: 'sub_board',
+                    caption: withExample ? 'Gus Robertson' : 'Aliado Clave',
+                    content: '',
+                    metadata: { itemCount: 6, accentColor: '#3b82f6' },
+                    x: 215,
+                    y: -270,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b12,
+                    type: 'sub_board',
+                    caption: withExample ? 'Padre Albert Stein' : 'Antagonista',
+                    content: '',
+                    metadata: { itemCount: 7, accentColor: '#ef4444' },
+                    x: 70,
+                    y: -115,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b13,
+                    type: 'sub_board',
+                    caption: 'Relaciones',
+                    content: '',
+                    metadata: { itemCount: 5, accentColor: '#eab308' },
+                    x: 215,
+                    y: -115,
+                    width: 135,
+                    height: 140,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b14,
+                    type: 'image',
+                    caption: withExample ? 'Tema principal: El bien vs. el mal' : 'Referencia de Atmósfera',
+                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Aislamiento rural, secretos colectivos y fe distorsionada.' : 'Imagen conceptual del tono de la obra.' },
+                    x: 70,
+                    y: 50,
+                    width: 280,
+                    height: 270,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 4: Portada Conceptual y Escaleta de Capítulos
+                {
+                    id: b15,
+                    type: 'image',
+                    caption: withExample ? 'Portada Conceptual • LOS DEVOTOS' : 'Concepto de Portada',
+                    content: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Dirección de arte para cubierta: bosque invernal y niebla.' : 'Idea visual para la portada del libro.' },
+                    x: 395,
+                    y: -270,
                     width: 285,
+                    height: 255,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b16,
+                    type: 'column',
+                    caption: 'DESGLOSE DE CAPÍTULOS',
+                    content: withExample
+                        ? 'CAPÍTULO 1: La llegada a Montrose y la casa junto al lago.\n\nCAPÍTULO 2: El niño desaparecido durante el festival de otoño.\n\nCAPÍTULO 3: ¿Por qué ningún vecino reporta la ausencia?\n\nCAPÍTULO 4: Archivos ocultos en la parroquia del Padre Stein.\n\nCAPÍTULO 5: La procesión nocturna y el rescate en las minas.'
+                        : 'CAPÍTULO 1: Apertura y presentación.\n\nCAPÍTULO 2: Incidente incitador.\n\nCAPÍTULO 3: Desarrollo del misterio.\n\nCAPÍTULO 4: Crisis y revelación.\n\nCAPÍTULO 5: Clímax y resolución.',
+                    x: 395,
+                    y: 10,
+                    width: 285,
+                    height: 360,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [
+                { from: b1, to: b6, color: '#10b981' },
+                { from: b9, to: b16, color: '#10b981' }
+            ];
+        } else if (templateId === 'moodboard') {
+            const b1 = `${ts}-mb-1`, b2 = `${ts}-mb-2`, b3 = `${ts}-mb-3`, b4 = `${ts}-mb-4`, b5 = `${ts}-mb-5`;
+            const b6 = `${ts}-mb-6`, b7 = `${ts}-mb-7`, b8 = `${ts}-mb-8`, b9 = `${ts}-mb-9`, b10 = `${ts}-mb-10`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'image',
+                    caption: withExample ? 'Nuevo amor en la tormenta' : 'Referencia Emocional',
+                    content: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Tensión emocional y refugio en medio del peligro.' : 'Vínculo entre los personajes.' },
+                    x: -560,
+                    y: -260,
+                    width: 255,
+                    height: 270,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'color_swatch',
+                    caption: 'Mojo // Carmesí',
+                    color: '#C03939',
+                    content: '#C03939',
+                    x: -560,
+                    y: 40,
+                    width: 255,
+                    height: 195,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'image',
+                    caption: withExample ? 'Casa en el bosque' : 'Locación Principal',
+                    content: 'https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Aislamiento arquitectónico rodeado de niebla espesa.' : 'Escenario principal de la historia.' },
+                    x: -275,
+                    y: -260,
+                    width: 265,
+                    height: 295,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'color_swatch',
+                    caption: 'Mine Shaft // Carbón',
+                    color: '#2B2B2B',
+                    content: '#2B2B2B',
+                    x: -275,
+                    y: 65,
+                    width: 265,
+                    height: 195,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
+                    type: 'image',
+                    caption: withExample ? 'Cartel: Desaparecido' : 'Elemento Detonante',
+                    content: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'El aviso pegado en la estación que nadie quiere mirar.' : 'Pista u objeto clave de la trama.' },
+                    x: 20,
+                    y: -260,
+                    width: 265,
+                    height: 255,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b6,
+                    type: 'text',
+                    caption: withExample ? 'Temas Nucleares' : 'Conceptos Clave',
+                    content: withExample
+                        ? '• El bien contra el mal difuminados\n• Secretos que protegen a una comunidad\n• Sociedades secretas y ritos antiguos\n• La memoria como territorio frágil'
+                        : '• Tema principal\n• Simbolismo recurrente\n• Sensación que debe dejar en el lector',
+                    metadata: { category: 'MOODBOARD // TEMAS' },
+                    x: 20,
+                    y: 25,
+                    width: 265,
+                    height: 215,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b7,
+                    type: 'image',
+                    caption: withExample ? 'Túneles bajo el pueblo' : 'Mundo Subterráneo',
+                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Galerías húmedas que conectan la iglesia con el bosque.' : 'Espacio oculto o atmósfera secundaria.' },
+                    x: 315,
+                    y: -260,
+                    width: 265,
+                    height: 270,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b8,
+                    type: 'color_swatch',
+                    caption: 'Bosque Profundo',
+                    color: '#254E3A',
+                    content: '#254E3A',
+                    x: 315,
+                    y: 40,
+                    width: 265,
+                    height: 195,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b9,
+                    type: 'image',
+                    caption: withExample ? 'Símbolo de la Sociedad Secreta' : 'Simbología & Arte',
+                    content: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Grabado antiguo encontrado en los registros parroquiales.' : 'Textura artística o emblema.' },
+                    x: 610,
+                    y: -260,
+                    width: 260,
+                    height: 265,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b10,
+                    type: 'text',
+                    caption: withExample ? 'Dirección Visual & Texturas' : 'Notas de Estilo',
+                    content: withExample
+                        ? 'Grano cinematográfico de 35mm, maderas húmedas, rojos oxidados y sombras densas inspiradas en el thriller nórdico.'
+                        : 'Describe la iluminación, texturas, música e influencias estéticas del proyecto.',
+                    metadata: { category: 'ESTÉTICA // TONO' },
+                    x: 610,
+                    y: 35,
+                    width: 260,
+                    height: 205,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [
+                { from: b3, to: b6, color: '#10b981' },
+                { from: b7, to: b10, color: '#10b981' }
+            ];
+        } else if (templateId === 'story_outline') {
+            const img1 = `${ts}-so-i1`, img2 = `${ts}-so-i2`, img3 = `${ts}-so-i3`, img4 = `${ts}-so-i4`, img5 = `${ts}-so-i5`;
+            const b1 = `${ts}-so-1`, b2 = `${ts}-so-2`, b3 = `${ts}-so-3`, b4 = `${ts}-so-4`, b5 = `${ts}-so-5`;
+            newBlocks = [
+                // Columna 1
+                {
+                    id: img1,
+                    type: 'image',
+                    caption: withExample ? '1. Llega a Montrose' : 'Acto I • Apertura',
+                    content: 'https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Un nuevo comienzo lejos de la ciudad.' : 'Imagen clave del inicio.' },
+                    x: -640,
+                    y: -230,
+                    width: 250,
                     height: 220,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
                 },
                 {
-                    id: `${ts}-wp-2`,
-                    type: 'column',
-                    caption: 'NOTAS Y PENDIENTES',
-                    content: '• Lunes: Definición de paleta\n• Miércoles: Pruebas de cámara\n• Viernes: Cierre de tablero',
-                    x: 130,
-                    y: -20,
-                    width: 290,
-                    height: 310,
+                    id: b1,
+                    type: 'text',
+                    caption: withExample ? '1. Llega a Montrose' : '1. Mundo Ordinario',
+                    content: withExample
+                        ? '• Olivia se muda buscando tranquilidad tras su retiro.\n• Conoce a su vecino Gus Robertson.\n• Percibe una extraña frialdad en los habitantes del pueblo.'
+                        : '• Presentación del protagonista en su entorno.\n• Estado emocional inicial.\n• Primeras señales del conflicto.',
+                    metadata: { category: 'ESCALETA // PASO 01' },
+                    x: -640,
+                    y: 20,
+                    width: 250,
+                    height: 225,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 2
+                {
+                    id: img2,
+                    type: 'image',
+                    caption: withExample ? '2. El niño desaparecido' : 'Acto I • Incidente',
+                    content: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'El suceso que rompe la calma del valle.' : 'Imagen del incidente incitador.' },
+                    x: -355,
+                    y: -230,
+                    width: 250,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'text',
+                    caption: withExample ? '2. El niño desaparecido' : '2. Incidente Incitador',
+                    content: withExample
+                        ? '• Un niño desaparece la noche del equinoccio.\n• Olivia encuentra una bufanda junto al río.\n• La policía local archiva el reporte sin investigar.'
+                        : '• El evento que altera el equilibrio.\n• El protagonista se ve involucrado.\n• Surge la pregunta dramática central.',
+                    metadata: { category: 'ESCALETA // PASO 02' },
+                    x: -355,
+                    y: 20,
+                    width: 250,
+                    height: 225,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 3
+                {
+                    id: img3,
+                    type: 'image',
+                    caption: withExample ? '3. ¿Por qué a nadie le importa?' : 'Acto II • Complicación',
+                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Pacto de silencio en la congregación.' : 'Imagen del misterio central.' },
+                    x: -70,
+                    y: -230,
+                    width: 250,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'text',
+                    caption: withExample ? '3. ¿Por qué a nadie le importa?' : '3. Punto Medio & Giro',
+                    content: withExample
+                        ? '• Los padres del niño niegan que haya desaparecido.\n• El Padre Albert Stein advierte a Olivia que no interfiera.\n• Descubre registros de casos idénticos cada diez años.'
+                        : '• Obstáculos crecientes y resistencia.\n• Una revelación cambia la comprensión del problema.\n• Ya no hay vuelta atrás.',
+                    metadata: { category: 'ESCALETA // PASO 03' },
+                    x: -70,
+                    y: 20,
+                    width: 250,
+                    height: 225,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 4
+                {
+                    id: img4,
+                    type: 'image',
+                    caption: withExample ? '4. Comienza la búsqueda' : 'Acto II • Crisis',
+                    content: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Infiltración nocturna en los túneles.' : 'Imagen de máxima tensión.' },
+                    x: 215,
+                    y: -230,
+                    width: 250,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'text',
+                    caption: withExample ? '4. Comienza la búsqueda' : '4. Noche Oscura',
+                    content: withExample
+                        ? '• Olivia y Gus siguen el mapa de las antiguas minas.\n• Son descubiertos por los vigías de Los Devotos.\n• Encuentran la cámara subterránea bajo la capilla.'
+                        : '• Todo parece perdido o el peligro llega al límite.\n• El protagonista arriesga todo por la verdad.\n• Descubrimiento de la guarida o núcleo del conflicto.',
+                    metadata: { category: 'ESCALETA // PASO 04' },
+                    x: 215,
+                    y: 20,
+                    width: 250,
+                    height: 225,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                // Columna 5
+                {
+                    id: img5,
+                    type: 'image',
+                    caption: withExample ? '5. El rescate' : 'Acto III • Clímax',
+                    content: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Confrontación final y amanecer en Montrose.' : 'Imagen del desenlace.' },
+                    x: 500,
+                    y: -230,
+                    width: 250,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
+                    type: 'text',
+                    caption: withExample ? '5. El rescate' : '5. Clímax y Resolución',
+                    content: withExample
+                        ? '• Enfrentamiento final con el Padre Stein durante el ritual.\n• Logran rescatar al niño antes del derrumbe.\n• La verdad sale a la luz y Olivia encuentra su propósito.'
+                        : '• Confrontación definitiva con el antagonista.\n• Resolución del conflicto principal.\n• Nuevo equilibrio alcanzado por el protagonista.',
+                    metadata: { category: 'ESCALETA // PASO 05' },
+                    x: 500,
+                    y: 20,
+                    width: 250,
+                    height: 225,
                     isPublic: false,
                     createdAt: new Date().toISOString(),
                     canvasId: targetCanvasId
                 }
             ];
+            newLinks = [
+                { from: b1, to: b2, color: '#10b981' },
+                { from: b2, to: b3, color: '#10b981' },
+                { from: b3, to: b4, color: '#10b981' },
+                { from: b4, to: b5, color: '#10b981' }
+            ];
+        } else if (templateId === 'weekly_plan') {
+            const w1 = `${ts}-wp-1`, w2 = `${ts}-wp-2`, w3 = `${ts}-wp-3`, w4 = `${ts}-wp-4`, w5 = `${ts}-wp-5`, w6 = `${ts}-wp-6`;
+            newBlocks = [
+                {
+                    id: w1,
+                    type: 'todo',
+                    caption: 'PRIORIDADES DE LA SEMANA',
+                    content: '',
+                    metadata: {
+                        items: withExample ? [
+                            { id: `${ts}-wp-i1`, text: 'Finalizar escaleta de los capítulos 1 al 4', done: true },
+                            { id: `${ts}-wp-i2`, text: 'Definir paleta de color y referencias visuales', done: true },
+                            { id: `${ts}-wp-i3`, text: 'Revisión de fichas de personajes secundarios', done: false },
+                            { id: `${ts}-wp-i4`, text: 'Entrega de corte preliminar el viernes', done: false }
+                        ] : [
+                            { id: `${ts}-wp-i1`, text: 'Objetivo prioritario #1', done: false },
+                            { id: `${ts}-wp-i2`, text: 'Objetivo prioritario #2', done: false },
+                            { id: `${ts}-wp-i3`, text: 'Objetivo prioritario #3', done: false }
+                        ]
+                    },
+                    x: -480,
+                    y: -230,
+                    width: 290,
+                    height: 245,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: w2,
+                    type: 'column',
+                    caption: 'AGENDA: LUNES A MIÉRCOLES',
+                    content: withExample
+                        ? 'LUNES\n• 09:00 — Sesión de lluvia de ideas\n• 14:00 — Investigación de referencias\n\nMARTES\n• 10:00 — Escritura de escenas clave\n• 16:00 — Pruebas de atmósfera visual\n\nMIÉRCOLES\n• 11:00 — Revisión de estructura y ritmo'
+                        : 'LUNES\n• \n\nMARTES\n• \n\nMIÉRCOLES\n• ',
+                    x: -155,
+                    y: -230,
+                    width: 290,
+                    height: 340,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: w3,
+                    type: 'column',
+                    caption: 'AGENDA: JUEVES A VIERNES',
+                    content: withExample
+                        ? 'JUEVES\n• 09:30 — Edición de borradores\n• 15:00 — Ajustes de diálogo y tono\n\nVIERNES\n• 10:00 — Cierre de entregables de la semana\n• 13:00 — Retrospectiva y planeación siguiente'
+                        : 'JUEVES\n• \n\nVIERNES\n• \n\nFIN DE SEMANA\n• ',
+                    x: 170,
+                    y: -230,
+                    width: 290,
+                    height: 340,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: w4,
+                    type: 'image',
+                    caption: withExample ? 'Enfoque Creativo de la Semana' : 'Inspiración Semanal',
+                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Mantener la atmósfera de misterio y claridad narrativa.' : 'Imagen motivacional o meta visual.' },
+                    x: -480,
+                    y: 45,
+                    width: 290,
+                    height: 245,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: w5,
+                    type: 'text',
+                    caption: withExample ? 'Notas & Ideas Rápidas' : 'Recordatorios',
+                    content: withExample
+                        ? 'Recuerda contrastar el tono frío de Montrose con los recuerdos cálidos de la protagonista para acentuar su aislamiento.'
+                        : 'Anota aquí ideas espontáneas, enlaces o pendientes para la próxima semana...',
+                    metadata: { category: 'SEMANA // APUNTES' },
+                    x: -155,
+                    y: 135,
+                    width: 290,
+                    height: 165,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: w6,
+                    type: 'sub_board',
+                    caption: 'Archivo de Entregables',
+                    content: '',
+                    metadata: { itemCount: 4, accentColor: '#10b981' },
+                    x: 170,
+                    y: 135,
+                    width: 290,
+                    height: 145,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [{ from: w1, to: w2, color: '#10b981' }];
         }
 
         if (newBlocks.length > 0) {
             setBlocks(prev => {
+                const removedIds = new Set(prev.filter(b => b.canvasId === targetCanvasId).map(b => b.id));
                 const filtered = prev.filter(b => b.canvasId !== targetCanvasId);
                 const updated = [...filtered, ...newBlocks];
                 if (typeof syncBlocks === 'function') syncBlocks(updated);
+                setLinks(prevLinks => {
+                    const baseLinks = (Array.isArray(prevLinks) ? prevLinks : []).filter(l => !removedIds.has(l.from) && !removedIds.has(l.to));
+                    const updatedLinks = [...baseLinks, ...newLinks];
+                    if (typeof syncLinks === 'function') syncLinks(updatedLinks);
+                    return updatedLinks;
+                });
                 return updated;
             });
-            if (newLinks.length > 0) {
-                setLinks(prev => {
-                    const updated = [...prev, ...newLinks];
-                    if (typeof syncLinks === 'function') syncLinks(updated);
-                    return updated;
-                });
-            }
-            setCam({ x: 0, y: 0, scale: 0.9 });
+            setCam({ x: 0, y: 0, scale: 0.72 });
         }
-        setIsTemplatePickerOpen(false);
+        if (closePicker) setIsTemplatePickerOpen(false);
     };
 
     const openSubBoardWorkspace = (boardId, boardTitle) => {
@@ -11664,7 +12268,12 @@ ${afcMapContext}
         setActiveCanvasId(boardId);
         setCam({ x: 0, y: 0, scale: 1 });
         const existingInBoard = (blocks || []).filter(b => b.canvasId === boardId);
-        setIsTemplatePickerOpen(existingInBoard.length === 0);
+        if (existingInBoard.length === 0) {
+            setSelectedBoardTemplate('empty');
+            setIsTemplatePickerOpen(true);
+        } else {
+            setIsTemplatePickerOpen(false);
+        }
         setIsMilanoteToolsOpen(false);
     };
 
@@ -11826,7 +12435,7 @@ ${afcMapContext}
                     if (!b.canvasId && activeCanvasId !== 'canvas_default') return false;
                     return true;
                 }).map(b => {
-                    const hasConnections = links.some(l => l.from === b.id || l.to === b.id);
+                    const hasConnections = Array.isArray(links) && links.some(l => l.from === b.id || l.to === b.id);
                     return (
                         <MemoNode
                             onRequestTitleEdit={(blockId, currentText) => {
@@ -12322,7 +12931,10 @@ ${afcMapContext}
                                         <button
                                             key={tpl.id}
                                             type="button"
-                                            onClick={() => setSelectedBoardTemplate(tpl.id)}
+                                            onClick={() => {
+                                                setSelectedBoardTemplate(tpl.id);
+                                                applySubBoardTemplate(tpl.id, activeCanvasId, keepTemplateContent, false);
+                                            }}
                                             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${isSelected
                                                 ? 'bg-white/[0.1] text-white shadow-inner'
                                                 : 'text-zinc-300 hover:bg-white/[0.05] hover:text-white'
@@ -12341,7 +12953,7 @@ ${afcMapContext}
 
                             <button
                                 type="button"
-                                onClick={() => applySubBoardTemplate(selectedBoardTemplate, activeCanvasId, keepTemplateContent)}
+                                onClick={() => applySubBoardTemplate(selectedBoardTemplate, activeCanvasId, keepTemplateContent, true)}
                                 className="w-full py-2.5 px-4 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black font-bold text-[13px] shadow-[0_8px_25px_rgba(16,185,129,0.35)] transition-all active:scale-[0.99]"
                             >
                                 Utilice esta plantilla
@@ -12351,7 +12963,13 @@ ${afcMapContext}
                                 <input
                                     type="checkbox"
                                     checked={keepTemplateContent}
-                                    onChange={(e) => setKeepTemplateContent(e.target.checked)}
+                                    onChange={(e) => {
+                                        const next = e.target.checked;
+                                        setKeepTemplateContent(next);
+                                        if (selectedBoardTemplate && selectedBoardTemplate !== 'empty') {
+                                            applySubBoardTemplate(selectedBoardTemplate, activeCanvasId, next, false);
+                                        }
+                                    }}
                                     className="w-3.5 h-3.5 rounded accent-[#10b981] cursor-pointer"
                                 />
                                 <span>Mantenga el contenido de ejemplo</span>
@@ -14356,7 +14974,9 @@ ${afcMapContext}
                 }
                 const u = document.getElementById('oasis_user_input')?.value;
                 const p = document.getElementById('oasis_key_input')?.value;
-                const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
+                const emailVal = isRegisterMode ? (document.getElementById('oasis_email_input')?.value || "") : "";
+                if (u && emailVal) localStorage.setItem('oasis_email_' + u, emailVal);
+                const fn = u || "";
                 const age = null;
                 if (u && p) handleAuth(u, p, fn, age);
             }
@@ -14468,7 +15088,8 @@ ${afcMapContext}
                                             </label>
                                             <input
                                                 type="email"
-                                                id="oasis_fullname_input"
+                                                id="oasis_email_input"
+                                                autoComplete="email"
                                                 placeholder="TU@CORREO.COM"
                                                 onKeyDown={handleKeyPress}
                                                 className="w-full h-10 bg-transparent border-b border-zinc-800 focus:border-zinc-500 rounded-none text-sm font-light uppercase tracking-widest text-white placeholder:text-zinc-850 outline-none transition-colors px-1"
@@ -14504,7 +15125,9 @@ ${afcMapContext}
                                         onClick={() => {
                                             const u = document.getElementById('oasis_user_input')?.value;
                                             const p = document.getElementById('oasis_key_input')?.value;
-                                            const fn = isRegisterMode ? (document.getElementById('oasis_fullname_input')?.value || "") : "";
+                                            const emailVal = isRegisterMode ? (document.getElementById('oasis_email_input')?.value || "") : "";
+                                            if (u && emailVal) localStorage.setItem('oasis_email_' + u, emailVal);
+                                            const fn = u || "";
                                             const age = null;
                                             const isClinician = isRegisterMode ? (document.getElementById('oasis_is_clinician')?.checked || false) : false;
                                             const role = isClinician ? 'clinician' : 'patient';

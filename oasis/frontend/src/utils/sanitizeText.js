@@ -309,7 +309,8 @@ export function sanitizeAfcGraph(graph) {
   if (!graph || typeof graph !== 'object') return graph;
   return {
     ...graph,
-    nodes: Array.isArray(graph.nodes) ? graph.nodes.map(sanitizeNodeObject) : graph.nodes
+    nodes: Array.isArray(graph.nodes) ? graph.nodes.map(sanitizeNodeObject) : [],
+    edges: Array.isArray(graph.edges) ? graph.edges : []
   };
 }
 
