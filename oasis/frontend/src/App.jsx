@@ -2216,7 +2216,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
     );
 };
 
-const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit }) => {
+const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit, selectedBlockId, onSelectBlockId }) => {
     const isImage = block.type === 'image' || block.type === 'relic';
     const isVideo = block.type === 'video';
     const isAudio = block.type === 'audio';
@@ -2231,6 +2231,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
     const isConversation = block.type === 'conversation';
     const hasMedia = block.content?.includes('[img]') || block.content?.includes('[vid]') || block.content?.includes('[aud]');
     const isActive = activeNoteId === block.id;
+    const isSelected = selectedBlockId === block.id || isActive || draggingId === block.id;
     const isChildNote = !!block.metadata?.parentId;
     const [newTodoText, setNewTodoText] = useState('');
 
@@ -2312,7 +2313,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     }
                 } else if (block.type === 'loop_map_mini') {
                     return; // No-op, its own button handles opening the archive
-                } else if (isImage || isVideo || isColorSwatch || isTodoCard || isColumnCard) {
+                } else if (isImage) {
+                    if (onSelectBlockId) onSelectBlockId(block.id);
+                    return;
+                } else if (isVideo || isColorSwatch || isTodoCard || isColumnCard) {
                     return; // No-op, inline controls handle interaction
                 } else if (isSubBoardCard) {
                     if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Sub-tablero');
@@ -2656,12 +2660,12 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             }}
         >
             <div
-                className={`relative flex flex-col ${isSubBoardCard ? 'rounded-3xl border-transparent bg-transparent shadow-none overflow-visible' : `${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`} ${draggingId ? 'transition-none' : 'transition-all duration-300'}`}
+                className={`relative flex flex-col ${isSubBoardCard ? 'rounded-3xl border-transparent bg-transparent shadow-none overflow-visible' : (isImage ? `rounded-xl transition-all duration-150 ${isSelected ? 'border border-white/50 ring-2 ring-white/20 bg-white/[0.03] shadow-[0_4px_25px_rgba(0,0,0,0.5)]' : 'border border-transparent bg-transparent shadow-none overflow-visible'}` : `${isColorSwatch ? 'rounded-[20px]' : (isChildNote ? 'rounded-[1.25rem]' : 'rounded-[22px]')} border ${camScale > 0.5 ? 'shadow-[0_18px_45px_rgba(0,0,0,0.82)]' : ''} overflow-hidden ${isConversation ? 'bg-[#0f0914] border-purple-500/20' : (isInsight || isResonanceAny ? 'insight-block' : (isDiaryAny ? 'bg-gradient-to-br from-[#1c120c] to-[#0e0906] border-amber-500/30' : (isLoopMapNode ? 'bg-[#050e14] border-cyan-500/30' : 'bg-[#121316]/95 backdrop-blur-xl border-white/[0.08]')))} ${draggingId === block.id ? 'border-[#10b981] ring-1 ring-[#10b981]/30' : (isActive ? `border-[#10b981] ${camScale > 0.5 ? 'shadow-[0_0_24px_rgba(16,185,129,0.3)]' : ''}` : (isDiaryAny ? `border-amber-500/20 hover:border-amber-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(245,158,11,0.1)]' : ''}` : (isLoopMapNode ? `border-cyan-500/20 hover:border-cyan-500/40 ${camScale > 0.5 ? 'shadow-[0_0_30px_rgba(6,182,212,0.1)]' : ''}` : 'border-white/[0.08] hover:border-white/[0.18]')))}`)} ${draggingId ? 'transition-none' : 'transition-all duration-300'}`}
                 style={{
-                    width: isSubBoardCard ? '180px' : (localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`),
-                    height: isSubBoardCard ? '160px' : ((block.type === 'text' || isTodoCard) ? 'auto' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`)),
-                    minWidth: isSubBoardCard ? '180px' : (isColorSwatch ? '175px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px'))))),
-                    minHeight: isSubBoardCard ? '160px' : (localSize.height ? `${localSize.height}px` : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px')))))),
+                    width: isSubBoardCard ? '180px' : (isImage ? (localSize.width ? `${localSize.width}px` : (block.width ? `${block.width}px` : (block.w ? `${block.w}px` : '260px'))) : (localSize.width ? `${localSize.width}px` : `${getBWidth(block, false)}px`)),
+                    height: isSubBoardCard ? '160px' : (isImage ? (localSize.height ? `${localSize.height}px` : (block.height ? `${block.height}px` : (block.h ? `${block.h}px` : 'auto'))) : ((block.type === 'text' || isTodoCard) ? 'auto' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`))),
+                    minWidth: isSubBoardCard ? '180px' : (isImage ? '40px' : (isColorSwatch ? '175px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px')))))),
+                    minHeight: isSubBoardCard ? '160px' : (isImage ? '40px' : (localSize.height ? `${localSize.height}px` : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))))),
                     maxWidth: undefined,
                     maxHeight: undefined,
                     willChange: 'transform',
@@ -2724,7 +2728,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
 
-                <div className={`${isColorSwatch || isSubBoardCard ? 'p-0' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
+                <div className={`${isColorSwatch || isSubBoardCard || isImage ? 'p-0' : (isMediaNode ? 'p-3.5' : (isChildNote ? 'p-2.5' : 'p-5'))} flex-1 flex flex-col min-h-0`}>
                     {isConversation ? (() => {
                         let parsedMsgs = [];
                         try {
@@ -3216,68 +3220,61 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             })()}
                         </div>
                     ) : isImage ? (
-                        <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
-                            {/* MILANOTE IMAGE HEADER */}
-                            <div className="flex items-center justify-between gap-2 pb-2.5 px-0.5 shrink-0">
-                                <input
-                                    type="text"
-                                    value={block.caption ?? 'Silueta & Guantes Vinilo'}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    onChange={(e) => {
-                                        if (onUpdateBlock) {
-                                            onUpdateBlock({ ...block, caption: e.target.value });
-                                        }
+                        <div className="relative w-full h-full flex flex-col items-center justify-center group/media select-none">
+                            {/* MILANOTE QUICK TOOLBAR - ON HOVER OR SELECTION ONLY */}
+                            <div
+                                className={`absolute -top-3.5 right-1 z-30 flex items-center gap-1 bg-black/85 backdrop-blur-md px-1.5 py-1 rounded-full border border-white/20 shadow-xl transition-all duration-200 pointer-events-auto ${
+                                    isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-95 group-hover/media:opacity-100 group-hover/media:scale-100'
+                                }`}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsMobileResizing(prev => !prev);
                                     }}
-                                    placeholder="Título de imagen..."
-                                    className="bg-transparent text-[11px] font-mono text-zinc-300 hover:text-white focus:text-white focus:outline-none truncate w-full transition-colors"
-                                />
-                                {!showDeleteConfirm && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setShowDeleteConfirm(true);
-                                        }}
-                                        className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors pointer-events-auto shrink-0"
-                                        title="Eliminar imagen"
-                                    >
-                                        <X size={13} />
-                                    </button>
-                                )}
+                                    className="p-1 hover:bg-white/20 rounded-full text-zinc-300 hover:text-white transition-colors"
+                                    title="Ajustar tamaño"
+                                >
+                                    <Maximize2 size={11} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowDeleteConfirm(true);
+                                    }}
+                                    className="p-1 hover:bg-red-500/30 rounded-full text-zinc-400 hover:text-red-400 transition-colors"
+                                    title="Eliminar del collage"
+                                >
+                                    <Trash2 size={11} />
+                                </button>
                             </div>
 
-                            {/* ROUNDED INNER IMAGE */}
-                            <div className="relative flex-1 w-full min-h-[130px] rounded-2xl overflow-hidden bg-black/50 border border-white/[0.05]">
+                            {/* PURE CUTOUT IMAGE (NO BACKGROUND BOX, TRANSPARENT CANVAS INTEGRATION) */}
+                            <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                                 <img
                                     onError={(e) => {
                                         if (!e.target.dataset.failed) {
                                             e.target.dataset.failed = true;
-                                            e.target.src = 'https://placehold.co/400x300/0a0d0c/10b981?text=Referencia+Visual';
+                                            e.target.src = 'https://placehold.co/400x300/0a0d0c/10b981?text=Imagen';
                                         }
                                     }}
                                     src={formatUrl(block.content)}
-                                    className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+                                    className="w-full h-full object-contain pointer-events-none select-none drop-shadow-md"
                                     draggable={false}
                                 />
                             </div>
 
-                            {/* MILANOTE BOTTOM CAPTION */}
-                            <textarea
-                                rows={2}
-                                value={block.metadata?.description ?? 'Brillo húmedo y textura filamentosa.'}
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                    if (onUpdateBlock) {
-                                        onUpdateBlock({
-                                            ...block,
-                                            metadata: { ...(block.metadata || {}), description: e.target.value }
-                                        });
-                                    }
-                                }}
-                                placeholder="Añadir nota al pie..."
-                                className="pt-2.5 px-0.5 bg-transparent text-[12px] text-zinc-400 hover:text-zinc-200 focus:text-zinc-100 focus:outline-none leading-snug resize-none overflow-hidden w-full transition-colors shrink-0"
-                            />
+                            {/* OPTIONAL CAPTION ONLY IF USER EXPLICITLY SET ONE (NOT DUMMY TEXT) */}
+                            {block.caption && block.caption !== 'Silueta & Guantes Vinilo' && block.caption !== 'Esbozo de Sincronía' && block.caption !== 'Retrato del Personaje' && block.caption !== 'Referencia Secundaria' && (
+                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 max-w-[90%] px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-mono text-zinc-300 truncate pointer-events-none select-none">
+                                    {block.caption}
+                                </div>
+                            )}
                         </div>
                     ) : isVideo ? (
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 group/media">
@@ -11321,6 +11318,131 @@ ${afcMapContext}
         }
     };
 
+    const [selectedBlockId, setSelectedBlockId] = useState(null);
+
+    // CLIPBOARD PASTE FOR COLLAGES (Ctrl+V PASTE OF IMAGES / TRANSPARENT CUTOUTS)
+    useEffect(() => {
+        if (view !== 'canvas') return;
+        const handleCanvasPaste = (e) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+                return;
+            }
+
+            const clipboard = e.clipboardData;
+            if (!clipboard) return;
+
+            const items = clipboard.items;
+            if (items && items.length > 0) {
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.type && item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        const blob = item.getAsFile();
+                        if (!blob) continue;
+
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            const dataUrl = ev.target.result;
+                            const img = new Image();
+                            img.onload = () => {
+                                const naturalW = img.naturalWidth || 300;
+                                const naturalH = img.naturalHeight || 300;
+                                const maxDim = 320;
+                                let w = naturalW;
+                                let h = naturalH;
+                                if (w > maxDim || h > maxDim) {
+                                    if (w > h) {
+                                        h = Math.round((h * maxDim) / w);
+                                        w = maxDim;
+                                    } else {
+                                        w = Math.round((w * maxDim) / h);
+                                        h = maxDim;
+                                    }
+                                }
+
+                                const jitterX = (Math.random() - 0.5) * 60;
+                                const jitterY = (Math.random() - 0.5) * 60;
+                                const spawnX = (-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX;
+                                const spawnY = (-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY;
+
+                                const newBlock = {
+                                    id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                                    type: 'image',
+                                    content: dataUrl,
+                                    x: Math.round(spawnX),
+                                    y: Math.round(spawnY),
+                                    w: Math.round(w),
+                                    h: Math.round(h),
+                                    width: Math.round(w),
+                                    height: Math.round(h),
+                                    rotation: 0,
+                                    username: user,
+                                    timestamp: new Date().toISOString(),
+                                    canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                };
+
+                                syncBlocks(prev => [newBlock, ...prev]);
+                                setSelectedBlockId(newBlock.id);
+                            };
+                            img.src = dataUrl;
+                        };
+                        reader.readAsDataURL(blob);
+                        return;
+                    }
+                }
+            }
+
+            const text = clipboard.getData('text')?.trim();
+            if (text && (text.match(/^https?:\/\/.*\.(png|jpg|jpeg|webp|gif|svg)(\?.*)?$/i) || text.startsWith('data:image/'))) {
+                e.preventDefault();
+                const img = new Image();
+                img.onload = () => {
+                    const naturalW = img.naturalWidth || 300;
+                    const naturalH = img.naturalHeight || 300;
+                    const maxDim = 320;
+                    let w = naturalW;
+                    let h = naturalH;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+
+                    const spawnX = (-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2);
+                    const spawnY = (-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2);
+
+                    const newBlock = {
+                        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                        type: 'image',
+                        content: text,
+                        x: Math.round(spawnX),
+                        y: Math.round(spawnY),
+                        w: Math.round(w),
+                        h: Math.round(h),
+                        width: Math.round(w),
+                        height: Math.round(h),
+                        rotation: 0,
+                        username: user,
+                        timestamp: new Date().toISOString(),
+                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                    };
+
+                    syncBlocks(prev => [newBlock, ...prev]);
+                    setSelectedBlockId(newBlock.id);
+                };
+                img.src = text;
+            }
+        };
+
+        window.addEventListener('paste', handleCanvasPaste);
+        return () => window.removeEventListener('paste', handleCanvasPaste);
+    }, [view, cam, user, activeCanvasId, syncBlocks]);
+
     // --- HANDLERS ---
     const handleStart = (e, id) => {
         if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('.port')) return;
@@ -11333,6 +11455,9 @@ ${afcMapContext}
         window.dragVelocity = { x: 0, y: 0 };
         if (id !== 'canvas' && id !== 'universe' && id !== 'feed' && id !== 'player') {
             setLastInteractedBlockId(id);
+            setSelectedBlockId(id);
+        } else {
+            setSelectedBlockId(null);
         }
 
         if (id === 'canvas' && e.touches && e.touches.length === 1) {
@@ -12644,8 +12769,8 @@ ${afcMapContext}
                 img.src = localUrl;
                 await new Promise(r => img.onload = r);
                 const ratio = img.naturalHeight / (img.naturalWidth || 1);
-                w = 270;
-                h = Math.min(420, Math.max(240, Math.round(220 * ratio) + 75));
+                w = 260;
+                h = Math.round(260 * ratio);
             }
 
             const formData = new FormData();
@@ -12665,8 +12790,8 @@ ${afcMapContext}
                                 id: `img-${Date.now()}`,
                                 type: isVid ? 'video' : 'image',
                                 content: data.url,
-                                caption: cleanName || 'Silueta & Guantes Vinilo',
-                                metadata: { description: 'Brillo húmedo y textura filamentosa.' },
+                                caption: cleanName || '',
+                                metadata: {},
                                 x: -cam.x / cam.scale,
                                 y: -cam.y / cam.scale,
                                 width: w,
@@ -12775,6 +12900,8 @@ ${afcMapContext}
                             blocks={blocks}
                             draggingId={draggingId}
                             activeNoteId={activeNoteId}
+                            selectedBlockId={selectedBlockId}
+                            onSelectBlockId={setSelectedBlockId}
                             onStart={handleStart}
                             onSelect={editBlock}
                             onUpdateBlock={handleInlineBlockUpdate}
