@@ -6,7 +6,7 @@ import {
     ArrowLeft, ArrowRight, ImageIcon, Mic, Zap, Pencil,
     Edit3, Trash2, Maximize2, Settings, X,
     Heart, MessageCircle, Eye, EyeOff, Globe,
-    Aperture, Infinity as InfinityIcon, Share2, Search, Play, Pause, SkipForward, SkipBack,
+    Aperture, Infinity as InfinityIcon, Share2, ExternalLink, Search, Play, Pause, SkipForward, SkipBack,
     FolderPlus, ChevronDown, ChevronUp, Pin, Star, FileText, PanelLeft, PanelLeftClose, MessageSquare, StickyNote,
     Paperclip, Send, ChevronLeft, ChevronRight, ListMusic, Sparkles, Save, LayoutGrid, Headphones,
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
@@ -1485,13 +1485,40 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                     {/* BOTTOM OVERLAY: comment + profile */}
                     <div className="absolute bottom-0 left-0 right-0 z-20 p-5 pointer-events-none">
                         {feedComment.trim() && (
-                            <p className="text-sm font-serif italic text-white/90 leading-snug mb-4 line-clamp-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                            <p className="text-sm font-serif italic text-white/90 leading-snug mb-3 line-clamp-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                                 {feedComment}
                             </p>
                         )}
+                        {(f.metadata?.buyLink || f.metadata?.price) && (
+                            <div className="mb-3 pointer-events-auto">
+                                <a
+                                    href={f.metadata.buyLink || 'https://ruidointerior.com/shop'}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-[#10b981] to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-[0_8px_25px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/buy"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingBag size={15} strokeWidth={2.5} className="group-hover/buy:scale-110 transition-transform" />
+                                        <span className="font-extrabold tracking-wide">Comprar / Adquirir</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-black/25 px-2.5 py-1 rounded-lg text-white font-mono font-bold text-xs">
+                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Ver'}</span>
+                                        <ExternalLink size={11} className="opacity-80" />
+                                    </div>
+                                </a>
+                            </div>
+                        )}
                         <div
                             className="flex items-center justify-between pointer-events-auto cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); if (setPublicProfileUser && f.username) setPublicProfileUser(f.username); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                                    if (setView) setView('profile');
+                                } else if (setPublicProfileUser && f.username) {
+                                    setPublicProfileUser(f.username);
+                                }
+                            }}
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full border-2 border-white/30 overflow-hidden shrink-0">
@@ -1508,12 +1535,13 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             </div>
                             <div className="flex items-center gap-3">
                                 {(f.metadata?.buyLink || f.metadata?.price) && (
-                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-full bg-accent/20 backdrop-blur-md border border-accent/30 flex items-center justify-center text-accent hover:bg-accent hover:text-black hover:scale-110 transition-all pointer-events-auto shadow-lg shrink-0">
-                                        <ShoppingBag size={14} />
+                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-auto shrink-0 transition-transform active:scale-95">
+                                        <ShoppingBag size={12} strokeWidth={2.5} />
+                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Comprar'}</span>
                                     </a>
                                 )}
                                 <p className="text-[8px] font-medium italic text-white/50 truncate max-w-[100px] text-right">
-                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'Publicación'}
+                                    {f.metadata?.feedCaption || f.caption || 'Publicación'}
                                 </p>
                             </div>
                         </div>
@@ -1603,9 +1631,36 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                                 <p className="text-sm font-serif italic text-white/85 leading-snug">{feedComment}</p>
                             </div>
                         )}
+                        {(f.metadata?.buyLink || f.metadata?.price) && (
+                            <div className="pointer-events-auto">
+                                <a
+                                    href={f.metadata.buyLink || 'https://ruidointerior.com/shop'}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-[#10b981] to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-[0_8px_25px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/buy"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingBag size={15} strokeWidth={2.5} className="group-hover/buy:scale-110 transition-transform" />
+                                        <span className="font-extrabold tracking-wide">Comprar / Adquirir</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-black/25 px-2.5 py-1 rounded-lg text-white font-mono font-bold text-xs">
+                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Ver'}</span>
+                                        <ExternalLink size={11} className="opacity-80" />
+                                    </div>
+                                </a>
+                            </div>
+                        )}
                         <div
                             className="flex items-center justify-between pt-2 border-t border-white/5 cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); if (setPublicProfileUser && f.username) setPublicProfileUser(f.username); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                                    if (setView) setView('profile');
+                                } else if (setPublicProfileUser && f.username) {
+                                    setPublicProfileUser(f.username);
+                                }
+                            }}
                         >
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden shrink-0">
@@ -1620,12 +1675,13 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             </div>
                             <div className="flex items-center gap-3">
                                 {(f.metadata?.buyLink || f.metadata?.price) && (
-                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-full bg-accent/20 backdrop-blur-md border border-accent/30 flex items-center justify-center text-accent hover:bg-accent hover:text-black hover:scale-110 transition-all pointer-events-auto shadow-lg shrink-0">
-                                        <ShoppingBag size={14} />
+                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-auto shrink-0 transition-transform active:scale-95">
+                                        <ShoppingBag size={12} strokeWidth={2.5} />
+                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Comprar'}</span>
                                     </a>
                                 )}
                                 <p className="text-[8px] italic text-zinc-500 truncate max-w-[100px] text-right">
-                                    {f.metadata?.price || f.metadata?.feedCaption || f.caption || 'Publicación'}
+                                    {f.metadata?.feedCaption || f.caption || 'Publicación'}
                                 </p>
                             </div>
                         </div>
@@ -1728,10 +1784,18 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                     </div>
                 )}
 
-                {/* HEADER TAG */}
-                <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2 z-20">
-                    <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-                    <span className="text-[6.5px] font-black uppercase tracking-widest text-white/70">{f.type === 'text' ? 'Nota' : f.type?.toUpperCase()}</span>
+                {/* HEADER TAG & PRICE BADGE */}
+                <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
+                    <div className="px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
+                        <span className="text-[6.5px] font-black uppercase tracking-widest text-white/70">{f.type === 'text' ? 'Nota' : f.type?.toUpperCase()}</span>
+                    </div>
+                    {f.metadata?.price && (
+                        <div className="px-3 py-1 bg-black/80 backdrop-blur-md border border-accent/40 rounded-full flex items-center gap-1 shadow-lg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-accent">{f.metadata.price}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* ACTIONS */}
@@ -1758,17 +1822,52 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                     </button>
                 </div>
 
+                {/* HIGH-CONVERTING PROMINENT BUY BANNER */}
+                {(f.metadata?.buyLink || f.metadata?.price) && (
+                    <div className="px-5 py-3 bg-gradient-to-r from-accent/20 via-black/50 to-accent/10 border-t border-accent/30 flex items-center justify-between gap-3 z-20 pointer-events-auto">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-2 h-2 rounded-full bg-accent animate-ping shrink-0" />
+                            <div className="flex flex-col text-left min-w-0">
+                                <span className="text-[10px] font-black tracking-widest uppercase text-white truncate">
+                                    {f.metadata?.price ? `Disponible · ${f.metadata.price}` : 'Pieza Disponible'}
+                                </span>
+                                <span className="text-[7.5px] text-accent/80 font-mono uppercase tracking-wider truncate">
+                                    Adquisición directa
+                                </span>
+                            </div>
+                        </div>
+                        <a
+                            href={f.metadata?.buyLink || 'https://ruidointerior.com/shop'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black text-[9px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-accent/25 hover:brightness-110 active:scale-95 transition-all shrink-0 cursor-pointer"
+                        >
+                            <ShoppingBag size={13} strokeWidth={2.5} />
+                            <span>Comprar</span>
+                            <ExternalLink size={10} strokeWidth={2.5} />
+                        </a>
+                    </div>
+                )}
+
                 {/* USER PROFILE */}
                 <div className="p-6 shrink-0 border-t border-white/5 bg-black/20 flex justify-between items-center z-20">
                     <div
-                        className="flex items-center gap-3 cursor-pointer pointer-events-auto"
-                        onClick={(e) => { e.stopPropagation(); if (setPublicProfileUser && f.username) setPublicProfileUser(f.username); }}
+                        className="flex items-center gap-3 cursor-pointer pointer-events-auto group/author"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                                if (setView) setView('profile');
+                            } else if (setPublicProfileUser && f.username) {
+                                setPublicProfileUser(f.username);
+                            }
+                        }}
                     >
-                        <div className="w-8 h-8 rounded-full border border-accent/20 p-0.5 bg-black/40 overflow-hidden shrink-0">
+                        <div className="w-8 h-8 rounded-full border border-accent/20 p-0.5 bg-black/40 overflow-hidden shrink-0 group-hover/author:border-accent transition-all">
                             <img onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
                         </div>
                         <div className="flex flex-col text-left">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white group-hover/author:text-accent transition-colors">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
                             <span className="text-[6.5px] font-black uppercase tracking-[0.2em] text-accent/60">
                                 {f.metadata?.publishedAt ? new Date(f.metadata.publishedAt).toLocaleDateString() + ' ' + new Date(f.metadata.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Resonancia Nivel 4'}
                             </span>
@@ -1784,7 +1883,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             </button>
                         </div>
                         {(f.metadata?.buyLink || f.metadata?.price) && (
-                            <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-full bg-accent/20 backdrop-blur-md border border-accent/30 flex items-center justify-center text-accent hover:bg-accent hover:text-black hover:scale-110 transition-all pointer-events-auto shadow-lg shrink-0">
+                            <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-full bg-accent/20 backdrop-blur-md border border-accent/30 flex items-center justify-center text-accent hover:bg-accent hover:text-black hover:scale-110 transition-all pointer-events-auto shadow-lg shrink-0" title="Comprar">
                                 <ShoppingBag size={14} />
                             </a>
                         )}
@@ -4015,7 +4114,8 @@ const PHENOM_QUESTIONS = [
 
 
 const ProfileView = ({
-    user, soulPieces, blocks, setBlocks, syncBlocks, accent, isEditingProfile, setIsEditingProfile,
+    user, targetUser, isVisitor = false, onCloseVisitor, publicProfileData, publicUsers = [],
+    soulPieces, blocks, setBlocks, syncBlocks, accent, isEditingProfile, setIsEditingProfile,
     deleteBlock, deleteBlocks,
     isBitacoraOpen, setIsBitacoraOpen,
     isLinking, setIsLinking, links, linkSource, setLinkSource,
@@ -4030,9 +4130,8 @@ const ProfileView = ({
     setIsHighlightModalOpen, setSelectedHighlight,
     isStoryUploadModalOpen, setIsStoryUploadModalOpen, setViewing24hStories
 }) => {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const user24hStories = (feed || []).filter(b => b.username === user && b.type === 'story' && b.timestamp > twentyFourHoursAgo);
-    const hasActiveStories = user24hStories.length > 0;
+    const effectiveUser = (targetUser || user || 'anon').replace('@', '');
+    const isOwnProfile = !isVisitor && Boolean(user) && (effectiveUser.toLowerCase() === user.toLowerCase());
 
     const cleanDisplayName = (val, fallback) => {
         if (!val || typeof val !== 'string') return fallback;
@@ -4041,25 +4140,126 @@ const ProfileView = ({
         return trimmed;
     };
 
-    const [bio, setBio] = useState(() => localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
-    const [profileLink, setProfileLink] = useState(() => localStorage.getItem('oasis_profilelink_' + user) || '');
-    const [fullName, setFullName] = useState(() => cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
-    const [coverImage, setCoverImage] = useState(() => localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+    const [bio, setBio] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.') : 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
+    const [profileLink, setProfileLink] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_profilelink_' + user) || '') : '');
+    const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : effectiveUser);
+    const [coverImage, setCoverImage] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+
+    const [copiedLink, setCopiedLink] = useState(false);
+    const handleShareProfile = (e) => {
+        if (e) e.stopPropagation();
+        const profileUrl = `${window.location.origin}/?u=${effectiveUser}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(profileUrl).then(() => {
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2500);
+            }).catch(() => {
+                prompt('Copia tu enlace personalizado:', profileUrl);
+            });
+        } else {
+            prompt('Copia tu enlace personalizado:', profileUrl);
+        }
+    };
+
+    const twentyFourHoursAgo = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+    const user24hStories = useMemo(() => {
+        return (feed || []).filter(b => {
+            if (!b || b.type !== 'story') return false;
+            const u1 = (b.username || '').replace('@', '').toLowerCase();
+            const u2 = (b.metadata?.feedUsername || '').replace('@', '').toLowerCase();
+            return (u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase()) && b.timestamp > twentyFourHoursAgo;
+        });
+    }, [feed, effectiveUser, twentyFourHoursAgo]);
+    const hasActiveStories = user24hStories.length > 0;
+
+    const displayAvatar = useMemo(() => {
+        if (isOwnProfile) return avatar;
+        if (publicProfileData?.avatar || publicProfileData?.Avatar) return publicProfileData.avatar || publicProfileData.Avatar;
+        const postWithAv = (feed || []).find(p => {
+            if (!p) return false;
+            const u1 = (p.username || '').replace('@', '').toLowerCase();
+            const u2 = (p.metadata?.feedUsername || '').replace('@', '').toLowerCase();
+            return (u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase()) && p.metadata?.userAvatar;
+        });
+        if (postWithAv) return postWithAv.metadata.userAvatar;
+        return `https://api.dicebear.com/7.x/pixel-art/svg?seed=${effectiveUser}`;
+    }, [isOwnProfile, avatar, publicProfileData, feed, effectiveUser]);
+
+    const targetUserPosts = useMemo(() => {
+        const target = effectiveUser.toLowerCase();
+        return (feed || []).filter(b => {
+            if (!b || b.type === 'story' || b.type === 'highlight') return false;
+            const u1 = (b.username || '').replace('@', '').toLowerCase();
+            const u2 = (b.metadata?.feedUsername || '').replace('@', '').toLowerCase();
+            return u1 === target || u2 === target;
+        });
+    }, [feed, effectiveUser]);
+
+    const linkedPosts = useMemo(() => {
+        return targetUserPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
+    }, [targetUserPosts]);
 
     const [activePurchasingId, setActivePurchasingId] = useState(null);
     const [activeSuccessId, setActiveSuccessId] = useState(null);
     const [isFirmaExpanded, setIsFirmaExpanded] = useState(false);
 
     React.useEffect(() => {
-        if (isEditingProfile) return; // No sobreescribir mientras el usuario edita
+        if (!isOwnProfile) {
+            let vFullName = effectiveUser;
+            let vBio = 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.';
+            let vCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+            let vLink = '';
 
-        // Limpiar cualquier correo accidentalmente guardado como nombre de usuario (ej. por autocompletado de registro)
+            const userFeedPosts = (feed || []).filter(p => {
+                if (!p) return false;
+                const u1 = (p.username || '').replace('@', '').toLowerCase();
+                const u2 = (p.metadata?.feedUsername || '').replace('@', '').toLowerCase();
+                return u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase();
+            });
+
+            if (userFeedPosts.length > 0) {
+                const pWithFn = userFeedPosts.find(p => p.metadata?.userFullName && !p.metadata.userFullName.includes('@'));
+                if (pWithFn) vFullName = pWithFn.metadata.userFullName;
+            }
+
+            const pData = publicProfileData || (() => {
+                try {
+                    const c = localStorage.getItem(`oasis_cached_profile_${effectiveUser}`);
+                    return c ? JSON.parse(c) : null;
+                } catch { return null; }
+            })();
+
+            if (pData) {
+                const getVal = (k1, k2) => {
+                    if (typeof pData[k1] === 'string' && pData[k1].trim() !== '') return pData[k1];
+                    if (typeof pData[k2] === 'string' && pData[k2].trim() !== '') return pData[k2];
+                    return null;
+                };
+                const fn = getVal('fullName', 'FullName');
+                if (fn && !fn.includes('@')) vFullName = fn;
+                const b = getVal('bio', 'Bio');
+                if (b) vBio = b;
+                const cv = getVal('coverImage', 'CoverImage');
+                if (cv) vCover = cv;
+                const pl = getVal('profileLink', 'ProfileLink');
+                if (pl) vLink = pl;
+            }
+
+            setFullName(vFullName);
+            setBio(vBio);
+            setCoverImage(vCover);
+            setProfileLink(vLink);
+            return;
+        }
+
+        if (isEditingProfile) return;
+
         const storedFn = localStorage.getItem('oasis_fullname_' + user);
         if (storedFn && storedFn.includes('@')) {
             localStorage.setItem('oasis_fullname_' + user, user || '');
         }
 
-        const profileBlock = blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings');
+        const profileBlock = (blocks || []).find(b => b.id === 'profile_settings' || b.Id === 'profile_settings');
         if (profileBlock) {
             try {
                 const data = JSON.parse(profileBlock.content || profileBlock.Content || "{}");
@@ -4099,7 +4299,7 @@ const ProfileView = ({
         setFullName(cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
         setCoverImage(localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
         setProfileLink(localStorage.getItem('oasis_profilelink_' + user) || '');
-    }, [user, blocks, setAvatar, isEditingProfile]);
+    }, [user, effectiveUser, isOwnProfile, publicProfileData, blocks, setAvatar, isEditingProfile, feed]);
 
     const [releaseTab, setReleaseTab] = useState('posts');
     const [savedPostIds, setSavedPostIds] = useState(() => {
@@ -4274,6 +4474,7 @@ const ProfileView = ({
 
     const formatUrl = (url) => {
         if (!url || typeof url !== 'string') return '';
+        url = url.replace(/\[\/?(img|vid|aud)\]/gi, '').trim();
 
         const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.'));
 
@@ -4295,12 +4496,22 @@ const ProfileView = ({
         if (!block) return null;
         if (block.type === 'image') return formatUrl(block.content);
 
+        if (block.metadata?.slides && Array.isArray(block.metadata.slides) && block.metadata.slides.length > 0) {
+            const imgSlide = block.metadata.slides.find(s => s && (s.type === 'image' || !s.type) && s.url);
+            if (imgSlide) return formatUrl(imgSlide.url);
+        }
+
         if (block.metadata?.thumbnail) return formatUrl(block.metadata.thumbnail);
+        if (block.metadata?.imageUrl) return formatUrl(block.metadata.imageUrl);
         if (block.bgType === 'image' && block.bgValue) return formatUrl(block.bgValue);
 
         if (block.content && typeof block.content === 'string') {
+            const imgMatch = block.content.match(/\[img\](.*?)\[\/img\]/i);
+            if (imgMatch && imgMatch[1]) {
+                return formatUrl(imgMatch[1].trim());
+            }
             const contentLines = block.content.split('\n') || [];
-            const inlineImg = contentLines.find(l => typeof l === 'string' && l.startsWith('[img]'))?.replace('[img]', '')?.replace('[/img]', '')?.trim();
+            const inlineImg = contentLines.find(l => typeof l === 'string' && l.includes('[img]'))?.replace(/\[\/?img\]/gi, '')?.trim();
             if (inlineImg) return formatUrl(inlineImg);
         }
 
@@ -4309,18 +4520,22 @@ const ProfileView = ({
             if (firstImg) return formatUrl(firstImg.content);
         }
 
-        if (block.metadata?.thumbnail) {
-            return formatUrl(block.metadata.thumbnail);
-        }
-
         return null;
     };
 
     const getBlockPreviewVideo = (block) => {
         if (!block) return null;
+        if (block.metadata?.slides && Array.isArray(block.metadata.slides) && block.metadata.slides.length > 0) {
+            const vidSlide = block.metadata.slides.find(s => s && s.type === 'video' && s.url);
+            if (vidSlide) return formatUrl(vidSlide.url);
+        }
         if (block.content && typeof block.content === 'string') {
+            const vidMatch = block.content.match(/\[vid\](.*?)\[\/vid\]/i);
+            if (vidMatch && vidMatch[1]) {
+                return formatUrl(vidMatch[1].trim());
+            }
             const contentLines = block.content.split('\n') || [];
-            const inlineVid = contentLines.find(l => typeof l === 'string' && l.startsWith('[vid]'))?.replace('[vid]', '')?.replace('[/vid]', '')?.trim();
+            const inlineVid = contentLines.find(l => typeof l === 'string' && l.includes('[vid]'))?.replace(/\[\/?vid\]/gi, '')?.trim();
             if (inlineVid) return formatUrl(inlineVid);
         }
         return null;
@@ -4558,16 +4773,35 @@ const ProfileView = ({
             }}
         >
             {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
-            <div className="absolute top-4 sm:top-8 left-4 right-4 md:left-10 md:right-10 flex justify-between items-start pointer-events-none z-50">
+            <div className="absolute top-4 sm:top-8 left-4 right-4 md:left-10 md:right-10 flex justify-between items-center pointer-events-none z-50">
                 <div className="flex gap-2 pointer-events-auto">
-                    {isEditingProfile && (
+                    {!isOwnProfile ? (
                         <button
-                            onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                            className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in hover:scale-105 active:scale-95"
+                            onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
+                            className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
                         >
-                            <Camera size={12} /> Cambiar Portada
+                            <ArrowLeft size={13} /> Volver
                         </button>
+                    ) : (
+                        isEditingProfile && (
+                            <button
+                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in hover:scale-105 active:scale-95 cursor-pointer"
+                            >
+                                <Camera size={12} /> Cambiar Portada
+                            </button>
+                        )
                     )}
+                </div>
+                <div className="flex gap-2 pointer-events-auto">
+                    <button
+                        onClick={handleShareProfile}
+                        className={`px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer ${copiedLink ? 'border-accent text-accent' : 'border-white/10 hover:border-white/30 text-white'}`}
+                        title="Copiar enlace personalizado"
+                    >
+                        {copiedLink ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2.5} />}
+                        <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
+                    </button>
                 </div>
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
@@ -4608,7 +4842,7 @@ const ProfileView = ({
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
-                                                } else {
+                                                } else if (isOwnProfile) {
                                                     handleAvatarClick(e);
                                                 }
                                             }}
@@ -4616,11 +4850,11 @@ const ProfileView = ({
                                             <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
-                                                    src={formatUrl(avatar)}
+                                                    src={formatUrl(displayAvatar)}
                                                     className="w-full h-full object-cover rounded-full"
                                                 />
                                             </div>
-                                            {isEditingProfile && (
+                                            {isOwnProfile && isEditingProfile && (
                                                 <div className="absolute inset-0 m-[2px] rounded-full bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                                                     <Camera size={14} className="text-white mb-0.5" />
                                                     <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
@@ -4628,31 +4862,33 @@ const ProfileView = ({
                                             )}
                                         </div>
                                         <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-                                        <div
-                                            onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                            className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
-                                            title="Subir historia"
-                                        >
-                                            <Plus size={10} strokeWidth={3} className="sm:size-[11px]" />
-                                        </div>
+                                        {isOwnProfile && (
+                                            <div
+                                                onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
+                                                className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
+                                                title="Subir historia"
+                                            >
+                                                <Plus size={10} strokeWidth={3} className="sm:size-[11px]" />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Nombre & Badges */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{cleanDisplayName(fullName, user)}</h2>
+                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{cleanDisplayName(fullName, effectiveUser)}</h2>
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
                                         </div>
-                                        <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{user}</span>
+                                        <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{effectiveUser}</span>
                                         <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
                                             <Sparkles size={8} className="text-accent" />
-                                            <span>Creador // Explorador</span>
+                                            <span>{isOwnProfile ? 'Creador // Explorador' : 'Perfil de Creador'}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Bio & Links */}
-                                {isEditingProfile ? (
+                                {isOwnProfile && isEditingProfile ? (
                                     <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
                                         <div>
                                             <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Nombre para mostrar</span>
@@ -4711,12 +4947,12 @@ const ProfileView = ({
                                 {/* Barra de Estadísticas */}
                                 <div className="grid grid-cols-3 gap-1 bg-black/40 border border-white/5 rounded-xl p-2 text-center">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold text-white font-mono">{(feed || []).filter(b => b.username === user).length}</span>
+                                        <span className="text-sm font-bold text-white font-mono">{targetUserPosts.length}</span>
                                         <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Posts</span>
                                     </div>
                                     <div className="flex flex-col items-center border-x border-white/5">
                                         <span className="text-sm font-bold text-accent font-mono">
-                                            {(feed || []).filter(b => b.username === user && (b.metadata?.resonanceScore > 0 || (b.content && typeof b.content === 'string' && b.content.includes('[resonancia]')))).length}
+                                            {targetUserPosts.filter(b => b.metadata?.resonanceScore > 0 || (b.content && typeof b.content === 'string' && b.content.includes('[resonancia]'))).length}
                                         </span>
                                         <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Resonancias</span>
                                     </div>
@@ -4728,32 +4964,57 @@ const ProfileView = ({
 
                                 {/* Botones de Acción */}
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => {
-                                            if (isEditingProfile && onSaveProfile) {
-                                                onSaveProfile({ fullName, bio, profileLink });
-                                            }
-                                            setIsEditingProfile(!isEditingProfile);
-                                        }}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${isEditingProfile ? 'bg-accent text-black hover:bg-accent/90' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
-                                    >
-                                        {isEditingProfile ? (
-                                            <>
-                                                <Check size={13} strokeWidth={2.5} /> Guardar Cambios
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Edit2 size={13} /> Editar perfil
-                                            </>
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={() => setIsSettingsOpen(true)}
-                                        className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-zinc-300 hover:text-white transition-all shadow-lg"
-                                        title="Ajustes de cuenta"
-                                    >
-                                        <Settings size={15} />
-                                    </button>
+                                    {isOwnProfile ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    if (isEditingProfile && onSaveProfile) {
+                                                        onSaveProfile({ fullName, bio, profileLink });
+                                                    }
+                                                    setIsEditingProfile(!isEditingProfile);
+                                                }}
+                                                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer ${isEditingProfile ? 'bg-accent text-black hover:bg-accent/90' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
+                                            >
+                                                {isEditingProfile ? (
+                                                    <>
+                                                        <Check size={13} strokeWidth={2.5} /> Guardar Cambios
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Edit2 size={13} /> Editar perfil
+                                                    </>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsSettingsOpen(true)}
+                                                className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-zinc-300 hover:text-white transition-all shadow-lg cursor-pointer"
+                                                title="Ajustes de cuenta"
+                                            >
+                                                <Settings size={15} />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={handleShareProfile}
+                                                className="flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 shadow-lg text-white cursor-pointer hover:scale-[1.02] active:scale-95"
+                                            >
+                                                {copiedLink ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2.5} />}
+                                                <span>{copiedLink ? '¡Enlace Copiado!' : 'Compartir Perfil'}</span>
+                                            </button>
+                                            {profileLink && (
+                                                <a
+                                                    href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 bg-accent/20 hover:bg-accent text-accent hover:text-black border border-accent/30 rounded-xl transition-all shadow-lg cursor-pointer"
+                                                    title="Visitar enlace del autor"
+                                                >
+                                                    <ExternalLink size={15} />
+                                                </a>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -4761,17 +5022,35 @@ const ProfileView = ({
                             {(() => {
                                 let resonanceData = null;
                                 try {
-                                    const saved = localStorage.getItem(`oasis_public_traits_${user}`);
-                                    if (saved) {
-                                        const parsed = JSON.parse(saved);
-                                        if (parsed?.sintesis || parsed?.Sintesis) {
-                                            resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
-                                        } else if (parsed?.habitar || parsed?.Habitar) {
-                                            resonanceData = {
-                                                habitar: parsed?.habitar || parsed?.Habitar,
-                                                vinculo: parsed?.vinculo || parsed?.Vinculo || '',
-                                                busqueda: parsed?.busqueda || parsed?.Busqueda || ''
-                                            };
+                                    if (isOwnProfile) {
+                                        const saved = localStorage.getItem(`oasis_public_traits_${user}`);
+                                        if (saved) {
+                                            const parsed = JSON.parse(saved);
+                                            if (parsed?.sintesis || parsed?.Sintesis) {
+                                                resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
+                                            } else if (parsed?.habitar || parsed?.Habitar) {
+                                                resonanceData = {
+                                                    habitar: parsed?.habitar || parsed?.Habitar,
+                                                    vinculo: parsed?.vinculo || parsed?.Vinculo || '',
+                                                    busqueda: parsed?.busqueda || parsed?.Busqueda || ''
+                                                };
+                                            }
+                                        }
+                                    } else {
+                                        if (publicUsers && Array.isArray(publicUsers)) {
+                                            const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === effectiveUser.toLowerCase());
+                                            if (pUserObj && pUserObj.publicTraits) {
+                                                const parsed = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
+                                                if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
+                                                    resonanceData = parsed;
+                                                }
+                                            }
+                                        }
+                                        if (!resonanceData && publicProfileData?.publicTraits) {
+                                            const parsed = typeof publicProfileData.publicTraits === 'string' ? JSON.parse(publicProfileData.publicTraits) : publicProfileData.publicTraits;
+                                            if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
+                                                resonanceData = parsed;
+                                            }
                                         }
                                     }
                                 } catch(e) {}
@@ -4842,19 +5121,15 @@ const ProfileView = ({
                         {/* RIGHT COLUMN: MOMENTOS DESTACADOS, VITRINA CREATIVA Y GALERÍA */}
                         <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-
-
                             {/* 2. VITRINA CREATIVA // ENLACES Y PRODUCTOS */}
                             {(() => {
-                                const linkedPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight' && ((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
-
                                 return (
                                     <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <LinkIcon size={12} className="text-accent" />
                                                 <span className="text-[10px] font-mono text-zinc-300 uppercase tracking-widest font-bold">
-                                                    Enlaces
+                                                    Enlaces & Obras
                                                 </span>
                                                 <span className="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[8px] font-mono">
                                                     {linkedPosts.length}
@@ -4871,18 +5146,22 @@ const ProfileView = ({
                                                         <LinkIcon size={16} />
                                                     </div>
                                                     <div className="space-y-1 text-center sm:text-left">
-                                                        <h4 className="text-xs font-bold text-white tracking-wide">Sin enlaces por ahora</h4>
+                                                        <h4 className="text-xs font-bold text-white tracking-wide">
+                                                            {isOwnProfile ? 'Sin enlaces por ahora' : 'Sin enlaces activos'}
+                                                        </h4>
                                                         <p className="text-[9px] text-zinc-400 font-sans leading-relaxed max-w-md">
-                                                            Asigna un enlace o precio a cualquier nota en el pizarrón para exhibirla aquí.
+                                                            {isOwnProfile ? 'Asigna un enlace o precio a cualquier nota en el pizarrón para exhibirla aquí.' : 'Este creador no ha publicado piezas o productos en venta todavía.'}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => setView('canvas')}
-                                                    className="px-3.5 py-2 bg-white/10 hover:bg-accent hover:text-black border border-white/15 hover:border-transparent rounded-xl text-[9px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 shrink-0 shadow-lg"
-                                                >
-                                                    <Compass size={11} /> Ir al Pizarrón
-                                                </button>
+                                                {isOwnProfile && (
+                                                    <button
+                                                        onClick={() => setView('canvas')}
+                                                        className="px-3.5 py-2 bg-white/10 hover:bg-accent hover:text-black border border-white/15 hover:border-transparent rounded-xl text-[9px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 shrink-0 shadow-lg cursor-pointer"
+                                                    >
+                                                        <Compass size={11} /> Ir al Pizarrón
+                                                    </button>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -4899,7 +5178,7 @@ const ProfileView = ({
                                                         const match = prod.content.match(/\$\d+(?:\.\d{2})?/);
                                                         if (match) price = match[0];
                                                     }
-                                                    if (!price) price = 'Ver';
+                                                    if (!price) price = 'Disponible';
 
                                                     const link = prod.metadata?.buyLink;
                                                     const postImg = getBlockPreviewImage(prod);
@@ -4911,7 +5190,7 @@ const ProfileView = ({
                                                             className="w-full aspect-[4/3] rounded-xl border border-white/10 hover:border-accent/40 relative group/prod-card overflow-hidden shadow-lg transition-all duration-300"
                                                         >
                                                             {postImg ? (
-                                                                <img
+                                                                 <img
                                                                     onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
                                                                     src={postImg}
                                                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/prod-card:scale-105"
@@ -4942,25 +5221,17 @@ const ProfileView = ({
                                                                     <h4 className="text-[10px] font-bold text-white tracking-tight line-clamp-1">
                                                                         {title}
                                                                     </h4>
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleProductBuyClick(id, link);
-                                                                        }}
-                                                                        disabled={activePurchasingId === id}
-                                                                        className={`w-full py-1.5 rounded-lg text-[8px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1 ${
-                                                                            activeSuccessId === id
-                                                                                ? 'bg-emerald-500 text-white'
-                                                                                : (activePurchasingId === id
-                                                                                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                                                                                    : 'bg-white/15 hover:bg-accent text-white hover:text-black border border-white/10 hover:border-transparent shadow-lg')
-                                                                        }`}
+                                                                    <a
+                                                                        href={link && link.trim() !== '' ? (link.startsWith('http') ? link : `https://${link}`) : 'https://ruidointerior.com/shop'}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        className="w-full py-1.5 rounded-lg text-[8px] font-mono font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 bg-accent text-black hover:brightness-110 shadow-lg cursor-pointer active:scale-95"
                                                                     >
-                                                                        {activePurchasingId === id && (
-                                                                            <div className="w-2.5 h-2.5 border border-zinc-400 border-t-white rounded-full animate-spin" />
-                                                                        )}
-                                                                        {activeSuccessId === id ? 'Listo' : (activePurchasingId === id ? '...' : (link ? 'Visitar' : 'Comprar'))}
-                                                                    </button>
+                                                                        <ShoppingBag size={11} strokeWidth={2.5} />
+                                                                        <span>{link ? 'Comprar Ahora' : 'Adquirir Obra'}</span>
+                                                                        <ExternalLink size={9} strokeWidth={2.5} />
+                                                                    </a>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -4978,24 +5249,26 @@ const ProfileView = ({
                                 <div className="flex items-center gap-2 p-1 bg-zinc-900/60 border border-white/10 rounded-2xl backdrop-blur-md">
                                     <button
                                         onClick={() => setReleaseTab('posts')}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'posts' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'posts' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         <LayoutGrid size={13} />
                                         <span>Publicaciones</span>
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setReleaseTab('saved');
-                                            reloadSaved();
-                                        }}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'saved' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        <Bookmark size={13} />
-                                        <span>Guardados</span>
-                                    </button>
+                                    {isOwnProfile && (
+                                        <button
+                                            onClick={() => {
+                                                setReleaseTab('saved');
+                                                reloadSaved();
+                                            }}
+                                            className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'saved' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        >
+                                            <Bookmark size={13} />
+                                            <span>Guardados</span>
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setReleaseTab('resonance')}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${releaseTab === 'resonance' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'resonance' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
                                     >
                                         <Sparkles size={13} />
                                         <span>Resonancias</span>
@@ -5005,16 +5278,13 @@ const ProfileView = ({
                                 {/* Grilla de Contenido */}
                                 <div className="w-full pb-10">
                                     {(() => {
-                                        const userPosts = (feed || []).filter(b => b.username === user && b.type !== 'story' && b.type !== 'highlight');
-                                        let tabFilteredPosts = userPosts;
+                                        let tabFilteredPosts = targetUserPosts;
                                         if (releaseTab === 'posts') {
-                                            tabFilteredPosts = userPosts.filter(b => !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
-                                        } else if (releaseTab === 'linked') {
-                                            tabFilteredPosts = userPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
+                                            tabFilteredPosts = targetUserPosts.filter(b => !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '')));
                                         } else if (releaseTab === 'saved') {
                                             tabFilteredPosts = (feed || []).filter(b => savedPostIds.includes(b.id));
                                         } else if (releaseTab === 'resonance') {
-                                            tabFilteredPosts = userPosts.filter(b => {
+                                            tabFilteredPosts = targetUserPosts.filter(b => {
                                                 const hasScore = b.metadata?.resonanceScore > 0;
                                                 const hasTag = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
                                                 return (hasScore || hasTag) && !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
@@ -5045,56 +5315,43 @@ const ProfileView = ({
                                                                     onNavigateToFeedPost(post.id);
                                                                 }
                                                             }}
-                                                            className="aspect-square w-full bg-zinc-900 border border-white/5 rounded-xl relative overflow-hidden cursor-pointer group hover:scale-[1.02] hover:border-white/20 transition-all duration-300 shadow-md"
+                                                            className="aspect-square bg-zinc-900/60 border border-white/10 rounded-xl overflow-hidden relative group/grid-card cursor-pointer hover:border-white/30 transition-all duration-300 shadow-md"
                                                         >
                                                             {postImg ? (
-                                                                <>
-                                                                    <img
-                                                                        onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
-                                                                        src={postImg}
-                                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                                    />
-                                                                    {postVid && (
-                                                                        <div className="absolute top-2 right-2 text-white drop-shadow-md">
-                                                                            <Film size={14} fill="white" />
-                                                                        </div>
-                                                                    )}
-                                                                    {(post.metadata?.buyLink || post.metadata?.price) && (
-                                                                        <div className="absolute bottom-2 left-2 text-white drop-shadow-md">
-                                                                            <ShoppingBag size={13} fill="white" />
-                                                                        </div>
-                                                                    )}
-                                                                </>
+                                                                <img
+                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline+Media'; } }}
+                                                                    src={postImg}
+                                                                    className="w-full h-full object-cover group-hover/grid-card:scale-105 transition-transform duration-500"
+                                                                />
                                                             ) : postVid ? (
-                                                                <>
-                                                                    <video
-                                                                        onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                                                                        src={postVid}
-                                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                                        muted loop playsInline
-                                                                        onMouseEnter={e => e.target.play().catch(() => { })}
-                                                                        onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }}
-                                                                    />
-                                                                    <div className="absolute top-2 right-2 text-white drop-shadow-md">
-                                                                        <Film size={14} fill="white" />
-                                                                    </div>
-                                                                </>
+                                                                <video
+                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
+                                                                    src={postVid}
+                                                                    className="w-full h-full object-cover"
+                                                                    muted loop playsInline autoPlay
+                                                                />
                                                             ) : (
-                                                                <div className="w-full h-full flex flex-col justify-between p-3 relative bg-zinc-800/80">
-                                                                    <div className="absolute top-2 right-2 text-white/50">
-                                                                        <FileText size={13} />
-                                                                    </div>
-                                                                    <p className="text-[9px] sm:text-[10px] font-sans text-white/90 line-clamp-5 leading-relaxed mt-2">
-                                                                        {cleanText}
+                                                                <div className="w-full h-full p-3 flex flex-col justify-between bg-zinc-900/80 group-hover/grid-card:bg-zinc-800/80 transition-colors">
+                                                                    <p className="text-[10px] text-zinc-300 font-sans line-clamp-4 leading-relaxed">
+                                                                        {cleanText || post.caption || 'Nota sin texto'}
                                                                     </p>
+                                                                    <span className="text-[7px] font-mono text-zinc-400 uppercase tracking-widest">
+                                                                        {post.type || 'Nota'}
+                                                                    </span>
                                                                 </div>
                                                             )}
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
-                                                                {post.metadata?.resonanceScore > 0 && (
-                                                                    <div className="flex items-center gap-1 text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-full border border-white/10">
-                                                                        <Activity size={13} className="text-accent" /> {post.metadata.resonanceScore}
-                                                                    </div>
-                                                                )}
+
+                                                            {postVid && (
+                                                                <div className="absolute top-1.5 right-1.5 p-1 bg-black/60 backdrop-blur-sm rounded-md text-white z-10">
+                                                                    <Film size={9} />
+                                                                </div>
+                                                            )}
+
+                                                            {/* Overlay al pasar el mouse */}
+                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/grid-card:opacity-100 transition-opacity flex items-center justify-center p-3 text-center">
+                                                                <span className="text-[9px] font-mono uppercase tracking-widest text-white flex items-center gap-1.5 font-bold">
+                                                                    <Eye size={12} /> Ver en Feed
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     );
@@ -5106,17 +5363,6 @@ const ProfileView = ({
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Animated Scroll Down Indicator to open Canvas */}
-                <div
-                    className="flex flex-col items-center gap-1 animate-bounce cursor-pointer pb-2 pointer-events-auto mt-auto shrink-0"
-                    onClick={() => {
-                        setView('canvas');
-                    }}
-                >
-                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-500">Desliza para abrir el pizarrón</span>
-                    <ChevronDown size={12} className="text-zinc-500" />
                 </div>
             </div>
         </div>
@@ -14488,12 +14734,22 @@ ${afcMapContext}
         if (!block) return null;
         if (block.type === 'image') return formatUrl(block.content);
 
+        if (block.metadata?.slides && Array.isArray(block.metadata.slides) && block.metadata.slides.length > 0) {
+            const imgSlide = block.metadata.slides.find(s => s && (s.type === 'image' || !s.type) && s.url);
+            if (imgSlide) return formatUrl(imgSlide.url);
+        }
+
         if (block.metadata?.thumbnail) return formatUrl(block.metadata.thumbnail);
+        if (block.metadata?.imageUrl) return formatUrl(block.metadata.imageUrl);
         if (block.bgType === 'image' && block.bgValue) return formatUrl(block.bgValue);
 
         if (block.content && typeof block.content === 'string') {
+            const imgMatch = block.content.match(/\[img\](.*?)\[\/img\]/i);
+            if (imgMatch && imgMatch[1]) {
+                return formatUrl(imgMatch[1].trim());
+            }
             const contentLines = block.content.split('\n') || [];
-            const inlineImg = contentLines.find(l => typeof l === 'string' && l.startsWith('[img]'))?.replace('[img]', '')?.trim();
+            const inlineImg = contentLines.find(l => typeof l === 'string' && l.includes('[img]'))?.replace(/\[\/?img\]/gi, '')?.trim();
             if (inlineImg) return formatUrl(inlineImg);
         }
 
@@ -14506,279 +14762,91 @@ ${afcMapContext}
 
     const getBlockPreviewVideo = (block) => {
         if (!block) return null;
+        if (block.metadata?.slides && Array.isArray(block.metadata.slides) && block.metadata.slides.length > 0) {
+            const vidSlide = block.metadata.slides.find(s => s && s.type === 'video' && s.url);
+            if (vidSlide) return formatUrl(vidSlide.url);
+        }
         if (block.content && typeof block.content === 'string') {
+            const vidMatch = block.content.match(/\[vid\](.*?)\[\/vid\]/i);
+            if (vidMatch && vidMatch[1]) {
+                return formatUrl(vidMatch[1].trim());
+            }
             const contentLines = block.content.split('\n') || [];
-            const inlineVid = contentLines.find(l => typeof l === 'string' && l.startsWith('[vid]'))?.replace('[vid]', '')?.replace('[/vid]', '')?.trim();
+            const inlineVid = contentLines.find(l => typeof l === 'string' && l.includes('[vid]'))?.replace(/\[\/?vid\]/gi, '')?.trim();
             if (inlineVid) return formatUrl(inlineVid);
         }
         return null;
     };
 
     const renderPublicProfileView = () => {
-        const cleanPublicUser = typeof publicProfileUser === 'string' ? publicProfileUser.replace('@', '') : '';
-        // Fix: also check metadata.feedUsername to catch all post formats
-        const publicUserPosts = (feed || []).filter(f => {
-            if (!f) return false;
-            const uname = (typeof f.username === 'string' ? f.username : '').replace('@', '');
-            const feedUname = (typeof f.metadata?.feedUsername === 'string' ? f.metadata.feedUsername : '').replace('@', '');
-            return uname === cleanPublicUser || feedUname === cleanPublicUser;
-        });
-        const nonStoryPosts = publicUserPosts.filter(p => p && p.type !== 'story' && p.type !== 'highlight');
-
-        let avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${cleanPublicUser || 'anon'}`;
-        let fullName = cleanPublicUser;
-        let bio = 'Sin bio por ahora.';
-        let cover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
-
-        // 1. Pre-fill from feed posts immediately to avoid visual "pop-in" while API loads
-        if (publicUserPosts.length > 0) {
-            const postWithAvatar = publicUserPosts.find(p => p.metadata?.userAvatar);
-            if (postWithAvatar) avatar = postWithAvatar.metadata.userAvatar;
-            
-            const postWithFullName = publicUserPosts.find(p => p.metadata?.userFullName);
-            if (postWithFullName) fullName = postWithFullName.metadata.userFullName;
-        }
-
-        // 2. Pre-fill from localStorage cache if available (super fast)
-        let mergedProfileData = null;
-        try {
-            const cached = localStorage.getItem(`oasis_cached_profile_${cleanPublicUser}`);
-            if (cached) mergedProfileData = JSON.parse(cached);
-        } catch(e) {}
-        
-        // 3. Override with live fetched data once it arrives
-        if (publicProfileData && typeof publicProfileData === 'object') {
-            mergedProfileData = publicProfileData;
-        }
-
-        if (mergedProfileData) {
-            const getProp = (key1, key2) => {
-                if (typeof mergedProfileData[key1] === 'string' && mergedProfileData[key1].trim() !== '') return mergedProfileData[key1];
-                if (typeof mergedProfileData[key2] === 'string' && mergedProfileData[key2].trim() !== '') return mergedProfileData[key2];
-                return null;
-            };
-            
-            const parsedAvatar = getProp('avatar', 'Avatar');
-            if (parsedAvatar) avatar = parsedAvatar;
-
-            const parsedFullName = getProp('fullName', 'FullName');
-            if (parsedFullName && !parsedFullName.includes('@')) fullName = parsedFullName;
-            else fullName = null;
-
-            const parsedBio = getProp('bio', 'Bio');
-            if (parsedBio) bio = parsedBio;
-
-            const parsedCover = getProp('coverImage', 'CoverImage');
-            if (parsedCover) cover = parsedCover;
-        }
-
-        if (cleanPublicUser && user && cleanPublicUser.toLowerCase() === user.toLowerCase()) {
-            const localAvatar = localStorage.getItem('oasis_avatar_' + user) || localStorage.getItem('oasis_avatar_' + cleanPublicUser);
-            if (localAvatar) avatar = localAvatar;
-
-            const localCover = localStorage.getItem('oasis_cover_' + user) || localStorage.getItem('oasis_cover_' + cleanPublicUser);
-            if (localCover) cover = localCover;
-
-            const localFullName = localStorage.getItem('oasis_fullname_' + user) || localStorage.getItem('oasis_fullname_' + cleanPublicUser);
-            if (localFullName && !localFullName.includes('@')) fullName = localFullName;
-            else if (!fullName) fullName = null;
-
-            const localBio = localStorage.getItem('oasis_bio_' + user) || localStorage.getItem('oasis_bio_' + cleanPublicUser);
-            if (localBio) bio = localBio;
-        }
-
-        let resonanceData = null;
-        let matchScore = null;
-        if (publicUsers) {
-            const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === cleanPublicUser.toLowerCase());
-            if (pUserObj && pUserObj.publicTraits) {
-                try {
-                    const parsed = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
-                    if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
-                        resonanceData = parsed;
-                    }
-                } catch(e) {}
-            }
-            
-            // Re-run similarity score for display
-            let myTraits = [];
-            try {
-                const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
-                if (savedTraits) {
-                    const parsed = JSON.parse(savedTraits);
-                    if (parsed && parsed.keywords) myTraits = parsed.keywords;
-                    else if (Array.isArray(parsed)) myTraits = parsed;
-                }
-            } catch (e) {}
-            
-            if (resonanceData && myTraits.length > 0 && resonanceData.keywords) {
-                let s = 0;
-                myTraits.forEach(mt => {
-                    resonanceData.keywords.forEach(tt => {
-                        if (mt.toLowerCase() === tt.toLowerCase()) s += 10;
-                        else if (mt.toLowerCase().includes(tt.toLowerCase().split(' ')[0])) s += 2;
-                    });
-                });
-                matchScore = Math.min(99, Math.max(75, Math.floor(s * 10) + 75)); 
-            } else if (resonanceData) {
-                matchScore = 75; // Default unknown baseline
-            }
-        }
-
-        const totalPosts = nonStoryPosts.length;
-
+        if (!publicProfileUser) return null;
         return (
-            <div className="absolute inset-0 z-[1500] pointer-events-none">
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto z-[1500]" onClick={(e) => { e.stopPropagation(); setPublicProfileUser(null); }} />
-
-                <div className="absolute inset-x-0 md:inset-x-[5vw] lg:inset-x-[10vw] xl:inset-x-[10vw] top-[72px] md:top-[100px] bottom-0 rounded-t-[2.5rem] border-t border-x border-white/8 flex flex-col bg-black/50 backdrop-blur-3xl text-white shadow-[0_-20px_50px_rgba(0,0,0,0.8)] pb-safe overflow-hidden transition-all pointer-events-auto z-[1501]"
-                    onTouchStart={(e) => { window._ppTouchStartY = e.touches[0].clientY; }}
-                    onTouchEnd={(e) => {
-                        const dy = e.changedTouches[0].clientY - (window._ppTouchStartY || 0);
-                        const scrollEl = document.querySelector('[data-profile-scroll]');
-                        const atTop = !scrollEl || scrollEl.scrollTop <= 4;
-                        if (dy > 90 && atTop) setPublicProfileUser(null);
-                    }}
-                >
-                    <button onClick={() => setPublicProfileUser(null)} className="absolute top-4 left-4 z-50 p-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/60 hover:text-white transition-all">
-                        <ArrowLeft size={14} />
-                    </button>
-
-                    <div data-profile-scroll className="w-full h-full overflow-y-auto no-scrollbar pb-28 relative z-10">
-                        
-                        {/* TOP COVER BANNER */}
-                        <div className="absolute top-0 left-0 w-full h-[60vh] z-0 pointer-events-none overflow-hidden rounded-t-[2rem]" style={{ maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)' }}>
-                            <div
-                                className="absolute inset-0 transition-all duration-700 ease-in-out"
-                                style={{
-                                    backgroundImage: `url(${formatUrl(cover)})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center center',
-                                    opacity: 0.35
-                                }}
-                            />
-                        </div>
-
-                        <div className="w-full max-w-3xl mx-auto px-4 flex flex-col pointer-events-auto pt-8 relative z-10">
-
-                            {/* Avatar + Stats row */}
-                            <div className="flex items-center gap-2 mb-3 mt-1">
-                                <div className="relative shrink-0">
-                                    <div className="w-10 h-10 rounded-full p-[1px] bg-white/10">
-                                        <div className="w-full h-full rounded-full border border-black/50 overflow-hidden bg-zinc-900">
-                                            <img src={formatUrl(avatar)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-full object-cover" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex-1 flex justify-around items-center">
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[10px] font-bold">{totalPosts}</span>
-                                        <span className="text-[7px] text-zinc-500">publicaciones</span>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[10px] font-bold">0</span>
-                                        <span className="text-[7px] text-zinc-500">resonancias</span>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[10px] font-bold">0</span>
-                                        <span className="text-[7px] text-zinc-500">conexiones</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Name + bio */}
-                            <div className="flex flex-col gap-0.5 mb-3 px-0.5">
-                                {fullName && fullName !== cleanPublicUser && (
-                                    <h2 className="text-[10px] font-bold text-white leading-tight">{fullName}</h2>
-                                )}
-                                <h2 className={fullName && fullName !== cleanPublicUser ? "text-[7px] text-zinc-500 font-mono" : "text-[10px] font-bold text-white leading-tight"}>
-                                    @{cleanPublicUser}
-                                </h2>
-                                {bio && bio !== 'Sin bio por ahora.' && (
-                                    <p className="text-[8px] leading-snug text-zinc-300 font-sans whitespace-pre-wrap mt-0.5">{bio}</p>
-                                )}
-                                {(!bio || bio === 'Sin bio por ahora.') && (
-                                    <p className="text-[7px] text-zinc-600 italic mt-0.5">Sin bio por ahora.</p>
-                                )}
-                            </div>
-
-                            {/* FIRMA DE RESONANCIA EXISTENCIAL */}
-                            {resonanceData && (
-                                <div className="mb-6 mx-0.5 rounded-2xl bg-zinc-950/80 border border-white/5 overflow-hidden backdrop-blur-md shadow-xl">
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                            <span className="text-[10px] font-bold text-zinc-300 tracking-wide">Carta de Vibración</span>
-                                        </div>
-                                        {matchScore && (
-                                            <span className="text-[9px] font-mono text-accent">Afinidad: {matchScore}%</span>
-                                        )}
-                                    </div>
-                                    <div className="p-4 space-y-4">
-                                        {resonanceData.sintesis ? (
-                                            <p className="text-[12px] sm:text-[13px] text-zinc-300 font-sans leading-relaxed italic border-l-2 border-white/10 pl-4 py-2">"{resonanceData.sintesis}"</p>
-                                        ) : (
-                                            <>
-                                                <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">ðŸŒŒ</span> Habitar</span>
-                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.habitar}"</p>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">ðŸŒ¿</span> Vínculo</span>
-                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.vinculo}"</p>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-[12px]">âœ¨</span> Búsqueda</span>
-                                                    <p className="text-[11px] text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonanceData.busqueda}"</p>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tab bar */}
-                            <div className="flex w-full border-t border-white/8 mt-3 mb-2">
-                                <div className="flex-1 flex justify-center py-2 border-t-2 border-white/70 text-white/70">
-                                    <LayoutGrid size={15} />
-                                </div>
-                            </div>
-
-                            {/* Posts grid */}
-                            {nonStoryPosts.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-16 gap-2 text-zinc-600">
-                                    <LayoutGrid size={28} className="opacity-30" />
-                                    <span className="text-[9px] font-mono uppercase tracking-widest">Sin publicaciones</span>
-                                </div>
-                            ) : (
-                                <div className="columns-2 md:columns-3 gap-1 w-full space-y-1 pb-10">
-                                    {nonStoryPosts.map((post, index) => {
-                                        const postImg = getBlockPreviewImage(post);
-                                        const postVid = getBlockPreviewVideo(post);
-                                        let cleanText = '';
-                                        if (post.metadata?.feedText && typeof post.metadata.feedText === 'string') cleanText = post.metadata.feedText;
-                                        else if (post.content && typeof post.content === 'string') cleanText = post.content.split('\n')[0];
-
-                                        return (
-                                            <div key={post.id || index} onClick={() => setSelectedPublicPost(post)} className="w-full bg-[#0d0d0f] border border-white/5 relative overflow-hidden cursor-pointer group hover:border-white/15 transition-all duration-300 rounded-md break-inside-avoid shadow-md">
-                                                {postImg ? (
-                                                    <img src={formatUrl(postImg)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.src = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
-                                                ) : postVid ? (
-                                                    <video src={formatUrl(postVid)} onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline'; } }} className="w-full h-auto block object-cover" muted loop playsInline />
-                                                ) : (
-                                                    <div className="w-full min-h-[100px] flex flex-col justify-center p-3 bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c]">
-                                                        <p className="text-[9px] font-sans text-white/80 line-clamp-5">{cleanText}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ProfileView
+                targetUser={publicProfileUser}
+                isVisitor={true}
+                onCloseVisitor={() => setPublicProfileUser(null)}
+                publicProfileData={publicProfileData}
+                publicUsers={publicUsers}
+                user={user}
+                soulPieces={soulPieces}
+                blocks={blocks}
+                setBlocks={setBlocks}
+                syncBlocks={syncBlocks}
+                feed={feed}
+                isBitacoraOpen={isBitacoraOpen}
+                setIsBitacoraOpen={setIsBitacoraOpen}
+                accent={accent}
+                isEditingProfile={false}
+                setIsEditingProfile={() => {}}
+                calculatedResults={calculatedResults}
+                noteKeywords={noteKeywords}
+                avatar={avatar}
+                setAvatar={setAvatar}
+                handleStart={handleStart}
+                profileCam={profileCam}
+                draggingId={draggingId}
+                centerProfile={() => setProfileCam({ x: 0, y: 0, scale: 0.7 })}
+                onSoulPieceImageChange={handleSoulPieceImageChange}
+                deleteBlock={deleteBlock}
+                deleteBlocks={deleteBlocks}
+                setIsHighlightModalOpen={setIsHighlightModalOpen}
+                setSelectedHighlight={setSelectedHighlight}
+                isStoryUploadModalOpen={false}
+                setIsStoryUploadModalOpen={() => {}}
+                setViewing24hStories={setViewing24hStories}
+                isLinking={isLinking}
+                setIsLinking={setIsLinking}
+                links={links}
+                linkSource={linkSource}
+                setLinkSource={setLinkSource}
+                completeConnection={completeConnection}
+                removeConnection={removeConnection}
+                synthesizeLinks={synthesizeLinks}
+                mouseCanvasPos={mouseCanvasPos}
+                editBlock={editBlock}
+                handleSelectNote={handleSelectNote}
+                isAnalyzing={isChatLoading}
+                activeNoteId={activeNoteId}
+                handleAnalyzeGroup={handleAnalyzeGroup}
+                handleAnalyzeBlock={handleAnalyzeBlock}
+                isChatLoading={isChatLoading}
+                setView={setView}
+                playlists={playlists}
+                setPlayQueue={setPlayQueue}
+                setCurrentTrack={setCurrentTrack}
+                setIsPlaying={setIsPlaying}
+                conversations={conversations}
+                setConversations={setConversations}
+                handleSelectConversation={handleSelectConversation}
+                onSaveProfile={handleSaveProfile}
+                onNewChat={handleNewChat}
+                onOpenNotebook={setActiveNotebook}
+                setActiveTest={setActiveTest}
+                setIsSettingsOpen={setIsSettingsOpen}
+                onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
+                openNewComposer={openNewComposer}
+                onNavigateToFeedPost={navigateToFeedAndFocusPost}
+            />
         );
     };
 
