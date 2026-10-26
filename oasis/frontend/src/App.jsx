@@ -1513,10 +1513,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             className="flex items-center justify-between pointer-events-auto cursor-pointer"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                                const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
+                                if (!targetAuthor) return;
+                                if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
                                     if (setView) setView('profile');
-                                } else if (setPublicProfileUser && f.username) {
-                                    setPublicProfileUser(f.username);
+                                } else if (setPublicProfileUser) {
+                                    setPublicProfileUser(targetAuthor);
                                 }
                             }}
                         >
@@ -1655,10 +1657,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             className="flex items-center justify-between pt-2 border-t border-white/5 cursor-pointer"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                                const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
+                                if (!targetAuthor) return;
+                                if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
                                     if (setView) setView('profile');
-                                } else if (setPublicProfileUser && f.username) {
-                                    setPublicProfileUser(f.username);
+                                } else if (setPublicProfileUser) {
+                                    setPublicProfileUser(targetAuthor);
                                 }
                             }}
                         >
@@ -1856,10 +1860,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         className="flex items-center gap-3 cursor-pointer pointer-events-auto group/author"
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (f.username && user && f.username.toLowerCase() === user.toLowerCase()) {
+                            const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
+                            if (!targetAuthor) return;
+                            if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
                                 if (setView) setView('profile');
-                            } else if (setPublicProfileUser && f.username) {
-                                setPublicProfileUser(f.username);
+                            } else if (setPublicProfileUser) {
+                                setPublicProfileUser(targetAuthor);
                             }
                         }}
                     >
@@ -4880,9 +4886,20 @@ const ProfileView = ({
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
                                         </div>
                                         <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{effectiveUser}</span>
-                                        <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
-                                            <Sparkles size={8} className="text-accent" />
-                                            <span>{isOwnProfile ? 'Creador // Explorador' : 'Perfil de Creador'}</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
+                                                <Sparkles size={8} className="text-accent" />
+                                                <span>{isOwnProfile ? 'Creador // Explorador' : 'Perfil de Creador'}</span>
+                                            </div>
+                                            <button
+                                                onClick={handleShareProfile}
+                                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/15 border border-accent/30 hover:bg-accent/25 hover:border-accent text-[8px] font-mono text-accent transition-all cursor-pointer group/copylink shadow-sm active:scale-95"
+                                                title="Copiar enlace para biografia (Instagram / Bio)"
+                                            >
+                                                <LinkIcon size={8} className="group-hover/copylink:rotate-45 transition-transform" />
+                                                <span>ruidointerior.com/?u={effectiveUser}</span>
+                                                {copiedLink ? <Check size={8} strokeWidth={2.5} /> : <Share2 size={8} />}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -5492,26 +5509,46 @@ function OasisApp() {
             }).catch(() => setPublicProfileBackground(null));
     }, [publicProfileUser]);
 
-    // NUEVA LOGICA DE ENRUTAMIENTO PUBLICO
+    // ENRUTAMIENTO DE PERFILES (PUBLICO Y PERSONAL CON LINK PERSONALIZADO)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const userParam = params.get('u');
         if (userParam) {
-            setPublicProfileUser(userParam);
+            const clean = userParam.replace('@', '');
+            if (user && clean.toLowerCase() === user.toLowerCase()) {
+                setViewRaw('profile');
+                setPublicProfileUser(null);
+            } else {
+                setPublicProfileUser(clean);
+            }
         } else {
             const path = window.location.pathname;
-            if (path !== '/' && path !== '') {
-                const potentialUser = path.substring(1).replace('/', '');
+            if (path !== '/' && path !== '' && path !== '/index.html') {
+                const potentialUser = path.substring(1).replace('/', '').replace('@', '');
                 if (potentialUser && !potentialUser.startsWith('api') && potentialUser !== 'index.html') {
-                    setPublicProfileUser(potentialUser);
+                    if (user && potentialUser.toLowerCase() === user.toLowerCase()) {
+                        setViewRaw('profile');
+                        setPublicProfileUser(null);
+                    } else {
+                        setPublicProfileUser(potentialUser);
+                    }
                 }
             }
         }
-    }, []);
+    }, [user]);
+
+    // SINCRONIZACION PERMANENTE DE LA BARRA DE DIRECCIONES (ruidointerior.com/?u=nombre)
+    const activeProfileUsername = publicProfileUser
+        ? publicProfileUser.replace('@', '')
+        : (view === 'profile' && user ? user.replace('@', '') : null);
 
     useEffect(() => {
-        if (publicProfileUser) {
-            window.history.pushState({}, '', '/?u=' + publicProfileUser.replace('@', ''));
+        if (activeProfileUsername) {
+            const targetUrl = '/?u=' + encodeURIComponent(activeProfileUsername);
+            const currentUrl = window.location.pathname + window.location.search;
+            if (currentUrl !== targetUrl) {
+                window.history.pushState({ profileUser: activeProfileUsername }, '', targetUrl);
+            }
         } else {
             if (window.location.search.includes('u=')) {
                 window.history.pushState({}, '', '/');
@@ -5519,7 +5556,31 @@ function OasisApp() {
                 window.history.pushState({}, '', '/');
             }
         }
-    }, [publicProfileUser]);
+    }, [activeProfileUsername]);
+
+    // SOPORTE PARA BOTONES ATRAS / ADELANTE DEL NAVEGADOR
+    useEffect(() => {
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            const userParam = params.get('u');
+            if (userParam) {
+                const clean = userParam.replace('@', '');
+                if (user && clean.toLowerCase() === user.toLowerCase()) {
+                    setViewRaw('profile');
+                    setPublicProfileUser(null);
+                } else {
+                    setPublicProfileUser(clean);
+                }
+            } else {
+                setPublicProfileUser(null);
+                if (view === 'profile') {
+                    setViewRaw('canvas');
+                }
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [user, view]);
 
     const setView = useCallback((v) => {
         setPublicProfileUser(null);
