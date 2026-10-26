@@ -4,7 +4,7 @@ import { Aperture, Mic, Network,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon, Upload
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon, Upload, ExternalLink
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -1340,6 +1340,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                             name: rawUser,
                             fullName: isAxel ? 'Axel Roben' : rawUser,
                             age: isAxel ? 14 : null,
+                            password: '123',
                             role: 'patient'
                         };
                     }
@@ -1381,7 +1382,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                             name: uname,
                             fullName: u.fullName || u.FullName || defaultName || patientsMap[uname]?.fullName || uname,
                             age: u.age ?? u.Age ?? patientsMap[uname]?.age ?? (isAxel ? 14 : null),
-                            password: u.password || u.Password || patientsMap[uname]?.password,
+                            password: u.password || u.Password || patientsMap[uname]?.password || '123',
                             role: userRole,
                             clinicalData: {
                                 ...cData,
@@ -2496,17 +2497,24 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                             <span className="text-zinc-500 uppercase shrink-0">
                                                 {patient.id}
                                             </span>
-                                            {patient.password && (
-                                                <>
-                                                    <span className="text-zinc-700 select-none">•</span>
-                                                    <span className="text-emerald-400 shrink-0">
-                                                        {patient.password}
-                                                    </span>
-                                                </>
-                                            )}
+                                            <span className="text-zinc-700 select-none">•</span>
+                                            <span className="text-emerald-400 font-mono font-medium shrink-0 flex items-center gap-1" title="Contraseña de acceso">
+                                                <Lock size={11} className="text-emerald-500 opacity-90" />
+                                                <span>{patient.password || '123'}</span>
+                                            </span>
                                         </div>
 
                                         <div className="flex items-center gap-2 sm:gap-3 text-zinc-600 shrink-0">
+                                            <a
+                                                href={`/?u=${encodeURIComponent(patient.name)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="p-1 text-zinc-500 hover:text-emerald-400 transition-colors"
+                                                title={`Entrar a sesión de @${patient.name}`}
+                                            >
+                                                <ExternalLink size={14} />
+                                            </a>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -5338,7 +5346,14 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </div>
                                     <div className="min-w-0 pr-2">
                                         <div className="text-xs font-black text-white italic truncate">@{selectedPatient.name}</div>
-                                        <div className="text-[9px] font-mono text-zinc-500 mt-0.5">{selectedPatient.id}</div>
+                                        <div className="text-[9px] font-mono text-zinc-500 mt-0.5 flex items-center gap-1.5">
+                                            <span>{selectedPatient.id}</span>
+                                            <span className="text-zinc-700 select-none">•</span>
+                                            <span className="text-emerald-400 font-bold flex items-center gap-1" title="Contraseña">
+                                                <Lock size={10} className="text-emerald-500" />
+                                                {selectedPatient.password || '123'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                                 <button 

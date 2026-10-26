@@ -586,11 +586,7 @@ namespace Oasis.Backend.Controllers
 
             var userByUsername = _state.Users.FirstOrDefault(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase));
             
-            // Interceptar cuentas con contraseña 123 para forzar restablecimiento
-            if (userByUsername != null && userByUsername.Password == "123")
-            {
-                return Ok(new { requiresPasswordReset = true, username = userByUsername.Username, msg = "Por seguridad, debes establecer una nueva contraseña." });
-            }
+            // Direct authentication allowed
 
             var user = _state.Users.FirstOrDefault(u => 
                 u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase) && 
