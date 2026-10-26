@@ -8110,6 +8110,9 @@ function OasisApp() {
                                             localStorage.setItem(key, cleanUser);
                                             return;
                                         }
+                                        if (key.startsWith('oasis_canvas_nodes_') && localStorage.getItem(key)) {
+                                            return;
+                                        }
                                         localStorage.setItem(key, val);
                                     });
                                 }
