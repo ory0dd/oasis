@@ -28,6 +28,7 @@ import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
 import { BiographicInterview } from './components/BiographicInterview';
 import PublishNoteSelector from './components/PublishNoteSelector';
 import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
+import DirectMessagesModal from './components/DirectMessagesModal';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
@@ -1171,7 +1172,7 @@ const DrawingModal = ({ isOpen, onClose, onSave, accent }) => {
     );
 };
 
-const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links = [], feed = [], setFeed, setView, editBlock, accent, setPublicProfileUser, user, currentUserAvatar, publicUsers = [] }) => {
+const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links = [], feed = [], setFeed, setView, editBlock, accent, setPublicProfileUser, user, currentUserAvatar, publicUsers = [], onOpenDirectMessage }) => {
     const [_unused, setIsInView] = React.useState(false);
     const itemRef = React.useRef(null);
     const [confirmAction, setConfirmAction] = React.useState(null);
@@ -1478,6 +1479,20 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                             </button>
                         )}
                         <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const author = f.username || f.metadata?.feedUsername;
+                                if (onOpenDirectMessage && author) {
+                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
+                                }
+                            }}
+                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
+                            title="Enviar mensaje directo al autor"
+                        >
+                            <MessageCircle size={14} />
+                        </button>
+                        <button
                             onClick={toggleBookmark}
                             className={`w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
                         >
@@ -1602,6 +1617,20 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         <span className="text-[6.5px] font-black uppercase tracking-widest text-white/80">VIDEO</span>
                     </div>
                     <div className="absolute right-3 top-3 flex gap-2 items-center z-20 pointer-events-auto">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const author = f.username || f.metadata?.feedUsername;
+                                if (onOpenDirectMessage && author) {
+                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
+                                }
+                            }}
+                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
+                            title="Enviar mensaje directo al autor"
+                        >
+                            <MessageCircle size={14} />
+                        </button>
                         <button
                             onClick={toggleBookmark}
                             className={`w-7 h-7 rounded-full bg-black/60 border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
@@ -1832,6 +1861,20 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                         </button>
                     )}
                     <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const author = f.username || f.metadata?.feedUsername;
+                                if (onOpenDirectMessage && author) {
+                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
+                                }
+                            }}
+                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
+                            title="Enviar mensaje directo al autor"
+                        >
+                            <MessageCircle size={14} />
+                        </button>
+                        <button
                         onClick={toggleBookmark}
                         className={`w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
                     >
@@ -5731,6 +5774,10 @@ function OasisApp() {
     const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
+    const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
+    const [directMessageTargetUser, setDirectMessageTargetUser] = useState(null);
+    const [directMessageContext, setDirectMessageContext] = useState('');
+    const [feedFilterTab, setFeedFilterTab] = useState('for_you'); // 'for_you' | 'recommended'
     const [isStoryUploadModalOpen, setIsStoryUploadModalOpen] = useState(false);
     const [selectedHighlight, setSelectedHighlight] = useState(null);
     const [viewing24hStories, setViewing24hStories] = useState(null);
@@ -15550,6 +15597,20 @@ ${afcMapContext}
                                             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all" />
                                         </div>
                                         <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-16 md:w-20 text-center">{soul.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDirectMessageTargetUser(soul.username);
+                                                setDirectMessageContext('');
+                                                setIsDirectMessagesOpen(true);
+                                            }}
+                                            className="px-2 py-0.5 rounded-full bg-accent/20 border border-accent/30 text-accent text-[8px] font-bold flex items-center gap-1 hover:bg-accent hover:text-black transition-all shadow-sm"
+                                            title="Enviar mensaje"
+                                        >
+                                            <Send size={7} />
+                                            <span>Mensaje</span>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -15583,6 +15644,11 @@ ${afcMapContext}
                                     user={user}
                                     currentUserAvatar={avatar}
                                     publicUsers={publicUsers}
+                                    onOpenDirectMessage={(author, context) => {
+                                        setDirectMessageTargetUser(author);
+                                        setDirectMessageContext(context || '');
+                                        setIsDirectMessagesOpen(true);
+                                    }}
                                 />
                             </div>
                         ))}
@@ -16575,6 +16641,20 @@ ${afcMapContext}
                         <Home size={15} />
                     </button>
 
+                    {/* 5. Mensajes Directos / Chat con Almas */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setDirectMessageTargetUser(null);
+                            setDirectMessageContext('');
+                            setIsDirectMessagesOpen(true);
+                        }}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${isDirectMessagesOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        title="Mensajes Directos / Chat"
+                    >
+                        <MessageCircle size={15} />
+                    </button>
+
                     {/* TÍTULO Y RUTA DE PESTAÑAS (BREADCRUMBS) DEL TABLERO MILANOTE CUANDO ESTÁS EN EL LIENZO */}
                     {view === 'canvas' && !activeNotebook && !isChatOpen && (() => {
                         const rootTitle = localStorage.getItem('oasis_board_title') || canvasBoardTitle || 'Extraños Movimientos';
@@ -16941,6 +17021,21 @@ ${afcMapContext}
                     accent={accent}
                 />
             )}
+
+            <DirectMessagesModal
+                isOpen={isDirectMessagesOpen}
+                onClose={() => setIsDirectMessagesOpen(false)}
+                currentUser={user}
+                currentUserAvatar={avatar}
+                publicUsers={publicUsers}
+                initialTargetUser={directMessageTargetUser}
+                initialContextMessage={directMessageContext}
+                onOpenProfile={(uname) => {
+                    setIsDirectMessagesOpen(false);
+                    setPublicProfileUser(uname);
+                }}
+                accent={accent}
+            />
             {isHighlightModalOpen && (
                 <HighlightModal
                     user={user}
