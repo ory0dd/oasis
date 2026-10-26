@@ -2251,6 +2251,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
     const localAudioRef = useRef(null);
     const [isMobileResizing, setIsMobileResizing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const deleteModalRef = useRef(null);
     const longPressTimer = useRef(null);
     const touchStartPos = useRef({ x: 0, y: 0 });
 
@@ -2268,7 +2269,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
 
     React.useEffect(() => {
         if (!showDeleteConfirm) return;
-        const handleOutsideClick = () => {
+        const handleOutsideClick = (e) => {
+            if (deleteModalRef.current && deleteModalRef.current.contains(e.target)) return;
             setShowDeleteConfirm(false);
         };
         const timer = setTimeout(() => {
@@ -3938,8 +3940,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 {/* CONFIRMATION DIALOG - GRANDE Y VISIBLE */}
                 {showDeleteConfirm && (
                     <div
+                        ref={deleteModalRef}
                         className="absolute inset-0 bg-black/92 backdrop-blur-lg z-[200] flex flex-col items-center justify-center p-3 sm:p-5 animate-in fade-in zoom-in-95 duration-150 border border-red-500/40 rounded-inherit pointer-events-auto"
                         onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -3958,12 +3962,18 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
 
                         <div className="flex flex-col sm:flex-row gap-2 w-full max-w-[220px]">
                             <button
+                                type="button"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onDelete(block.id);
+                                    const targetId = block.id !== undefined ? block.id : block.Id;
+                                    if (onDelete && targetId !== undefined) {
+                                        onDelete(targetId);
+                                    }
                                     setShowDeleteConfirm(false);
                                 }}
-                                className="flex-1 py-2 sm:py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white text-[11px] sm:text-xs font-bold rounded-xl shadow-lg shadow-red-950/60 uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 border border-red-400/30"
+                                className="flex-1 py-2 sm:py-2.5 px-3 bg-red-600 hover:bg-red-500 text-white text-[11px] sm:text-xs font-bold rounded-xl shadow-lg shadow-red-950/60 uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 border border-red-400/30 cursor-pointer"
                             >
                                 <Trash2 size={13} />
                                 <span>Eliminar</span>
@@ -5453,6 +5463,7 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 
 function OasisApp() {
     const initialUser = localStorage.getItem('oasis_user') || '';
+    const [user, setUser] = useState(initialUser);
     const initialRole = localStorage.getItem('oasis_role_' + initialUser) || 'patient';
     const isInitialClinician = initialRole === 'clinician' || initialUser === 'observador1' || initialUser === 'observador';
     const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
@@ -5760,7 +5771,6 @@ function OasisApp() {
         };
     }, [bgType, bgValue]);
 
-    const [user, setUser] = useState(localStorage.getItem('oasis_user') || '');
     const [hasAcceptedConsent, setHasAcceptedConsent] = useState(() => {
         return typeof window !== 'undefined' && (localStorage.getItem('oasis_user') || '')
             ? localStorage.getItem('oasis_consent_accepted_' + (localStorage.getItem('oasis_user') || '')) === 'true'
@@ -8926,26 +8936,25 @@ function OasisApp() {
     }, [syncBlocks]);
 
     const deleteBlock = (id) => {
-        setBlocks(prev => {
-            const updated = prev.filter(b => b.id !== id);
-            syncBlocks(updated);
-            return updated;
-        });
+        const idStr = String(id);
+        syncBlocks(prev => prev.filter(b => b.id !== id && b.Id !== id && String(b.id) !== idStr && String(b.Id) !== idStr));
         setLinks(prev => {
-            const updated = prev.filter(l => l.from !== id && l.to !== id);
+            const updated = prev.filter(l => l.from !== id && l.to !== id && String(l.from) !== idStr && String(l.to) !== idStr);
             syncLinks(updated);
             return updated;
         });
+        if (user) {
+            fetch(`${API_URL}/api/oasis/blocks/${id}?user=${user}`, { method: 'DELETE' })
+                .then(() => fetchFeed())
+                .catch(() => {});
+        }
     };
 
     const deleteBlocks = (ids) => {
-        setBlocks(prev => {
-            const updated = prev.filter(b => !ids.includes(b.id));
-            syncBlocks(updated);
-            return updated;
-        });
+        const idSet = new Set(ids.map(i => String(i)));
+        syncBlocks(prev => prev.filter(b => !idSet.has(String(b.id)) && !idSet.has(String(b.Id))));
         setLinks(prev => {
-            const updated = prev.filter(l => !ids.includes(l.from) && !ids.includes(l.to));
+            const updated = prev.filter(l => !idSet.has(String(l.from)) && !idSet.has(String(l.to)));
             syncLinks(updated);
             return updated;
         });
