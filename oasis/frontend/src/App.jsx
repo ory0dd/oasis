@@ -5115,6 +5115,9 @@ export default function App() {
     const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
     const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
     const [isMilanoteToolsOpen, setIsMilanoteToolsOpen] = useState(false);
+    const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
+    const [selectedBoardTemplate, setSelectedBoardTemplate] = useState('character_profile');
+    const [keepTemplateContent, setKeepTemplateContent] = useState(true);
     const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Extraños Movimientos');
     const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
@@ -11254,6 +11257,346 @@ ${afcMapContext}
         console.error(`Fallo en el Núcleo Cognitivo. Último error: ${lastError}`);
     };
 
+    const applySubBoardTemplate = (templateId, targetCanvasId, withExample = true) => {
+        if (!targetCanvasId || targetCanvasId === 'canvas_default') return;
+        const ts = Date.now();
+        let newBlocks = [];
+        let newLinks = [];
+
+        if (templateId === 'empty') {
+            setIsTemplatePickerOpen(false);
+            return;
+        } else if (templateId === 'character_profile') {
+            const b1 = `${ts}-cp-1`, b2 = `${ts}-cp-2`, b3 = `${ts}-cp-3`, b4 = `${ts}-cp-4`, b5 = `${ts}-cp-5`, b6 = `${ts}-cp-6`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'image',
+                    caption: 'Perfil • Retrato Principal',
+                    content: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: withExample ? 'Nombre: Det. Olivia Morales • 22 Feb 1972, Escocia. Hija única.' : 'Datos biográficos y retrato del personaje.' },
+                    x: -360,
+                    y: -90,
+                    width: 260,
+                    height: 310,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'text',
+                    caption: withExample ? 'Seria y sensible' : 'Rasgo Principal',
+                    content: withExample ? 'Aparenta ser una persona seria y puede parecer distante. Descubre sus fortalezas y debilidades al volverse más tranquila.' : 'Describe las características psicológicas principales...',
+                    metadata: { category: 'CARACTERÍSTICAS' },
+                    x: -50,
+                    y: -140,
+                    width: 270,
+                    height: 195,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'text',
+                    caption: withExample ? 'Historia previa' : 'Trasfondo',
+                    content: withExample ? 'Recientemente jubilada tras 27 años como detective. Tuvo una beca para la academia tras graduarse con honores.' : 'Escribe el pasado y eventos que marcaron al personaje...',
+                    metadata: { category: 'HISTORIA PREVIA' },
+                    x: -50,
+                    y: 110,
+                    width: 270,
+                    height: 205,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'todo',
+                    caption: 'MANÍAS Y DEFECTOS',
+                    content: '',
+                    metadata: {
+                        items: withExample ? [
+                            { id: `${ts}-i1`, text: 'Suele mirar al cielo antes de hablar', done: true },
+                            { id: `${ts}-i2`, text: 'Se expone al peligro con facilidad', done: true },
+                            { id: `${ts}-i3`, text: 'Se frustra cuando preguntan su origen', done: false }
+                        ] : [
+                            { id: `${ts}-i1`, text: 'Hábito o manía recurrente', done: false }
+                        ]
+                    },
+                    x: 260,
+                    y: -120,
+                    width: 280,
+                    height: 215,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
+                    type: 'text',
+                    caption: withExample ? 'Comienza siendo...' : 'Estado Inicial',
+                    content: withExample ? 'Un personaje duro y a menudo hostil que protege celosamente su espacio personal.' : 'Punto de partida emocional del personaje.',
+                    metadata: { category: 'ARCO INICIAL' },
+                    x: 220,
+                    y: 145,
+                    width: 245,
+                    height: 165,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b6,
+                    type: 'text',
+                    caption: withExample ? 'Se convierte en...' : 'Transformación',
+                    content: withExample ? 'Alguien capaz de confiar y abrirse tras enfrentar la verdad del caso.' : 'Evolución al final de la historia.',
+                    metadata: { category: 'ARCO FINAL' },
+                    x: 520,
+                    y: 95,
+                    width: 245,
+                    height: 165,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [{ from: b5, to: b6, color: '#10b981' }];
+        } else if (templateId === 'novel_plan') {
+            const b1 = `${ts}-np-1`, b2 = `${ts}-np-2`, b3 = `${ts}-np-3`, b4 = `${ts}-np-4`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'text',
+                    caption: withExample ? 'Premisa Central' : 'Premisa',
+                    content: withExample ? 'Dos desconocidos quedan atrapados en una estación de carretera durante una tormenta geomagnética que altera los recuerdos.' : 'Escribe la idea central de tu obra en dos oraciones.',
+                    metadata: { category: 'CONCEPTO // LOGLINE' },
+                    x: -310,
+                    y: -110,
+                    width: 280,
+                    height: 195,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'column',
+                    caption: 'ESTRUCTURA EN 3 ACTOS',
+                    content: withExample ? 'ACTO I: El hallazgo en la Carretera 191.\n\nACTO II: La anomalía acústica y el aislamiento.\n\nACTO III: La reconstrucción del origen.' : 'Organiza aquí los actos y capítulos...',
+                    x: 10,
+                    y: -30,
+                    width: 290,
+                    height: 340,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'todo',
+                    caption: 'OBJETIVOS DE ESCRITURA',
+                    content: '',
+                    metadata: {
+                        items: [
+                            { id: `${ts}-n1`, text: 'Definir conflicto principal y antagonista', done: true },
+                            { id: `${ts}-n2`, text: 'Escribir escaleta del Primer Acto', done: false },
+                            { id: `${ts}-n3`, text: 'Investigar locaciones y atmósfera', done: false }
+                        ]
+                    },
+                    x: 330,
+                    y: -90,
+                    width: 280,
+                    height: 215,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'color_swatch',
+                    caption: 'Atmósfera Nocturna',
+                    color: '#254E3A',
+                    content: '#254E3A',
+                    x: -310,
+                    y: 135,
+                    width: 215,
+                    height: 205,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [{ from: b1, to: b2, color: '#10b981' }];
+        } else if (templateId === 'moodboard') {
+            const b1 = `${ts}-mb-1`, b2 = `${ts}-mb-2`, b3 = `${ts}-mb-3`, b4 = `${ts}-mb-4`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'image',
+                    caption: 'Referencia de Luz & Sombra',
+                    content: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+                    metadata: { description: 'Contraste alto y grano cinematográfico 35mm.' },
+                    x: -290,
+                    y: -40,
+                    width: 270,
+                    height: 300,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'color_swatch',
+                    caption: 'Stromboli',
+                    color: '#366354',
+                    content: '#366354',
+                    x: 20,
+                    y: -90,
+                    width: 215,
+                    height: 205,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'color_swatch',
+                    caption: 'Obsidiana Fría',
+                    color: '#182226',
+                    content: '#182226',
+                    x: 260,
+                    y: -90,
+                    width: 215,
+                    height: 205,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'text',
+                    caption: 'Dirección Visual',
+                    content: 'Texturas orgánicas combinadas con iluminación verde ciano y silencios espaciales.',
+                    metadata: { category: 'MOODBOARD // NOTAS' },
+                    x: 130,
+                    y: 145,
+                    width: 290,
+                    height: 175,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [{ from: b1, to: b4, color: '#10b981' }];
+        } else if (templateId === 'story_outline') {
+            const b1 = `${ts}-so-1`, b2 = `${ts}-so-2`, b3 = `${ts}-so-3`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'text',
+                    caption: '1. El Incidente Incitador',
+                    content: 'El evento que rompe el equilibrio cotidiano del protagonista y lo obliga a cruzar el umbral.',
+                    metadata: { category: 'APERTURA' },
+                    x: -320,
+                    y: -20,
+                    width: 265,
+                    height: 185,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'text',
+                    caption: '2. Punto Medio & Giro',
+                    content: 'Una revelación cambia la comprensión del problema; ya no hay vuelta atrás.',
+                    metadata: { category: 'NUDO' },
+                    x: 0,
+                    y: -20,
+                    width: 265,
+                    height: 185,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'text',
+                    caption: '3. Clímax y Resolución',
+                    content: 'El enfrentamiento final con la verdad interna y el nuevo equilibrio alcanzado.',
+                    metadata: { category: 'DESENLACE' },
+                    x: 320,
+                    y: -20,
+                    width: 265,
+                    height: 185,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [
+                { from: b1, to: b2, color: '#10b981' },
+                { from: b2, to: b3, color: '#10b981' }
+            ];
+        } else if (templateId === 'weekly_plan') {
+            newBlocks = [
+                {
+                    id: `${ts}-wp-1`,
+                    type: 'todo',
+                    caption: 'PRIORIDADES DE LA SEMANA',
+                    content: '',
+                    metadata: {
+                        items: [
+                            { id: `${ts}-w1`, text: 'Completar bocetos principales', done: true },
+                            { id: `${ts}-w2`, text: 'Revisión de referencias visuales', done: false },
+                            { id: `${ts}-w3`, text: 'Entrega de corte preliminar', done: false }
+                        ]
+                    },
+                    x: -220,
+                    y: -30,
+                    width: 285,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: `${ts}-wp-2`,
+                    type: 'column',
+                    caption: 'NOTAS Y PENDIENTES',
+                    content: '• Lunes: Definición de paleta\n• Miércoles: Pruebas de cámara\n• Viernes: Cierre de tablero',
+                    x: 130,
+                    y: -20,
+                    width: 290,
+                    height: 310,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+        }
+
+        if (newBlocks.length > 0) {
+            setBlocks(prev => {
+                const filtered = prev.filter(b => b.canvasId !== targetCanvasId);
+                const updated = [...filtered, ...newBlocks];
+                if (typeof syncBlocks === 'function') syncBlocks(updated);
+                return updated;
+            });
+            if (newLinks.length > 0) {
+                setLinks(prev => {
+                    const updated = [...prev, ...newLinks];
+                    if (typeof syncLinks === 'function') syncLinks(updated);
+                    return updated;
+                });
+            }
+            setCam({ x: 0, y: 0, scale: 0.9 });
+        }
+        setIsTemplatePickerOpen(false);
+    };
+
     const handleInlineBlockUpdate = (updatedBlock) => {
         setBlocks(prev => {
             const next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
@@ -11436,10 +11779,7 @@ ${afcMapContext}
                             onStart={handleStart}
                             onSelect={editBlock}
                             onUpdateBlock={handleInlineBlockUpdate}
-                            onOpenSubBoard={(boardId, boardTitle) => {
-                                setActiveCanvasId(boardId);
-                                if (boardTitle) setCanvasBoardTitle(boardTitle);
-                            }}
+                            onOpenSubBoard={openSubBoardWorkspace}
                             onSelectNote={handleSelectNote}
                             onSelectGroup={handleAnalyzeGroup}
                             onAnalyzeBlock={handleAnalyzeBlock}
@@ -11590,12 +11930,31 @@ ${afcMapContext}
                             {/* 5. Tablero */}
                             <button
                                 onClick={() => {
-                                    spawnMilanoteBlock('sub_board', {
-                                        caption: 'Escena II • Bosque',
+                                    const newBoardId = `sub_board-${Date.now()}`;
+                                    const jitterX = (Math.random() - 0.5) * 90;
+                                    const jitterY = (Math.random() - 0.5) * 70;
+                                    const newBoardBlock = {
+                                        id: newBoardId,
+                                        type: 'sub_board',
+                                        caption: 'Nuevo Tablero',
                                         content: '',
+                                        x: (-cam.x / cam.scale) + jitterX,
+                                        y: (-cam.y / cam.scale) + jitterY,
                                         width: 235,
-                                        height: 86
+                                        height: 86,
+                                        isPublic: false,
+                                        createdAt: new Date().toISOString(),
+                                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                    };
+                                    setBlocks(prev => {
+                                        const updated = [...prev, newBoardBlock];
+                                        if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                        return updated;
                                     });
+                                    setActiveCanvasId(newBoardId);
+                                    setCam({ x: 0, y: 0, scale: 1 });
+                                    setIsTemplatePickerOpen(true);
+                                    setIsMilanoteToolsOpen(false);
                                 }}
                                 className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
@@ -11855,6 +12214,78 @@ ${afcMapContext}
                             +
                         </button>
                     </div>
+
+                    {/* PANEL FLOTANTE "ELIJA UNA PLANTILLA" PARA SUB-TABLEROS MILANOTE */}
+                    {activeCanvasId !== 'canvas_default' && isTemplatePickerOpen && (
+                        <div
+                            className="fixed bottom-20 right-6 z-[2550] w-[300px] sm:w-[320px] bg-[#161920]/98 backdrop-blur-2xl border border-white/[0.1] rounded-2xl p-5 shadow-[0_25px_70px_rgba(0,0,0,0.92)] text-white pointer-events-auto select-none animate-in fade-in slide-in-from-bottom-4 duration-200"
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
+                            onWheel={e => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-3.5">
+                                <h3 className="text-[15px] font-bold tracking-tight text-white">
+                                    Elija una plantilla
+                                </h3>
+                                <button
+                                    onClick={() => setIsTemplatePickerOpen(false)}
+                                    className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                                    title="Cerrar"
+                                >
+                                    <X size={15} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-1 mb-4">
+                                {[
+                                    { id: 'empty', label: 'Tablero vacío' },
+                                    { id: 'novel_plan', label: 'Plan de Novela', badge: 'ELECCIÓN TOP' },
+                                    { id: 'character_profile', label: 'Perfil de Personaje' },
+                                    { id: 'moodboard', label: 'Tablero de Inspiración de Novela' },
+                                    { id: 'story_outline', label: 'Esquema de Historia' },
+                                    { id: 'weekly_plan', label: 'Plan Semanal' }
+                                ].map((tpl) => {
+                                    const isSelected = selectedBoardTemplate === tpl.id;
+                                    return (
+                                        <button
+                                            key={tpl.id}
+                                            type="button"
+                                            onClick={() => setSelectedBoardTemplate(tpl.id)}
+                                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-[13px] font-medium transition-all ${isSelected
+                                                ? 'bg-white/[0.1] text-white shadow-inner'
+                                                : 'text-zinc-300 hover:bg-white/[0.05] hover:text-white'
+                                                }`}
+                                        >
+                                            <span className="truncate">{tpl.label}</span>
+                                            {tpl.badge && (
+                                                <span className="ml-2 px-1.5 py-0.5 rounded bg-white/[0.14] text-[9px] font-bold uppercase tracking-wider text-zinc-200 shrink-0">
+                                                    {tpl.badge}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => applySubBoardTemplate(selectedBoardTemplate, activeCanvasId, keepTemplateContent)}
+                                className="w-full py-2.5 px-4 rounded-xl bg-[#10b981] hover:bg-emerald-400 text-black font-bold text-[13px] shadow-[0_8px_25px_rgba(16,185,129,0.35)] transition-all active:scale-[0.99]"
+                            >
+                                Utilice esta plantilla
+                            </button>
+
+                            <label className="mt-3.5 flex items-center justify-center gap-2 text-[12px] text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={keepTemplateContent}
+                                    onChange={(e) => setKeepTemplateContent(e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded accent-[#10b981] cursor-pointer"
+                                />
+                                <span>Mantenga el contenido de ejemplo</span>
+                            </label>
+                        </div>
+                    )}
                 </>
             )}
 
@@ -14764,56 +15195,100 @@ ${afcMapContext}
                         <Home size={15} />
                     </button>
 
-                    {/* TÍTULO Y SUBTÍTULO DEL TABLERO MILANOTE CUANDO ESTÁS EN EL LIENZO */}
-                    {view === 'canvas' && !activeNotebook && !isChatOpen && (
-                        <>
-                            <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
-                            {activeCanvasId !== 'canvas_default' && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveCanvasId('canvas_default');
-                                        setCanvasBoardTitle(localStorage.getItem('oasis_board_title') || 'Extraños Movimientos');
-                                    }}
-                                    className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] font-mono text-[#10b981] flex items-center gap-1 transition-colors shrink-0"
-                                    title="Volver al lienzo principal"
-                                >
-                                    <ArrowLeft size={12} /> Raíz
-                                </button>
-                            )}
-                            <div className="flex items-center gap-2.5 pr-3 pl-1 select-none shrink-0">
-                                <span
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const nextTitle = window.prompt('Nombre del tablero creativo:', canvasBoardTitle);
-                                        if (nextTitle && nextTitle.trim()) {
-                                            setCanvasBoardTitle(nextTitle.trim());
-                                            localStorage.setItem('oasis_board_title', nextTitle.trim());
-                                        }
-                                    }}
-                                    className="text-[13px] sm:text-[14px] font-bold text-white hover:text-[#10b981] tracking-tight cursor-pointer transition-colors whitespace-nowrap"
-                                    title="Clic para renombrar tablero"
-                                >
-                                    {canvasBoardTitle}
-                                </span>
-                                <span
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const nextSub = window.prompt('Subtítulo o código de proyecto:', canvasBoardSubtitle);
-                                        if (nextSub !== null) {
-                                            const clean = nextSub.trim() || 'Carretera 191';
-                                            setCanvasBoardSubtitle(clean);
-                                            localStorage.setItem('oasis_board_subtitle', clean);
-                                        }
-                                    }}
-                                    className="text-[11px] sm:text-[12px] font-mono text-zinc-500 hover:text-zinc-300 cursor-pointer transition-colors whitespace-nowrap"
-                                    title="Clic para editar subtítulo"
-                                >
-                                    {canvasBoardSubtitle}
-                                </span>
-                            </div>
-                        </>
-                    )}
+                    {/* TÍTULO Y RUTA DE PESTAÑAS (BREADCRUMBS) DEL TABLERO MILANOTE CUANDO ESTÁS EN EL LIENZO */}
+                    {view === 'canvas' && !activeNotebook && !isChatOpen && (() => {
+                        const rootTitle = localStorage.getItem('oasis_board_title') || canvasBoardTitle || 'Extraños Movimientos';
+                        const activeSubBoardBlock = activeCanvasId !== 'canvas_default'
+                            ? blocks.find(b => b.id === activeCanvasId)
+                            : null;
+
+                        return (
+                            <>
+                                <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
+                                {activeCanvasId === 'canvas_default' ? (
+                                    <div className="flex items-center gap-2.5 pr-3 pl-1 select-none shrink-0">
+                                        <span className="w-3 h-3 rounded-[3px] bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+                                        <input
+                                            type="text"
+                                            value={canvasBoardTitle}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onChange={(e) => {
+                                                setCanvasBoardTitle(e.target.value);
+                                                localStorage.setItem('oasis_board_title', e.target.value);
+                                            }}
+                                            className="bg-transparent text-[13px] sm:text-[14px] font-bold text-white hover:text-[#10b981] focus:text-white focus:outline-none tracking-tight transition-colors w-40 sm:w-44 truncate"
+                                            title="Editar nombre del tablero principal"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={canvasBoardSubtitle}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onChange={(e) => {
+                                                setCanvasBoardSubtitle(e.target.value);
+                                                localStorage.setItem('oasis_board_subtitle', e.target.value);
+                                            }}
+                                            className="bg-transparent text-[11px] sm:text-[12px] font-mono text-zinc-500 hover:text-zinc-300 focus:text-zinc-200 focus:outline-none transition-colors w-24 sm:w-28 truncate"
+                                            title="Editar subtítulo"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 pr-3 pl-1 select-none shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const parentCanvas = activeSubBoardBlock?.canvasId || 'canvas_default';
+                                                setActiveCanvasId(parentCanvas);
+                                                setCam({ x: 0, y: 0, scale: 1 });
+                                                setIsTemplatePickerOpen(false);
+                                            }}
+                                            className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-white text-[12px] sm:text-[13px] font-medium transition-colors"
+                                            title="Volver al tablero anterior"
+                                        >
+                                            <span className="w-3 h-3 rounded-[3px] bg-amber-500 shrink-0" />
+                                            <span className="truncate max-w-[130px]">{rootTitle}</span>
+                                        </button>
+
+                                        <span className="text-zinc-600 font-mono text-xs">/</span>
+
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-3 h-3 rounded-[3px] bg-[#3b82f6] shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.45)]" />
+                                            <input
+                                                type="text"
+                                                value={activeSubBoardBlock?.caption ?? 'Nuevo Tablero'}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onChange={(e) => {
+                                                    if (activeSubBoardBlock) {
+                                                        handleInlineBlockUpdate({
+                                                            ...activeSubBoardBlock,
+                                                            caption: e.target.value
+                                                        });
+                                                    }
+                                                }}
+                                                className="bg-transparent text-[13px] sm:text-[14px] font-bold text-white focus:outline-none w-32 sm:w-36 truncate"
+                                                title="Renombrar este sub-tablero"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsTemplatePickerOpen(prev => !prev);
+                                            }}
+                                            className="ml-1 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-[#10b981]/20 border border-white/10 hover:border-[#10b981]/40 text-[10px] font-mono text-zinc-300 hover:text-[#10b981] transition-all"
+                                            title="Elegir plantilla para este tablero"
+                                        >
+                                            Plantillas
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 
