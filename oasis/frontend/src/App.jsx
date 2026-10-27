@@ -4433,6 +4433,9 @@ const ProfileView = ({
     const [profileLink, setProfileLink] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_profilelink_' + user) || '') : '');
     const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : effectiveUser);
     const [coverImage, setCoverImage] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+    const [coverPosition, setCoverPosition] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_pos_' + user) || 'center') : 'center');
+    const [coverHeightMode, setCoverHeightMode] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_height_' + user) || 'expanded') : 'expanded');
+    const [isCoverLightboxOpen, setIsCoverLightboxOpen] = useState(false);
 
     const [copiedLink, setCopiedLink] = useState(false);
     const handleShareProfile = (e) => {
@@ -5061,60 +5064,7 @@ const ProfileView = ({
     return (
         <div
             className={`fixed inset-0 z-[1500] flex flex-col bg-[#08080a] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[70px] md:inset-x-6 md:bottom-2 md:rounded-3xl border-t border-white/10'}`}
-            onTouchStart={(e) => {
-                e.stopPropagation();
-                const touch = e.touches[0];
-                const rect = e.currentTarget.getBoundingClientRect();
-                if (touch.clientY - rect.top <= 100) {
-                    e.currentTarget.dataset.dragAllowed = 'true';
-                    e.currentTarget.dataset.startY = touch.clientY;
-                    e.currentTarget.style.transition = 'none';
-                } else {
-                    e.currentTarget.dataset.dragAllowed = 'false';
-                }
-            }}
-            onTouchMove={(e) => {
-                e.stopPropagation();
-                if (e.currentTarget.dataset.dragAllowed !== 'true') return;
-                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
-                const currentY = e.touches[0].clientY;
-                const deltaY = currentY - startY;
-
-                const scrollable = e.target.closest('.overflow-y-auto');
-                if (scrollable && scrollable.scrollTop > 0) return;
-
-                if (deltaY > 0) {
-                    e.currentTarget.style.transform = `translateY(${deltaY}px)`;
-                }
-
-                if (deltaY > 120) {
-                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                    e.currentTarget.style.transform = 'translateY(100%)';
-                    setTimeout(() => setView('canvas'), 200);
-                }
-            }}
-            onTouchEnd={(e) => {
-                if (e.currentTarget.dataset.dragAllowed !== 'true') return;
-                const startY = parseFloat(e.currentTarget.dataset.startY || 0);
-                const currentY = e.changedTouches[0].clientY;
-                const deltaY = currentY - startY;
-                if (deltaY <= 120) {
-                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                    e.currentTarget.style.transform = 'translateY(0px)';
-                }
-            }}
             onPointerDown={e => e.stopPropagation()}
-            onWheel={(e) => {
-                e.stopPropagation();
-                const scrollable = e.target.closest('.overflow-y-auto');
-                if (scrollable && (scrollable.scrollTop > 0 || e.deltaY > 0)) return;
-
-                if (e.deltaY < -50) {
-                    e.currentTarget.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                    e.currentTarget.style.transform = 'translateY(100%)';
-                    setTimeout(() => setView('canvas'), 200);
-                }
-            }}
         >
             {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
             <div className="absolute top-4 sm:top-8 left-4 right-4 md:left-10 md:right-10 flex justify-between items-center pointer-events-none z-50">
@@ -5168,7 +5118,7 @@ const ProfileView = ({
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
             </div>
 
-            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar snap-y snap-mandatory scroll-smooth will-change-scroll pb-20 sm:pb-32">
+            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-20 sm:pb-32" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* AMBIENTE LUMINOSO Y COLORIDO (ELIMINA PÁGINA OSCURA/ABURRIDA) */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
                     <div
@@ -5181,11 +5131,24 @@ const ProfileView = ({
 
                 {/* PORTADA VISIBLE TIPO BANNER SUPERIOR */}
                 <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-1 z-10 relative pointer-events-auto">
-                    <div className="w-full h-40 sm:h-56 md:h-64 rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md">
+                    <div 
+                        onClick={() => setIsCoverLightboxOpen(true)}
+                        className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md cursor-pointer transition-all duration-300 ${
+                            coverHeightMode === 'expanded'
+                                ? 'h-64 sm:h-80 md:h-[380px] lg:h-[420px]'
+                                : coverHeightMode === 'full'
+                                ? 'h-auto max-h-[520px] aspect-[16/10] sm:aspect-[16/9]'
+                                : 'h-44 sm:h-56 md:h-64'
+                        }`}
+                    >
                         <img
                             src={formatUrl(coverImage)}
                             alt="Foto de fondo"
-                            className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-700"
+                            className={`w-full h-full group-hover/cover:scale-[1.02] transition-transform duration-700 ${
+                                coverHeightMode === 'full' ? 'object-contain bg-black/60' : 'object-cover'
+                            } ${
+                                coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
+                            }`}
                             onError={(e) => {
                                 if (!e.target.dataset.failed) {
                                     e.target.dataset.failed = 'true';
@@ -5194,22 +5157,109 @@ const ProfileView = ({
                             }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
-                        {isOwnProfile && (
+
+                        {/* Controles de la portada */}
+                        <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10" onClick={e => e.stopPropagation()}>
+                            {/* Botón Ver Completa */}
                             <button
-                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                type="button"
+                                onClick={() => setIsCoverLightboxOpen(true)}
+                                className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                title="Ver portada en tamaño completo"
                             >
-                                <Camera size={11} />
-                                <span>Cambiar fondo</span>
+                                <Maximize2 size={11} />
+                                <span className="hidden sm:inline">Ver completa</span>
                             </button>
-                        )}
+
+                            {/* Selector de Encuadre (Arriba / Centro / Abajo) */}
+                            {isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const next = coverPosition === 'center' ? 'top' : coverPosition === 'top' ? 'bottom' : 'center';
+                                        setCoverPosition(next);
+                                        localStorage.setItem('oasis_cover_pos_' + user, next);
+                                    }}
+                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title={`Encuadre actual: ${coverPosition}. Toca para cambiar a Arriba/Centro/Abajo.`}
+                                >
+                                    <Crop size={11} />
+                                    <span>Encuadre: {coverPosition === 'top' ? 'Arriba' : coverPosition === 'bottom' ? 'Abajo' : 'Centro'}</span>
+                                </button>
+                            )}
+
+                            {/* Alternar Altura (Expandida / Completa / Compacta) */}
+                            {isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const next = coverHeightMode === 'expanded' ? 'full' : coverHeightMode === 'full' ? 'compact' : 'expanded';
+                                        setCoverHeightMode(next);
+                                        localStorage.setItem('oasis_cover_height_' + user, next);
+                                    }}
+                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title={`Modo de altura: ${coverHeightMode}. Toca para alternar.`}
+                                >
+                                    <Layers size={11} />
+                                    <span className="hidden sm:inline">Vista: {coverHeightMode === 'expanded' ? 'Expandida' : coverHeightMode === 'full' ? 'Completa' : 'Compacta'}</span>
+                                </button>
+                            )}
+
+                            {/* Cambiar fondo */}
+                            {isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                >
+                                    <Camera size={11} />
+                                    <span>Cambiar fondo</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
+
+                {/* MODAL LIGHTBOX: VER PORTADA COMPLETA EN ALTA DEFINICIÓN */}
+                {isCoverLightboxOpen && (
+                    <div
+                        className="fixed inset-0 z-[6000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsCoverLightboxOpen(false)}
+                    >
+                        <div className="absolute top-5 right-5 flex items-center gap-3 z-10" onClick={e => e.stopPropagation()}>
+                            {isOwnProfile && (
+                                <button
+                                    onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                    className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-lg"
+                                >
+                                    <Camera size={13} />
+                                    <span>Cambiar portada</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setIsCoverLightboxOpen(false)}
+                                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all shadow-lg"
+                                title="Cerrar"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="max-w-5xl max-h-[85vh] flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <img
+                                src={formatUrl(coverImage)}
+                                alt="Portada completa"
+                                className="w-auto h-auto max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+                            />
+                        </div>
+                        <span className="text-zinc-500 text-xs font-mono mt-3">Portada de @{effectiveUser} · Toca fuera para cerrar</span>
+                    </div>
+                )}
 
                 {/* MODERN ASYMMETRICAL LEFT-ALIGNED PROFILE */}
                 <div
                     data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-2 sm:pt-4 pb-safe z-10 no-swipe snap-start min-h-[100vh]"
+                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-2 sm:pt-4 pb-safe z-10"
                 >
                     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8 pointer-events-auto">
 
