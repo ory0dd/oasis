@@ -2,110 +2,110 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Check, ArrowRight } from 'lucide-react';
 
 export const BIO_QUESTIONS = [
-    // ─── I. FICHA DE IDENTIFICACIÓN BÁSICA ───
+    // ─── I. PRESENTACIÓN ───
     {
-        section: "FICHA DE IDENTIFICACIÓN",
-        title: "Nombre completo",
-        text: "Nombre completo del / de la consultante",
-        placeholder: "Escribe tu nombre completo aquí..."
+        section: "PRESENTACIÓN",
+        title: "Tu nombre",
+        text: "¿Cómo te llamas o cómo te gusta que te digan?",
+        placeholder: "Escribe aquí tu nombre o el alias con el que te sientas más cómodo..."
     },
     {
         section: null,
-        title: "Datos básicos",
-        text: "Edad y ocupación / actividad actual",
-        placeholder: "Ej: \"28 años, estudiante de diseño\", \"42 años, gerente de ventas\", \"35 años, en transición laboral\"..."
+        title: "Tu momento actual",
+        text: "¿Cuántos años tienes y a qué le dedicas tu tiempo en el día a día?",
+        placeholder: "Ej: \"24 años, estudiante de diseño y hago música\", \"32 años, trabajo en ventas\", \"28 años, en transición buscando qué rumbo tomar\"..."
     },
 
-    // ─── II. MOTIVO DE CONSULTA E IMPACTO EMOCIONAL ───
+    // ─── II. ¿QUÉ ONDA CONTIGO HOY? ───
     {
-        section: "MOTIVO DE CONSULTA",
-        title: "Motivo de consulta",
-        text: "Describa brevemente el motivo de consulta",
-        placeholder: "Ej: \"Siento mucha ansiedad en el trabajo y me cuesta desconectarme\", \"Me siento abrumado emocionalmente sin una causa clara\", \"Busco un espacio de introspección y claridad mental\"..."
+        section: "¿QUÉ ONDA CONTIGO HOY?",
+        title: "¿Qué te trae por aquí?",
+        text: "¿Qué sientes que traes atorado en la cabeza o qué te motivó a entrar a este espacio?",
+        placeholder: "Ej: \"Siento que ando muy acelerado y me cuesta desconectar\", \"Me siento abrumado sin una razón clara\", \"Quiero un espacio para reflexionar y poner orden en mis ideas\"..."
     },
     {
         section: null,
-        title: "Repercusiones",
-        text: "Repercusiones o impacto que ha tenido debido a este motivo",
-        placeholder: "Ej: \"Me cuesta mucho concentrarme\", \"Tengo insomnio y fatiga constante\", \"Me he estado aislando de mis círculos cercanos\"..."
+        title: "¿Cómo te está pegando?",
+        text: "¿En qué partes de tu rutina o tus días sientes que más te afecta esto?",
+        placeholder: "Ej: \"Me cuesta un montón concentrarme\", \"Tengo insomnio y fatiga constante\", \"Me dan ganas de aislarme y no hablar con nadie\"..."
     },
     {
         section: null,
-        title: "Temporalidad",
-        text: "¿Desde cuándo se presenta dicha problemática?",
-        placeholder: "Ej: \"Desde hace 6 meses por un cambio de puesto\", \"A raíz de una pérdida hace un año\", \"Es una constante desde la adolescencia\"..."
+        title: "El tiempo que llevas con esto",
+        text: "¿Desde hace cuánto vienes sintiendo o notando esta situación?",
+        placeholder: "Ej: \"Desde hace como 3 meses por cambios en mi vida\", \"A raíz de una pérdida o ruptura\", \"Siento que es algo que traigo desde la adolescencia\"..."
     },
     {
         section: null,
-        title: "Atribución",
-        text: "¿A qué atribuye o con qué asocia la problemática?",
-        placeholder: "Ej: \"Al exceso de carga laboral y falta de descanso\", \"A dificultades para procesar y expresar mis emociones\", \"No tengo claridad de la causa exacta\"..."
+        title: "¿De dónde sientes que viene?",
+        text: "Si tuvieras que adivinar o ponerle nombre, ¿con qué sientes que tiene que ver?",
+        placeholder: "Ej: \"Con exigirme demasiado y no descansar\", \"Me cuesta procesar y decir lo que siento\", \"La neta no tengo idea y por eso quiero explorarlo\"..."
     },
 
-    // ─── III. HISTORIAL DE SALUD Y SUEÑO ───
+    // ─── III. CUERPO, MENTE Y DESCANSO ───
     {
-        section: "HISTORIAL DE SALUD Y SUEÑO",
-        title: "Diagnóstico clínico",
-        text: "¿Cuenta con algún diagnóstico clínico o psicológico actual? ¿Quién se lo otorgó?",
-        placeholder: "Ej: \"Ansiedad generalizada, diagnosticado por psiquiatra\", \"Ninguno, es mi primera aproximación a un proceso\", \"Migraña tensional crónica, por neurólogo\"..."
+        section: "CUERPO, MENTE Y DESCANSO",
+        title: "Diagnósticos o valoraciones",
+        text: "¿Alguna vez te han diagnosticado con algo en psicología o psiquiatría, o es tu primera aproximación?",
+        placeholder: "Ej: \"Me diagnosticaron ansiedad hace un año\", \"Ninguno, es la primera vez que busco un espacio así\", \"Tratamiento médico por migraña/tensión\"..."
     },
     {
         section: null,
-        title: "Estudios de salud",
-        text: "¿Le han realizado algún estudio de salud o neurológico reciente?",
-        placeholder: "Ej: \"Ninguno\", \"Análisis de sangre generales hace tres meses\", \"Audiometría o revisión de salud auditiva\"..."
+        title: "Salud física",
+        text: "¿Te has hecho algún estudio médico, neurológico o chequeo general recientemente?",
+        placeholder: "Ej: \"Ninguno reciente, todo bien\", \"Análisis de sangre generales hace poco\", \"Chequeo de vista o salud auditiva\"..."
     },
     {
         section: null,
-        title: "Historial del sueño",
-        text: "Horas promedio y calidad del descanso",
-        placeholder: "Ej: \"Entre 5 y 6 horas de forma intermitente\", \"Varía mucho, de 4 a 8 horas dependiendo del nivel de estrés\"..."
+        title: "Horas de sueño",
+        text: "¿Cómo anda tu descanso? ¿Cuántas horas sueles dormir y qué tan reparador lo sientes?",
+        placeholder: "Ej: \"Unas 6 horas pero me despierto con cansancio\", \"Varía mucho, de 5 a 8 horas dependiendo de la semana\"..."
     },
     {
         section: null,
-        title: "Dificultades del sueño",
-        text: "Dificultades específicas en el ciclo del sueño",
-        placeholder: "Ej: \"Me cuesta conciliar el sueño por ruidos o rumiación de pensamientos\", \"Despertares nocturnos frecuentes\", \"Sueño muy ligero, no logro descansar\"..."
+        title: "Detalles al dormir",
+        text: "¿Tienes alguna dificultad específica para conciliar el sueño o durante la noche?",
+        placeholder: "Ej: \"La cabeza no para de dar vueltas al acostarme\", \"Me despierto a mitad de la noche sin motivo\", \"Tengo sueño muy ligero\"..."
     },
 
-    // ─── IV. PERFIL SONORO E IDENTIDAD MUSICAL ───
+    // ─── IV. TU MUNDO SONORO ───
     {
-        section: "PERFIL SONORO E IDENTIDAD MUSICAL",
-        title: "Relación con la música",
-        text: "¿Cómo describirías tu relación actual con la música y el silencio?",
-        placeholder: "Ej: \"Uso la música para regular mi día y mis estados de ánimo\", \"Casi no escucho música, prefiero habitar el silencio\", \"La música me acompaña siempre, pero a veces me satura\"..."
+        section: "TU MUNDO SONORO",
+        title: "Música y silencio",
+        text: "¿Qué papel juega la música o el silencio en tu día a día?",
+        placeholder: "Ej: \"Siempre traigo audífonos para regular mi estado de ánimo\", \"Casi no escucho música, prefiero el silencio\", \"Me gusta mucho pero a veces me satura el ruido\"..."
     },
     {
         section: null,
-        title: "Sonidos de rechazo",
-        text: "¿Existe algún sonido, género musical o frecuencia que te genere rechazo, irritabilidad o ansiedad?",
-        placeholder: "Ej: \"Los sonidos agudos o ritmos muy repetitivos me desesperan\", \"Los ruidos fuertes e imprevistos de la calle\", \"Ninguno en especial\"..."
+        title: "Sonidos que te saturan",
+        text: "¿Hay algún sonido, frecuencia o tipo de ruido que te desespere o te ponga de malas?",
+        placeholder: "Ej: \"Los ruidos repetitivos de la calle\", \"Gritos, tonos muy agudos o volumen caótico\", \"Casi nada en especial\"..."
     },
     {
         section: null,
-        title: "Herramientas de relajación",
-        text: "¿Qué herramientas, hábitos o actividades utilizas para intentar relajarte o conectar contigo mismo?",
-        placeholder: "Ej: \"Escucho podcasts o ruidos blancos para dormir\", \"Ejercicios de respiración ocasionales\", \"Ninguna, me cuesta mucho trabajo entrar en estados de relajación\"..."
+        title: "Tus formas de desconectar",
+        text: "Cuando necesitas bajar revoluciones o conectar contigo, ¿qué cosas te ayudan?",
+        placeholder: "Ej: \"Salir a caminar escuchando algo tranquilo\", \"Hacer respiraciones\", \"Dibujar o escribir\", \"La verdad me cuesta mucho trabajo relajarme\"..."
     },
 
-    // ─── V. HISTORIAL TERAPÉUTICO Y PRÁCTICAS COMPLEMENTARIAS ───
+    // ─── V. EXPERIENCIAS Y ACOMPAÑAMIENTO ───
     {
-        section: "HISTORIAL TERAPÉUTICO",
-        title: "Procesos terapéuticos previos",
-        text: "¿Qué tipo de procesos terapéuticos o de acompañamiento ha llevado previamente y con qué frecuencia?",
-        placeholder: "Ej: \"Psicoterapia cognitivo-conductual hace un año\", \"Ninguna previa\", \"Procesos de psicoterapia intermitentes\"..."
+        section: "EXPERIENCIAS Y ACOMPAÑAMIENTO",
+        title: "Acompañamientos previos",
+        text: "¿Has llevado algún proceso de terapia o acompañamiento antes? ¿Cómo fue tu experiencia?",
+        placeholder: "Ej: \"Fui a terapia hace un año por unos meses\", \"Nunca he ido, es mi primera vez\", \"Procesos intermitentes cuando lo necesito\"..."
     },
     {
         section: null,
-        title: "Sustancias y herramientas alternativas",
-        text: "¿Utiliza o ha utilizado alguna sustancia, planta médica o herramienta alternativa con fines terapéuticos o de introspección?",
-        placeholder: "Ej: \"Microdosis de psilocibina por cuenta propia para la ansiedad\", \"Cannabis para conciliar el sueño\", \"Experiencias en ceremonias de introspección\", \"Ninguno\"..."
+        title: "Herramientas o prácticas alternativas",
+        text: "¿Acostumbras o has probado herramientas alternativas de introspección (plantas, microdosis, meditación, etc.)?",
+        placeholder: "Ej: \"Cannabis ocasional para relajarme\", \"Microdosis por cuenta propia para enfocarme\", \"Meditación o ceremonias\", \"No uso nada de eso\"..."
     },
     {
         section: null,
-        title: "Tratamiento farmacológico activo",
-        text: "¿Existe algún tratamiento médico o farmacológico activo que crea importante mencionar?",
-        placeholder: "Ej: \"Tratamiento farmacológico recetado por psiquiatra\", \"Uso diario de adaptógenos (Reishi, Melena de León) para el enfoque\", \"Ninguno\"..."
+        title: "Tratamientos o medicamentos",
+        text: "¿Tomas actualmente algún medicamento o suplemento diario que sientas importante mencionar?",
+        placeholder: "Ej: \"Medicamento recetado por especialista\", \"Suplementos o adaptógenos para el enfoque\", \"Ninguno actualmente\"..."
     },
 ];
 
@@ -193,7 +193,7 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
                         <div className="space-y-2 md:space-y-4">
                             <h2 className="text-lg md:text-3xl font-serif italic text-white leading-tight tracking-tight">Antes de comenzar...</h2>
                             <p className="text-xs md:text-lg text-zinc-300 font-sans leading-relaxed">
-                                "El objetivo de esta entrevista es recopilar datos esenciales sobre tu historia clínica. Puedes escribir tus respuestas de forma clara y directa, tomándote el tiempo necesario para reflexionar sobre cada pregunta. Al finalizar, tus respuestas se guardarán de forma segura."
+                                Este es un espacio tranquilo para conocerte mejor: qué te mueve, cómo andas y qué buscas en tu día a día. No hay respuestas correctas ni incorrectas; responde a tu propio ritmo con lo que sientas más tuyo.
                             </p>
                         </div>
                         <div className="pt-3 md:pt-6">
@@ -201,7 +201,7 @@ export function BiographicInterview({ username, activeVersion = 1, onComplete, o
                                 onClick={() => setIsStarted(true)}
                                 className="w-full py-4 rounded-xl md:rounded-2xl bg-emerald-900/40 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-600 hover:text-black font-black uppercase tracking-[0.2em] transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] text-[10px] md:text-xs"
                             >
-                                Iniciar Entrevista
+                                Entrar al espacio
                             </button>
                         </div>
                     </div>

@@ -4291,27 +4291,27 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
 const PHENOM_PART_A = [
     {
         key: "antecedentes_origen",
-        title: "Origen y Reglas Invisibles",
-        question: "¿Qué ecos del pasado guían tus pasos en silencio? Si miras hacia tu origen, ¿cuál es esa ley no escrita que te enseñaron a seguir?",
-        placeholder: "Describe las expectativas ajenas, el miedo a equivocarte o los lazos familiares que aún condicionan tus decisiones hoy..."
+        title: "Origen y Raíces",
+        question: "Mirando hacia atrás, ¿cuál sientes que es esa 'regla' o expectativa de tu casa o tu pasado que todavía cargas sin querer?",
+        placeholder: "Ej: 'Sentir que siempre tengo que ser el fuerte', 'el miedo a fallarle a mi familia', 'la idea de que descansar es perder el tiempo'..."
     },
     {
         key: "experiencia_insuficiencia",
-        title: "La Sombra de la Autoexigencia",
-        question: "¿En qué momentos sientes que corres tras una meta que siempre se aleja? ¿Cuándo y dónde te susurra la mente que no eres o no haces suficiente?",
-        placeholder: "Piensa en la exigencia diaria, el trabajo o los vínculos donde el cansancio te paraliza..."
+        title: "La Presión Mental",
+        question: "¿En qué momentos sientes que tu propia cabeza te mete el pie diciéndote que no estás haciendo lo suficiente?",
+        placeholder: "Ej: 'Cuando me comparo con los demás en redes', 'al terminar un proyecto y no sentirme satisfecho', 'en el trabajo cuando siento que voy atrasado'..."
     },
     {
         key: "temporalidad_vivida",
-        title: "Temporalidad Vivida",
-        question: "¿Cómo transcurre el tiempo en tu interior? ¿Sientes que el reloj es una sombra que te persigue, una corriente que te arrastra, o un río estancado?",
-        placeholder: "Explora si vives en la prisa del mañana, en el peso del ayer, o si logras habitar el presente..."
+        title: "Tu Relación con el Tiempo",
+        question: "¿Cómo sientes que se te va el tiempo en el día a día? ¿Sientes que vas a mil por hora, que te gana la prisa o que a veces te quedas atorado?",
+        placeholder: "Ej: 'Siento que el día no me rinde y vivo con prisa por el futuro', 'me quedo pensando mucho en cosas del pasado', 'a veces me siento en pausa'..."
     },
     {
         key: "premisa_realidad",
-        title: "Premisa de Realidad",
-        question: "Si tuvieras que desnudar tu motor más íntimo... ¿qué certeza sostiene tu día a día? ¿Cuál es el pulso que te hace despertar cada mañana?",
-        placeholder: "Tu verdadera motivación, o si sientes que simplemente avanzas en automático sin un rumbo claro..."
+        title: "Tu Chispa Diaria",
+        question: "Al final del día, ¿qué es lo que de verdad te mueve o te recarga la pila? ¿O sientes que vas en automático?",
+        placeholder: "Ej: 'Crear cosas que me apasionan (arte, música, proyectos)', 'estar en paz con mi gente cercana', 'la neta ando en automático buscando qué me motive'..."
     }
 ];
 
@@ -4346,57 +4346,57 @@ const PHENOM_PART_B = [
 const PHENOM_QUESTIONS = [
     {
         id: 1,
-        title: "Mecanismo Existencial",
-        text: "¿Cómo experimentas la mayor parte del tiempo tu presencia individual en el flujo cotidiano?",
+        title: "Tu forma de estar en el mundo",
+        text: "En tu día a día con el entorno, ¿cómo sientes que interactúas la mayor parte del tiempo?",
         options: [
-            { key: "A", text: "Como un observador desapegado que analiza los acontecimientos desde fuera." },
-            { key: "B", text: "Como una tensión constante entre el deseo de fusión con otros y el miedo a perderme." },
-            { key: "C", text: "Como una lucha activa por imponer orden y control sobre un entorno caótico." },
-            { key: "D", text: "Como un flujo de impulsos creativos que a veces colapsa ante la falta de dirección." }
+            { key: "A", text: "Como observador: mirando y analizando todo desde fuera sin meterme mucho." },
+            { key: "B", text: "Entre dos fuegos: quiero conectar con otros pero también me da miedo abrumarme." },
+            { key: "C", text: "En guardia: intentando tener orden y control para que nada se salga de control." },
+            { key: "D", text: "En modo creativo / caótico: lleno de ideas e impulsos, aunque a veces me disperso." }
         ]
     },
     {
         id: 2,
-        title: "Dinámica de Parálisis",
-        text: "Cuando te encuentras ante un bloqueo o parálisis emocional, ¿cuál suele ser la raíz primaria?",
+        title: "Cuando te bloqueas",
+        text: "Cuando te sientes atorado o sin ganas de nada, ¿de dónde sientes que viene?",
         options: [
-            { key: "A", text: "El miedo a la imperfección o a fallar ante mis propios estándares implacables." },
-            { key: "B", text: "La sensación de vacío o de que mis esfuerzos carecen de un propósito trascendental." },
-            { key: "C", text: "La sobrecarga atencional al intentar sostener demasiadas posibilidades simultáneamente." },
-            { key: "D", text: "El repliegue automático hacia fantasías internas para evadir el peso del mundo físico." }
+            { key: "A", text: "De no tolerar equivocarme o sentir que no va a quedar perfecto." },
+            { key: "B", text: "De sentir que lo que hago no tiene mucho sentido o propósito real." },
+            { key: "C", text: "De tener demasiadas cosas en la cabeza a la vez y saturarme." },
+            { key: "D", text: "De refugiarme en mi propio mundo para desconectarme de la realidad." }
         ]
     },
     {
         id: 3,
-        title: "Modulación del Tiempo",
-        text: "¿Cómo modula el tiempo tu experiencia psicológica actual?",
+        title: "El ritmo del tiempo",
+        text: "¿Cómo sientes que te afecta el paso del tiempo hoy en día?",
         options: [
-            { key: "A", text: "Vivo en anticipación ansiosa del futuro, planificando bucles infinitos para evitar sorpresas." },
-            { key: "B", text: "Quedo atrapado en la nostalgia o el análisis retrospectivo de decisiones pasadas." },
-            { key: "C", text: "Siento que el presente transcurre con excesiva rapidez y sin tiempo para integrar mis vivencias." },
-            { key: "D", text: "Experimento el tiempo de forma fragmentada, alternando entre hiperactividad y estancamiento." }
+            { key: "A", text: "Siempre pensando en el futuro y anticipando lo que puede salir mal." },
+            { key: "B", text: "Atorado en la nostalgia o dándole vueltas a cosas que ya pasaron." },
+            { key: "C", text: "Siento que los días vuelan y no me da tiempo de procesar nada." },
+            { key: "D", text: "A ratos con mucha energía y a ratos en pausa total sin punto medio." }
         ]
     },
     {
         id: 4,
-        title: "La Mirada del Otro",
-        text: "¿De qué manera influye la mirada del otro en tus bloqueos internos?",
+        title: "La opinión de los demás",
+        text: "¿Qué tanto te pesa lo que piensen o esperen los demás de ti?",
         options: [
-            { key: "A", text: "Como un juez implacable que activa mi necesidad de autosuficiencia radical." },
-            { key: "B", text: "Como un ancla necesaria de la que dependo para validar mi existencia." },
-            { key: "C", text: "Como una perturbación de mi espacio mental de la cual prefiero retirarme físicamente." },
-            { key: "D", text: "Como un juego de espejos donde tiendo a proyectar mis propias inseguridades reprimidas." }
+            { key: "A", text: "Siento que me juzgan, así que prefiero resolver todo yo solo sin pedir ayuda." },
+            { key: "B", text: "Me importa mucho su aprobación y me pega si siento que los decepciono." },
+            { key: "C", text: "Me satura tanta interacción social y prefiero alejarme a mi espacio." },
+            { key: "D", text: "Siento que muchas veces me proyecto en lo que creo que ellos piensan de mí." }
         ]
     },
     {
         id: 5,
-        title: "Anhelo de Armonía",
-        text: "¿Qué describe mejor tu idea de armonía o liberación mental?",
+        title: "Tu idea de paz mental",
+        text: "Para ti, ¿qué sería sentirte en verdadera armonía o tranquilidad?",
         options: [
-            { key: "A", text: "La quietud analítica, donde puedo silenciar el ruido del pensamiento racional." },
-            { key: "B", text: "La conexión profunda e incondicional con el arte, la naturaleza o un alma afín." },
-            { key: "C", text: "La auto-realización soberana, actuando con total autonomía sin miedo al rechazo." },
-            { key: "D", text: "La integración fluida de mis contradicciones internas sin juzgarlas como defectos." }
+            { key: "A", text: "Silencio mental: poder apagar la cabeza y no sobrepensar tanto." },
+            { key: "B", text: "Conexión: compartir con personas afines, crear arte o estar en la naturaleza." },
+            { key: "C", text: "Libertad: ser yo mismo y tomar mis decisiones sin culpa ni miedo." },
+            { key: "D", text: "Aceptación: abrazar mis contradicciones y sentirme en paz con quien soy." }
         ]
     }
 ];
@@ -5079,7 +5079,7 @@ const ProfileView = ({
 
                 {/* PORTADA VISIBLE TIPO BANNER SUPERIOR (PEGADITA ARRIBA SIN FRANJA EXTRA) */}
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-1 z-10 relative pointer-events-auto">
+                <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-[86px] md:pt-3 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md cursor-pointer transition-all duration-300 ${
@@ -5122,28 +5122,28 @@ const ProfileView = ({
                             </div>
                         )}
 
-                        {/* Controles de la portada */}
-                        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 sm:gap-2 z-10" onClick={e => e.stopPropagation()}>
+                        {/* Controles de la portada (Minimalistas y Responsivos tipo Linktree) */}
+                        <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 flex items-center gap-1 sm:gap-2 z-10" onClick={e => e.stopPropagation()}>
                             {/* Botón Mi Enlace / Compartir */}
                             <button
                                 type="button"
                                 onClick={handleShareProfile}
-                                className={`px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-accent text-accent' : 'border-white/20 hover:border-white/40'}`}
+                                className={`p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-accent text-accent' : 'border-white/20 hover:border-white/40'}`}
                                 title="Copiar enlace personalizado de este perfil"
                             >
-                                {copiedLink ? <Check size={11} strokeWidth={2.5} /> : <Share2 size={11} strokeWidth={2.5} />}
-                                <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
+                                {copiedLink ? <Check size={12} strokeWidth={2.5} /> : <Share2 size={12} strokeWidth={2.5} />}
+                                <span className="hidden sm:inline">{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
                             </button>
 
                             {/* Botón Ver Completa */}
                             <button
                                 type="button"
                                 onClick={() => setIsCoverLightboxOpen(true)}
-                                className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
                                 title="Ver portada en tamaño completo"
                             >
-                                <Maximize2 size={11} />
-                                <span className="hidden sm:inline">Ver completa</span>
+                                <Maximize2 size={12} />
+                                <span className="hidden md:inline">Ver completa</span>
                             </button>
 
                             {/* Selector de Encuadre (Arriba / Centro / Abajo) */}
@@ -5155,11 +5155,11 @@ const ProfileView = ({
                                         setCoverPosition(next);
                                         localStorage.setItem('oasis_cover_pos_' + user, next);
                                     }}
-                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
                                     title={`Encuadre actual: ${coverPosition}. Toca para cambiar a Arriba/Centro/Abajo.`}
                                 >
-                                    <Crop size={11} />
-                                    <span>Encuadre: {coverPosition === 'top' ? 'Arriba' : coverPosition === 'bottom' ? 'Abajo' : 'Centro'}</span>
+                                    <Crop size={12} />
+                                    <span className="hidden md:inline">Encuadre: {coverPosition === 'top' ? 'Arriba' : coverPosition === 'bottom' ? 'Abajo' : 'Centro'}</span>
                                 </button>
                             )}
 
@@ -5172,11 +5172,11 @@ const ProfileView = ({
                                         setCoverHeightMode(next);
                                         localStorage.setItem('oasis_cover_height_' + user, next);
                                     }}
-                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
                                     title={`Modo de altura: ${coverHeightMode}. Toca para alternar.`}
                                 >
-                                    <Layers size={11} />
-                                    <span className="hidden sm:inline">Vista: {coverHeightMode === 'expanded' ? 'Expandida' : coverHeightMode === 'full' ? 'Completa' : 'Compacta'}</span>
+                                    <Layers size={12} />
+                                    <span className="hidden md:inline">Vista: {coverHeightMode === 'expanded' ? 'Expandida' : coverHeightMode === 'full' ? 'Completa' : 'Compacta'}</span>
                                 </button>
                             )}
 
@@ -5185,10 +5185,11 @@ const ProfileView = ({
                                 <button
                                     type="button"
                                     onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                    className="px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Cambiar foto de portada"
                                 >
-                                    <Camera size={11} />
-                                    <span>Cambiar fondo</span>
+                                    <Camera size={12} />
+                                    <span className="hidden sm:inline">Cambiar fondo</span>
                                 </button>
                             )}
                         </div>
@@ -7123,10 +7124,9 @@ function OasisApp() {
                 return updatedBlocks;
             });
 
-            // Move to PID-5 Breve (Parte B)
+            // Move directly to Entrevista Biográfica (saltando PID-5 para flujo ágil)
             if (view === 'soul') {
-                setActiveTest('pid5');
-                setCurrentPidIndex(0);
+                setActiveTest('biographic');
                 setCurrentPhenomIndex(0);
             } else {
                 setActiveTest(null);
@@ -15753,7 +15753,7 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-8 xl:gap-14 px-2 xs:px-3 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-36">
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-8 xl:gap-14 px-2 xs:px-3 sm:px-6 pt-[86px] sm:pt-[90px] md:pt-[92px] pb-36">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
                     <div className="w-full max-w-[380px] xs:max-w-[410px] sm:max-w-[460px] flex flex-col items-center">
                         {/* LISTA DE PUBLICACIONES */}
