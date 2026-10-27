@@ -4435,10 +4435,46 @@ const ProfileView = ({
         return trimmed;
     };
 
-    const [bio, setBio] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.') : 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.');
-    const [profileLink, setProfileLink] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_profilelink_' + user) || '') : '');
-    const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : effectiveUser);
-    const [coverImage, setCoverImage] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop') : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop');
+    const isOry = (effectiveUser || user || '').replace('@', '').toLowerCase() === 'ory11';
+
+    const [bio, setBio] = useState(() => {
+        if (isOwnProfile) {
+            const stored = localStorage.getItem('oasis_bio_' + user);
+            if (stored && !stored.includes('Explorador del Oasis')) return stored;
+            if (isOry) return 'ruido extraviado';
+            return stored || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+        }
+        if (publicProfileData?.bio || publicProfileData?.Bio) return publicProfileData.bio || publicProfileData.Bio;
+        if (isOry) return 'ruido extraviado';
+        return 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+    });
+
+    const [profileLink, setProfileLink] = useState(() => {
+        if (isOwnProfile) {
+            const stored = localStorage.getItem('oasis_profilelink_' + user);
+            if (stored && !stored.includes('muleinterior')) return stored;
+            if (isOry) return 'https://inn3r.shop/';
+            return stored || '';
+        }
+        if (publicProfileData?.profileLink || publicProfileData?.ProfileLink) return publicProfileData.profileLink || publicProfileData.ProfileLink;
+        if (isOry) return 'https://inn3r.shop/';
+        return '';
+    });
+
+    const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : (publicProfileData?.fullName || effectiveUser));
+
+    const [coverImage, setCoverImage] = useState(() => {
+        if (isOwnProfile) {
+            const stored = localStorage.getItem('oasis_cover_' + user);
+            if (stored && !stored.includes('950091e3') && !stored.includes('unsplash')) return stored;
+            if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+            return stored || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
+        }
+        if (publicProfileData?.coverImage || publicProfileData?.CoverImage) return publicProfileData.coverImage || publicProfileData.CoverImage;
+        if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+        return 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
+    });
+
     const [coverPosition, setCoverPosition] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_pos_' + user) || 'center') : 'center');
     const [coverHeightMode, setCoverHeightMode] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_height_' + user) || 'expanded') : 'expanded');
     const [isCoverLightboxOpen, setIsCoverLightboxOpen] = useState(false);
@@ -4477,8 +4513,15 @@ const ProfileView = ({
     const hasActiveStories = user24hStories.length > 0;
 
     const displayAvatar = useMemo(() => {
-        if (isOwnProfile) return avatar;
+        if (isOwnProfile) {
+            if (avatar && !avatar.includes('ba90867f') && !avatar.includes('dicebear')) return avatar;
+            const stored = localStorage.getItem('oasis_avatar_' + (user || ''));
+            if (stored && !stored.includes('ba90867f') && !stored.includes('dicebear')) return stored;
+            if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+            return avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${effectiveUser}`;
+        }
         if (publicProfileData?.avatar || publicProfileData?.Avatar) return publicProfileData.avatar || publicProfileData.Avatar;
+        if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
         const postWithAv = (feed || []).find(p => {
             if (!p) return false;
             const u1 = (p.username || '').replace('@', '').toLowerCase();
@@ -4487,7 +4530,7 @@ const ProfileView = ({
         });
         if (postWithAv) return postWithAv.metadata.userAvatar;
         return `https://api.dicebear.com/7.x/pixel-art/svg?seed=${effectiveUser}`;
-    }, [isOwnProfile, avatar, publicProfileData, feed, effectiveUser]);
+    }, [isOwnProfile, avatar, publicProfileData, feed, effectiveUser, isOry, user]);
 
     const targetUserPosts = useMemo(() => {
         const target = (effectiveUser || '').replace('@', '').toLowerCase();
@@ -4580,51 +4623,52 @@ const ProfileView = ({
             localStorage.setItem('oasis_fullname_' + user, user || '');
         }
 
+        const targetU = (effectiveUser || user || '').replace('@', '').toLowerCase();
+        const isTargetOry = targetU === 'ory11';
+
         const profileBlock = (blocks || []).find(b => b.id === 'profile_settings' || b.Id === 'profile_settings');
         if (profileBlock) {
             try {
                 const data = JSON.parse(profileBlock.content || profileBlock.Content || "{}");
-                if (data.bio !== undefined || data.Bio !== undefined) {
-                    const bioVal = data.bio !== undefined ? data.bio : data.Bio;
-                    setBio(bioVal || '');
-                    localStorage.setItem('oasis_bio_' + user, bioVal || '');
+                let bioVal = data.bio !== undefined ? data.bio : data.Bio;
+                let fnVal = data.fullName !== undefined ? data.fullName : data.FullName;
+                let coverVal = data.coverImage !== undefined ? data.coverImage : data.CoverImage;
+                let avatarVal = data.avatar !== undefined ? data.avatar : data.Avatar;
+                let linkVal = data.profileLink !== undefined ? data.profileLink : data.ProfileLink;
+
+                if (isTargetOry) {
+                    if (!bioVal || bioVal.includes('Explorador del Oasis')) bioVal = 'ruido extraviado';
+                    if (!linkVal || linkVal.includes('muleinterior')) linkVal = 'https://inn3r.shop/';
+                    if (!coverVal || coverVal.includes('950091e3') || coverVal.includes('unsplash')) {
+                        coverVal = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+                    }
+                    if (!avatarVal || avatarVal.includes('ba90867f') || avatarVal.includes('dicebear')) {
+                        avatarVal = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+                    }
                 }
-                if (data.fullName !== undefined || data.FullName !== undefined) {
-                    const fnVal = data.fullName !== undefined ? data.fullName : data.FullName;
+
+                if (bioVal !== undefined) { setBio(bioVal || ''); localStorage.setItem('oasis_bio_' + user, bioVal || ''); }
+                if (fnVal !== undefined) {
                     const safeFn = cleanDisplayName(fnVal, cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer'));
                     setFullName(safeFn);
                     localStorage.setItem('oasis_fullname_' + user, safeFn);
                 }
-                if (data.coverImage !== undefined || data.CoverImage !== undefined) {
-                    const coverVal = data.coverImage !== undefined ? data.coverImage : data.CoverImage;
-                    setCoverImage(coverVal || '');
-                    localStorage.setItem('oasis_cover_' + user, coverVal || '');
-                }
-                if (data.avatar !== undefined || data.Avatar !== undefined) {
-                    const avatarVal = data.avatar !== undefined ? data.avatar : data.Avatar;
-                    setAvatar(avatarVal || '');
-                    localStorage.setItem('oasis_avatar_' + user, avatarVal || '');
-                }
-                if (data.profileLink !== undefined || data.ProfileLink !== undefined) {
-                    const linkVal = data.profileLink !== undefined ? data.profileLink : data.ProfileLink;
-                    setProfileLink(linkVal || '');
-                    localStorage.setItem('oasis_profilelink_' + user, linkVal || '');
-                }
-                return;
+                if (coverVal !== undefined) { setCoverImage(coverVal || ''); localStorage.setItem('oasis_cover_' + user, coverVal || ''); }
+                if (avatarVal !== undefined) { setAvatar(avatarVal || ''); localStorage.setItem('oasis_avatar_' + user, avatarVal || ''); }
+                if (linkVal !== undefined) { setProfileLink(linkVal || ''); localStorage.setItem('oasis_profilelink_' + user, linkVal || ''); }
             } catch (e) {
                 console.error("Error parsing profile settings:", e);
             }
         }
 
-        const targetU = effectiveUser || user;
         const storedBio = localStorage.getItem('oasis_bio_' + targetU);
-        if (storedBio) setBio(storedBio);
+        if (storedBio && (!isTargetOry || !storedBio.includes('Explorador del Oasis'))) setBio(storedBio);
         const targetStoredFn = localStorage.getItem('oasis_fullname_' + targetU);
         if (targetStoredFn && !targetStoredFn.includes('@')) setFullName(cleanDisplayName(targetStoredFn, targetU || 'Oasis Explorer'));
         const storedCover = localStorage.getItem('oasis_cover_' + targetU);
-        if (storedCover) setCoverImage(storedCover);
+        if (storedCover && (!isTargetOry || !storedCover.includes('950091e3'))) setCoverImage(storedCover);
         const storedLink = localStorage.getItem('oasis_profilelink_' + targetU);
-        if (storedLink) setProfileLink(storedLink);
+        if (storedLink && (!isTargetOry || !storedLink.includes('muleinterior'))) setProfileLink(storedLink);
 
         if (targetU) {
             // Sincronizar datos autoritativos de perfil desde clinical-data
@@ -4632,12 +4676,19 @@ const ProfileView = ({
                 .then(r => r.json())
                 .then(serverData => {
                     if (!serverData) return;
-                    const bBio = serverData[`oasis_bio_${targetU}`];
-                    const bLink = serverData[`oasis_profilelink_${targetU}`];
-                    const bCover = serverData[`oasis_cover_${targetU}`];
-                    const bAv = serverData[`oasis_avatar_${targetU}`];
+                    let bBio = serverData[`oasis_bio_${targetU}`];
+                    let bLink = serverData[`oasis_profilelink_${targetU}`];
+                    let bCover = serverData[`oasis_cover_${targetU}`];
+                    let bAv = serverData[`oasis_avatar_${targetU}`];
                     const bPub = serverData[`oasis_is_public_${targetU}`];
                     const bFn = serverData[`oasis_fullname_${targetU}`];
+
+                    if (isTargetOry) {
+                        if (!bBio || bBio.includes('Explorador del Oasis')) bBio = 'ruido extraviado';
+                        if (!bLink || bLink.includes('muleinterior')) bLink = 'https://inn3r.shop/';
+                        if (!bCover || bCover.includes('950091e3')) bCover = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+                        if (!bAv || bAv.includes('ba90867f')) bAv = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+                    }
 
                     if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                     if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
@@ -5285,7 +5336,7 @@ const ProfileView = ({
                                     <div className="flex items-center gap-2 min-w-0 truncate">
                                         <Globe size={12} className="text-emerald-400 shrink-0" />
                                         <span className="truncate">
-                                            {profileLink ? profileLink.replace(/^https?:\/\//, '') : `muleinterior.com/7/${effectiveUser}`}
+                                            {profileLink ? profileLink.replace(/^https?:\/\//, '') : (effectiveUser?.toLowerCase() === 'ory11' ? 'inn3r.shop/' : `muleinterior.com/7/${effectiveUser}`)}
                                         </span>
                                     </div>
                                     <ChevronRight size={13} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
@@ -6264,7 +6315,12 @@ function OasisApp() {
                 innerHeight: innerH,
                 offsetTop: offsetT
             });
-            setMaxHeight(prev => Math.max(prev, innerH));
+            const isTyping = typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+            if (!isTyping) {
+                setMaxHeight(innerH);
+            } else {
+                setMaxHeight(prev => Math.max(prev, innerH));
+            }
             if (window.scrollY !== 0) {
                 window.scrollTo(0, 0);
             }
@@ -6442,11 +6498,27 @@ function OasisApp() {
 
     const [activeNotebook, setActiveNotebookRaw] = useState(null); // 'diary' | 'resonance'
 
-    const [avatar, setAvatar] = useState(() => localStorage.getItem('oasis_avatar_' + (localStorage.getItem('oasis_user') || '')) || '');
+    const [avatar, setAvatar] = useState(() => {
+        const u = localStorage.getItem('oasis_user') || '';
+        const stored = localStorage.getItem('oasis_avatar_' + u) || '';
+        if (u.toLowerCase() === 'ory11') {
+            if (!stored || stored.includes('ba90867f') || stored.includes('dicebear')) {
+                const puppyAv = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+                localStorage.setItem('oasis_avatar_ory11', puppyAv);
+                return puppyAv;
+            }
+        }
+        return stored;
+    });
 
     useEffect(() => {
         if (user) {
-            setAvatar(localStorage.getItem('oasis_avatar_' + user) || '');
+            let stored = localStorage.getItem('oasis_avatar_' + user) || '';
+            if (user.toLowerCase() === 'ory11' && (!stored || stored.includes('ba90867f') || stored.includes('dicebear'))) {
+                stored = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+                localStorage.setItem('oasis_avatar_ory11', stored);
+            }
+            setAvatar(stored);
         } else {
             setAvatar('');
         }
@@ -9030,6 +9102,9 @@ function OasisApp() {
                                     const targetUser = getTargetUserFromKey(key);
                                     if (targetUser === user) {
                                         const val = localStorage.getItem(key);
+                                        if (val && typeof val === 'string' && (val.includes('ba90867f') || val.includes('950091e3') || val.includes('muleinterior'))) {
+                                            continue;
+                                        }
                                         if (serverDataForUser[key] !== val) {
                                             keysToPush[key] = val;
                                         }
@@ -17065,11 +17140,11 @@ ${afcMapContext}
             )}
 
             {/* BOTÓN DE ACCIÓN ÚNICO (LA REFINERÍA & CHAT) + TÍTULO MILANOTE DEL LIENZO */}
-            {(view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && !publicProfileUser && (
+            {Boolean(user) && (view === 'canvas' || view === 'profile' || view === 'soul' || view === 'feed' || view === 'my_responses' || isSimpleNotesOpen || activeNotebook) && view !== 'clinical' && !activeTest && (
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && view === 'feed') ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && view === 'feed') ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
                     style={{ top: 'max(14px, calc(env(safe-area-inset-top) + 10px))' }}
                 >
                     {/* 1. Perfil */}
