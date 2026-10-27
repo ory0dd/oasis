@@ -5454,8 +5454,16 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* FIRMA DE RESONANCIA EXISTENCIAL (COMPACTA Y DESPLEGABLE) */}
+                            {/* FIRMA DE RESONANCIA EXISTENCIAL (VISIBLE EXCLUSIVAMENTE PARA EL ROL DE OBSERVADOR) */}
                             {(() => {
+                                // Oculto del perfil general público/personal; visible exclusivamente para observadores clínicos
+                                const viewerUser = (typeof user !== 'undefined' ? user : localStorage.getItem('oasis_user') || '').replace('@', '').toLowerCase();
+                                const viewerRole = (localStorage.getItem('oasis_role_' + viewerUser) || localStorage.getItem('oasis_role') || '').toLowerCase();
+                                const isObserver = viewerRole === 'clinician' || viewerRole === 'supervisor' || viewerRole === 'admin' ||
+                                    ['observador1', 'observador', 'yul', 'yuli', '2112', 'ory11'].includes(viewerUser);
+
+                                if (!isObserver) return null;
+
                                 let resonanceData = null;
                                 try {
                                     if (isOwnProfile) {
@@ -5497,15 +5505,18 @@ const ProfileView = ({
                                     : [resonanceData.habitar, resonanceData.vinculo].filter(Boolean).join(' · ');
 
                                 return (
-                                    <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-3.5 backdrop-blur-md shadow-md transition-all">
+                                    <div className="bg-zinc-900/40 border border-emerald-500/20 rounded-2xl p-3.5 backdrop-blur-md shadow-md transition-all">
                                         <div
                                             className="flex items-center justify-between cursor-pointer select-none group"
                                             onClick={() => setIsFirmaExpanded(!isFirmaExpanded)}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                                 <span className="text-[9px] font-bold text-zinc-300 tracking-wider uppercase font-mono group-hover:text-white transition-colors">
                                                     Firma de Resonancia
+                                                </span>
+                                                <span className="text-[7.5px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                                                    Solo Observador
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[8px] font-mono text-zinc-400 group-hover:border-white/20 transition-all">

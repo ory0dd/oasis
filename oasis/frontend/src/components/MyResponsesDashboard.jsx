@@ -7154,35 +7154,68 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
                 {/* 2.5 FIRMA DE RESONANCIA */}
                 {(() => {
-                    const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
-                    if (!savedTraits) return null;
                     let resonance = null;
                     try {
-                        resonance = JSON.parse(savedTraits);
+                        const savedTraits = localStorage.getItem(`oasis_public_traits_${user}`);
+                        if (savedTraits) {
+                            resonance = JSON.parse(savedTraits);
+                        }
                     } catch(e){}
-                    if (!resonance || (!resonance.habitar && !resonance.vinculo && !resonance.busqueda)) return null;
+
+                    if (!resonance && treatmentPlan?.dynamicTraits) {
+                        const dt = treatmentPlan.dynamicTraits;
+                        if (dt["Firma de Resonancia"]) {
+                            resonance = { sintesis: dt["Firma de Resonancia"] };
+                        }
+                    }
+
+                    if (!resonance) return null;
+                    const sintesisText = resonance.sintesis || resonance.Sintesis;
+                    const hasParts = Boolean(resonance.habitar || resonance.vinculo || resonance.busqueda);
+                    if (!sintesisText && !hasParts) return null;
 
                     return (
-                        <div className="mb-6 rounded-2xl bg-zinc-950/40 border border-white/5 overflow-hidden shadow-xl">
+                        <div className="mb-6 rounded-2xl bg-zinc-950/40 border border-emerald-500/20 overflow-hidden shadow-xl">
                             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-zinc-900/40">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     <span className="text-[10px] font-black text-zinc-300 tracking-widest uppercase">Firma de Resonancia Existencial</span>
+                                    <span className="text-[7.5px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                                        Solo Observador
+                                    </span>
                                 </div>
                             </div>
-                            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🌍</span> Habitar</span>
-                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.habitar}"</p>
-                                </div>
-                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🔗</span> Vínculo</span>
-                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.vinculo}"</p>
-                                </div>
-                                <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
-                                    <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🧭</span> Búsqueda</span>
-                                    <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.busqueda}"</p>
-                                </div>
+                            <div className="p-5 space-y-4">
+                                {sintesisText && (
+                                    <div className="p-4 rounded-xl bg-zinc-900/60 border border-emerald-500/20">
+                                        <span className="text-[9px] font-mono font-bold text-emerald-400 uppercase tracking-widest block mb-1.5">Síntesis Existencial</span>
+                                        <p className="text-xs text-zinc-200 font-sans leading-relaxed italic border-l-2 border-emerald-400/40 pl-3 py-0.5">
+                                            "{sintesisText}"
+                                        </p>
+                                    </div>
+                                )}
+                                {hasParts && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {resonance.habitar && (
+                                            <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                                <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🌍</span> Habitar</span>
+                                                <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.habitar}"</p>
+                                            </div>
+                                        )}
+                                        {resonance.vinculo && (
+                                            <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                                <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🔗</span> Vínculo</span>
+                                                <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.vinculo}"</p>
+                                            </div>
+                                        )}
+                                        {resonance.busqueda && (
+                                            <div className="space-y-1.5 bg-zinc-950/50 p-4 rounded-xl border border-white/5">
+                                                <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5"><span className="text-sm">🧭</span> Búsqueda</span>
+                                                <p className="text-xs text-zinc-300 font-sans leading-relaxed italic pr-2">"{resonance.busqueda}"</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

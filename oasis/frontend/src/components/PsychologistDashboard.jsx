@@ -5572,6 +5572,47 @@ Devuelve estrictamente el JSON sin formato extra.
                                     </>
                                 );
                             })()}
+
+                            {/* FIRMA DE RESONANCIA EXISTENCIAL (VISTA EXCLUSIVA OBSERVADOR) */}
+                            {(() => {
+                                const pName = selectedPatient?.name;
+                                if (!pName) return null;
+                                let traits = null;
+                                try {
+                                    const saved = localStorage.getItem(`oasis_public_traits_${pName}`);
+                                    if (saved) traits = JSON.parse(saved);
+                                } catch (e) {}
+
+                                if (!traits && selectedPatient.clinicalData) {
+                                    const raw = selectedPatient.clinicalData[`oasis_public_traits_${pName}`];
+                                    if (raw) {
+                                        try { traits = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch(e) {}
+                                    }
+                                }
+
+                                if (!traits) return null;
+                                const text = traits.sintesis || traits.Sintesis || [traits.habitar, traits.vinculo, traits.busqueda].filter(Boolean).join(' · ');
+                                if (!text) return null;
+
+                                return (
+                                    <div className="pt-2 border-t border-white/5 space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase font-black flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                Firma de Resonancia
+                                            </span>
+                                            <span className="text-[7px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded font-semibold uppercase">
+                                                Observador
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 rounded-xl bg-zinc-950/70 border border-emerald-500/20 shadow-inner">
+                                            <p className="text-[9px] font-sans text-zinc-300 italic leading-relaxed line-clamp-3 hover:line-clamp-none transition-all cursor-pointer" title={text}>
+                                                "{text}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Navigation Structure */}
