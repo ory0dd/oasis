@@ -7,7 +7,7 @@ const formatUrl = (url) => {
     return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId, blocks, setBlocks, accent, onClose, user, editBlock, openNewComposer, 
+export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId, blocks, setBlocks, syncBlocks, accent, onClose, user, editBlock, openNewComposer, 
     deleteBlocks, onNewChat, onOpenSimpleNotes, isLoading
 }) {
     const [releaseTab, setReleaseTabRaw] = useState(() => localStorage.getItem('oasis_bitacora_tab') || 'all');
@@ -236,35 +236,59 @@ export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId,
                                                                 const fileInput = document.createElement('input');
                                                                 fileInput.type = 'file';
                                                                 fileInput.accept = 'image/*';
-                                                                fileInput.onchange = (e) => {
-                                                                    const file = e.target.files[0];
+                                                                fileInput.onchange = (ev) => {
+                                                                    const file = ev.target.files?.[0];
                                                                     if (!file) return;
+
+                                                                    // 1. Vista previa instantánea
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (re) => {
+                                                                        const localDataUrl = re.target.result;
+                                                                        try {
+                                                                            localStorage.setItem('oasis_canvas_thumbnail_' + canvas.id, localDataUrl);
+                                                                        } catch (err) {}
+                                                                        setBlocks(prev => {
+                                                                            const exists = prev.some(b => b.id === canvas.id);
+                                                                            const updated = !exists
+                                                                                ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { thumbnail: localDataUrl } }]
+                                                                                : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: localDataUrl } } : b);
+                                                                            if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                                                            return updated;
+                                                                        });
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+
+                                                                    // 2. Subida permanente a /api/oasis/upload
                                                                     const formData = new FormData();
                                                                     formData.append('file', file);
-                                                                    const xhr = new XMLHttpRequest();
-                                                                    xhr.open('POST', `${API_URL}/api/upload`);
-                                                                    xhr.onload = () => {
-                                                                        if (xhr.status >= 200 && xhr.status < 300) {
+                                                                    fetch(`${API_URL}/api/oasis/upload`, {
+                                                                        method: 'POST',
+                                                                        body: formData
+                                                                    })
+                                                                    .then(res => res.json())
+                                                                    .then(data => {
+                                                                        if (data && data.url) {
                                                                             try {
-                                                                                const data = JSON.parse(xhr.responseText);
-                                                                                if (data.url) {
-                                                                                    setBlocks(prev => {
-                                                                                        const exists = prev.some(b => b.id === canvas.id);
-                                                                                        if (!exists) {
-                                                                                            return [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text, timestamp: new Date().toISOString(), user, metadata: { thumbnail: data.url } }];
-                                                                                        }
-                                                                                        return prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: data.url } } : b);
-                                                                                    });
-                                                                                }
+                                                                                localStorage.setItem('oasis_canvas_thumbnail_' + canvas.id, data.url);
                                                                             } catch (err) {}
+                                                                            setBlocks(prev => {
+                                                                                const exists = prev.some(b => b.id === canvas.id);
+                                                                                const updated = !exists
+                                                                                    ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { thumbnail: data.url } }]
+                                                                                    : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: data.url } } : b);
+                                                                                if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                                                                return updated;
+                                                                            });
                                                                         }
-                                                                    };
-                                                                    xhr.send(formData);
+                                                                    })
+                                                                    .catch(err => {
+                                                                        console.error("Error al subir portada del pizarrón:", err);
+                                                                    });
                                                                 };
                                                                 fileInput.click();
                                                             }} 
-                                                            className="text-zinc-400 hover:text-white p-1 rounded-full"
-                                                            title="Cambiar portada"
+                                                            className="text-zinc-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                                                            title="Cambiar portada del pizarrón"
                                                         >
                                                             <ImageIcon size={12} />
                                                         </button>

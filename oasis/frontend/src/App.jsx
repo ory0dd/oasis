@@ -17624,6 +17624,7 @@ ${afcMapContext}
                     isLoading={!isDataLoaded}
                     blocks={blocks}
                     setBlocks={setBlocks}
+                    syncBlocks={syncBlocks}
                     accent={accent}
                     onClose={() => setIsBitacoraOpen(false)}
                     user={user}
