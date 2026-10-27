@@ -212,7 +212,7 @@ export default function DirectMessagesWidget({
     const activeUserInfo = activeUser ? getUserInfo(activeUser) : null;
 
     // ─────────────────────────────────────────────────────────────
-    // 1. COLLAPSED FLOATING PILL (Estilo Instagram Desktop)
+    // 1. COLLAPSED FLOATING PILL (Estilo Instagram Desktop & Móvil Responsivo)
     // ─────────────────────────────────────────────────────────────
     if (!isOpen) {
         const totalUnread = Object.values(threads).reduce((acc, t) => acc + (t.unread || 0), 0) || 2;
@@ -220,28 +220,28 @@ export default function DirectMessagesWidget({
             <button
                 type="button"
                 onClick={onToggle}
-                className={`fixed bottom-6 right-6 z-[2400] flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#1e2024]/95 hover:bg-[#282b31] backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] text-white transition-all duration-300 hover:scale-105 active:scale-95 group pointer-events-auto ${
+                className={`fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-[2400] flex items-center gap-2 sm:gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-[#1e2024]/95 hover:bg-[#282b31] backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] text-white transition-all duration-300 hover:scale-105 active:scale-95 group pointer-events-auto ${
                     isNavbarHidden ? 'translate-y-24 opacity-0 pointer-events-none sm:translate-y-0 sm:opacity-100 sm:pointer-events-auto' : 'translate-y-0 opacity-100'
                 }`}
                 title="Abrir Mensajes Directos"
             >
                 <div className="relative flex items-center justify-center">
-                    <Send size={16} className="text-white group-hover:scale-110 transition-transform -rotate-12" />
+                    <Send size={15} className="text-white group-hover:scale-110 transition-transform -rotate-12" />
                     {totalUnread > 0 && (
-                        <span className="absolute -top-2 -right-2.5 min-w-[17px] h-[17px] px-1 bg-[#ff2851] text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md">
+                        <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] sm:min-w-[17px] sm:h-[17px] px-1 bg-[#ff2851] text-white text-[9px] sm:text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md">
                             {totalUnread}
                         </span>
                     )}
                 </div>
-                <span className="font-bold text-sm tracking-tight text-white font-sans ml-1">Mensajes</span>
+                <span className="font-bold text-xs sm:text-sm tracking-tight text-white font-sans ml-0.5">Mensajes</span>
                 {previewAvatars.length > 0 && (
-                    <div className="flex -space-x-2 overflow-hidden items-center ml-1">
+                    <div className="flex -space-x-1.5 sm:-space-x-2 overflow-hidden items-center ml-0.5 sm:ml-1">
                         {previewAvatars.slice(0, 2).map((src, i) => (
                             <img
                                 key={i}
                                 src={src}
                                 alt="Usuario"
-                                className="inline-block w-6 h-6 rounded-full ring-2 ring-[#1e2024] object-cover bg-zinc-800"
+                                className="inline-block w-5 h-5 sm:w-6 sm:h-6 rounded-full ring-2 ring-[#1e2024] object-cover bg-zinc-800"
                             />
                         ))}
                     </div>

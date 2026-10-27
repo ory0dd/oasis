@@ -1819,10 +1819,10 @@ const FeedItem = ({
         <div 
             id={`feed-item-${f.id}`} 
             ref={itemRef} 
-            className="w-full min-h-[100dvh] flex items-center justify-center px-2 xs:px-3 sm:px-4 pt-10 pb-20 sm:pt-16 sm:pb-16"
+            className="w-full flex items-center justify-center px-2 xs:px-3 sm:px-4 py-2 sm:py-3.5"
         >
             <div 
-                className="w-full max-w-[345px] xs:max-w-[380px] sm:max-w-[420px] max-h-[78dvh] sm:max-h-[84vh] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between select-none"
+                className="w-full max-w-[360px] xs:max-w-[390px] sm:max-w-[440px] bg-black sm:bg-[#0c0c0e] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col select-none"
             >
                 {/* 1. HEADER (Instagram style: avatar + @username · 10 h + 3 dots) */}
                 <div className="px-3.5 py-3 flex items-center justify-between border-b border-white/5">
@@ -1914,7 +1914,7 @@ const FeedItem = ({
 
                 {/* 2. MEDIA (Instagram 4:5 aspect ratio) */}
                 <div 
-                    className="w-full max-h-[38dvh] sm:max-h-[46vh] aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer mx-auto"
+                    className="w-full aspect-[4/5] max-h-[500px] sm:max-h-[560px] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer mx-auto"
                     style={{ touchAction: slides.length > 1 ? "pan-y" : "auto" }}
                     onTouchStart={slides.length > 1 ? handleTouchStart : undefined}
                     onTouchMove={slides.length > 1 ? handleTouchMove : undefined}
@@ -9168,12 +9168,12 @@ function OasisApp() {
         if (user) {
             localStorage.setItem('oasis_bg_' + user, JSON.stringify({ type, value: val, isTiled: tiled }));
         }
-        if (!isLoggedIn || !user || !isDataLoaded) return;
+        if (!user) return;
         fetch(`${API_URL}/api/oasis/background?user=${user}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type, value: val, isTiled: tiled, opacity: 0.8 })
-        });
+        }).catch(() => {});
     };
 
     // Asegurar que los elementos centrales estén siempre en el pizarrón
@@ -9286,7 +9286,7 @@ function OasisApp() {
     };
 
     const handleSaveProfile = useCallback((updates) => {
-        if (!isLoggedIn || !user || !isDataLoaded) return;
+        if (!isLoggedIn || !user) return;
 
         // Actualizar local storage inmediatamente para evitar esperas
         if (updates.avatar !== undefined) localStorage.setItem('oasis_avatar_' + user, updates.avatar);
@@ -15753,9 +15753,9 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-16 sm:pt-18 md:pt-20 pb-28">
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-8 xl:gap-14 px-2 xs:px-3 sm:px-6 pt-4 sm:pt-6 md:pt-8 pb-36">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
-                    <div className="w-full max-w-[430px] sm:max-w-[470px] flex flex-col items-center">
+                    <div className="w-full max-w-[380px] xs:max-w-[410px] sm:max-w-[460px] flex flex-col items-center">
                         {/* LISTA DE PUBLICACIONES */}
                         {activeFeedItems.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest gap-4 h-64 relative z-10 pb-32">
@@ -15763,7 +15763,7 @@ ${afcMapContext}
                                 <span>No hay publicaciones en el feed</span>
                             </div>
                         ) : (
-                            <div className="w-full flex flex-col items-center space-y-8 relative z-10">
+                            <div className="w-full flex flex-col items-center space-y-4 sm:space-y-6 relative z-10">
                                 {activeFeedItems.map((f, i) => (
                                     <React.Fragment key={f.id || i}>
                                         <div className="feed-post-item w-full flex justify-center">
