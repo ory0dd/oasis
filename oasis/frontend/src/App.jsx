@@ -5077,52 +5077,9 @@ const ProfileView = ({
                     <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
                 </div>
 
-                {/* ACCIONES SUPERIORES (MI ENLACE / VOLVER) - AJUSTADAS SIN FRANJA VACÍA */}
-                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 flex items-center justify-between pointer-events-auto z-20 shrink-0">
-                    <div className="flex items-center gap-2">
-                        {!isOwnProfile ? (
-                            <div className="flex items-center gap-2">
-                                {user ? (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
-                                        className="px-3.5 py-1.5 bg-black/60 hover:bg-black/85 backdrop-blur-md rounded-full border border-white/15 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                                    >
-                                        <ArrowLeft size={12} /> Volver al feed
-                                    </button>
-                                ) : (
-                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-md">
-                                        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                                        <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-300 font-bold">Ruido Interior</span>
-                                    </div>
-                                )}
-                            </div>
-                        ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-auto">
-                        {!user && (
-                            <a
-                                href="/"
-                                className="px-3.5 py-1.5 bg-accent hover:brightness-110 text-black rounded-full font-black text-[9px] uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                            >
-                                <Sparkles size={11} />
-                                <span>Crear mi página</span>
-                            </a>
-                        )}
-                        <button
-                            onClick={handleShareProfile}
-                            className={`px-3.5 py-1.5 bg-black/60 hover:bg-black/85 backdrop-blur-md rounded-full border transition-all text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer ${copiedLink ? 'border-accent text-accent' : 'border-white/15 hover:border-white/30 text-white'}`}
-                            title="Copiar enlace personalizado"
-                        >
-                            {copiedLink ? <Check size={12} strokeWidth={2.5} /> : <Share2 size={12} strokeWidth={2.5} />}
-                            <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
-                        </button>
-                    </div>
-                    <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-                </div>
-
-                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR (PEGADITA ARRIBA) */}
-                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-1 z-10 relative pointer-events-auto">
+                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR (PEGADITA ARRIBA SIN FRANJA EXTRA) */}
+                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
+                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md cursor-pointer transition-all duration-300 ${
@@ -5150,8 +5107,34 @@ const ProfileView = ({
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
 
+                        {/* Volver al feed si es perfil visitante */}
+                        {!isOwnProfile && user && (
+                            <div className="absolute top-3 left-3 z-10" onClick={e => e.stopPropagation()}>
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
+                                    className="px-3 py-1.5 bg-black/75 hover:bg-black/90 backdrop-blur-md rounded-full border border-white/20 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+                                    title="Volver al feed principal"
+                                >
+                                    <ArrowLeft size={11} />
+                                    <span>Volver al feed</span>
+                                </button>
+                            </div>
+                        )}
+
                         {/* Controles de la portada */}
-                        <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10" onClick={e => e.stopPropagation()}>
+                        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 sm:gap-2 z-10" onClick={e => e.stopPropagation()}>
+                            {/* Botón Mi Enlace / Compartir */}
+                            <button
+                                type="button"
+                                onClick={handleShareProfile}
+                                className={`px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-accent text-accent' : 'border-white/20 hover:border-white/40'}`}
+                                title="Copiar enlace personalizado de este perfil"
+                            >
+                                {copiedLink ? <Check size={11} strokeWidth={2.5} /> : <Share2 size={11} strokeWidth={2.5} />}
+                                <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
+                            </button>
+
                             {/* Botón Ver Completa */}
                             <button
                                 type="button"
@@ -15773,50 +15756,6 @@ ${afcMapContext}
                 <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-24 sm:pt-28 md:pt-32 pb-28">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
                     <div className="w-full max-w-[430px] sm:max-w-[470px] flex flex-col items-center">
-                        {/* OTRAS ALMAS / HISTORIAS (Slider horizontal con tarjeta estilizada) */}
-                        {similarSouls.length > 0 && (
-                            <div className="w-full mb-6 p-3.5 sm:p-4 rounded-2xl bg-[#121316]/90 sm:bg-[#121316]/85 backdrop-blur-xl border border-white/10 shadow-2xl">
-                                <div className="flex items-center justify-between mb-3 px-1">
-                                    <h3 className="text-white font-bold text-sm tracking-tight flex items-center gap-2 font-sans">
-                                        <span>Otras Almas</span>
-                                        <span className="text-[10px] font-mono text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30 font-bold">{similarSouls.length}</span>
-                                    </h3>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setIsDirectMessagesOpen(true)}
-                                        className="text-[10px] text-zinc-400 hover:text-white uppercase font-bold tracking-widest transition-colors font-mono"
-                                    >
-                                        Ver todas
-                                    </button>
-                                </div>
-                                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1 px-1 snap-x">
-                                    {similarSouls.map((soul) => (
-                                        <div key={soul.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" onClick={(e) => {
-                                            e.stopPropagation();
-                                            setPublicProfileUser(soul.username);
-                                        }}>
-                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/15 group-hover:border-accent group-hover:scale-105 transition-all shadow-xl bg-zinc-900 relative">
-                                                <img 
-                                                    onError={(e) => {
-                                                        if (!e.target.dataset.failed) {
-                                                            e.target.dataset.failed = 'true';
-                                                            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(soul.username || 'oasis');
-                                                        }
-                                                    }} 
-                                                    src={formatUrl(soul.img)} 
-                                                    alt={soul.username} 
-                                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
-                                                />
-                                            </div>
-                                            <span className="text-[10px] font-mono font-bold text-zinc-300 group-hover:text-white transition-colors truncate w-14 sm:w-16 text-center">
-                                                @{soul.username}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* LISTA DE PUBLICACIONES */}
                         {activeFeedItems.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest gap-4 h-64 relative z-10 pb-32">
@@ -15826,31 +15765,111 @@ ${afcMapContext}
                         ) : (
                             <div className="w-full flex flex-col items-center space-y-8 relative z-10">
                                 {activeFeedItems.map((f, i) => (
-                                    <div key={f.id || i} className="feed-post-item w-full flex justify-center">
-                                        <FeedItem
-                                            f={f}
-                                            accent={accent}
-                                            credits={credits}
-                                            setCredits={setCredits}
-                                            blocks={blocks}
-                                            setBlocks={setBlocks}
-                                            syncBlocks={syncBlocks}
-                                            links={links}
-                                            feed={feed}
-                                            setFeed={setFeed}
-                                            setView={setView}
-                                            editBlock={editBlock}
-                                            setPublicProfileUser={setPublicProfileUser}
-                                            user={user}
-                                            currentUserAvatar={avatar}
-                                            publicUsers={publicUsers}
-                                            onOpenDirectMessage={(author, context) => {
-                                                setDirectWidgetActiveUser(author);
-                                                setDirectWidgetContext(context || '');
-                                                setIsDirectWidgetOpen(true);
-                                            }}
-                                        />
-                                    </div>
+                                    <React.Fragment key={f.id || i}>
+                                        <div className="feed-post-item w-full flex justify-center">
+                                            <FeedItem
+                                                f={f}
+                                                accent={accent}
+                                                credits={credits}
+                                                setCredits={setCredits}
+                                                blocks={blocks}
+                                                setBlocks={setBlocks}
+                                                syncBlocks={syncBlocks}
+                                                links={links}
+                                                feed={feed}
+                                                setFeed={setFeed}
+                                                setView={setView}
+                                                editBlock={editBlock}
+                                                setPublicProfileUser={setPublicProfileUser}
+                                                user={user}
+                                                currentUserAvatar={avatar}
+                                                publicUsers={publicUsers}
+                                                onOpenDirectMessage={(author, context) => {
+                                                    setDirectWidgetActiveUser(author);
+                                                    setDirectWidgetContext(context || '');
+                                                    setIsDirectWidgetOpen(true);
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* RECOMENDACIÓN DE A QUIÉN SEGUIR (En medio del feed mientras vas bajando) */}
+                                        {(i === 1 || (activeFeedItems.length === 1 && i === 0)) && similarSouls.length > 0 && (
+                                            <div className="w-full my-2 p-4 sm:p-5 rounded-2xl bg-[#121316]/95 backdrop-blur-xl border border-white/10 shadow-2xl">
+                                                <div className="flex items-center justify-between mb-3.5 px-0.5">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-bold text-sm tracking-tight font-sans flex items-center gap-2">
+                                                            <span>Sugerencias para ti</span>
+                                                            <Sparkles size={14} className="text-accent animate-pulse" />
+                                                        </span>
+                                                        <span className="text-[11px] text-zinc-400 font-sans">
+                                                            Recomendaciones de creadores para seguir
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsDirectWidgetOpen(true)}
+                                                        className="text-xs font-semibold text-[#0095f6] hover:text-white transition-colors"
+                                                    >
+                                                        Ver todo
+                                                    </button>
+                                                </div>
+
+                                                {/* Carrusel horizontal de creadores sugeridos */}
+                                                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 pt-1 snap-x">
+                                                    {similarSouls.map((soul) => {
+                                                        const cleanTarget = soul.username.toLowerCase();
+                                                        const isFollowing = followedUsernames.has(cleanTarget);
+                                                        return (
+                                                            <div
+                                                                key={soul.id || soul.username}
+                                                                className="w-[145px] sm:w-[155px] shrink-0 p-3.5 rounded-xl bg-[#18191d]/90 hover:bg-[#1f2026] border border-white/5 hover:border-white/15 transition-all flex flex-col items-center text-center relative group shadow-lg snap-start"
+                                                            >
+                                                                <div 
+                                                                    className="cursor-pointer flex flex-col items-center w-full"
+                                                                    onClick={() => setPublicProfileUser(soul.username)}
+                                                                >
+                                                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-accent group-hover:scale-105 transition-all shadow-md bg-zinc-900 mb-2.5">
+                                                                        <img
+                                                                            onError={(e) => {
+                                                                                if (!e.target.dataset.failed) {
+                                                                                    e.target.dataset.failed = 'true';
+                                                                                    e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(soul.username || 'oasis');
+                                                                                }
+                                                                            }}
+                                                                            src={formatUrl(soul.img)}
+                                                                            alt={soul.username}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </div>
+                                                                    <span className="font-bold text-xs text-white truncate max-w-full font-mono">
+                                                                        @{soul.username}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-zinc-400 truncate max-w-full mb-3">
+                                                                        {soul.name && soul.name !== soul.username ? soul.name : 'Creador Oasis'}
+                                                                    </span>
+                                                                </div>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        toggleFollowUser(soul.username);
+                                                                    }}
+                                                                    className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold transition-all shadow-sm ${
+                                                                        isFollowing
+                                                                            ? 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                                                                            : 'bg-[#0095f6] hover:bg-[#1877f2] text-white active:scale-95'
+                                                                    }`}
+                                                                >
+                                                                    {isFollowing ? 'Siguiendo' : 'Seguir'}
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </React.Fragment>
                                 ))}
 
                                 {/* FINAL DE STREAM */}
@@ -15864,8 +15883,8 @@ ${afcMapContext}
                         )}
                     </div>
 
-                    {/* COLUMNA LATERAL DERECHA (Sugerencias para ti - Estilo Instagram Desktop) */}
-                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 sticky top-28 self-start space-y-5 select-none">
+                    {/* COLUMNA LATERAL DERECHA (Sugerencias para ti - Flujo natural al scrollear hacia abajo) */}
+                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 self-start space-y-5 select-none">
                         {/* Perfil del usuario actual */}
                         <div className="flex items-center justify-between py-1">
                             <div 
