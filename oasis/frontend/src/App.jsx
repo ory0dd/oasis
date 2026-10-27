@@ -1817,10 +1817,10 @@ const FeedItem = ({
         <div 
             id={`feed-item-${f.id}`} 
             ref={itemRef} 
-            className="w-full min-h-screen snap-center snap-always flex items-center justify-center px-2 sm:px-4 py-12 md:py-16"
+            className="w-full h-screen snap-center snap-always flex items-center justify-center px-3 sm:px-4 pt-16 pb-16 sm:pt-20 sm:pb-20"
         >
             <div 
-                className="w-full max-w-[470px] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col select-none"
+                className="w-full max-w-[390px] sm:max-w-[430px] max-h-[82vh] sm:max-h-[85vh] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between select-none"
                 style={{ touchAction: "pan-y" }} 
                 onTouchStart={handleTouchStart} 
                 onTouchMove={handleTouchMove} 
@@ -1916,7 +1916,7 @@ const FeedItem = ({
 
                 {/* 2. MEDIA (Instagram 4:5 aspect ratio) */}
                 <div 
-                    className="w-full aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer"
+                    className="w-full max-h-[44vh] sm:max-h-[48vh] aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer mx-auto"
                     onClick={() => { if (onOpenDetail) onOpenDetail(); }}
                 >
                     <div 
@@ -5863,11 +5863,22 @@ function OasisApp() {
     const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
     const [selectedBoardTemplate, setSelectedBoardTemplate] = useState('character_profile');
     const [keepTemplateContent, setKeepTemplateContent] = useState(true);
-    const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Extraños Movimientos');
+    const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_board_title') || localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Pizarrón 1');
     const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
+    const [isNavbarHidden, setIsNavbarHidden] = useState(false);
+    const lastFeedScrollRef = useRef(0);
+    const handleFeedScroll = useCallback((e) => {
+        const current = e.target.scrollTop;
+        if (current > lastFeedScrollRef.current + 25 && current > 60) {
+            setIsNavbarHidden(true);
+        } else if (current < lastFeedScrollRef.current - 15 || current <= 40) {
+            setIsNavbarHidden(false);
+        }
+        lastFeedScrollRef.current = current;
+    }, []);
     const [directMessageTargetUser, setDirectMessageTargetUser] = useState(null);
     const [directMessageContext, setDirectMessageContext] = useState('');
     const [feedFilterTab, setFeedFilterTab] = useState('for_you'); // 'for_you' | 'recommended'
@@ -13856,29 +13867,34 @@ ${afcMapContext}
                         </button>
                     </div>
 
-                    {/* PÍLDORA DE ZOOM EN ESQUINA INFERIOR DERECHA (- 100% +) */}
+                    {/* PÍLDORA DE TÍTULO DE PIZARRÓN Y ZOOM EN ESQUINA INFERIOR DERECHA */}
                     <div
-                        className="fixed bottom-6 right-6 z-[2400] hidden sm:flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.75)] text-zinc-400 font-mono text-[11px] pointer-events-auto select-none"
+                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3.5 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.75)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
                     >
+                        <span className="w-2 h-2 rounded-[2px] bg-amber-500 shrink-0 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+                        <span className="font-bold text-white text-xs tracking-tight truncate max-w-[130px]">
+                            {activeCanvasId === 'canvas_default' ? (localStorage.getItem('oasis_board_title') || canvasBoardTitle || 'Pizarrón 1') : (blocks.find(b => b.id === activeCanvasId)?.caption || 'Pizarrón')}
+                        </span>
+                        <span className="text-zinc-600 font-sans">·</span>
                         <button
                             onClick={() => setCam(prev => ({ ...prev, scale: Math.max(0.15, +(prev.scale - 0.1).toFixed(2)) }))}
-                            className="hover:text-white px-1 transition-colors"
+                            className="hover:text-white px-0.5 transition-colors font-mono"
                             title="Alejar"
                         >
                             -
                         </button>
                         <button
                             onClick={() => setCam({ x: 0, y: 0, scale: 1 })}
-                            className="text-zinc-300 hover:text-[#10b981] min-w-[38px] text-center transition-colors"
+                            className="text-zinc-400 hover:text-[#10b981] min-w-[32px] text-center transition-colors font-mono text-[10px]"
                             title="Restablecer vista al 100%"
                         >
                             {Math.round(cam.scale * 100)}%
                         </button>
                         <button
                             onClick={() => setCam(prev => ({ ...prev, scale: Math.min(4, +(prev.scale + 0.1).toFixed(2)) }))}
-                            className="hover:text-white px-1 transition-colors"
+                            className="hover:text-white px-0.5 transition-colors font-mono"
                             title="Acercar"
                         >
                             +
@@ -15665,7 +15681,7 @@ ${afcMapContext}
         };
 
         return (
-            <div className="w-full h-full relative overflow-y-auto snap-y snap-mandatory no-scrollbar bg-transparent">
+            <div onScroll={handleFeedScroll} className="w-full h-full relative overflow-y-auto snap-y snap-mandatory no-scrollbar bg-transparent">
                 <FeedAutoScroller />
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
@@ -16656,7 +16672,7 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && view === 'feed') ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
                     style={{ top: 'max(14px, calc(env(safe-area-inset-top) + 10px))' }}
                 >
                     {/* 1. Perfil */}
@@ -16757,107 +16773,7 @@ ${afcMapContext}
                         <MessageCircle size={15} />
                     </button>
 
-                    {/* TÍTULO Y RUTA DE PESTAÑAS (BREADCRUMBS) DEL TABLERO MILANOTE CUANDO ESTÁS EN EL LIENZO */}
-                    {view === 'canvas' && !activeNotebook && !isChatOpen && (() => {
-                        const rootTitle = localStorage.getItem('oasis_board_title') || canvasBoardTitle || 'Extraños Movimientos';
-                        const activeSubBoardBlock = activeCanvasId !== 'canvas_default'
-                            ? blocks.find(b => b.id === activeCanvasId)
-                            : null;
-
-                        return (
-                            <>
-                                <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
-                                {activeCanvasId === 'canvas_default' ? (
-                                    <div className="flex items-center gap-2.5 pr-3 pl-1 select-none shrink-0">
-                                        <span className="w-3 h-3 rounded-[3px] bg-amber-500 shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-                                        <input
-                                            type="text"
-                                            value={canvasBoardTitle}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onChange={(e) => {
-                                                setCanvasBoardTitle(e.target.value);
-                                                localStorage.setItem('oasis_board_title', e.target.value);
-                                            }}
-                                            className="bg-transparent text-[13px] sm:text-[14px] font-bold text-white hover:text-[#10b981] focus:text-white focus:outline-none tracking-tight transition-colors w-40 sm:w-44 truncate"
-                                            title="Editar nombre del tablero principal"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={canvasBoardSubtitle}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onChange={(e) => {
-                                                setCanvasBoardSubtitle(e.target.value);
-                                                localStorage.setItem('oasis_board_subtitle', e.target.value);
-                                            }}
-                                            className="bg-transparent text-[11px] sm:text-[12px] font-mono text-zinc-500 hover:text-zinc-300 focus:text-zinc-200 focus:outline-none transition-colors w-24 sm:w-28 truncate"
-                                            title="Editar subtítulo"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2 pr-3 pl-1 select-none shrink-0">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const parentCanvas = activeSubBoardBlock?.canvasId || 'canvas_default';
-                                                setActiveCanvasId(parentCanvas);
-                                                setCam({ x: 0, y: 0, scale: 1 });
-                                                setIsTemplatePickerOpen(false);
-                                            }}
-                                            className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-white text-[12px] sm:text-[13px] font-medium transition-colors"
-                                            title="Volver al tablero anterior"
-                                        >
-                                            <span className="w-3 h-3 rounded-[3px] bg-amber-500 shrink-0" />
-                                            <span className="truncate max-w-[130px]">{rootTitle}</span>
-                                        </button>
-
-                                        <span className="text-zinc-600 font-mono text-xs">/</span>
-
-                                        <div className="flex items-center gap-1.5">
-                                            <span
-                                                className="w-3 h-3 rounded-[3px] shrink-0"
-                                                style={{
-                                                    backgroundColor: activeSubBoardBlock?.color || '#3b82f6',
-                                                    boxShadow: `0 0 8px ${(activeSubBoardBlock?.color || '#3b82f6')}70`
-                                                }}
-                                            />
-                                            <input
-                                                type="text"
-                                                value={activeSubBoardBlock?.caption ?? 'Nuevo Tablero'}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onMouseDown={(e) => e.stopPropagation()}
-                                                onChange={(e) => {
-                                                    if (activeSubBoardBlock) {
-                                                        handleInlineBlockUpdate({
-                                                            ...activeSubBoardBlock,
-                                                            caption: e.target.value
-                                                        });
-                                                    }
-                                                }}
-                                                className="bg-transparent text-[13px] sm:text-[14px] font-bold text-white focus:outline-none w-32 sm:w-36 truncate"
-                                                title="Renombrar este sub-tablero"
-                                            />
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsTemplatePickerOpen(prev => !prev);
-                                            }}
-                                            className="ml-1 px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-[#10b981]/20 border border-white/10 hover:border-[#10b981]/40 text-[10px] font-mono text-zinc-300 hover:text-[#10b981] transition-all"
-                                            title="Elegir plantilla para este tablero"
-                                        >
-                                            Plantillas
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        );
-                    })()}
-                </div>
+                    </div>
             )}
 
             {isPublishSelectorOpen && (
