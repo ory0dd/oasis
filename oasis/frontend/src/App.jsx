@@ -4502,6 +4502,7 @@ const ProfileView = ({
             if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings') return false;
             const u = (b.username || user || '').replace('@', '').toLowerCase();
             if (u !== target) return false;
+            if (isOwnProfile) return true;
             return b.isPublic === true || !!(b.metadata && (b.metadata.buyLink || b.metadata.price));
         });
 
@@ -4626,6 +4627,26 @@ const ProfileView = ({
         if (storedLink) setProfileLink(storedLink);
 
         if (targetU) {
+            // Sincronizar datos autoritativos de perfil desde clinical-data
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${targetU}`)
+                .then(r => r.json())
+                .then(serverData => {
+                    if (!serverData) return;
+                    const bBio = serverData[`oasis_bio_${targetU}`];
+                    const bLink = serverData[`oasis_profilelink_${targetU}`];
+                    const bCover = serverData[`oasis_cover_${targetU}`];
+                    const bAv = serverData[`oasis_avatar_${targetU}`];
+                    const bPub = serverData[`oasis_is_public_${targetU}`];
+                    const bFn = serverData[`oasis_fullname_${targetU}`];
+
+                    if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
+                    if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
+                    if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
+                    if (bAv) { if (setAvatar) setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
+                    if (bPub !== undefined) { localStorage.setItem('oasis_is_public_' + targetU, String(bPub)); }
+                    if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
+                }).catch(() => {});
+
             fetch(`${API_URL}/api/oasis/blocks?user=${targetU}`)
                 .then(r => r.json())
                 .then(srvBlocks => {
@@ -5027,7 +5048,24 @@ const ProfileView = ({
                         <div 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                if (setIsPlaying) setIsPlaying(!isPlaying);
+                                const nextPlaying = !isPlaying;
+                                if (setIsPlaying) setIsPlaying(nextPlaying);
+                                const bgAudio = document.querySelector('#background-media-engine audio') || document.querySelector('audio');
+                                if (bgAudio) {
+                                    if (nextPlaying) {
+                                        if (!bgAudio.src && playerTracks && playerTracks[currentTrack]?.url) {
+                                            bgAudio.src = playerTracks[currentTrack].url;
+                                        }
+                                        bgAudio.play().catch(() => {});
+                                    } else {
+                                        bgAudio.pause();
+                                        document.querySelectorAll('audio').forEach(a => a.pause());
+                                    }
+                                } else {
+                                    document.querySelectorAll('audio').forEach(a => {
+                                        if (!nextPlaying) a.pause();
+                                    });
+                                }
                             }}
                             className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
                             title="Toca para reproducir/pausar ambiente sonoro"
@@ -11708,8 +11746,13 @@ ${afcMapContext}
     }, [currentTrack]);
 
     useEffect(() => {
-        if (isPlaying && audioPlayerRef.current && audioPlayerRef.current.src && audioPlayerRef.current.src !== window.location.href) {
-            audioPlayerRef.current.play().catch(e => console.log("Playback failed:", e));
+        if (!audioPlayerRef.current) return;
+        if (isPlaying) {
+            if (audioPlayerRef.current.src && audioPlayerRef.current.src !== window.location.href) {
+                audioPlayerRef.current.play().catch(e => console.log("Playback failed:", e));
+            }
+        } else {
+            audioPlayerRef.current.pause();
         }
     }, [playQueue[currentTrack]?.url, isPlaying]);
 
@@ -13634,9 +13677,9 @@ ${afcMapContext}
                     {/* SUB-BARRA DE HERRAMIENTAS MILANOTE */}
                     {isMilanoteToolsOpen && (
                         <div
-                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-4 sm:px-6 py-2.5 sm:py-3 rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.88)] flex items-center gap-2 sm:gap-4 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar animate-in fade-in slide-in-from-bottom-2 duration-200"
+                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-2 sm:px-5 py-2 sm:py-2.5 rounded-[22px] sm:rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.88)] flex items-center gap-1 sm:gap-3 pointer-events-auto w-full max-w-[96vw] sm:w-max overflow-x-auto no-scrollbar overscroll-contain scroll-smooth animate-in fade-in slide-in-from-bottom-2 duration-200"
                             style={{
-                                bottom: window.innerWidth >= 768 ? '94px' : '86px'
+                                bottom: window.innerWidth >= 768 ? '94px' : '78px'
                             }}
                             onMouseDown={e => e.stopPropagation()}
                             onTouchStart={e => e.stopPropagation()}
@@ -13814,9 +13857,9 @@ ${afcMapContext}
 
                     {/* DOCK PRINCIPAL INFERIOR */}
                     <div
-                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-2 sm:px-3 sm:py-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-1 sm:gap-2 pointer-events-auto w-max max-w-[95vw] overflow-x-auto no-scrollbar scale-90 sm:scale-100 origin-bottom"
+                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-1.5 sm:px-3 sm:py-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-0.5 sm:gap-1.5 pointer-events-auto w-max max-w-[96vw] overflow-x-auto no-scrollbar scale-95 sm:scale-100 origin-bottom"
                         style={{
-                            bottom: window.innerWidth >= 768 ? '24px' : '16px'
+                            bottom: window.innerWidth >= 768 ? '24px' : '14px'
                         }}
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
@@ -14056,20 +14099,21 @@ ${afcMapContext}
                     
                     {/* BREADCRUMB FLOTANTE SUPERIOR AL NAVEGAR DENTRO DE CARPETAS / SUB-TABLEROS */}
                     {isInsideSubBoard && (
-                        <div className="fixed top-20 left-6 z-[2400] flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3.5 py-1.5 rounded-full shadow-lg text-zinc-300 font-mono text-xs pointer-events-auto select-none animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="fixed top-[68px] sm:top-20 left-1/2 -translate-x-1/2 sm:left-6 sm:translate-x-0 z-[2400] flex items-center gap-1.5 sm:gap-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-lg text-zinc-300 font-mono text-[11px] sm:text-xs pointer-events-auto select-none max-w-[94vw] truncate animate-in fade-in slide-in-from-top-2 duration-200">
                             <button
                                 onClick={() => {
                                     setActiveCanvasId(parentCanvasId || 'canvas_default');
                                     setCam({ x: 0, y: 0, scale: 1 });
                                 }}
-                                className="flex items-center gap-1.5 text-accent hover:text-white transition-colors cursor-pointer font-bold"
+                                className="flex items-center gap-1 text-[#10b981] hover:text-white transition-colors cursor-pointer font-bold shrink-0"
                                 title={`Volver a ${parentBoardTitle}`}
                             >
-                                <ChevronLeft size={14} />
-                                <span>Volver a {parentBoardTitle}</span>
+                                <ChevronLeft size={13} />
+                                <span className="hidden sm:inline">Volver a {parentBoardTitle}</span>
+                                <span className="sm:hidden">{parentBoardTitle}</span>
                             </button>
-                            <span className="text-zinc-600">/</span>
-                            <span className="text-white font-bold truncate max-w-[200px]">{currentBoardTitle}</span>
+                            <span className="text-zinc-600 shrink-0">/</span>
+                            <span className="text-white font-bold truncate max-w-[130px] sm:max-w-[220px]">{currentBoardTitle}</span>
                         </div>
                     )}
 

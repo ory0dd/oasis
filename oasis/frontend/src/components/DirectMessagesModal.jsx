@@ -1,9 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     X, Send, Search, MessageCircle, UserPlus, Sparkles, 
     Check, ExternalLink, ArrowLeft, Heart, UserCheck, UserX,
-    Clock, Users, ShieldAlert, CheckCircle2
+    Clock, Users, ShieldAlert, CheckCircle2, ArrowDown, Mic,
+    Paperclip, Moon, ChevronRight, Hash, Compass, Plus
 } from 'lucide-react';
+
+const DEFAULT_DEMO_CONTACTS = [
+    {
+        username: 'luna_veil',
+        displayName: 'Luna Veil',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop',
+        categoryTag: '#escultura',
+        timeLabel: '12m',
+        isOnline: true,
+        vibe: 'Modelando resina fría ✨',
+        initialMessages: [
+            { id: 'm1', sender: 'luna_veil', text: 'Hola Ory, vi la pieza #01 de tu marco lila.', timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString() },
+            { id: 'm2', sender: 'luna_veil', text: '¿Trabajas con resina pura o mezclas mortero?', timestamp: new Date(Date.now() - 14 * 60 * 1000).toISOString() },
+            { id: 'm3', sender: 'ory11', text: 'Hey Luna! Es cerámica fría modelada a mano con acabado en resina refractaria c:', timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString() }
+        ]
+    },
+    {
+        username: 'kairo',
+        displayName: 'Kairo',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop',
+        categoryTag: '#sonido',
+        timeLabel: '2h',
+        isOnline: true,
+        vibe: 'Grabación binaural 432Hz 🎧',
+        initialMessages: [
+            { id: 'k1', sender: 'kairo', text: 'Oye Ory, logré procesar las frecuencias binaurales de la cinta de meditación.', timestamp: new Date(Date.now() - 150 * 60 * 1000).toISOString() },
+            { id: 'k2', sender: 'kairo', text: 'Te dejé una resonancia en el archivo sonoro para cuando quieras escuchar.', timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString() }
+        ]
+    },
+    {
+        username: 'solaris',
+        displayName: 'Solaris',
+        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=300&auto=format&fit=crop',
+        categoryTag: '#fotografia',
+        timeLabel: '5h',
+        isOnline: true,
+        vibe: 'Cámara analógica en luz tenue 📸',
+        initialMessages: [
+            { id: 's1', sender: 'solaris', text: '¿Viste las nuevas capturas de flash analógico del taller?', timestamp: new Date(Date.now() - 300 * 60 * 1000).toISOString() }
+        ]
+    }
+];
 
 export default function DirectMessagesModal({
     isOpen,
@@ -25,13 +68,29 @@ export default function DirectMessagesModal({
     const FRIENDS_KEY = `oasis_friends_${cleanCurrent}`;
     const SENT_KEY = `oasis_sent_requests_${cleanCurrent}`;
     const RECEIVED_KEY = `oasis_received_requests_${cleanCurrent}`;
-    const GLOBAL_FRIENDS_KEY = `oasis_global_friendship_store`;
+    const ZEN_KEY = `oasis_dm_zen_mode_${cleanCurrent}`;
 
     // ─── STATE INITIALIZERS ───
     const [threads, setThreads] = useState(() => {
         try {
             const saved = localStorage.getItem(THREADS_KEY);
-            return saved ? JSON.parse(saved) : {};
+            if (saved) return JSON.parse(saved);
+            
+            // Seed with curated creative contacts from mockup
+            const initialMap = {};
+            DEFAULT_DEMO_CONTACTS.forEach(c => {
+                initialMap[c.username] = {
+                    targetUser: c.username,
+                    displayName: c.displayName,
+                    avatar: c.avatar,
+                    categoryTag: c.categoryTag,
+                    lastUpdated: c.initialMessages[c.initialMessages.length - 1].timestamp,
+                    lastMessage: c.initialMessages[c.initialMessages.length - 1].text,
+                    messages: c.initialMessages
+                };
+            });
+            localStorage.setItem(THREADS_KEY, JSON.stringify(initialMap));
+            return initialMap;
         } catch {
             return {};
         }
@@ -40,6 +99,18 @@ export default function DirectMessagesModal({
     const [friends, setFriends] = useState(() => {
         try {
             const saved = localStorage.getItem(FRIENDS_KEY);
+            if (saved) return JSON.parse(saved);
+            const defaultFriends = ['luna_veil', 'kairo', 'solaris'];
+            localStorage.setItem(FRIENDS_KEY, JSON.stringify(defaultFriends));
+            return defaultFriends;
+        } catch {
+            return ['luna_veil', 'kairo', 'solaris'];
+        }
+    });
+
+    const [receivedRequests, setReceivedRequests] = useState(() => {
+        try {
+            const saved = localStorage.getItem(RECEIVED_KEY);
             return saved ? JSON.parse(saved) : [];
         } catch {
             return [];
@@ -55,42 +126,40 @@ export default function DirectMessagesModal({
         }
     });
 
-    const [receivedRequests, setReceivedRequests] = useState(() => {
+    const [zenMode, setZenMode] = useState(() => {
         try {
-            const saved = localStorage.getItem(RECEIVED_KEY);
-            if (saved) return JSON.parse(saved);
-            
-            // Si es la primera vez que se abre, sembramos 1 o 2 solicitudes de ejemplo
-            // a partir de usuarios públicos existentes para permitir probar "Aceptar" y "Negar" de inmediato.
-            const candidates = (publicUsers || [])
-                .map(u => (u.Username || u.username || '').replace('@', '').toLowerCase())
-                .filter(u => u && u !== cleanCurrent && u !== 'anon' && !u.startsWith('test_'));
-            
-            const seed = candidates.slice(0, 2);
-            if (seed.length > 0) {
-                localStorage.setItem(RECEIVED_KEY, JSON.stringify(seed));
-                return seed;
-            }
-            return [];
+            return localStorage.getItem(ZEN_KEY) === 'true';
         } catch {
-            return [];
+            return false;
         }
     });
 
-    const [activeUser, setActiveUser] = useState(initialTargetUser ? initialTargetUser.replace('@', '') : null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState(initialTargetUser ? 'chats' : 'chats'); // 'chats' | 'requests' | 'discover'
-    const [messageText, setMessageText] = useState(initialContextMessage || '');
-    const [toastMessage, setToastMessage] = useState(null);
-    const messagesEndRef = useRef(null);
-
-    // Feedback Toast helper
-    const showToast = (msg) => {
-        setToastMessage(msg);
-        setTimeout(() => setToastMessage(null), 3500);
+    const toggleZenMode = () => {
+        setZenMode(prev => {
+            const next = !prev;
+            try { localStorage.setItem(ZEN_KEY, String(next)); } catch {}
+            return next;
+        });
     };
 
-    // Save helpers
+    const [activeUser, setActiveUser] = useState(() => {
+        if (initialTargetUser) return initialTargetUser.replace('@', '').toLowerCase();
+        return 'luna_veil';
+    });
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [subTab, setSubTab] = useState('bandeja'); // 'bandeja' | 'resonancias' | 'frecuencias'
+    const [messageText, setMessageText] = useState(initialContextMessage || '');
+    const [toastMessage, setToastMessage] = useState(null);
+    const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+    const messagesEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
+
+    const showToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
+
     const saveThreads = (newThreads) => {
         setThreads(newThreads);
         try {
@@ -100,60 +169,20 @@ export default function DirectMessagesModal({
         }
     };
 
-    const saveFriends = (newList) => {
-        setFriends(newList);
-        try {
-            localStorage.setItem(FRIENDS_KEY, JSON.stringify(newList));
-        } catch (e) {
-            console.error('Error saving friends:', e);
-        }
-    };
-
-    const saveSentRequests = (newList) => {
-        setSentRequests(newList);
-        try {
-            localStorage.setItem(SENT_KEY, JSON.stringify(newList));
-        } catch (e) {
-            console.error('Error saving sent requests:', e);
-        }
-    };
-
-    const saveReceivedRequests = (newList) => {
-        setReceivedRequests(newList);
-        try {
-            localStorage.setItem(RECEIVED_KEY, JSON.stringify(newList));
-        } catch (e) {
-            console.error('Error saving received requests:', e);
-        }
-    };
-
-    // Auto-scroll to bottom of active chat
-    useEffect(() => {
+    const scrollToBottom = () => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [activeUser, threads]);
+    };
 
-    // Handle Escape key to go back or close
     useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape' || e.key === 'Esc') {
-                e.preventDefault();
-                if (activeUser) {
-                    setActiveUser(null);
-                } else {
-                    onClose();
-                }
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [activeUser, onClose]);
+        scrollToBottom();
+    }, [activeUser, threads]);
 
     // Handle initial target user
     useEffect(() => {
         if (initialTargetUser) {
-            const targetClean = initialTargetUser.replace('@', '');
+            const targetClean = initialTargetUser.replace('@', '').toLowerCase();
             setActiveUser(targetClean);
             if (initialContextMessage) {
                 setMessageText(initialContextMessage);
@@ -161,135 +190,57 @@ export default function DirectMessagesModal({
         }
     }, [initialTargetUser, initialContextMessage]);
 
-    // Available users list - formatted strictly with USERNAME (no full names)
-    const communityUsers = (publicUsers || [])
-        .filter(u => {
+    // Strict privacy filter for community users:
+    // Only verified creators or existing friends
+    const filteredCommunityUsers = useMemo(() => {
+        const friendSet = new Set(friends.map(f => f.toLowerCase()));
+        return (publicUsers || []).filter(u => {
             const uname = (u.Username || u.username || '').replace('@', '').toLowerCase();
-            return uname && uname !== cleanCurrent && uname !== 'anon' && !uname.startsWith('test_');
-        })
-        .map((u, idx) => {
+            if (!uname || uname === cleanCurrent || uname === 'anon' || uname.startsWith('test_')) return false;
+            // Never expose clinical patients
+            if (uname.includes('patient') || uname.includes('clinician') || uname === 'somni') return false;
+            const isCreator = u.isPublicProfile === true || u.role === 'creator' || u.Role === 'creator';
+            return isCreator || friendSet.has(uname);
+        }).map((u, idx) => {
             const uname = (u.Username || u.username || '').replace('@', '');
-            const avatar = u.Avatar || u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+            const avatar = u.Avatar || u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}`;
             return {
                 id: u.id || idx,
                 username: uname,
+                displayName: u.FullName || u.fullName || uname,
                 avatar,
-                bio: u.Bio || u.bio || 'Creador en el Oasis'
+                bio: u.Bio || u.bio || 'Creador en Oasis',
+                categoryTag: '#resonancia'
             };
         });
+    }, [publicUsers, friends, cleanCurrent]);
 
-    // Helper to get user info by username
-    const getUserInfo = (username) => {
-        const found = communityUsers.find(s => s.username.toLowerCase() === username.toLowerCase());
-        if (found) return found;
+    const getUserMeta = (username) => {
+        if (!username) return { username: 'anon', displayName: 'Explorador', avatar: '', categoryTag: '#obra' };
+        const clean = username.replace('@', '').toLowerCase();
+        const demo = DEFAULT_DEMO_CONTACTS.find(d => d.username.toLowerCase() === clean);
+        if (demo) return demo;
+        const comm = filteredCommunityUsers.find(c => c.username.toLowerCase() === clean);
+        if (comm) return comm;
         return {
-            username: username.replace('@', ''),
-            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(username)}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
-            bio: 'Usuario de Oasis'
+            username: clean,
+            displayName: clean,
+            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(clean)}`,
+            categoryTag: '#frecuencia',
+            isOnline: true,
+            vibe: 'En sintonía con Oasis'
         };
     };
 
-    // ─── FRIENDSHIP ACTIONS ───
-    const handleSendFriendRequest = (targetUsername) => {
-        const targetClean = targetUsername.replace('@', '').toLowerCase();
-        if (targetClean === cleanCurrent) return;
-
-        if (friends.includes(targetClean)) {
-            showToast(`Ya eres amigo de @${targetClean}`);
-            return;
-        }
-
-        if (sentRequests.includes(targetClean)) {
-            showToast(`Ya enviaste una solicitud a @${targetClean}`);
-            return;
-        }
-
-        // Si el otro usuario ya nos había enviado solicitud, al enviarle solicitud se auto-acepta la amistad
-        if (receivedRequests.includes(targetClean)) {
-            handleAcceptRequest(targetClean);
-            return;
-        }
-
-        const newSent = [...sentRequests, targetClean];
-        saveSentRequests(newSent);
-
-        // Actualizar almacenamiento global para sincronizar con la otra sesión
-        try {
-            const globalRaw = localStorage.getItem(GLOBAL_FRIENDS_KEY);
-            const globalStore = globalRaw ? JSON.parse(globalRaw) : {};
-            if (!globalStore[targetClean]) globalStore[targetClean] = { received: [], friends: [] };
-            if (!globalStore[targetClean].received.includes(cleanCurrent)) {
-                globalStore[targetClean].received.push(cleanCurrent);
-            }
-            localStorage.setItem(GLOBAL_FRIENDS_KEY, JSON.stringify(globalStore));
-        } catch (e) {
-            console.error(e);
-        }
-
-        showToast(`Solicitud de amistad enviada a @${targetClean}`);
-    };
-
-    const handleCancelSentRequest = (targetUsername) => {
-        const targetClean = targetUsername.replace('@', '').toLowerCase();
-        const newSent = sentRequests.filter(u => u !== targetClean);
-        saveSentRequests(newSent);
-        showToast(`Solicitud a @${targetClean} cancelada`);
-    };
-
-    const handleAcceptRequest = (targetUsername) => {
-        const targetClean = targetUsername.replace('@', '').toLowerCase();
-        
-        // Quitar de recibidas
-        const newReceived = receivedRequests.filter(u => u !== targetClean);
-        saveReceivedRequests(newReceived);
-
-        // Agregar a amigos si no está
-        if (!friends.includes(targetClean)) {
-            const newFriends = [...friends, targetClean];
-            saveFriends(newFriends);
-        }
-
-        // Quitar de enviadas si estaba
-        if (sentRequests.includes(targetClean)) {
-            const newSent = sentRequests.filter(u => u !== targetClean);
-            saveSentRequests(newSent);
-        }
-
-        showToast(`¡Ahora eres amigo de @${targetClean}! Ya pueden chatear.`);
-    };
-
-    const handleRejectRequest = (targetUsername) => {
-        const targetClean = targetUsername.replace('@', '').toLowerCase();
-        const newReceived = receivedRequests.filter(u => u !== targetClean);
-        saveReceivedRequests(newReceived);
-        showToast(`Solicitud de @${targetClean} rechazada`);
-    };
-
-    const isFriend = (username) => {
-        return friends.includes(username.replace('@', '').toLowerCase());
-    };
-
-    const isRequestSent = (username) => {
-        return sentRequests.includes(username.replace('@', '').toLowerCase());
-    };
-
-    const isRequestReceived = (username) => {
-        return receivedRequests.includes(username.replace('@', '').toLowerCase());
-    };
-
-    // ─── CHAT ACTIONS ───
     const handleSendMessage = () => {
         if (!messageText.trim() || !activeUser) return;
         const targetClean = activeUser.toLowerCase();
 
-        // Validar amistad antes de chatear
-        if (!isFriend(targetClean)) {
-            showToast(`Debes enviar y tener aceptada una solicitud de amistad con @${targetClean} para enviar mensajes.`);
-            return;
-        }
-
         const currentThread = threads[targetClean] || {
             targetUser: activeUser,
+            displayName: getUserMeta(activeUser).displayName,
+            avatar: getUserMeta(activeUser).avatar,
+            categoryTag: getUserMeta(activeUser).categoryTag,
             messages: []
         };
 
@@ -326,639 +277,448 @@ export default function DirectMessagesModal({
     });
 
     const filteredThreadKeys = threadKeys.filter(key => {
-        return key.toLowerCase().includes(searchQuery.toLowerCase());
+        const meta = getUserMeta(key);
+        const q = searchQuery.toLowerCase();
+        return key.toLowerCase().includes(q) || meta.displayName.toLowerCase().includes(q) || (meta.categoryTag || '').toLowerCase().includes(q);
     });
 
-    const filteredCommunity = communityUsers.filter(u => {
-        return u.username.toLowerCase().includes(searchQuery.toLowerCase());
-    });
-
+    const activeUserInfo = activeUser ? getUserMeta(activeUser) : null;
     const activeThread = activeUser ? (threads[activeUser.toLowerCase()] || { messages: [] }) : null;
-    const activeUserInfo = activeUser ? getUserInfo(activeUser) : null;
-    const activeUserIsFriend = activeUser ? isFriend(activeUser) : false;
-    const activeUserRequestSent = activeUser ? isRequestSent(activeUser) : false;
-    const activeUserRequestReceived = activeUser ? isRequestReceived(activeUser) : false;
 
     return (
         <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 select-none animate-in fade-in duration-200"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 select-none animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div 
-                className="bg-[#111114] border border-white/10 rounded-3xl w-full max-w-4xl h-[88vh] max-h-[720px] flex overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.9)] relative flex-col md:flex-row"
+                className="bg-[#0c0f12] border border-white/10 rounded-[28px] sm:rounded-[32px] w-full max-w-5xl h-[90vh] max-h-[760px] flex flex-col overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.95)] relative animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
             >
-                {/* ALWAYS-VISIBLE CLOSE BUTTON ON TOP RIGHT */}
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="absolute top-3.5 right-3.5 z-50 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white flex items-center justify-center transition-all shadow-lg pointer-events-auto"
-                    title="Cerrar mensajes (Esc)"
-                >
-                    <X size={16} />
-                </button>
-
-                {/* TOAST FEEDBACK NOTIFICATION */}
+                {/* ─── TOAST FEEDBACK ─── */}
                 {toastMessage && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-zinc-900 border border-white/15 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
-                        <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1a1f26] border border-[#2dd4bf]/30 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
+                        <CheckCircle2 size={14} className="text-[#2dd4bf] shrink-0" />
                         <span>{toastMessage}</span>
                     </div>
                 )}
 
-                {/* ─── SIDEBAR: CONVERSACIONES, SOLICITUDES Y COMUNIDAD ─── */}
-                <div className={`w-full md:w-80 shrink-0 border-r border-white/5 flex flex-col bg-zinc-950/70 ${activeUser ? 'hidden md:flex' : 'flex h-full'}`}>
-                    
-                    {/* SIDEBAR HEADER */}
-                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
-                                <MessageCircle size={16} />
-                            </div>
-                            <div>
-                                <h3 className="text-white font-bold text-sm tracking-tight">Mensajes</h3>
-                                <p className="text-[11px] text-zinc-400 font-mono">@{cleanCurrent}</p>
-                            </div>
+                {/* ─── MODAL TOP HEADER (MATCHING MOCKUP) ─── */}
+                <div className="px-5 sm:px-6 py-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-[#0e1216]/90 backdrop-blur-md">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/25 flex items-center justify-center text-[#2dd4bf] shadow-inner">
+                            <MessageCircle size={18} />
                         </div>
-                        <button 
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-white font-bold text-sm sm:text-base tracking-tight">
+                                    Mensajes & Resonancias
+                                </h3>
+                                <span className="w-2 h-2 rounded-full bg-[#2dd4bf] shadow-[0_0_8px_#2dd4bf] animate-pulse" />
+                            </div>
+                            <p className="text-[11px] text-zinc-400 font-mono tracking-wide">
+                                @{cleanCurrent} // frecuencia activa privada
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* MODO ZEN BUTTON */}
+                        <button
+                            type="button"
+                            onClick={toggleZenMode}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 border ${
+                                zenMode 
+                                    ? 'bg-[#2dd4bf]/15 text-[#2dd4bf] border-[#2dd4bf]/40 shadow-sm' 
+                                    : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/10'
+                            }`}
+                            title="Activar modo concentración silencioso"
+                        >
+                            <Moon size={13} className={zenMode ? 'text-[#2dd4bf]' : 'text-zinc-400'} />
+                            <span>Modo Zen</span>
+                        </button>
+
+                        {/* CLOSE BUTTON */}
+                        <button
                             type="button"
                             onClick={onClose}
-                            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
-                            title="Cerrar mensajes (Esc)"
+                            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                            title="Cerrar (Esc)"
                         >
-                            <X size={15} />
+                            <X size={16} />
                         </button>
-                    </div>
-
-                    {/* SEARCH INPUT */}
-                    <div className="px-4 py-2.5">
-                        <div className="relative">
-                            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                            <input 
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Buscar por @usuario..."
-                                className="w-full bg-black/40 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-accent transition-colors font-mono"
-                            />
-                        </div>
-                    </div>
-
-                    {/* TABS: BANDEJA | SOLICITUDES | COMUNIDAD */}
-                    <div className="flex items-center gap-1 px-3 pb-2 border-b border-white/5">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('chats')}
-                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
-                                activeTab === 'chats' 
-                                    ? 'bg-white/15 text-white shadow-sm' 
-                                    : 'text-zinc-500 hover:text-zinc-300'
-                            }`}
-                        >
-                            <span>Bandeja</span>
-                            {threadKeys.length > 0 && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-accent text-black font-mono font-bold">
-                                    {threadKeys.length}
-                                </span>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('requests')}
-                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 relative ${
-                                activeTab === 'requests' 
-                                    ? 'bg-white/15 text-white shadow-sm' 
-                                    : 'text-zinc-500 hover:text-zinc-300'
-                            }`}
-                        >
-                            <UserPlus size={11} className={receivedRequests.length > 0 ? "text-amber-400" : ""} />
-                            <span>Solicitudes</span>
-                            {receivedRequests.length > 0 && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-400 text-black font-mono font-bold animate-pulse">
-                                    {receivedRequests.length}
-                                </span>
-                            )}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('discover')}
-                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
-                                activeTab === 'discover' 
-                                    ? 'bg-white/15 text-white shadow-sm' 
-                                    : 'text-zinc-500 hover:text-zinc-300'
-                            }`}
-                        >
-                            <Users size={11} className="text-accent" />
-                            <span>Explorar</span>
-                        </button>
-                    </div>
-
-                    {/* LIST BODY */}
-                    <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
-                        
-                        {/* ── TAB 1: BANDEJA DE CHATS ── */}
-                        {activeTab === 'chats' && (
-                            filteredThreadKeys.length === 0 ? (
-                                <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
-                                    <MessageCircle size={24} className="opacity-40" />
-                                    <p className="text-xs font-medium">No hay conversaciones activas</p>
-                                    <p className="text-[11px] text-zinc-600 max-w-[200px]">
-                                        Conecta con otros usuarios enviando una solicitud de amistad.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('discover')}
-                                        className="mt-2 px-3 py-1.5 rounded-xl bg-accent/15 border border-accent/30 text-accent text-xs font-bold hover:bg-accent/25 transition-colors"
-                                    >
-                                        Explorar usuarios
-                                    </button>
-                                </div>
-                            ) : (
-                                filteredThreadKeys.map(key => {
-                                    const thread = threads[key];
-                                    const userInf = getUserInfo(key);
-                                    const isSelected = activeUser?.toLowerCase() === key.toLowerCase();
-                                    return (
-                                        <div
-                                            key={key}
-                                            onClick={() => setActiveUser(key)}
-                                            className={`p-2.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all ${
-                                                isSelected 
-                                                    ? 'bg-accent/15 border border-accent/30 text-white' 
-                                                    : 'hover:bg-white/5 border border-transparent text-zinc-300'
-                                            }`}
-                                        >
-                                            <div className="w-10 h-10 rounded-full border border-white/15 overflow-hidden shrink-0 bg-zinc-900 relative">
-                                                <img 
-                                                    src={userInf.avatar} 
-                                                    alt={userInf.username} 
-                                                    className="w-full h-full object-cover" 
-                                                />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-bold truncate text-white font-mono">@{userInf.username}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-mono">
-                                                        {thread.lastUpdated ? new Date(thread.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                                    </span>
-                                                </div>
-                                                <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                                                    {thread.lastMessage || 'Conversación iniciada'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )
-                        )}
-
-                        {/* ── TAB 2: SOLICITUDES DE AMISTAD (RECIBIDAS Y ENVIADAS) ── */}
-                        {activeTab === 'requests' && (
-                            <div className="space-y-4 p-1">
-                                {/* SOLICITUDES RECIBIDAS */}
-                                <div>
-                                    <div className="flex items-center justify-between px-1 mb-2">
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                                            Recibidas ({receivedRequests.length})
-                                        </span>
-                                    </div>
-
-                                    {receivedRequests.length === 0 ? (
-                                        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center text-[11px] text-zinc-500">
-                                            No tienes solicitudes de amistad pendientes.
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {receivedRequests.map(uname => {
-                                                const userInf = getUserInfo(uname);
-                                                return (
-                                                    <div
-                                                        key={uname}
-                                                        className="p-3 rounded-2xl bg-zinc-900/90 border border-amber-500/20 flex flex-col gap-2.5 shadow-sm"
-                                                    >
-                                                        <div className="flex items-center gap-2.5">
-                                                            <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden shrink-0 bg-zinc-800">
-                                                                <img src={userInf.avatar} alt={userInf.username} className="w-full h-full object-cover" />
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <span className="text-xs font-bold text-white truncate block font-mono">
-                                                                    @{userInf.username}
-                                                                </span>
-                                                                <span className="text-[10px] text-zinc-400 block">
-                                                                    Te ha enviado una solicitud
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* BOTONES ACEPTAR / NEGAR */}
-                                                        <div className="flex items-center gap-2 pt-1 border-t border-white/5">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleAcceptRequest(uname)}
-                                                                className="flex-1 py-1.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95"
-                                                            >
-                                                                <Check size={12} strokeWidth={3} />
-                                                                <span>Aceptar</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRejectRequest(uname)}
-                                                                className="flex-1 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 border border-white/10 text-zinc-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all active:scale-95"
-                                                            >
-                                                                <X size={12} strokeWidth={2.5} />
-                                                                <span>Negar</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* SOLICITUDES ENVIADAS */}
-                                {sentRequests.length > 0 && (
-                                    <div className="pt-2 border-t border-white/5">
-                                        <div className="flex items-center justify-between px-1 mb-2">
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                                                Enviadas ({sentRequests.length})
-                                            </span>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            {sentRequests.map(uname => {
-                                                const userInf = getUserInfo(uname);
-                                                return (
-                                                    <div
-                                                        key={uname}
-                                                        className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-2"
-                                                    >
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden shrink-0 bg-zinc-800">
-                                                                <img src={userInf.avatar} alt={userInf.username} className="w-full h-full object-cover" />
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <span className="text-xs font-bold text-white truncate block font-mono">
-                                                                    @{userInf.username}
-                                                                </span>
-                                                                <span className="text-[9px] text-zinc-500 flex items-center gap-1">
-                                                                    <Clock size={9} /> Solicitud pendiente
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleCancelSentRequest(uname)}
-                                                            className="px-2.5 py-1 rounded-lg text-[10px] text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
-                                                        >
-                                                            Cancelar
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* ── TAB 3: EXPLORAR COMUNIDAD / ENVIAR SOLICITUD ── */}
-                        {activeTab === 'discover' && (
-                            filteredCommunity.length === 0 ? (
-                                <div className="p-8 text-center text-zinc-500 text-xs">
-                                    No se encontraron usuarios en la comunidad.
-                                </div>
-                            ) : (
-                                filteredCommunity.map(userItem => {
-                                    const friendStatus = isFriend(userItem.username);
-                                    const sentStatus = isRequestSent(userItem.username);
-                                    const receivedStatus = isRequestReceived(userItem.username);
-
-                                    return (
-                                        <div
-                                            key={userItem.username}
-                                            className="p-3 rounded-2xl border border-white/5 hover:border-white/15 bg-white/[0.02] hover:bg-white/[0.04] transition-all flex flex-col gap-2.5 group"
-                                        >
-                                            <div className="flex items-center justify-between gap-2.5">
-                                                <div 
-                                                    className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
-                                                    onClick={() => {
-                                                        setActiveUser(userItem.username);
-                                                        setActiveTab('chats');
-                                                    }}
-                                                >
-                                                    <div className="w-9 h-9 rounded-full border border-white/15 overflow-hidden shrink-0 bg-zinc-900">
-                                                        <img src={userItem.avatar} alt={userItem.username} className="w-full h-full object-cover" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <span className="text-xs font-bold text-white truncate block font-mono group-hover:text-accent transition-colors">
-                                                            @{userItem.username}
-                                                        </span>
-                                                        <span className="text-[10px] text-zinc-400 block truncate">
-                                                            {userItem.bio}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* STATUS PILL */}
-                                                {friendStatus ? (
-                                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold flex items-center gap-1 shrink-0">
-                                                        <Check size={9} strokeWidth={3} />
-                                                        Amigos
-                                                    </span>
-                                                ) : sentStatus ? (
-                                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-bold flex items-center gap-1 shrink-0">
-                                                        <Clock size={9} />
-                                                        Pendiente
-                                                    </span>
-                                                ) : null}
-                                            </div>
-
-                                            {/* ACTIONS BUTTONS */}
-                                            <div className="flex items-center gap-2 pt-1 border-t border-white/5">
-                                                {friendStatus ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setActiveUser(userItem.username);
-                                                            setActiveTab('chats');
-                                                        }}
-                                                        className="w-full py-1.5 rounded-xl bg-accent text-black font-extrabold text-[11px] hover:brightness-110 transition-all flex items-center justify-center gap-1.5 shadow-md"
-                                                    >
-                                                        <Send size={11} />
-                                                        <span>Chatear</span>
-                                                    </button>
-                                                ) : receivedStatus ? (
-                                                    <div className="w-full flex items-center gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleAcceptRequest(userItem.username)}
-                                                            className="flex-1 py-1.5 rounded-xl bg-emerald-500 text-black font-extrabold text-[11px] hover:bg-emerald-400 transition-all flex items-center justify-center gap-1 shadow-md"
-                                                        >
-                                                            <Check size={11} strokeWidth={3} />
-                                                            <span>Aceptar solicitud</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRejectRequest(userItem.username)}
-                                                            className="px-3 py-1.5 rounded-xl bg-white/5 text-zinc-300 font-bold text-[11px] hover:text-red-400 hover:bg-red-500/20 transition-all"
-                                                        >
-                                                            <span>Negar</span>
-                                                        </button>
-                                                    </div>
-                                                ) : sentStatus ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCancelSentRequest(userItem.username)}
-                                                        className="w-full py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 text-[11px] font-semibold transition-all flex items-center justify-center gap-1"
-                                                    >
-                                                        <span>Cancelar solicitud enviada</span>
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSendFriendRequest(userItem.username)}
-                                                        className="w-full py-1.5 rounded-xl bg-accent/15 border border-accent/40 text-accent hover:bg-accent hover:text-black font-extrabold text-[11px] transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
-                                                    >
-                                                        <UserPlus size={12} />
-                                                        <span>Enviar solicitud de amistad</span>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )
-                        )}
-
                     </div>
                 </div>
 
-                {/* ─── MAIN CHAT AREA ─── */}
-                <div className={`flex-1 flex-col bg-[#0e0e11] ${activeUser ? 'flex h-full' : 'hidden md:flex'}`}>
-                    {activeUser && activeUserInfo ? (
-                        <>
-                            {/* CHAT HEADER */}
-                            <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between bg-zinc-950/50 shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <button 
-                                        type="button"
-                                        onClick={() => setActiveUser(null)}
-                                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white flex items-center justify-center transition-colors"
-                                        title="Volver a la lista (Esc)"
-                                    >
-                                        <ArrowLeft size={16} />
-                                    </button>
-                                    <div 
-                                        className="w-10 h-10 rounded-full border-2 border-accent/40 overflow-hidden shrink-0 bg-zinc-900 cursor-pointer"
-                                        onClick={() => {
-                                            if (onOpenProfile) onOpenProfile(activeUserInfo.username);
-                                        }}
-                                    >
-                                        <img src={activeUserInfo.avatar} alt={activeUserInfo.username} className="w-full h-full object-cover" />
+                {/* ─── MODAL MAIN BODY: 2-COLUMN LAYOUT ─── */}
+                <div className="flex-1 flex overflow-hidden min-h-0 flex-col md:flex-row">
+                    
+                    {/* ──── LEFT COLUMN (SIDEBAR) ──── */}
+                    <div className={`w-full md:w-[350px] lg:w-[380px] shrink-0 border-r border-white/[0.08] flex flex-col bg-[#0a0d10] ${activeUser ? 'hidden md:flex' : 'flex h-full'}`}>
+                        
+                        {/* SEARCH INPUT */}
+                        <div className="p-3.5 pb-2">
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                                <input 
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Buscar presencia o @usuario..."
+                                    className="w-full bg-[#12161b] border border-white/10 rounded-2xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#2dd4bf]/50 transition-colors font-mono"
+                                />
+                            </div>
+                        </div>
+
+                        {/* PRESENCIA AMBIENTAL (VIBES EN VIVO) */}
+                        <div className="px-4 py-2 border-b border-white/[0.06]">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-mono tracking-wider uppercase text-zinc-400 font-bold">
+                                    PRESENCIA AMBIENTAL
+                                </span>
+                                <span className="text-[10px] font-mono text-[#2dd4bf] font-bold tracking-wider">
+                                    EN VIVO
+                                </span>
+                            </div>
+
+                            {/* HORIZONTAL VIBE BUBBLES */}
+                            <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                                {/* TU VIBE BUTTON */}
+                                <div 
+                                    onClick={() => {
+                                        const customVibe = prompt('Escribe tu estado de presencia o vibe:', 'Esculpiendo calma en la sobreinformación ✨');
+                                        if (customVibe) showToast('Vibe ambiental actualizado');
+                                    }}
+                                    className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                                >
+                                    <div className="w-11 h-11 rounded-full border border-dashed border-white/20 group-hover:border-[#2dd4bf] flex items-center justify-center text-zinc-400 group-hover:text-[#2dd4bf] transition-all bg-white/[0.02]">
+                                        <Plus size={16} />
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-white font-bold text-sm tracking-tight font-mono">@{activeUserInfo.username}</h4>
-                                            {activeUserIsFriend && (
-                                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Amigo conectado" />
+                                    <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[50px]">
+                                        Tu vibe
+                                    </span>
+                                </div>
+
+                                {/* CONTACT VIBES */}
+                                {DEFAULT_DEMO_CONTACTS.map(contact => (
+                                    <div 
+                                        key={contact.username}
+                                        onClick={() => setActiveUser(contact.username)}
+                                        className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                                        title={contact.vibe}
+                                    >
+                                        <div className="w-11 h-11 rounded-2xl p-0.5 relative group-hover:scale-105 transition-transform">
+                                            <img 
+                                                src={contact.avatar} 
+                                                alt={contact.displayName} 
+                                                className="w-full h-full object-cover rounded-xl border border-white/15" 
+                                            />
+                                            {contact.isOnline && (
+                                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] border-2 border-[#0a0d10] shadow-[0_0_6px_#2dd4bf]" />
                                             )}
                                         </div>
-                                        <p className="text-[10px] text-zinc-400">
-                                            {activeUserIsFriend ? 'Amigos' : activeUserRequestSent ? 'Solicitud de amistad enviada' : activeUserRequestReceived ? 'Te envió solicitud de amistad' : 'Aún no son amigos'}
-                                        </p>
+                                        <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[54px]">
+                                            {contact.username.split('_')[0]}
+                                        </span>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {onOpenProfile && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onOpenProfile(activeUserInfo.username)}
-                                            className="px-3 py-1.5 rounded-xl border border-white/10 text-zinc-300 hover:text-white hover:bg-white/5 text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1"
-                                        >
-                                            <span>Perfil</span>
-                                            <ExternalLink size={10} />
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={onClose}
-                                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
+                                ))}
                             </div>
+                        </div>
 
-                            {/* CHAT MESSAGES BODY OR FRIENDSHIP GATE */}
-                            {!activeUserIsFriend ? (
-                                <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-zinc-400 overflow-y-auto">
-                                    <div className="w-16 h-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 text-accent">
-                                        <UserPlus size={28} />
-                                    </div>
-
-                                    {activeUserRequestReceived ? (
-                                        <div className="max-w-sm space-y-4">
-                                            <h5 className="text-white text-base font-bold">@{activeUserInfo.username} quiere ser tu amigo</h5>
-                                            <p className="text-xs text-zinc-400 leading-relaxed">
-                                                Acepta su solicitud de amistad para habilitar la conversación directa y compartir notas creativas.
-                                            </p>
-                                            <div className="flex items-center justify-center gap-3 pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleAcceptRequest(activeUserInfo.username)}
-                                                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all"
-                                                >
-                                                    <Check size={14} strokeWidth={3} />
-                                                    <span>Aceptar solicitud</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRejectRequest(activeUserInfo.username)}
-                                                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 border border-white/10 text-xs font-bold transition-all"
-                                                >
-                                                    <span>Negar</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : activeUserRequestSent ? (
-                                        <div className="max-w-sm space-y-3">
-                                            <h5 className="text-white text-base font-bold">Solicitud enviada a @{activeUserInfo.username}</h5>
-                                            <p className="text-xs text-zinc-400 leading-relaxed">
-                                                Tu solicitud de amistad está pendiente de aprobación. Podrás intercambiar mensajes una vez que @{activeUserInfo.username} la acepte.
-                                            </p>
-                                            <div className="pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleCancelSentRequest(activeUserInfo.username)}
-                                                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-red-400 text-xs font-semibold transition-all"
-                                                >
-                                                    Cancelar solicitud
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="max-w-sm space-y-3">
-                                            <h5 className="text-white text-base font-bold">Conecta con @{activeUserInfo.username}</h5>
-                                            <p className="text-xs text-zinc-400 leading-relaxed">
-                                                Para iniciar una conversación directa, primero envía una solicitud de amistad.
-                                            </p>
-                                            <div className="pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSendFriendRequest(activeUserInfo.username)}
-                                                    className="px-5 py-2.5 rounded-xl bg-accent text-black font-extrabold text-xs flex items-center gap-2 shadow-lg hover:brightness-110 transition-all mx-auto"
-                                                >
-                                                    <UserPlus size={14} />
-                                                    <span>Enviar solicitud de amistad</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <>
-                                    {/* MESSAGES THREAD */}
-                                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
-                                        {(!activeThread.messages || activeThread.messages.length === 0) ? (
-                                            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-                                                <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center mb-3 text-zinc-600 bg-white/[0.02]">
-                                                    <MessageCircle size={28} />
-                                                </div>
-                                                <h5 className="text-white text-sm font-bold font-mono">Comienza una conversación con @{activeUserInfo.username}</h5>
-                                                <p className="text-xs text-zinc-400 max-w-xs mt-1">
-                                                    Comparte reflexiones, ideas o responde a sus notas en el Oasis.
-                                                </p>
-                                                <div className="flex flex-wrap justify-center gap-2 mt-4">
-                                                    {['¡Hola! 👋', 'Me gustó tu publicación ✨', '¿En qué estás trabajando hoy? 💡'].map(preset => (
-                                                        <button
-                                                            key={preset}
-                                                            type="button"
-                                                            onClick={() => setMessageText(preset)}
-                                                            className="px-3 py-1 rounded-full text-[11px] bg-white/5 border border-white/10 text-zinc-300 hover:text-white hover:bg-white/10 transition-colors"
-                                                        >
-                                                            {preset}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            activeThread.messages.map((msg) => {
-                                                const isMine = msg.sender.toLowerCase() === cleanCurrent;
-                                                return (
-                                                    <div 
-                                                        key={msg.id}
-                                                        className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
-                                                    >
-                                                        <div 
-                                                            className={`max-w-[80%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-md ${
-                                                                isMine 
-                                                                    ? 'bg-accent text-black font-medium rounded-br-none' 
-                                                                    : 'bg-zinc-800/90 border border-white/10 text-white rounded-bl-none'
-                                                            }`}
-                                                        >
-                                                            {msg.text}
-                                                        </div>
-                                                        <span className="text-[9px] text-zinc-500 font-mono mt-1 px-1">
-                                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                        <div ref={messagesEndRef} />
-                                    </div>
-
-                                    {/* CHAT INPUT */}
-                                    <div className="p-3 sm:p-4 border-t border-white/5 bg-zinc-950/60 shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="text"
-                                                value={messageText}
-                                                onChange={(e) => setMessageText(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        handleSendMessage();
-                                                    }
-                                                }}
-                                                placeholder={`Escribe un mensaje a @${activeUserInfo.username}...`}
-                                                className="flex-1 bg-black/50 border border-white/10 rounded-2xl px-4 py-3 text-white text-xs sm:text-sm placeholder-zinc-500 focus:outline-none focus:border-accent transition-colors shadow-inner"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleSendMessage}
-                                                disabled={!messageText.trim()}
-                                                className="w-11 h-11 rounded-2xl bg-accent text-black font-bold flex items-center justify-center hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-lg shrink-0"
-                                                title="Enviar mensaje (Enter)"
-                                            >
-                                                <Send size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </>
-                    ) : (
-                        /* EMPTY CHAT SELECTION SCREEN */
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-                            <div className="w-20 h-20 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent mb-4 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
-                                <MessageCircle size={36} />
-                            </div>
-                            <h4 className="text-white text-base font-bold tracking-tight">Tus Mensajes</h4>
-                            <p className="text-xs text-zinc-400 max-w-sm mt-1 leading-relaxed">
-                                Selecciona una conversación de tu bandeja o envía solicitudes de amistad para comenzar a chatear.
-                            </p>
+                        {/* SUB-TABS: BANDEJA | RESONANCIAS 2 | FRECUENCIAS */}
+                        <div className="flex items-center gap-1 px-3 py-2 border-b border-white/[0.06]">
                             <button
                                 type="button"
-                                onClick={() => setActiveTab('discover')}
-                                className="mt-4 px-4 py-2 rounded-xl bg-accent/15 border border-accent/30 text-accent text-xs font-bold hover:bg-accent hover:text-black transition-all"
+                                onClick={() => setSubTab('bandeja')}
+                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1 ${
+                                    subTab === 'bandeja' 
+                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
                             >
-                                Explorar usuarios
+                                <span>Bandeja</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setSubTab('resonancias')}
+                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                    subTab === 'resonancias' 
+                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                <span>Resonancias</span>
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#2dd4bf] text-black font-mono font-bold">
+                                    2
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setSubTab('frecuencias')}
+                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1 ${
+                                    subTab === 'frecuencias' 
+                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
+                                        : 'text-zinc-500 hover:text-zinc-300'
+                                }`}
+                            >
+                                <span>Frecuencias</span>
                             </button>
                         </div>
-                    )}
+
+                        {/* CONVERSATION THREAD LIST */}
+                        <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1.5">
+                            {filteredThreadKeys.length === 0 ? (
+                                <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
+                                    <MessageCircle size={24} className="opacity-40" />
+                                    <p className="text-xs font-medium">Sin resonancias encontradas</p>
+                                </div>
+                            ) : (
+                                filteredThreadKeys.map(uname => {
+                                    const meta = getUserMeta(uname);
+                                    const thread = threads[uname] || {};
+                                    const isSelected = activeUser?.toLowerCase() === uname.toLowerCase();
+
+                                    return (
+                                        <div
+                                            key={uname}
+                                            onClick={() => setActiveUser(uname)}
+                                            className={`p-2.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
+                                                isSelected 
+                                                    ? 'bg-[#2dd4bf]/[0.08] border-[#2dd4bf]/50 shadow-[0_0_20px_rgba(45,212,191,0.12)]' 
+                                                    : 'hover:bg-white/[0.04] border-transparent'
+                                            }`}
+                                        >
+                                            {/* AVATAR SQUIRCLE */}
+                                            <div className="w-11 h-11 rounded-2xl border border-white/15 overflow-hidden shrink-0 bg-zinc-900 relative">
+                                                <img 
+                                                    src={meta.avatar} 
+                                                    alt={meta.displayName} 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                                {meta.isOnline && (
+                                                    <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] border-2 border-[#0c0f12]" />
+                                                )}
+                                            </div>
+
+                                            {/* BODY */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="text-xs font-bold text-white font-mono truncate">
+                                                            {meta.displayName}
+                                                        </span>
+                                                        <span className="text-[10px] text-zinc-500 font-mono shrink-0">
+                                                            {meta.timeLabel || (thread.lastUpdated ? new Date(thread.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'ahora')}
+                                                        </span>
+                                                    </div>
+                                                    {/* CATEGORY TAG PILL (#escultura, #sonido, #fotografia) */}
+                                                    {meta.categoryTag && (
+                                                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-400 shrink-0">
+                                                            {meta.categoryTag}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <p className="text-[11px] text-zinc-400 truncate mt-1 font-mono">
+                                                    {thread.lastMessage || 'Resonancia sincronizada'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                    </div>
+
+                    {/* ──── RIGHT COLUMN (ACTIVE CONVERSATION) ──── */}
+                    <div className={`flex-1 flex flex-col bg-[#0b0e11] ${activeUser ? 'flex h-full' : 'hidden md:flex'}`}>
+                        {activeUser && activeUserInfo ? (
+                            <>
+                                {/* ACTIVE CHAT TOP BAR */}
+                                <div className="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between bg-[#0d1014]/90 backdrop-blur-md shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setActiveUser(null)}
+                                            className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 flex items-center justify-center transition-colors"
+                                            title="Volver a la lista"
+                                        >
+                                            <ArrowLeft size={16} />
+                                        </button>
+
+                                        <div 
+                                            className="w-10 h-10 rounded-2xl border border-[#2dd4bf]/40 overflow-hidden shrink-0 bg-zinc-900 cursor-pointer"
+                                            onClick={() => {
+                                                if (onOpenProfile) onOpenProfile(activeUserInfo.username);
+                                            }}
+                                        >
+                                            <img src={activeUserInfo.avatar} alt={activeUserInfo.displayName} className="w-full h-full object-cover" />
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-white font-bold text-sm tracking-tight font-mono">
+                                                    {activeUserInfo.displayName}
+                                                </h4>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] shadow-[0_0_6px_#2dd4bf] animate-pulse" />
+                                            </div>
+                                            <p className="text-[10px] text-zinc-400 font-mono">
+                                                @{activeUserInfo.username} // sincronizado
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* ACTION ICONS (CLIP & SPARKLES) */}
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                showToast('Adjuntos efímeros listos para vincular');
+                                            }}
+                                            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                                            title="Adjuntar obra o archivo"
+                                        >
+                                            <Paperclip size={15} />
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const ideas = [
+                                                    'Tu pieza tiene una resonancia visual magnética ✨',
+                                                    '¿Qué textura usaste para el acabado final?',
+                                                    'Me encantaría colaborar en el próximo monolito sonoro.'
+                                                ];
+                                                const randomIdea = ideas[Math.floor(Math.random() * ideas.length)];
+                                                setMessageText(randomIdea);
+                                                showToast('Inspiración generada');
+                                            }}
+                                            className="w-8 h-8 rounded-xl bg-[#2dd4bf]/10 hover:bg-[#2dd4bf]/20 border border-[#2dd4bf]/30 text-[#2dd4bf] flex items-center justify-center transition-all cursor-pointer"
+                                            title="Generar resonancia creativa asistida"
+                                        >
+                                            <Sparkles size={15} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* MESSAGES STREAM */}
+                                <div 
+                                    ref={chatContainerRef}
+                                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 no-scrollbar relative"
+                                >
+                                    {(!activeThread.messages || activeThread.messages.length === 0) ? (
+                                        <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
+                                            <div className="w-14 h-14 rounded-2xl border border-white/10 flex items-center justify-center mb-3 text-zinc-500 bg-white/[0.02]">
+                                                <MessageCircle size={24} />
+                                            </div>
+                                            <h5 className="text-white text-sm font-bold font-mono">Comienza una resonancia con @{activeUserInfo.username}</h5>
+                                            <p className="text-xs text-zinc-400 max-w-xs mt-1 font-mono">
+                                                Comparte susurros efímeros, feedback estético y reflexiones sonoras.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        activeThread.messages.map((msg) => {
+                                            const isMine = msg.sender.toLowerCase() === cleanCurrent;
+                                            return (
+                                                <div 
+                                                    key={msg.id}
+                                                    className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                                                >
+                                                    <div 
+                                                        className={`max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-mono leading-relaxed shadow-sm ${
+                                                            isMine 
+                                                                ? 'bg-[#2dd4bf] text-black font-medium shadow-[0_4px_16px_rgba(45,212,191,0.2)]' 
+                                                                : 'bg-[#15191e] border border-white/[0.08] text-zinc-200'
+                                                        }`}
+                                                    >
+                                                        {msg.text}
+                                                    </div>
+                                                    <span className="text-[9px] text-zinc-500 font-mono mt-1 px-1">
+                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                    <div ref={messagesEndRef} />
+                                </div>
+
+                                {/* FLOATING SCROLL TO BOTTOM BUTTON */}
+                                <div className="relative flex justify-center -mb-4 z-10 pointer-events-none">
+                                    <button
+                                        type="button"
+                                        onClick={scrollToBottom}
+                                        className="w-8 h-8 rounded-full bg-[#12161b] hover:bg-[#1a2028] border border-white/15 text-white shadow-xl flex items-center justify-center transition-all pointer-events-auto cursor-pointer hover:scale-105 active:scale-95"
+                                        title="Bajar al último susurro"
+                                    >
+                                        <ArrowDown size={14} />
+                                    </button>
+                                </div>
+
+                                {/* CHAT EFÍMERO INPUT BAR */}
+                                <div className="p-3 sm:p-4 border-t border-white/[0.08] bg-[#0d1014]/95 shrink-0">
+                                    <div className="flex items-center gap-2.5 bg-[#12161c] border border-white/10 rounded-full px-3 py-1.5 shadow-inner focus-within:border-[#2dd4bf]/50 transition-colors">
+                                        {/* MIC BUTTON */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsRecordingAudio(!isRecordingAudio);
+                                                showToast(isRecordingAudio ? 'Nota de voz cancelada' : 'Grabando susurro de voz... 🎙');
+                                            }}
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                                isRecordingAudio 
+                                                    ? 'bg-rose-500 text-white animate-pulse' 
+                                                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                            title="Grabar susurro de voz"
+                                        >
+                                            <Mic size={15} />
+                                        </button>
+
+                                        {/* INPUT TEXT */}
+                                        <input
+                                            type="text"
+                                            value={messageText}
+                                            onChange={(e) => setMessageText(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleSendMessage();
+                                                }
+                                            }}
+                                            placeholder={`Escribe un susurro efímero a ${activeUserInfo.displayName.split(' ')[0]}...`}
+                                            className="flex-1 bg-transparent border-none text-white text-xs sm:text-sm placeholder-zinc-500 focus:outline-none font-mono py-1"
+                                        />
+
+                                        {/* SEND BUTTON */}
+                                        <button
+                                            type="button"
+                                            onClick={handleSendMessage}
+                                            disabled={!messageText.trim()}
+                                            className="w-8 h-8 rounded-full bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 text-black flex items-center justify-center transition-all shadow-md active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shrink-0"
+                                            title="Enviar susurro"
+                                        >
+                                            <Send size={14} className="translate-x-0.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            /* EMPTY STATE */
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
+                                <div className="w-16 h-16 rounded-2xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/20 flex items-center justify-center text-[#2dd4bf] mb-3 shadow-[0_0_30px_rgba(45,212,191,0.15)]">
+                                    <MessageCircle size={28} />
+                                </div>
+                                <h4 className="text-white text-base font-bold tracking-tight font-mono">Bandeja de Resonancias</h4>
+                                <p className="text-xs text-zinc-400 max-w-sm mt-1 leading-relaxed font-mono">
+                                    Selecciona una presencia o contacto para sintonizar en privado.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             </div>
         </div>
