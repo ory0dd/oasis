@@ -172,6 +172,7 @@ namespace Oasis.Backend.Models
         public Dictionary<string, string> ClinicalData { get; set; } = new();
         public string Role { get; set; } = "patient"; // "clinician", "patient", "admin"
         public string ClinicianId { get; set; } = string.Empty; // username of the clinician that created this patient
+        public bool IsPublicProfile { get; set; } = false; // Privado por defecto; se activa al publicar en el feed o cambiar a creador
     }
 
 

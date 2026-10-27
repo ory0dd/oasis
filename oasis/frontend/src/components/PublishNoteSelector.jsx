@@ -34,6 +34,7 @@ export default function PublishNoteSelector({
     const [price, setPrice] = useState('');
     const [pendingThumbnail, setPendingThumbnail] = useState(null);
     const [localThumbnailUrl, setLocalThumbnailUrl] = useState(null);
+    const [showPublicNotice, setShowPublicNotice] = useState(false);
 
     const fileInputRef = useRef(null);
     const thumbnailInputRef = useRef(null);
@@ -75,6 +76,15 @@ export default function PublishNoteSelector({
     };
 
     const isPublishingRef = useRef(false);
+
+    const handlePublishClick = () => {
+        const isAlreadyPublic = localStorage.getItem('oasis_is_public_' + user) === 'true';
+        if (!isAlreadyPublic) {
+            setShowPublicNotice(true);
+            return;
+        }
+        handlePublish();
+    };
 
     // ── MAIN PUBLISH FLOW ──
     const handlePublish = async () => {
@@ -400,7 +410,7 @@ export default function PublishNoteSelector({
                         </button>
                         <h2 className="text-base font-black text-white tracking-tight">Nueva publicación</h2>
                         <button
-                            onClick={handlePublish}
+                            onClick={handlePublishClick}
                             className="px-4 py-1.5 rounded-full text-sm font-bold transition-all flex items-center gap-2"
                             style={{ color: accent, backgroundColor: `${accent}20` }}
                         >
@@ -527,6 +537,63 @@ export default function PublishNoteSelector({
                             <p className="text-[10px] text-zinc-500 px-2">
                                 Al publicar, este contenido será visible en el Feed público de Ruido Interior y en tu perfil.
                             </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* AVISO DE CONVERSIÓN A PERFIL PÚBLICO / CREADOR */}
+            {showPublicNotice && (
+                <div className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative text-left space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+                            <Globe size={24} style={{ color: accent }} />
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                            <h3 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                                ¿Compartir en el Feed Público?
+                            </h3>
+                            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                                Al compartir esta publicación, tu perfil se convertirá en un <strong className="text-white">Perfil Público / Creador</strong> visible para la comunidad del Oasis.
+                            </p>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-400 font-semibold uppercase tracking-wider">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Privacidad y Protección de Datos
+                            </div>
+                            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
+                                Tus evaluaciones diagnósticas, cuestionarios existenciales y notas de sesión seguirán siendo <span className="text-zinc-200 font-semibold">100% privadas y confidenciales</span>. Solo tu contenido público será visible.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowPublicNotice(false)}
+                                className="px-4 py-2.5 rounded-xl text-xs font-mono text-zinc-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowPublicNotice(false);
+                                    localStorage.setItem('oasis_is_public_' + user, 'true');
+                                    localStorage.setItem('oasis_role_' + user, 'creator');
+                                    fetch(`${API_URL}/api/oasis/profile/set-public?user=${user}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ isPublic: true })
+                                    }).catch(console.error);
+                                    handlePublish();
+                                }}
+                                className="px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
+                                style={{ backgroundColor: accent, color: '#050506' }}
+                            >
+                                Aceptar y Publicar
+                            </button>
                         </div>
                     </div>
                 </div>

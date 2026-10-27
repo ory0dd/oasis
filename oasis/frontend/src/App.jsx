@@ -5300,7 +5300,7 @@ const ProfileView = ({
                                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
                                             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
                                                 <Sparkles size={8} className="text-accent" />
-                                                <span>{isOwnProfile ? 'Creador // Explorador' : 'Perfil de Creador'}</span>
+                                                <span>{isOwnProfile ? (localStorage.getItem('oasis_is_public_' + user) === 'true' ? 'Público // Creador' : 'Privado // Clínico') : 'Perfil de Creador'}</span>
                                             </div>
                                             <button
                                                 onClick={handleShareProfile}

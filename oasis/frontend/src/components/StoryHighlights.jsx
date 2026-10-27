@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Trash2, Image as ImageIcon, History } from 'lucide-react';
+import { X, Plus, Trash2, Image as ImageIcon, History, Globe } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ||
     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
@@ -155,6 +155,7 @@ export const StoryViewer = ({ storiesArray, highlight, onClose, onDelete, isOwne
 export const StoryUploadModal = ({ onClose, onSave, user, userAvatar }) => {
     const [fileUrl, setFileUrl] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showPublicNotice, setShowPublicNotice] = useState(false);
 
     const handleFileUpload = async (fileBlob) => {
         const formData = new FormData();
@@ -170,6 +171,15 @@ export const StoryUploadModal = ({ onClose, onSave, user, userAvatar }) => {
 
     const handleSave = async () => {
         if (!fileUrl) return;
+        const isAlreadyPublic = localStorage.getItem('oasis_is_public_' + user) === 'true';
+        if (!isAlreadyPublic) {
+            setShowPublicNotice(true);
+            return;
+        }
+        proceedSave();
+    };
+
+    const proceedSave = async () => {
         setIsUploading(true);
         try {
             let finalUrl = fileUrl;
@@ -463,6 +473,62 @@ export const HighlightModal = ({ onClose, onSave, user, archive = [] }) => {
                     {isUploading ? 'Creando...' : 'Crear Destacada'}
                 </button>
             </div>
+            {/* AVISO DE CONVERSIÓN A PERFIL PÚBLICO */}
+            {showPublicNotice && (
+                <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-[#0c0c0e] border border-white/10 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative text-left space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                            <Globe size={24} />
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                            <h3 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                                ¿Compartir Historia Pública?
+                            </h3>
+                            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                                Al compartir esta historia, tu perfil se convertirá en un <strong className="text-white">Perfil Público / Creador</strong> visible para la comunidad del Oasis.
+                            </p>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-400 font-semibold uppercase tracking-wider">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Privacidad y Protección de Datos
+                            </div>
+                            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
+                                Tus cuestionarios clínicos, entrevistas y notas confidenciales seguirán estando <span className="text-zinc-200 font-semibold">100% protegidos</span>.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowPublicNotice(false)}
+                                className="px-4 py-2.5 rounded-xl text-xs font-mono text-zinc-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowPublicNotice(false);
+                                    localStorage.setItem('oasis_is_public_' + user, 'true');
+                                    localStorage.setItem('oasis_role_' + user, 'creator');
+                                    fetch(`${API_URL}/api/oasis/profile/set-public?user=${user}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ isPublic: true })
+                                    }).catch(console.error);
+                                    proceedSave();
+                                }}
+                                className="px-5 py-2.5 rounded-xl text-xs font-mono font-bold bg-purple-500 text-white hover:bg-purple-400 transition-all shadow-lg active:scale-95 cursor-pointer"
+                            >
+                                Aceptar y Publicar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

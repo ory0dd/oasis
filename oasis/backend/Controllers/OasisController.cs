@@ -114,6 +114,7 @@ namespace Oasis.Backend.Controllers
             public Dictionary<string, string> ClinicalData { get; set; } = new();
             public string Role { get; set; } = string.Empty;
             public string ClinicianId { get; set; } = string.Empty;
+            public bool IsPublicProfile { get; set; } = false;
  
             public static UserDto FromUser(User user) => new()
             {
@@ -130,7 +131,8 @@ namespace Oasis.Backend.Controllers
                 ContinuousMemory = user.ContinuousMemory,
                 ClinicalData = user.ClinicalData,
                 Role = user.Role,
-                ClinicianId = user.ClinicianId
+                ClinicianId = user.ClinicianId,
+                IsPublicProfile = user.IsPublicProfile
             };
         }
 
@@ -785,8 +787,8 @@ namespace Oasis.Backend.Controllers
                 Username = u.Username,
                 FullName = u.FullName,
                 Age = u.Age,
-                Password = u.Password,
                 Role = u.Role,
+                IsPublicProfile = u.IsPublicProfile,
                 ClinicianId = u.ClinicianId,
                 ClinicalData = u.ClinicalData
             }).ToList();
