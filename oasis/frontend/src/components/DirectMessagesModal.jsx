@@ -3,50 +3,8 @@ import {
     X, Send, Search, MessageCircle, UserPlus, Sparkles, 
     Check, ExternalLink, ArrowLeft, Heart, UserCheck, UserX,
     Clock, Users, ShieldAlert, CheckCircle2, ArrowDown, Mic,
-    Paperclip, Moon, ChevronRight, Hash, Compass, Plus
+    Paperclip, Moon, ChevronRight, Hash, Compass, Plus, User
 } from 'lucide-react';
-
-const DEFAULT_DEMO_CONTACTS = [
-    {
-        username: 'luna_veil',
-        displayName: 'Luna Veil',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop',
-        categoryTag: '#escultura',
-        timeLabel: '12m',
-        isOnline: true,
-        vibe: 'Modelando resina fría ✨',
-        initialMessages: [
-            { id: 'm1', sender: 'luna_veil', text: 'Hola Ory, vi la pieza #01 de tu marco lila.', timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString() },
-            { id: 'm2', sender: 'luna_veil', text: '¿Trabajas con resina pura o mezclas mortero?', timestamp: new Date(Date.now() - 14 * 60 * 1000).toISOString() },
-            { id: 'm3', sender: 'ory11', text: 'Hey Luna! Es cerámica fría modelada a mano con acabado en resina refractaria c:', timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString() }
-        ]
-    },
-    {
-        username: 'kairo',
-        displayName: 'Kairo',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop',
-        categoryTag: '#sonido',
-        timeLabel: '2h',
-        isOnline: true,
-        vibe: 'Grabación binaural 432Hz 🎧',
-        initialMessages: [
-            { id: 'k1', sender: 'kairo', text: 'Oye Ory, logré procesar las frecuencias binaurales de la cinta de meditación.', timestamp: new Date(Date.now() - 150 * 60 * 1000).toISOString() },
-            { id: 'k2', sender: 'kairo', text: 'Te dejé una resonancia en el archivo sonoro para cuando quieras escuchar.', timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString() }
-        ]
-    },
-    {
-        username: 'solaris',
-        displayName: 'Solaris',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=300&auto=format&fit=crop',
-        categoryTag: '#fotografia',
-        timeLabel: '5h',
-        isOnline: true,
-        vibe: 'Cámara analógica en luz tenue 📸',
-        initialMessages: [
-            { id: 's1', sender: 'solaris', text: '¿Viste las nuevas capturas de flash analógico del taller?', timestamp: new Date(Date.now() - 300 * 60 * 1000).toISOString() }
-        ]
-    }
-];
 
 export default function DirectMessagesModal({
     isOpen,
@@ -66,31 +24,47 @@ export default function DirectMessagesModal({
     // ─── LOCAL STORAGE KEYS ───
     const THREADS_KEY = `oasis_direct_messages_${cleanCurrent}`;
     const FRIENDS_KEY = `oasis_friends_${cleanCurrent}`;
-    const SENT_KEY = `oasis_sent_requests_${cleanCurrent}`;
-    const RECEIVED_KEY = `oasis_received_requests_${cleanCurrent}`;
     const ZEN_KEY = `oasis_dm_zen_mode_${cleanCurrent}`;
 
-    // ─── STATE INITIALIZERS ───
+    // ─── FILTER REAL USERS ONLY (EXCLUDE CLINICAL PATIENT IDS & SELF) ───
+    const realUsers = useMemo(() => {
+        return (publicUsers || []).filter(u => {
+            const uname = (u.Username || u.username || '').replace('@', '').toLowerCase();
+            if (!uname || uname === cleanCurrent || uname === 'anon' || uname.startsWith('test_')) return false;
+            // Purge mock users
+            if (uname === 'luna_veil' || uname === 'kairo' || uname === 'solaris') return false;
+            // Strict clinical privacy: hide internal test/patient accounts
+            if (uname.includes('patient') || uname.includes('observador') || uname === 'somni') return false;
+            return true;
+        }).map((u, idx) => {
+            const uname = (u.Username || u.username || '').replace('@', '');
+            const avatar = u.Avatar || u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}`;
+            return {
+                id: u.id || idx,
+                username: uname,
+                displayName: u.FullName || u.fullName || uname,
+                avatar,
+                bio: u.Bio || u.bio || 'Creador en Oasis',
+                categoryTag: (u.Role || u.role) === 'creator' ? '#creador' : '#frecuencia',
+                isOnline: true,
+                vibe: 'En sintonía con Oasis'
+            };
+        });
+    }, [publicUsers, cleanCurrent]);
+
+    // ─── STATE INITIALIZERS (CLEANED OF ANY FAKE MOCKUP CONTACTS) ───
     const [threads, setThreads] = useState(() => {
         try {
             const saved = localStorage.getItem(THREADS_KEY);
-            if (saved) return JSON.parse(saved);
-            
-            // Seed with curated creative contacts from mockup
-            const initialMap = {};
-            DEFAULT_DEMO_CONTACTS.forEach(c => {
-                initialMap[c.username] = {
-                    targetUser: c.username,
-                    displayName: c.displayName,
-                    avatar: c.avatar,
-                    categoryTag: c.categoryTag,
-                    lastUpdated: c.initialMessages[c.initialMessages.length - 1].timestamp,
-                    lastMessage: c.initialMessages[c.initialMessages.length - 1].text,
-                    messages: c.initialMessages
-                };
-            });
-            localStorage.setItem(THREADS_KEY, JSON.stringify(initialMap));
-            return initialMap;
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Purge any residual mock contacts
+                delete parsed['luna_veil'];
+                delete parsed['kairo'];
+                delete parsed['solaris'];
+                return parsed;
+            }
+            return {};
         } catch {
             return {};
         }
@@ -99,28 +73,11 @@ export default function DirectMessagesModal({
     const [friends, setFriends] = useState(() => {
         try {
             const saved = localStorage.getItem(FRIENDS_KEY);
-            if (saved) return JSON.parse(saved);
-            const defaultFriends = ['luna_veil', 'kairo', 'solaris'];
-            localStorage.setItem(FRIENDS_KEY, JSON.stringify(defaultFriends));
-            return defaultFriends;
-        } catch {
-            return ['luna_veil', 'kairo', 'solaris'];
-        }
-    });
-
-    const [receivedRequests, setReceivedRequests] = useState(() => {
-        try {
-            const saved = localStorage.getItem(RECEIVED_KEY);
-            return saved ? JSON.parse(saved) : [];
-        } catch {
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return parsed.filter(f => f !== 'luna_veil' && f !== 'kairo' && f !== 'solaris');
+            }
             return [];
-        }
-    });
-
-    const [sentRequests, setSentRequests] = useState(() => {
-        try {
-            const saved = localStorage.getItem(SENT_KEY);
-            return saved ? JSON.parse(saved) : [];
         } catch {
             return [];
         }
@@ -142,9 +99,15 @@ export default function DirectMessagesModal({
         });
     };
 
+    // Initialize active user
     const [activeUser, setActiveUser] = useState(() => {
         if (initialTargetUser) return initialTargetUser.replace('@', '').toLowerCase();
-        return 'luna_veil';
+        // If there are existing real threads, select the most recent one
+        const threadList = Object.keys(threads);
+        if (threadList.length > 0) return threadList[0];
+        // Otherwise, if real users exist, pick the first real user
+        if (realUsers.length > 0) return realUsers[0].username;
+        return null;
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -190,38 +153,32 @@ export default function DirectMessagesModal({
         }
     }, [initialTargetUser, initialContextMessage]);
 
-    // Strict privacy filter for community users:
-    // Only verified creators or existing friends
-    const filteredCommunityUsers = useMemo(() => {
-        const friendSet = new Set(friends.map(f => f.toLowerCase()));
-        return (publicUsers || []).filter(u => {
-            const uname = (u.Username || u.username || '').replace('@', '').toLowerCase();
-            if (!uname || uname === cleanCurrent || uname === 'anon' || uname.startsWith('test_')) return false;
-            // Never expose clinical patients
-            if (uname.includes('patient') || uname.includes('clinician') || uname === 'somni') return false;
-            const isCreator = u.isPublicProfile === true || u.role === 'creator' || u.Role === 'creator';
-            return isCreator || friendSet.has(uname);
-        }).map((u, idx) => {
-            const uname = (u.Username || u.username || '').replace('@', '');
-            const avatar = u.Avatar || u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}`;
-            return {
-                id: u.id || idx,
-                username: uname,
-                displayName: u.FullName || u.fullName || uname,
-                avatar,
-                bio: u.Bio || u.bio || 'Creador en Oasis',
-                categoryTag: '#resonancia'
-            };
-        });
-    }, [publicUsers, friends, cleanCurrent]);
+    // Purge old mock data from localStorage once
+    useEffect(() => {
+        try {
+            const savedThreads = localStorage.getItem(THREADS_KEY);
+            if (savedThreads && (savedThreads.includes('luna_veil') || savedThreads.includes('kairo') || savedThreads.includes('solaris'))) {
+                const parsed = JSON.parse(savedThreads);
+                delete parsed['luna_veil'];
+                delete parsed['kairo'];
+                delete parsed['solaris'];
+                localStorage.setItem(THREADS_KEY, JSON.stringify(parsed));
+                setThreads(parsed);
+            }
+            const savedFriends = localStorage.getItem(FRIENDS_KEY);
+            if (savedFriends && (savedFriends.includes('luna_veil') || savedFriends.includes('kairo') || savedFriends.includes('solaris'))) {
+                const parsedFriends = JSON.parse(savedFriends).filter(f => f !== 'luna_veil' && f !== 'kairo' && f !== 'solaris');
+                localStorage.setItem(FRIENDS_KEY, JSON.stringify(parsedFriends));
+                setFriends(parsedFriends);
+            }
+        } catch {}
+    }, []);
 
     const getUserMeta = (username) => {
         if (!username) return { username: 'anon', displayName: 'Explorador', avatar: '', categoryTag: '#obra' };
         const clean = username.replace('@', '').toLowerCase();
-        const demo = DEFAULT_DEMO_CONTACTS.find(d => d.username.toLowerCase() === clean);
-        if (demo) return demo;
-        const comm = filteredCommunityUsers.find(c => c.username.toLowerCase() === clean);
-        if (comm) return comm;
+        const foundReal = realUsers.find(r => r.username.toLowerCase() === clean);
+        if (foundReal) return foundReal;
         return {
             username: clean,
             displayName: clean,
@@ -235,12 +192,13 @@ export default function DirectMessagesModal({
     const handleSendMessage = () => {
         if (!messageText.trim() || !activeUser) return;
         const targetClean = activeUser.toLowerCase();
+        const meta = getUserMeta(activeUser);
 
         const currentThread = threads[targetClean] || {
             targetUser: activeUser,
-            displayName: getUserMeta(activeUser).displayName,
-            avatar: getUserMeta(activeUser).avatar,
-            categoryTag: getUserMeta(activeUser).categoryTag,
+            displayName: meta.displayName,
+            avatar: meta.avatar,
+            categoryTag: meta.categoryTag,
             messages: []
         };
 
@@ -282,41 +240,51 @@ export default function DirectMessagesModal({
         return key.toLowerCase().includes(q) || meta.displayName.toLowerCase().includes(q) || (meta.categoryTag || '').toLowerCase().includes(q);
     });
 
+    // Real users matching search (for starting new chats)
+    const filteredSearchUsers = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase().replace('@', '');
+        return realUsers.filter(u => 
+            u.username.toLowerCase().includes(q) || 
+            u.displayName.toLowerCase().includes(q)
+        );
+    }, [searchQuery, realUsers]);
+
     const activeUserInfo = activeUser ? getUserMeta(activeUser) : null;
     const activeThread = activeUser ? (threads[activeUser.toLowerCase()] || { messages: [] }) : null;
 
     return (
         <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 select-none animate-in fade-in duration-200"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-4 select-none animate-in fade-in duration-150"
             onClick={onClose}
         >
             <div 
-                className="bg-[#0c0f12] border border-white/10 rounded-[28px] sm:rounded-[32px] w-full max-w-5xl h-[90vh] max-h-[760px] flex flex-col overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.95)] relative animate-in zoom-in-95 duration-200"
+                className="bg-[#0f1013] border border-white/[0.08] rounded-[24px] sm:rounded-[28px] w-full max-w-5xl h-[88vh] max-h-[740px] flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.92)] relative animate-in zoom-in-95 duration-150"
                 onClick={e => e.stopPropagation()}
             >
-                {/* ─── TOAST FEEDBACK ─── */}
+                {/* TOAST FEEDBACK */}
                 {toastMessage && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#1a1f26] border border-[#2dd4bf]/30 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
-                        <CheckCircle2 size={14} className="text-[#2dd4bf] shrink-0" />
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[#181a1f] border border-white/10 text-white text-xs font-semibold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top duration-200">
+                        <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                         <span>{toastMessage}</span>
                     </div>
                 )}
 
-                {/* ─── MODAL TOP HEADER (MATCHING MOCKUP) ─── */}
-                <div className="px-5 sm:px-6 py-3.5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-[#0e1216]/90 backdrop-blur-md">
+                {/* MODAL TOP HEADER (OPACA Y MATE) */}
+                <div className="px-5 sm:px-6 py-3.5 border-b border-white/[0.07] flex items-center justify-between shrink-0 bg-[#121317]">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/25 flex items-center justify-center text-[#2dd4bf] shadow-inner">
-                            <MessageCircle size={18} />
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300">
+                            <MessageCircle size={16} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-white font-bold text-sm sm:text-base tracking-tight">
+                                <h3 className="text-white font-bold text-sm tracking-tight">
                                     Mensajes & Resonancias
                                 </h3>
-                                <span className="w-2 h-2 rounded-full bg-[#2dd4bf] shadow-[0_0_8px_#2dd4bf] animate-pulse" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             </div>
                             <p className="text-[11px] text-zinc-400 font-mono tracking-wide">
-                                @{cleanCurrent} // frecuencia activa privada
+                                @{cleanCurrent} // frecuencia privada
                             </p>
                         </div>
                     </div>
@@ -326,14 +294,14 @@ export default function DirectMessagesModal({
                         <button
                             type="button"
                             onClick={toggleZenMode}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 border ${
+                            className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-1.5 border ${
                                 zenMode 
-                                    ? 'bg-[#2dd4bf]/15 text-[#2dd4bf] border-[#2dd4bf]/40 shadow-sm' 
-                                    : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/10'
+                                    ? 'bg-white/15 text-white border-white/20' 
+                                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border-white/[0.08]'
                             }`}
                             title="Activar modo concentración silencioso"
                         >
-                            <Moon size={13} className={zenMode ? 'text-[#2dd4bf]' : 'text-zinc-400'} />
+                            <Moon size={12} className={zenMode ? 'text-amber-300' : 'text-zinc-400'} />
                             <span>Modo Zen</span>
                         </button>
 
@@ -341,19 +309,19 @@ export default function DirectMessagesModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                            className="w-8 h-8 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
                             title="Cerrar (Esc)"
                         >
-                            <X size={16} />
+                            <X size={15} />
                         </button>
                     </div>
                 </div>
 
-                {/* ─── MODAL MAIN BODY: 2-COLUMN LAYOUT ─── */}
+                {/* MODAL MAIN BODY: 2-COLUMN LAYOUT */}
                 <div className="flex-1 flex overflow-hidden min-h-0 flex-col md:flex-row">
                     
-                    {/* ──── LEFT COLUMN (SIDEBAR) ──── */}
-                    <div className={`w-full md:w-[350px] lg:w-[380px] shrink-0 border-r border-white/[0.08] flex flex-col bg-[#0a0d10] ${activeUser ? 'hidden md:flex' : 'flex h-full'}`}>
+                    {/* LEFT COLUMN (SIDEBAR) */}
+                    <div className={`w-full md:w-[340px] lg:w-[360px] shrink-0 border-r border-white/[0.07] flex flex-col bg-[#0b0c0f] ${activeUser ? 'hidden md:flex' : 'flex h-full'}`}>
                         
                         {/* SEARCH INPUT */}
                         <div className="p-3.5 pb-2">
@@ -364,24 +332,24 @@ export default function DirectMessagesModal({
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Buscar presencia o @usuario..."
-                                    className="w-full bg-[#12161b] border border-white/10 rounded-2xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#2dd4bf]/50 transition-colors font-mono"
+                                    className="w-full bg-[#14151a] border border-white/[0.08] rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 transition-colors font-mono"
                                 />
                             </div>
                         </div>
 
-                        {/* PRESENCIA AMBIENTAL (VIBES EN VIVO) */}
+                        {/* PRESENCIA AMBIENTAL (USUARIOS REALES) */}
                         <div className="px-4 py-2 border-b border-white/[0.06]">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-[10px] font-mono tracking-wider uppercase text-zinc-400 font-bold">
                                     PRESENCIA AMBIENTAL
                                 </span>
-                                <span className="text-[10px] font-mono text-[#2dd4bf] font-bold tracking-wider">
-                                    EN VIVO
+                                <span className="text-[9px] font-mono text-zinc-500">
+                                    COMUNIDAD
                                 </span>
                             </div>
 
                             {/* HORIZONTAL VIBE BUBBLES */}
-                            <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
                                 {/* TU VIBE BUTTON */}
                                 <div 
                                     onClick={() => {
@@ -390,49 +358,50 @@ export default function DirectMessagesModal({
                                     }}
                                     className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
                                 >
-                                    <div className="w-11 h-11 rounded-full border border-dashed border-white/20 group-hover:border-[#2dd4bf] flex items-center justify-center text-zinc-400 group-hover:text-[#2dd4bf] transition-all bg-white/[0.02]">
-                                        <Plus size={16} />
+                                    <div className="w-10 h-10 rounded-xl border border-dashed border-white/20 group-hover:border-white/40 flex items-center justify-center text-zinc-400 group-hover:text-white transition-all bg-white/[0.02]">
+                                        <Plus size={15} />
                                     </div>
-                                    <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[50px]">
+                                    <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[48px]">
                                         Tu vibe
                                     </span>
                                 </div>
 
-                                {/* CONTACT VIBES */}
-                                {DEFAULT_DEMO_CONTACTS.map(contact => (
+                                {/* REAL USERS VIBES */}
+                                {realUsers.slice(0, 10).map(contact => (
                                     <div 
                                         key={contact.username}
-                                        onClick={() => setActiveUser(contact.username)}
+                                        onClick={() => {
+                                            setActiveUser(contact.username);
+                                            setSearchQuery('');
+                                        }}
                                         className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
-                                        title={contact.vibe}
+                                        title={`@${contact.username} - ${contact.displayName}`}
                                     >
-                                        <div className="w-11 h-11 rounded-2xl p-0.5 relative group-hover:scale-105 transition-transform">
+                                        <div className="w-10 h-10 rounded-xl p-0.5 relative group-hover:scale-105 transition-transform bg-zinc-900 border border-white/[0.08]">
                                             <img 
                                                 src={contact.avatar} 
                                                 alt={contact.displayName} 
-                                                className="w-full h-full object-cover rounded-xl border border-white/15" 
+                                                className="w-full h-full object-cover rounded-[10px]" 
                                             />
-                                            {contact.isOnline && (
-                                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] border-2 border-[#0a0d10] shadow-[0_0_6px_#2dd4bf]" />
-                                            )}
+                                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-black" />
                                         </div>
-                                        <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[54px]">
-                                            {contact.username.split('_')[0]}
+                                        <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors truncate max-w-[50px]">
+                                            {contact.username}
                                         </span>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* SUB-TABS: BANDEJA | RESONANCIAS 2 | FRECUENCIAS */}
+                        {/* SUB-TABS: BANDEJA | RESONANCIAS */}
                         <div className="flex items-center gap-1 px-3 py-2 border-b border-white/[0.06]">
                             <button
                                 type="button"
                                 onClick={() => setSubTab('bandeja')}
-                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1 ${
+                                className={`flex-1 py-1.5 rounded-lg text-[11px] font-mono font-medium transition-all flex items-center justify-center gap-1 ${
                                     subTab === 'bandeja' 
-                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
-                                        : 'text-zinc-500 hover:text-zinc-300'
+                                        ? 'bg-white/10 text-white border border-white/10 shadow-sm' 
+                                        : 'text-zinc-400 hover:text-zinc-200'
                                 }`}
                             >
                                 <span>Bandeja</span>
@@ -441,115 +410,148 @@ export default function DirectMessagesModal({
                             <button
                                 type="button"
                                 onClick={() => setSubTab('resonancias')}
-                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                className={`flex-1 py-1.5 rounded-lg text-[11px] font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
                                     subTab === 'resonancias' 
-                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
-                                        : 'text-zinc-500 hover:text-zinc-300'
+                                        ? 'bg-white/10 text-white border border-white/10 shadow-sm' 
+                                        : 'text-zinc-400 hover:text-zinc-200'
                                 }`}
                             >
-                                <span>Resonancias</span>
-                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#2dd4bf] text-black font-mono font-bold">
-                                    2
-                                </span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setSubTab('frecuencias')}
-                                className={`flex-1 py-1.5 rounded-xl text-[11px] font-mono font-bold transition-all flex items-center justify-center gap-1 ${
-                                    subTab === 'frecuencias' 
-                                        ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
-                                        : 'text-zinc-500 hover:text-zinc-300'
-                                }`}
-                            >
-                                <span>Frecuencias</span>
+                                <span>Comunidad ({realUsers.length})</span>
                             </button>
                         </div>
 
-                        {/* CONVERSATION THREAD LIST */}
-                        <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1.5">
-                            {filteredThreadKeys.length === 0 ? (
-                                <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
-                                    <MessageCircle size={24} className="opacity-40" />
-                                    <p className="text-xs font-medium">Sin resonancias encontradas</p>
-                                </div>
-                            ) : (
-                                filteredThreadKeys.map(uname => {
-                                    const meta = getUserMeta(uname);
-                                    const thread = threads[uname] || {};
-                                    const isSelected = activeUser?.toLowerCase() === uname.toLowerCase();
-
-                                    return (
-                                        <div
-                                            key={uname}
-                                            onClick={() => setActiveUser(uname)}
-                                            className={`p-2.5 rounded-2xl flex items-center gap-3 cursor-pointer transition-all border ${
-                                                isSelected 
-                                                    ? 'bg-[#2dd4bf]/[0.08] border-[#2dd4bf]/50 shadow-[0_0_20px_rgba(45,212,191,0.12)]' 
-                                                    : 'hover:bg-white/[0.04] border-transparent'
-                                            }`}
-                                        >
-                                            {/* AVATAR SQUIRCLE */}
-                                            <div className="w-11 h-11 rounded-2xl border border-white/15 overflow-hidden shrink-0 bg-zinc-900 relative">
-                                                <img 
-                                                    src={meta.avatar} 
-                                                    alt={meta.displayName} 
-                                                    className="w-full h-full object-cover" 
-                                                />
-                                                {meta.isOnline && (
-                                                    <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-[#2dd4bf] border-2 border-[#0c0f12]" />
-                                                )}
+                        {/* CONVERSATION THREAD LIST & SEARCH RESULTS */}
+                        <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
+                            {/* SEARCH RESULTS DROPDOWN */}
+                            {searchQuery.trim() !== '' && (
+                                <div className="mb-2 pb-2 border-b border-white/[0.06]">
+                                    <p className="text-[10px] font-mono uppercase text-zinc-400 px-2 py-1">Usuarios encontrados</p>
+                                    {filteredSearchUsers.length === 0 ? (
+                                        <p className="text-xs text-zinc-500 px-2 py-2">No se encontraron usuarios</p>
+                                    ) : (
+                                        filteredSearchUsers.map(u => (
+                                            <div
+                                                key={u.username}
+                                                onClick={() => {
+                                                    setActiveUser(u.username);
+                                                    setSearchQuery('');
+                                                }}
+                                                className="p-2 rounded-xl flex items-center gap-2.5 cursor-pointer hover:bg-white/[0.06] transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-900">
+                                                    <img src={u.avatar} alt={u.displayName} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold text-white font-mono truncate">{u.displayName}</p>
+                                                    <p className="text-[10px] text-zinc-400 font-mono">@{u.username}</p>
+                                                </div>
                                             </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
 
-                                            {/* BODY */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <div className="flex items-center gap-1.5 min-w-0">
+                            {subTab === 'bandeja' ? (
+                                filteredThreadKeys.length === 0 ? (
+                                    <div className="p-6 text-center flex flex-col items-center justify-center gap-2 text-zinc-500">
+                                        <MessageCircle size={22} className="opacity-40" />
+                                        <p className="text-xs font-medium text-zinc-400">Sin mensajes aún</p>
+                                        <p className="text-[11px] text-zinc-500 max-w-[200px]">
+                                            Selecciona un usuario de la lista superior para iniciar una conversación privada.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    filteredThreadKeys.map(uname => {
+                                        const meta = getUserMeta(uname);
+                                        const thread = threads[uname] || {};
+                                        const isSelected = activeUser?.toLowerCase() === uname.toLowerCase();
+
+                                        return (
+                                            <div
+                                                key={uname}
+                                                onClick={() => setActiveUser(uname)}
+                                                className={`p-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border ${
+                                                    isSelected 
+                                                        ? 'bg-white/[0.08] border-white/20 text-white shadow-sm' 
+                                                        : 'hover:bg-white/[0.03] border-transparent text-zinc-300'
+                                                }`}
+                                            >
+                                                {/* AVATAR SQUIRCLE */}
+                                                <div className="w-10 h-10 rounded-xl border border-white/10 overflow-hidden shrink-0 bg-zinc-900 relative">
+                                                    <img 
+                                                        src={meta.avatar} 
+                                                        alt={meta.displayName} 
+                                                        className="w-full h-full object-cover" 
+                                                    />
+                                                </div>
+
+                                                {/* BODY */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-1">
                                                         <span className="text-xs font-bold text-white font-mono truncate">
                                                             {meta.displayName}
                                                         </span>
                                                         <span className="text-[10px] text-zinc-500 font-mono shrink-0">
-                                                            {meta.timeLabel || (thread.lastUpdated ? new Date(thread.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'ahora')}
+                                                            {thread.lastUpdated ? new Date(thread.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'ahora'}
                                                         </span>
                                                     </div>
-                                                    {/* CATEGORY TAG PILL (#escultura, #sonido, #fotografia) */}
-                                                    {meta.categoryTag && (
-                                                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-zinc-400 shrink-0">
-                                                            {meta.categoryTag}
-                                                        </span>
-                                                    )}
+                                                    <p className="text-[11px] text-zinc-400 truncate mt-0.5 font-mono">
+                                                        {thread.lastMessage || 'Conversación iniciada'}
+                                                    </p>
                                                 </div>
-
-                                                <p className="text-[11px] text-zinc-400 truncate mt-1 font-mono">
-                                                    {thread.lastMessage || 'Resonancia sincronizada'}
-                                                </p>
                                             </div>
+                                        );
+                                    })
+                                )
+                            ) : (
+                                /* COMUNIDAD TAB */
+                                <div className="space-y-1">
+                                    {realUsers.map(u => (
+                                        <div
+                                            key={u.username}
+                                            onClick={() => setActiveUser(u.username)}
+                                            className={`p-2 rounded-xl flex items-center gap-2.5 cursor-pointer transition-colors border ${
+                                                activeUser?.toLowerCase() === u.username.toLowerCase()
+                                                    ? 'bg-white/[0.08] border-white/20'
+                                                    : 'hover:bg-white/[0.04] border-transparent'
+                                            }`}
+                                        >
+                                            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-zinc-900">
+                                                <img src={u.avatar} alt={u.displayName} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-white font-mono truncate">{u.displayName}</p>
+                                                <p className="text-[10px] text-zinc-400 font-mono truncate">@{u.username}</p>
+                                            </div>
+                                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400 shrink-0">
+                                                Conectar
+                                            </span>
                                         </div>
-                                    );
-                                })
+                                    ))}
+                                </div>
                             )}
                         </div>
 
                     </div>
 
-                    {/* ──── RIGHT COLUMN (ACTIVE CONVERSATION) ──── */}
-                    <div className={`flex-1 flex flex-col bg-[#0b0e11] ${activeUser ? 'flex h-full' : 'hidden md:flex'}`}>
+                    {/* RIGHT COLUMN (ACTIVE CONVERSATION) */}
+                    <div className={`flex-1 flex flex-col bg-[#0c0d10] ${activeUser ? 'flex h-full' : 'hidden md:flex'}`}>
                         {activeUser && activeUserInfo ? (
                             <>
                                 {/* ACTIVE CHAT TOP BAR */}
-                                <div className="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between bg-[#0d1014]/90 backdrop-blur-md shrink-0">
+                                <div className="px-5 py-3 border-b border-white/[0.07] flex items-center justify-between bg-[#111216] shrink-0">
                                     <div className="flex items-center gap-3">
                                         <button 
                                             type="button"
                                             onClick={() => setActiveUser(null)}
-                                            className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 flex items-center justify-center transition-colors"
+                                            className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 flex items-center justify-center transition-colors"
                                             title="Volver a la lista"
                                         >
                                             <ArrowLeft size={16} />
                                         </button>
 
                                         <div 
-                                            className="w-10 h-10 rounded-2xl border border-[#2dd4bf]/40 overflow-hidden shrink-0 bg-zinc-900 cursor-pointer"
+                                            className="w-9 h-9 rounded-xl border border-white/15 overflow-hidden shrink-0 bg-zinc-900 cursor-pointer"
                                             onClick={() => {
                                                 if (onOpenProfile) onOpenProfile(activeUserInfo.username);
                                             }}
@@ -559,63 +561,46 @@ export default function DirectMessagesModal({
 
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h4 className="text-white font-bold text-sm tracking-tight font-mono">
+                                                <h4 className="text-white font-bold text-xs sm:text-sm tracking-tight font-mono">
                                                     {activeUserInfo.displayName}
                                                 </h4>
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#2dd4bf] shadow-[0_0_6px_#2dd4bf] animate-pulse" />
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                             </div>
                                             <p className="text-[10px] text-zinc-400 font-mono">
-                                                @{activeUserInfo.username} // sincronizado
+                                                @{activeUserInfo.username} // conectado
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* ACTION ICONS (CLIP & SPARKLES) */}
+                                    {/* ACTION ICONS */}
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                showToast('Adjuntos efímeros listos para vincular');
+                                                if (onOpenProfile) onOpenProfile(activeUserInfo.username);
                                             }}
-                                            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
-                                            title="Adjuntar obra o archivo"
+                                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white text-[11px] font-mono flex items-center gap-1.5 transition-all cursor-pointer"
+                                            title="Ver perfil de usuario"
                                         >
-                                            <Paperclip size={15} />
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const ideas = [
-                                                    'Tu pieza tiene una resonancia visual magnética ✨',
-                                                    '¿Qué textura usaste para el acabado final?',
-                                                    'Me encantaría colaborar en el próximo monolito sonoro.'
-                                                ];
-                                                const randomIdea = ideas[Math.floor(Math.random() * ideas.length)];
-                                                setMessageText(randomIdea);
-                                                showToast('Inspiración generada');
-                                            }}
-                                            className="w-8 h-8 rounded-xl bg-[#2dd4bf]/10 hover:bg-[#2dd4bf]/20 border border-[#2dd4bf]/30 text-[#2dd4bf] flex items-center justify-center transition-all cursor-pointer"
-                                            title="Generar resonancia creativa asistida"
-                                        >
-                                            <Sparkles size={15} />
+                                            <User size={12} />
+                                            <span className="hidden sm:inline">Ver Perfil</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* MESSAGES STREAM */}
+                                {/* MESSAGES STREAM (OPACA, MATE, ELEGANTE) */}
                                 <div 
                                     ref={chatContainerRef}
-                                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 no-scrollbar relative"
+                                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 no-scrollbar relative"
                                 >
                                     {(!activeThread.messages || activeThread.messages.length === 0) ? (
                                         <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-                                            <div className="w-14 h-14 rounded-2xl border border-white/10 flex items-center justify-center mb-3 text-zinc-500 bg-white/[0.02]">
-                                                <MessageCircle size={24} />
+                                            <div className="w-12 h-12 rounded-xl border border-white/10 flex items-center justify-center mb-3 text-zinc-500 bg-white/[0.02]">
+                                                <MessageCircle size={20} />
                                             </div>
-                                            <h5 className="text-white text-sm font-bold font-mono">Comienza una resonancia con @{activeUserInfo.username}</h5>
-                                            <p className="text-xs text-zinc-400 max-w-xs mt-1 font-mono">
-                                                Comparte susurros efímeros, feedback estético y reflexiones sonoras.
+                                            <h5 className="text-white text-xs sm:text-sm font-bold font-mono">Comienza una conversación con @{activeUserInfo.username}</h5>
+                                            <p className="text-[11px] text-zinc-400 max-w-xs mt-1 font-mono">
+                                                Comparte notas, ideas y feedback directamente en privado.
                                             </p>
                                         </div>
                                     ) : (
@@ -626,16 +611,17 @@ export default function DirectMessagesModal({
                                                     key={msg.id}
                                                     className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                                                 >
+                                                    {/* BURBUJA DE MENSAJE: MATE OSCURA OPACA */}
                                                     <div 
                                                         className={`max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-mono leading-relaxed shadow-sm ${
                                                             isMine 
-                                                                ? 'bg-[#2dd4bf] text-black font-medium shadow-[0_4px_16px_rgba(45,212,191,0.2)]' 
-                                                                : 'bg-[#15191e] border border-white/[0.08] text-zinc-200'
+                                                                ? 'bg-[#1e2025] border border-white/[0.12] text-zinc-100' 
+                                                                : 'bg-[#131417] border border-white/[0.06] text-zinc-300'
                                                         }`}
                                                     >
                                                         {msg.text}
                                                     </div>
-                                                    <span className="text-[9px] text-zinc-500 font-mono mt-1 px-1">
+                                                    <span className="text-[9px] text-zinc-600 font-mono mt-1 px-1">
                                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
@@ -650,33 +636,16 @@ export default function DirectMessagesModal({
                                     <button
                                         type="button"
                                         onClick={scrollToBottom}
-                                        className="w-8 h-8 rounded-full bg-[#12161b] hover:bg-[#1a2028] border border-white/15 text-white shadow-xl flex items-center justify-center transition-all pointer-events-auto cursor-pointer hover:scale-105 active:scale-95"
-                                        title="Bajar al último susurro"
+                                        className="w-7 h-7 rounded-full bg-[#181a1f] hover:bg-[#22252c] border border-white/10 text-zinc-300 shadow-xl flex items-center justify-center transition-all pointer-events-auto cursor-pointer"
+                                        title="Bajar al último mensaje"
                                     >
-                                        <ArrowDown size={14} />
+                                        <ArrowDown size={13} />
                                     </button>
                                 </div>
 
-                                {/* CHAT EFÍMERO INPUT BAR */}
-                                <div className="p-3 sm:p-4 border-t border-white/[0.08] bg-[#0d1014]/95 shrink-0">
-                                    <div className="flex items-center gap-2.5 bg-[#12161c] border border-white/10 rounded-full px-3 py-1.5 shadow-inner focus-within:border-[#2dd4bf]/50 transition-colors">
-                                        {/* MIC BUTTON */}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsRecordingAudio(!isRecordingAudio);
-                                                showToast(isRecordingAudio ? 'Nota de voz cancelada' : 'Grabando susurro de voz... 🎙');
-                                            }}
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                                isRecordingAudio 
-                                                    ? 'bg-rose-500 text-white animate-pulse' 
-                                                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                                            }`}
-                                            title="Grabar susurro de voz"
-                                        >
-                                            <Mic size={15} />
-                                        </button>
-
+                                {/* CHAT INPUT BAR (OPACA Y MATE) */}
+                                <div className="p-3 sm:p-4 border-t border-white/[0.07] bg-[#101115] shrink-0">
+                                    <div className="flex items-center gap-2.5 bg-[#16171c] border border-white/[0.08] rounded-full px-3 py-1.5 shadow-inner focus-within:border-white/20 transition-colors">
                                         {/* INPUT TEXT */}
                                         <input
                                             type="text"
@@ -688,19 +657,19 @@ export default function DirectMessagesModal({
                                                     handleSendMessage();
                                                 }
                                             }}
-                                            placeholder={`Escribe un susurro efímero a ${activeUserInfo.displayName.split(' ')[0]}...`}
-                                            className="flex-1 bg-transparent border-none text-white text-xs sm:text-sm placeholder-zinc-500 focus:outline-none font-mono py-1"
+                                            placeholder={`Escribe un mensaje privado a ${activeUserInfo.displayName.split(' ')[0]}...`}
+                                            className="flex-1 bg-transparent border-none text-white text-xs sm:text-sm placeholder-zinc-500 focus:outline-none font-mono py-1 px-1"
                                         />
 
-                                        {/* SEND BUTTON */}
+                                        {/* SEND BUTTON (MATE, OPACA, NO NEÓN) */}
                                         <button
                                             type="button"
                                             onClick={handleSendMessage}
                                             disabled={!messageText.trim()}
-                                            className="w-8 h-8 rounded-full bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 text-black flex items-center justify-center transition-all shadow-md active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shrink-0"
-                                            title="Enviar susurro"
+                                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10 active:scale-95 disabled:opacity-30 disabled:pointer-events-none cursor-pointer shrink-0"
+                                            title="Enviar mensaje"
                                         >
-                                            <Send size={14} className="translate-x-0.5" />
+                                            <Send size={13} className="translate-x-0.5" />
                                         </button>
                                     </div>
                                 </div>
@@ -708,12 +677,12 @@ export default function DirectMessagesModal({
                         ) : (
                             /* EMPTY STATE */
                             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
-                                <div className="w-16 h-16 rounded-2xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/20 flex items-center justify-center text-[#2dd4bf] mb-3 shadow-[0_0_30px_rgba(45,212,191,0.15)]">
-                                    <MessageCircle size={28} />
+                                <div className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-zinc-400 mb-3">
+                                    <MessageCircle size={24} />
                                 </div>
-                                <h4 className="text-white text-base font-bold tracking-tight font-mono">Bandeja de Resonancias</h4>
+                                <h4 className="text-white text-sm font-bold tracking-tight font-mono">Bandeja de Mensajes</h4>
                                 <p className="text-xs text-zinc-400 max-w-sm mt-1 leading-relaxed font-mono">
-                                    Selecciona una presencia o contacto para sintonizar en privado.
+                                    Selecciona un usuario de la lista para iniciar una conversación privada.
                                 </p>
                             </div>
                         )}

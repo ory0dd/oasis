@@ -12,7 +12,7 @@ import {
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
-    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX
+    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, Loader2, Music
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -323,8 +323,14 @@ const getBWidth = (block, isPoint) => {
     if (block.type === 'loop_map_mini') return 850;
     if (block.type === 'diary_notebook' || block.type === 'resonance_notebook' || block.type === 'conversation_notebook') return 480;
     const hasMedia = block.content && typeof block.content === 'string' && (block.content.includes('[img]') || block.content.includes('[vid]'));
-    if (hasMedia) return 360;
-    return block.metadata?.parentId ? 180 : 300;
+    if (hasMedia) return 380;
+    if (block.metadata?.parentId) return 200;
+    // DYNAMIC BALANCED WIDTH: Notas con bastante texto se hacen más anchas (370px - 440px)
+    // para evitar que se hagan columnas verticales infinitas o gigantes
+    const textLen = (typeof block.content === 'string' ? block.content.length : 0);
+    if (textLen > 350) return 430;
+    if (textLen > 160) return 370;
+    return 320;
 };
 
 const getBHeight = (block, isPoint) => {
@@ -2949,8 +2955,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     height: isSubBoardCard ? '160px' : (isImage ? (localSize.height ? `${localSize.height}px` : (block.height ? `${block.height}px` : (block.h ? `${block.h}px` : 'auto'))) : ((block.type === 'text' || isTodoCard) ? 'auto' : (localSize.height ? `${localSize.height}px` : `${getBHeight(block, false)}px`))),
                     minWidth: isSubBoardCard ? '180px' : (isImage ? '40px' : (isColorSwatch ? '175px' : (isLinkCard ? '240px' : (isTodoCard ? '250px' : (isChildNote ? '160px' : (isMediaNode ? '200px' : '270px')))))),
                     minHeight: isSubBoardCard ? '160px' : (isImage ? '40px' : (localSize.height ? `${localSize.height}px` : (isColorSwatch ? '170px' : (isLinkCard ? '96px' : (isTodoCard ? '150px' : (isChildNote ? '140px' : (isMediaNode ? '200px' : '165px'))))))),
-                    maxWidth: undefined,
-                    maxHeight: undefined,
+                    maxWidth: isCentralNode ? '900px' : (block.type === 'text' ? '460px' : undefined),
+                    maxHeight: (isCentralNode || isMediaNode || isSubBoardCard) ? undefined : '540px',
                     willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
@@ -3480,9 +3486,30 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             </div>
                                         )
                                     }
-                                    ) : (
-                                        <SimpleNarrativeRenderer content={block.type === 'insight' ? `[insight] ${block.content}` : block.content} isChild={isChildNote} cleanMinimal={true} />
-                                    )}
+                                    ) : (() => {
+                                        const rawText = block.content || '';
+                                        const MAX_TEXT_LEN = isChildNote ? 200 : 420;
+                                        const isLong = typeof rawText === 'string' && rawText.length > MAX_TEXT_LEN && !rawText.includes('[img]') && !rawText.includes('[vid]') && !rawText.includes('[aud]');
+                                        const processedContent = isLong ? (rawText.slice(0, MAX_TEXT_LEN).trim() + ' ...') : rawText;
+
+                                        return (
+                                            <div className="relative">
+                                                <SimpleNarrativeRenderer 
+                                                    content={block.type === 'insight' ? `[insight] ${processedContent}` : processedContent} 
+                                                    isChild={isChildNote} 
+                                                    cleanMinimal={true} 
+                                                />
+                                                {isLong && (
+                                                    <div className="mt-2 pt-1.5 border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                                                        <span className="italic">...</span>
+                                                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-300 group-hover:text-white transition-colors">
+                                                            Doble clic para ver completa
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             )}
 
