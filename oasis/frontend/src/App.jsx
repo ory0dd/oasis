@@ -5063,63 +5063,11 @@ const ProfileView = ({
 
     return (
         <div
-            className={`fixed inset-0 z-[1500] flex flex-col bg-[#08080a] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[70px] md:inset-x-6 md:bottom-2 md:rounded-3xl border-t border-white/10'}`}
+            className={`fixed inset-0 z-[1500] flex flex-col bg-[#08080a] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[86px] md:inset-x-6 md:bottom-3 md:rounded-3xl border border-white/10'}`}
             onPointerDown={e => e.stopPropagation()}
         >
-            {/* TOP NAVIGATION / ACTIONS OVERLAY (FIXED ON SCREEN) */}
-            <div className="absolute top-4 sm:top-8 left-4 right-4 md:left-10 md:right-10 flex justify-between items-center pointer-events-none z-50">
-                <div className="flex gap-2 pointer-events-auto">
-                    {!isOwnProfile ? (
-                        <div className="flex items-center gap-2">
-                            {user ? (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
-                                    className="px-4 py-2 bg-black/75 backdrop-blur-md rounded-full border border-white/15 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
-                                >
-                                    <ArrowLeft size={13} /> Volver al feed
-                                </button>
-                            ) : (
-                                <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 shadow-xl">
-                                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                                    <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-300 font-bold">Ruido Interior</span>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        isEditingProfile && (
-                            <button
-                                onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:border-white/30 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-xl animate-fade-in hover:scale-105 active:scale-95 cursor-pointer"
-                            >
-                                <Camera size={12} /> Cambiar Portada
-                            </button>
-                        )
-                    )}
-                </div>
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    {!user && (
-                        <a
-                            href="/"
-                            className="px-4 py-2 bg-accent hover:brightness-110 text-black rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                        >
-                            <Sparkles size={11} />
-                            <span>Crear mi página</span>
-                        </a>
-                    )}
-                    <button
-                        onClick={handleShareProfile}
-                        className={`px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl hover:scale-105 active:scale-95 cursor-pointer ${copiedLink ? 'border-accent text-accent' : 'border-white/10 hover:border-white/30 text-white'}`}
-                        title="Copiar enlace personalizado"
-                    >
-                        {copiedLink ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2.5} />}
-                        <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
-                    </button>
-                </div>
-                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-            </div>
-
             <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-20 sm:pb-32" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* AMBIENTE LUMINOSO Y COLORIDO (ELIMINA PÁGINA OSCURA/ABURRIDA) */}
+                {/* AMBIENTE LUMINOSO Y COLORIDO */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
                     <div
                         className="absolute -inset-10 bg-cover bg-center opacity-35 blur-3xl scale-110 transition-all duration-1000"
@@ -5129,8 +5077,52 @@ const ProfileView = ({
                     <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
                 </div>
 
-                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR */}
-                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-1 z-10 relative pointer-events-auto">
+                {/* ACCIONES SUPERIORES (MI ENLACE / VOLVER) - AJUSTADAS SIN FRANJA VACÍA */}
+                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 flex items-center justify-between pointer-events-auto z-20 shrink-0">
+                    <div className="flex items-center gap-2">
+                        {!isOwnProfile ? (
+                            <div className="flex items-center gap-2">
+                                {user ? (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
+                                        className="px-3.5 py-1.5 bg-black/60 hover:bg-black/85 backdrop-blur-md rounded-full border border-white/15 hover:border-white/30 transition-all text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                                    >
+                                        <ArrowLeft size={12} /> Volver al feed
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-md">
+                                        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                                        <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-300 font-bold">Ruido Interior</span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                        {!user && (
+                            <a
+                                href="/"
+                                className="px-3.5 py-1.5 bg-accent hover:brightness-110 text-black rounded-full font-black text-[9px] uppercase tracking-wider transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <Sparkles size={11} />
+                                <span>Crear mi página</span>
+                            </a>
+                        )}
+                        <button
+                            onClick={handleShareProfile}
+                            className={`px-3.5 py-1.5 bg-black/60 hover:bg-black/85 backdrop-blur-md rounded-full border transition-all text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer ${copiedLink ? 'border-accent text-accent' : 'border-white/15 hover:border-white/30 text-white'}`}
+                            title="Copiar enlace personalizado"
+                        >
+                            {copiedLink ? <Check size={12} strokeWidth={2.5} /> : <Share2 size={12} strokeWidth={2.5} />}
+                            <span>{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
+                        </button>
+                    </div>
+                    <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
+                </div>
+
+                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR (PEGADITA ARRIBA) */}
+                <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md cursor-pointer transition-all duration-300 ${
