@@ -2385,7 +2385,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
     );
 };
 
-const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit, selectedBlockId, onSelectBlockId }) => {
+const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit, selectedBlockId, onSelectBlockId, selectedBlockIds = [] }) => {
     const isImage = block.type === 'image' || block.type === 'relic';
     const isVideo = block.type === 'video';
     const isAudio = block.type === 'audio';
@@ -2400,7 +2400,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
     const isConversation = block.type === 'conversation';
     const hasMedia = block.content?.includes('[img]') || block.content?.includes('[vid]') || block.content?.includes('[aud]');
     const isActive = activeNoteId === block.id;
-    const isSelected = selectedBlockId === block.id || isActive || draggingId === block.id;
+    const isSelected = selectedBlockId === block.id || isActive || draggingId === block.id || (Array.isArray(selectedBlockIds) && selectedBlockIds.includes(block.id));
     const isChildNote = !!block.metadata?.parentId;
     const [newTodoText, setNewTodoText] = useState('');
 
@@ -4428,6 +4428,62 @@ const ProfileView = ({
     const effectiveUser = (targetUser || user || 'anon').replace('@', '');
     const isOwnProfile = !isVisitor && Boolean(user) && (effectiveUser.toLowerCase() === user.toLowerCase());
 
+    // Profile Ambient Audio Engine (Self-contained for 100% public & owner reliability)
+    const profileAudioRef = useRef(null);
+    const audioFileInputRef = useRef(null);
+    const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
+    const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+
+    const ambientAudioUrl = useMemo(() => {
+        return publicProfileData?.ambientAudioUrl ||
+            publicProfileData?.AmbientAudioUrl ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null) ||
+            'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+    }, [publicProfileData, effectiveUser]);
+
+    const ambientAudioTitle = useMemo(() => {
+        return publicProfileData?.ambientAudioTitle ||
+            publicProfileData?.AmbientAudioTitle ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null) ||
+            'Oasis Core — Sincronía Profunda';
+    }, [publicProfileData, effectiveUser]);
+
+    const handleAmbientAudioUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploadingAudio(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch(`${API_URL}/api/oasis/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data?.url) {
+                const songTitle = file.name.replace(/\.[^/.]+$/, '');
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem(`oasis_ambient_audio_${effectiveUser}`, data.url);
+                    localStorage.setItem(`oasis_ambient_title_${effectiveUser}`, songTitle);
+                }
+                if (onSaveProfile) {
+                    onSaveProfile({
+                        ambientAudioUrl: data.url,
+                        ambientAudioTitle: songTitle
+                    });
+                }
+                if (profileAudioRef.current) {
+                    profileAudioRef.current.src = data.url;
+                    profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                }
+            }
+        } catch (err) {
+            console.error('Error uploading ambient song:', err);
+        } finally {
+            setIsUploadingAudio(false);
+        }
+    };
+
     const cleanDisplayName = (val, fallback) => {
         if (!val || typeof val !== 'string') return fallback;
         const trimmed = val.trim();
@@ -4534,6 +4590,7 @@ const ProfileView = ({
 
     const targetUserPosts = useMemo(() => {
         const target = (effectiveUser || '').replace('@', '').toLowerCase();
+        // 1. Authoritative posts published to the feed (oasis_feed table)
         const feedPosts = (feed || []).filter(b => {
             if (!b || b.type === 'story' || b.type === 'highlight') return false;
             const u1 = (b.username || '').replace('@', '').toLowerCase();
@@ -4541,16 +4598,18 @@ const ProfileView = ({
             return u1 === target || u2 === target;
         });
 
-        const canvasPosts = (blocks || []).filter(b => {
-            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings') return false;
+        // 2. Canvas blocks ONLY if explicitly marked as published to feed or commercial showcase
+        // Raw canvas notes, diaries, insights stay strictly private on the canvas!
+        const explicitFeedBlocks = (blocks || []).filter(b => {
+            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings' || b.type === 'diary' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook') return false;
             const u = (b.username || user || '').replace('@', '').toLowerCase();
             if (u !== target) return false;
-            if (isOwnProfile) return true;
-            return b.isPublic === true || !!(b.metadata && (b.metadata.buyLink || b.metadata.price));
+            // Never dump all canvas notes into the feed. Only include if intentionally published to feed or showcase piece
+            return b.isFeedPost === true || b.publishedToFeed === true || !!(b.metadata && (b.metadata.buyLink || b.metadata.price));
         });
 
         const combined = [...feedPosts];
-        canvasPosts.forEach(cp => {
+        explicitFeedBlocks.forEach(cp => {
             if (!combined.some(p => p.id === cp.id || p.id === `feed_${cp.id}` || `feed_${p.id}` === cp.id)) {
                 combined.push(cp);
             }
@@ -5095,37 +5154,66 @@ const ProfileView = ({
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
 
-                        {/* Top-Left: Ambient Audio Badge (Image 1) */}
+                        {/* Audio Engine y File Input ocultos */}
+                        <audio
+                            ref={profileAudioRef}
+                            src={ambientAudioUrl}
+                            loop
+                            preload="auto"
+                            onPlay={() => setIsProfileAudioPlaying(true)}
+                            onPause={() => setIsProfileAudioPlaying(false)}
+                        />
+                        <input
+                            ref={audioFileInputRef}
+                            type="file"
+                            accept="audio/*"
+                            className="hidden"
+                            onChange={handleAmbientAudioUpload}
+                        />
+
+                        {/* Top-Left: Ambient Audio Badge (Funciona 100% para visitantes sin cuenta y dueños) */}
                         <div 
                             onClick={(e) => {
                                 e.stopPropagation();
-                                const nextPlaying = !isPlaying;
-                                if (setIsPlaying) setIsPlaying(nextPlaying);
-                                const bgAudio = document.querySelector('#background-media-engine audio') || document.querySelector('audio');
-                                if (bgAudio) {
-                                    if (nextPlaying) {
-                                        if (!bgAudio.src && playerTracks && playerTracks[currentTrack]?.url) {
-                                            bgAudio.src = playerTracks[currentTrack].url;
-                                        }
-                                        bgAudio.play().catch(() => {});
+                                if (profileAudioRef.current) {
+                                    if (profileAudioRef.current.paused) {
+                                        profileAudioRef.current.play()
+                                            .then(() => setIsProfileAudioPlaying(true))
+                                            .catch((err) => {
+                                                console.warn('Audio playback error:', err);
+                                            });
                                     } else {
-                                        bgAudio.pause();
-                                        document.querySelectorAll('audio').forEach(a => a.pause());
+                                        profileAudioRef.current.pause();
+                                        setIsProfileAudioPlaying(false);
                                     }
-                                } else {
-                                    document.querySelectorAll('audio').forEach(a => {
-                                        if (!nextPlaying) a.pause();
-                                    });
                                 }
                             }}
                             className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
-                            title="Toca para reproducir/pausar ambiente sonoro"
+                            title="Toca para reproducir/pausar ambiente sonoro de este perfil"
                         >
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${isPlaying ? 'bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-[#10b981]/70'}`} />
-                            <span className="text-[10px] font-mono tracking-wider text-zinc-200 group-hover/ambient:text-white truncate max-w-[190px] sm:max-w-[300px]">
-                                {activeTrackTitle}
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-[#10b981]/70'}`} />
+                            <span className="text-[10px] font-mono tracking-wider text-zinc-200 group-hover/ambient:text-white truncate max-w-[160px] sm:max-w-[260px]">
+                                {ambientAudioTitle}
                             </span>
-                            {isPlaying ? <Pause size={10} className="text-[#10b981] ml-0.5" /> : <Play size={10} className="text-zinc-400 group-hover/ambient:text-white ml-0.5" />}
+                            {isProfileAudioPlaying ? (
+                                <Pause size={10} className="text-[#10b981] ml-0.5" />
+                            ) : (
+                                <Play size={10} className="text-zinc-400 group-hover/ambient:text-white ml-0.5" />
+                            )}
+                            {isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        audioFileInputRef.current?.click();
+                                    }}
+                                    className="p-1 -mr-1 rounded-full hover:bg-white/15 text-zinc-400 hover:text-emerald-400 transition-colors ml-0.5 cursor-pointer"
+                                    title="Subir canción personalizada para tu perfil (se escuchará al entrar)"
+                                    disabled={isUploadingAudio}
+                                >
+                                    {isUploadingAudio ? <Loader2 size={10} className="animate-spin text-emerald-400" /> : <Upload size={10} />}
+                                </button>
+                            )}
                         </div>
 
                         {/* Volver al feed si es perfil visitante */}
@@ -5950,10 +6038,10 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
                         <path
                             d={path}
                             stroke={color}
-                            strokeWidth="1.8"
-                            strokeDasharray="4, 5"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
                             fill="none"
-                            className="opacity-55 transition-opacity duration-200 group-hover/link-canvas:opacity-100"
+                            className="opacity-85 transition-opacity duration-200 group-hover/link-canvas:opacity-100 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
                         />
                     </g>
                 );
@@ -5976,10 +6064,10 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
                         <path
                             d={path}
                             stroke="#10b981"
-                            strokeWidth="1.8"
-                            strokeDasharray="4, 5"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
                             fill="none"
-                            className="opacity-85"
+                            className="opacity-95 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
                         />
                     </g>
                 );
@@ -12033,6 +12121,35 @@ ${afcMapContext}
     };
 
     const [selectedBlockId, setSelectedBlockId] = useState(null);
+    const [selectedBlockIds, setSelectedBlockIds] = useState([]);
+    const [boxSelectBox, setBoxSelectBox] = useState(null);
+    const isBoxSelectingRef = useRef(false);
+    const boxStartRef = useRef(null);
+
+    // KEYBOARD SHORTCUTS FOR MULTI-SELECTION (Delete / Backspace / Escape)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (selectedBlockIds.length === 0) return;
+            const targetTag = e.target?.tagName?.toLowerCase();
+            if (targetTag === 'input' || targetTag === 'textarea' || e.target?.isContentEditable) return;
+
+            if (e.key === 'Escape') {
+                setSelectedBlockIds([]);
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                deleteBlocks(selectedBlockIds);
+                if (user) {
+                    selectedBlockIds.forEach(id => {
+                        fetch(`${API_URL}/api/oasis/blocks/${id}?user=${user}`, { method: 'DELETE' }).catch(console.error);
+                    });
+                }
+                setSelectedBlockIds([]);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedBlockIds, deleteBlocks, user]);
 
     // CLIPBOARD PASTE FOR COLLAGES (Ctrl+V PASTE OF IMAGES / TRANSPARENT CUTOUTS)
     useEffect(() => {
@@ -12245,7 +12362,24 @@ ${afcMapContext}
         }
 
         if (id === 'canvas') {
-            dragStart.current = { x: clientX - cam.x, y: clientY - cam.y };
+            if (e.shiftKey) {
+                isBoxSelectingRef.current = true;
+                const canvasPt = {
+                    x: (clientX - window.innerWidth / 2 - cam.x) / cam.scale,
+                    y: (clientY - window.innerHeight / 2 - cam.y) / cam.scale
+                };
+                boxStartRef.current = { canvas: canvasPt, screen: { x: clientX, y: clientY } };
+                setBoxSelectBox({
+                    start: canvasPt,
+                    current: canvasPt,
+                    screenStart: { x: clientX, y: clientY },
+                    screenCurrent: { x: clientX, y: clientY }
+                });
+                return;
+            } else {
+                setSelectedBlockIds([]);
+                dragStart.current = { x: clientX - cam.x, y: clientY - cam.y };
+            }
         } else if (id === 'universe') {
             dragStart.current = { x: clientX - profileCam.x, y: clientY - profileCam.y };
         } else if (id === 'feed') {
@@ -12320,6 +12454,42 @@ ${afcMapContext}
             const nx = (clientX - window.innerWidth / 2 - currentCam.x) / currentCam.scale;
             const ny = (clientY - window.innerHeight / 2 - currentCam.y) / currentCam.scale;
             setMouseCanvasPos({ x: nx, y: ny });
+        }
+
+        // MARQUEE SELECTION BOX UPDATE (Shift + Drag)
+        if (isBoxSelectingRef.current && boxStartRef.current) {
+            const currCanvasPt = {
+                x: (clientX - window.innerWidth / 2 - cam.x) / cam.scale,
+                y: (clientY - window.innerHeight / 2 - cam.y) / cam.scale
+            };
+            setBoxSelectBox({
+                start: boxStartRef.current.canvas,
+                current: currCanvasPt,
+                screenStart: boxStartRef.current.screen,
+                screenCurrent: { x: clientX, y: clientY }
+            });
+
+            const minX = Math.min(boxStartRef.current.canvas.x, currCanvasPt.x);
+            const maxX = Math.max(boxStartRef.current.canvas.x, currCanvasPt.x);
+            const minY = Math.min(boxStartRef.current.canvas.y, currCanvasPt.y);
+            const maxY = Math.max(boxStartRef.current.canvas.y, currCanvasPt.y);
+
+            const activeBoardBlocks = blocks.filter(b => {
+                if (b.type === 'insight' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook' || b.type === 'settings' || b.type === 'canvas' || b.type === 'note' || b.isPublic || b.type === 'profile_settings' || b.type === 'user_settings') return false;
+                if (b.type === 'diary' || (b.entries && b.entries.length > 0)) return false;
+                if (b.canvasId && b.canvasId !== activeCanvasId) return false;
+                if (!b.canvasId && activeCanvasId !== 'canvas_default') return false;
+                return true;
+            });
+
+            const matched = activeBoardBlocks.filter(b => {
+                const w = b.width && b.width !== 'auto' ? Number(b.width) : (b.content?.includes('[img]') ? 384 : 220);
+                const h = b.height && b.height !== 'auto' ? Number(b.height) : 170;
+                return (b.x + w >= minX && b.x <= maxX && b.y + h >= minY && b.y <= maxY);
+            }).map(b => b.id);
+
+            setSelectedBlockIds(matched);
+            return;
         }
 
         if (!isPointerDown.current) return;
@@ -12406,7 +12576,21 @@ ${afcMapContext}
             } else {
                 setBlocks(prev => {
                     const block = prev.find(b => b.id === draggingId);
-                    if (!block || !block.groupId) {
+                    if (!block) return prev;
+
+                    // If dragging an item that belongs to a multi-selection
+                    if (selectedBlockIds.includes(draggingId) && selectedBlockIds.length > 1) {
+                        const dx = nx - block.x;
+                        const dy = ny - block.y;
+                        return prev.map(b => {
+                            if (selectedBlockIds.includes(b.id)) {
+                                return { ...b, x: b.x + dx, y: b.y + dy };
+                            }
+                            return b;
+                        });
+                    }
+
+                    if (!block.groupId) {
                         return prev.map(b => b.id === draggingId ? { ...b, x: nx, y: ny } : b);
                     }
 
@@ -12425,6 +12609,10 @@ ${afcMapContext}
 
     const handleEnd = () => {
         if (canvasLongPressTimerRef.current) clearTimeout(canvasLongPressTimerRef.current);
+        if (isBoxSelectingRef.current) {
+            isBoxSelectingRef.current = false;
+            setBoxSelectBox(null);
+        }
         isPointerDown.current = false;
         if (draggingId && draggingId !== 'canvas' && draggingId !== 'universe' && draggingId !== 'feed' && draggingId !== 'player') {
             window.lastRelease = {
@@ -13677,6 +13865,7 @@ ${afcMapContext}
                             draggingId={draggingId}
                             activeNoteId={activeNoteId}
                             selectedBlockId={selectedBlockId}
+                            selectedBlockIds={selectedBlockIds}
                             onSelectBlockId={setSelectedBlockId}
                             onStart={handleStart}
                             onSelect={editBlock}
@@ -14280,6 +14469,143 @@ ${afcMapContext}
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[100] bg-red-950/85 backdrop-blur-sm border border-red-500/20 px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.3)] select-none">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-red-200">Grabando audio para el pizarrón...</span>
+                </div>
+            )}
+
+            {/* CAJA VISUAL DE SELECCIÓN MARQUEE (Shift + Arrastrar Ratón) */}
+            {boxSelectBox && (
+                <div
+                    className="fixed pointer-events-none z-[2600] border-2 border-emerald-400 bg-emerald-500/15 backdrop-blur-[1px] rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-none"
+                    style={{
+                        left: Math.min(boxSelectBox.screenStart.x, boxSelectBox.screenCurrent.x),
+                        top: Math.min(boxSelectBox.screenStart.y, boxSelectBox.screenCurrent.y),
+                        width: Math.abs(boxSelectBox.screenCurrent.x - boxSelectBox.screenStart.x),
+                        height: Math.abs(boxSelectBox.screenCurrent.y - boxSelectBox.screenStart.y)
+                    }}
+                />
+            )}
+
+            {/* BARRA FLOTANTE DE ACCIONES EN LOTE PARA SELECCIÓN MÚLTIPLE */}
+            {view === 'canvas' && selectedBlockIds.length > 0 && (
+                <div
+                    className="fixed left-1/2 -translate-x-1/2 z-[2550] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.12] px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full shadow-[0_20px_60px_rgba(0,0,0,0.92)] flex items-center gap-2 sm:gap-3 pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-200 select-none max-w-[96vw] overflow-x-auto no-scrollbar"
+                    style={{ bottom: window.innerWidth >= 768 ? '96px' : '84px' }}
+                    onMouseDown={e => e.stopPropagation()}
+                    onTouchStart={e => e.stopPropagation()}
+                >
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[10px] sm:text-[11px] font-mono font-bold text-emerald-400 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>{selectedBlockIds.length} seleccionados</span>
+                    </div>
+
+                    {/* Paleta de Colores en Lote */}
+                    <div className="flex items-center gap-1.5 px-2 border-l border-r border-white/10 shrink-0">
+                        {['#10b981', '#06b6d4', '#a855f7', '#f59e0b', '#ef4444', '#27272a'].map(c => (
+                            <button
+                                key={c}
+                                type="button"
+                                onClick={() => {
+                                    syncBlocks(prev => prev.map(b => selectedBlockIds.includes(b.id) ? { ...b, color: c } : b));
+                                }}
+                                className="w-4 h-4 rounded-full hover:scale-125 transition-transform cursor-pointer border border-white/20 shrink-0"
+                                style={{ backgroundColor: c, boxShadow: `0 0 6px ${c}80` }}
+                                title="Cambiar color a todas las notas seleccionadas"
+                            />
+                        ))}
+                    </div>
+
+                    {/* Herramientas de Alineación y Emparejamiento */}
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setBlocks(prev => {
+                                    const firstY = prev.find(b => selectedBlockIds.includes(b.id))?.y || 0;
+                                    const updated = prev.map(b => selectedBlockIds.includes(b.id) ? { ...b, y: firstY } : b);
+                                    syncBlocks(updated);
+                                    return updated;
+                                });
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+                            title="Alinear horizontalmente al mismo nivel (mismo Y)"
+                        >
+                            <AlignLeft size={13} className="rotate-90" />
+                            <span className="hidden sm:inline">Alinear H</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setBlocks(prev => {
+                                    const firstX = prev.find(b => selectedBlockIds.includes(b.id))?.x || 0;
+                                    const updated = prev.map(b => selectedBlockIds.includes(b.id) ? { ...b, x: firstX } : b);
+                                    syncBlocks(updated);
+                                    return updated;
+                                });
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+                            title="Alinear verticalmente en columna (mismo X)"
+                        >
+                            <AlignLeft size={13} />
+                            <span className="hidden sm:inline">Alinear V</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setBlocks(prev => {
+                                    const sel = prev.filter(b => selectedBlockIds.includes(b.id)).sort((a, b) => a.x - b.x);
+                                    if (sel.length === 0) return prev;
+                                    const startX = sel[0].x;
+                                    const baseY = sel[0].y;
+                                    let currentX = startX;
+                                    const posMap = {};
+                                    sel.forEach(b => {
+                                        posMap[b.id] = { x: currentX, y: baseY };
+                                        const w = b.width && b.width !== 'auto' ? Number(b.width) : (b.content?.includes('[img]') ? 384 : 220);
+                                        currentX += w + 24;
+                                    });
+                                    const updated = prev.map(b => posMap[b.id] ? { ...b, x: posMap[b.id].x, y: posMap[b.id].y } : b);
+                                    syncBlocks(updated);
+                                    return updated;
+                                });
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-[10px] font-mono flex items-center gap-1 cursor-pointer"
+                            title="Emparejar en fila horizontal espaciada"
+                        >
+                            <Columns size={13} />
+                            <span className="hidden sm:inline">Fila</span>
+                        </button>
+                    </div>
+
+                    {/* Eliminar Selección en Lote */}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (window.confirm(`¿Deseas eliminar las ${selectedBlockIds.length} notas seleccionadas?`)) {
+                                deleteBlocks(selectedBlockIds);
+                                if (user) {
+                                    selectedBlockIds.forEach(id => fetch(`${API_URL}/api/oasis/blocks/${id}?user=${user}`, { method: 'DELETE' }).catch(console.error));
+                                }
+                                setSelectedBlockIds([]);
+                            }
+                        }}
+                        className="px-2.5 py-1.5 rounded-full bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white transition-all text-[11px] font-mono font-bold flex items-center gap-1.5 cursor-pointer ml-1 shrink-0"
+                        title="Eliminar elementos seleccionados (Delete / Backspace)"
+                    >
+                        <Trash2 size={12} />
+                        <span>Eliminar</span>
+                    </button>
+
+                    {/* Botón de Deseleccionar */}
+                    <button
+                        type="button"
+                        onClick={() => setSelectedBlockIds([])}
+                        className="p-1 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer shrink-0"
+                        title="Deseleccionar (Escape)"
+                    >
+                        <X size={13} />
+                    </button>
                 </div>
             )}
         </div>
