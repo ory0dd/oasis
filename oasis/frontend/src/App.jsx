@@ -15770,32 +15770,32 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-16 sm:pt-20 pb-28">
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-24 sm:pt-28 md:pt-32 pb-28">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
                     <div className="w-full max-w-[430px] sm:max-w-[470px] flex flex-col items-center">
-                        {/* OTRAS ALMAS / HISTORIAS (Slider horizontal) */}
+                        {/* OTRAS ALMAS / HISTORIAS (Slider horizontal con tarjeta estilizada) */}
                         {similarSouls.length > 0 && (
-                            <div className="w-full mb-6 pb-4 border-b border-white/5">
+                            <div className="w-full mb-6 p-3.5 sm:p-4 rounded-2xl bg-[#121316]/90 sm:bg-[#121316]/85 backdrop-blur-xl border border-white/10 shadow-2xl">
                                 <div className="flex items-center justify-between mb-3 px-1">
-                                    <h3 className="text-white font-bold text-sm tracking-tight flex items-center gap-2">
+                                    <h3 className="text-white font-bold text-sm tracking-tight flex items-center gap-2 font-sans">
                                         <span>Otras Almas</span>
                                         <span className="text-[10px] font-mono text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30 font-bold">{similarSouls.length}</span>
                                     </h3>
                                     <button 
                                         type="button" 
                                         onClick={() => setIsDirectMessagesOpen(true)}
-                                        className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                        className="text-[10px] text-zinc-400 hover:text-white uppercase font-bold tracking-widest transition-colors font-mono"
                                     >
                                         Ver todas
                                     </button>
                                 </div>
-                                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1 snap-x">
+                                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1 px-1 snap-x">
                                     {similarSouls.map((soul) => (
                                         <div key={soul.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" onClick={(e) => {
                                             e.stopPropagation();
                                             setPublicProfileUser(soul.username);
                                         }}>
-                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-accent transition-all shadow-xl bg-zinc-900 relative">
+                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white/15 group-hover:border-accent group-hover:scale-105 transition-all shadow-xl bg-zinc-900 relative">
                                                 <img 
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
@@ -15805,10 +15805,10 @@ ${afcMapContext}
                                                     }} 
                                                     src={formatUrl(soul.img)} 
                                                     alt={soul.username} 
-                                                    className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" 
+                                                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
                                                 />
                                             </div>
-                                            <span className="text-[10px] font-mono font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-14 sm:w-16 text-center">
+                                            <span className="text-[10px] font-mono font-bold text-zinc-300 group-hover:text-white transition-colors truncate w-14 sm:w-16 text-center">
                                                 @{soul.username}
                                             </span>
                                         </div>
@@ -15865,7 +15865,7 @@ ${afcMapContext}
                     </div>
 
                     {/* COLUMNA LATERAL DERECHA (Sugerencias para ti - Estilo Instagram Desktop) */}
-                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 sticky top-24 self-start space-y-5 select-none">
+                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 sticky top-28 self-start space-y-5 select-none">
                         {/* Perfil del usuario actual */}
                         <div className="flex items-center justify-between py-1">
                             <div 
