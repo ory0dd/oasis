@@ -1818,7 +1818,7 @@ const FeedItem = ({
         <div 
             id={`feed-item-${f.id}`} 
             ref={itemRef} 
-            className="w-full min-h-[100dvh] snap-start sm:snap-center flex items-center justify-center px-2 xs:px-3 sm:px-4 pt-14 pb-24 sm:pt-18 sm:pb-18"
+            className="w-full min-h-[100dvh] flex items-center justify-center px-2 xs:px-3 sm:px-4 pt-10 pb-20 sm:pt-16 sm:pb-16"
         >
             <div 
                 className="w-full max-w-[345px] xs:max-w-[380px] sm:max-w-[420px] max-h-[78dvh] sm:max-h-[84vh] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between select-none"
@@ -5878,30 +5878,24 @@ function OasisApp() {
     const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
     const [isNavbarHidden, setIsNavbarHidden] = useState(false);
     const lastFeedScrollRef = useRef(0);
-    const feedScrollTickingRef = useRef(false);
     const isNavbarHiddenRef = useRef(false);
     const handleFeedScroll = useCallback((e) => {
         const current = e.target.scrollTop;
-        if (!feedScrollTickingRef.current) {
-            feedScrollTickingRef.current = true;
-            window.requestAnimationFrame(() => {
-                const prev = lastFeedScrollRef.current;
-                const diff = current - prev;
-                if (diff > 30 && current > 70) {
-                    if (!isNavbarHiddenRef.current) {
-                        isNavbarHiddenRef.current = true;
-                        setIsNavbarHidden(true);
-                    }
-                } else if (diff < -20 || current <= 40) {
-                    if (isNavbarHiddenRef.current) {
-                        isNavbarHiddenRef.current = false;
-                        setIsNavbarHidden(false);
-                    }
-                }
-                lastFeedScrollRef.current = current;
-                feedScrollTickingRef.current = false;
-            });
+        const diff = current - lastFeedScrollRef.current;
+        if (Math.abs(diff) < 6) return;
+
+        if (diff > 8 && current > 60) {
+            if (!isNavbarHiddenRef.current) {
+                isNavbarHiddenRef.current = true;
+                setIsNavbarHidden(true);
+            }
+        } else if (diff < -8 || current <= 30) {
+            if (isNavbarHiddenRef.current) {
+                isNavbarHiddenRef.current = false;
+                setIsNavbarHidden(false);
+            }
         }
+        lastFeedScrollRef.current = current;
     }, []);
     const [directMessageTargetUser, setDirectMessageTargetUser] = useState(null);
     const [directMessageContext, setDirectMessageContext] = useState('');
@@ -15697,28 +15691,14 @@ ${afcMapContext}
             });
         const similarSouls = otherSouls;
 
-        const FeedAutoScroller = () => {
-            React.useEffect(() => {
-                const timer = setTimeout(() => {
-                    const firstPost = document.querySelector('.feed-post-item');
-                    if (firstPost) {
-                        firstPost.scrollIntoView({ behavior: 'auto', block: 'start' });
-                    }
-                }, 50); // slight delay to ensure DOM is ready
-                return () => clearTimeout(timer);
-            }, []);
-            return null;
-        };
-
         return (
-            <div onScroll={handleFeedScroll} className="w-full h-full relative overflow-y-auto snap-y snap-proximity scroll-smooth no-scrollbar bg-transparent" style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
-                <FeedAutoScroller />
+            <div onScroll={handleFeedScroll} className="w-full h-full relative overflow-y-auto no-scrollbar bg-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
                 {/* SIMILAR SOULS / NEW MATCHES (Horizontal Scroll) */}
                 {similarSouls.length > 0 && (
-                    <div className="w-full relative z-20 pt-[110px] pb-6 px-4 bg-gradient-to-b from-black/80 to-transparent snap-start shrink-0 pointer-events-auto border-b border-white/5">
+                    <div className="w-full relative z-20 pt-[110px] pb-6 px-4 bg-gradient-to-b from-black/80 to-transparent shrink-0 pointer-events-auto border-b border-white/5">
                         <div className="max-w-xl mx-auto w-full">
                             <div className="flex items-center justify-between mb-4 px-2">
                                 <h3 className="text-white font-bold text-base md:text-lg tracking-tight flex items-center gap-2">
@@ -15801,7 +15781,7 @@ ${afcMapContext}
                             </div>
                         ))}
                         {/* FINAL DE STREAM */}
-                        <div className="h-screen flex items-center justify-center opacity-25 snap-center snap-always shrink-0">
+                        <div className="h-screen flex items-center justify-center opacity-25 shrink-0">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="w-px h-16 bg-white/20" />
                                 <span className="text-[7px] font-black uppercase tracking-[0.4em] text-zinc-500">Fin de las Frecuencias</span>
