@@ -4461,19 +4461,75 @@ const ProfileView = ({
     const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
     const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
-    const ambientAudioUrl = useMemo(() => {
+    const [customAudioUrl, setCustomAudioUrl] = useState(() => {
         return publicProfileData?.ambientAudioUrl ||
             publicProfileData?.AmbientAudioUrl ||
             (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null) ||
-            'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-    }, [publicProfileData, effectiveUser]);
+            '';
+    });
 
-    const ambientAudioTitle = useMemo(() => {
+    const [customAudioTitle, setCustomAudioTitle] = useState(() => {
         return publicProfileData?.ambientAudioTitle ||
             publicProfileData?.AmbientAudioTitle ||
             (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null) ||
+            '';
+    });
+
+    useEffect(() => {
+        const audio = publicProfileData?.ambientAudioUrl || publicProfileData?.AmbientAudioUrl;
+        const title = publicProfileData?.ambientAudioTitle || publicProfileData?.AmbientAudioTitle;
+        if (audio) setCustomAudioUrl(formatUrl(audio));
+        if (title) setCustomAudioTitle(title);
+    }, [publicProfileData]);
+
+    const ambientAudioUrl = useMemo(() => {
+        const val = customAudioUrl ||
+            publicProfileData?.ambientAudioUrl ||
+            publicProfileData?.AmbientAudioUrl ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null);
+        if (!val) return 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+        return formatUrl(val);
+    }, [customAudioUrl, publicProfileData, effectiveUser]);
+
+    const ambientAudioTitle = useMemo(() => {
+        return customAudioTitle ||
+            publicProfileData?.ambientAudioTitle ||
+            publicProfileData?.AmbientAudioTitle ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null) ||
             'Oasis Core — Sincronía Profunda';
-    }, [publicProfileData, effectiveUser]);
+    }, [customAudioTitle, publicProfileData, effectiveUser]);
+
+    // Auto-reproducción suave para visitantes: intenta reproducir y se activa al primer tap/click si el navegador lo bloquea
+    useEffect(() => {
+        let hasInteracted = false;
+        const tryPlay = () => {
+            if (hasInteracted || !profileAudioRef.current) return;
+            hasInteracted = true;
+            profileAudioRef.current.play()
+                .then(() => setIsProfileAudioPlaying(true))
+                .catch(() => {});
+            window.removeEventListener('click', tryPlay);
+            window.removeEventListener('touchstart', tryPlay);
+            window.removeEventListener('keydown', tryPlay);
+        };
+
+        if (profileAudioRef.current && ambientAudioUrl) {
+            profileAudioRef.current.src = ambientAudioUrl;
+            profileAudioRef.current.play()
+                .then(() => setIsProfileAudioPlaying(true))
+                .catch(() => {
+                    window.addEventListener('click', tryPlay, { once: true });
+                    window.addEventListener('touchstart', tryPlay, { once: true });
+                    window.addEventListener('keydown', tryPlay, { once: true });
+                });
+        }
+
+        return () => {
+            window.removeEventListener('click', tryPlay);
+            window.removeEventListener('touchstart', tryPlay);
+            window.removeEventListener('keydown', tryPlay);
+        };
+    }, [ambientAudioUrl]);
 
     const handleAmbientAudioUpload = async (e) => {
         const file = e.target.files?.[0];
@@ -4488,19 +4544,36 @@ const ProfileView = ({
             });
             const data = await res.json();
             if (data?.url) {
+                const fullAudioUrl = (data.url.startsWith('http://') || data.url.startsWith('https://'))
+                    ? data.url
+                    : `${API_URL}${data.url.startsWith('/') ? '' : '/'}${data.url}`;
                 const songTitle = file.name.replace(/\.[^/.]+$/, '');
+
+                setCustomAudioUrl(fullAudioUrl);
+                setCustomAudioTitle(songTitle);
+
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem(`oasis_ambient_audio_${effectiveUser}`, data.url);
+                    localStorage.setItem(`oasis_ambient_audio_${effectiveUser}`, fullAudioUrl);
                     localStorage.setItem(`oasis_ambient_title_${effectiveUser}`, songTitle);
                 }
                 if (onSaveProfile) {
                     onSaveProfile({
-                        ambientAudioUrl: data.url,
+                        ambientAudioUrl: fullAudioUrl,
                         ambientAudioTitle: songTitle
                     });
                 }
+                // Sincronizar directo a clinical-data inmediatamente
+                fetch(`${API_URL}/api/oasis/clinical-data?user=${effectiveUser}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Oasis-User': effectiveUser },
+                    body: JSON.stringify({
+                        [`oasis_ambient_audio_${effectiveUser}`]: fullAudioUrl,
+                        [`oasis_ambient_title_${effectiveUser}`]: songTitle
+                    })
+                }).catch(console.error);
+
                 if (profileAudioRef.current) {
-                    profileAudioRef.current.src = data.url;
+                    profileAudioRef.current.src = fullAudioUrl;
                     profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
                 }
             }
@@ -4782,6 +4855,18 @@ const ProfileView = ({
                     if (bAv) { if (setAvatar) setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
                     if (bPub !== undefined) { localStorage.setItem('oasis_is_public_' + targetU, String(bPub)); }
                     if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
+
+                    const bAudio = serverData['oasis_ambient_audio_' + targetU];
+                    const bAudioTitle = serverData['oasis_ambient_title_' + targetU];
+                    if (bAudio) {
+                        const formatted = formatUrl(bAudio);
+                        setCustomAudioUrl(formatted);
+                        localStorage.setItem('oasis_ambient_audio_' + targetU, formatted);
+                    }
+                    if (bAudioTitle) {
+                        setCustomAudioTitle(bAudioTitle);
+                        localStorage.setItem('oasis_ambient_title_' + targetU, bAudioTitle);
+                    }
                 }).catch(() => {});
 
             fetch(`${API_URL}/api/oasis/blocks?user=${targetU}`)
@@ -4796,11 +4881,23 @@ const ProfileView = ({
                             const bFn = parsed.fullName || parsed.FullName;
                             const bCover = parsed.coverImage || parsed.CoverImage;
                             const bAv = parsed.avatar || parsed.Avatar;
+                            const bAudio = parsed.ambientAudioUrl || parsed.AmbientAudioUrl;
+                            const bAudioTitle = parsed.ambientAudioTitle || parsed.AmbientAudioTitle;
+
                             if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                             if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
                             if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
                             if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
                             if (bAv && setAvatar && isOwnProfile) { setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
+                            if (bAudio) {
+                                const formatted = formatUrl(bAudio);
+                                setCustomAudioUrl(formatted);
+                                localStorage.setItem('oasis_ambient_audio_' + targetU, formatted);
+                            }
+                            if (bAudioTitle) {
+                                setCustomAudioTitle(bAudioTitle);
+                                localStorage.setItem('oasis_ambient_title_' + targetU, bAudioTitle);
+                            }
                         } catch(e) {}
                     }
                 }).catch(() => {});
@@ -5556,6 +5653,48 @@ const ProfileView = ({
                                         </button>
                                     )}
                                 </div>
+
+                                {/* SECCIÓN DE PROCESO CLÍNICO & ENTREVISTAS (VOLUNTARIO) */}
+                                {isOwnProfile && (
+                                    <div className="bg-gradient-to-br from-purple-950/40 via-zinc-950/60 to-black/80 border border-purple-500/25 hover:border-purple-500/40 rounded-2xl p-3.5 backdrop-blur-xl shadow-lg transition-all">
+                                        <div className="flex items-center justify-between gap-2.5">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shrink-0">
+                                                    <Heart size={15} />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-300">
+                                                            Proceso Clínico
+                                                        </span>
+                                                        {hasAcceptedConsent ? (
+                                                            <span className="text-[7.5px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">
+                                                                Activo
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[7.5px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
+                                                                Opcional
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[9px] text-zinc-400 line-clamp-1 font-sans">
+                                                        Entrevistas biográficas, diagnóstico existencial y consentimiento.
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setView('soul');
+                                                    setSoulTab('tests');
+                                                }}
+                                                className="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600 border border-purple-500/30 text-purple-200 hover:text-white text-[9.5px] font-mono font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm flex items-center gap-1"
+                                            >
+                                                <span>{hasAcceptedConsent ? 'Abrir' : 'Iniciar'}</span>
+                                                <ChevronRight size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* FIRMA DE RESONANCIA EXISTENCIAL (OBSERVADOR / CLÍNICO EXCLUSIVO) */}
@@ -6218,7 +6357,7 @@ function OasisApp() {
     const [publicProfileData, setPublicProfileData] = useState(null);
     const [publicProfileBackground, setPublicProfileBackground] = useState(null);
 
-    // Fetch real avatar/cover/bio when viewing another user's profile
+    // Fetch real avatar/cover/bio/audio when viewing another user's profile
     useEffect(() => {
         if (!publicProfileUser) {
             setPublicProfileData(null);
@@ -6233,12 +6372,29 @@ function OasisApp() {
                 if (profileBlock) {
                     try { 
                         const parsed = JSON.parse(profileBlock.content || profileBlock.Content || '{}');
-                        setPublicProfileData(parsed); 
+                        setPublicProfileData(prev => ({ ...(prev || {}), ...parsed })); 
                         localStorage.setItem(`oasis_cached_profile_${cleanUser}`, JSON.stringify(parsed));
                     }
-                    catch { setPublicProfileData(null); }
-                } else { setPublicProfileData(null); }
-            }).catch(() => setPublicProfileData(null));
+                    catch { }
+                }
+            }).catch(() => {});
+
+        fetch(`${API_URL}/api/oasis/clinical-data?user=${cleanUser}`)
+            .then(r => r.json())
+            .then(cData => {
+                if (cData && typeof cData === 'object') {
+                    setPublicProfileData(prev => ({
+                        ...(prev || {}),
+                        ambientAudioUrl: cData[`oasis_ambient_audio_${cleanUser}`] || prev?.ambientAudioUrl || prev?.AmbientAudioUrl,
+                        ambientAudioTitle: cData[`oasis_ambient_title_${cleanUser}`] || prev?.ambientAudioTitle || prev?.AmbientAudioTitle,
+                        bio: cData[`oasis_bio_${cleanUser}`] || prev?.bio || prev?.Bio,
+                        profileLink: cData[`oasis_profilelink_${cleanUser}`] || prev?.profileLink || prev?.ProfileLink,
+                        coverImage: cData[`oasis_cover_${cleanUser}`] || prev?.coverImage || prev?.CoverImage,
+                        avatar: cData[`oasis_avatar_${cleanUser}`] || prev?.avatar || prev?.Avatar,
+                        fullName: cData[`oasis_fullname_${cleanUser}`] || prev?.fullName || prev?.FullName,
+                    }));
+                }
+            }).catch(() => {});
 
         fetch(`${API_URL}/api/oasis/background?user=${cleanUser}`)
             .then(r => r.json())
@@ -8656,15 +8812,8 @@ function OasisApp() {
         });
     }, []);
 
-    const isFresh = useMemo(() => {
-        const role = localStorage.getItem('oasis_role_' + user) || 'patient';
-        const isClinician = role === 'clinician' || user === 'observador1' || user === 'observador';
-        if (!isLoggedIn || !user || isClinician || !isDataLoaded) return false;
-        if (!Array.isArray(blocks)) return false;
-        const noteCount = blocks.filter(b => b && b.type === 'note').length;
-        const hasPhenomMeta = !!localStorage.getItem('oasis_phenom_metadata_' + user);
-        return noteCount === 0 && !hasPhenomMeta;
-    }, [isLoggedIn, user, isDataLoaded, blocks]);
+    // Onboarding libre: no forzar redirección clínica obligatoria a nuevos usuarios
+    const isFresh = false;
 
     useEffect(() => {
         if (isFresh) {
@@ -9572,8 +9721,28 @@ function OasisApp() {
         }
         if (updates.bio !== undefined) localStorage.setItem('oasis_bio_' + user, updates.bio);
         if (updates.profileLink !== undefined) localStorage.setItem('oasis_profilelink_' + user, updates.profileLink);
+        if (updates.ambientAudioUrl !== undefined) localStorage.setItem('oasis_ambient_audio_' + user, updates.ambientAudioUrl);
+        if (updates.ambientAudioTitle !== undefined) localStorage.setItem('oasis_ambient_title_' + user, updates.ambientAudioTitle);
 
         lastLocalSaveRef.current = Date.now();
+
+        // Sincronizar en paralelo a clinical-data para redundancia autoritativa
+        const clinicalSync = {};
+        if (updates.avatar !== undefined) clinicalSync[`oasis_avatar_${user}`] = updates.avatar;
+        if (updates.coverImage !== undefined) clinicalSync[`oasis_cover_${user}`] = updates.coverImage;
+        if (updates.fullName !== undefined) clinicalSync[`oasis_fullname_${user}`] = updates.fullName;
+        if (updates.bio !== undefined) clinicalSync[`oasis_bio_${user}`] = updates.bio;
+        if (updates.profileLink !== undefined) clinicalSync[`oasis_profilelink_${user}`] = updates.profileLink;
+        if (updates.ambientAudioUrl !== undefined) clinicalSync[`oasis_ambient_audio_${user}`] = updates.ambientAudioUrl;
+        if (updates.ambientAudioTitle !== undefined) clinicalSync[`oasis_ambient_title_${user}`] = updates.ambientAudioTitle;
+
+        if (Object.keys(clinicalSync).length > 0) {
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${user}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user },
+                body: JSON.stringify(clinicalSync)
+            }).catch(e => console.error("Error syncing profile to clinical-data:", e));
+        }
 
         setBlocks(prev => {
             const updated = [...prev];
@@ -9587,7 +9756,9 @@ function OasisApp() {
                 coverImage: localStorage.getItem('oasis_cover_' + user) || '',
                 fullName: safeStoredFn,
                 bio: localStorage.getItem('oasis_bio_' + user) || '',
-                profileLink: localStorage.getItem('oasis_profilelink_' + user) || ''
+                profileLink: localStorage.getItem('oasis_profilelink_' + user) || '',
+                ambientAudioUrl: localStorage.getItem('oasis_ambient_audio_' + user) || '',
+                ambientAudioTitle: localStorage.getItem('oasis_ambient_title_' + user) || ''
             };
 
             if (idx > -1) {
@@ -9611,7 +9782,7 @@ function OasisApp() {
                 x: 99999, // offscreen
                 y: 99999,
                 rotation: 0,
-                isPublic: false,
+                isPublic: true,
                 timestamp: new Date().toISOString()
             };
 
@@ -9866,26 +10037,13 @@ function OasisApp() {
                     const serverBlocks = (userData.blocks || []).filter(b => b.type !== 'diary' && b.type !== 'diary_notebook' && (!b.entries || b.entries.length === 0));
                     const filteredBlocks = serverBlocks.filter(b => b.type !== 'insight');
 
-                    let shouldOpenSoul = isRegisterMode;
-                    console.log("[Oasis Debug] isRegisterMode:", isRegisterMode);
+                    let shouldOpenSoul = false; // No forzar soul en login ni registro libre
                     try {
                         const { merged } = smartMergeBlocks(filteredBlocks, userData.username);
                         setBlocks(merged);
                         localStorage.setItem('oasis_canvas_nodes_' + userData.username, JSON.stringify(merged));
-                        const noteCount = merged.filter(b => b.type === 'note').length;
-                        const hasPhenomMeta = !!localStorage.getItem('oasis_phenom_metadata_' + userData.username);
-                        console.log("[Oasis Debug] merged note count:", noteCount, "hasPhenomMeta:", hasPhenomMeta);
-                        if (noteCount === 0 && !hasPhenomMeta) {
-                            shouldOpenSoul = true;
-                        }
                     } catch (e) {
                         setBlocks(filteredBlocks);
-                        const noteCount = filteredBlocks.filter(b => b.type === 'note').length;
-                        const hasPhenomMeta = !!localStorage.getItem('oasis_phenom_metadata_' + userData.username);
-                        console.log("[Oasis Debug] catch note count:", noteCount, "hasPhenomMeta:", hasPhenomMeta);
-                        if (noteCount === 0 && !hasPhenomMeta) {
-                            shouldOpenSoul = true;
-                        }
                     }
                 } finally {
                     window.isDownloadingClinicalData = false;
@@ -9930,22 +10088,13 @@ function OasisApp() {
                 }
                 setIsDataLoaded(true);
 
-                console.log("[Oasis Debug] Final shouldOpenSoul:", shouldOpenSoul);
-                if (shouldOpenSoul) {
-                    console.log("[Oasis Debug] Redirecting to soul tests/phenom");
-                    setActiveNotebook(null);
-                    setIsBitacoraOpen(false);
-                    setIsSettingsOpen(false);
-                    setView('soul');
-                    setSoulTab('tests');
-                    setActiveTest('phenom');
-                    setShowPhenomIntro(true);
-                } else if ((userData.role === 'clinician') || userData.username === 'observador1' || userData.username === 'observador') {
+                if ((userData.role === 'clinician') || userData.username === 'observador1' || userData.username === 'observador') {
                     console.log("[Oasis Debug] Redirecting to clinical view");
                     setView('clinical');
                 } else {
-                    console.log("[Oasis Debug] Redirecting to canvas view");
-                    setView('canvas');
+                    const savedScreen = localStorage.getItem('oasis_startup_screen') || 'profile';
+                    console.log("[Oasis Debug] Redirecting to free home view:", savedScreen);
+                    setView(savedScreen);
                 }
             } else {
                 setAuthError(`${data.msg || 'Fallo de Conexión'} (${res.status})`);
@@ -14903,6 +15052,22 @@ ${afcMapContext}
         }
 
         if (activeTest === 'biographic') {
+            const currentU = user || (typeof window !== 'undefined' ? localStorage.getItem('oasis_user') : '') || '';
+            const isConsentSigned = currentU ? localStorage.getItem('oasis_consent_accepted_' + currentU) === 'true' : false;
+
+            if (!isConsentSigned || !hasAcceptedConsent) {
+                return (
+                    <InformedConsentModal
+                        user={currentU}
+                        initialFullName={localStorage.getItem('oasis_fullname_' + currentU) || ''}
+                        onAccept={() => {
+                            setHasAcceptedConsent(true);
+                        }}
+                        onCancel={() => setActiveTest(null)}
+                    />
+                );
+            }
+
             return (
                 <BiographicInterview username={user} activeVersion={activeVersion}
                     onClose={() => setActiveTest(null)}
@@ -14911,7 +15076,7 @@ ${afcMapContext}
                         const suffix = activeVersion > 1 ? '_v' + activeVersion : '';
                         localStorage.setItem('oasis_bio_transcriptions_' + user + suffix, JSON.stringify(data));
                         setActiveTest(null);
-                        setView('canvas');
+                        setView('profile');
                     }}
                 />
             );
@@ -15208,9 +15373,9 @@ ${afcMapContext}
                 <div className="flex-1 w-full relative overflow-y-auto no-scrollbar pt-8 md:pt-24 pb-36 px-4 md:px-8">
                     {/* BACK TO CANVAS BUTTON (Opposite of settings cog on the top-left) */}
                     <button
-                        onClick={() => setView('canvas')}
-                        className="hidden md:flex fixed top-6 left-6 z-[500] w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all duration-500 shadow-2xl group"
-                        title="Volver al Lienzo"
+                        onClick={() => setView('profile')}
+                        className="flex fixed top-4 left-4 md:top-6 md:left-6 z-[500] w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 items-center justify-center text-zinc-300 hover:text-white hover:border-white/30 transition-all duration-300 shadow-2xl group cursor-pointer"
+                        title="Volver al Perfil"
                     >
                         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                     </button>
@@ -17418,7 +17583,7 @@ ${afcMapContext}
                                     }
                                     return null;
                                 })()}
-                                <button onClick={() => { setView('soul'); setIsSettingsOpen(false); }} className="w-full py-4 bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all">Entrevista Biográfica</button>
+                                <button onClick={() => { setView('soul'); setSoulTab('tests'); setIsSettingsOpen(false); }} className="w-full py-4 bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"><span>Proceso Clínico & Entrevistas</span></button>
                             </div>
                         </div>
 

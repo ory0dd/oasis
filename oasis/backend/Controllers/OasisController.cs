@@ -2504,9 +2504,30 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
         [HttpGet("clinical-data")]
         public ActionResult<Dictionary<string, string>> GetClinicalData([FromQuery] string user)
         {
-            if (!IsCallerAuthorized(user)) return StatusCode(403, "No autorizado.");
             var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user, StringComparison.OrdinalIgnoreCase));
             if (u == null) return new Dictionary<string, string>();
+
+            if (!IsCallerAuthorized(user))
+            {
+                // Visitantes sin login pueden consultar metadatos publicos del perfil
+                var publicData = new Dictionary<string, string>();
+                foreach (var kvp in u.ClinicalData)
+                {
+                    if (IsKeyForUser(kvp.Key, user))
+                    {
+                        if (kvp.Key.StartsWith("oasis_ambient_", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("oasis_avatar_", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("oasis_cover_", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("oasis_fullname_", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("oasis_bio_", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.StartsWith("oasis_profilelink", StringComparison.OrdinalIgnoreCase))
+                        {
+                            publicData[kvp.Key] = kvp.Value;
+                        }
+                    }
+                }
+                return publicData;
+            }
 
             string caller = GetAuthenticatedUser();
             var filtered = new Dictionary<string, string>();
@@ -2577,6 +2598,43 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                         if (kvp.Key.Equals($"oasis_fullname_{user}", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(kvp.Value))
                         {
                             u.FullName = kvp.Value.Trim();
+                        }
+                        if (kvp.Key.Equals($"oasis_ambient_audio_{user}", StringComparison.OrdinalIgnoreCase) ||
+                            kvp.Key.Equals($"oasis_ambient_title_{user}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var psBlock = u.Blocks.FirstOrDefault(b => b.Id == "profile_settings");
+                                var dict = new Dictionary<string, object>();
+                                if (psBlock != null && !string.IsNullOrEmpty(psBlock.Content))
+                                {
+                                    try { dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(psBlock.Content) ?? new(); } catch {}
+                                }
+                                if (u.ClinicalData.TryGetValue($"oasis_ambient_audio_{user}", out var audUrl))
+                                    dict["ambientAudioUrl"] = audUrl;
+                                if (u.ClinicalData.TryGetValue($"oasis_ambient_title_{user}", out var audTitle))
+                                    dict["ambientAudioTitle"] = audTitle;
+
+                                string serialized = System.Text.Json.JsonSerializer.Serialize(dict);
+                                if (psBlock != null)
+                                {
+                                    psBlock.Content = serialized;
+                                    psBlock.IsPublic = true;
+                                }
+                                else
+                                {
+                                    u.Blocks.Add(new Block {
+                                        Id = "profile_settings",
+                                        Type = "profile_settings",
+                                        Content = serialized,
+                                        X = 99999,
+                                        Y = 99999,
+                                        IsPublic = true,
+                                        Timestamp = DateTime.UtcNow
+                                    });
+                                }
+                            }
+                            catch (Exception psEx) { Console.WriteLine($"Error auto-syncing profile_settings: {psEx.Message}"); }
                         }
                     }
                 }
