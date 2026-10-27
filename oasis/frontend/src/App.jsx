@@ -1337,11 +1337,12 @@ const FeedItem = ({
     };
 
     const handleTouchMove = (e) => {
+        if (!slides || slides.length <= 1) return;
         const dx = Math.abs(e.targetTouches[0].clientX - touchStartX.current);
         const dy = Math.abs(e.targetTouches[0].clientY - touchStartY.current);
-        if (dx > dy && dx > 10) {
+        if (dx > dy && dx > 15) {
             touchIsHorizontal.current = true;
-            e.stopPropagation();
+            if (e.cancelable) e.preventDefault();
         }
     };
 
@@ -1817,14 +1818,10 @@ const FeedItem = ({
         <div 
             id={`feed-item-${f.id}`} 
             ref={itemRef} 
-            className="w-full h-screen snap-center snap-always flex items-center justify-center px-3 sm:px-4 pt-16 pb-16 sm:pt-20 sm:pb-20"
+            className="w-full min-h-[100dvh] snap-start sm:snap-center flex items-center justify-center px-2 xs:px-3 sm:px-4 pt-14 pb-24 sm:pt-18 sm:pb-18"
         >
             <div 
-                className="w-full max-w-[390px] sm:max-w-[430px] max-h-[82vh] sm:max-h-[85vh] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between select-none"
-                style={{ touchAction: "pan-y" }} 
-                onTouchStart={handleTouchStart} 
-                onTouchMove={handleTouchMove} 
-                onTouchEnd={handleTouchEnd}
+                className="w-full max-w-[345px] xs:max-w-[380px] sm:max-w-[420px] max-h-[78dvh] sm:max-h-[84vh] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between select-none"
             >
                 {/* 1. HEADER (Instagram style: avatar + @username · 10 h + 3 dots) */}
                 <div className="px-3.5 py-3 flex items-center justify-between border-b border-white/5">
@@ -1916,7 +1913,11 @@ const FeedItem = ({
 
                 {/* 2. MEDIA (Instagram 4:5 aspect ratio) */}
                 <div 
-                    className="w-full max-h-[44vh] sm:max-h-[48vh] aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer mx-auto"
+                    className="w-full max-h-[38dvh] sm:max-h-[46vh] aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer mx-auto"
+                    style={{ touchAction: slides.length > 1 ? "pan-y" : "auto" }}
+                    onTouchStart={slides.length > 1 ? handleTouchStart : undefined}
+                    onTouchMove={slides.length > 1 ? handleTouchMove : undefined}
+                    onTouchEnd={slides.length > 1 ? handleTouchEnd : undefined}
                     onClick={() => { if (onOpenDetail) onOpenDetail(); }}
                 >
                     <div 
@@ -5853,6 +5854,13 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 });
 
 function OasisApp() {
+    if (typeof window !== 'undefined') {
+        try {
+            if (localStorage.getItem('oasis_board_title') === 'ttt') {
+                localStorage.removeItem('oasis_board_title');
+            }
+        } catch (_) {}
+    }
     const initialUser = localStorage.getItem('oasis_user') || '';
     const [user, setUser] = useState(initialUser);
     const initialRole = localStorage.getItem('oasis_role_' + initialUser) || 'patient';
@@ -5863,21 +5871,37 @@ function OasisApp() {
     const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
     const [selectedBoardTemplate, setSelectedBoardTemplate] = useState('character_profile');
     const [keepTemplateContent, setKeepTemplateContent] = useState(true);
-    const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_board_title') || localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Pizarrón 1');
+    const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Pizarrón 1');
     const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
     const [isNavbarHidden, setIsNavbarHidden] = useState(false);
     const lastFeedScrollRef = useRef(0);
+    const feedScrollTickingRef = useRef(false);
+    const isNavbarHiddenRef = useRef(false);
     const handleFeedScroll = useCallback((e) => {
         const current = e.target.scrollTop;
-        if (current > lastFeedScrollRef.current + 25 && current > 60) {
-            setIsNavbarHidden(true);
-        } else if (current < lastFeedScrollRef.current - 15 || current <= 40) {
-            setIsNavbarHidden(false);
+        if (!feedScrollTickingRef.current) {
+            feedScrollTickingRef.current = true;
+            window.requestAnimationFrame(() => {
+                const prev = lastFeedScrollRef.current;
+                const diff = current - prev;
+                if (diff > 30 && current > 70) {
+                    if (!isNavbarHiddenRef.current) {
+                        isNavbarHiddenRef.current = true;
+                        setIsNavbarHidden(true);
+                    }
+                } else if (diff < -20 || current <= 40) {
+                    if (isNavbarHiddenRef.current) {
+                        isNavbarHiddenRef.current = false;
+                        setIsNavbarHidden(false);
+                    }
+                }
+                lastFeedScrollRef.current = current;
+                feedScrollTickingRef.current = false;
+            });
         }
-        lastFeedScrollRef.current = current;
     }, []);
     const [directMessageTargetUser, setDirectMessageTargetUser] = useState(null);
     const [directMessageContext, setDirectMessageContext] = useState('');
@@ -6070,6 +6094,12 @@ function OasisApp() {
             setBlocksRaw(deduplicateBlocks(newVal));
         }
     }, []);
+
+    // Current active canvas board title (strictly matches the board title in the library)
+    const currentBoardTitle = useMemo(() => {
+        const activeCanvasBlock = (blocks || []).find(b => b.type === 'canvas' && (b.id === activeCanvasId || (activeCanvasId === 'canvas_default' && (b.id === 'canvas_default' || !b.canvasId))));
+        return activeCanvasBlock?.content || activeCanvasBlock?.text || activeCanvasBlock?.caption || (activeCanvasId === 'canvas_default' ? 'Pizarrón 1' : 'Pizarrón');
+    }, [blocks, activeCanvasId]);
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
     const [feed, setFeed] = useState([]);
     const [publicUsers, setPublicUsers] = useState([]);
@@ -13874,8 +13904,8 @@ ${afcMapContext}
                         onTouchStart={e => e.stopPropagation()}
                     >
                         <span className="w-2 h-2 rounded-[2px] bg-amber-500 shrink-0 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-                        <span className="font-bold text-white text-xs tracking-tight truncate max-w-[130px]">
-                            {activeCanvasId === 'canvas_default' ? (localStorage.getItem('oasis_board_title') || canvasBoardTitle || 'Pizarrón 1') : (blocks.find(b => b.id === activeCanvasId)?.caption || 'Pizarrón')}
+                        <span onClick={() => setIsBitacoraOpen(true)} className="font-bold text-white text-xs tracking-tight truncate max-w-[130px] cursor-pointer hover:text-accent transition-colors" title="Abrir Librero de Pizarrones">
+                            {currentBoardTitle}
                         </span>
                         <span className="text-zinc-600 font-sans">·</span>
                         <button
@@ -15681,7 +15711,7 @@ ${afcMapContext}
         };
 
         return (
-            <div onScroll={handleFeedScroll} className="w-full h-full relative overflow-y-auto snap-y snap-mandatory no-scrollbar bg-transparent">
+            <div onScroll={handleFeedScroll} className="w-full h-full relative overflow-y-auto snap-y snap-proximity scroll-smooth no-scrollbar bg-transparent" style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}>
                 <FeedAutoScroller />
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
@@ -19221,7 +19251,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
 
             {/* RETURN TO PROFILE CARD / BUTTON & FEED BUTTON */}
             {(view === 'canvas' || view === 'feed') && !isComposerOpen && !isSimpleNotesOpen && !activeNotebook && !activeTest && !activeNoteId && (
-                <div className="fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-8 left-1/2 -translate-x-1/2 z-[2500] flex gap-3 pointer-events-auto">
+                <div className={`fixed bottom-[calc(24px+env(safe-area-inset-bottom,0px))] md:bottom-8 left-1/2 -translate-x-1/2 z-[2500] flex gap-3 pointer-events-auto transition-all duration-300 ease-out ${isNavbarHidden && view === 'feed' ? 'translate-y-28 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
                     <button
                         onClick={() => setView('profile')}
                         className="bg-black/80 backdrop-blur-sm px-5 py-2.5 sm:px-6 sm:py-3 rounded-full border border-white/10 text-white font-bold text-[9px] sm:text-[10px] uppercase tracking-widest shadow-[0_10px_40px_rgba(0,0,0,0.8)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group hover:border-white/30 hover:bg-black/90"
