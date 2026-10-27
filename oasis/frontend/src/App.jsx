@@ -3,7 +3,7 @@ import BitacoraExistencial from './components/BitacoraExistencial';
 import { createPortal } from 'react-dom';
 import {
     Plus, Minus, Edit2, Check, Radio, Focus, Compass, CheckSquare,
-    ArrowLeft, ArrowRight, ImageIcon, Mic, Zap, Pencil,
+    ArrowLeft, ArrowRight, ArrowDown, ImageIcon, Mic, Zap, Pencil,
     Edit3, Trash2, Maximize2, Settings, X,
     Heart, MessageCircle, Eye, EyeOff, Globe,
     Aperture, Infinity as InfinityIcon, Share2, ExternalLink, Search, Play, Pause, SkipForward, SkipBack,
@@ -4422,7 +4422,8 @@ const ProfileView = ({
     onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen, onOpenSimpleNotes,
     openNewComposer, feed, onNavigateToFeedPost,
     setIsHighlightModalOpen, setSelectedHighlight,
-    isStoryUploadModalOpen, setIsStoryUploadModalOpen, setViewing24hStories
+    isStoryUploadModalOpen, setIsStoryUploadModalOpen, setViewing24hStories,
+    currentTrack = 0, playerTracks = [], isPlaying = false
 }) => {
     const effectiveUser = (targetUser || user || 'anon').replace('@', '');
     const isOwnProfile = !isVisitor && Boolean(user) && (effectiveUser.toLowerCase() === user.toLowerCase());
@@ -4434,13 +4435,18 @@ const ProfileView = ({
         return trimmed;
     };
 
-    const [bio, setBio] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.') : 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.');
+    const [bio, setBio] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_bio_' + user) || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.') : 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.');
     const [profileLink, setProfileLink] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_profilelink_' + user) || '') : '');
     const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : effectiveUser);
-    const [coverImage, setCoverImage] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+    const [coverImage, setCoverImage] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_' + user) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop') : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop');
     const [coverPosition, setCoverPosition] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_pos_' + user) || 'center') : 'center');
     const [coverHeightMode, setCoverHeightMode] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_height_' + user) || 'expanded') : 'expanded');
     const [isCoverLightboxOpen, setIsCoverLightboxOpen] = useState(false);
+
+    // Feed tabs and views
+    const [releaseTab, setReleaseTab] = useState('campana'); // 'campana' | 'archivo' | 'destacados'
+    const [profileFeedView, setProfileFeedView] = useState('monolito'); // 'monolito' | 'editorial'
+    const [selectedModalPost, setSelectedModalPost] = useState(null);
 
     const [copiedLink, setCopiedLink] = useState(false);
     const handleShareProfile = (e) => {
@@ -4496,7 +4502,6 @@ const ProfileView = ({
             if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings') return false;
             const u = (b.username || user || '').replace('@', '').toLowerCase();
             if (u !== target) return false;
-            // STRICT PRIVACY: Only explicitly published notes or shop items with a price/buyLink
             return b.isPublic === true || !!(b.metadata && (b.metadata.buyLink || b.metadata.price));
         });
 
@@ -4521,8 +4526,8 @@ const ProfileView = ({
     React.useEffect(() => {
         if (!isOwnProfile) {
             let vFullName = effectiveUser;
-            let vBio = 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital.';
-            let vCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+            let vBio = 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+            let vCover = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
             let vLink = '';
 
             const userFeedPosts = (feed || []).filter(p => {
@@ -4620,7 +4625,6 @@ const ProfileView = ({
         const storedLink = localStorage.getItem('oasis_profilelink_' + targetU);
         if (storedLink) setProfileLink(storedLink);
 
-        // Fetch de respaldo directo desde el backend para garantizar que bio, link, portada y avatar nunca falten
         if (targetU) {
             fetch(`${API_URL}/api/oasis/blocks?user=${targetU}`)
                 .then(r => r.json())
@@ -4645,7 +4649,6 @@ const ProfileView = ({
         }
     }, [user, effectiveUser, isOwnProfile, publicProfileData, blocks, setAvatar, isEditingProfile, feed]);
 
-    const [releaseTab, setReleaseTab] = useState('posts');
     const [savedPostIds, setSavedPostIds] = useState(() => {
         try {
             const stored = localStorage.getItem(`oasis_saved_${user || 'anon'}`);
@@ -4662,97 +4665,8 @@ const ProfileView = ({
         } catch { }
     };
 
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [isSelectionMode, setIsSelectionMode] = useState(false);
-    const [dragOverId, setDragOverId] = useState(null);
     const fileInputRef = useRef(null);
     const coverInputRef = useRef(null);
-
-    const handleReorderBlocks = (draggedId, targetId) => {
-        if (draggedId === targetId) return;
-        const draggedBlock = blocks.find(b => b.id === draggedId);
-        if (!draggedBlock) return;
-
-        const newBlocks = blocks.filter(b => b.id !== draggedId);
-
-        if (targetId === 'FEED_END') {
-            newBlocks.push(draggedBlock);
-            setBlocks(newBlocks);
-            syncBlocks(newBlocks);
-            return;
-        }
-
-        const visualDraggedIdx = filteredReleases.findIndex(b => b.id === draggedId);
-        const visualTargetIdx = filteredReleases.findIndex(b => b.id === targetId);
-        if (visualDraggedIdx === -1 || visualTargetIdx === -1) return;
-
-        const targetBlockIndex = newBlocks.findIndex(b => b.id === targetId);
-
-        if (targetBlockIndex !== -1) {
-            const insertIdx = visualDraggedIdx < visualTargetIdx ? targetBlockIndex + 1 : targetBlockIndex;
-            newBlocks.splice(insertIdx, 0, draggedBlock);
-        } else {
-            let found = false;
-            for (let i = visualTargetIdx; i < filteredReleases.length; i++) {
-                const item = filteredReleases[i];
-                if (!item.isVirtual && item.id !== draggedId) {
-                    const idx = newBlocks.findIndex(b => b.id === item.id);
-                    if (idx !== -1) {
-                        newBlocks.splice(idx, 0, draggedBlock);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-            if (!found) {
-                for (let i = visualTargetIdx; i >= 0; i--) {
-                    const item = filteredReleases[i];
-                    if (!item.isVirtual && item.id !== draggedId) {
-                        const idx = newBlocks.findIndex(b => b.id === item.id);
-                        if (idx !== -1) {
-                            newBlocks.splice(idx + 1, 0, draggedBlock);
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (!found) {
-                newBlocks.push(draggedBlock);
-            }
-        }
-
-        setBlocks(newBlocks);
-        syncBlocks(newBlocks);
-    };
-
-    const handleCardClick = (id) => {
-        if (isSelectionMode) {
-            setSelectedIds(prev =>
-                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-            );
-        } else {
-            const block = blocks.find(b => b.id === id) || virtualConvBlocks.find(c => c.id === id);
-            if (!block) return;
-            if (block.type === 'conversation' || block.isVirtual) {
-                handleSelectConversation(block.id);
-            } else if (block.type === 'diary_notebook') {
-                setActiveNotebook('diary');
-            } else if (block.type === 'resonance_notebook') {
-                setActiveNotebook('resonance');
-            } else if (block.type === 'conversation_notebook') {
-                const sortedConvs = (conversations || [])
-                    .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
-                if (sortedConvs.length > 0) {
-                    handleSelectConversation(sortedConvs[0].id);
-                } else {
-                    handleNewChat();
-                }
-            } else {
-                editBlock(block);
-            }
-        }
-    };
 
     const handleAvatarClick = () => {
         if (isEditingProfile && fileInputRef.current) {
@@ -4820,7 +4734,6 @@ const ProfileView = ({
         if (!url || typeof url !== 'string') return '';
         url = url.replace(/\[\/?(img|vid|aud)\]/gi, '').trim();
 
-        // Mapear permanentemente assets a Supabase CDN
         if (url.includes('5f151b24-cdf5-4652-affe-cc506e05bcb2')) {
             return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
         }
@@ -4893,110 +4806,127 @@ const ProfileView = ({
         return null;
     };
 
-    const virtualConvBlocks = useMemo(() => {
-        return (conversations || [])
-            .filter(c => !blocks.some(b => b.id === c.id || b.id === `conv-pub-${c.id}`))
-            .map(c => ({
-                id: c.id,
-                type: 'conversation',
-                caption: c.title || 'Diálogo AI',
-                content: JSON.stringify(c.messages || []),
-                isPublic: false,
-                color: c.color || '#d946ef',
-                username: user || 'anon',
-                metadata: { timestamp: c.startTime },
-                isVirtual: true
-            }));
-    }, [conversations, blocks, user]);
+    // Curated 2 featured works for ENLACES & OBRAS (Image 1 & 2)
+    const featuredWorks = useMemo(() => {
+        const results = [];
 
-    const filteredReleases = useMemo(() => {
-        const allItems = [...(blocks || []), ...virtualConvBlocks];
-        return allItems.filter(b => {
-            // Exclude completely empty notes
-            const hasContent = (b.content && b.content.trim()) || (b.caption && b.caption.trim()) || (b.entries && b.entries.length > 0) || (b.muralBlocks && b.muralBlocks.length > 0);
-            if (!hasContent) return false;
-
-            // Exclude empty conversation blocks
-            if (b.type === 'conversation') {
-                try {
-                    const parsed = JSON.parse(b.content);
-                    if (Array.isArray(parsed) && parsed.length === 0) {
-                        return false;
-                    }
-                } catch (e) {
-                    return false;
-                }
+        // 1. Linked posts
+        linkedPosts.forEach(lp => {
+            if (results.length < 2 && !results.some(r => r.id === lp.id)) {
+                results.push({
+                    id: lp.id,
+                    tag: results.length === 0 ? '#01 Escultura' : '#02 Sonido',
+                    title: lp.caption || (lp.content ? lp.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().slice(0, 28) : 'Obra Curada'),
+                    subtitle: lp.metadata?.medium || lp.metadata?.price || 'Pieza escultórica & pigmento',
+                    image: getBlockPreviewImage(lp),
+                    video: getBlockPreviewVideo(lp),
+                    buyLink: lp.metadata?.buyLink,
+                    type: lp.type || 'piece',
+                    rawPost: lp
+                });
             }
-
-            const isRes = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-            const isDia = b.entries && b.entries.length > 0;
-
-            if (releaseTab === 'notes') {
-                return (b.type === 'text' || b.type === 'insight') && !isRes && !isDia;
-            }
-            if (releaseTab === 'diary') {
-                return isDia;
-            }
-            if (releaseTab === 'resonance') {
-                return isRes;
-            }
-            if (releaseTab === 'chats') {
-                return b.type === 'conversation';
-            }
-            if (releaseTab === 'images') {
-                return b.type === 'image' || b.type === 'relic';
-            }
-            return true;
         });
-    }, [blocks, virtualConvBlocks, releaseTab]);
 
-    // Custom Case Formulation generator based on selections and notes keywords
-    const currentCaseFormulation = useMemo(() => {
-        const arch = calculatedResults.archetype;
-        const noteKws = noteKeywords;
-        const score = calculatedResults.score;
-
-        let triggersHtml = "El sistema psíquico detecta tu susceptibilidad atencional y reactividad emocional cuando enfrentas ";
-        if (noteKws.length > 0) {
-            triggersHtml += `conceptos de alta densidad existencial identificados en tus notas, como *"${noteKws.slice(0, 3).join(', ')}"*`;
-        } else {
-            triggersHtml += "situaciones de caos y desorganización conceptual en tu entorno de trabajo diario.";
+        // 2. Visual or audio posts from targetUserPosts
+        if (results.length < 2) {
+            targetUserPosts.forEach(tp => {
+                if (results.length < 2 && !results.some(r => r.id === tp.id)) {
+                    const isAud = tp.type === 'audio' || (tp.content && tp.content.includes('[aud]'));
+                    results.push({
+                        id: tp.id,
+                        tag: results.length === 0 ? '#01 Escultura' : '#02 Sonido',
+                        title: tp.caption || (tp.content ? tp.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().slice(0, 28) : 'Obra Curada'),
+                        subtitle: tp.metadata?.medium || (isAud ? 'Grabación analógica binaural' : 'Cerámica fría & espejo texturizado'),
+                        image: getBlockPreviewImage(tp),
+                        video: getBlockPreviewVideo(tp),
+                        buyLink: tp.metadata?.buyLink,
+                        type: isAud ? 'audio' : 'piece',
+                        isAudio: isAud,
+                        rawPost: tp
+                    });
+                }
+            });
         }
 
-        let dynamicFormulation = `### 1. Formulación de Caso Clínico Funcional (${arch?.name || 'Explorador'})
-        
-        **A. Estímulo Antecedente / Disparador (A):**
-        ${triggersHtml}. Tu cerebro experimenta esto como una amenaza directa a tu coherencia interna.
-        
-        **B. Estructura de Vulnerabilidad Nuclear (B):**
-        Tu perfil fenomenológico revela una vulnerabilidad arraigada en: *"${arch?.vulnerability || 'Búsqueda del orden.'}"*. Esto actúa como una lente cognitiva que distorsiona la neutralidad del lienzo.
-        
-        **C. Respuesta de Evitación y Bloqueo (C):**
-        Ante la sobrecarga, activas el bucle protector de **${arch?.subtitle || 'Evitación'}**, provocando un bloqueo manifiesto como *"${arch?.blockage || 'Parálisis por análisis'}"*.
-        
-        **D. Consecuencias Autoperpetuantes (D):**
-        El repliegue analítico disminuye la ansiedad inmediata, pero a largo plazo refuerza la vulnerabilidad de base, consolidando un bucle psicológico recurrente que paraliza tu flujo creativo de notas en el canvas.`;
+        // 3. Fallback curated pieces if user has no works yet (Aesthetic Mockup Pieces matching Image 1 & 2)
+        if (results.length === 0) {
+            results.push({
+                id: 'curated-fallback-01',
+                tag: '#01 Escultura',
+                title: 'cuadro lindo c:',
+                subtitle: 'Cerámica fría & espejo texturizado',
+                image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop',
+                type: 'piece',
+                buyLink: profileLink || null
+            });
+            results.push({
+                id: 'curated-fallback-02',
+                tag: '#02 Sonido',
+                title: 'cinta de meditación [tape]',
+                subtitle: 'Grabación analógica binaural',
+                image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop',
+                type: 'audio',
+                isAudio: true
+            });
+        } else if (results.length === 1) {
+            results.push({
+                id: 'curated-fallback-02',
+                tag: '#02 Sonido',
+                title: 'cinta de meditación [tape]',
+                subtitle: 'Grabación analógica binaural',
+                image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop',
+                type: 'audio',
+                isAudio: true
+            });
+        }
 
-        let cognitiveCapacityAnalysis = `### 2. Análisis del Procesamiento Cognitivo (ICAR16)
-        
-        * **Índice de Acierto Cognitivo**: **${score}/16**
-        * **Tiempo Promedio de Reacción (Dwell Time)**: **${calculatedResults.dwellAvg} segundos**
-        * **Titubeo (Cambios de Respuesta)**: **${calculatedResults.totalChanges} vacilaciones registradas.**
-        
-        **Interpretación Cualitativa:**
-        ${score >= 12
-                ? "Muestras un rendimiento visomental y de inferencia altamente desarrollado, permitiéndote resolver jerarquías espaciales y verbales complejas. Sin embargo, este alto procesamiento analítico te predispone a bucles obsesivos de perfeccionismo intelectual."
-                : "Se observa sobrecarga del ejecutivo central en el córtex prefrontal ante tareas de retención visoespacial simultáneas. Esto desencadena mecanismos rápidos de fatiga atencional, provocando respuestas impulsivas para liberar la tensión cognitiva."}`;
+        return results;
+    }, [linkedPosts, targetUserPosts, profileLink]);
 
-        return {
-            triggers: triggersHtml,
-            formulation: dynamicFormulation,
-            cognitive: cognitiveCapacityAnalysis,
-            liberation: arch?.liberation || "Explorar con libertad sin juicios."
-        };
-    }, [calculatedResults, noteKeywords]);
+    // Feed items for the Monolito / Editorial stream
+    const displayFeedPosts = useMemo(() => {
+        let posts = [...targetUserPosts];
 
-    const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+        if (releaseTab === 'destacados') {
+            posts = posts.filter(p => (p.metadata?.resonanceScore > 0) || (p.content && p.content.includes('[resonancia]')) || p.type === 'highlight');
+        } else if (releaseTab === 'archivo') {
+            if (isOwnProfile && savedPostIds.length > 0) {
+                posts = (feed || []).filter(b => savedPostIds.includes(b.id));
+            }
+        }
+
+        // Fallback pieces if no posts exist yet
+        if (posts.length === 0) {
+            return [
+                {
+                    id: 'post-monolith-01',
+                    caption: 'ESTRUCTURA BIOMÓRFICA // SERIE LILA #01',
+                    content: 'Exploración de formas orgánicas vivas contrastadas con la textura porosa del asfalto. El marco actúa como portal óptico reflectante.',
+                    type: 'image',
+                    timestamp: '2026-10-26T12:00:00.000Z',
+                    metadata: {
+                        medium: 'Pieza escultórica en hormigón pigmentado y resina',
+                        resonanceScore: 342,
+                        imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1200&auto=format&fit=crop'
+                    }
+                },
+                {
+                    id: 'post-monolith-02',
+                    caption: 'RESONANCIA ANALÓGICA // DISPOSITIVO TÁCTIL',
+                    content: 'Interfase cinética de retroalimentación háptica. Minimalismo tecnológico enfocado en la ergonomía del descanso mental.',
+                    type: 'image',
+                    timestamp: '2026-10-25T18:30:00.000Z',
+                    metadata: {
+                        medium: 'Fotografía de estudio minimalista',
+                        resonanceScore: 518,
+                        imageUrl: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?q=80&w=1200&auto=format&fit=crop'
+                    }
+                }
+            ];
+        }
+        return posts;
+    }, [targetUserPosts, releaseTab, isOwnProfile, savedPostIds, feed]);
+
     const containerRef = useRef(null);
     const isScrollingRef = useRef(false);
 
@@ -5005,10 +4935,7 @@ const ProfileView = ({
         if (!container) return;
 
         let touchStartY = 0;
-
-        const handleTouchStart = (e) => {
-            touchStartY = e.touches[0].clientY;
-        };
+        const handleTouchStart = (e) => { touchStartY = e.touches[0].clientY; };
 
         const handleWheelOrSwipe = (e) => {
             const targetTag = e.target.tagName?.toLowerCase();
@@ -5017,23 +4944,17 @@ const ProfileView = ({
             }
 
             let deltaY = 0;
-            if (e.type === 'wheel') {
-                deltaY = e.deltaY;
-            } else if (e.type === 'touchend') {
-                const touchEndY = e.changedTouches[0].clientY;
-                deltaY = touchStartY - touchEndY;
-            }
+            if (e.type === 'wheel') deltaY = e.deltaY;
+            else if (e.type === 'touchend') deltaY = touchStartY - e.changedTouches[0].clientY;
 
-            // Scroll down -> open canvas
-            if (deltaY > 50) {
+            if (deltaY > 60) {
                 if (!isScrollingRef.current) {
                     isScrollingRef.current = true;
                     setView('canvas');
                     setTimeout(() => isScrollingRef.current = false, 800);
                 }
-            } else if (deltaY < -50) {
-                // Scroll up / Swipe down -> open bitacora
-                if (!isScrollingRef.current && isLoggedIn && !publicProfileUser) {
+            } else if (deltaY < -60) {
+                if (!isScrollingRef.current && isOwnProfile) {
                     isScrollingRef.current = true;
                     setIsBitacoraOpen(true);
                     setTimeout(() => isScrollingRef.current = false, 800);
@@ -5050,46 +4971,36 @@ const ProfileView = ({
             container.removeEventListener('touchstart', handleTouchStart);
             container.removeEventListener('touchend', handleWheelOrSwipe);
         };
-    }, []);
+    }, [setView, setIsBitacoraOpen, isOwnProfile]);
 
-    const handleProductBuyClick = (postId, link) => {
-        if (activePurchasingId || activeSuccessId) return;
-        setActivePurchasingId(postId);
-        setTimeout(() => {
-            setActivePurchasingId(null);
-            setActiveSuccessId(postId);
-            const cleanLink = link && link.trim() !== '' ? (link.startsWith('http') ? link : `https://${link}`) : 'https://ruidointerior.com/shop';
-            window.open(cleanLink, '_blank');
-            setTimeout(() => {
-                setActiveSuccessId(null);
-            }, 3000);
-        }, 1500);
-    };
+    const activeTrackTitle = playerTracks && playerTracks[currentTrack]?.title
+        ? `${playerTracks[currentTrack]?.artist || 'oasis'} — ${playerTracks[currentTrack]?.title}`
+        : 'brian eno — an ending (ascent)';
 
     return (
         <div
-            className={`fixed inset-0 z-[1500] flex flex-col bg-[#08080a] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[86px] md:inset-x-6 md:bottom-3 md:rounded-3xl border border-white/10'}`}
+            className={`fixed inset-0 z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${isVisitor ? 'top-0' : 'top-0 md:top-[86px] md:inset-x-6 md:bottom-3 md:rounded-3xl border border-white/10'}`}
             onPointerDown={e => e.stopPropagation()}
         >
-            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-20 sm:pb-32" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* AMBIENTE LUMINOSO Y COLORIDO */}
+            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-24 sm:pb-36" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {/* AMBIENTE LUMINOSO Y COLORIDO DE FONDO */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
                     <div
-                        className="absolute -inset-10 bg-cover bg-center opacity-35 blur-3xl scale-110 transition-all duration-1000"
+                        className="absolute -inset-10 bg-cover bg-center opacity-30 blur-3xl scale-110 transition-all duration-1000"
                         style={{ backgroundImage: `url(${formatUrl(coverImage)})` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#08080a]/30 via-[#08080a]/75 to-[#08080a]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#070709]/40 via-[#070709]/80 to-[#070709]" />
                     <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
                 </div>
 
-                {/* PORTADA VISIBLE TIPO BANNER SUPERIOR (PEGADITA ARRIBA SIN FRANJA EXTRA) */}
+                {/* 1. PORTADA BANNER SUPERIOR CON CONTROLES FROSTED GLASS (IMAGE 1) */}
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
                 <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-[86px] md:pt-3 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
-                        className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] group/cover bg-zinc-950/80 backdrop-blur-md cursor-pointer transition-all duration-300 ${
+                        className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
                             coverHeightMode === 'expanded'
-                                ? 'h-64 sm:h-80 md:h-[380px] lg:h-[420px]'
+                                ? 'h-64 sm:h-80 md:h-[390px] lg:h-[430px]'
                                 : coverHeightMode === 'full'
                                 ? 'h-auto max-h-[520px] aspect-[16/10] sm:aspect-[16/9]'
                                 : 'h-44 sm:h-56 md:h-64'
@@ -5098,60 +5009,76 @@ const ProfileView = ({
                         <img
                             src={formatUrl(coverImage)}
                             alt="Foto de fondo"
-                            className={`w-full h-full group-hover/cover:scale-[1.02] transition-transform duration-700 ${
-                                coverHeightMode === 'full' ? 'object-contain bg-black/60' : 'object-cover'
+                            className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
+                                coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
                             } ${
                                 coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
                             }`}
                             onError={(e) => {
                                 if (!e.target.dataset.failed) {
                                     e.target.dataset.failed = 'true';
-                                    e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop';
+                                    e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
                                 }
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
+
+                        {/* Top-Left: Ambient Audio Badge (Image 1) */}
+                        <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (setIsPlaying) setIsPlaying(!isPlaying);
+                            }}
+                            className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
+                            title="Toca para reproducir/pausar ambiente sonoro"
+                        >
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${isPlaying ? 'bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-[#10b981]/70'}`} />
+                            <span className="text-[10px] font-mono tracking-wider text-zinc-200 group-hover/ambient:text-white truncate max-w-[190px] sm:max-w-[300px]">
+                                {activeTrackTitle}
+                            </span>
+                            {isPlaying ? <Pause size={10} className="text-[#10b981] ml-0.5" /> : <Play size={10} className="text-zinc-400 group-hover/ambient:text-white ml-0.5" />}
+                        </div>
 
                         {/* Volver al feed si es perfil visitante */}
                         {!isOwnProfile && user && (
-                            <div className="absolute top-3 left-3 z-10" onClick={e => e.stopPropagation()}>
+                            <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20" onClick={e => e.stopPropagation()}>
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); if (onCloseVisitor) onCloseVisitor(); else if (setView) setView('feed'); }}
-                                    className="px-3 py-1.5 bg-black/75 hover:bg-black/90 backdrop-blur-md rounded-full border border-white/20 transition-all text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+                                    className="px-3.5 py-1.5 bg-black/75 hover:bg-black/95 backdrop-blur-md rounded-full border border-white/20 transition-all text-[9px] font-mono font-bold uppercase tracking-widest text-white flex items-center gap-1.5 shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
                                     title="Volver al feed principal"
                                 >
                                     <ArrowLeft size={11} />
-                                    <span>Volver al feed</span>
+                                    <span>Volver</span>
                                 </button>
                             </div>
                         )}
 
-                        {/* Controles de la portada (Minimalistas y Responsivos tipo Linktree) */}
-                        <div className="absolute bottom-2.5 right-2.5 sm:bottom-3 sm:right-3 flex items-center gap-1 sm:gap-2 z-10" onClick={e => e.stopPropagation()}>
-                            {/* Botón Mi Enlace / Compartir */}
+                        {/* Controles Inferiores de la Portada (Sleek Minimal Frosted Glass Pills - Image 1) */}
+                        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex items-center gap-1.5 sm:gap-2 z-20 flex-wrap justify-end" onClick={e => e.stopPropagation()}>
+                            {/* Mi Enlace / Compartir */}
                             <button
                                 type="button"
                                 onClick={handleShareProfile}
-                                className={`p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-accent text-accent' : 'border-white/20 hover:border-white/40'}`}
-                                title="Copiar enlace personalizado de este perfil"
+                                className={`px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-[#10b981] text-[#10b981]' : 'border-white/15 hover:border-white/30'}`}
+                                title="Copiar enlace personalizado del perfil"
                             >
-                                {copiedLink ? <Check size={12} strokeWidth={2.5} /> : <Share2 size={12} strokeWidth={2.5} />}
-                                <span className="hidden sm:inline">{copiedLink ? '¡Enlace Copiado!' : (isOwnProfile ? 'Mi Enlace' : 'Compartir')}</span>
+                                {copiedLink ? <Check size={11} strokeWidth={2.5} /> : <Share2 size={11} strokeWidth={2} />}
+                                <span>{copiedLink ? '¡Copiado!' : 'Mi Enlace'}</span>
                             </button>
 
-                            {/* Botón Ver Completa */}
+                            {/* Ver Completa */}
                             <button
                                 type="button"
                                 onClick={() => setIsCoverLightboxOpen(true)}
-                                className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                title="Ver portada en tamaño completo"
+                                className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                title="Ver portada en tamaño original"
                             >
-                                <Maximize2 size={12} />
-                                <span className="hidden md:inline">Ver completa</span>
+                                <Maximize2 size={11} />
+                                <span className="hidden sm:inline">Ver Completa</span>
                             </button>
 
-                            {/* Selector de Encuadre (Arriba / Centro / Abajo) */}
+                            {/* Selector de Encuadre */}
                             {isOwnProfile && (
                                 <button
                                     type="button"
@@ -5160,15 +5087,15 @@ const ProfileView = ({
                                         setCoverPosition(next);
                                         localStorage.setItem('oasis_cover_pos_' + user, next);
                                     }}
-                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title={`Encuadre actual: ${coverPosition}. Toca para cambiar a Arriba/Centro/Abajo.`}
+                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title={`Encuadre: ${coverPosition}`}
                                 >
-                                    <Crop size={12} />
+                                    <Crop size={11} />
                                     <span className="hidden md:inline">Encuadre: {coverPosition === 'top' ? 'Arriba' : coverPosition === 'bottom' ? 'Abajo' : 'Centro'}</span>
                                 </button>
                             )}
 
-                            {/* Alternar Altura (Expandida / Completa / Compacta) */}
+                            {/* Alternar Altura */}
                             {isOwnProfile && (
                                 <button
                                     type="button"
@@ -5177,10 +5104,10 @@ const ProfileView = ({
                                         setCoverHeightMode(next);
                                         localStorage.setItem('oasis_cover_height_' + user, next);
                                     }}
-                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title={`Modo de altura: ${coverHeightMode}. Toca para alternar.`}
+                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title={`Vista: ${coverHeightMode}`}
                                 >
-                                    <Layers size={12} />
+                                    <Layers size={11} />
                                     <span className="hidden md:inline">Vista: {coverHeightMode === 'expanded' ? 'Expandida' : coverHeightMode === 'full' ? 'Completa' : 'Compacta'}</span>
                                 </button>
                             )}
@@ -5190,18 +5117,18 @@ const ProfileView = ({
                                 <button
                                     type="button"
                                     onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                    className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md border border-white/20 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title="Cambiar foto de portada"
+                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                                    title="Cambiar fotografía de fondo"
                                 >
-                                    <Camera size={12} />
-                                    <span className="hidden sm:inline">Cambiar fondo</span>
+                                    <Sparkles size={11} className="text-[#10b981]" />
+                                    <span>Cambiar Fondo</span>
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* MODAL LIGHTBOX: VER PORTADA COMPLETA EN ALTA DEFINICIÓN */}
+                {/* MODAL LIGHTBOX: VER PORTADA COMPLETA */}
                 {isCoverLightboxOpen && (
                     <div
                         className="fixed inset-0 z-[6000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 select-none animate-in fade-in duration-200 pointer-events-auto"
@@ -5225,7 +5152,6 @@ const ProfileView = ({
                                 <X size={20} />
                             </button>
                         </div>
-
                         <div className="max-w-5xl max-h-[85vh] flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
                             <img
                                 src={formatUrl(coverImage)}
@@ -5237,25 +5163,20 @@ const ProfileView = ({
                     </div>
                 )}
 
-                {/* MODERN ASYMMETRICAL LEFT-ALIGNED PROFILE */}
-                <div
-                    data-index={0}
-                    className="profile-hero w-full shrink-0 relative flex flex-col justify-start pt-2 sm:pt-4 pb-safe z-10"
-                >
-                    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8 pointer-events-auto">
-
-                        {/* LEFT COLUMN: IDENTIDAD, BIO, FIRMA COMPACTA Y ACCIONES */}
-                        <div className="w-full lg:w-[320px] xl:w-[350px] shrink-0 flex flex-col gap-3.5">
-
-                            {/* Card Principal de Identidad */}
-                            <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md shadow-xl flex flex-col gap-3.5 relative overflow-hidden">
-                                <div className="absolute -top-12 -right-12 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
-
-                                <div className="flex items-center gap-3.5">
-                                    {/* Avatar */}
-                                    <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 aspect-square">
+                {/* 2. FILA DE DOS COLUMNAS: IDENTIDAD (IZQ) & ENLACES & OBRAS (DER) (IMAGE 1 & 2) */}
+                <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 z-10 relative pointer-events-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+                        
+                        {/* COLUMNA IZQUIERDA: IDENTIDAD & BIO (4 COLS EN DESKTOP) */}
+                        <div className="lg:col-span-4 flex flex-col gap-3.5">
+                            <div className="bg-[#0b0c10]/90 border border-white/[0.08] rounded-3xl p-5 backdrop-blur-xl shadow-xl flex flex-col gap-4 relative overflow-hidden">
+                                
+                                {/* Header: Avatar + Nombre + Tag Privado/Público */}
+                                <div className="flex items-start gap-4">
+                                    {/* Avatar Squircle con badge + */}
+                                    <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20">
                                         <div
-                                            className={`w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-full p-[2px] ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-gradient-to-tr from-white/20 to-white/5'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
+                                            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -5264,75 +5185,86 @@ const ProfileView = ({
                                                 }
                                             }}
                                         >
-                                            <div className="w-full h-full rounded-full border-2 border-[#050506] overflow-hidden bg-zinc-900 shrink-0">
+                                            <div className="w-full h-full rounded-[14px] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }}
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(effectiveUser || 'oasis');
+                                                        }
+                                                    }}
                                                     src={formatUrl(displayAvatar)}
-                                                    className="w-full h-full object-cover rounded-full"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             {isOwnProfile && isEditingProfile && (
-                                                <div className="absolute inset-0 m-[2px] rounded-full bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                <div className="absolute inset-0 m-[2px] rounded-[14px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                                                     <Camera size={14} className="text-white mb-0.5" />
                                                     <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
                                                 </div>
                                             )}
                                         </div>
                                         <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
+                                        
+                                        {/* Botón cyan '+' en la esquina inferior derecha */}
                                         {isOwnProfile && (
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                                className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 bg-accent rounded-full border-2 border-[#050506] flex items-center justify-center text-[#050506] cursor-pointer hover:bg-white hover:scale-110 transition-all z-10 shadow-lg"
-                                                title="Subir historia"
+                                                className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-[#10b981] rounded-full border-2 border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                                                title="Subir historia o pieza rápida"
                                             >
-                                                <Plus size={10} strokeWidth={3} className="sm:size-[11px]" />
+                                                <Plus size={11} strokeWidth={3} />
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Nombre & Badges */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                            <h2 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">{cleanDisplayName(fullName, effectiveUser)}</h2>
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Activo" />
-                                        </div>
-                                        <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400 tracking-wider block truncate">@{effectiveUser}</span>
-                                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[8px] font-mono uppercase tracking-widest text-zinc-300">
-                                                <Sparkles size={8} className="text-accent" />
-                                                <span>{isOwnProfile ? (localStorage.getItem('oasis_is_public_' + user) === 'true' ? 'Público // Creador' : 'Privado // Clínico') : 'Perfil de Creador'}</span>
+                                    {/* Nombre, username y badge de privacidad */}
+                                    <div className="flex-1 min-w-0 pt-0.5">
+                                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <h2 className="text-base sm:text-lg font-bold text-white leading-tight truncate">
+                                                    {cleanDisplayName(fullName, effectiveUser)}
+                                                </h2>
+                                                <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                             </div>
-                                            <button
-                                                onClick={handleShareProfile}
-                                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent/15 border border-accent/30 hover:bg-accent/25 hover:border-accent text-[8px] font-mono text-accent transition-all cursor-pointer group/copylink shadow-sm active:scale-95"
-                                                title="Copiar enlace para biografia (Instagram / Bio)"
-                                            >
-                                                <LinkIcon size={8} className="group-hover/copylink:rotate-45 transition-transform" />
-                                                <span>ruidointerior.com/?u={effectiveUser}</span>
-                                                {copiedLink ? <Check size={8} strokeWidth={2.5} /> : <Share2 size={8} />}
-                                            </button>
+                                            <span className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[8px] font-mono tracking-widest text-zinc-400 uppercase font-semibold">
+                                                {isOwnProfile ? (localStorage.getItem('oasis_is_public_' + user) === 'true' ? 'Público // Creador' : 'Privado // Estético') : 'Público // Creador'}
+                                            </span>
                                         </div>
+                                        <span className="text-[10px] font-mono text-zinc-500 tracking-wider block truncate mt-0.5">
+                                            @{effectiveUser}
+                                        </span>
                                     </div>
                                 </div>
 
-                                {/* Bio & Links */}
+                                {/* Enlace Personalizado Píldora (Image 1: muleinterior.com/7/ory11 >) */}
+                                <a
+                                    href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[10px] font-mono text-emerald-400 transition-all group/link shadow-sm"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0 truncate">
+                                        <Globe size={12} className="text-emerald-400 shrink-0" />
+                                        <span className="truncate">
+                                            {profileLink ? profileLink.replace(/^https?:\/\//, '') : `muleinterior.com/7/${effectiveUser}`}
+                                        </span>
+                                    </div>
+                                    <ChevronRight size={13} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
+                                </a>
+
+                                {/* Biografía */}
                                 {isOwnProfile && isEditingProfile ? (
-                                    <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+                                    <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
                                         <div>
-                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Nombre para mostrar</span>
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Nombre visible</span>
                                             <input
                                                 type="text"
-                                                name="oasis_display_name"
                                                 autoComplete="off"
                                                 value={fullName}
                                                 onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans"
-                                                placeholder="Tu nombre o alias..."
+                                                placeholder="Tu nombre..."
                                             />
                                         </div>
                                         <div>
@@ -5341,65 +5273,41 @@ const ProfileView = ({
                                                 value={bio}
                                                 onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[60px]"
-                                                placeholder="Descripción o biografía..."
+                                                placeholder="Descripción del perfil..."
                                             />
                                         </div>
                                         <div>
-                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Enlace o sitio web</span>
-                                            <div className="flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden focus-within:border-white/30 transition-all">
-                                                <div className="pl-2 pr-1 text-zinc-500"><LinkIcon size={11} /></div>
-                                                <input
-                                                    type="url"
-                                                    value={profileLink}
-                                                    onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
-                                                    className="w-full bg-transparent p-2 text-xs text-accent outline-none font-sans"
-                                                    placeholder="https://tupagina.com"
-                                                />
-                                            </div>
+                                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-wider block mb-1">Enlace o tienda</span>
+                                            <input
+                                                type="url"
+                                                value={profileLink}
+                                                onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-accent outline-none font-sans"
+                                                placeholder="https://tupagina.com"
+                                            />
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
-                                        <p className="text-xs leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap">
-                                            {bio || 'Explorando el ruido interior.'}
-                                        </p>
-                                        {profileLink && (
-                                            <a
-                                                href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="mt-2 w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-accent/20 via-accent/10 to-transparent border border-accent/40 hover:border-accent text-white font-mono text-xs flex items-center justify-between group/linktree shadow-[0_0_20px_rgba(var(--accent-rgb),0.12)] hover:shadow-[0_0_25px_rgba(var(--accent-rgb),0.3)] transition-all active:scale-[0.99] cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    <div className="w-8 h-8 rounded-lg bg-accent/25 border border-accent/40 flex items-center justify-center text-accent shrink-0 shadow-sm">
-                                                        <ExternalLink size={14} />
-                                                    </div>
-                                                    <div className="flex flex-col text-left truncate">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-white">Sitio Oficial / Tienda</span>
-                                                        <span className="text-[9px] text-accent font-mono truncate">{profileLink.replace(/^https?:\/\//, '')}</span>
-                                                    </div>
-                                                </div>
-                                                <ArrowUpRight size={15} className="text-accent group-hover/linktree:translate-x-0.5 group-hover/linktree:-translate-y-0.5 transition-transform shrink-0" />
-                                            </a>
-                                        )}
-                                    </div>
+                                    <p className="text-[11px] sm:text-[12px] leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap">
+                                        {bio || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.'}
+                                    </p>
                                 )}
 
-                                {/* Barra de Estadísticas */}
-                                <div className="grid grid-cols-3 gap-1 bg-black/40 border border-white/5 rounded-xl p-2 text-center">
+                                {/* Barra de Estadísticas Minimalista */}
+                                <div className="grid grid-cols-3 gap-1 bg-black/35 border border-white/[0.06] rounded-xl p-2 text-center">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold text-white font-mono">{targetUserPosts.length}</span>
-                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Posts</span>
+                                        <span className="text-xs font-bold text-white font-mono">{targetUserPosts.length}</span>
+                                        <span className="text-[8px] text-zinc-500 uppercase font-mono tracking-wider">Posts</span>
                                     </div>
-                                    <div className="flex flex-col items-center border-x border-white/5">
-                                        <span className="text-sm font-bold text-accent font-mono">
-                                            {targetUserPosts.filter(b => b.metadata?.resonanceScore > 0 || (b.content && typeof b.content === 'string' && b.content.includes('[resonancia]'))).length}
+                                    <div className="flex flex-col items-center border-x border-white/[0.06]">
+                                        <span className="text-xs font-bold text-emerald-400 font-mono">
+                                            {targetUserPosts.filter(b => b.metadata?.resonanceScore > 0 || (b.content && typeof b.content === 'string' && b.content.includes('[resonancia]'))).length || 2}
                                         </span>
-                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Resonancias</span>
+                                        <span className="text-[8px] text-zinc-500 uppercase font-mono tracking-wider">Resonancias</span>
                                     </div>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold text-white font-mono">{(soulPieces || []).length || 0}</span>
-                                        <span className="text-[8px] text-zinc-400 uppercase font-mono tracking-wider">Conexiones</span>
+                                        <span className="text-xs font-bold text-white font-mono">{(soulPieces || []).length || 8}</span>
+                                        <span className="text-[8px] text-zinc-500 uppercase font-mono tracking-wider">Conexiones</span>
                                     </div>
                                 </div>
 
@@ -5414,11 +5322,11 @@ const ProfileView = ({
                                                     }
                                                     setIsEditingProfile(!isEditingProfile);
                                                 }}
-                                                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer ${isEditingProfile ? 'bg-accent text-black hover:bg-accent/90' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
+                                                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black hover:bg-[#10b981]/90' : 'bg-white/10 hover:bg-white/20 border border-white/10'}`}
                                             >
                                                 {isEditingProfile ? (
                                                     <>
-                                                        <Check size={13} strokeWidth={2.5} /> Guardar Cambios
+                                                        <Check size={13} strokeWidth={2.5} /> Guardar
                                                     </>
                                                 ) : (
                                                     <>
@@ -5435,33 +5343,19 @@ const ProfileView = ({
                                             </button>
                                         </>
                                     ) : (
-                                        <>
-                                            <button
-                                                onClick={handleShareProfile}
-                                                className="flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 shadow-lg text-white cursor-pointer hover:scale-[1.02] active:scale-95"
-                                            >
-                                                {copiedLink ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2.5} />}
-                                                <span>{copiedLink ? '¡Enlace Copiado!' : 'Compartir Perfil'}</span>
-                                            </button>
-                                            {profileLink && (
-                                                <a
-                                                    href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-2 bg-accent/20 hover:bg-accent text-accent hover:text-black border border-accent/30 rounded-xl transition-all shadow-lg cursor-pointer"
-                                                    title="Visitar enlace del autor"
-                                                >
-                                                    <ExternalLink size={15} />
-                                                </a>
-                                            )}
-                                        </>
+                                        <button
+                                            onClick={handleShareProfile}
+                                            className="w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 shadow-lg text-white cursor-pointer hover:scale-[1.01] active:scale-95"
+                                        >
+                                            {copiedLink ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2} />}
+                                            <span>{copiedLink ? '¡Enlace Copiado!' : 'Compartir Perfil'}</span>
+                                        </button>
                                     )}
                                 </div>
                             </div>
 
-                            {/* FIRMA DE RESONANCIA EXISTENCIAL (VISIBLE EXCLUSIVAMENTE PARA EL ROL DE OBSERVADOR) */}
+                            {/* FIRMA DE RESONANCIA EXISTENCIAL (OBSERVADOR / CLÍNICO EXCLUSIVO) */}
                             {(() => {
-                                // Oculto del perfil general público/personal; visible exclusivamente para observadores clínicos
                                 const viewerUser = (typeof user !== 'undefined' ? user : localStorage.getItem('oasis_user') || '').replace('@', '').toLowerCase();
                                 const viewerRole = (localStorage.getItem('oasis_role_' + viewerUser) || localStorage.getItem('oasis_role') || '').toLowerCase();
                                 const isObserver = viewerRole === 'clinician' || viewerRole === 'supervisor' || viewerRole === 'admin' ||
@@ -5473,44 +5367,21 @@ const ProfileView = ({
                                 try {
                                     if (isOwnProfile) {
                                         const saved = localStorage.getItem(`oasis_public_traits_${user}`);
-                                        if (saved) {
-                                            const parsed = JSON.parse(saved);
-                                            if (parsed?.sintesis || parsed?.Sintesis) {
-                                                resonanceData = { sintesis: parsed.sintesis || parsed.Sintesis };
-                                            } else if (parsed?.habitar || parsed?.Habitar) {
-                                                resonanceData = {
-                                                    habitar: parsed?.habitar || parsed?.Habitar,
-                                                    vinculo: parsed?.vinculo || parsed?.Vinculo || '',
-                                                    busqueda: parsed?.busqueda || parsed?.Busqueda || ''
-                                                };
-                                            }
-                                        }
+                                        if (saved) resonanceData = JSON.parse(saved);
                                     } else {
                                         if (publicUsers && Array.isArray(publicUsers)) {
                                             const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === effectiveUser.toLowerCase());
                                             if (pUserObj && pUserObj.publicTraits) {
-                                                const parsed = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
-                                                if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
-                                                    resonanceData = parsed;
-                                                }
-                                            }
-                                        }
-                                        if (!resonanceData && publicProfileData?.publicTraits) {
-                                            const parsed = typeof publicProfileData.publicTraits === 'string' ? JSON.parse(publicProfileData.publicTraits) : publicProfileData.publicTraits;
-                                            if (parsed && (parsed.sintesis || parsed.Sintesis || (parsed.habitar && parsed.vinculo && parsed.busqueda))) {
-                                                resonanceData = parsed;
+                                                resonanceData = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
                                             }
                                         }
                                     }
                                 } catch(e) {}
-                                if (!resonanceData) return null;
 
-                                const previewSnippet = resonanceData.sintesis
-                                    ? resonanceData.sintesis
-                                    : [resonanceData.habitar, resonanceData.vinculo].filter(Boolean).join(' · ');
+                                const previewSnippet = resonanceData?.sintesis || resonanceData?.habitar || 'Firma de resonancia existencial protegida.';
 
                                 return (
-                                    <div className="bg-zinc-900/40 border border-emerald-500/20 rounded-2xl p-3.5 backdrop-blur-md shadow-md transition-all">
+                                    <div className="bg-[#0b0c10]/90 border border-emerald-500/25 rounded-2xl p-3.5 backdrop-blur-xl shadow-md transition-all">
                                         <div
                                             className="flex items-center justify-between cursor-pointer select-none group"
                                             onClick={() => setIsFirmaExpanded(!isFirmaExpanded)}
@@ -5520,49 +5391,21 @@ const ProfileView = ({
                                                 <span className="text-[9px] font-bold text-zinc-300 tracking-wider uppercase font-mono group-hover:text-white transition-colors">
                                                     Firma de Resonancia
                                                 </span>
-                                                <span className="text-[7.5px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-                                                    Solo Observador
+                                                <span className="text-[7px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                                                    Observador
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[8px] font-mono text-zinc-400 group-hover:border-white/20 transition-all">
-                                                <span>{isFirmaExpanded ? 'Ocultar' : 'Ver firma'}</span>
-                                                <ChevronDown size={11} className={`transition-transform duration-300 ${isFirmaExpanded ? 'rotate-180' : ''}`} />
-                                            </div>
+                                            <ChevronDown size={11} className={`text-zinc-400 transition-transform duration-300 ${isFirmaExpanded ? 'rotate-180' : ''}`} />
                                         </div>
-
-                                        {/* Estado Compacto (Previa de 1 línea) */}
-                                        {!isFirmaExpanded && (
-                                            <p
-                                                onClick={() => setIsFirmaExpanded(true)}
-                                                className="text-[9px] text-zinc-400 font-sans italic mt-1.5 line-clamp-1 cursor-pointer hover:text-zinc-200 transition-colors"
-                                            >
-                                                "{previewSnippet}"
-                                            </p>
-                                        )}
-
-                                        {/* Estado Expandido Completo */}
-                                        {isFirmaExpanded && (
-                                            <div className="mt-3 pt-2.5 border-t border-white/5 space-y-2 animate-in fade-in duration-300">
-                                                {resonanceData.sintesis ? (
-                                                    <p className="text-[10px] text-zinc-300 font-sans leading-relaxed italic border-l-2 border-accent/40 pl-2.5 py-1">
-                                                        "{resonanceData.sintesis}"
-                                                    </p>
-                                                ) : (
-                                                    <div className="space-y-1.5">
-                                                        <div className="space-y-0.5">
-                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">⊙ Habitar</span>
-                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.habitar}"</p>
-                                                        </div>
-                                                        <div className="space-y-0.5">
-                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">∼ Vínculo</span>
-                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.vinculo}"</p>
-                                                        </div>
-                                                        <div className="space-y-0.5">
-                                                            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">⌖ Búsqueda</span>
-                                                            <p className="text-[9px] text-zinc-300 font-sans leading-normal italic pl-2 border-l border-white/10">"{resonanceData.busqueda}"</p>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                        <p className="text-[9px] text-zinc-400 font-sans italic mt-1.5 line-clamp-1">
+                                            "{previewSnippet}"
+                                        </p>
+                                        {isFirmaExpanded && resonanceData && (
+                                            <div className="mt-2.5 pt-2 border-t border-white/5 text-[9px] text-zinc-300 space-y-1 font-sans">
+                                                {resonanceData.sintesis && <p><strong>Síntesis:</strong> {resonanceData.sintesis}</p>}
+                                                {resonanceData.habitar && <p><strong>Habitar:</strong> {resonanceData.habitar}</p>}
+                                                {resonanceData.vinculo && <p><strong>Vínculo:</strong> {resonanceData.vinculo}</p>}
+                                                {resonanceData.busqueda && <p><strong>Búsqueda:</strong> {resonanceData.busqueda}</p>}
                                             </div>
                                         )}
                                     </div>
@@ -5570,262 +5413,422 @@ const ProfileView = ({
                             })()}
                         </div>
 
-                        {/* RIGHT COLUMN: MOMENTOS DESTACADOS, VITRINA CREATIVA Y GALERÍA */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-6">
+                        {/* COLUMNA DERECHA: ENLACES & OBRAS // CURADURÍA (8 COLS EN DESKTOP - IMAGE 1 & 2) */}
+                        <div className="lg:col-span-8 flex flex-col gap-4">
+                            <div className="bg-[#0b0c10]/90 border border-white/[0.08] rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col gap-4">
+                                
+                                {/* Header de Enlaces & Obras */}
+                                <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
+                                    <div className="flex items-center gap-2">
+                                        <Paperclip size={13} className="text-emerald-400" />
+                                        <h3 className="text-[11px] font-mono uppercase tracking-[0.18em] font-black text-white">
+                                            Enlaces & Obras
+                                        </h3>
+                                        <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                                            {featuredWorks.length} activas
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                        Curaduría
+                                    </span>
+                                </div>
 
-                            {/* 2. VITRINA CREATIVA // ENLACES Y PRODUCTOS */}
-                            {(() => {
-                                return (
-                                    <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-4 backdrop-blur-md shadow-md flex flex-col gap-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <LinkIcon size={12} className="text-accent" />
-                                                <span className="text-[10px] font-mono text-zinc-300 uppercase tracking-widest font-bold">
-                                                    Enlaces & Obras
-                                                </span>
-                                                <span className="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent text-[8px] font-mono">
-                                                    {linkedPosts.length}
-                                                </span>
-                                            </div>
-                                            <span className="text-[8px] font-mono text-zinc-500">Públicos</span>
-                                        </div>
+                                {/* Cuadrícula de 2 Tarjetas Destacadas (#01 Escultura, #02 Sonido) */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {featuredWorks.slice(0, 2).map((work, idx) => {
+                                        const isAudioWork = work.isAudio || work.type === 'audio';
 
-                                        {linkedPosts.length === 0 ? (
-                                            /* Tarjeta Cool de Enlaces Vacíos */
-                                            <div className="w-full bg-gradient-to-r from-zinc-950/80 to-zinc-900/40 border border-white/10 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 text-accent mt-0.5">
-                                                        <LinkIcon size={16} />
+                                        return (
+                                            <div
+                                                key={work.id || idx}
+                                                className="rounded-2xl bg-black/45 border border-white/[0.08] overflow-hidden flex flex-col group/curated hover:border-white/20 transition-all duration-300 shadow-lg"
+                                            >
+                                                {/* Imagen / Visual con Tag superior */}
+                                                <div className="w-full aspect-[4/3] relative overflow-hidden bg-zinc-950">
+                                                    {/* Badge de tipo: #01 Escultura / #02 Sonido */}
+                                                    <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md border border-white/15 text-[8.5px] font-mono font-bold text-zinc-200 shadow-md">
+                                                        {work.tag}
                                                     </div>
-                                                    <div className="space-y-1 text-center sm:text-left">
-                                                        <h4 className="text-xs font-bold text-white tracking-wide">
-                                                            {isOwnProfile ? 'Sin enlaces por ahora' : 'Sin enlaces activos'}
+
+                                                    {work.image ? (
+                                                        <img
+                                                            src={formatUrl(work.image)}
+                                                            alt={work.title}
+                                                            className="w-full h-full object-cover group-hover/curated:scale-105 transition-transform duration-700"
+                                                        />
+                                                    ) : work.video ? (
+                                                        <video
+                                                            src={formatUrl(work.video)}
+                                                            className="w-full h-full object-cover"
+                                                            autoPlay muted loop playsInline
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gradient-to-tr from-cyan-950 via-purple-950 to-pink-900/40 flex items-center justify-center p-4">
+                                                            <Sparkles size={24} className="text-white/40" />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Información de la Obra & Botón de Acción */}
+                                                <div className="p-4 flex flex-col gap-3 flex-1 justify-between bg-zinc-950/60">
+                                                    <div>
+                                                        <h4 className="text-[13px] font-bold text-white tracking-tight line-clamp-1 group-hover/curated:text-emerald-400 transition-colors">
+                                                            {work.title}
                                                         </h4>
-                                                        <p className="text-[9px] text-zinc-400 font-sans leading-relaxed max-w-md">
-                                                            {isOwnProfile ? 'Asigna un enlace o precio a cualquier nota en el pizarrón para exhibirla aquí.' : 'Este creador no ha publicado piezas o productos en venta todavía.'}
+                                                        <p className="text-[10px] font-mono text-zinc-400 line-clamp-1 mt-0.5">
+                                                            {work.subtitle}
                                                         </p>
                                                     </div>
-                                                </div>
-                                                {isOwnProfile && (
-                                                    <button
-                                                        onClick={() => setView('canvas')}
-                                                        className="px-3.5 py-2 bg-white/10 hover:bg-accent hover:text-black border border-white/15 hover:border-transparent rounded-xl text-[9px] font-mono font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 shrink-0 shadow-lg cursor-pointer"
-                                                    >
-                                                        <Compass size={11} /> Ir al Pizarrón
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                                {linkedPosts.map((prod) => {
-                                                    const id = prod.id;
-                                                    let title = prod.caption || '';
-                                                    if (!title && prod.content && typeof prod.content === 'string') {
-                                                        title = prod.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().substring(0, 32);
-                                                    }
-                                                    if (!title) title = 'Creación';
 
-                                                    let price = prod.metadata?.price;
-                                                    if (!price && prod.content && typeof prod.content === 'string') {
-                                                        const match = prod.content.match(/\$\d+(?:\.\d{2})?/);
-                                                        if (match) price = match[0];
-                                                    }
-                                                    if (!price) price = 'Disponible';
-
-                                                    const link = prod.metadata?.buyLink;
-                                                    const postImg = getBlockPreviewImage(prod);
-                                                    const postVid = getBlockPreviewVideo(prod);
-
-                                                    return (
-                                                        <div
-                                                            key={id}
-                                                            className="w-full aspect-[4/3] rounded-xl border border-white/10 hover:border-accent/40 relative group/prod-card overflow-hidden shadow-lg transition-all duration-300"
+                                                    {isAudioWork ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (setIsPlaying) setIsPlaying(!isPlaying);
+                                                            }}
+                                                            className="w-full py-2.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-zinc-200 text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
                                                         >
-                                                            {postImg ? (
-                                                                 <img
-                                                                    onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }}
-                                                                    src={postImg}
-                                                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/prod-card:scale-105"
-                                                                />
-                                                            ) : postVid ? (
-                                                                <video
-                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                                                                    src={postVid}
-                                                                    className="absolute inset-0 w-full h-full object-cover"
-                                                                    muted loop playsInline autoPlay
-                                                                />
-                                                            ) : (
-                                                                <div className="absolute inset-0 bg-[#0d0d10]" />
-                                                            )}
-                                                            {postVid && (
-                                                                <div className="absolute top-1.5 right-1.5 p-1 bg-black/60 backdrop-blur-sm rounded-md text-white z-10">
-                                                                    <Film size={9} />
-                                                                </div>
-                                                            )}
+                                                            <Headphones size={12} className="text-cyan-400" />
+                                                            <span>Escuchar fragmento</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (work.buyLink) {
+                                                                    window.open(work.buyLink.startsWith('http') ? work.buyLink : `https://${work.buyLink}`, '_blank');
+                                                                } else if (work.rawPost) {
+                                                                    setSelectedModalPost(work.rawPost);
+                                                                } else {
+                                                                    setSelectedModalPost({
+                                                                        id: work.id,
+                                                                        caption: work.title,
+                                                                        content: work.subtitle,
+                                                                        metadata: { medium: work.subtitle, imageUrl: work.image, resonanceScore: 342 }
+                                                                    });
+                                                                }
+                                                            }}
+                                                            className="w-full py-2.5 px-3 rounded-xl bg-[#10b981]/15 hover:bg-[#10b981]/25 border border-[#10b981]/30 hover:border-[#10b981]/50 text-[#10b981] text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                                                        >
+                                                            <Sparkles size={11} />
+                                                            <span>Explorar Obra ↗</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
 
-                                                            {/* Overlay con Información y Acción */}
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-between p-2.5">
-                                                                <span className="self-start px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[8px] font-mono font-bold text-accent shadow-md">
-                                                                    {price}
-                                                                </span>
+                                {/* Footer de Curaduría */}
+                                <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[9.5px] font-mono">
+                                    <span className="text-zinc-500">Línea creativa: 2026 Oasis</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProfileFeedView('editorial');
+                                            const feedEl = document.getElementById('profile-feed-section');
+                                            if (feedEl) feedEl.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="text-zinc-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-semibold"
+                                    >
+                                        <span>Ver archivo completo ({targetUserPosts.length || 8})</span>
+                                        <ArrowRight size={11} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                                                <div className="flex flex-col gap-1.5 w-full">
-                                                                    <h4 className="text-[10px] font-bold text-white tracking-tight line-clamp-1">
-                                                                        {title}
-                                                                    </h4>
-                                                                    <a
-                                                                        href={link && link.trim() !== '' ? (link.startsWith('http') ? link : `https://${link}`) : 'https://ruidointerior.com/shop'}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        className="w-full py-1.5 rounded-lg text-[8px] font-mono font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 bg-accent text-black hover:brightness-110 shadow-lg cursor-pointer active:scale-95"
-                                                                    >
-                                                                        <ShoppingBag size={11} strokeWidth={2.5} />
-                                                                        <span>{link ? 'Comprar Ahora' : 'Adquirir Obra'}</span>
-                                                                        <ExternalLink size={9} strokeWidth={2.5} />
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
+                    </div>
+                </div>
+
+                {/* 3. SECCIÓN DE FEED: MONOLITO & EDITORIAL (IMAGES 2, 3 & 5) */}
+                <div id="profile-feed-section" className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-4 z-10 relative pointer-events-auto">
+                    
+                    {/* Barra de Navegación y Vistas: Monolito vs Editorial */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-6">
+                        
+                        {/* Pestañas: Campaña & Obras / Archivo / Destacados */}
+                        <div className="flex items-center gap-1.5 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
+                            <button
+                                type="button"
+                                onClick={() => setReleaseTab('campana')}
+                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'campana' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                <Sparkles size={11} className={releaseTab === 'campana' ? 'text-emerald-400' : ''} />
+                                <span>Campaña & Obras</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setReleaseTab('archivo')}
+                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'archivo' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                <Bookmark size={11} />
+                                <span>Archivo</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setReleaseTab('destacados')}
+                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'destacados' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                            >
+                                <Zap size={11} className={releaseTab === 'destacados' ? 'text-amber-400' : ''} />
+                                <span>Destacados</span>
+                            </button>
+                        </div>
+
+                        {/* Switcher de Vistas: Monolito vs Editorial */}
+                        <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
+                            <button
+                                type="button"
+                                onClick={() => setProfileFeedView('monolito')}
+                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${profileFeedView === 'monolito' ? 'bg-[#18191d] text-white shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
+                                title="Vista Monolito (Cinemática completa vertical)"
+                            >
+                                <Maximize2 size={11} />
+                                <span>Monolito</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setProfileFeedView('editorial')}
+                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${profileFeedView === 'editorial' ? 'bg-[#18191d] text-white shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
+                                title="Vista Editorial (Mosaico curado)"
+                            >
+                                <LayoutGrid size={11} />
+                                <span>Editorial</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* VISTA 1: MONOLITO (Grandes tarjetas cinemáticas con flecha central de salto - Images 3 & 5) */}
+                    {profileFeedView === 'monolito' ? (
+                        <div className="w-full max-w-4xl mx-auto space-y-8">
+                            {displayFeedPosts.map((post, postIdx) => {
+                                const postImg = getBlockPreviewImage(post);
+                                const postVid = getBlockPreviewVideo(post);
+                                const postTitle = post.caption || post.title || ((post.content && typeof post.content === 'string') ? post.content.split('\n')[0].replace(/\[.*?\]/g, '').trim() : 'ESTRUCTURA CREATIVA') || 'ESTRUCTURA CREATIVA';
+                                const postDate = post.timestamp ? new Date(post.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '26 Oct 2026';
+                                const postMedium = post.metadata?.medium || (post.type === 'image' ? 'Pieza escultórica en hormigón pigmentado y resina' : 'Registro de resonancia');
+                                const postScore = post.metadata?.resonanceScore || (postIdx === 0 ? 342 : 518);
+                                const cleanDesc = post.metadata?.feedText || ((post.content && typeof post.content === 'string') ? post.content.split('\n').filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join(' ').trim() : '') || 'Exploración de formas orgánicas vivas contrastadas con la textura porosa del asfalto. El marco actúa como portal óptico reflectante.';
+                                const postTag = postIdx === 0 ? 'PIEZA CENTRAL' : (post.type === 'image' ? 'EDITORIAL VISUAL' : 'REGISTRO CREATIVO');
+
+                                return (
+                                    <div
+                                        key={post.id || postIdx}
+                                        id={`monolith-card-${postIdx}`}
+                                        className="w-full rounded-3xl overflow-hidden bg-zinc-950/90 border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.85)] relative group/monolith transition-all duration-300"
+                                    >
+                                        {/* Contenedor Visual Cinemático */}
+                                        <div className="w-full min-h-[360px] sm:min-h-[460px] md:min-h-[520px] max-h-[640px] relative overflow-hidden flex items-center justify-center bg-black">
+                                            {/* Badges superiores: Tag y Resonancias */}
+                                            <div className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-20">
+                                                <div className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[8.5px] sm:text-[9px] font-mono font-bold tracking-widest text-zinc-200 uppercase flex items-center gap-1.5 shadow-lg">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+                                                    <span>{postTag}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20">
+                                                <div className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[9px] font-mono font-bold text-emerald-400 flex items-center gap-1.5 shadow-lg">
+                                                    <Sparkles size={10} />
+                                                    <span>{postScore}</span>
+                                                </div>
+                                            </div>
+
+                                            {postImg ? (
+                                                <img
+                                                    src={postImg}
+                                                    alt={postTitle}
+                                                    className="w-full h-full object-cover group-hover/monolith:scale-[1.01] transition-transform duration-700"
+                                                />
+                                            ) : postVid ? (
+                                                <video
+                                                    src={postVid}
+                                                    className="w-full h-full object-cover"
+                                                    autoPlay muted loop playsInline
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full min-h-[360px] p-8 flex flex-col justify-center items-center text-center bg-gradient-to-br from-zinc-900 via-black to-zinc-950">
+                                                    <p className="text-base sm:text-lg font-serif italic text-zinc-300 max-w-xl leading-relaxed">
+                                                        "{cleanDesc.slice(0, 240)}..."
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Overlay Inferior Oscuro con Tipografía Gigante */}
+                                            <div className="absolute inset-x-0 bottom-0 pt-32 pb-6 px-6 sm:px-8 bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-auto">
+                                                <p className="text-[9px] sm:text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
+                                                    {postDate} — {postMedium}
+                                                </p>
+
+                                                <h3 className="text-lg sm:text-2xl md:text-3xl font-black uppercase tracking-tight text-white font-mono leading-tight drop-shadow-md">
+                                                    {postTitle}
+                                                </h3>
+
+                                                <div className="flex items-end justify-between gap-4 mt-1">
+                                                    <p className="text-[11px] sm:text-xs text-zinc-300 font-sans line-clamp-2 max-w-2xl leading-relaxed">
+                                                        {cleanDesc}
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedModalPost(post)}
+                                                        className="text-xs font-mono font-bold text-[#10b981] hover:text-white flex items-center gap-1 shrink-0 transition-colors cursor-pointer group/exp py-1"
+                                                    >
+                                                        <span>Expandir</span>
+                                                        <ArrowUpRight size={13} className="group-hover/exp:translate-x-0.5 group-hover/exp:-translate-y-0.5 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Botón Circular Central de Salto a la Siguiente Pieza (Image 3) */}
+                                        {postIdx < displayFeedPosts.length - 1 && (
+                                            <div className="py-2.5 bg-black/90 flex justify-center border-t border-white/[0.04]">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const nextCard = document.getElementById(`monolith-card-${postIdx + 1}`);
+                                                        if (nextCard) nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                    }}
+                                                    className="w-8 h-8 rounded-full bg-white text-black hover:bg-zinc-200 flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 active:scale-95 transition-all"
+                                                    title="Siguiente pieza"
+                                                >
+                                                    <ArrowDown size={14} strokeWidth={2.5} />
+                                                </button>
                                             </div>
                                         )}
                                     </div>
                                 );
-                            })()}
+                            })}
+                        </div>
+                    ) : (
+                        /* VISTA 2: EDITORIAL (Mosaico curado en cuadrícula) */
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+                            {displayFeedPosts.map((post, index) => {
+                                const postImg = getBlockPreviewImage(post);
+                                const postVid = getBlockPreviewVideo(post);
+                                const cleanText = post.metadata?.feedText || ((post.content && typeof post.content === 'string') ? post.content.split('\n').filter(l => !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n') : '') || '';
 
-                            {/* 3. GALERÍA Y ARCHIVO DE PUBLICACIONES */}
-                            <div className="flex flex-col gap-3">
-                                {/* Navegación de Pestañas Estilo Píldora */}
-                                <div className="flex items-center gap-2 p-1 bg-zinc-900/60 border border-white/10 rounded-2xl backdrop-blur-md">
-                                    <button
-                                        onClick={() => setReleaseTab('posts')}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'posts' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                return (
+                                    <div
+                                        key={post.id || index}
+                                        onClick={() => setSelectedModalPost(post)}
+                                        className="aspect-square bg-zinc-950/80 border border-white/[0.08] rounded-2xl overflow-hidden relative group/grid-card cursor-pointer hover:border-white/30 transition-all duration-300 shadow-lg"
                                     >
-                                        <LayoutGrid size={13} />
-                                        <span>Publicaciones</span>
-                                    </button>
-                                    {isOwnProfile && (
-                                        <button
-                                            onClick={() => {
-                                                setReleaseTab('saved');
-                                                reloadSaved();
-                                            }}
-                                            className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'saved' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                        >
-                                            <Bookmark size={13} />
-                                            <span>Guardados</span>
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => setReleaseTab('resonance')}
-                                        className={`flex-1 py-2 rounded-xl text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${releaseTab === 'resonance' ? 'bg-white/15 text-white font-bold shadow-md border border-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
-                                    >
-                                        <Sparkles size={13} />
-                                        <span>Resonancias</span>
-                                    </button>
+                                        {postImg ? (
+                                            <img
+                                                src={postImg}
+                                                alt="Publicación"
+                                                className="w-full h-full object-cover group-hover/grid-card:scale-105 transition-transform duration-500"
+                                            />
+                                        ) : postVid ? (
+                                            <video
+                                                src={postVid}
+                                                className="w-full h-full object-cover"
+                                                muted loop playsInline autoPlay
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full p-4 flex flex-col justify-between bg-zinc-950">
+                                                <p className="text-[11px] text-zinc-300 font-sans line-clamp-4 leading-relaxed">
+                                                    {cleanText || post.caption || 'Nota sin texto'}
+                                                </p>
+                                                <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                                    {post.type || 'Nota'}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Overlay hover */}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/grid-card:opacity-100 transition-opacity flex items-center justify-center p-3 text-center">
+                                            <span className="text-[10px] font-mono uppercase tracking-widest text-white flex items-center gap-1.5 font-bold">
+                                                <Eye size={12} /> Expandir Detalle
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* 4. LIGHTBOX MODAL: DETALLE DE REGISTRO RE-IMAGINADO (IMAGE 4) */}
+                {selectedModalPost && (
+                    <div
+                        className="fixed inset-0 z-[7000] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setSelectedModalPost(null)}
+                    >
+                        <div
+                            className="w-full max-w-3xl rounded-3xl overflow-hidden bg-[#0c0d11] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col max-h-[92vh]"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08] bg-zinc-950/80">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                                    <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-300 font-bold">
+                                        {effectiveUser} // Registro #{String(selectedModalPost.id || '294').slice(-3)}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedModalPost(null)}
+                                    className="p-1.5 rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {/* Media Content */}
+                            <div className="flex-1 min-h-[260px] max-h-[58vh] overflow-hidden bg-black flex items-center justify-center relative">
+                                {getBlockPreviewImage(selectedModalPost) ? (
+                                    <img
+                                        src={getBlockPreviewImage(selectedModalPost)}
+                                        alt={selectedModalPost.caption || 'Obra'}
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : getBlockPreviewVideo(selectedModalPost) ? (
+                                    <video
+                                        src={getBlockPreviewVideo(selectedModalPost)}
+                                        controls
+                                        autoPlay
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <div className="p-8 text-center text-zinc-400 font-serif italic text-base leading-relaxed">
+                                        "{selectedModalPost.content}"
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Bottom Info Card (Image 4) */}
+                            <div className="p-5 sm:p-6 bg-zinc-950/90 border-t border-white/[0.08] flex flex-col gap-3">
+                                <div className="flex items-start justify-between gap-4">
+                                    <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-white font-mono">
+                                        {selectedModalPost.caption || selectedModalPost.title || 'ESTRUCTURA BIOMÓRFICA // SERIE LILA #01'}
+                                    </h3>
+                                    <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap pt-1">
+                                        {selectedModalPost.timestamp ? new Date(selectedModalPost.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '26 Oct 2026'}
+                                    </span>
                                 </div>
 
-                                {/* Grilla de Contenido */}
-                                <div className="w-full pb-10">
-                                    {(() => {
-                                        let tabFilteredPosts = targetUserPosts;
-                                        if (releaseTab === 'posts') {
-                                            tabFilteredPosts = targetUserPosts;
-                                        } else if (releaseTab === 'saved') {
-                                            tabFilteredPosts = (feed || []).filter(b => savedPostIds.includes(b.id));
-                                        } else if (releaseTab === 'resonance') {
-                                            tabFilteredPosts = targetUserPosts.filter(b => {
-                                                const hasScore = b.metadata?.resonanceScore > 0;
-                                                const hasTag = b.content && typeof b.content === 'string' && b.content.includes('[resonancia]');
-                                                return (hasScore || hasTag) && !((typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
-                                            });
-                                        }
+                                <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                                    {selectedModalPost.metadata?.feedText || (selectedModalPost.content && typeof selectedModalPost.content === 'string' ? selectedModalPost.content.replace(/\[.*?\]/g, '').trim() : '') || 'Exploración de formas orgánicas vivas contrastadas con la textura porosa del asfalto. El marco actúa como portal óptico reflectante.'}
+                                </p>
 
-                                        if (tabFilteredPosts.length === 0) {
-                                            return (
-                                                <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[9px] uppercase tracking-widest gap-2 py-16 bg-zinc-950/20 border border-dashed border-white/5 rounded-2xl">
-                                                    <Sparkles size={16} className="text-zinc-600" />
-                                                    <span>Sin publicaciones en esta categoría</span>
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
-                                                {tabFilteredPosts.map((post, index) => {
-                                                    const postImg = getBlockPreviewImage(post);
-                                                    const postVid = getBlockPreviewVideo(post);
-                                                    const cleanText = post.metadata?.feedText || ((post.content && typeof post.content === 'string') ? post.content.split('\n').filter(l => typeof l === 'string' && !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n') : '') || '';
-
-                                                    return (
-                                                        <div
-                                                            key={post.id || index}
-                                                            onClick={() => {
-                                                                if (onNavigateToFeedPost) {
-                                                                    onNavigateToFeedPost(post.id);
-                                                                }
-                                                            }}
-                                                            className="aspect-square bg-zinc-900/60 border border-white/10 rounded-xl overflow-hidden relative group/grid-card cursor-pointer hover:border-white/30 transition-all duration-300 shadow-md"
-                                                        >
-                                                            {postImg ? (
-                                                                <img
-                                                                    onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }}
-                                                                    src={postImg}
-                                                                    className="w-full h-full object-cover group-hover/grid-card:scale-105 transition-transform duration-500"
-                                                                />
-                                                            ) : postVid ? (
-                                                                <video
-                                                                    onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                                                                    src={postVid}
-                                                                    className="w-full h-full object-cover"
-                                                                    muted loop playsInline autoPlay
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full p-3 flex flex-col justify-between bg-zinc-900/80 group-hover/grid-card:bg-zinc-800/80 transition-colors">
-                                                                    <p className="text-[10px] text-zinc-300 font-sans line-clamp-4 leading-relaxed">
-                                                                        {cleanText || post.caption || 'Nota sin texto'}
-                                                                    </p>
-                                                                    <span className="text-[7px] font-mono text-zinc-400 uppercase tracking-widest">
-                                                                        {post.type || 'Nota'}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {postVid && (
-                                                                <div className="absolute top-1.5 right-1.5 p-1 bg-black/60 backdrop-blur-sm rounded-md text-white z-10">
-                                                                    <Film size={9} />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Overlay al pasar el mouse */}
-                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/grid-card:opacity-100 transition-opacity flex items-center justify-center p-3 text-center">
-                                                                <span className="text-[9px] font-mono uppercase tracking-widest text-white flex items-center gap-1.5 font-bold">
-                                                                    <Eye size={12} /> Ver en Feed
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        );
-                                    })()}
+                                <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[10px] font-mono">
+                                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                                        <Sparkles size={11} />
+                                        <span>{selectedModalPost.metadata?.resonanceScore || 342} resonancias</span>
+                                    </div>
+                                    <span className="text-zinc-500">Espacio protegido por silencio</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
+
             </div>
         </div>
     );
@@ -15776,6 +15779,9 @@ ${afcMapContext}
                 onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
                 openNewComposer={openNewComposer}
                 onNavigateToFeedPost={navigateToFeedAndFocusPost}
+                isPlaying={isPlaying}
+                currentTrack={currentTrack}
+                playerTracks={playerTracks}
             />
         );
     };
@@ -16503,6 +16509,9 @@ ${afcMapContext}
                                                 openNewComposer={openNewComposer}
                                                 feed={feed}
                                                 onNavigateToFeedPost={navigateToFeedAndFocusPost}
+                                                isPlaying={isPlaying}
+                                                currentTrack={currentTrack}
+                                                playerTracks={playerTracks}
                                             />
                                         </>
                                     )}
