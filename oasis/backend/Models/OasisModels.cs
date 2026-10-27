@@ -198,6 +198,7 @@ namespace Oasis.Backend.Models
         public List<Resonance> Resonances { get; set; } = new();
         public List<Block> FeedItems { get; set; } = new();
         public List<WhatsAppPatient> WhatsAppPatients { get; set; } = new();
+        public HashSet<string> DeletedUsers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
         // Fallback or Shared
         public BackgroundConfig GlobalBackground { get; set; } = new();
         public List<BackgroundTemplate> BackgroundTemplates { get; set; } = new();

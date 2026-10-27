@@ -246,6 +246,7 @@ namespace Oasis.Backend.Controllers
             {
                 foreach (var du in diskState.Users)
                 {
+                    if (state.DeletedUsers != null && !string.IsNullOrEmpty(du.Username) && state.DeletedUsers.Contains(du.Username)) continue;
                     var existing = state.Users.FirstOrDefault(u => u.Username.Equals(du.Username, StringComparison.OrdinalIgnoreCase));
                     if (existing == null)
                     {
@@ -832,6 +833,9 @@ namespace Oasis.Backend.Controllers
                     return NotFound(new { message = "User not found" });
                 }
 
+                if (_state.DeletedUsers == null) _state.DeletedUsers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                _state.DeletedUsers.Add(userToRemove.Username);
+                _state.DeletedUsers.Add(username);
                 _state.Users.Remove(userToRemove);
                 if (_state.WhatsAppPatients != null)
                 {
@@ -844,6 +848,76 @@ namespace Oasis.Backend.Controllers
                 }
                 SaveState();
                 return Ok(new { message = "User deleted successfully" });
+            }
+        }
+
+
+        [HttpGet("backup/export")]
+        public IActionResult ExportDatabaseBackup()
+        {
+            string caller = GetAuthenticatedUser();
+            bool isAuthorized = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                caller.ToLower().Contains("observador")
+            );
+            if (!isAuthorized) return Forbid();
+
+            string json = JsonSerializer.Serialize(_state, JsonOptions);
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            string fileName = $"oasis_backup_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+            return File(bytes, "application/json", fileName);
+        }
+
+        [HttpPost("backup/import")]
+        public async Task<IActionResult> ImportDatabaseBackup()
+        {
+            string caller = GetAuthenticatedUser();
+            bool isAuthorized = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                caller.ToLower().Contains("observador")
+            );
+            if (!isAuthorized) return Forbid();
+
+            try
+            {
+                using var reader = new StreamReader(Request.Body);
+                string json = await reader.ReadToEndAsync();
+                var imported = JsonSerializer.Deserialize<OasisState>(json, JsonOptions);
+                if (imported == null || imported.Users == null || imported.Users.Count == 0)
+                {
+                    return BadRequest(new { message = "Archivo de respaldo inválido o vacío." });
+                }
+
+                lock (StateLock)
+                {
+                    // Pre-restore safety backup
+                    try {
+                        string curJson = JsonSerializer.Serialize(_state, JsonOptions);
+                        string safetyFile = Path.Combine(Directory.GetCurrentDirectory(), $"oasis_backup_pre_restore_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json");
+                        System.IO.File.WriteAllText(safetyFile, curJson);
+                    } catch {}
+
+                    _state.Users = imported.Users;
+                    if (imported.Resonances != null) _state.Resonances = imported.Resonances;
+                    if (imported.FeedItems != null) _state.FeedItems = imported.FeedItems;
+                    if (imported.WhatsAppPatients != null) _state.WhatsAppPatients = imported.WhatsAppPatients;
+                    if (imported.GlobalBackground != null) _state.GlobalBackground = imported.GlobalBackground;
+                    if (imported.DeletedUsers != null) _state.DeletedUsers = imported.DeletedUsers;
+
+                    SaveState();
+                }
+
+                return Ok(new { message = "Respaldo restaurado exitosamente", usersCount = _state.Users.Count });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error restaurando respaldo: " + ex.Message });
             }
         }
 

@@ -6158,11 +6158,38 @@ function OasisApp() {
         }
     }, []);
 
-    // Current active canvas board title (strictly matches the board title in the library)
-    const currentBoardTitle = useMemo(() => {
-        const activeCanvasBlock = (blocks || []).find(b => b.type === 'canvas' && (b.id === activeCanvasId || (activeCanvasId === 'canvas_default' && (b.id === 'canvas_default' || !b.canvasId))));
-        return activeCanvasBlock?.content || activeCanvasBlock?.text || activeCanvasBlock?.caption || (activeCanvasId === 'canvas_default' ? 'Pizarrón 1' : 'Pizarrón');
+    // Current active canvas / sub-board block and hierarchical navigation
+    const activeBoardBlock = useMemo(() => {
+        if (!activeCanvasId || activeCanvasId === 'canvas_default') {
+            return (blocks || []).find(b => b.type === 'canvas' && (b.id === 'canvas_default' || !b.canvasId)) || null;
+        }
+        return (blocks || []).find(b => b.id === activeCanvasId) || null;
     }, [blocks, activeCanvasId]);
+
+    const isInsideSubBoard = useMemo(() => {
+        return Boolean(activeBoardBlock && (activeBoardBlock.type === 'sub_board' || activeCanvasId !== 'canvas_default'));
+    }, [activeBoardBlock, activeCanvasId]);
+
+    const parentCanvasId = useMemo(() => {
+        if (!activeBoardBlock || !activeBoardBlock.canvasId) return 'canvas_default';
+        return activeBoardBlock.canvasId;
+    }, [activeBoardBlock]);
+
+    const parentBoardTitle = useMemo(() => {
+        if (!parentCanvasId || parentCanvasId === 'canvas_default') {
+            const defaultCanvas = (blocks || []).find(b => b.type === 'canvas' && (b.id === 'canvas_default' || !b.canvasId));
+            return defaultCanvas?.content || defaultCanvas?.text || 'Pizarrón';
+        }
+        const parentBlock = (blocks || []).find(b => b.id === parentCanvasId);
+        return parentBlock?.caption || parentBlock?.content || parentBlock?.text || 'Pizarrón';
+    }, [blocks, parentCanvasId]);
+
+    const currentBoardTitle = useMemo(() => {
+        if (activeBoardBlock) {
+            return activeBoardBlock.caption || activeBoardBlock.content || activeBoardBlock.text || (activeCanvasId === 'canvas_default' ? 'Pizarrón 1' : 'Carpeta');
+        }
+        return (activeCanvasId === 'canvas_default' ? 'Pizarrón 1' : 'Carpeta');
+    }, [activeBoardBlock, activeCanvasId]);
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
     const [feed, setFeed] = useState([]);
     const [publicUsers, setPublicUsers] = useState([]);
@@ -13959,16 +13986,41 @@ ${afcMapContext}
                         </button>
                     </div>
 
-                    {/* PÍLDORA DE TÍTULO DE PIZARRÓN Y ZOOM EN ESQUINA INFERIOR DERECHA */}
+                    {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM */}
                     <div
-                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3.5 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.75)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
+                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
                     >
-                        <span className="w-2 h-2 rounded-[2px] bg-amber-500 shrink-0 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-                        <span onClick={() => setIsBitacoraOpen(true)} className="font-bold text-white text-xs tracking-tight truncate max-w-[130px] cursor-pointer hover:text-accent transition-colors" title="Abrir Librero de Pizarrones">
-                            {currentBoardTitle}
-                        </span>
+                        {isInsideSubBoard ? (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        setActiveCanvasId(parentCanvasId || 'canvas_default');
+                                        setCam({ x: 0, y: 0, scale: 1 });
+                                    }}
+                                    className="flex items-center gap-1 text-zinc-400 hover:text-white hover:bg-white/10 px-2 py-0.5 rounded-full transition-all cursor-pointer font-bold active:scale-95 group/back"
+                                    title={`Volver a ${parentBoardTitle}`}
+                                >
+                                    <ChevronLeft size={13} className="text-accent group-hover/back:-translate-x-0.5 transition-transform" />
+                                    <span className="truncate max-w-[90px]">{parentBoardTitle}</span>
+                                </button>
+                                <span className="text-zinc-600 font-sans">/</span>
+                                <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                    <span className="w-2 h-2 rounded-[2px] bg-blue-500 shrink-0 shadow-[0_0_6px_rgba(59,130,246,0.6)]" />
+                                    <span className="font-bold text-white text-xs tracking-tight truncate max-w-[130px]" title={currentBoardTitle}>
+                                        {currentBoardTitle}
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                                <span className="w-2 h-2 rounded-[2px] bg-amber-500 shrink-0 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+                                <span onClick={() => setIsBitacoraOpen(true)} className="font-bold text-white text-xs tracking-tight truncate max-w-[130px] cursor-pointer hover:text-accent transition-colors" title="Abrir Librero de Pizarrones">
+                                    {currentBoardTitle}
+                                </span>
+                            </div>
+                        )}
                         <span className="text-zinc-600 font-sans">·</span>
                         <button
                             onClick={() => setCam(prev => ({ ...prev, scale: Math.max(0.15, +(prev.scale - 0.1).toFixed(2)) }))}
@@ -13992,6 +14044,26 @@ ${afcMapContext}
                             +
                         </button>
                     </div>
+
+                    
+                    {/* BREADCRUMB FLOTANTE SUPERIOR AL NAVEGAR DENTRO DE CARPETAS / SUB-TABLEROS */}
+                    {isInsideSubBoard && (
+                        <div className="fixed top-20 left-6 z-[2400] flex items-center gap-2 bg-[#111215]/90 backdrop-blur-xl border border-white/[0.08] px-3.5 py-1.5 rounded-full shadow-lg text-zinc-300 font-mono text-xs pointer-events-auto select-none animate-in fade-in slide-in-from-top-2 duration-200">
+                            <button
+                                onClick={() => {
+                                    setActiveCanvasId(parentCanvasId || 'canvas_default');
+                                    setCam({ x: 0, y: 0, scale: 1 });
+                                }}
+                                className="flex items-center gap-1.5 text-accent hover:text-white transition-colors cursor-pointer font-bold"
+                                title={`Volver a ${parentBoardTitle}`}
+                            >
+                                <ChevronLeft size={14} />
+                                <span>Volver a {parentBoardTitle}</span>
+                            </button>
+                            <span className="text-zinc-600">/</span>
+                            <span className="text-white font-bold truncate max-w-[200px]">{currentBoardTitle}</span>
+                        </div>
+                    )}
 
                     {/* PANEL FLOTANTE "ELIJA UNA PLANTILLA" PARA SUB-TABLEROS MILANOTE */}
                     {activeCanvasId !== 'canvas_default' && isTemplatePickerOpen && (

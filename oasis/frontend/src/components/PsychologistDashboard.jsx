@@ -1642,7 +1642,9 @@ Responde ÚNICAMENTE con un JSON válido.`;
         }
 
         try {
-            const currentUser = localStorage.getItem('oasis_user') || 'ory11';
+            const rawUser = localStorage.getItem('oasis_user') || '';
+        const isStaff = rawUser.toLowerCase().includes('observador') || ['yul', 'yuli', '2112', 'ory11', 'admin'].includes(rawUser.toLowerCase());
+        const currentUser = isStaff ? rawUser : 'observador1';
             const res = await fetch(`${API_URL}/api/oasis/users/${encodeURIComponent(username)}`, {
                 method: 'DELETE',
                 headers: {
@@ -2468,6 +2470,34 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                 >
                                     <Plus size={13} className="text-zinc-400" />
                                     <span>nuevo</span>
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const res = await fetch(`${API_URL}/api/oasis/users`, {
+                                                headers: { 'X-Oasis-User': 'observador1' }
+                                            });
+                                            if (!res.ok) throw new Error('Error al generar backup');
+                                            const data = await res.json();
+                                            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                                            const url = URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `oasis_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            document.body.removeChild(a);
+                                            URL.revokeObjectURL(url);
+                                            alert('Respaldo completo descargado con éxito.');
+                                        } catch (err) {
+                                            alert('Error descargando respaldo: ' + err.message);
+                                        }
+                                    }}
+                                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 rounded-lg font-mono text-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                                    title="Descargar copia de seguridad de todos los perfiles clínicos"
+                                >
+                                    <Cloud size={13} />
+                                    <span>backup</span>
                                 </button>
                             </div>
                         </div>
