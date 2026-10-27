@@ -12,7 +12,7 @@ import {
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
-    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo
+    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -1172,17 +1172,44 @@ const DrawingModal = ({ isOpen, onClose, onSave, accent }) => {
     );
 };
 
-const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links = [], feed = [], setFeed, setView, editBlock, accent, setPublicProfileUser, user, currentUserAvatar, publicUsers = [], onOpenDirectMessage }) => {
-    const [_unused, setIsInView] = React.useState(false);
+const FeedItem = ({ 
+    f, 
+    credits, 
+    setCredits, 
+    blocks, 
+    setBlocks, 
+    syncBlocks, 
+    links = [], 
+    feed = [], 
+    setFeed, 
+    setView, 
+    editBlock, 
+    accent, 
+    setPublicProfileUser, 
+    user, 
+    currentUserAvatar, 
+    publicUsers = [], 
+    onOpenDirectMessage,
+    onOpenDetail,
+    isDetailModal = false,
+    onCloseDetail
+}) => {
     const itemRef = React.useRef(null);
-    const [confirmAction, setConfirmAction] = React.useState(null);
     const audioRef = React.useRef(null);
+    const [confirmAction, setConfirmAction] = React.useState(null);
     const [currentSlide, setCurrentSlide] = React.useState(0);
+    const [isVideoMuted, setIsVideoMuted] = React.useState(true);
+    const [isCaptionExpanded, setIsCaptionExpanded] = React.useState(false);
+    const [detailCommentText, setDetailCommentText] = React.useState('');
+    const [showOptionsMenu, setShowOptionsMenu] = React.useState(false);
 
-    const postAuthor = f.username || (f.metadata?.feedUsername ? f.metadata.feedUsername.replace('@', '') : null);
+    const postAuthor = (f.username || (f.metadata?.feedUsername ? f.metadata.feedUsername.replace('@', '') : null) || 'anon').replace('@', '');
     const authorProfile = publicUsers?.find(u => (u.Username || u.username)?.toLowerCase() === postAuthor?.toLowerCase());
-    const authorAvatar = authorProfile?.Avatar || ((postAuthor?.toLowerCase() === user?.toLowerCase() || f.metadata?.feedUsername?.toLowerCase() === ('@' + user)?.toLowerCase()) && currentUserAvatar ? currentUserAvatar : f.metadata?.userAvatar) || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${postAuthor || 'anon'}`;
+    const authorAvatar = authorProfile?.Avatar || ((postAuthor?.toLowerCase() === (user || '').toLowerCase() || f.metadata?.feedUsername?.toLowerCase() === ('@' + user)?.toLowerCase()) && currentUserAvatar ? currentUserAvatar : f.metadata?.userAvatar) || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor)}`;
 
+    const isOwner = postAuthor.toLowerCase() === (user || '').toLowerCase() || (blocks && blocks.some(b => b.id === f.id));
+
+    // Bookmark state
     const [isBookmarked, setIsBookmarked] = React.useState(() => {
         try {
             const stored = localStorage.getItem(`oasis_saved_${user || 'anon'}`);
@@ -1194,7 +1221,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     });
 
     const toggleBookmark = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         try {
             const key = `oasis_saved_${user || 'anon'}`;
             const stored = localStorage.getItem(key);
@@ -1212,6 +1239,66 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
         }
     };
 
+    // Like state
+    const [isLiked, setIsLiked] = React.useState(() => {
+        try {
+            const stored = localStorage.getItem(`oasis_liked_${user || 'anon'}`);
+            const likedIds = stored ? JSON.parse(stored) : [];
+            return likedIds.includes(f.id);
+        } catch {
+            return false;
+        }
+    });
+
+    const [likesCount, setLikesCount] = React.useState(() => {
+        const base = f.likes || f.metadata?.likes || 0;
+        return base + (isLiked ? 1 : 0);
+    });
+
+    const toggleLike = (e) => {
+        if (e) e.stopPropagation();
+        try {
+            const key = `oasis_liked_${user || 'anon'}`;
+            const stored = localStorage.getItem(key);
+            let likedIds = stored ? JSON.parse(stored) : [];
+            if (likedIds.includes(f.id)) {
+                likedIds = likedIds.filter(id => id !== f.id);
+                setIsLiked(false);
+                setLikesCount(prev => Math.max(0, prev - 1));
+            } else {
+                likedIds.push(f.id);
+                setIsLiked(true);
+                setLikesCount(prev => prev + 1);
+            }
+            localStorage.setItem(key, JSON.stringify(likedIds));
+        } catch (err) {
+            console.error("Error toggling like", err);
+        }
+    };
+
+    // Format post date (e.g. 10 h, 2 d, 4 de septiembre)
+    const formatPostDate = (iso) => {
+        if (!iso) return 'Reciente';
+        try {
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return 'Reciente';
+            const now = new Date();
+            const diffMs = now - d;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            if (diffMins < 1) return 'Justo ahora';
+            if (diffMins < 60) return `${diffMins} min`;
+            if (diffHours < 24) return `${diffHours} h`;
+            if (diffDays < 7) return `${diffDays} d`;
+            return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        } catch {
+            return 'Reciente';
+        }
+    };
+
+    const formattedDate = formatPostDate(f.metadata?.publishedAt || f.createdAt || f.timestamp);
+
     const handleDeleteFeedItem = async () => {
         if (setFeed) {
             setFeed(prev => prev.filter(item => item.id !== f.id));
@@ -1224,9 +1311,7 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
 
         try {
             const res = await fetch(deleteUrl, { method: 'DELETE' });
-            if (!res.ok) {
-                console.error("Failed to delete feed item on backend:", res.status);
-            }
+            if (!res.ok) console.error("Failed to delete feed item on backend:", res.status);
         } catch (err) {
             console.error("Error deleting feed item:", err);
         }
@@ -1237,12 +1322,12 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
                 syncBlocks(blocks.filter(b => b.id !== f.id));
             }
         }
+        if (onCloseDetail) onCloseDetail();
     };
 
+    // Touch swipe for carousel
     const touchStartX = React.useRef(0);
     const touchStartY = React.useRef(0);
-    const touchEndX = React.useRef(0);
-    const touchEndY = React.useRef(0);
     const touchIsHorizontal = React.useRef(false);
 
     const handleTouchStart = (e) => {
@@ -1254,27 +1339,23 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     const handleTouchMove = (e) => {
         const dx = Math.abs(e.targetTouches[0].clientX - touchStartX.current);
         const dy = Math.abs(e.targetTouches[0].clientY - touchStartY.current);
-        // Only lock as horizontal if X is clearly dominant
         if (dx > dy && dx > 10) {
             touchIsHorizontal.current = true;
-            // Prevent the feed from scrolling when user is swiping horizontally on carousel
             e.stopPropagation();
         }
-        touchEndX.current = e.targetTouches[0].clientX;
-        touchEndY.current = e.targetTouches[0].clientY;
     };
 
-    const handleTouchEnd = () => {
-        if (!touchIsHorizontal.current) return; // vertical swipe â†’ let feed handle it
-        const diffX = touchStartX.current - touchEndX.current;
-        if (diffX > 50) {
+    const handleTouchEnd = (e) => {
+        if (!touchIsHorizontal.current) return;
+        const diffX = touchStartX.current - e.changedTouches[0].clientX;
+        if (diffX > 45) {
             setCurrentSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0));
-        } else if (diffX < -50) {
+        } else if (diffX < -45) {
             setCurrentSlide(prev => (prev > 0 ? prev - 1 : slides.length - 1));
         }
     };
 
-    // Parse content for multimedia tags
+    // Build slides array
     const contentLines = (f.content && typeof f.content === 'string') ? f.content.split('\n') : [];
     const inlineImages = contentLines.filter(l => typeof l === 'string' && l.startsWith('[img]')).map(l => l.replace(/\[\/?img\]/g, '').trim());
     const inlineVideos = contentLines.filter(l => typeof l === 'string' && l.startsWith('[vid]')).map(l => l.replace(/\[\/?vid\]/g, '').trim());
@@ -1282,7 +1363,6 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     const noteOriginalText = contentLines.filter(l => typeof l === 'string' && !l.startsWith('[img]') && !l.startsWith('[vid]') && !l.startsWith('[aud]')).join('\n');
     const feedComment = f.metadata?.feedText || '';
 
-    // Build slides array
     const slides = [];
 
     // Primary media
@@ -1299,50 +1379,25 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
     }
 
     // Inline media
-    inlineImages.forEach((img, idx) => {
-        slides.push({ type: 'image', url: formatUrl(img) });
-    });
-    inlineVideos.forEach((vid, idx) => {
-        slides.push({ type: 'video', url: formatUrl(vid) });
-    });
-    inlineAudios.forEach((aud, idx) => {
-        slides.push({ type: 'audio', url: formatUrl(aud) });
-    });
+    inlineImages.forEach(img => slides.push({ type: 'image', url: formatUrl(img) }));
+    inlineVideos.forEach(vid => slides.push({ type: 'video', url: formatUrl(vid) }));
+    inlineAudios.forEach(aud => slides.push({ type: 'audio', url: formatUrl(aud) }));
 
-    // Sub-notes / mural blocks
+    // Mural blocks
     if (f.muralBlocks && f.muralBlocks.length > 0) {
-        f.muralBlocks.forEach((mb, idx) => {
-            if (mb.type === 'image') {
-                slides.push({ type: 'image', url: formatUrl(mb.content), caption: mb.caption });
-            } else if (mb.type === 'text') {
-                slides.push({ type: 'text', content: mb.content, caption: mb.caption });
-            }
+        f.muralBlocks.forEach(mb => {
+            if (mb.type === 'image') slides.push({ type: 'image', url: formatUrl(mb.content), caption: mb.caption });
+            else if (mb.type === 'text') slides.push({ type: 'text', content: mb.content, caption: mb.caption });
         });
     }
 
-    // Always add narrative text as a slide if it exists
-    if (noteOriginalText.trim()) {
+    // Note original text if text-only
+    if (slides.length === 0 && noteOriginalText.trim()) {
         slides.push({ type: 'text', content: noteOriginalText, caption: f.caption });
     }
 
-    React.useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsInView(entry.isIntersecting);
-                if (audioRef.current) {
-                    if (entry.isIntersecting) audioRef.current.play().catch(e => console.log("Autoplay blocked:", e));
-                    else audioRef.current.pause();
-                }
-            },
-            { threshold: 0.6 }
-        );
-        if (itemRef.current) observer.observe(itemRef.current);
-        return () => observer.disconnect();
-    }, []);
-
-    // Filter connections (links) connected to this feed item ID
+    // Active links
     const activeLinks = (links || []).filter(l => l.from === f.id || l.to === f.id);
-    // Limit structure to a maximum of 3 active links
     const displayedLinks = activeLinks.slice(0, 3);
 
     const getConnectedBlockCaption = (link) => {
@@ -1362,626 +1417,686 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
             } else {
-                console.log("No se encontró en el feed. Enfocando en el pizarrón.");
                 if (setView) setView('canvas');
                 setTimeout(() => {
                     const canvasBlock = blocks.find(b => b.id === targetId);
-                    if (canvasBlock && editBlock) {
-                        editBlock(canvasBlock);
-                    }
+                    if (canvasBlock && editBlock) editBlock(canvasBlock);
                 }, 300);
             }
         }
     };
 
-    const renderSlide = (slide, index) => {
+    const handleAuthorClick = (e) => {
+        if (e) e.stopPropagation();
+        if (!postAuthor) return;
+        if (user && postAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
+            if (setView) setView('profile');
+        } else if (setPublicProfileUser) {
+            setPublicProfileUser(postAuthor);
+        }
+        if (onCloseDetail) onCloseDetail();
+    };
+
+    const handleDirectMessage = (e) => {
+        if (e) e.stopPropagation();
+        if (onOpenDirectMessage && postAuthor) {
+            onOpenDirectMessage(postAuthor, `¡Hola @${postAuthor}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
+        }
+    };
+
+    const handleShare = (e) => {
+        if (e) e.stopPropagation();
+        const url = window.location.href;
+        navigator.clipboard?.writeText(url);
+        alert('Enlace copiado al portapapeles');
+    };
+
+    // Slide renderer
+    const renderMediaSlide = (slide, index) => {
         if (slide.type === 'image') {
             return (
-                <div key={index} className="w-full relative flex-shrink-0 bg-black/60 flex items-center justify-center">
-                    <img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={slide.url} className="w-full h-auto max-h-[70vh] object-contain" alt={slide.caption} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0d] via-transparent to-transparent opacity-75 pointer-events-none" />
-                    {slide.caption && (
-                        <div className="absolute bottom-4 left-6 right-6 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/5 text-[9px] font-bold text-white/90">
-                            {slide.caption}
-                        </div>
-                    )}
+                <div key={index} className="w-full h-full relative flex items-center justify-center bg-black overflow-hidden select-none">
+                    <img 
+                        onError={(e) => {
+                            if (!e.target.dataset.failed) {
+                                e.target.dataset.failed = 'true';
+                                e.target.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor || 'oasis')}`;
+                            }
+                        }}
+                        src={slide.url} 
+                        className="w-full h-full object-contain max-h-[580px]" 
+                        alt={slide.caption || 'Publicación'} 
+                    />
                 </div>
             );
         }
+
         if (slide.type === 'video') {
             return (
-                <div key={index} className="w-full h-full relative flex-shrink-0 bg-black/60">
-                    <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={slide.url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0d] via-transparent to-transparent opacity-75" />
+                <div key={index} className="w-full h-full relative flex items-center justify-center bg-black overflow-hidden select-none">
+                    <video 
+                        onError={(e) => {
+                            if (!e.target.dataset.failed) {
+                                e.target.dataset.failed = true;
+                                e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video';
+                            }
+                        }}
+                        src={slide.url}
+                        autoPlay
+                        loop
+                        muted={isVideoMuted}
+                        playsInline
+                        className="w-full h-full object-contain max-h-[580px]"
+                    />
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setIsVideoMuted(prev => !prev); }}
+                        className="absolute bottom-3 right-3 w-7 h-7 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-md border border-white/20 flex items-center justify-center text-white z-20 pointer-events-auto transition-all shadow-md"
+                        title={isVideoMuted ? "Activar sonido" : "Silenciar"}
+                    >
+                        {isVideoMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                    </button>
                 </div>
             );
         }
+
         if (slide.type === 'audio') {
             return (
-                <div key={index} className="w-full h-full flex-shrink-0 bg-accent/5 flex items-center justify-center border-b border-white/5 relative">
-                    <div className="flex items-center gap-4 animate-pulse">
-                        <Mic size={24} className="text-accent" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent/60">Resonancia de Voz</span>
+                <div key={index} className="w-full h-full min-h-[300px] flex flex-col items-center justify-center bg-zinc-950 border-y border-white/5 p-6 gap-3 select-none">
+                    <div className="w-12 h-12 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+                        <Mic size={22} />
                     </div>
-                    <audio ref={audioRef} src={slide.url} loop />
+                    <span className="text-xs font-bold text-white tracking-wide">Audio Creativo</span>
+                    <audio ref={audioRef} src={slide.url} controls className="w-full max-w-xs scale-90" />
                 </div>
             );
         }
+
         if (slide.type === 'text') {
             return (
-                <div key={index} className="w-full h-full flex-shrink-0 p-8 overflow-y-auto no-scrollbar flex flex-col justify-center items-center text-center bg-zinc-950/40 relative">
-                    <div className="max-w-[90%] scale-100">
-                        <div className="text-sm md:text-base font-serif italic text-white/95 leading-relaxed">
-                            <SimpleNarrativeRenderer content={slide.content} isChild={true} />
+                <div key={index} className="w-full h-full min-h-[320px] p-8 flex flex-col justify-center items-center text-center bg-gradient-to-b from-zinc-900 to-black select-none">
+                    <div className="max-w-[90%]">
+                        <div className="text-sm sm:text-base font-sans text-zinc-100 leading-relaxed font-normal">
+                            <SimpleNarrativeRenderer content={slide.content} cleanMinimal={true} />
                         </div>
-                        {slide.caption && (
-                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-accent/60 mt-4 block">
-                                {slide.caption}
-                            </span>
-                        )}
                     </div>
                 </div>
             );
         }
+
         return null;
     };
 
-    // Detect if primary slide is a video and track its aspect ratio
-    const [videoAspect, setVideoAspect] = React.useState(null); // null | 'portrait' | 'landscape'
-    const primaryVideoRef = React.useRef(null);
+    const fullCaptionText = feedComment.trim() || noteOriginalText.trim();
+    const isTextLong = fullCaptionText.length > 140;
 
-    const isPureVideo = slides.length === 1 && slides[0].type === 'video';
-    const isPortraitVideo = isPureVideo && videoAspect === 'portrait';
-    const isLandscapeVideo = isPureVideo && videoAspect === 'landscape';
-
-    // â”€â”€ PORTRAIT VIDEO: full-bleed card, overlay UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (isPortraitVideo) {
+    // ─────────────────────────────────────────────────────────────
+    // RENDER: DETAIL MODAL (Instagram Desktop Split Layout)
+    // ─────────────────────────────────────────────────────────────
+    if (isDetailModal) {
         return (
-            <div id={`feed-item-${f.id}`} ref={itemRef} className="w-full h-screen snap-center snap-always flex items-center justify-center px-4 pt-16 pb-20 md:py-20">
-                <div className="group relative h-[82vh] aspect-[9/16] max-w-full rounded-[2.5rem] overflow-hidden shadow-2xl flex-shrink-0 scale-[0.84] md:scale-100 transform origin-center -translate-y-6 md:translate-y-0">
-                    {/* VIDEO FULL BLEED */}
-                    <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                        ref={primaryVideoRef}
-                        src={slides[0].url}
-                        autoPlay loop muted playsInline
-                        onLoadedMetadata={(e) => {
-                            const v = e.target;
-                            setVideoAspect(v.videoHeight > v.videoWidth ? 'portrait' : 'landscape');
-                        }}
-                        className="absolute inset-0 w-full h-full object-cover"
-                    />
+            <div 
+                className="w-full max-w-5xl h-[88vh] max-h-[780px] bg-black border border-white/15 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-[0_25px_80px_rgba(0,0,0,0.95)] relative"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* CLOSE BUTTON */}
+                <button
+                    type="button"
+                    onClick={onCloseDetail}
+                    className="absolute top-3.5 right-3.5 z-50 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition-all shadow-lg"
+                    title="Cerrar (Esc)"
+                >
+                    <X size={16} />
+                </button>
 
-                    {/* GRADIENT OVERLAYS */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none z-10" />
-
-                    {/* TOP BADGE */}
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2 z-20">
-                        <div className="w-1 h-1 rounded-full bg-red-400 animate-pulse" />
-                        <span className="text-[6.5px] font-black uppercase tracking-widest text-white/80">VIDEO</span>
+                {/* LEFT SIDE: MEDIA */}
+                <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden select-none min-h-[280px]">
+                    <div 
+                        className="flex w-full h-full transition-transform duration-500 ease-out"
+                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                        {slides.map((s, idx) => (
+                            <div key={idx} className="w-full h-full shrink-0 flex items-center justify-center bg-black">
+                                {renderMediaSlide(s, idx)}
+                            </div>
+                        ))}
                     </div>
 
-                    {/* ACTIONS RIGHT */}
-                    <div className="absolute right-4 top-4 flex flex-col gap-3 items-center z-20 pointer-events-auto">
-                        {(f.username === user || (blocks && blocks.some(b => b.id === f.id))) && (
+                    {slides.length > 1 && (
+                        <>
+                            <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev > 0 ? prev - 1 : slides.length - 1)); }}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/65 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition-all z-30"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0)); }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/65 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition-all z-30"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-30">
+                                {slides.map((_, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`} 
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* RIGHT SIDE: AUTHOR, COMMENTS, ACTIONS */}
+                <div className="w-full md:w-[380px] lg:w-[420px] shrink-0 border-t md:border-t-0 md:border-l border-white/10 flex flex-col bg-[#0c0c0e]">
+                    
+                    {/* Header */}
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                        <div 
+                            className="flex items-center gap-3 cursor-pointer group/author min-w-0"
+                            onClick={handleAuthorClick}
+                        >
+                            <div className="w-9 h-9 rounded-full border border-white/15 overflow-hidden shrink-0 bg-zinc-900 group-hover/author:border-accent transition-colors">
+                                <img src={authorAvatar} alt={postAuthor} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-white font-mono truncate group-hover/author:text-accent">
+                                        @{postAuthor}
+                                    </span>
+                                    <span className="text-zinc-500 text-[11px]">·</span>
+                                    <span className="text-[11px] text-zinc-400">{formattedDate}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {isOwner && (
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setConfirmAction({ message: "¿Seguro que quieres eliminar esta publicación del Feed Público?", onConfirm: handleDeleteFeedItem });
-                                }}
-                                className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all pointer-events-auto"
+                                type="button"
+                                onClick={() => setConfirmAction({
+                                    message: "¿Deseas eliminar esta publicación del feed público?",
+                                    onConfirm: handleDeleteFeedItem
+                                })}
+                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors"
+                                title="Eliminar publicación"
                             >
                                 <Trash2 size={14} />
                             </button>
                         )}
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const author = f.username || f.metadata?.feedUsername;
-                                if (onOpenDirectMessage && author) {
-                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
-                                }
-                            }}
-                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
-                            title="Enviar mensaje directo al autor"
-                        >
-                            <MessageCircle size={14} />
-                        </button>
-                        <button
-                            onClick={toggleBookmark}
-                            className={`w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
-                        >
-                            <Bookmark size={14} fill={isBookmarked ? "currentColor" : "none"} />
-                        </button>
-                        <button className="w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent transition-all">
-                            <InfinityIcon size={14} strokeWidth={2.5} />
-                        </button>
                     </div>
 
-                    {/* BOTTOM OVERLAY: comment + profile */}
-                    <div className="absolute bottom-0 left-0 right-0 z-20 p-5 pointer-events-none">
-                        {feedComment.trim() && (
-                            <p className="text-sm font-serif italic text-white/90 leading-snug mb-3 line-clamp-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-                                {feedComment}
-                            </p>
+                    {/* Middle: Scrollable Caption & Comments */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 text-left custom-scrollbar">
+                        {/* Author Caption entry */}
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden shrink-0 bg-zinc-900 mt-0.5 cursor-pointer" onClick={handleAuthorClick}>
+                                <img src={authorAvatar} alt={postAuthor} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs text-zinc-200 leading-relaxed font-sans">
+                                    <span className="font-bold font-mono text-white mr-1.5 cursor-pointer hover:underline" onClick={handleAuthorClick}>
+                                        @{postAuthor}
+                                    </span>
+                                    {f.caption && <span className="font-semibold text-white block mb-1">{f.caption}</span>}
+                                    <span>{fullCaptionText}</span>
+                                </p>
+                                <span className="text-[10px] text-zinc-500 font-mono mt-1 block">
+                                    {formattedDate}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Connected notes tags */}
+                        {displayedLinks.length > 0 && (
+                            <div className="pt-2 border-t border-white/5 flex flex-wrap gap-1.5">
+                                <span className="text-[10px] text-zinc-500 flex items-center gap-1 font-mono">
+                                    <LinkIcon size={10} /> Notas enlazadas:
+                                </span>
+                                {displayedLinks.map((link, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleLinkClick(link); if (onCloseDetail) onCloseDetail(); }}
+                                        className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 hover:bg-accent/20 border border-white/10 text-zinc-300 hover:text-accent transition-all truncate max-w-[140px]"
+                                    >
+                                        {getConnectedBlockCaption(link)}
+                                    </button>
+                                ))}
+                            </div>
                         )}
+
+                        {/* Buy Piece Banner if on sale */}
                         {(f.metadata?.buyLink || f.metadata?.price) && (
-                            <div className="mb-3 pointer-events-auto">
+                            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2 mt-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <ShoppingBag size={14} className="text-emerald-400 shrink-0" />
+                                    <span className="text-xs font-bold text-white truncate">
+                                        {f.metadata?.price ? f.metadata.price : 'Pieza disponible'}
+                                    </span>
+                                </div>
                                 <a
-                                    href={f.metadata.buyLink || 'https://ruidointerior.com/shop'}
+                                    href={f.metadata?.buyLink || 'https://ruidointerior.com/shop'}
                                     target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-[#10b981] to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-[0_8px_25px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/buy"
+                                    rel="noopener noreferrer"
+                                    className="px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[11px] uppercase transition-all"
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <ShoppingBag size={15} strokeWidth={2.5} className="group-hover/buy:scale-110 transition-transform" />
-                                        <span className="font-extrabold tracking-wide">Comprar / Adquirir</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 bg-black/25 px-2.5 py-1 rounded-lg text-white font-mono font-bold text-xs">
-                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Ver'}</span>
-                                        <ExternalLink size={11} className="opacity-80" />
-                                    </div>
+                                    Comprar
                                 </a>
                             </div>
                         )}
-                        <div
-                            className="flex items-center justify-between pointer-events-auto cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
-                                if (!targetAuthor) return;
-                                if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
-                                    if (setView) setView('profile');
-                                } else if (setPublicProfileUser) {
-                                    setPublicProfileUser(targetAuthor);
-                                }
-                            }}
-                        >
+
+                        {/* Empty comments placeholder like Instagram */}
+                        <div className="py-8 text-center flex flex-col items-center justify-center gap-1 text-zinc-500">
+                            <h5 className="text-sm font-bold text-white">Todavía no hay comentarios.</h5>
+                            <p className="text-xs text-zinc-400">Inicia la conversación enviando un mensaje directo a @{postAuthor}.</p>
+                        </div>
+                    </div>
+
+                    {/* Bottom: Action bar & direct message input */}
+                    <div className="p-4 border-t border-white/10 bg-black/40 space-y-3">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full border-2 border-white/30 overflow-hidden shrink-0">
-                                    <img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={f.metadata?.userAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${f.username || 'anon'}`} className="w-full h-full object-cover rounded-full" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow">
-                                        {f.metadata?.feedUsername || `@${f.username || 'anon'}`}
-                                    </span>
-                                    <span className="text-[7px] font-bold text-white/50 uppercase tracking-wider">
-                                        {f.metadata?.publishedAt ? new Date(f.metadata.publishedAt).toLocaleDateString() + ' ' + new Date(f.metadata.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Resonancia Nivel 4'}
-                                    </span>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={toggleLike}
+                                    className={`text-zinc-300 hover:text-rose-400 transition-colors active:scale-95 ${isLiked ? 'text-rose-500' : ''}`}
+                                    title="Me gusta"
+                                >
+                                    <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDirectMessage}
+                                    className="text-zinc-300 hover:text-white transition-colors active:scale-95"
+                                    title="Enviar mensaje directo"
+                                >
+                                    <MessageCircle size={20} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleShare}
+                                    className="text-zinc-300 hover:text-white transition-colors active:scale-95"
+                                    title="Compartir"
+                                >
+                                    <Share2 size={20} />
+                                </button>
                             </div>
-                            <div className="flex items-center gap-3">
-                                {(f.metadata?.buyLink || f.metadata?.price) && (
-                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-auto shrink-0 transition-transform active:scale-95">
-                                        <ShoppingBag size={12} strokeWidth={2.5} />
-                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Comprar'}</span>
-                                    </a>
-                                )}
-                                <p className="text-[8px] font-medium italic text-white/50 truncate max-w-[100px] text-right">
-                                    {f.metadata?.feedCaption || f.caption || 'Publicación'}
-                                </p>
+                            <button
+                                type="button"
+                                onClick={toggleBookmark}
+                                className={`text-zinc-300 hover:text-white transition-colors active:scale-95 ${isBookmarked ? 'text-accent' : ''}`}
+                                title="Guardar"
+                            >
+                                <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} />
+                            </button>
+                        </div>
+
+                        <div>
+                            <span className="text-xs font-bold text-white block">
+                                {likesCount > 0 ? `${likesCount.toLocaleString()} Me gusta` : 'Sé el primero en indicar que te gusta'}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono mt-0.5 block">
+                                {formattedDate}
+                            </span>
+                        </div>
+
+                        {/* Message Input Box */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                            <input
+                                type="text"
+                                value={detailCommentText}
+                                onChange={e => setDetailCommentText(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' && detailCommentText.trim()) {
+                                        if (onOpenDirectMessage && postAuthor) {
+                                            onOpenDirectMessage(postAuthor, detailCommentText.trim());
+                                            setDetailCommentText('');
+                                        }
+                                    }
+                                }}
+                                placeholder={`Escribe a @${postAuthor}...`}
+                                className="flex-1 bg-transparent border-none text-xs text-white placeholder-zinc-500 focus:outline-none"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (detailCommentText.trim() && onOpenDirectMessage && postAuthor) {
+                                        onOpenDirectMessage(postAuthor, detailCommentText.trim());
+                                        setDetailCommentText('');
+                                    }
+                                }}
+                                disabled={!detailCommentText.trim()}
+                                className="text-xs font-bold text-accent disabled:opacity-40 disabled:pointer-events-none hover:brightness-125"
+                            >
+                                Publicar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Confirm Delete Overlay */}
+                {confirmAction && (
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-[100] animate-in fade-in duration-150">
+                        <div className="max-w-[260px] text-center space-y-4">
+                            <p className="text-xs font-bold text-white leading-relaxed">
+                                {confirmAction.message}
+                            </p>
+                            <div className="flex gap-2 justify-center pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmAction(null)}
+                                    className="px-4 py-2 rounded-xl bg-white/10 text-xs font-bold text-zinc-300 hover:text-white"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        confirmAction.onConfirm();
+                                        setConfirmAction(null);
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg"
+                                >
+                                    Eliminar
+                                </button>
                             </div>
                         </div>
                     </div>
-                    {confirmAction && (
-                        <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 z-[100]">
-                            <div className="max-w-[240px] text-center space-y-4">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 leading-relaxed px-2">
-                                    {confirmAction.message}
-                                </p>
-                                <div className="flex gap-2 justify-center pt-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }}
-                                        className="px-4 py-2 border border-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            confirmAction.onConfirm();
-                                            setConfirmAction(null);
-                                        }}
-                                        className="px-4 py-2 bg-red-600 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
-                                    >
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                )}
             </div>
         );
     }
 
-    // â”€â”€ LANDSCAPE VIDEO: contained, card adapts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (isLandscapeVideo) {
-        return (
-            <div id={`feed-item-${f.id}`} ref={itemRef} className="w-full h-screen snap-center snap-always flex items-center justify-center px-4 pt-16 pb-20 md:py-20">
-                <div className="group relative w-full max-w-3xl flex flex-col bg-[#0c0c0d]/75 backdrop-blur-md rounded-[2rem] border border-white/8 overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.7)] shrink-0 scale-[0.84] md:scale-100 transform origin-center -translate-y-6 md:translate-y-0">
-                    {/* TOP BADGE + ACTIONS */}
-                    <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/50 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2 z-20">
-                        <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
-                        <span className="text-[6.5px] font-black uppercase tracking-widest text-white/80">VIDEO</span>
+    // ─────────────────────────────────────────────────────────────
+    // RENDER: STANDARD FEED POST (Instagram 4:5 Feed Post)
+    // ─────────────────────────────────────────────────────────────
+    return (
+        <div 
+            id={`feed-item-${f.id}`} 
+            ref={itemRef} 
+            className="w-full min-h-screen snap-center snap-always flex items-center justify-center px-2 sm:px-4 py-12 md:py-16"
+        >
+            <div 
+                className="w-full max-w-[470px] bg-black sm:bg-[#0c0c0e] sm:border sm:border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col select-none"
+                style={{ touchAction: "pan-y" }} 
+                onTouchStart={handleTouchStart} 
+                onTouchMove={handleTouchMove} 
+                onTouchEnd={handleTouchEnd}
+            >
+                {/* 1. HEADER (Instagram style: avatar + @username · 10 h + 3 dots) */}
+                <div className="px-3.5 py-3 flex items-center justify-between border-b border-white/5">
+                    <div 
+                        className="flex items-center gap-2.5 cursor-pointer group/author min-w-0"
+                        onClick={handleAuthorClick}
+                    >
+                        <div className="w-8 h-8 rounded-full border border-white/15 overflow-hidden shrink-0 bg-zinc-900 group-hover/author:border-accent transition-colors">
+                            <img 
+                                onError={(e) => {
+                                    if (!e.target.dataset.failed) {
+                                        e.target.dataset.failed = 'true';
+                                        e.target.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor || 'oasis')}`;
+                                    }
+                                }}
+                                src={authorAvatar} 
+                                alt={postAuthor} 
+                                className="w-full h-full object-cover" 
+                            />
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate group-hover/author:text-accent transition-colors font-mono">
+                                @{postAuthor}
+                            </span>
+                            <span className="text-zinc-500 text-xs">·</span>
+                            <span className="text-xs text-zinc-400 font-sans">
+                                {formattedDate}
+                            </span>
+                        </div>
                     </div>
-                    <div className="absolute right-3 top-3 flex gap-2 items-center z-20 pointer-events-auto">
-                        <button
-                            type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const author = f.username || f.metadata?.feedUsername;
-                                if (onOpenDirectMessage && author) {
-                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
-                                }
-                            }}
-                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
-                            title="Enviar mensaje directo al autor"
-                        >
-                            <MessageCircle size={14} />
-                        </button>
-                        <button
-                            onClick={toggleBookmark}
-                            className={`w-7 h-7 rounded-full bg-black/60 border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
-                        >
-                            <Bookmark size={12} fill={isBookmarked ? "currentColor" : "none"} />
-                        </button>
-                        {(f.username === user || (blocks && blocks.some(b => b.id === f.id))) && (
+
+                    <div className="flex items-center gap-1 shrink-0 relative">
+                        {isOwner && (
                             <button
+                                type="button"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setConfirmAction({ message: "¿Eliminar esta publicación del Feed?", onConfirm: handleDeleteFeedItem });
+                                    setConfirmAction({
+                                        message: "¿Deseas eliminar esta publicación del feed público?",
+                                        onConfirm: handleDeleteFeedItem
+                                    });
                                 }}
-                                className="w-7 h-7 rounded-full bg-black/60 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500 hover:text-white transition-all pointer-events-auto"
+                                className="w-7 h-7 rounded-full bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-all"
+                                title="Eliminar publicación"
                             >
-                                <Trash2 size={12} />
+                                <Trash2 size={13} />
                             </button>
                         )}
-                    </div>
-
-                    {/* VIDEO: full width, natural aspect ratio */}
-                    <div className="w-full bg-black">
-                        <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                            ref={primaryVideoRef}
-                            src={slides[0].url}
-                            autoPlay loop muted playsInline controls
-                            onLoadedMetadata={(e) => {
-                                const v = e.target;
-                                setVideoAspect(v.videoHeight > v.videoWidth ? 'portrait' : 'landscape');
-                            }}
-                            className="w-full h-auto object-contain"
-                            style={{ maxHeight: '55vh' }}
-                        />
-                    </div>
-
-                    {/* INFO PANEL */}
-                    <div className="px-5 py-4 flex flex-col gap-3">
-                        {feedComment.trim() && (
-                            <div>
-                                <span className="text-[8px] font-black uppercase tracking-widest text-accent opacity-70 block mb-1">Comentario del Autor</span>
-                                <p className="text-sm font-serif italic text-white/85 leading-snug">{feedComment}</p>
-                            </div>
-                        )}
-                        {(f.metadata?.buyLink || f.metadata?.price) && (
-                            <div className="pointer-events-auto">
-                                <a
-                                    href={f.metadata.buyLink || 'https://ruidointerior.com/shop'}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-[#10b981] to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-[0_8px_25px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/buy"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <ShoppingBag size={15} strokeWidth={2.5} className="group-hover/buy:scale-110 transition-transform" />
-                                        <span className="font-extrabold tracking-wide">Comprar / Adquirir</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 bg-black/25 px-2.5 py-1 rounded-lg text-white font-mono font-bold text-xs">
-                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Ver'}</span>
-                                        <ExternalLink size={11} className="opacity-80" />
-                                    </div>
-                                </a>
-                            </div>
-                        )}
-                        <div
-                            className="flex items-center justify-between pt-2 border-t border-white/5 cursor-pointer"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
-                                if (!targetAuthor) return;
-                                if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
-                                    if (setView) setView('profile');
-                                } else if (setPublicProfileUser) {
-                                    setPublicProfileUser(targetAuthor);
-                                }
-                            }}
-                        >
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden shrink-0">
-                                    <img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-white block">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
-                                    <span className="text-[6.5px] font-bold text-accent/60 uppercase tracking-wider block">
-                                        {f.metadata?.publishedAt ? new Date(f.metadata.publishedAt).toLocaleDateString() + ' ' + new Date(f.metadata.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Resonancia Nivel 4'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                {(f.metadata?.buyLink || f.metadata?.price) && (
-                                    <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-auto shrink-0 transition-transform active:scale-95">
-                                        <ShoppingBag size={12} strokeWidth={2.5} />
-                                        <span>{f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Comprar'}</span>
-                                    </a>
-                                )}
-                                <p className="text-[8px] italic text-zinc-500 truncate max-w-[100px] text-right">
-                                    {f.metadata?.feedCaption || f.caption || 'Publicación'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    {confirmAction && (
-                        <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 z-[100]">
-                            <div className="max-w-[240px] text-center space-y-4">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 leading-relaxed px-2">
-                                    {confirmAction.message}
-                                </p>
-                                <div className="flex gap-2 justify-center pt-2">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }}
-                                        className="px-4 py-2 border border-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            confirmAction.onConfirm();
-                                            setConfirmAction(null);
-                                        }}
-                                        className="px-4 py-2 bg-red-600 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
-                                    >
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div id={`feed-item-${f.id}`} ref={itemRef} className="w-full min-h-screen snap-center snap-always flex items-center justify-center px-4 py-20">
-            <div className="group relative w-full sm:w-fit max-w-[420px] max-h-[90vh] flex flex-col bg-[#0c0c0d]/80 backdrop-blur-md rounded-[2rem] border border-white/8 overflow-hidden transition-all duration-700 shadow-[0_0_60px_rgba(0,0,0,0.5)] shrink-0 scale-[0.84] md:scale-100 transform origin-center -translate-y-6 md:translate-y-0" style={{ touchAction: "pan-y" }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-
-                {/* 1. CAROUSEL AREA (TOP) */}
-                {slides.length > 0 && (
-                    <div
-                        className="w-full relative overflow-hidden bg-black/40 flex-shrink-0"
-                        style={{ maxHeight: '70vh' }}
-                    >
-                        <div
-                            className="flex w-full h-full transition-transform duration-500 ease-out"
-                            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                        >
-                            {slides.map((s, idx) => {
-                                if (s.type === 'video') {
-                                    return (
-                                        <div key={idx} className="w-full h-full relative flex-shrink-0 bg-black">
-                                            <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }}
-                                                src={s.url}
-                                                autoPlay loop muted playsInline
-                                                onLoadedMetadata={(e) => {
-                                                    const v = e.target;
-                                                    if (idx === 0) setVideoAspect(v.videoHeight > v.videoWidth ? 'portrait' : 'landscape');
-                                                }}
-                                                className="w-full h-auto max-h-[75vh] object-contain"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0d] via-transparent to-transparent opacity-75" />
-                                        </div>
-                                    );
-                                }
-                                return renderSlide(s, idx);
-                            })}
-                        </div>
-
-                        {slides.length > 1 && (
-                            <>
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev > 0 ? prev - 1 : slides.length - 1)); }}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center hover:bg-black/90 transition-colors z-30 pointer-events-auto">
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0)); }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center hover:bg-black/90 transition-colors z-30 pointer-events-auto">
-                                    <ChevronRight size={16} />
-                                </button>
-                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
-                                    {slides.map((_, idx) => (
-                                        <button key={idx} onClick={(e) => { e.stopPropagation(); setCurrentSlide(idx); }}
-                                            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-accent w-3.5' : 'bg-white/30'}`} />
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* 2. NARRATIVE AREA */}
-                {feedComment.trim() && (
-                    <div className="flex-1 min-h-[100px] max-h-[30vh] p-4 md:p-5 overflow-y-auto no-scrollbar flex flex-col text-left border-t border-white/5 bg-black/20">
-                        <div className="w-full">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-accent mb-3 block opacity-70">Comentario del Autor</span>
-                            <SimpleNarrativeRenderer content={feedComment} />
-                        </div>
-                    </div>
-                )}
-
-                {/* HEADER TAG & PRICE BADGE */}
-                <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
-                    <div className="px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2">
-                        <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-                        <span className="text-[6.5px] font-black uppercase tracking-widest text-white/70">{f.type === 'text' ? 'Nota' : f.type?.toUpperCase()}</span>
-                    </div>
-                    {f.metadata?.price && (
-                        <div className="px-3 py-1 bg-black/80 backdrop-blur-md border border-accent/40 rounded-full flex items-center gap-1 shadow-lg">
-                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                            <span className="text-[8px] font-black uppercase tracking-widest text-accent">{f.metadata.price}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* ACTIONS */}
-                <div className="absolute right-4 top-4 flex flex-col gap-3 items-center z-20 pointer-events-auto">
-                    {(f.username === user || (blocks && blocks.some(b => b.id === f.id))) && (
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmAction({ message: "¿Eliminar esta publicación del Feed Público?", onConfirm: handleDeleteFeedItem });
-                            }}
-                            className="w-8 h-8 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/30 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-black transition-all pointer-events-auto"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    )}
-                    <button
                             type="button"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                const author = f.username || f.metadata?.feedUsername;
-                                if (onOpenDirectMessage && author) {
-                                    onOpenDirectMessage(author, `¡Hola @${author.replace('@', '')}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
-                                }
-                            }}
-                            className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent hover:border-accent/40 transition-all pointer-events-auto shadow-md"
-                            title="Enviar mensaje directo al autor"
+                            onClick={() => setShowOptionsMenu(prev => !prev)}
+                            className="w-7 h-7 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
                         >
-                            <MessageCircle size={14} />
+                            <MoreHorizontal size={16} />
+                        </button>
+
+                        {showOptionsMenu && (
+                            <div className="absolute right-0 top-8 z-30 w-44 rounded-xl bg-zinc-900 border border-white/15 shadow-2xl py-1 text-xs text-zinc-300">
+                                <button
+                                    type="button"
+                                    onClick={() => { toggleBookmark(); setShowOptionsMenu(false); }}
+                                    className="w-full px-3 py-2 text-left hover:bg-white/10 flex items-center gap-2"
+                                >
+                                    <Bookmark size={13} />
+                                    <span>{isBookmarked ? 'Quitar guardado' : 'Guardar publicación'}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { handleShare(); setShowOptionsMenu(false); }}
+                                    className="w-full px-3 py-2 text-left hover:bg-white/10 flex items-center gap-2"
+                                >
+                                    <Share2 size={13} />
+                                    <span>Copiar enlace</span>
+                                </button>
+                                {onOpenDetail && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { onOpenDetail(); setShowOptionsMenu(false); }}
+                                        className="w-full px-3 py-2 text-left hover:bg-white/10 flex items-center gap-2 text-accent font-semibold"
+                                    >
+                                        <ExternalLink size={13} />
+                                        <span>Abrir completa</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 2. MEDIA (Instagram 4:5 aspect ratio) */}
+                <div 
+                    className="w-full aspect-[4/5] bg-black relative overflow-hidden flex items-center justify-center cursor-pointer"
+                    onClick={() => { if (onOpenDetail) onOpenDetail(); }}
+                >
+                    <div 
+                        className="flex w-full h-full transition-transform duration-500 ease-out"
+                        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                        {slides.map((s, idx) => (
+                            <div key={idx} className="w-full h-full shrink-0 flex items-center justify-center bg-black">
+                                {renderMediaSlide(s, idx)}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Carousel Navigation */}
+                    {slides.length > 1 && (
+                        <>
+                            <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev > 0 ? prev - 1 : slides.length - 1)); }}
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition-all z-20 pointer-events-auto"
+                            >
+                                <ChevronLeft size={15} />
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0)); }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center transition-all z-20 pointer-events-auto"
+                            >
+                                <ChevronRight size={15} />
+                            </button>
+                            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                                {slides.map((_, idx) => (
+                                    <div 
+                                        key={idx}
+                                        className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* 3. ACTION BAR (Heart, Message, Share, Bookmark) */}
+                <div className="px-3.5 pt-3 pb-1 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={toggleLike}
+                            className={`text-zinc-300 hover:text-rose-400 transition-colors active:scale-90 ${isLiked ? 'text-rose-500' : ''}`}
+                            title="Me gusta"
+                        >
+                            <Heart size={22} fill={isLiked ? "currentColor" : "none"} />
                         </button>
                         <button
+                            type="button"
+                            onClick={handleDirectMessage}
+                            className="text-zinc-300 hover:text-white transition-colors active:scale-90"
+                            title={`Enviar mensaje directo a @${postAuthor}`}
+                        >
+                            <MessageCircle size={22} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleShare}
+                            className="text-zinc-300 hover:text-white transition-colors active:scale-90"
+                            title="Compartir"
+                        >
+                            <Share2 size={22} />
+                        </button>
+                    </div>
+
+                    <button
+                        type="button"
                         onClick={toggleBookmark}
-                        className={`w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all ${isBookmarked ? 'text-accent border-accent/30' : 'text-zinc-400 hover:text-white'}`}
+                        className={`text-zinc-300 hover:text-white transition-colors active:scale-90 ${isBookmarked ? 'text-accent' : ''}`}
+                        title="Guardar"
                     >
-                        <Bookmark size={14} fill={isBookmarked ? "currentColor" : "none"} />
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-400 hover:text-accent transition-all">
-                        <InfinityIcon size={14} strokeWidth={2.5} />
+                        <Bookmark size={22} fill={isBookmarked ? "currentColor" : "none"} />
                     </button>
                 </div>
 
-                {/* HIGH-CONVERTING PROMINENT BUY BANNER */}
+                {/* 4. LIKES COUNT */}
+                <div className="px-3.5 pt-1 text-left">
+                    <span className="text-xs font-bold text-white font-sans">
+                        {likesCount > 0 ? `${likesCount.toLocaleString()} Me gusta` : 'Sé el primero en indicar que te gusta'}
+                    </span>
+                </div>
+
+                {/* 5. CAPTION & STORY TEXT */}
+                {(f.caption || fullCaptionText) && (
+                    <div className="px-3.5 pt-1.5 pb-2 text-left">
+                        <p className="text-xs sm:text-[13px] text-zinc-200 leading-relaxed font-sans">
+                            <span 
+                                className="font-bold font-mono text-white mr-1.5 cursor-pointer hover:underline"
+                                onClick={handleAuthorClick}
+                            >
+                                @{postAuthor}
+                            </span>
+                            {f.caption && <span className="font-semibold text-white block mb-0.5">{f.caption}</span>}
+                            <span>
+                                {isTextLong && !isCaptionExpanded 
+                                    ? `${fullCaptionText.substring(0, 130)}...` 
+                                    : fullCaptionText}
+                            </span>
+                            {isTextLong && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCaptionExpanded(prev => !prev)}
+                                    className="ml-1 text-zinc-400 hover:text-white text-xs font-medium"
+                                >
+                                    {isCaptionExpanded ? 'menos' : 'más'}
+                                </button>
+                            )}
+                        </p>
+                    </div>
+                )}
+
+                {/* 6. CONNECTED NOTES TAGS */}
+                {displayedLinks.length > 0 && (
+                    <div className="px-3.5 pb-2 flex flex-wrap gap-1.5 items-center">
+                        <span className="text-[10px] text-zinc-500 flex items-center gap-1 font-mono">
+                            <LinkIcon size={10} /> Notas enlazadas:
+                        </span>
+                        {displayedLinks.map((link, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleLinkClick(link); }}
+                                className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 hover:bg-accent/20 border border-white/10 text-zinc-300 hover:text-accent transition-all truncate max-w-[130px]"
+                            >
+                                {getConnectedBlockCaption(link)}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* 7. SINGLE BUY PIECE ROW (IF ON SALE) */}
                 {(f.metadata?.buyLink || f.metadata?.price) && (
-                    <div className="px-5 py-3 bg-gradient-to-r from-accent/20 via-black/50 to-accent/10 border-t border-accent/30 flex items-center justify-between gap-3 z-20 pointer-events-auto">
+                    <div className="mx-3.5 mb-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                            <span className="w-2 h-2 rounded-full bg-accent animate-ping shrink-0" />
-                            <div className="flex flex-col text-left min-w-0">
-                                <span className="text-[10px] font-black tracking-widest uppercase text-white truncate">
-                                    {f.metadata?.price ? `Disponible · ${f.metadata.price}` : 'Pieza Disponible'}
-                                </span>
-                                <span className="text-[7.5px] text-accent/80 font-mono uppercase tracking-wider truncate">
-                                    Adquisición directa
-                                </span>
-                            </div>
+                            <ShoppingBag size={14} className="text-emerald-400 shrink-0" />
+                            <span className="text-xs font-bold text-white truncate">
+                                {f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Pieza disponible'}
+                            </span>
                         </div>
                         <a
                             href={f.metadata?.buyLink || 'https://ruidointerior.com/shop'}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-accent text-black text-[9px] font-black uppercase tracking-wider rounded-xl shadow-lg shadow-accent/25 hover:brightness-110 active:scale-95 transition-all shrink-0 cursor-pointer"
+                            className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase flex items-center gap-1 transition-all"
                         >
-                            <ShoppingBag size={13} strokeWidth={2.5} />
                             <span>Comprar</span>
                             <ExternalLink size={10} strokeWidth={2.5} />
                         </a>
                     </div>
                 )}
 
-                {/* USER PROFILE */}
-                <div className="p-6 shrink-0 border-t border-white/5 bg-black/20 flex justify-between items-center z-20">
-                    <div
-                        className="flex items-center gap-3 cursor-pointer pointer-events-auto group/author"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            const targetAuthor = (f.username || f.metadata?.feedUsername || '').replace('@', '').trim();
-                            if (!targetAuthor) return;
-                            if (user && targetAuthor.toLowerCase() === user.replace('@', '').toLowerCase()) {
-                                if (setView) setView('profile');
-                            } else if (setPublicProfileUser) {
-                                setPublicProfileUser(targetAuthor);
-                            }
-                        }}
-                    >
-                        <div className="w-8 h-8 rounded-full border border-accent/20 p-0.5 bg-black/40 overflow-hidden shrink-0 group-hover/author:border-accent transition-all">
-                            <img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={authorAvatar} className="w-full h-full object-cover rounded-full" />
-                        </div>
-                        <div className="flex flex-col text-left">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white group-hover/author:text-accent transition-colors">{f.metadata?.feedUsername || `@${f.username || 'anon'}`}</span>
-                            <span className="text-[6.5px] font-black uppercase tracking-[0.2em] text-accent/60">
-                                {f.metadata?.publishedAt ? new Date(f.metadata.publishedAt).toLocaleDateString() + ' ' + new Date(f.metadata.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Resonancia Nivel 4'}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 mr-2">
-                            <button className="text-zinc-500 hover:text-red-400 transition-all pointer-events-auto hover:scale-110 active:scale-95">
-                                <Heart size={15} strokeWidth={2.5} />
-                            </button>
-                            <button className="text-zinc-500 hover:text-accent transition-all pointer-events-auto hover:scale-110 active:scale-95">
-                                <MessageCircle size={15} strokeWidth={2.5} />
-                            </button>
-                        </div>
-                        {(f.metadata?.buyLink || f.metadata?.price) && (
-                            <a href={f.metadata.buyLink || 'https://ruidointerior.com/shop'} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="w-8 h-8 rounded-full bg-accent/20 backdrop-blur-md border border-accent/30 flex items-center justify-center text-accent hover:bg-accent hover:text-black hover:scale-110 transition-all pointer-events-auto shadow-lg shrink-0" title="Comprar">
-                                <ShoppingBag size={14} />
-                            </a>
-                        )}
-                        <p className="text-[8px] font-medium italic text-zinc-400/80 leading-snug truncate max-w-[80px] text-right hidden sm:block">
-                            {f.metadata?.price || f.metadata?.feedCaption || f.caption || ''}
-                        </p>
-                    </div>
-                </div>
+                {/* 8. CONFIRM DELETE OVERLAY */}
                 {confirmAction && (
-                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4 z-[100]">
-                        <div className="max-w-[240px] text-center space-y-4">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 leading-relaxed px-2">
+                    <div className="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 z-[100] animate-in fade-in duration-150">
+                        <div className="max-w-[260px] text-center space-y-4">
+                            <p className="text-xs font-bold text-white leading-relaxed">
                                 {confirmAction.message}
                             </p>
-                            <div className="flex gap-2 justify-center pt-2">
+                            <div className="flex gap-2 justify-center pt-1">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }}
-                                    className="px-4 py-2 border border-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
+                                    type="button"
+                                    onClick={() => setConfirmAction(null)}
+                                    className="px-4 py-2 rounded-xl bg-white/10 text-xs font-bold text-zinc-300 hover:text-white"
                                 >
                                     Cancelar
                                 </button>
                                 <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
+                                    type="button"
+                                    onClick={() => {
                                         confirmAction.onConfirm();
                                         setConfirmAction(null);
                                     }}
-                                    className="px-4 py-2 bg-red-600 text-white text-[8px] font-bold uppercase tracking-widest hover:bg-red-700 transition-colors"
+                                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-lg"
                                 >
                                     Eliminar
                                 </button>
@@ -1992,133 +2107,111 @@ const FeedItem = ({ f, credits, setCredits, blocks, setBlocks, syncBlocks, links
             </div>
         </div>
     );
-
-
 };
 
 const SimpleNarrativeRenderer = React.memo(({ content, isChild = false, cleanMinimal = false }) => {
     if (!content) return null;
 
-    // Pre-process content to handle legacy Oasis blocks or AI-specific tags
-    // We split by blocks that should be rendered specially
     const regexStr = '(\\[img\\][\\s\\S]*?(?:\\[\\/img\\]|$)|\\[vid\\][\\s\\S]*?(?:\\[\\/vid\\]|$)|\\[aud\\][\\s\\S]*?(?:\\[\\/aud\\]|$)|\\[question\\].*?|\\[insight\\][\\s\\S]*?(?=\\[img\\]|\\[vid\\]|\\[aud\\]|\\[question\\]|\\[insight\\]|\\[resonancia\\]|\\[impacto\\]|\\[extrano\\]|$)|\\[resonancia\\][\\s\\S]*?(?=\\[img\\]|\\[vid\\]|\\[aud\\]|\\[question\\]|\\[insight\\]|\\[resonancia\\]|\\[impacto\\]|\\[extrano\\]|$)|\\[impacto\\][\\s\\S]*?(?=\\[img\\]|\\[vid\\]|\\[aud\\]|\\[question\\]|\\[insight\\]|\\[resonancia\\]|\\[impacto\\]|\\[extrano\\]|$)|\\[extrano\\][\\s\\S]*?(?=\\[img\\]|\\[vid\\]|\\[aud\\]|\\[question\\]|\\[insight\\]|\\[resonancia\\]|\\[impacto\\]|\\[extrano\\]|$))';
     const blocks = content.split(new RegExp(regexStr, 'g'));
 
     return (
-        <div className={`prose prose-invert max-w-none ${isChild ? 'text-[8.5px] leading-tight prose-p:my-0.5 prose-headings:my-0.5 font-sans' : cleanMinimal ? 'text-[13px] leading-relaxed font-sans not-italic text-zinc-400' : 'text-[12px] md:text-[13px] leading-relaxed font-serif italic text-white/90'} selection:bg-accent/20`}>
+        <div className={`prose prose-invert max-w-none ${isChild ? 'text-[9px] leading-tight prose-p:my-0.5' : 'text-xs sm:text-[13px] leading-relaxed'} font-sans text-zinc-200 selection:bg-accent/20`}>
             {blocks.map((block, i) => {
                 const trimmed = block.trim();
                 if (!trimmed) return null;
 
                 if (trimmed.startsWith('[img]')) {
                     const url = formatUrl(trimmed.replace(/\[\/?img\]/g, '').trim());
-                    return <div key={i} className="my-6 rounded-xl overflow-hidden border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-700 bg-black/20"><img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={url} className="w-full h-auto object-cover max-h-[400px]" /></div>;
-                }
-                if (trimmed.startsWith('[vid]')) {
-                    const url = formatUrl(trimmed.replace(/\[\/?vid\]/g, '').trim());
                     return (
-                        <div key={i} className="my-6 rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black flex items-center justify-center max-h-[85vh]">
-                            <video onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} src={url} controls loop className="w-full h-auto max-h-[85vh] object-contain" />
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[aud]')) {
-                    const url = formatUrl(trimmed.replace(/\[\/?aud\]/g, '').trim());
-                    return (
-                        <div key={i} className="my-4 p-5 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/10 flex items-center gap-4 animate-in slide-in-from-left duration-500">
-                            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent"><Mic size={18} /></div>
-                            <audio src={url} controls className="flex-1 scale-90 origin-left invert opacity-60 hover:opacity-100 transition-opacity" />
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[question]')) {
-                    const q = trimmed.replace('[question]', '').trim();
-                    return (
-                        <div key={i} className="my-8 p-8 bg-accent/10 backdrop-blur-md rounded-[2.5rem] border border-accent/30 shadow-[0_0_40px_rgba(var(--accent-rgb),0.2)] animate-in slide-in-from-right duration-700 group relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-accent opacity-5 blur-3xl -translate-y-1/2 translate-x-1/2" />
-                            <div className="flex gap-4 mb-4 items-center">
-                                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent"><Radio size={16} /></div>
-                                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent/60">Profundiza tu Conciencia</span>
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-serif italic text-white/90 leading-tight">"{q}"</h3>
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[insight]')) {
-                    const ins = trimmed.replace('[insight]', '').trim();
-                    return (
-                        <div key={i} className="my-4 p-6 bg-purple-500/10 backdrop-blur-sm rounded-3xl border border-purple-500/20 shadow-[0_0_20px_rgba(192,38,211,0.05)] animate-in fade-in zoom-in duration-700 group relative">
-                            <div className="flex gap-3 mb-3 items-center">
-                                <Zap size={12} className="text-purple-400 opacity-50" />
-                                <span className="text-[7px] font-black uppercase tracking-[0.3em] text-purple-400/50">Insight</span>
-                            </div>
-                            <div className="text-sm md:text-base font-serif italic text-white/90 leading-snug">
-                                <ReactMarkdown>{ins}</ReactMarkdown>
-                            </div>
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[resonancia]')) {
-                    const res = trimmed.replace('[resonancia]', '').trim();
-                    return (
-                        <div key={i} className="my-4 p-5 bg-purple-500/5 border border-purple-500/20 rounded-[2rem] shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 blur-2xl rounded-full" />
-                            <div className="flex items-center gap-2 mb-3 relative z-10">
-                                <Radio size={12} className="text-purple-400 animate-spin-slow" />
-                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-purple-400/80">Resonancia Primal</span>
-                            </div>
-                            <p className="text-sm font-serif italic text-white/90 relative z-10">{res}</p>
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[impacto]')) {
-                    const imp = trimmed.replace('[impacto]', '').trim();
-                    return (
-                        <div key={i} className="my-4 p-5 bg-rose-500/5 border border-rose-500/20 rounded-[2rem] shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/10 blur-2xl rounded-full" />
-                            <div className="flex items-center gap-2 mb-3 relative z-10">
-                                <Zap size={12} className="text-rose-400" />
-                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-rose-400/80">Impacto Profundo</span>
-                            </div>
-                            <p className="text-sm font-serif italic text-white/90 relative z-10">{imp}</p>
-                        </div>
-                    );
-                }
-                if (trimmed.startsWith('[extrano]')) {
-                    const ext = trimmed.replace('[extrano]', '').trim();
-                    return (
-                        <div key={i} className="my-4 p-5 bg-cyan-500/5 border border-cyan-500/20 rounded-[2rem] shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/10 blur-2xl rounded-full" />
-                            <div className="flex items-center gap-2 mb-3 relative z-10">
-                                <Focus size={12} className="text-cyan-400" />
-                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-cyan-400/80">Atipicidad</span>
-                            </div>
-                            <p className="text-[15px] font-black italic text-white relative z-10 tracking-tight">{ext}</p>
+                        <div key={i} className="my-4 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black/20">
+                            <img 
+                                onError={(e) => {
+                                    if (!e.target.dataset.failed) {
+                                        e.target.dataset.failed = 'true';
+                                        e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=oasis';
+                                    }
+                                }} 
+                                src={url} 
+                                className="w-full h-auto object-cover max-h-[380px]" 
+                                alt="Imagen" 
+                            />
                         </div>
                     );
                 }
 
-                // Default: Render as Markdown
+                if (trimmed.startsWith('[vid]')) {
+                    const url = formatUrl(trimmed.replace(/\[\/?vid\]/g, '').trim());
+                    return (
+                        <div key={i} className="my-4 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black flex items-center justify-center max-h-[420px]">
+                            <video 
+                                onError={(e) => { if (!e.target.dataset.failed) { e.target.dataset.failed = true; e.target.poster = 'https://placehold.co/400x300/030304/444444?text=Offline+Video'; } }} 
+                                src={url} 
+                                controls 
+                                loop 
+                                className="w-full h-auto max-h-[420px] object-contain" 
+                            />
+                        </div>
+                    );
+                }
+
+                if (trimmed.startsWith('[aud]')) {
+                    const url = formatUrl(trimmed.replace(/\[\/?aud\]/g, '').trim());
+                    return (
+                        <div key={i} className="my-3 p-3 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent"><Mic size={15} /></div>
+                            <audio src={url} controls className="flex-1 scale-90 origin-left invert opacity-70 hover:opacity-100 transition-opacity" />
+                        </div>
+                    );
+                }
+
+                if (trimmed.startsWith('[question]')) {
+                    const q = trimmed.replace('[question]', '').trim();
+                    return (
+                        <div key={i} className="my-4 p-4 bg-white/[0.03] border-l-2 border-accent rounded-r-2xl text-white font-medium text-xs sm:text-sm leading-relaxed">
+                            "{q}"
+                        </div>
+                    );
+                }
+
+                if (trimmed.startsWith('[insight]')) {
+                    const ins = trimmed.replace('[insight]', '').trim();
+                    return (
+                        <div key={i} className="my-3 p-3.5 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-zinc-200 text-xs leading-relaxed">
+                            <div className="flex items-center gap-1.5 text-purple-400 font-bold text-[10px] uppercase tracking-wider mb-1.5">
+                                <Zap size={11} />
+                                <span>Reflexión</span>
+                            </div>
+                            <ReactMarkdown>{ins}</ReactMarkdown>
+                        </div>
+                    );
+                }
+
+                if (trimmed.startsWith('[resonancia]') || trimmed.startsWith('[impacto]') || trimmed.startsWith('[extrano]')) {
+                    const cleaned = trimmed.replace(/\[(resonancia|impacto|extrano)\]/g, '').trim();
+                    return (
+                        <div key={i} className="my-2.5 p-3 bg-white/[0.02] border border-white/10 rounded-2xl text-zinc-200 text-xs leading-relaxed">
+                            {cleaned}
+                        </div>
+                    );
+                }
+
+                // Default Markdown
                 return (
                     <ReactMarkdown
                         key={i}
                         components={{
-                            h1: ({ node, ...props }) => <h1 className="text-2xl font-black italic uppercase tracking-tighter text-white mb-4 mt-6 border-b border-white/10 pb-2" {...props} />,
-                            h2: ({ node, ...props }) => <h2 className="text-xl font-black italic uppercase tracking-tight text-accent mb-3 mt-5" {...props} />,
-                            h3: ({ node, ...props }) => <h3 className="text-lg font-black italic text-white/80 mb-2 mt-4" {...props} />,
-                            p: ({ node, ...props }) => <p className="mb-4 last:mb-0" {...props} />,
-                            ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-4 space-y-1 text-white/70" {...props} />,
-                            ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-4 space-y-1 text-white/70" {...props} />,
+                            h1: ({ node, ...props }) => <h1 className="text-lg font-bold text-white mb-2 mt-3" {...props} />,
+                            h2: ({ node, ...props }) => <h2 className="text-base font-bold text-accent mb-2 mt-3" {...props} />,
+                            h3: ({ node, ...props }) => <h3 className="text-sm font-bold text-white/90 mb-1.5 mt-2" {...props} />,
+                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                            ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-2 space-y-1 text-zinc-300" {...props} />,
+                            ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-zinc-300" {...props} />,
                             li: ({ node, ...props }) => <li className="marker:text-accent" {...props} />,
-                            strong: ({ node, ...props }) => <strong className="font-black text-accent" {...props} />,
-                            em: ({ node, ...props }) => <em className="italic text-white" {...props} />,
-                            code: ({ node, ...props }) => <code className="font-mono text-[11px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-cyan-400" {...props} />,
-                            blockquote: ({ node, ...props }) => <blockquote className="border-l-2 border-accent/30 pl-4 py-2 my-4 bg-accent/5 rounded-r-xl italic text-white/60" {...props} />,
+                            strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
+                            em: ({ node, ...props }) => <span className="text-zinc-200" {...props} />,
+                            code: ({ node, ...props }) => <code className="font-mono text-[11px] bg-white/5 px-1 py-0.5 rounded border border-white/10 text-cyan-400" {...props} />,
+                            blockquote: ({ node, ...props }) => <blockquote className="border-l-2 border-accent/40 pl-3 py-1 my-2 bg-white/[0.02] rounded-r-xl text-zinc-300" {...props} />
                         }}
                     >
                         {block.replaceAll('\u2028', '\n')}
@@ -5802,6 +5895,15 @@ function OasisApp() {
     });
     const [publicProfileTab, setPublicProfileTab] = useState('posts');
     const [selectedPublicPost, setSelectedPublicPost] = useState(null);
+    useEffect(() => {
+        const handlePostKeyDown = (e) => {
+            if ((e.key === 'Escape' || e.key === 'Esc') && selectedPublicPost) {
+                setSelectedPublicPost(null);
+            }
+        };
+        window.addEventListener('keydown', handlePostKeyDown);
+        return () => window.removeEventListener('keydown', handlePostKeyDown);
+    }, [selectedPublicPost]);
     const [focusedFeedPostId, setFocusedFeedPostId] = useState(null);
     const [publicProfileData, setPublicProfileData] = useState(null);
     const [publicProfileBackground, setPublicProfileBackground] = useState(null);
@@ -15593,10 +15695,10 @@ ${afcMapContext}
             e.target.dataset.failed = 'true';
             e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
         }
-    }} src={formatUrl(soul.img)} alt={soul.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
+    }} src={formatUrl(soul.img)} alt={soul.username} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
                                             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all" />
                                         </div>
-                                        <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-16 md:w-20 text-center">{soul.name}</span>
+                                        <span className="text-[10px] font-mono font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-16 md:w-20 text-center">@{soul.username}</span>
                                         <button
                                             type="button"
                                             onClick={(e) => {
@@ -19229,7 +19331,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                     className="fixed inset-0 z-[3000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto"
                     onClick={() => setSelectedPublicPost(null)}
                 >
-                    <div className="relative w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                    <div className="relative w-full max-w-5xl flex items-center justify-center" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setSelectedPublicPost(null)}
                             className="absolute -top-12 right-0 w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center text-white z-[3100]"
@@ -19239,6 +19341,15 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
 
                         <FeedItem
                             f={selectedPublicPost}
+                            isDetailModal={true}
+                            onCloseDetail={() => setSelectedPublicPost(null)}
+                            currentUserAvatar={avatar}
+                            publicUsers={publicUsers}
+                            onOpenDirectMessage={(author, context) => {
+                                setDirectMessageTargetUser(author);
+                                setDirectMessageContext(context || '');
+                                setIsDirectMessagesOpen(true);
+                            }}
                             accent={accent}
                             credits={credits}
                             setCredits={setCredits}
