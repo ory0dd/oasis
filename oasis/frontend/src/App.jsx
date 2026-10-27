@@ -29,6 +29,7 @@ import { BiographicInterview } from './components/BiographicInterview';
 import PublishNoteSelector from './components/PublishNoteSelector';
 import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
 import DirectMessagesModal from './components/DirectMessagesModal';
+import DirectMessagesWidget from './components/DirectMessagesWidget';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
@@ -5876,6 +5877,37 @@ function OasisApp() {
     const [titlePrompt, setTitlePrompt] = useState(null);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
+    const [isDirectWidgetOpen, setIsDirectWidgetOpen] = useState(false);
+    const [directWidgetActiveUser, setDirectWidgetActiveUser] = useState(null);
+    const [directWidgetContext, setDirectWidgetContext] = useState('');
+    const [followedUsernames, setFollowedUsernames] = useState(() => {
+        try {
+            const clean = (initialUser || '').replace('@', '').toLowerCase();
+            const saved = localStorage.getItem(`oasis_friends_${clean}`);
+            return new Set(saved ? JSON.parse(saved) : []);
+        } catch {
+            return new Set();
+        }
+    });
+
+    const toggleFollowUser = useCallback((targetUname) => {
+        const cleanCurrent = (user || '').replace('@', '').toLowerCase();
+        const cleanTarget = (targetUname || '').replace('@', '').toLowerCase();
+        const key = `oasis_friends_${cleanCurrent}`;
+        let list = [];
+        try {
+            list = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch (_) {}
+
+        let updated;
+        if (list.includes(cleanTarget)) {
+            updated = list.filter(u => u !== cleanTarget);
+        } else {
+            updated = [...list, cleanTarget];
+        }
+        localStorage.setItem(key, JSON.stringify(updated));
+        setFollowedUsernames(new Set(updated));
+    }, [user]);
     const [isNavbarHidden, setIsNavbarHidden] = useState(false);
     const lastFeedScrollRef = useRef(0);
     const isNavbarHiddenRef = useRef(false);
@@ -15696,101 +15728,254 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                {/* SIMILAR SOULS / NEW MATCHES (Horizontal Scroll) */}
-                {similarSouls.length > 0 && (
-                    <div className="w-full relative z-20 pt-[110px] pb-6 px-4 bg-gradient-to-b from-black/80 to-transparent shrink-0 pointer-events-auto border-b border-white/5">
-                        <div className="max-w-xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-4 px-2">
-                                <h3 className="text-white font-bold text-base md:text-lg tracking-tight flex items-center gap-2">
-                                    <span>Otras Almas</span>
-                                    <span className="text-[10px] font-mono text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30 font-bold">{similarSouls.length}</span>
-                                </h3>
-                                <button className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition-colors">
-                                    Ver todas
-                                </button>
-                            </div>
-                            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-2 snap-x">
-                                {similarSouls.map((soul) => (
-                                    <div key={soul.id} className="flex flex-col items-center gap-2 shrink-0 snap-center cursor-pointer group" onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPublicProfileUser(soul.username);
-                                    }}>
-                                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-white/20 transition-all shadow-xl bg-zinc-900 relative">
-                                            <img onError={(e) => {
-        if (!e.target.dataset.failed) {
-            e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
-        }
-    }} src={formatUrl(soul.img)} alt={soul.username} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" />
-                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all" />
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-16 sm:pt-20 pb-28">
+                    {/* COLUMNA PRINCIPAL DEL FEED */}
+                    <div className="w-full max-w-[430px] sm:max-w-[470px] flex flex-col items-center">
+                        {/* OTRAS ALMAS / HISTORIAS (Slider horizontal) */}
+                        {similarSouls.length > 0 && (
+                            <div className="w-full mb-6 pb-4 border-b border-white/5">
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                    <h3 className="text-white font-bold text-sm tracking-tight flex items-center gap-2">
+                                        <span>Otras Almas</span>
+                                        <span className="text-[10px] font-mono text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/30 font-bold">{similarSouls.length}</span>
+                                    </h3>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsDirectMessagesOpen(true)}
+                                        className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                    >
+                                        Ver todas
+                                    </button>
+                                </div>
+                                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1 snap-x">
+                                    {similarSouls.map((soul) => (
+                                        <div key={soul.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPublicProfileUser(soul.username);
+                                        }}>
+                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-accent transition-all shadow-xl bg-zinc-900 relative">
+                                                <img 
+                                                    onError={(e) => {
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(soul.username || 'oasis');
+                                                        }
+                                                    }} 
+                                                    src={formatUrl(soul.img)} 
+                                                    alt={soul.username} 
+                                                    className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity grayscale group-hover:grayscale-0" 
+                                                />
+                                            </div>
+                                            <span className="text-[10px] font-mono font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-14 sm:w-16 text-center">
+                                                @{soul.username}
+                                            </span>
                                         </div>
-                                        <span className="text-[10px] font-mono font-bold text-zinc-400 group-hover:text-white transition-colors truncate w-16 md:w-20 text-center">@{soul.username}</span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setDirectMessageTargetUser(soul.username);
-                                                setDirectMessageContext('');
-                                                setIsDirectMessagesOpen(true);
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* LISTA DE PUBLICACIONES */}
+                        {activeFeedItems.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest gap-4 h-64 relative z-10 pb-32">
+                                <Aperture size={32} className="animate-spin-slow text-zinc-600" />
+                                <span>No hay publicaciones en el feed</span>
+                            </div>
+                        ) : (
+                            <div className="w-full flex flex-col items-center space-y-8 relative z-10">
+                                {activeFeedItems.map((f, i) => (
+                                    <div key={f.id || i} className="feed-post-item w-full flex justify-center">
+                                        <FeedItem
+                                            f={f}
+                                            accent={accent}
+                                            credits={credits}
+                                            setCredits={setCredits}
+                                            blocks={blocks}
+                                            setBlocks={setBlocks}
+                                            syncBlocks={syncBlocks}
+                                            links={links}
+                                            feed={feed}
+                                            setFeed={setFeed}
+                                            setView={setView}
+                                            editBlock={editBlock}
+                                            setPublicProfileUser={setPublicProfileUser}
+                                            user={user}
+                                            currentUserAvatar={avatar}
+                                            publicUsers={publicUsers}
+                                            onOpenDirectMessage={(author, context) => {
+                                                setDirectWidgetActiveUser(author);
+                                                setDirectWidgetContext(context || '');
+                                                setIsDirectWidgetOpen(true);
                                             }}
-                                            className="px-2 py-0.5 rounded-full bg-accent/20 border border-accent/30 text-accent text-[8px] font-bold flex items-center gap-1 hover:bg-accent hover:text-black transition-all shadow-sm"
-                                            title="Enviar mensaje"
-                                        >
-                                            <Send size={7} />
-                                            <span>Mensaje</span>
-                                        </button>
+                                        />
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
-                {activeFeedItems.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest gap-4 h-full relative z-10 snap-center pb-32">
-                        <Aperture size={32} className="animate-spin-slow text-zinc-600" />
-                        <span>No hay publicaciones en el feed</span>
+                                {/* FINAL DE STREAM */}
+                                <div className="py-12 flex items-center justify-center opacity-30 shrink-0">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-px h-12 bg-white/20" />
+                                        <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">Fin de las Frecuencias</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className={`w-full flex flex-col items-center relative z-10 ${similarSouls.length === 0 ? 'pt-[110px]' : ''}`}>
-                        {activeFeedItems.map((f, i) => (
-                            <div key={f.id || i} className="feed-post-item w-full">
-                                <FeedItem
-                                    f={f}
-                                    accent={accent}
-                                    credits={credits}
-                                    setCredits={setCredits}
-                                    blocks={blocks}
-                                    setBlocks={setBlocks}
-                                    syncBlocks={syncBlocks}
-                                    links={links}
-                                    feed={feed}
-                                    setFeed={setFeed}
-                                    setView={setView}
-                                    editBlock={editBlock}
-                                    setPublicProfileUser={setPublicProfileUser}
-                                    user={user}
-                                    currentUserAvatar={avatar}
-                                    publicUsers={publicUsers}
-                                    onOpenDirectMessage={(author, context) => {
-                                        setDirectMessageTargetUser(author);
-                                        setDirectMessageContext(context || '');
-                                        setIsDirectMessagesOpen(true);
-                                    }}
+
+                    {/* COLUMNA LATERAL DERECHA (Sugerencias para ti - Estilo Instagram Desktop) */}
+                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 sticky top-24 self-start space-y-5 select-none">
+                        {/* Perfil del usuario actual */}
+                        <div className="flex items-center justify-between py-1">
+                            <div 
+                                className="flex items-center gap-3 cursor-pointer group/me min-w-0"
+                                onClick={() => setView('profile')}
+                                title="Ir a mi perfil"
+                            >
+                                <img 
+                                    src={avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(cleanCurrentU || 'me')}`}
+                                    alt={cleanCurrentU}
+                                    className="w-11 h-11 rounded-full object-cover border border-white/10 group-hover/me:border-accent transition-colors shrink-0 bg-zinc-900"
                                 />
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-bold text-white font-mono truncate group-hover/me:text-accent transition-colors">
+                                        @{cleanCurrentU}
+                                    </span>
+                                    <span className="text-[11px] text-zinc-400 truncate">
+                                        Explorador Oasis
+                                    </span>
+                                </div>
                             </div>
-                        ))}
-                        {/* FINAL DE STREAM */}
-                        <div className="h-screen flex items-center justify-center opacity-25 shrink-0">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="w-px h-16 bg-white/20" />
-                                <span className="text-[7px] font-black uppercase tracking-[0.4em] text-zinc-500">Fin de las Frecuencias</span>
+                            <button
+                                type="button"
+                                onClick={() => setView('profile')}
+                                className="text-xs font-bold text-[#0095f6] hover:text-white transition-colors shrink-0"
+                            >
+                                Cambiar
+                            </button>
+                        </div>
+
+                        {/* Encabezado Sugerencias para ti */}
+                        <div className="flex items-center justify-between pt-2">
+                            <span className="text-xs font-bold text-zinc-400">
+                                Sugerencias para ti
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsDirectMessagesOpen(true)}
+                                className="text-xs font-semibold text-white hover:text-zinc-300 transition-colors"
+                            >
+                                Ver todo
+                            </button>
+                        </div>
+
+                        {/* Lista de Sugerencias */}
+                        <div className="space-y-3.5">
+                            {similarSouls.slice(0, 5).map((soul, idx) => {
+                                const cleanTarget = soul.username.toLowerCase();
+                                const isFollowing = followedUsernames.has(cleanTarget);
+                                const reasons = [
+                                    'Sugerencia para ti',
+                                    'Alma resonante en Oasis',
+                                    'Nuevo creador en el feed',
+                                    'Coincidencia de frecuencias',
+                                    'Sigue esta cuenta'
+                                ];
+                                const reason = reasons[idx % reasons.length];
+
+                                return (
+                                    <div key={soul.id || soul.username} className="flex items-center justify-between group/sug">
+                                        <div 
+                                            className="flex items-center gap-3 min-w-0 cursor-pointer"
+                                            onClick={() => setPublicProfileUser(soul.username)}
+                                        >
+                                            <img
+                                                src={formatUrl(soul.img)}
+                                                alt={soul.username}
+                                                className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0 bg-zinc-900 group-hover/sug:border-white/30 transition-colors"
+                                            />
+                                            <div className="flex flex-col min-w-0 pr-1">
+                                                <span className="text-xs font-bold text-white font-mono truncate group-hover/sug:text-accent transition-colors">
+                                                    @{soul.username}
+                                                </span>
+                                                <span className="text-[11px] text-zinc-400 truncate">
+                                                    {reason}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDirectWidgetActiveUser(soul.username);
+                                                    setDirectWidgetContext('');
+                                                    setIsDirectWidgetOpen(true);
+                                                }}
+                                                className="text-[11px] text-zinc-500 hover:text-white transition-colors"
+                                                title="Enviar mensaje"
+                                            >
+                                                Chat
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleFollowUser(soul.username)}
+                                                className={`text-xs font-semibold transition-colors ${
+                                                    isFollowing
+                                                        ? 'text-zinc-400 hover:text-white'
+                                                        : 'text-[#0095f6] hover:brightness-125'
+                                                }`}
+                                            >
+                                                {isFollowing ? 'Siguiendo' : 'Seguir'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footer informativo estilo Instagram */}
+                        <div className="pt-6 border-t border-white/5 text-[11px] text-zinc-500 leading-relaxed space-y-3">
+                            <div className="flex flex-wrap gap-x-1.5 gap-y-0.5">
+                                <span className="hover:underline cursor-pointer">Información</span>·
+                                <span className="hover:underline cursor-pointer">Ayuda</span>·
+                                <span className="hover:underline cursor-pointer">Prensa</span>·
+                                <span className="hover:underline cursor-pointer">API</span>·
+                                <span className="hover:underline cursor-pointer">Empleo</span>·
+                                <span className="hover:underline cursor-pointer">Privacidad</span>·
+                                <span className="hover:underline cursor-pointer">Condiciones</span>·
+                                <span className="hover:underline cursor-pointer">Ubicaciones</span>·
+                                <span className="hover:underline cursor-pointer">Idioma</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">
+                                © 2026 OASIS FROM RUIDO INTERIOR
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
 
-
+                {/* POPUP / PILL FLOTANTE DE MENSAJES DIRECTOS (Instagram Messenger Popup) */}
+                <DirectMessagesWidget
+                    isOpen={isDirectWidgetOpen}
+                    onToggle={() => setIsDirectWidgetOpen(prev => !prev)}
+                    activeUser={directWidgetActiveUser}
+                    setActiveUser={setDirectWidgetActiveUser}
+                    initialContext={directWidgetContext}
+                    currentUser={user}
+                    currentUserAvatar={avatar}
+                    publicUsers={publicUsers}
+                    onOpenFullScreen={() => {
+                        setIsDirectWidgetOpen(false);
+                        setDirectMessageTargetUser(directWidgetActiveUser);
+                        setDirectMessageContext(directWidgetContext);
+                        setIsDirectMessagesOpen(true);
+                    }}
+                    onOpenProfile={(uname) => {
+                        setIsDirectWidgetOpen(false);
+                        setPublicProfileUser(uname);
+                    }}
+                    accent={accent}
+                    isNavbarHidden={isNavbarHidden}
+                />
             </div>
         );
     };
