@@ -15753,7 +15753,7 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-24 sm:pt-28 md:pt-32 pb-28">
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-10 xl:gap-16 px-3 sm:px-6 pt-16 sm:pt-18 md:pt-20 pb-28">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
                     <div className="w-full max-w-[430px] sm:max-w-[470px] flex flex-col items-center">
                         {/* LISTA DE PUBLICACIONES */}
