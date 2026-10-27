@@ -4018,9 +4018,11 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         );
                     })() : isColumnCard ? (
                         <div className="flex-1 w-full h-full flex flex-col min-h-0 select-none">
-                            <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-white/[0.08] shrink-0">
+                            <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-white/[0.06] shrink-0">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <Columns size={13} className="text-[#10b981] shrink-0" />
+                                    <div className="w-5 h-5 rounded-md bg-[#10b981]/10 border border-[#10b981]/20 flex items-center justify-center shrink-0">
+                                        <Columns size={11} className="text-[#10b981]" />
+                                    </div>
                                     <input
                                         type="text"
                                         value={block.caption ?? 'COLUMNA CREATIVA'}
@@ -4032,7 +4034,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             }
                                         }}
                                         placeholder="COLUMNA CREATIVA"
-                                        className="bg-transparent text-[11px] font-mono font-bold uppercase tracking-[0.15em] text-[#10b981] truncate focus:outline-none w-full"
+                                        className="bg-transparent text-[11px] font-mono font-bold uppercase tracking-[0.14em] text-[#10b981] truncate focus:outline-none w-full"
                                     />
                                 </div>
                                 <button
@@ -4040,23 +4042,26 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                         e.stopPropagation();
                                         setShowDeleteConfirm(true);
                                     }}
-                                    className="text-zinc-500 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors shrink-0"
+                                    className="text-zinc-500 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors shrink-0"
+                                    title="Eliminar columna"
                                 >
-                                    <X size={13} />
+                                    <X size={12} />
                                 </button>
                             </div>
-                            <textarea
-                                value={block.content || ''}
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onChange={(e) => {
-                                    if (onUpdateBlock) {
-                                        onUpdateBlock({ ...block, content: e.target.value });
-                                    }
-                                }}
-                                placeholder="Escribe notas estructuradas, ideas de escena o secuencia aquí..."
-                                className="flex-1 w-full bg-white/[0.02] border border-dashed border-white/[0.08] rounded-xl p-3 text-[13px] text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none focus:border-[#10b981]/40 leading-relaxed"
-                            />
+                            <div className="flex-1 w-full min-h-0 rounded-xl bg-black/40 border border-white/[0.06] focus-within:border-[#10b981]/30 focus-within:ring-1 focus-within:ring-[#10b981]/20 p-2.5 transition-all flex flex-col">
+                                <textarea
+                                    value={block.content || ''}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({ ...block, content: e.target.value });
+                                        }
+                                    }}
+                                    placeholder="Escribe notas estructuradas, ideas de escena o secuencia aquí..."
+                                    className="flex-1 w-full bg-transparent text-[12px] font-sans text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none leading-relaxed pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
+                                />
+                            </div>
                         </div>
                     ) : null}
                 </div>
