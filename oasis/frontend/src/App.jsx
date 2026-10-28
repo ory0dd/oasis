@@ -4770,6 +4770,8 @@ const ProfileView = ({
     const [activePurchasingId, setActivePurchasingId] = useState(null);
     const [activeSuccessId, setActiveSuccessId] = useState(null);
     const [isFirmaExpanded, setIsFirmaExpanded] = useState(false);
+    const [isPiecesModalOpen, setIsPiecesModalOpen] = useState(false);
+    const [isQuickCustomizeOpen, setIsQuickCustomizeOpen] = useState(false);
 
     React.useEffect(() => {
         if (!isOwnProfile) {
@@ -5220,6 +5222,36 @@ const ProfileView = ({
         return list;
     }, [linkedPosts]);
 
+    const allPiecesForSale = useMemo(() => {
+        const list = [];
+        (linkedPosts || []).forEach(lp => {
+            if (!list.some(p => p.id === lp.id)) {
+                list.push({
+                    id: lp.id,
+                    title: lp.caption || lp.content?.split('\n')[0]?.replace(/\[.*?\]/g, '').trim().slice(0, 20) || 'Reliquia',
+                    price: lp.metadata?.price || '$45',
+                    image: getBlockPreviewImage(lp) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600',
+                    buyLink: lp.metadata?.buyLink,
+                    raw: lp
+                });
+            }
+        });
+        const defaults = [
+            { id: 'def-1', title: 'Cuadro Lindo', price: '$100', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600', buyLink: 'https://inn3r.shop' },
+            { id: 'def-2', title: 'Glitch Spikes', price: '$65', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600', buyLink: 'https://inn3r.shop' },
+            { id: 'def-3', title: 'Echo 01 USB', price: '$45', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600', buyLink: 'https://inn3r.shop' },
+            { id: 'def-4', title: 'Fanzine Void #01', price: '$25', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=600', buyLink: 'https://inn3r.shop' },
+            { id: 'def-5', title: 'Cassette Ambient 432Hz', price: '$35', image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600', buyLink: 'https://inn3r.shop' },
+            { id: 'def-6', title: 'Monolito Cerámico', price: '$85', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600', buyLink: 'https://inn3r.shop' }
+        ];
+        defaults.forEach(d => {
+            if (!list.some(p => p.id === d.id || p.title === d.title)) {
+                list.push(d);
+            }
+        });
+        return list;
+    }, [linkedPosts]);
+
     const bentoCentralPiece = useMemo(() => {
         const cand = (featuredWorks && featuredWorks[0]) || (targetUserPosts && targetUserPosts[0]);
         return {
@@ -5537,22 +5569,24 @@ const ProfileView = ({
                         {/* ======================================================== */}
                         <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
                             
-                            {/* 1. PERFIL: APENAS ESPACIO (MICRO-COMPACTO) */}
-                            <div className="w-[28%] sm:w-[24%] lg:w-[20%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-0.5 sm:pr-1">
-                                <div className="flex items-center gap-1.5 sm:gap-2">
-                                    {/* Avatar Squircle compacto */}
-                                    <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
+                            {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS EN EL MISMO ESPACIO */}
+                            <div className="w-[48%] sm:w-[45%] lg:w-[40%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
+                                
+                                {/* Fila 1: Avatar + @usuario + Botón Personalizar */}
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="relative shrink-0 w-8 h-8 sm:w-9 sm:h-9">
                                         <div
-                                            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl p-[1px] sm:p-[1.5px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
+                                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl p-[1px] sm:p-[1.5px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
                                                 } else if (isOwnProfile) {
-                                                    handleAvatarClick(e);
+                                                    fileInputRef.current?.click();
                                                 }
                                             }}
+                                            title={isOwnProfile ? "Toca para cambiar foto de perfil" : undefined}
                                         >
-                                            <div className="w-full h-full rounded-[7px] sm:rounded-[9px] overflow-hidden bg-zinc-900 shrink-0">
+                                            <div className="w-full h-full rounded-[7px] sm:rounded-[8px] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
@@ -5564,8 +5598,8 @@ const ProfileView = ({
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
-                                            {isOwnProfile && isEditingProfile && (
-                                                <div className="absolute inset-0 m-[1px] rounded-[7px] sm:rounded-[9px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                            {isOwnProfile && (
+                                                <div className="absolute inset-0 m-[1px] rounded-[7px] sm:rounded-[8px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                                                     <Camera size={9} className="text-white" />
                                                 </div>
                                             )}
@@ -5583,16 +5617,36 @@ const ProfileView = ({
                                         )}
                                     </div>
 
-                                    {/* Solo el usuario a un lado (sin nombre) */}
-                                    <div className="flex-1 min-w-0 flex items-center gap-1 my-auto">
-                                        <span className="text-[8.5px] sm:text-[10px] font-mono font-bold text-white truncate tracking-tight">
+                                    <div className="flex-1 min-w-0 flex items-center gap-1">
+                                        <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white truncate tracking-tight">
                                             @{effectiveUser}
                                         </span>
                                         <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                     </div>
+
+                                    {/* Botón rápido de personalización o compartir */}
+                                    {isOwnProfile ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsQuickCustomizeOpen(true)}
+                                            className="p-1 rounded-md bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0 flex items-center gap-0.5"
+                                            title="Personalizar foto, fondo y audio"
+                                        >
+                                            <Pencil size={8} className="text-emerald-400" />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleShareProfile}
+                                            className="p-1 rounded-md bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0"
+                                            title="Compartir perfil"
+                                        >
+                                            <Share2 size={8} />
+                                        </button>
+                                    )}
                                 </div>
 
-                                {/* Enlace */}
+                                {/* Fila 2: Enlace */}
                                 <a
                                     href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
                                     target="_blank"
@@ -5605,107 +5659,51 @@ const ProfileView = ({
                                     <ChevronRight size={7} className="text-zinc-500 shrink-0 ml-0.5" />
                                 </a>
 
-                                {/* Bio */}
-                                {isOwnProfile && isEditingProfile ? (
-                                    <textarea
-                                        value={bio}
-                                        onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                        className="w-full bg-black/40 border border-white/10 rounded p-1 text-[8px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none h-[28px]"
-                                        placeholder="Bio..."
-                                    />
-                                ) : (
-                                    <p className="text-[7px] sm:text-[8px] leading-tight text-zinc-300 font-sans line-clamp-1 truncate">
-                                        {bio || 'ruido extraviado'}
-                                    </p>
-                                )}
+                                {/* Fila 3: Bio */}
+                                <p className="text-[7px] sm:text-[8px] leading-tight text-zinc-300 font-sans line-clamp-1 truncate">
+                                    {bio || 'ruido extraviado'}
+                                </p>
 
-                                {/* Botón Acción */}
-                                <div className="flex items-center gap-1 pt-0.5">
-                                    {isOwnProfile ? (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    if (isEditingProfile && onSaveProfile) {
-                                                        onSaveProfile({ fullName, bio, profileLink });
-                                                    }
-                                                    setIsEditingProfile(!isEditingProfile);
-                                                }}
-                                                className={`flex-1 py-0.5 px-1.5 rounded-md text-[7px] sm:text-[8px] font-bold transition-all flex items-center justify-center gap-0.5 shadow-xs cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black' : 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'}`}
-                                            >
-                                                {isEditingProfile ? <Check size={7} strokeWidth={2.5} /> : <Edit2 size={7} />}
-                                                <span className="truncate">{isEditingProfile ? 'OK' : 'Editar'}</span>
-                                            </button>
-                                            <button
-                                                onClick={() => setIsSettingsOpen(true)}
-                                                className="p-1 bg-white/10 hover:bg-white/20 border border-white/10 rounded-md text-zinc-300 hover:text-white transition-all shadow-xs cursor-pointer shrink-0"
-                                                title="Ajustes"
-                                            >
-                                                <Settings size={8} />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <button
-                                            onClick={handleShareProfile}
-                                            className="w-full py-0.5 px-1.5 rounded-md text-[7px] sm:text-[8px] font-bold transition-all flex items-center justify-center gap-0.5 bg-white/10 hover:bg-white/20 border border-white/10 shadow-xs text-white cursor-pointer"
-                                        >
-                                            <Share2 size={7} />
-                                            <span className="truncate">Compartir</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 2. ARCHIVO (MINIMALISTA: SOLO ICONOS + INDICADORES SIN TEXTOS) */}
-                            <div className="w-[23%] sm:w-[20%] lg:w-[17%] shrink-0 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] px-1 sm:px-1.5">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <span className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
-                                        Archivo
-                                    </span>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400/80 animate-pulse" />
-                                </div>
-
-                                <div className="flex flex-col gap-1 my-auto">
-                                    {/* Icono Radio + 32 */}
+                                {/* Fila 4: Archivo (en el lugar donde estaba el botón de editar) */}
+                                <div className="grid grid-cols-3 gap-1 pt-0.5">
                                     <div
                                         onClick={() => {
                                             if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs"
+                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs"
                                         title="Comunidad (32 activos)"
                                     >
-                                        <Radio size={10} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
+                                        <Radio size={8} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
                                             32
                                         </span>
                                     </div>
 
-                                    {/* Icono Mic + #04 */}
                                     <div
                                         onClick={() => {
                                             if (profileAudioRef.current) {
                                                 profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
                                             }
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs"
+                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs"
                                         title="Podcast (#04)"
                                     >
-                                        <Mic size={10} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
+                                        <Mic size={8} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
                                             #04
                                         </span>
                                     </div>
 
-                                    {/* Icono Bookmark + zine */}
                                     <div
                                         onClick={() => {
                                             setProfileFeedView('editorial');
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs"
+                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs"
                                         title="Fanzines y Libros"
                                     >
-                                        <Bookmark size={10} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
+                                        <Bookmark size={8} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
                                             zine
                                         </span>
@@ -5713,10 +5711,10 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* 3. PIEZAS (MINIMALISTA: SOLO ELEMENTOS Y BOTÓN +) */}
-                            <div className="flex-1 flex flex-col justify-center gap-1 min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-2.5 my-auto">
-                                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 items-start">
-                                    {bentoPiecesForSale.slice(0, 2).map((item, idx) => (
+                            {/* LADO DERECHO: 3 PIEZAS COMPLETAS + BOTÓN (+) EN LA ESQUINA INFERIOR */}
+                            <div className="flex-1 flex flex-col justify-between min-w-0 border-l border-white/[0.08] pl-2 sm:pl-3 relative">
+                                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 items-start my-auto">
+                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
                                             onClick={() => {
@@ -5750,21 +5748,21 @@ const ProfileView = ({
                                             </span>
                                         </div>
                                     ))}
+                                </div>
 
-                                    {/* Botón + Minimalista */}
-                                    <div
-                                        onClick={() => {
-                                            const el = document.getElementById('profile-feed-section');
-                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                        }}
-                                        className="w-full aspect-square rounded-md sm:rounded-lg border border-dashed border-white/20 hover:border-emerald-400/60 bg-white/[0.02] hover:bg-emerald-500/10 flex flex-col items-center justify-center text-zinc-400 hover:text-emerald-400 transition-all cursor-pointer group/plus shadow-xs"
-                                        title="Ver más piezas y catálogo"
+                                {/* Abajo en la esquina: solo el de más (+) para abrir la ventana con más piezas */}
+                                <div className="flex justify-end pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPiecesModalOpen(true)}
+                                        className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full bg-white/[0.06] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-300 transition-all flex items-center justify-center cursor-pointer shadow-xs hover:scale-110 active:scale-95"
+                                        title="Abrir catálogo con más piezas"
                                     >
-                                        <Plus size={14} strokeWidth={2.5} className="group-hover/plus:scale-125 transition-transform text-zinc-400 group-hover/plus:text-emerald-400" />
-                                    </div>
+                                        <Plus size={10} strokeWidth={2.5} />
+                                    </button>
                                 </div>
                             </div>
-                            </div>
+                        </div>
 
                         {/* ======================================================== */}
                         {/* FILA 2 (IZQUIERDA): OBRA CENTRAL / LOOP CONTINUO [432 HZ] */}
@@ -5953,6 +5951,232 @@ const ProfileView = ({
 
                     </div>
                 </div>
+
+                {/* MODAL DE PERSONALIZACIÓN RÁPIDA (FONDO, AUDIO, FOTO DE PERFIL Y BIO) */}
+                {isQuickCustomizeOpen && (
+                    <div
+                        className="fixed inset-0 z-[7000] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsQuickCustomizeOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-sm bg-[#0e1015] border border-white/15 rounded-3xl p-5 shadow-2xl flex flex-col gap-4 text-white relative animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                                    <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
+                                        Personalizar Perfil
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setIsQuickCustomizeOpen(false)}
+                                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+
+                            {/* Acciones Rápidas Directas */}
+                            <div className="flex flex-col gap-2">
+                                {/* 1. Cambiar foto de perfil */}
+                                <div
+                                    onClick={() => {
+                                        if (fileInputRef.current) fileInputRef.current.click();
+                                        setIsQuickCustomizeOpen(false);
+                                    }}
+                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-emerald-500/40 transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                                            <Camera size={18} />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Foto de Perfil</span>
+                                            <span className="text-[9px] font-sans text-zinc-400">Actualizar tu avatar squircle</span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">Cambiar ↗</span>
+                                </div>
+
+                                {/* 2. Cambiar fondo de pantalla */}
+                                <div
+                                    onClick={() => {
+                                        if (coverInputRef.current) coverInputRef.current.click();
+                                        setIsQuickCustomizeOpen(false);
+                                    }}
+                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-purple-500/40 transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+                                            <Sparkles size={18} />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Fondo de Pantalla</span>
+                                            <span className="text-[9px] font-sans text-zinc-400">Cambiar la portada principal</span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">Cambiar ↗</span>
+                                </div>
+
+                                {/* 3. Cambiar audio de fondo */}
+                                <div
+                                    onClick={() => {
+                                        if (audioFileInputRef.current) audioFileInputRef.current.click();
+                                        setIsQuickCustomizeOpen(false);
+                                    }}
+                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-500/40 transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                                            <Music size={18} />
+                                        </div>
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Audio de Fondo</span>
+                                            <span className="text-[9px] font-sans text-zinc-400">Música ambiental que suena al entrar</span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform">Subir ↗</span>
+                                </div>
+                            </div>
+
+                            {/* Edición rápida de Bio y Enlace */}
+                            <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.08]">
+                                <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">Biografía</label>
+                                <textarea
+                                    value={bio}
+                                    onChange={(e) => {
+                                        setBio(e.target.value);
+                                        localStorage.setItem('oasis_bio_' + user, e.target.value);
+                                    }}
+                                    placeholder="Escribe tu bio..."
+                                    rows={2}
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl p-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500/50 transition-all resize-none font-sans"
+                                />
+
+                                <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 mt-1">Enlace Personal</label>
+                                <input
+                                    type="text"
+                                    value={profileLink || ''}
+                                    onChange={(e) => {
+                                        setProfileLink(e.target.value);
+                                        localStorage.setItem('oasis_profilelink_' + user, e.target.value);
+                                    }}
+                                    placeholder="ej: inn3r.shop o instagram.com/tu_usuario"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-emerald-400 placeholder-zinc-500 outline-none focus:border-emerald-500/50 transition-all"
+                                />
+
+                                <div className="flex items-center gap-2 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (onSaveProfile) {
+                                                onSaveProfile({ fullName, bio, profileLink });
+                                            }
+                                            setIsQuickCustomizeOpen(false);
+                                        }}
+                                        className="flex-1 py-2 rounded-xl bg-[#10b981] hover:bg-[#059669] text-black font-mono font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                                    >
+                                        <Check size={14} strokeWidth={2.5} />
+                                        <span>Guardar Cambios</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsQuickCustomizeOpen(false);
+                                            setIsSettingsOpen(true);
+                                        }}
+                                        className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white transition-all cursor-pointer shadow-sm"
+                                        title="Abrir ajustes avanzados"
+                                    >
+                                        <Settings size={15} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL VENTANA: CATÁLOGO COMPLETO DE PIEZAS */}
+                {isPiecesModalOpen && (
+                    <div
+                        className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-3 sm:p-5 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsPiecesModalOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-2xl bg-[#0b0c10]/95 border border-white/[0.12] rounded-3xl p-4 sm:p-6 backdrop-blur-2xl shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Header del Modal */}
+                            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                    <h3 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-white">
+                                        Catálogo de Piezas & Reliquias
+                                    </h3>
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[8px] font-mono font-bold">
+                                        {allPiecesForSale.length} disponibles
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setIsPiecesModalOpen(false)}
+                                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                                >
+                                    <X size={15} />
+                                </button>
+                            </div>
+
+                            {/* Grid de Piezas en el Modal */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto no-scrollbar p-1 max-h-[60vh]">
+                                {allPiecesForSale.map((item, idx) => (
+                                    <div
+                                        key={item.id || idx}
+                                        onClick={() => {
+                                            if (item.buyLink) {
+                                                window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                            } else if (item.raw) {
+                                                setSelectedModalPost(item.raw);
+                                            }
+                                        }}
+                                        className="group/modalItem flex flex-col rounded-2xl bg-black/50 border border-white/[0.08] hover:border-emerald-500/50 p-2 transition-all cursor-pointer shadow-md hover:scale-[1.02]"
+                                    >
+                                        <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.05] bg-zinc-950">
+                                            <img
+                                                src={formatUrl(item.image)}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover group-hover/modalItem:scale-105 transition-transform duration-500"
+                                                onError={(e) => {
+                                                    if (!e.target.dataset.failed) {
+                                                        e.target.dataset.failed = 'true';
+                                                        e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shadow-md">
+                                                {item.price}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-2 px-0.5">
+                                            <span className="text-[10px] sm:text-xs font-mono font-bold text-zinc-200 group-hover/modalItem:text-white truncate">
+                                                {item.title}
+                                            </span>
+                                            <span className="text-[8px] font-mono text-emerald-400 font-bold group-hover/modalItem:translate-x-0.5 transition-transform">
+                                                Ver ↗
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Footer del Modal */}
+                            <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[8px] sm:text-[9px] font-mono text-zinc-500">
+                                <span>Tienda de @{effectiveUser}</span>
+                                <span>Toca una pieza para comprar o ver detalles</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 3. SECCIÓN DE FEED: MONOLITO & EDITORIAL (IMAGES 2, 3 & 5) */}
                 <div id="profile-feed-section" className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-4 z-10 relative pointer-events-auto">
