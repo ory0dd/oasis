@@ -4455,6 +4455,33 @@ const ProfileView = ({
     const effectiveUser = (targetUser || user || 'anon').replace('@', '');
     const isOwnProfile = !isVisitor && Boolean(user) && (effectiveUser.toLowerCase() === user.toLowerCase());
 
+    const formatUrl = (url) => {
+        if (!url || typeof url !== 'string') return '';
+        url = url.replace(/\[\/?(img|vid|aud)\]/gi, '').trim();
+
+        if (url.includes('5f151b24-cdf5-4652-affe-cc506e05bcb2')) {
+            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
+        }
+        if (url.includes('47d7e72a-e82c-4f48-8f06-709bbbde053a')) {
+            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+        }
+
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.'));
+
+        if (!isLocal && typeof url === 'string' && url.includes('localhost:5046')) {
+            url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
+        }
+
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
+            return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+        }
+
+        if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
+        if (url.startsWith('uploads/')) return `${API_URL}/${url.replace('uploads/', '')}`;
+        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     // Profile Ambient Audio Engine (Self-contained for 100% public & owner reliability)
     const profileAudioRef = useRef(null);
     const audioFileInputRef = useRef(null);
@@ -4983,33 +5010,6 @@ const ProfileView = ({
             console.error(err);
             alert('Error al subir la portada.');
         }
-    };
-
-    const formatUrl = (url) => {
-        if (!url || typeof url !== 'string') return '';
-        url = url.replace(/\[\/?(img|vid|aud)\]/gi, '').trim();
-
-        if (url.includes('5f151b24-cdf5-4652-affe-cc506e05bcb2')) {
-            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
-        }
-        if (url.includes('47d7e72a-e82c-4f48-8f06-709bbbde053a')) {
-            return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
-        }
-
-        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.'));
-
-        if (!isLocal && typeof url === 'string' && url.includes('localhost:5046')) {
-            url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
-        }
-
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-        if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
-            return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-        }
-
-        if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
-        if (url.startsWith('uploads/')) return `${API_URL}/${url.replace('uploads/', '')}`;
-        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
     const getBlockPreviewImage = (block) => {
