@@ -400,3 +400,11 @@ html, body { touch-action: auto; overscroll-behavior-y: none; }
   will-change: transform;
   backface-visibility: hidden;
 }
+
+/* BENTO MOBILE CONTENTS FOR SEAMLESS DASHBOARD REORDERING */
+@media (max-width: 1023px) {
+  .bento-mobile-contents {
+    display: contents !important;
+  }
+}
+
