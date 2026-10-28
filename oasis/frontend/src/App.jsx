@@ -4485,30 +4485,41 @@ const ProfileView = ({
     };
 
     // Profile Ambient Audio Engine (Self-contained for 100% public & owner reliability)
+    const DEFAULT_AMBIENT_URL = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3';
+    const DEFAULT_AMBIENT_TITLE = 'Oasis Ambient — Resonancia Serena';
+
     const profileAudioRef = useRef(null);
     const audioFileInputRef = useRef(null);
     const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
     const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
     const [customAudioUrl, setCustomAudioUrl] = useState(() => {
+        const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null);
+        if (stored && stored.includes('SoundHelix')) return DEFAULT_AMBIENT_URL;
         return publicProfileData?.ambientAudioUrl ||
             publicProfileData?.AmbientAudioUrl ||
-            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null) ||
+            stored ||
             '';
     });
 
     const [customAudioTitle, setCustomAudioTitle] = useState(() => {
+        const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null);
+        if (stored && (stored.includes('Sincronía Profunda') || stored.includes('Sincronia Profunda') || stored.includes('SoundHelix'))) return DEFAULT_AMBIENT_TITLE;
         return publicProfileData?.ambientAudioTitle ||
             publicProfileData?.AmbientAudioTitle ||
-            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null) ||
+            stored ||
             '';
     });
 
     useEffect(() => {
         const audio = publicProfileData?.ambientAudioUrl || publicProfileData?.AmbientAudioUrl;
         const title = publicProfileData?.ambientAudioTitle || publicProfileData?.AmbientAudioTitle;
-        if (audio) setCustomAudioUrl(formatUrl(audio));
-        if (title) setCustomAudioTitle(title);
+        if (audio) {
+            setCustomAudioUrl(audio.includes('SoundHelix') ? DEFAULT_AMBIENT_URL : formatUrl(audio));
+        }
+        if (title) {
+            setCustomAudioTitle((title.includes('Sincronía Profunda') || title.includes('Sincronia Profunda')) ? DEFAULT_AMBIENT_TITLE : title);
+        }
     }, [publicProfileData]);
 
     const ambientAudioUrl = useMemo(() => {
@@ -4516,16 +4527,17 @@ const ProfileView = ({
             publicProfileData?.ambientAudioUrl ||
             publicProfileData?.AmbientAudioUrl ||
             (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null);
-        if (!val) return 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+        if (!val || val.includes('SoundHelix')) return DEFAULT_AMBIENT_URL;
         return formatUrl(val);
     }, [customAudioUrl, publicProfileData, effectiveUser]);
 
     const ambientAudioTitle = useMemo(() => {
-        return customAudioTitle ||
+        const t = customAudioTitle ||
             publicProfileData?.ambientAudioTitle ||
             publicProfileData?.AmbientAudioTitle ||
-            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null) ||
-            'Oasis Core — Sincronía Profunda';
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null);
+        if (!t || t.includes('Sincronía Profunda') || t.includes('Sincronia Profunda')) return DEFAULT_AMBIENT_TITLE;
+        return t;
     }, [customAudioTitle, publicProfileData, effectiveUser]);
 
     // Auto-reproducción suave para visitantes: intenta reproducir y se activa al primer tap/click si el navegador lo bloquea
@@ -10732,7 +10744,7 @@ function OasisApp() {
     const [volume, setVolume] = useState(0.5);
     const [playerPos, setPlayerPos] = useState({ x: 0, y: 0 });
     const [playerTracks, setPlayerTracks] = useState([
-        { title: 'Sincronía Profunda', artist: 'Oasis Core', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        { title: 'Resonancia Serena', artist: 'Oasis Ambient', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' },
         { title: 'Glitch Astral', artist: 'Flux', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
         { title: 'Memoria RAM', artist: 'Holo', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
     ]);
