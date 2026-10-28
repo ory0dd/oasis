@@ -5539,7 +5539,7 @@ const ProfileView = ({
                             
                             {/* 1. PERFIL: APENAS ESPACIO (MICRO-COMPACTO) */}
                             <div className="w-[28%] sm:w-[24%] lg:w-[20%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-0.5 sm:pr-1">
-                                <div className="flex items-start gap-1 sm:gap-1.5">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
                                     {/* Avatar Squircle compacto */}
                                     <div className="relative shrink-0 w-8 h-8 sm:w-10 sm:h-10">
                                         <div
@@ -5583,17 +5583,12 @@ const ProfileView = ({
                                         )}
                                     </div>
 
-                                    {/* Nombre y username */}
-                                    <div className="flex-1 min-w-0 pt-0.5">
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <h2 className="text-[10px] sm:text-xs font-black text-white leading-tight truncate">
-                                                {cleanDisplayName(fullName, effectiveUser)}
-                                            </h2>
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" />
-                                        </div>
-                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono text-zinc-400 truncate block">
+                                    {/* Solo el usuario a un lado (sin nombre) */}
+                                    <div className="flex-1 min-w-0 flex items-center gap-1 my-auto">
+                                        <span className="text-[8.5px] sm:text-[10px] font-mono font-bold text-white truncate tracking-tight">
                                             @{effectiveUser}
                                         </span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                     </div>
                                 </div>
 
