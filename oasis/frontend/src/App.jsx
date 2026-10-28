@@ -5655,8 +5655,8 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* 2. ARCHIVO (COMUNIDAD, PODCAST, LIBROS) */}
-                            <div className="w-[29%] sm:w-[26%] lg:w-[22%] shrink-0 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] px-1 sm:px-2">
+                            {/* 2. ARCHIVO (MINIMALISTA: SOLO ICONOS + INDICADORES SIN TEXTOS) */}
+                            <div className="w-[23%] sm:w-[20%] lg:w-[17%] shrink-0 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] px-1 sm:px-1.5">
                                 <div className="flex items-center justify-between pb-0.5">
                                     <span className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
                                         Archivo
@@ -5665,89 +5665,58 @@ const ProfileView = ({
                                 </div>
 
                                 <div className="flex flex-col gap-1 my-auto">
-                                    {/* Comunidad */}
+                                    {/* Icono Radio + 32 */}
                                     <div
                                         onClick={() => {
                                             if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-0.5 sm:py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs"
-                                        title="Comunidad inn3r.noise"
+                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs"
+                                        title="Comunidad (32 activos)"
                                     >
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <Radio size={9} className="text-emerald-400 shrink-0" />
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
-                                                Comunidad
-                                            </span>
-                                        </div>
-                                        <span className="text-[5.5px] sm:text-[6.5px] font-mono text-zinc-500 shrink-0">
+                                        <Radio size={10} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
+                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
                                             32
                                         </span>
                                     </div>
 
-                                    {/* Podcast */}
+                                    {/* Icono Mic + #04 */}
                                     <div
                                         onClick={() => {
                                             if (profileAudioRef.current) {
                                                 profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
                                             }
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-0.5 sm:py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs"
-                                        title="Podcast Ruido #04"
+                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs"
+                                        title="Podcast (#04)"
                                     >
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <Mic size={9} className="text-purple-400 shrink-0" />
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/p:text-white truncate">
-                                                Podcast
-                                            </span>
-                                        </div>
-                                        <span className="text-[5.5px] sm:text-[6.5px] font-mono text-purple-400 shrink-0">
+                                        <Mic size={10} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
+                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
                                             #04
                                         </span>
                                     </div>
 
-                                    {/* Libros */}
+                                    {/* Icono Bookmark + zine */}
                                     <div
                                         onClick={() => {
                                             setProfileFeedView('editorial');
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="flex items-center justify-between px-1.5 py-0.5 sm:py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs"
-                                        title="Libros y Fanzines"
+                                        className="flex items-center justify-between px-1.5 py-1 rounded-md bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs"
+                                        title="Fanzines y Libros"
                                     >
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <Bookmark size={9} className="text-amber-400 shrink-0" />
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/l:text-white truncate">
-                                                Libros
-                                            </span>
-                                        </div>
-                                        <span className="text-[5.5px] sm:text-[6.5px] font-mono text-amber-400 shrink-0">
-                                            fanzine
+                                        <Bookmark size={10} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
+                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
+                                            zine
                                         </span>
                                     </div>
                                 </div>
-
-                                <div className="pt-0.5 border-t border-white/[0.04] text-[5.5px] sm:text-[6.5px] font-mono text-zinc-500 truncate text-right">
-                                    explorar ↗
-                                </div>
                             </div>
 
-                        {/* 3. PIEZAS / VENTA (PRODUCTOS) */}
-                            <div className="flex-1 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-2.5">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1 min-w-0">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                        <h3 className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
-                                            Piezas / Venta
-                                        </h3>
-                                    </div>
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
-                                        {bentoPiecesForSale.length}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 my-auto">
-                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
+                            {/* 3. PIEZAS (MINIMALISTA: SOLO ELEMENTOS Y BOTÓN +) */}
+                            <div className="flex-1 flex flex-col justify-center gap-1 min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-2.5 my-auto">
+                                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 items-start">
+                                    {bentoPiecesForSale.slice(0, 2).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
                                             onClick={() => {
@@ -5757,7 +5726,7 @@ const ProfileView = ({
                                                     setSelectedModalPost(item.raw);
                                                 }
                                             }}
-                                            className={`group/item flex flex-col cursor-pointer ${idx === 2 ? 'hidden sm:flex' : 'flex'}`}
+                                            className="group/item flex flex-col cursor-pointer"
                                             title={item.title}
                                         >
                                             <div className="w-full aspect-square rounded-md sm:rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-xs">
@@ -5781,26 +5750,20 @@ const ProfileView = ({
                                             </span>
                                         </div>
                                     ))}
-                                </div>
 
-                                <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
-                                    <span className="text-[6px] sm:text-[7px] font-mono text-zinc-500 truncate">
-                                        {effectiveUser === 'ory11' ? 'store' : 'tienda'}
-                                    </span>
-                                    <button
-                                        type="button"
+                                    {/* Botón + Minimalista */}
+                                    <div
                                         onClick={() => {
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="text-[6px] sm:text-[7px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
+                                        className="w-full aspect-square rounded-md sm:rounded-lg border border-dashed border-white/20 hover:border-emerald-400/60 bg-white/[0.02] hover:bg-emerald-500/10 flex flex-col items-center justify-center text-zinc-400 hover:text-emerald-400 transition-all cursor-pointer group/plus shadow-xs"
+                                        title="Ver más piezas y catálogo"
                                     >
-                                        <span>Ver más</span>
-                                        <ChevronRight size={7} />
-                                    </button>
+                                        <Plus size={14} strokeWidth={2.5} className="group-hover/plus:scale-125 transition-transform text-zinc-400 group-hover/plus:text-emerald-400" />
+                                    </div>
                                 </div>
                             </div>
-
                             </div>
 
                         {/* ======================================================== */}
