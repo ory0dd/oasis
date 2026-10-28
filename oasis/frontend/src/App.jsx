@@ -5314,12 +5314,12 @@ const ProfileView = ({
                 <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
-                        className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
+                        className={`w-full rounded-2xl sm:rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
                             coverHeightMode === 'expanded'
-                                ? 'aspect-[16/9] max-h-48 sm:max-h-64 md:max-h-none md:h-[390px] lg:h-[430px]'
+                                ? 'h-32 sm:h-44 md:h-[390px] lg:h-[430px]'
                                 : coverHeightMode === 'full'
-                                ? 'h-auto max-h-[520px] aspect-[16/10] sm:aspect-[16/9]'
-                                : 'h-36 sm:h-48 md:h-64'
+                                ? 'h-auto max-h-[460px] aspect-[16/10] sm:aspect-[16/9]'
+                                : 'h-24 sm:h-36 md:h-64'
                         }`}
                     >
                         <img
@@ -5373,7 +5373,7 @@ const ProfileView = ({
                                     }
                                 }
                             }}
-                            className="absolute top-3.5 left-3.5 sm:top-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
+                            className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
                             title="Toca para reproducir/pausar ambiente sonoro de este perfil"
                         >
                             <span className={`w-2 h-2 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-[#10b981]/70'}`} />
@@ -5420,7 +5420,7 @@ const ProfileView = ({
                         )}
 
                         {/* Controles Inferiores de la Portada (Sleek Minimal Frosted Glass Pills - Image 1) */}
-                        <div className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 flex items-center gap-1 sm:gap-2 z-20 flex-wrap justify-end max-w-[95%]" onClick={e => e.stopPropagation()}>
+                        <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-1 sm:gap-2 z-20 flex-wrap justify-end max-w-[95%]" onClick={e => e.stopPropagation()}>
                             {/* Mi Enlace / Compartir */}
                             <button
                                 type="button"
@@ -5529,7 +5529,7 @@ const ProfileView = ({
                 )}
 
                 {/* 2. BENTO DASHBOARD COMPACTO: EQUILIBRIO DE SENTIDOS (CENTRO DE EXPLORACIÓN INTERNA) */}
-                <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-2.5 sm:pt-4 z-10 relative pointer-events-auto">
+                <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 z-10 relative pointer-events-auto">
                     <div className="grid grid-cols-2 lg:grid-cols-12 gap-2 sm:gap-3 lg:gap-4 items-start">
                         
                         {/* ======================================================== */}
@@ -5538,12 +5538,12 @@ const ProfileView = ({
                         <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
                             
                             {/* Card 1.1: Identidad & Bio (Compacto, micro-jerarquía táctil) */}
-                            <div className="col-span-2 lg:col-span-4 order-1 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4.5 backdrop-blur-xl shadow-xl flex flex-col gap-2.5 sm:gap-3 relative overflow-hidden">
-                                <div className="flex items-center gap-2.5 sm:gap-3">
+                            <div className="col-span-1 lg:col-span-4 order-1 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 sm:gap-2.5 relative overflow-hidden min-h-[175px] sm:min-h-0">
+                                <div className="flex items-center gap-2 sm:gap-3">
                                     {/* Avatar Squircle compacto */}
-                                    <div className="relative shrink-0 w-13 h-13 sm:w-16 sm:h-16">
+                                    <div className="relative shrink-0 w-9 h-9 sm:w-14 sm:h-14">
                                         <div
-                                            className={`w-13 h-13 sm:w-16 sm:h-16 rounded-[14px] sm:rounded-2xl p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
+                                            className={`w-9 h-9 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl p-[1.5px] sm:p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -5552,7 +5552,7 @@ const ProfileView = ({
                                                 }
                                             }}
                                         >
-                                            <div className="w-full h-full rounded-[12px] sm:rounded-[14px] overflow-hidden bg-zinc-900 shrink-0">
+                                            <div className="w-full h-full rounded-[9px] sm:rounded-[12px] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
@@ -5565,9 +5565,9 @@ const ProfileView = ({
                                                 />
                                             </div>
                                             {isOwnProfile && isEditingProfile && (
-                                                <div className="absolute inset-0 m-[2px] rounded-[12px] sm:rounded-[14px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
-                                                    <Camera size={13} className="text-white mb-0.5" />
-                                                    <span className="text-[6px] font-black uppercase tracking-widest text-white">Cambiar</span>
+                                                <div className="absolute inset-0 m-[1.5px] rounded-[9px] sm:rounded-[12px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                    <Camera size={10} className="text-white mb-0.5" />
+                                                    <span className="text-[5px] font-black uppercase tracking-widest text-white">Editar</span>
                                                 </div>
                                             )}
                                         </div>
@@ -5576,82 +5576,79 @@ const ProfileView = ({
                                         {isOwnProfile && (
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                                className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#10b981] rounded-full border-2 border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                                                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-5 sm:h-5 bg-[#10b981] rounded-full border-2 border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
                                                 title="Subir historia"
                                             >
-                                                <Plus size={10} strokeWidth={3} />
+                                                <Plus size={7} strokeWidth={3} className="sm:w-2.5 sm:h-2.5" />
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Nombre, username y badge */}
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                            <h2 className="text-sm sm:text-base md:text-lg font-black text-white leading-tight truncate">
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            <h2 className="text-[11px] sm:text-base font-black text-white leading-tight truncate">
                                                 {cleanDisplayName(fullName, effectiveUser)}
                                             </h2>
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                         </div>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
-                                            <span className="text-[9.5px] sm:text-[10px] font-mono text-zinc-500 tracking-wider truncate">
+                                        <div className="flex items-center gap-1 mt-0.5 min-w-0">
+                                            <span className="text-[8px] sm:text-[10px] font-mono text-zinc-400 tracking-wider truncate">
                                                 @{effectiveUser}
-                                            </span>
-                                            <span className="px-1.5 py-0.2 rounded-full bg-white/[0.04] border border-white/[0.08] text-[7px] sm:text-[7.5px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
-                                                {isOwnProfile ? (localStorage.getItem('oasis_is_public_' + user) === 'true' ? 'Público // Creador' : 'Privado // Estético') : 'Público // Creador'}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Píldora Enlace Personalizado (Estilo inn3r.shop/ >) */}
+                                {/* Píldora Enlace Personalizado */}
                                 <a
                                     href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full flex items-center justify-between px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[9px] sm:text-[9.5px] font-mono text-emerald-400 transition-all group/link shadow-sm"
+                                    className="w-full flex items-center justify-between px-2 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7.5px] sm:text-[9.5px] font-mono text-emerald-400 transition-all group/link shadow-sm"
                                 >
-                                    <div className="flex items-center gap-2 min-w-0 truncate">
-                                        <Globe size={11} className="text-emerald-400 shrink-0" />
+                                    <div className="flex items-center gap-1.5 min-w-0 truncate">
+                                        <Globe size={9} className="text-emerald-400 shrink-0" />
                                         <span className="truncate">
                                             {profileLink ? profileLink.replace(/^https?:\/\//, '') : (effectiveUser?.toLowerCase() === 'ory11' ? 'inn3r.shop/' : `muleinterior.com/7/${effectiveUser}`)}
                                         </span>
                                     </div>
-                                    <ChevronRight size={12} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
+                                    <ChevronRight size={10} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
                                 </a>
 
                                 {/* Biografía */}
                                 {isOwnProfile && isEditingProfile ? (
-                                    <div className="flex flex-col gap-2 pt-1 border-t border-white/[0.06]">
+                                    <div className="flex flex-col gap-1.5 pt-1 border-t border-white/[0.06]">
                                         <input
                                             type="text"
                                             autoComplete="off"
                                             value={fullName}
                                             onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-white outline-none focus:border-white/30 transition-all font-sans"
                                             placeholder="Tu nombre..."
                                         />
                                         <textarea
                                             value={bio}
                                             onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[50px]"
-                                            placeholder="Descripción del perfil..."
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[40px]"
+                                            placeholder="Descripción..."
                                         />
                                         <input
                                             type="url"
                                             value={profileLink}
                                             onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-accent outline-none font-sans"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-accent outline-none font-sans"
                                             placeholder="https://tupagina.com"
                                         />
                                     </div>
                                 ) : (
-                                    <p className="text-[10.5px] sm:text-[11px] leading-relaxed text-zinc-300 font-sans whitespace-pre-wrap line-clamp-3">
+                                    <p className="text-[8.5px] sm:text-[11px] leading-tight text-zinc-300 font-sans whitespace-pre-wrap line-clamp-2">
                                         {bio || 'ruido extraviado'}
                                     </p>
                                 )}
 
                                 {/* Botón de Acción Compacto */}
-                                <div className="flex items-center gap-2 pt-0.5">
+                                <div className="flex items-center gap-1.5 pt-0.5">
                                     {isOwnProfile ? (
                                         <>
                                             <button
@@ -5661,50 +5658,50 @@ const ProfileView = ({
                                                     }
                                                     setIsEditingProfile(!isEditingProfile);
                                                 }}
-                                                className={`flex-1 py-1.5 px-3 rounded-xl text-[10px] sm:text-[10.5px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black hover:bg-[#10b981]/90' : 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'}`}
+                                                className={`flex-1 py-1 px-2 rounded-lg text-[8.5px] sm:text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-md cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black hover:bg-[#10b981]/90' : 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'}`}
                                             >
                                                 {isEditingProfile ? (
-                                                    <><Check size={12} strokeWidth={2.5} /> Guardar</>
+                                                    <><Check size={10} strokeWidth={2.5} /> Guardar</>
                                                 ) : (
-                                                    <><Edit2 size={12} /> Editar perfil</>
+                                                    <><Edit2 size={10} /> Editar</>
                                                 )}
                                             </button>
                                             <button
                                                 onClick={() => setIsSettingsOpen(true)}
-                                                className="p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-zinc-300 hover:text-white transition-all shadow-md cursor-pointer"
+                                                className="p-1 sm:p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-zinc-300 hover:text-white transition-all shadow-md cursor-pointer shrink-0"
                                                 title="Ajustes de cuenta"
                                             >
-                                                <Settings size={14} />
+                                                <Settings size={12} />
                                             </button>
                                         </>
                                     ) : (
                                         <button
                                             onClick={handleShareProfile}
-                                            className="w-full py-1.5 px-3 rounded-xl text-[10px] sm:text-[10.5px] font-bold transition-all flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/10 shadow-md text-white cursor-pointer hover:scale-[1.01] active:scale-95"
+                                            className="w-full py-1 px-2 rounded-lg text-[8.5px] sm:text-[10px] font-bold transition-all flex items-center justify-center gap-1 bg-white/10 hover:bg-white/20 border border-white/10 shadow-md text-white cursor-pointer hover:scale-[1.01] active:scale-95"
                                         >
-                                            {copiedLink ? <Check size={12} strokeWidth={2.5} /> : <Share2 size={12} strokeWidth={2} />}
-                                            <span>{copiedLink ? '¡Enlace Copiado!' : 'Compartir Perfil'}</span>
+                                            {copiedLink ? <Check size={10} strokeWidth={2.5} /> : <Share2 size={10} strokeWidth={2} />}
+                                            <span>{copiedLink ? 'Copiado' : 'Compartir'}</span>
                                         </button>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Card 1.2: PIEZAS A LA VENTA // RELIQUIAS */}
-                            <div className="col-span-2 lg:col-span-4 order-5 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
-                                <div className="flex items-center justify-between pb-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                        <h3 className="text-[8px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                                            Piezas a la Venta
+                            {/* Card 1.2: PIEZAS A LA VENTA // RELIQUIAS (A lado del perfil) */}
+                            <div className="col-span-1 lg:col-span-4 order-2 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative min-h-[175px] sm:min-h-0">
+                                <div className="flex items-center justify-between pb-0.5">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                        <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
+                                            Piezas / Venta
                                         </h3>
                                     </div>
-                                    <span className="text-[7.5px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                                        {bentoPiecesForSale.length} Reliquias
+                                    <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
+                                        {bentoPiecesForSale.length} Items
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                                    {bentoPiecesForSale.map((item, idx) => (
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2">
+                                    {bentoPiecesForSale.slice(0, 2).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
                                             onClick={() => {
@@ -5717,7 +5714,7 @@ const ProfileView = ({
                                             className="group/item flex flex-col cursor-pointer"
                                             title={item.title}
                                         >
-                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                            <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
                                                 <img
                                                     src={formatUrl(item.image)}
                                                     alt={item.title}
@@ -5729,25 +5726,77 @@ const ProfileView = ({
                                                         }
                                                     }}
                                                 />
-                                                <span className="absolute top-1 right-1 px-1.5 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
                                                     {item.price}
                                                 </span>
                                             </div>
-                                            <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 sm:mt-1.5 text-center">
+                                            <span className="text-[7px] sm:text-[9px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 sm:mt-1 text-center">
                                                 {item.title}
                                             </span>
                                         </div>
                                     ))}
+                                    {bentoPiecesForSale[2] && (
+                                        <div
+                                            key={bentoPiecesForSale[2].id || 'item-3'}
+                                            onClick={() => {
+                                                if (bentoPiecesForSale[2].buyLink) {
+                                                    window.open(bentoPiecesForSale[2].buyLink.startsWith('http') ? bentoPiecesForSale[2].buyLink : `https://${bentoPiecesForSale[2].buyLink}`, '_blank', 'noopener,noreferrer');
+                                                } else if (bentoPiecesForSale[2].raw) {
+                                                    setSelectedModalPost(bentoPiecesForSale[2].raw);
+                                                }
+                                            }}
+                                            className="group/item hidden lg:flex flex-col cursor-pointer"
+                                            title={bentoPiecesForSale[2].title}
+                                        >
+                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                                <img
+                                                    src={formatUrl(bentoPiecesForSale[2].image)}
+                                                    alt={bentoPiecesForSale[2].title}
+                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                                                    onError={(e) => {
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="absolute top-1 right-1 px-1.5 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                    {bentoPiecesForSale[2].price}
+                                                </span>
+                                            </div>
+                                            <span className="text-[7.5px] sm:text-[9px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
+                                                {bentoPiecesForSale[2].title}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer action / link */}
+                                <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
+                                    <span className="text-[6.5px] sm:text-[8px] font-mono text-zinc-500 truncate">
+                                        {effectiveUser === 'ory11' ? 'inn3r store' : 'tienda'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const el = document.getElementById('profile-feed-section');
+                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="text-[6.5px] sm:text-[8px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
+                                    >
+                                        <span>Ver más</span>
+                                        <ChevronRight size={8} />
+                                    </button>
                                 </div>
                             </div>
 
                             {/* Proceso Clínico & Firma de Resonancia */}
                             {isOwnProfile && (
-                                <div className="col-span-2 lg:col-span-4 order-7 lg:order-none bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
+                                <div className="col-span-2 lg:col-span-4 order-8 lg:order-none bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <Heart size={13} className="text-purple-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
+                                            <span className="text-[8.5px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
                                                 Proceso Clínico
                                             </span>
                                             <span className="text-[7.5px] sm:text-[8px] font-sans text-zinc-400 truncate">
@@ -5775,7 +5824,7 @@ const ProfileView = ({
                         <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
                             
                             {/* Card 2.1: Obra / Loop Continuo Central (respiración lenta [432 Hz]) */}
-                            <div className="col-span-1 lg:col-span-4 order-3 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-1 lg:col-span-4 order-3 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative min-h-[160px] sm:min-h-0">
                                 <div
                                     onClick={() => {
                                         if (profileAudioRef.current) {
@@ -5805,36 +5854,36 @@ const ProfileView = ({
                                     <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
                                     
                                     {/* Badge Superior Derecho: loop continuo */}
-                                    <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[7.5px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
+                                    <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
                                         {bentoCentralPiece.badge}
                                     </div>
 
                                     {/* Play Button Central */}
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
-                                            {isProfileAudioPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+                                        <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                            {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Pie de la Pieza Central */}
                                 <div className="flex items-center justify-between px-0.5 pt-0.5">
-                                    <span className="text-[11px] sm:text-xs font-bold text-white font-sans truncate">
+                                    <span className="text-[10px] sm:text-xs font-bold text-white font-sans truncate">
                                         {bentoCentralPiece.title}
                                     </span>
-                                    <span className="text-[9px] sm:text-[9.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
+                                    <span className="text-[8px] sm:text-[9.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
                                         {bentoCentralPiece.tag}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Card 2.2: Publicaciones Recientes // Fotos */}
-                            <div className="col-span-2 lg:col-span-4 order-8 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-2 lg:col-span-4 order-7 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
                                 <div className="flex items-center justify-between pb-1">
-                                    <h3 className="text-[8px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                                    <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
                                         Publicaciones Recientes
                                     </h3>
-                                    <span className="text-[7.5px] sm:text-[8px] font-mono text-emerald-400 uppercase tracking-widest">
+                                    <span className="text-[7px] sm:text-[8px] font-mono text-emerald-400 uppercase tracking-widest">
                                         {bentoRecentPhotos.length} Fotos
                                     </span>
                                 </div>
@@ -5887,7 +5936,7 @@ const ProfileView = ({
                         <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
                             
                             {/* Card 3.1: Micro-canales (COMUNIDAD, PODCAST, LIBROS) */}
-                            <div className="col-span-2 lg:col-span-4 order-2 lg:order-none grid grid-cols-3 gap-1.5 sm:gap-2">
+                            <div className="col-span-2 lg:col-span-4 order-5 lg:order-none grid grid-cols-3 gap-1.5 sm:gap-2">
                                 {/* Comunidad */}
                                 <div
                                     onClick={() => {
@@ -5899,11 +5948,11 @@ const ProfileView = ({
                                         <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-emerald-400">Comunidad</span>
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     </div>
-                                    <Radio size={14} className="text-emerald-400 my-1 group-hover/com:scale-110 transition-transform" />
-                                    <span className="text-[8.5px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/com:text-white truncate w-full">
+                                    <Radio size={13} className="text-emerald-400 my-1 group-hover/com:scale-110 transition-transform" />
+                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/com:text-white truncate w-full">
                                         inn3r.noise
                                     </span>
-                                    <span className="text-[7px] sm:text-[7.5px] font-mono text-zinc-500">
+                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
                                         32 activos
                                     </span>
                                 </div>
@@ -5918,11 +5967,11 @@ const ProfileView = ({
                                     className="bg-black/50 border border-white/[0.08] hover:border-purple-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/pod shadow-sm"
                                 >
                                     <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-purple-400">Podcast</span>
-                                    <Mic size={14} className="text-purple-400 my-1 group-hover/pod:scale-110 transition-transform" />
-                                    <span className="text-[8.5px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/pod:text-white truncate w-full">
+                                    <Mic size={13} className="text-purple-400 my-1 group-hover/pod:scale-110 transition-transform" />
+                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/pod:text-white truncate w-full">
                                         Ruido #04
                                     </span>
-                                    <span className="text-[7px] sm:text-[7.5px] font-mono text-purple-400 font-semibold group-hover/pod:underline">
+                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-purple-400 font-semibold group-hover/pod:underline">
                                         escuchar ↗
                                     </span>
                                 </div>
@@ -5937,36 +5986,36 @@ const ProfileView = ({
                                     className="bg-black/50 border border-white/[0.08] hover:border-amber-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/lib shadow-sm"
                                 >
                                     <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-amber-400">Libros</span>
-                                    <Bookmark size={14} className="text-amber-400 my-1 group-hover/lib:scale-110 transition-transform" />
-                                    <span className="text-[8.5px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/lib:text-white truncate w-full">
+                                    <Bookmark size={13} className="text-amber-400 my-1 group-hover/lib:scale-110 transition-transform" />
+                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/lib:text-white truncate w-full">
                                         Glitch
                                     </span>
-                                    <span className="text-[7px] sm:text-[7.5px] font-mono text-zinc-500">
+                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
                                         fanzine
                                     </span>
                                 </div>
                             </div>
 
                             {/* Card 3.2: Frase Sensorial / Estado Existencial ("hoy sentí calma...") */}
-                            <div className="col-span-1 lg:col-span-4 order-4 lg:order-none bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-2 relative transition-all group/quote min-h-[150px] sm:min-h-0">
-                                <p className="text-[10px] sm:text-[11.5px] text-zinc-200 font-serif italic leading-snug line-clamp-2">
+                            <div className="col-span-1 lg:col-span-4 order-4 lg:order-none bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-2 relative transition-all group/quote min-h-[160px] sm:min-h-0">
+                                <p className="text-[9.5px] sm:text-[11.5px] text-zinc-200 font-serif italic leading-snug line-clamp-3">
                                     "{bentoSensoryQuote}"
                                 </p>
-                                <span className="text-[8.5px] sm:text-[9px] font-mono font-black text-emerald-400 shrink-0 tracking-wider">
+                                <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shrink-0 tracking-wider">
                                     03:14 AM
                                 </span>
                             </div>
 
                             {/* Card 3.3: RECUERDOS VALIOSOS // MEMORABILIA */}
-                            <div className="col-span-2 lg:col-span-4 order-6 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-2 lg:col-span-4 order-6 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
                                 <div className="flex items-center justify-between pb-1">
                                     <div className="flex items-center gap-1.5">
                                         <Sparkles size={11} className="text-emerald-400" />
-                                        <h3 className="text-[8px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
+                                        <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
                                             Recuerdos Valiosos
                                         </h3>
                                     </div>
-                                    <span className="text-[7.5px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
                                         Memorabilia
                                     </span>
                                 </div>
@@ -5984,10 +6033,10 @@ const ProfileView = ({
                                                 {memo.icon === 'diamond' ? <Aperture size={12} /> : <StickyNote size={12} />}
                                             </div>
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-[9.5px] sm:text-[10px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate">
+                                                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate">
                                                     {memo.title}
                                                 </span>
-                                                <span className="text-[7.5px] sm:text-[8px] font-mono text-zinc-500 truncate">
+                                                <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 truncate">
                                                     {memo.subtitle}
                                                 </span>
                                             </div>
