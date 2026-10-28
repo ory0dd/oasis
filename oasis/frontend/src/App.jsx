@@ -5292,8 +5292,8 @@ const ProfileView = ({
         <div
             className={`fixed z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${
                 hasSession
-                    ? 'top-[62px] sm:top-[74px] md:top-[86px] inset-x-1.5 sm:inset-x-4 md:inset-x-6 bottom-1.5 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
-                    : 'top-1.5 sm:top-3 md:top-4 inset-x-1.5 sm:inset-x-4 md:inset-x-6 bottom-1.5 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
+                    ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] inset-x-2 sm:inset-x-4 md:inset-x-6 bottom-2 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
+                    : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 inset-x-2 sm:inset-x-4 md:inset-x-6 bottom-2 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
             }`}
             onClick={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
@@ -5316,7 +5316,7 @@ const ProfileView = ({
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
                             coverHeightMode === 'expanded'
-                                ? 'h-44 sm:h-60 md:h-[390px] lg:h-[430px]'
+                                ? 'aspect-[16/9] max-h-48 sm:max-h-64 md:max-h-none md:h-[390px] lg:h-[430px]'
                                 : coverHeightMode === 'full'
                                 ? 'h-auto max-h-[520px] aspect-[16/10] sm:aspect-[16/9]'
                                 : 'h-36 sm:h-48 md:h-64'
@@ -5690,7 +5690,7 @@ const ProfileView = ({
                             </div>
 
                             {/* Card 1.2: PIEZAS A LA VENTA // RELIQUIAS */}
-                            <div className="col-span-2 sm:col-span-1 lg:col-span-4 order-5 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-2 lg:col-span-4 order-5 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
                                 <div className="flex items-center justify-between pb-1">
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -5775,7 +5775,7 @@ const ProfileView = ({
                         <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
                             
                             {/* Card 2.1: Obra / Loop Continuo Central (respiración lenta [432 Hz]) */}
-                            <div className="col-span-2 sm:col-span-1 lg:col-span-4 order-3 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-1 lg:col-span-4 order-3 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
                                 <div
                                     onClick={() => {
                                         if (profileAudioRef.current) {
@@ -5948,7 +5948,7 @@ const ProfileView = ({
                             </div>
 
                             {/* Card 3.2: Frase Sensorial / Estado Existencial ("hoy sentí calma...") */}
-                            <div className="col-span-2 sm:col-span-1 lg:col-span-4 order-4 lg:order-none bg-black/50 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-lg flex items-center justify-between gap-2.5 sm:gap-3 relative transition-all group/quote">
+                            <div className="col-span-1 lg:col-span-4 order-4 lg:order-none bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-2 relative transition-all group/quote min-h-[150px] sm:min-h-0">
                                 <p className="text-[10px] sm:text-[11.5px] text-zinc-200 font-serif italic leading-snug line-clamp-2">
                                     "{bentoSensoryQuote}"
                                 </p>
@@ -5958,7 +5958,7 @@ const ProfileView = ({
                             </div>
 
                             {/* Card 3.3: RECUERDOS VALIOSOS // MEMORABILIA */}
-                            <div className="col-span-2 sm:col-span-1 lg:col-span-4 order-6 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="col-span-2 lg:col-span-4 order-6 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-3 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
                                 <div className="flex items-center justify-between pb-1">
                                     <div className="flex items-center gap-1.5">
                                         <Sparkles size={11} className="text-emerald-400" />
