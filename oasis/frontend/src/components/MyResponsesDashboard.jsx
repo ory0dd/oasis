@@ -8092,13 +8092,13 @@ Devuelve estrictamente el JSON sin formato extra.
     return (
         <div className={isEmbedded
             ? "relative w-full h-full font-sans text-zinc-100 flex flex-col"
-            : "fixed inset-0 z-[100] bg-black/40 backdrop-blur-md overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-700 flex flex-col pointer-events-none"
+            : "fixed inset-0 z-[100] bg-[#070709]/80 overflow-hidden font-sans text-zinc-100 animate-in fade-in duration-300 flex flex-col pointer-events-none"
         }>
-            {/* Background Effects */}
+            {/* Background Effects (Optimized for smooth 60fps with video) */}
             {!isEmbedded && (
                 <div className="fixed inset-0 pointer-events-none z-0">
-                    <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-accent/5 blur-[150px] rounded-full  transform translate-x-1/3 -translate-y-1/3" style={{ backgroundColor: accent }} />
-                    <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full  transform -translate-x-1/3 translate-y-1/3" />
+                    <div className="absolute top-0 right-0 w-[700px] h-[700px] pointer-events-none transform translate-x-1/3 -translate-y-1/3" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%)' }} />
+                    <div className="absolute bottom-0 left-0 w-[550px] h-[550px] pointer-events-none transform -translate-x-1/3 translate-y-1/3" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%)' }} />
                     <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
                 </div>
             )}
@@ -8295,12 +8295,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                 onDragStart={(e) => e.preventDefault()}
                                 style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitUserDrag: 'none' }}
                             >
-                                {/* Decoración de fondo del lienzo (fija kawaii / dreamy constellation) */}
+                                {/* Decoración de fondo del lienzo (Optimizada con radial gradients sin coste de blur) */}
                                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-pink-500/5 blur-[120px] rounded-full  pointer-events-none" />
-                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] bg-indigo-500/5 blur-[130px] rounded-full  pointer-events-none" />
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/4 blur-[140px] rounded-full  pointer-events-none" />
-                                    <div className="absolute inset-0 opacity-25" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
+                                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.035) 0%, transparent 70%)' }} />
+                                    <div className="absolute bottom-1/3 right-1/4 w-[550px] h-[550px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.035) 0%, transparent 70%)' }} />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.03) 0%, transparent 70%)' }} />
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1.2px, transparent 1.2px)', backgroundSize: '42px 42px' }} />
                                 </div>
 
 
@@ -8327,12 +8327,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <div
                                     ref={transformContainerRef}
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
-                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`, textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
+                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate3d(${mapTransform.x}px, ${mapTransform.y}px, 0px) scale(${mapTransform.scale})`, willChange: isDraggingMap ? 'transform' : 'auto', contain: 'layout style', textRendering: 'optimizeSpeed' }}
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
                                     <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
                                         {/* Radial Spiderweb Atmosphere */}
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-purple-600/[0.025] blur-[100px] pointer-events-none" />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(147,51,234,0.025) 0%, transparent 70%)' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.03] pointer-events-none" style={{ width: '28%', height: '32%' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.022] pointer-events-none" style={{ width: '56%', height: '62%' }} />
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/[0.015] pointer-events-none" style={{ width: '84%', height: '88%' }} />
@@ -8373,8 +8373,8 @@ Devuelve estrictamente el JSON sin formato extra.
                                                         animation: edgeFlowAnim 1.6s linear infinite;
                                                     }
                                                     @keyframes hubPulse {
-                                                        0%, 100% { filter: brightness(1); }
-                                                        50% { filter: brightness(1.8); }
+                                                        0%, 100% { opacity: 0.85; }
+                                                        50% { opacity: 1; }
                                                     }
                                                 `}</style>
                                         <defs>
@@ -8783,7 +8783,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 </span>
                                                                 
                                                                 {/* Texto del nodo */}
-                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${
+                                                                <span className={`text-center font-medium leading-snug px-1 py-0.5 rounded bg-black/40 [text-shadow:0_1px_3px_rgba(0,0,0,0.98)] ${
                                                                     isHub 
                                                                         ? 'text-[11px] font-bold text-white' 
                                                                         : isCondition 

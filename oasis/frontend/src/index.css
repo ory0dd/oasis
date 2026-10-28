@@ -393,3 +393,10 @@ html, body { touch-action: auto; overscroll-behavior-y: none; }
 .touch-action-none { touch-action: none !important; }
 .overflow-y-auto, .custom-scroll, .crm-scroll, .no-scrollbar { touch-action: auto !important; overscroll-behavior-y: contain; }
 
+
+/* ISOLATE BACKGROUND VIDEO ON ITS OWN GPU COMPOSITOR LAYER */
+.global-bg-video {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
