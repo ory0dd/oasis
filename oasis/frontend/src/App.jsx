@@ -5655,77 +5655,8 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* 2. PIEZAS / VENTA (PRODUCTOS) */}
-                            <div className="flex-1 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] px-1.5 sm:px-2.5">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1 min-w-0">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                                        <h3 className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
-                                            Piezas / Venta
-                                        </h3>
-                                    </div>
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
-                                        {bentoPiecesForSale.length}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 my-auto">
-                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
-                                        <div
-                                            key={item.id || idx}
-                                            onClick={() => {
-                                                if (item.buyLink) {
-                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
-                                                } else if (item.raw) {
-                                                    setSelectedModalPost(item.raw);
-                                                }
-                                            }}
-                                            className={`group/item flex flex-col cursor-pointer ${idx === 2 ? 'hidden sm:flex' : 'flex'}`}
-                                            title={item.title}
-                                        >
-                                            <div className="w-full aspect-square rounded-md sm:rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-xs">
-                                                <img
-                                                    src={formatUrl(item.image)}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
-                                                    onError={(e) => {
-                                                        if (!e.target.dataset.failed) {
-                                                            e.target.dataset.failed = 'true';
-                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
-                                                        }
-                                                    }}
-                                                />
-                                                <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[5.5px] sm:text-[6.5px] font-mono font-black text-emerald-400 shadow-xs">
-                                                    {item.price}
-                                                </span>
-                                            </div>
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
-                                                {item.title}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
-                                    <span className="text-[6px] sm:text-[7px] font-mono text-zinc-500 truncate">
-                                        {effectiveUser === 'ory11' ? 'store' : 'tienda'}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const el = document.getElementById('profile-feed-section');
-                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                        }}
-                                        className="text-[6px] sm:text-[7px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
-                                    >
-                                        <span>Ver más</span>
-                                        <ChevronRight size={7} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* 3. ARCHIVO (PODCAST, COMUNIDAD, LIBROS) */}
-                            <div className="w-[30%] sm:w-[26%] lg:w-[22%] shrink-0 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-2.5">
+                            {/* 2. ARCHIVO (COMUNIDAD, PODCAST, LIBROS) */}
+                            <div className="w-[29%] sm:w-[26%] lg:w-[22%] shrink-0 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] px-1 sm:px-2">
                                 <div className="flex items-center justify-between pb-0.5">
                                     <span className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
                                         Archivo
@@ -5801,7 +5732,76 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                        </div>
+                        {/* 3. PIEZAS / VENTA (PRODUCTOS) */}
+                            <div className="flex-1 flex flex-col justify-between gap-1 min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-2.5">
+                                <div className="flex items-center justify-between pb-0.5">
+                                    <div className="flex items-center gap-1 min-w-0">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                        <h3 className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
+                                            Piezas / Venta
+                                        </h3>
+                                    </div>
+                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
+                                        {bentoPiecesForSale.length}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 my-auto">
+                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
+                                        <div
+                                            key={item.id || idx}
+                                            onClick={() => {
+                                                if (item.buyLink) {
+                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                                } else if (item.raw) {
+                                                    setSelectedModalPost(item.raw);
+                                                }
+                                            }}
+                                            className={`group/item flex flex-col cursor-pointer ${idx === 2 ? 'hidden sm:flex' : 'flex'}`}
+                                            title={item.title}
+                                        >
+                                            <div className="w-full aspect-square rounded-md sm:rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-xs">
+                                                <img
+                                                    src={formatUrl(item.image)}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                                                    onError={(e) => {
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[5.5px] sm:text-[6.5px] font-mono font-black text-emerald-400 shadow-xs">
+                                                    {item.price}
+                                                </span>
+                                            </div>
+                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
+                                                {item.title}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
+                                    <span className="text-[6px] sm:text-[7px] font-mono text-zinc-500 truncate">
+                                        {effectiveUser === 'ory11' ? 'store' : 'tienda'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const el = document.getElementById('profile-feed-section');
+                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="text-[6px] sm:text-[7px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
+                                    >
+                                        <span>Ver más</span>
+                                        <ChevronRight size={7} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            </div>
 
                         {/* ======================================================== */}
                         {/* FILA 2 (IZQUIERDA): OBRA CENTRAL / LOOP CONTINUO [432 HZ] */}
