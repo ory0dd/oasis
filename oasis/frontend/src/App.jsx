@@ -5063,22 +5063,26 @@ const ProfileView = ({
         return null;
     };
 
-    // Curated 2 featured works for ENLACES & OBRAS (Image 1 & 2)
+    // Curated 2 featured works for ENLACES & OBRAS (Only real user works, zero mockups)
     const featuredWorks = useMemo(() => {
         const results = [];
 
         // 1. Linked posts
         linkedPosts.forEach(lp => {
             if (results.length < 2 && !results.some(r => r.id === lp.id)) {
+                const isAud = lp.type === 'audio' || (lp.content && lp.content.includes('[aud]'));
+                const isVid = lp.type === 'video' || (lp.content && lp.content.includes('[vid]'));
+                const defaultTag = isAud ? 'Sonido' : (isVid ? 'Video' : 'Obra');
                 results.push({
                     id: lp.id,
-                    tag: results.length === 0 ? '#01 Escultura' : '#02 Sonido',
+                    tag: `#${String(results.length + 1).padStart(2, '0')} ${defaultTag}`,
                     title: lp.caption || (lp.content ? lp.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().slice(0, 28) : 'Obra Curada'),
-                    subtitle: lp.metadata?.medium || lp.metadata?.price || 'Pieza escultórica & pigmento',
+                    subtitle: lp.metadata?.medium || lp.metadata?.price || 'Pieza de archivo',
                     image: getBlockPreviewImage(lp),
                     video: getBlockPreviewVideo(lp),
                     buyLink: lp.metadata?.buyLink,
                     type: lp.type || 'piece',
+                    isAudio: isAud,
                     rawPost: lp
                 });
             }
@@ -5091,11 +5095,13 @@ const ProfileView = ({
                 if (typeof tp.content === 'string' && tp.content.includes('"avatar"') && tp.content.includes('"fullName"')) return;
                 if (results.length < 2 && !results.some(r => r.id === tp.id)) {
                     const isAud = tp.type === 'audio' || (tp.content && tp.content.includes('[aud]'));
+                    const isVid = tp.type === 'video' || (tp.content && tp.content.includes('[vid]'));
+                    const defaultTag = isAud ? 'Sonido' : (isVid ? 'Video' : 'Obra');
                     results.push({
                         id: tp.id,
-                        tag: results.length === 0 ? '#01 Escultura' : '#02 Sonido',
+                        tag: `#${String(results.length + 1).padStart(2, '0')} ${defaultTag}`,
                         title: tp.caption || (tp.content ? tp.content.split('\n')[0].replace(/\[.*?\]/g, '').trim().slice(0, 28) : 'Obra Curada'),
-                        subtitle: tp.metadata?.medium || (isAud ? 'Grabación analógica binaural' : 'Cerámica fría & espejo texturizado'),
+                        subtitle: tp.metadata?.medium || (isAud ? 'Archivo sonoro' : 'Registro de obra'),
                         image: getBlockPreviewImage(tp),
                         video: getBlockPreviewVideo(tp),
                         buyLink: tp.metadata?.buyLink,
@@ -5107,42 +5113,10 @@ const ProfileView = ({
             });
         }
 
-        // 3. Fallback curated pieces if user has no works yet (Aesthetic Mockup Pieces matching Image 1 & 2)
-        if (results.length === 0) {
-            results.push({
-                id: 'curated-fallback-01',
-                tag: '#01 Escultura',
-                title: 'cuadro lindo c:',
-                subtitle: 'Cerámica fría & espejo texturizado',
-                image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop',
-                type: 'piece',
-                buyLink: profileLink || null
-            });
-            results.push({
-                id: 'curated-fallback-02',
-                tag: '#02 Sonido',
-                title: 'cinta de meditación [tape]',
-                subtitle: 'Grabación analógica binaural',
-                image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop',
-                type: 'audio',
-                isAudio: true
-            });
-        } else if (results.length === 1) {
-            results.push({
-                id: 'curated-fallback-02',
-                tag: '#02 Sonido',
-                title: 'cinta de meditación [tape]',
-                subtitle: 'Grabación analógica binaural',
-                image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop',
-                type: 'audio',
-                isAudio: true
-            });
-        }
-
         return results;
-    }, [linkedPosts, targetUserPosts, profileLink]);
+    }, [linkedPosts, targetUserPosts]);
 
-    // Feed items for the Monolito / Editorial stream
+    // Feed items for the Monolito / Editorial stream (Only real user works, zero mockups)
     const displayFeedPosts = useMemo(() => {
         let posts = [...targetUserPosts];
 
@@ -5154,35 +5128,6 @@ const ProfileView = ({
             }
         }
 
-        // Fallback pieces if no posts exist yet
-        if (posts.length === 0) {
-            return [
-                {
-                    id: 'post-monolith-01',
-                    caption: 'ESTRUCTURA BIOMÓRFICA // SERIE LILA #01',
-                    content: 'Exploración de formas orgánicas vivas contrastadas con la textura porosa del asfalto. El marco actúa como portal óptico reflectante.',
-                    type: 'image',
-                    timestamp: '2026-10-26T12:00:00.000Z',
-                    metadata: {
-                        medium: 'Pieza escultórica en hormigón pigmentado y resina',
-                        resonanceScore: 342,
-                        imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1200&auto=format&fit=crop'
-                    }
-                },
-                {
-                    id: 'post-monolith-02',
-                    caption: 'RESONANCIA ANALÓGICA // DISPOSITIVO TÁCTIL',
-                    content: 'Interfase cinética de retroalimentación háptica. Minimalismo tecnológico enfocado en la ergonomía del descanso mental.',
-                    type: 'image',
-                    timestamp: '2026-10-25T18:30:00.000Z',
-                    metadata: {
-                        medium: 'Fotografía de estudio minimalista',
-                        resonanceScore: 518,
-                        imageUrl: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?q=80&w=1200&auto=format&fit=crop'
-                    }
-                }
-            ];
-        }
         return posts;
     }, [targetUserPosts, releaseTab, isOwnProfile, savedPostIds, feed]);
 
@@ -5780,8 +5725,15 @@ const ProfileView = ({
                                     </span>
                                 </div>
 
-                                {/* Cuadrícula de 2 Tarjetas Destacadas (#01 Escultura, #02 Sonido) */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Cuadrícula de Tarjetas Destacadas (Obras Reales) */}
+                                {featuredWorks.length === 0 ? (
+                                    <div className="py-8 px-4 rounded-2xl bg-black/30 border border-white/[0.05] flex flex-col items-center justify-center text-center">
+                                        <Sparkles size={16} className="text-zinc-600 mb-1.5" />
+                                        <p className="text-[11px] font-mono text-zinc-400">Sin obras destacadas en este perfil</p>
+                                        <span className="text-[9px] font-mono text-zinc-600 mt-0.5">Tus publicaciones vinculadas aparecerán aquí</span>
+                                    </div>
+                                ) : (
+                                <div className={`grid grid-cols-1 ${featuredWorks.length > 1 ? 'sm:grid-cols-2' : ''} gap-4`}>
                                     {featuredWorks.slice(0, 2).map((work, idx) => {
                                         const isAudioWork = work.isAudio || work.type === 'audio';
 
@@ -5868,6 +5820,7 @@ const ProfileView = ({
                                         );
                                     })}
                                 </div>
+                                )}
 
                                 {/* Footer de Curaduría */}
                                 <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[9.5px] font-mono">
@@ -5948,8 +5901,16 @@ const ProfileView = ({
                         </div>
                     </div>
 
-                    {/* VISTA 1: MONOLITO (Grandes tarjetas cinemáticas con flecha central de salto - Images 3 & 5) */}
-                    {profileFeedView === 'monolito' ? (
+                    {/* Feed de Obras: Monolito / Editorial con estado vacío si no hay posts reales */}
+                    {displayFeedPosts.length === 0 ? (
+                        <div className="w-full py-16 px-4 rounded-3xl bg-zinc-950/40 border border-white/[0.06] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-6">
+                            <FileText size={22} className="text-zinc-600 mb-2" />
+                            <p className="text-xs font-mono text-zinc-400 font-medium">Archivo editorial vacío</p>
+                            <span className="text-[10px] font-mono text-zinc-600 mt-1 max-w-xs">
+                                {isOwnProfile ? 'Las notas y obras que publiques en tu feed se mostrarán aquí.' : 'Este usuario aún no ha publicado piezas en su perfil.'}
+                            </span>
+                        </div>
+                    ) : profileFeedView === 'monolito' ? (
                         <div className="w-full max-w-4xl mx-auto space-y-8">
                             {displayFeedPosts.map((post, postIdx) => {
                                 const postImg = getBlockPreviewImage(post);
