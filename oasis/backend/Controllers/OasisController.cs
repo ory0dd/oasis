@@ -1525,7 +1525,7 @@ namespace Oasis.Backend.Controllers
             if (!loadedFromSupabase)
             {
                 allPublicBlocks = (_state.FeedItems ?? new List<Block>())
-                    .Concat(_state.Users.SelectMany(usr => usr.Blocks).Where(b => b.IsPublic))
+                    .Concat(_state.Users.SelectMany(usr => usr.Blocks).Where(b => b.IsPublic && b.Id != "profile_settings" && b.Id != "user_settings" && b.Type != "profile_settings" && b.Type != "settings" && b.Type != "canvas"))
                     .GroupBy(b => b.Id)
                     .Select(g => g.First())
                     .ToList();
@@ -1534,13 +1534,16 @@ namespace Oasis.Backend.Controllers
             {
                 allPublicBlocks = allPublicBlocks
                     .Concat(_state.FeedItems ?? new List<Block>())
-                    .Concat(_state.Users.SelectMany(usr => usr.Blocks).Where(b => b.IsPublic))
+                    .Concat(_state.Users.SelectMany(usr => usr.Blocks).Where(b => b.IsPublic && b.Id != "profile_settings" && b.Id != "user_settings" && b.Type != "profile_settings" && b.Type != "settings" && b.Type != "canvas"))
                     .GroupBy(b => b.Id)
                     .Select(g => g.First())
                     .ToList();
             }
 
-            allPublicBlocks = allPublicBlocks.OrderByDescending(b => b.Timestamp).ToList();
+            allPublicBlocks = allPublicBlocks
+                .Where(b => b.Id != "profile_settings" && b.Id != "user_settings" && b.Type != "profile_settings" && b.Type != "settings" && b.Type != "canvas")
+                .OrderByDescending(b => b.Timestamp)
+                .ToList();
 
             if (string.IsNullOrEmpty(user))
             {
@@ -2619,7 +2622,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                                 if (psBlock != null)
                                 {
                                     psBlock.Content = serialized;
-                                    psBlock.IsPublic = true;
+                                    psBlock.IsPublic = false;
                                 }
                                 else
                                 {
@@ -2629,7 +2632,7 @@ Devuelve estrictamente un objeto JSON con dos claves: 'esfera_existencial' (con 
                                         Content = serialized,
                                         X = 99999,
                                         Y = 99999,
-                                        IsPublic = true,
+                                        IsPublic = false,
                                         Timestamp = DateTime.UtcNow
                                     });
                                 }

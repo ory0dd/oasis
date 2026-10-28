@@ -4719,7 +4719,8 @@ const ProfileView = ({
         const target = (effectiveUser || '').replace('@', '').toLowerCase();
         // 1. Authoritative posts published to the feed (oasis_feed table)
         const feedPosts = (feed || []).filter(b => {
-            if (!b || b.type === 'story' || b.type === 'highlight') return false;
+            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'profile_settings' || b.type === 'settings' || b.type === 'canvas' || b.type === 'story' || b.type === 'highlight') return false;
+            if (typeof b.content === 'string' && b.content.includes('"avatar"') && b.content.includes('"fullName"')) return false;
             const u1 = (b.username || '').replace('@', '').toLowerCase();
             const u2 = (b.metadata?.feedUsername || '').replace('@', '').toLowerCase();
             return u1 === target || u2 === target;
@@ -4728,7 +4729,8 @@ const ProfileView = ({
         // 2. Canvas blocks ONLY if explicitly marked as published to feed or commercial showcase
         // Raw canvas notes, diaries, insights stay strictly private on the canvas!
         const explicitFeedBlocks = (blocks || []).filter(b => {
-            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'canvas' || b.type === 'settings' || b.type === 'diary' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook') return false;
+            if (!b || b.id === 'profile_settings' || b.id === 'user_settings' || b.type === 'profile_settings' || b.type === 'canvas' || b.type === 'settings' || b.type === 'diary' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook') return false;
+            if (typeof b.content === 'string' && b.content.includes('"avatar"') && b.content.includes('"fullName"')) return false;
             const u = (b.username || user || '').replace('@', '').toLowerCase();
             if (u !== target) return false;
             // Never dump all canvas notes into the feed. Only include if intentionally published to feed or showcase piece
@@ -5085,6 +5087,8 @@ const ProfileView = ({
         // 2. Visual or audio posts from targetUserPosts
         if (results.length < 2) {
             targetUserPosts.forEach(tp => {
+                if (!tp || tp.id === 'profile_settings' || tp.id === 'user_settings' || tp.type === 'profile_settings' || tp.type === 'settings' || tp.type === 'canvas') return;
+                if (typeof tp.content === 'string' && tp.content.includes('"avatar"') && tp.content.includes('"fullName"')) return;
                 if (results.length < 2 && !results.some(r => r.id === tp.id)) {
                     const isAud = tp.type === 'audio' || (tp.content && tp.content.includes('[aud]'));
                     results.push({
@@ -9782,7 +9786,7 @@ function OasisApp() {
                 x: 99999, // offscreen
                 y: 99999,
                 rotation: 0,
-                isPublic: true,
+                isPublic: false,
                 timestamp: new Date().toISOString()
             };
 
@@ -9885,7 +9889,16 @@ function OasisApp() {
             }
 
             if (data && Array.isArray(data)) {
-                setFeed(data);
+                const cleanFeed = data.filter(post => 
+                    post && 
+                    post.id !== 'profile_settings' && 
+                    post.id !== 'user_settings' && 
+                    post.type !== 'profile_settings' && 
+                    post.type !== 'settings' && 
+                    post.type !== 'canvas' &&
+                    !(typeof post.content === 'string' && post.content.includes('"avatar"') && post.content.includes('"fullName"'))
+                );
+                setFeed(cleanFeed);
                 // Pre-cache avatars and names from feed posts so they load instantly in profiles
                 data.forEach(post => {
                     if (post.metadata?.userAvatar || post.metadata?.userFullName || post.metadata?.feedUsername) {
