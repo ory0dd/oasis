@@ -5190,18 +5190,18 @@ const ProfileView = ({
         >
             <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-24 sm:pb-36" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* AMBIENTE LUMINOSO Y COLORIDO DE FONDO */}
-                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
+                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none bg-[#070709]">
                     <div
-                        className="absolute -inset-10 bg-cover bg-center opacity-30 blur-3xl scale-110 transition-all duration-1000"
+                        className="absolute -inset-10 bg-cover bg-center opacity-25 blur-3xl scale-110 transition-all duration-1000"
                         style={{ backgroundImage: `url(${formatUrl(coverImage)})` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#070709]/40 via-[#070709]/80 to-[#070709]" />
-                    <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#070709] via-[#070709]/90 to-[#070709]" />
+                    <div className="absolute inset-0 opacity-15 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
                 </div>
 
                 {/* 1. PORTADA BANNER SUPERIOR CON CONTROLES FROSTED GLASS (IMAGE 1) */}
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-                <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-[86px] md:pt-3 pb-1 z-10 relative pointer-events-auto">
+                <div className={`w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pb-1 z-10 relative pointer-events-auto ${isVisitor ? 'pt-2 sm:pt-3.5' : 'pt-2.5 md:pt-3.5'}`}>
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
