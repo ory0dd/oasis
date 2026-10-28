@@ -5570,7 +5570,7 @@ const ProfileView = ({
                         <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
                             
                             {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS EN EL MISMO ESPACIO */}
-                            <div className="w-[48%] sm:w-[45%] lg:w-[40%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
+                            <div className="w-[38%] sm:w-[35%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
                                 
                                 {/* Fila 1: Avatar + @usuario + Botón Personalizar */}
                                 <div className="flex items-center gap-1.5 min-w-0">
@@ -5711,9 +5711,9 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* LADO DERECHO: 3 PIEZAS COMPLETAS + BOTÓN (+) EN LA ESQUINA INFERIOR */}
-                            <div className="flex-1 flex flex-col justify-between min-w-0 border-l border-white/[0.08] pl-2 sm:pl-3 relative">
-                                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 items-start my-auto">
+                            {/* LADO DERECHO: 3 PIEZAS MÁS GRANDES + BOTÓN (+) SÚPER PEQUEÑO EN LA ESQUINA */}
+                            <div className="flex-1 flex flex-col justify-center min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-3 relative pr-1">
+                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 items-center w-full my-auto">
                                     {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
@@ -5727,7 +5727,7 @@ const ProfileView = ({
                                             className="group/item flex flex-col cursor-pointer"
                                             title={item.title}
                                         >
-                                            <div className="w-full aspect-square rounded-md sm:rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-xs">
+                                            <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
                                                 <img
                                                     src={formatUrl(item.image)}
                                                     alt={item.title}
@@ -5739,28 +5739,26 @@ const ProfileView = ({
                                                         }
                                                     }}
                                                 />
-                                                <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[5.5px] sm:text-[6.5px] font-mono font-black text-emerald-400 shadow-xs">
+                                                <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
                                                     {item.price}
                                                 </span>
                                             </div>
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
+                                            <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
                                                 {item.title}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
 
-                                {/* Abajo en la esquina: solo el de más (+) para abrir la ventana con más piezas */}
-                                <div className="flex justify-end pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsPiecesModalOpen(true)}
-                                        className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full bg-white/[0.06] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-300 transition-all flex items-center justify-center cursor-pointer shadow-xs hover:scale-110 active:scale-95"
-                                        title="Abrir catálogo con más piezas"
-                                    >
-                                        <Plus size={10} strokeWidth={2.5} />
-                                    </button>
-                                </div>
+                                {/* Botón (+) súper pequeño en la esquina inferior */}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPiecesModalOpen(true)}
+                                    className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white/10 hover:bg-[#10b981] hover:text-black border border-white/20 text-zinc-400 hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90 z-10"
+                                    title="Abrir catálogo con más piezas"
+                                >
+                                    <Plus size={8} strokeWidth={3} />
+                                </button>
                             </div>
                         </div>
 
