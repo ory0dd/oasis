@@ -4436,6 +4436,7 @@ const PHENOM_QUESTIONS = [
 
 const ProfileView = ({
     user, targetUser, isVisitor = false, onCloseVisitor, publicProfileData, publicUsers = [],
+    hasAcceptedConsent = false, setSoulTab,
     soulPieces, blocks, setBlocks, syncBlocks, accent, isEditingProfile, setIsEditingProfile,
     deleteBlock, deleteBlocks,
     isBitacoraOpen, setIsBitacoraOpen,
@@ -4454,6 +4455,7 @@ const ProfileView = ({
 }) => {
     const effectiveUser = (targetUser || user || 'anon').replace('@', '');
     const isOwnProfile = !isVisitor && Boolean(user) && (effectiveUser.toLowerCase() === user.toLowerCase());
+    const isConsentSigned = Boolean(hasAcceptedConsent) || (typeof window !== 'undefined' && localStorage.getItem('oasis_consent_accepted_' + (user || effectiveUser)) === 'true');
 
     const formatUrl = (url) => {
         if (!url || typeof url !== 'string') return '';
@@ -5616,7 +5618,7 @@ const ProfileView = ({
                                                         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-300">
                                                             Proceso Clínico
                                                         </span>
-                                                        {hasAcceptedConsent ? (
+                                                        {isConsentSigned ? (
                                                             <span className="text-[7.5px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">
                                                                 Activo
                                                             </span>
@@ -5634,11 +5636,11 @@ const ProfileView = ({
                                             <button
                                                 onClick={() => {
                                                     setView('soul');
-                                                    setSoulTab('tests');
+                                                    if (typeof setSoulTab === 'function') setSoulTab('tests');
                                                 }}
                                                 className="px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600 border border-purple-500/30 text-purple-200 hover:text-white text-[9.5px] font-mono font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-sm flex items-center gap-1"
                                             >
-                                                <span>{hasAcceptedConsent ? 'Abrir' : 'Iniciar'}</span>
+                                                <span>{isConsentSigned ? 'Abrir' : 'Iniciar'}</span>
                                                 <ChevronRight size={12} />
                                             </button>
                                         </div>
@@ -16328,6 +16330,8 @@ ${afcMapContext}
             <ProfileView
                 targetUser={publicProfileUser}
                 isVisitor={true}
+                hasAcceptedConsent={hasAcceptedConsent}
+                setSoulTab={setSoulTab}
                 onCloseVisitor={() => setPublicProfileUser(null)}
                 publicProfileData={publicProfileData}
                 publicUsers={publicUsers}
@@ -17061,6 +17065,8 @@ ${afcMapContext}
                                             <div className="fixed inset-0 z-[1399] bg-black/25 backdrop-blur-[2px] transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
                                             <ProfileView
                                                 user={user}
+                                                hasAcceptedConsent={hasAcceptedConsent}
+                                                setSoulTab={setSoulTab}
                                                 soulPieces={soulPieces}
                                                 blocks={blocks}
                                                 setBlocks={setBlocks}
