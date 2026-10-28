@@ -5292,8 +5292,8 @@ const ProfileView = ({
         <div
             className={`fixed z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${
                 hasSession
-                    ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] inset-x-2 sm:inset-x-4 md:inset-x-6 bottom-2 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
-                    : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 inset-x-2 sm:inset-x-4 md:inset-x-6 bottom-2 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
+                    ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
+                    : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
             }`}
             onClick={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
@@ -5529,21 +5529,21 @@ const ProfileView = ({
                 )}
 
                 {/* 2. BENTO DASHBOARD COMPACTO: EQUILIBRIO DE SENTIDOS (CENTRO DE EXPLORACIÓN INTERNA) */}
-                <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 z-10 relative pointer-events-auto">
+                <div className="w-full max-w-6xl mx-auto px-1.5 sm:px-4 lg:px-8 pt-2 sm:pt-3 z-10 relative pointer-events-auto">
                     <div className="grid grid-cols-2 lg:grid-cols-12 gap-2 sm:gap-3 lg:gap-4 items-start">
                         
                         {/* ======================================================== */}
-                        {/* COLUMNA 1: IDENTIDAD & PIEZAS A LA VENTA */}
+                        {/* CARD 1: USUARIO COMPACTO & PRODUCTOS AL LADO (UNIFIED) */}
                         {/* ======================================================== */}
-                        <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
+                        <div className="col-span-2 lg:col-span-8 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-2.5 sm:gap-4 relative overflow-hidden">
                             
-                            {/* Card 1.1: Identidad & Bio (Compacto, micro-jerarquía táctil) */}
-                            <div className="col-span-1 lg:col-span-4 order-1 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 sm:gap-2.5 relative overflow-hidden min-h-[175px] sm:min-h-0">
-                                <div className="flex items-center gap-2 sm:gap-3">
+                            {/* LADO IZQUIERDO: USUARIO (FOTO PEQUEÑA COMO EL ORIGINAL + IDENTIDAD) */}
+                            <div className="flex-1 flex flex-col justify-between gap-1.5 sm:gap-2.5 min-w-0 pr-0.5 sm:pr-1">
+                                <div className="flex items-start gap-2 sm:gap-2.5">
                                     {/* Avatar Squircle compacto */}
-                                    <div className="relative shrink-0 w-9 h-9 sm:w-14 sm:h-14">
+                                    <div className="relative shrink-0 w-10 h-10 sm:w-12 sm:h-12">
                                         <div
-                                            className={`w-9 h-9 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl p-[1.5px] sm:p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
+                                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl p-[1.5px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-lg hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -5552,7 +5552,7 @@ const ProfileView = ({
                                                 }
                                             }}
                                         >
-                                            <div className="w-full h-full rounded-[9px] sm:rounded-[12px] overflow-hidden bg-zinc-900 shrink-0">
+                                            <div className="w-full h-full rounded-[10px] sm:rounded-[13px] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
@@ -5565,7 +5565,7 @@ const ProfileView = ({
                                                 />
                                             </div>
                                             {isOwnProfile && isEditingProfile && (
-                                                <div className="absolute inset-0 m-[1.5px] rounded-[9px] sm:rounded-[12px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                <div className="absolute inset-0 m-[1.5px] rounded-[10px] sm:rounded-[13px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                                                     <Camera size={10} className="text-white mb-0.5" />
                                                     <span className="text-[5px] font-black uppercase tracking-widest text-white">Editar</span>
                                                 </div>
@@ -5576,25 +5576,28 @@ const ProfileView = ({
                                         {isOwnProfile && (
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-5 sm:h-5 bg-[#10b981] rounded-full border-2 border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                                                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#10b981] rounded-full border-2 border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
                                                 title="Subir historia"
                                             >
-                                                <Plus size={7} strokeWidth={3} className="sm:w-2.5 sm:h-2.5" />
+                                                <Plus size={7} strokeWidth={3} />
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Nombre, username y badge */}
-                                    <div className="flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0 pt-0.5">
                                         <div className="flex items-center gap-1 min-w-0">
-                                            <h2 className="text-[11px] sm:text-base font-black text-white leading-tight truncate">
+                                            <h2 className="text-xs sm:text-sm font-black text-white leading-tight truncate">
                                                 {cleanDisplayName(fullName, effectiveUser)}
                                             </h2>
                                             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                         </div>
-                                        <div className="flex items-center gap-1 mt-0.5 min-w-0">
-                                            <span className="text-[8px] sm:text-[10px] font-mono text-zinc-400 tracking-wider truncate">
+                                        <div className="flex items-center gap-1 mt-0.5 min-w-0 flex-wrap">
+                                            <span className="text-[8px] sm:text-[9.5px] font-mono text-zinc-400 tracking-wider truncate">
                                                 @{effectiveUser}
+                                            </span>
+                                            <span className="px-1 py-0.2 rounded bg-white/[0.04] border border-white/[0.08] text-[6.5px] sm:text-[7px] font-mono tracking-wider text-zinc-400 uppercase font-semibold">
+                                                {isOwnProfile ? (localStorage.getItem('oasis_is_public_' + user) === 'true' ? 'Público' : 'Privado') : 'Público'}
                                             </span>
                                         </div>
                                     </div>
@@ -5605,7 +5608,7 @@ const ProfileView = ({
                                     href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full flex items-center justify-between px-2 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7.5px] sm:text-[9.5px] font-mono text-emerald-400 transition-all group/link shadow-sm"
+                                    className="w-full flex items-center justify-between px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7.5px] sm:text-[8.5px] font-mono text-emerald-400 transition-all group/link shadow-sm"
                                 >
                                     <div className="flex items-center gap-1.5 min-w-0 truncate">
                                         <Globe size={9} className="text-emerald-400 shrink-0" />
@@ -5613,36 +5616,36 @@ const ProfileView = ({
                                             {profileLink ? profileLink.replace(/^https?:\/\//, '') : (effectiveUser?.toLowerCase() === 'ory11' ? 'inn3r.shop/' : `muleinterior.com/7/${effectiveUser}`)}
                                         </span>
                                     </div>
-                                    <ChevronRight size={10} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
+                                    <ChevronRight size={9} className="text-zinc-500 group-hover/link:text-emerald-400 group-hover/link:translate-x-0.5 transition-all shrink-0" />
                                 </a>
 
                                 {/* Biografía */}
                                 {isOwnProfile && isEditingProfile ? (
-                                    <div className="flex flex-col gap-1.5 pt-1 border-t border-white/[0.06]">
+                                    <div className="flex flex-col gap-1 pt-1 border-t border-white/[0.06]">
                                         <input
                                             type="text"
                                             autoComplete="off"
                                             value={fullName}
                                             onChange={(e) => { setFullName(e.target.value); localStorage.setItem('oasis_fullname_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-white outline-none focus:border-white/30 transition-all font-sans"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1 text-[9px] text-white outline-none focus:border-white/30 transition-all font-sans"
                                             placeholder="Tu nombre..."
                                         />
                                         <textarea
                                             value={bio}
                                             onChange={(e) => { setBio(e.target.value); localStorage.setItem('oasis_bio_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[40px]"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1 text-[9px] text-white outline-none focus:border-white/30 transition-all font-sans resize-none min-h-[36px]"
                                             placeholder="Descripción..."
                                         />
                                         <input
                                             type="url"
                                             value={profileLink}
                                             onChange={(e) => { setProfileLink(e.target.value); localStorage.setItem('oasis_profilelink_' + user, e.target.value); }}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1.5 text-[10px] text-accent outline-none font-sans"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-1 text-[9px] text-accent outline-none font-sans"
                                             placeholder="https://tupagina.com"
                                         />
                                     </div>
                                 ) : (
-                                    <p className="text-[8.5px] sm:text-[11px] leading-tight text-zinc-300 font-sans whitespace-pre-wrap line-clamp-2">
+                                    <p className="text-[8.5px] sm:text-[10px] leading-tight text-zinc-300 font-sans whitespace-pre-wrap line-clamp-2">
                                         {bio || 'ruido extraviado'}
                                     </p>
                                 )}
@@ -5658,7 +5661,7 @@ const ProfileView = ({
                                                     }
                                                     setIsEditingProfile(!isEditingProfile);
                                                 }}
-                                                className={`flex-1 py-1 px-2 rounded-lg text-[8.5px] sm:text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-md cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black hover:bg-[#10b981]/90' : 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'}`}
+                                                className={`flex-1 py-1 px-2 rounded-lg text-[8.5px] sm:text-[9.5px] font-bold transition-all flex items-center justify-center gap-1 shadow-md cursor-pointer ${isEditingProfile ? 'bg-[#10b981] text-black hover:bg-[#10b981]/90' : 'bg-white/10 hover:bg-white/20 border border-white/10 text-white'}`}
                                             >
                                                 {isEditingProfile ? (
                                                     <><Check size={10} strokeWidth={2.5} /> Guardar</>
@@ -5668,16 +5671,16 @@ const ProfileView = ({
                                             </button>
                                             <button
                                                 onClick={() => setIsSettingsOpen(true)}
-                                                className="p-1 sm:p-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-zinc-300 hover:text-white transition-all shadow-md cursor-pointer shrink-0"
+                                                className="p-1 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-zinc-300 hover:text-white transition-all shadow-md cursor-pointer shrink-0"
                                                 title="Ajustes de cuenta"
                                             >
-                                                <Settings size={12} />
+                                                <Settings size={11} />
                                             </button>
                                         </>
                                     ) : (
                                         <button
                                             onClick={handleShareProfile}
-                                            className="w-full py-1 px-2 rounded-lg text-[8.5px] sm:text-[10px] font-bold transition-all flex items-center justify-center gap-1 bg-white/10 hover:bg-white/20 border border-white/10 shadow-md text-white cursor-pointer hover:scale-[1.01] active:scale-95"
+                                            className="w-full py-1 px-2 rounded-lg text-[8.5px] sm:text-[9.5px] font-bold transition-all flex items-center justify-center gap-1 bg-white/10 hover:bg-white/20 border border-white/10 shadow-md text-white cursor-pointer hover:scale-[1.01] active:scale-95"
                                         >
                                             {copiedLink ? <Check size={10} strokeWidth={2.5} /> : <Share2 size={10} strokeWidth={2} />}
                                             <span>{copiedLink ? 'Copiado' : 'Compartir'}</span>
@@ -5686,21 +5689,21 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* Card 1.2: PIEZAS A LA VENTA // RELIQUIAS (A lado del perfil) */}
-                            <div className="col-span-1 lg:col-span-4 order-2 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative min-h-[175px] sm:min-h-0">
+                            {/* LADO DERECHO: PRODUCTOS // PIEZAS A LA VENTA (A UN LADO) */}
+                            <div className="flex-1 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 border-l border-white/[0.08] pl-2.5 sm:pl-3.5">
                                 <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="flex items-center gap-1 min-w-0">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                                         <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
                                             Piezas / Venta
                                         </h3>
                                     </div>
-                                    <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
+                                    <span className="text-[7px] sm:text-[7.5px] font-mono text-zinc-500 uppercase tracking-widest shrink-0">
                                         {bentoPiecesForSale.length} Items
                                     </span>
                                 </div>
 
-                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 sm:gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-1.5 my-auto">
                                     {bentoPiecesForSale.slice(0, 2).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
@@ -5714,7 +5717,7 @@ const ProfileView = ({
                                             className="group/item flex flex-col cursor-pointer"
                                             title={item.title}
                                         >
-                                            <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                            <div className="w-full aspect-square rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
                                                 <img
                                                     src={formatUrl(item.image)}
                                                     alt={item.title}
@@ -5726,11 +5729,11 @@ const ProfileView = ({
                                                         }
                                                     }}
                                                 />
-                                                <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7px] font-mono font-black text-emerald-400 shadow-sm">
                                                     {item.price}
                                                 </span>
                                             </div>
-                                            <span className="text-[7px] sm:text-[9px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 sm:mt-1 text-center">
+                                            <span className="text-[7px] sm:text-[8px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
                                                 {item.title}
                                             </span>
                                         </div>
@@ -5745,10 +5748,10 @@ const ProfileView = ({
                                                     setSelectedModalPost(bentoPiecesForSale[2].raw);
                                                 }
                                             }}
-                                            className="group/item hidden lg:flex flex-col cursor-pointer"
+                                            className="group/item hidden sm:flex flex-col cursor-pointer"
                                             title={bentoPiecesForSale[2].title}
                                         >
-                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                            <div className="w-full aspect-square rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
                                                 <img
                                                     src={formatUrl(bentoPiecesForSale[2].image)}
                                                     alt={bentoPiecesForSale[2].title}
@@ -5760,11 +5763,11 @@ const ProfileView = ({
                                                         }
                                                     }}
                                                 />
-                                                <span className="absolute top-1 right-1 px-1.5 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7px] font-mono font-black text-emerald-400 shadow-sm">
                                                     {bentoPiecesForSale[2].price}
                                                 </span>
                                             </div>
-                                            <span className="text-[7.5px] sm:text-[9px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
+                                            <span className="text-[7px] sm:text-[8px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
                                                 {bentoPiecesForSale[2].title}
                                             </span>
                                         </div>
@@ -5773,7 +5776,7 @@ const ProfileView = ({
 
                                 {/* Footer action / link */}
                                 <div className="flex items-center justify-between pt-0.5 border-t border-white/[0.04]">
-                                    <span className="text-[6.5px] sm:text-[8px] font-mono text-zinc-500 truncate">
+                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500 truncate">
                                         {effectiveUser === 'ory11' ? 'inn3r store' : 'tienda'}
                                     </span>
                                     <button
@@ -5782,270 +5785,263 @@ const ProfileView = ({
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="text-[6.5px] sm:text-[8px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
+                                        className="text-[6.5px] sm:text-[7.5px] font-mono text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-0.5 cursor-pointer shrink-0"
                                     >
                                         <span>Ver más</span>
                                         <ChevronRight size={8} />
                                     </button>
                                 </div>
                             </div>
-
-                            {/* Proceso Clínico & Firma de Resonancia */}
-                            {isOwnProfile && (
-                                <div className="col-span-2 lg:col-span-4 order-8 lg:order-none bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <Heart size={13} className="text-purple-400 shrink-0" />
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-[8.5px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
-                                                Proceso Clínico
-                                            </span>
-                                            <span className="text-[7.5px] sm:text-[8px] font-sans text-zinc-400 truncate">
-                                                {isConsentSigned ? 'Expediente activo' : 'Diagnóstico voluntario'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            setView('soul');
-                                            if (typeof setSoulTab === 'function') setSoulTab('tests');
-                                        }}
-                                        className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 text-[8px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
-                                    >
-                                        {isConsentSigned ? 'Abrir' : 'Iniciar'}
-                                    </button>
-                                </div>
-                            )}
-
                         </div>
 
                         {/* ======================================================== */}
-                        {/* COLUMNA 2: PIEZA CENTRAL SENSORIAL & RECIENTES */}
+                        {/* CARD 2: OBRA / LOOP CONTINUO [432 HZ] */}
                         {/* ======================================================== */}
-                        <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
-                            
-                            {/* Card 2.1: Obra / Loop Continuo Central (respiración lenta [432 Hz]) */}
-                            <div className="col-span-1 lg:col-span-4 order-3 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative min-h-[160px] sm:min-h-0">
-                                <div
-                                    onClick={() => {
-                                        if (profileAudioRef.current) {
-                                            if (profileAudioRef.current.paused) {
-                                                profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
-                                            } else {
-                                                profileAudioRef.current.pause();
-                                                setIsProfileAudioPlaying(false);
-                                            }
-                                        } else if (bentoCentralPiece.raw) {
-                                            setSelectedModalPost(bentoCentralPiece.raw);
-                                        }
-                                    }}
-                                    className="w-full aspect-[4/3] rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/loop cursor-pointer shadow-md"
-                                >
-                                    <img
-                                        src={formatUrl(bentoCentralPiece.image)}
-                                        alt={bentoCentralPiece.title}
-                                        className="w-full h-full object-cover group-hover/loop:scale-105 transition-transform duration-700"
-                                        onError={(e) => {
-                                            if (!e.target.dataset.failed) {
-                                                e.target.dataset.failed = 'true';
-                                                e.target.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop';
-                                            }
-                                        }}
-                                    />
-                                    <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
-                                    
-                                    {/* Badge Superior Derecho: loop continuo */}
-                                    <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
-                                        {bentoCentralPiece.badge}
-                                    </div>
-
-                                    {/* Play Button Central */}
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
-                                            {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Pie de la Pieza Central */}
-                                <div className="flex items-center justify-between px-0.5 pt-0.5">
-                                    <span className="text-[10px] sm:text-xs font-bold text-white font-sans truncate">
-                                        {bentoCentralPiece.title}
-                                    </span>
-                                    <span className="text-[8px] sm:text-[9.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
-                                        {bentoCentralPiece.tag}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Card 2.2: Publicaciones Recientes // Fotos */}
-                            <div className="col-span-2 lg:col-span-4 order-7 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
-                                <div className="flex items-center justify-between pb-1">
-                                    <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                                        Publicaciones Recientes
-                                    </h3>
-                                    <span className="text-[7px] sm:text-[8px] font-mono text-emerald-400 uppercase tracking-widest">
-                                        {bentoRecentPhotos.length} Fotos
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                                    {bentoRecentPhotos.map((item, idx) => (
-                                        <div
-                                            key={item.id || idx}
-                                            onClick={() => {
-                                                if (item.raw) setSelectedModalPost(item.raw);
-                                            }}
-                                            className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/rec cursor-pointer hover:border-white/20 transition-all shadow-md"
-                                        >
-                                            <img
-                                                src={formatUrl(item.image)}
-                                                alt="Publicación reciente"
-                                                className="w-full h-full object-cover group-hover/rec:scale-105 transition-transform duration-500"
-                                                onError={(e) => {
-                                                    if (!e.target.dataset.failed) {
-                                                        e.target.dataset.failed = 'true';
-                                                        e.target.src = 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600';
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Botón Circular Central de Desplazamiento al Feed */}
-                                <div className="flex justify-center pt-0.5 sm:pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const el = document.getElementById('profile-feed-section');
-                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                        }}
-                                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/[0.1] flex items-center justify-center text-zinc-300 hover:text-white transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95"
-                                        title="Ver todas las publicaciones y archivo"
-                                    >
-                                        <ArrowDown size={11} />
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {/* ======================================================== */}
-                        {/* COLUMNA 3: MICRO-CANALES, FRASE SENSORIAL & MEMORABILIA */}
-                        {/* ======================================================== */}
-                        <div className="contents lg:flex lg:flex-col lg:col-span-4 gap-2.5 sm:gap-3.5 bento-mobile-contents">
-                            
-                            {/* Card 3.1: Micro-canales (COMUNIDAD, PODCAST, LIBROS) */}
-                            <div className="col-span-2 lg:col-span-4 order-5 lg:order-none grid grid-cols-3 gap-1.5 sm:gap-2">
-                                {/* Comunidad */}
-                                <div
-                                    onClick={() => {
-                                        if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
-                                    }}
-                                    className="bg-black/50 border border-white/[0.08] hover:border-emerald-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/com shadow-sm"
-                                >
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-emerald-400">Comunidad</span>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    </div>
-                                    <Radio size={13} className="text-emerald-400 my-1 group-hover/com:scale-110 transition-transform" />
-                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/com:text-white truncate w-full">
-                                        inn3r.noise
-                                    </span>
-                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
-                                        32 activos
-                                    </span>
-                                </div>
-
-                                {/* Podcast */}
-                                <div
-                                    onClick={() => {
-                                        if (profileAudioRef.current) {
+                        <div className="col-span-1 lg:col-span-4 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative min-h-[160px] sm:min-h-0">
+                            <div
+                                onClick={() => {
+                                    if (profileAudioRef.current) {
+                                        if (profileAudioRef.current.paused) {
                                             profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                        } else {
+                                            profileAudioRef.current.pause();
+                                            setIsProfileAudioPlaying(false);
+                                        }
+                                    } else if (bentoCentralPiece.raw) {
+                                        setSelectedModalPost(bentoCentralPiece.raw);
+                                    }
+                                }}
+                                className="w-full aspect-[4/3] rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/loop cursor-pointer shadow-md"
+                            >
+                                <img
+                                    src={formatUrl(bentoCentralPiece.image)}
+                                    alt={bentoCentralPiece.title}
+                                    className="w-full h-full object-cover group-hover/loop:scale-105 transition-transform duration-700"
+                                    onError={(e) => {
+                                        if (!e.target.dataset.failed) {
+                                            e.target.dataset.failed = 'true';
+                                            e.target.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop';
                                         }
                                     }}
-                                    className="bg-black/50 border border-white/[0.08] hover:border-purple-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/pod shadow-sm"
-                                >
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-purple-400">Podcast</span>
-                                    <Mic size={13} className="text-purple-400 my-1 group-hover/pod:scale-110 transition-transform" />
-                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/pod:text-white truncate w-full">
-                                        Ruido #04
-                                    </span>
-                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-purple-400 font-semibold group-hover/pod:underline">
-                                        escuchar ↗
-                                    </span>
+                                />
+                                <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
+                                
+                                <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
+                                    {bentoCentralPiece.badge}
                                 </div>
 
-                                {/* Libros */}
-                                <div
-                                    onClick={() => {
-                                        setProfileFeedView('editorial');
-                                        const el = document.getElementById('profile-feed-section');
-                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="bg-black/50 border border-white/[0.08] hover:border-amber-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/lib shadow-sm"
-                                >
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-amber-400">Libros</span>
-                                    <Bookmark size={13} className="text-amber-400 my-1 group-hover/lib:scale-110 transition-transform" />
-                                    <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/lib:text-white truncate w-full">
-                                        Glitch
-                                    </span>
-                                    <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
-                                        fanzine
-                                    </span>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                        {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Card 3.2: Frase Sensorial / Estado Existencial ("hoy sentí calma...") */}
-                            <div className="col-span-1 lg:col-span-4 order-4 lg:order-none bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-2 relative transition-all group/quote min-h-[160px] sm:min-h-0">
-                                <p className="text-[9.5px] sm:text-[11.5px] text-zinc-200 font-serif italic leading-snug line-clamp-3">
-                                    "{bentoSensoryQuote}"
-                                </p>
-                                <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shrink-0 tracking-wider">
-                                    03:14 AM
+                            <div className="flex items-center justify-between px-0.5 pt-0.5">
+                                <span className="text-[10px] sm:text-xs font-bold text-white font-sans truncate">
+                                    {bentoCentralPiece.title}
+                                </span>
+                                <span className="text-[8px] sm:text-[9.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
+                                    {bentoCentralPiece.tag}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* ======================================================== */}
+                        {/* CARD 3: FRASE SENSORIAL / ESTADO EXISTENCIAL */}
+                        {/* ======================================================== */}
+                        <div className="col-span-1 lg:col-span-4 order-3 bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-2 relative transition-all group/quote min-h-[160px] sm:min-h-0">
+                            <p className="text-[9.5px] sm:text-[11.5px] text-zinc-200 font-serif italic leading-snug line-clamp-3">
+                                "{bentoSensoryQuote}"
+                            </p>
+                            <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shrink-0 tracking-wider">
+                                03:14 AM
+                            </span>
+                        </div>
+
+                        {/* ======================================================== */}
+                        {/* CARD 4: MICRO-CANALES (COMUNIDAD, PODCAST, LIBROS) */}
+                        {/* ======================================================== */}
+                        <div className="col-span-2 lg:col-span-4 order-4 grid grid-cols-3 gap-1.5 sm:gap-2">
+                            {/* Comunidad */}
+                            <div
+                                onClick={() => {
+                                    if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
+                                }}
+                                className="bg-black/50 border border-white/[0.08] hover:border-emerald-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/com shadow-sm"
+                            >
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-emerald-400">Comunidad</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                </div>
+                                <Radio size={13} className="text-emerald-400 my-1 group-hover/com:scale-110 transition-transform" />
+                                <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/com:text-white truncate w-full">
+                                    inn3r.noise
+                                </span>
+                                <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
+                                    32 activos
                                 </span>
                             </div>
 
-                            {/* Card 3.3: RECUERDOS VALIOSOS // MEMORABILIA */}
-                            <div className="col-span-2 lg:col-span-4 order-6 lg:order-none bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
-                                <div className="flex items-center justify-between pb-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <Sparkles size={11} className="text-emerald-400" />
-                                        <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
-                                            Recuerdos Valiosos
-                                        </h3>
-                                    </div>
-                                    <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
-                                        Memorabilia
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5 sm:gap-2">
-                                    {bentoValuableMemories.map((memo, idx) => (
-                                        <div
-                                            key={memo.id || idx}
-                                            onClick={() => {
-                                                if (onOpenSimpleNotes) onOpenSimpleNotes();
-                                            }}
-                                            className="flex items-center gap-2 p-1.5 sm:p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-sm"
-                                        >
-                                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
-                                                {memo.icon === 'diamond' ? <Aperture size={12} /> : <StickyNote size={12} />}
-                                            </div>
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate">
-                                                    {memo.title}
-                                                </span>
-                                                <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 truncate">
-                                                    {memo.subtitle}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                            {/* Podcast */}
+                            <div
+                                onClick={() => {
+                                    if (profileAudioRef.current) {
+                                        profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                    }
+                                }}
+                                className="bg-black/50 border border-white/[0.08] hover:border-purple-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/pod shadow-sm"
+                            >
+                                <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-purple-400">Podcast</span>
+                                <Mic size={13} className="text-purple-400 my-1 group-hover/pod:scale-110 transition-transform" />
+                                <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/pod:text-white truncate w-full">
+                                    Ruido #04
+                                </span>
+                                <span className="text-[6.5px] sm:text-[7.5px] font-mono text-purple-400 font-semibold group-hover/pod:underline">
+                                    escuchar ↗
+                                </span>
                             </div>
 
+                            {/* Libros */}
+                            <div
+                                onClick={() => {
+                                    setProfileFeedView('editorial');
+                                    const el = document.getElementById('profile-feed-section');
+                                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="bg-black/50 border border-white/[0.08] hover:border-amber-500/40 rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between text-center transition-all cursor-pointer group/lib shadow-sm"
+                            >
+                                <span className="text-[6.5px] sm:text-[7px] font-mono uppercase font-black text-amber-400">Libros</span>
+                                <Bookmark size={13} className="text-amber-400 my-1 group-hover/lib:scale-110 transition-transform" />
+                                <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-200 group-hover/lib:text-white truncate w-full">
+                                    Glitch
+                                </span>
+                                <span className="text-[6.5px] sm:text-[7.5px] font-mono text-zinc-500">
+                                    fanzine
+                                </span>
+                            </div>
                         </div>
+
+                        {/* ======================================================== */}
+                        {/* CARD 5: RECUERDOS VALIOSOS // MEMORABILIA */}
+                        {/* ======================================================== */}
+                        <div className="col-span-2 lg:col-span-4 order-5 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="flex items-center justify-between pb-1">
+                                <div className="flex items-center gap-1.5">
+                                    <Sparkles size={11} className="text-emerald-400" />
+                                    <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
+                                        Recuerdos Valiosos
+                                    </h3>
+                                </div>
+                                <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    Memorabilia
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5 sm:gap-2">
+                                {bentoValuableMemories.map((memo, idx) => (
+                                    <div
+                                        key={memo.id || idx}
+                                        onClick={() => {
+                                            if (onOpenSimpleNotes) onOpenSimpleNotes();
+                                        }}
+                                        className="flex items-center gap-2 p-1.5 sm:p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-sm"
+                                    >
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
+                                            {memo.icon === 'diamond' ? <Aperture size={12} /> : <StickyNote size={12} />}
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate">
+                                                {memo.title}
+                                            </span>
+                                            <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 truncate">
+                                                {memo.subtitle}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ======================================================== */}
+                        {/* CARD 6: PUBLICACIONES RECIENTES // FOTOS */}
+                        {/* ======================================================== */}
+                        <div className="col-span-2 lg:col-span-4 order-6 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 sm:gap-2.5 relative">
+                            <div className="flex items-center justify-between pb-1">
+                                <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                                    Publicaciones Recientes
+                                </h3>
+                                <span className="text-[7px] sm:text-[8px] font-mono text-emerald-400 uppercase tracking-widest">
+                                    {bentoRecentPhotos.length} Fotos
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                                {bentoRecentPhotos.map((item, idx) => (
+                                    <div
+                                        key={item.id || idx}
+                                        onClick={() => {
+                                            if (item.raw) setSelectedModalPost(item.raw);
+                                        }}
+                                        className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/rec cursor-pointer hover:border-white/20 transition-all shadow-md"
+                                    >
+                                        <img
+                                            src={formatUrl(item.image)}
+                                            alt="Publicación reciente"
+                                            className="w-full h-full object-cover group-hover/rec:scale-105 transition-transform duration-500"
+                                            onError={(e) => {
+                                                if (!e.target.dataset.failed) {
+                                                    e.target.dataset.failed = 'true';
+                                                    e.target.src = 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600';
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-center pt-0.5 sm:pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const el = document.getElementById('profile-feed-section');
+                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/[0.1] flex items-center justify-center text-zinc-300 hover:text-white transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95"
+                                    title="Ver todas las publicaciones y archivo"
+                                >
+                                    <ArrowDown size={11} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ======================================================== */}
+                        {/* CARD 7: PROCESO CLÍNICO & EXPEDIENTE */}
+                        {/* ======================================================== */}
+                        {isOwnProfile && (
+                            <div className="col-span-2 lg:col-span-4 order-7 bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Heart size={13} className="text-purple-400 shrink-0" />
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[8.5px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
+                                            Proceso Clínico
+                                        </span>
+                                        <span className="text-[7.5px] sm:text-[8px] font-sans text-zinc-400 truncate">
+                                            {isConsentSigned ? 'Expediente activo' : 'Diagnóstico voluntario'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setView('soul');
+                                        if (typeof setSoulTab === 'function') setSoulTab('tests');
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 text-[8px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
+                                >
+                                    {isConsentSigned ? 'Abrir' : 'Iniciar'}
+                                </button>
+                            </div>
+                        )}
 
                     </div>
                 </div>
