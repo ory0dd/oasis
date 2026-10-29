@@ -4652,7 +4652,7 @@ const ProfileView = ({
     avatar, setAvatar, calculatedResults, noteKeywords, bgType, bgValue,
     conversations, setConversations, handleSelectConversation,
     onSaveProfile, onNewChat, onOpenNotebook, setActiveTest, setIsSettingsOpen, onOpenSimpleNotes,
-    openNewComposer, feed, onNavigateToFeedPost,
+    openNewComposer, onOpenPublishWithLink, feed, onNavigateToFeedPost,
     setIsHighlightModalOpen, setSelectedHighlight,
     isStoryUploadModalOpen, setIsStoryUploadModalOpen, setViewing24hStories,
     currentTrack = 0, playerTracks = [], isPlaying = false,
@@ -4702,7 +4702,10 @@ const ProfileView = ({
             const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_playlist_${effectiveUser}`) : null);
             if (stored) {
                 const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                if (Array.isArray(parsed)) {
+                    const cleaned = parsed.filter(t => t && t.id !== 'def-2' && t.id !== 'def-3');
+                    if (cleaned.length > 0) return cleaned;
+                }
             }
         } catch (e) {}
 
@@ -4724,10 +4727,6 @@ const ProfileView = ({
             });
         }
 
-        initial.push(
-            { id: 'def-2', title: 'resonancia serena [432 Hz]', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' },
-            { id: 'def-3', title: 'frecuencia etérea [528 Hz]', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' }
-        );
         return initial;
     });
 
@@ -6992,10 +6991,10 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                     <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400">
                                         {isOwnProfile ? 'Aún no has publicado posts con enlaces' : 'Sin publicaciones con enlaces aún'}
                                     </span>
-                                    {isOwnProfile && openNewComposer && (
+                                    {isOwnProfile && (onOpenPublishWithLink || openNewComposer) && (
                                         <button
                                             type="button"
-                                            onClick={() => openNewComposer()}
+                                            onClick={() => (onOpenPublishWithLink || openNewComposer)()}
                                             className="mt-0.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[8px] sm:text-[9px] font-mono font-bold text-emerald-300 hover:text-white transition-all cursor-pointer"
                                         >
                                             + Publicar con link
@@ -7146,7 +7145,8 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 </span>
                             </div>
 
-                            {/* Lista de Canciones Espaciosa sin textos cortados */}
+                            {/* Lista de Canciones Espaciosa sin textos cortados (Solo se muestra si hay más de 1 track) */}
+                            {playlistTracks.length > 1 && (
                             <div className="flex flex-col gap-1 border-t border-white/[0.05] pt-1.5">
                                 {playlistTracks.map((track, idx) => {
                                     const isCurrent = currentTrackIndex === idx;
@@ -7198,6 +7198,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                     );
                                 })}
                             </div>
+                            )}
                         </div>
 
                         {/* LADO DERECHO: RECUERDOS VALIOSOS (SOLO POSTS DE PURO TEXTO) */}
@@ -7543,8 +7544,20 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                             {/* Grid de Piezas en el Modal */}
                             {allPiecesForSale.length === 0 ? (
-                                <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2 border border-white/5 border-dashed rounded-2xl">
+                                <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-3 border border-white/5 border-dashed rounded-2xl">
                                     <span className="text-xs font-mono text-zinc-400">No hay publicaciones con enlaces aún.</span>
+                                    {isOwnProfile && (onOpenPublishWithLink || openNewComposer) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsPiecesModalOpen(false);
+                                                (onOpenPublishWithLink || openNewComposer)();
+                                            }}
+                                            className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-300 hover:text-white transition-all cursor-pointer"
+                                        >
+                                            + Publicar con link
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto no-scrollbar p-1 max-h-[60vh]">
@@ -8777,6 +8790,7 @@ function OasisApp() {
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
     const [isPublishSelectorOpen, setIsPublishSelectorOpen] = useState(false);
+    const [highlightPublishLink, setHighlightPublishLink] = useState(false);
     const [isSimpleNotesOpen, setIsSimpleNotesOpenRaw] = useState(false);
     const [isSplitViewEnabled, setIsSplitViewEnabled] = useState(false);
     const [isUnifiedCreatorOpen, setIsUnifiedCreatorOpen] = useState(initialStartupScreen === 'diary');
@@ -18720,6 +18734,10 @@ ${afcMapContext}
                 setIsSettingsOpen={setIsSettingsOpen}
                 onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
                 openNewComposer={openNewComposer}
+                onOpenPublishWithLink={() => {
+                    setHighlightPublishLink(true);
+                    setIsPublishSelectorOpen(true);
+                }}
                 onNavigateToFeedPost={navigateToFeedAndFocusPost}
                 isPlaying={isPlaying}
                 currentTrack={currentTrack}
@@ -19557,6 +19575,10 @@ ${afcMapContext}
                                                 setIsSettingsOpen={setIsSettingsOpen}
                                                 onOpenSimpleNotes={() => setIsSimpleNotesOpen(true)}
                                                 openNewComposer={openNewComposer}
+                                                onOpenPublishWithLink={() => {
+                                                    setHighlightPublishLink(true);
+                                                    setIsPublishSelectorOpen(true);
+                                                }}
                                                 feed={feed}
                                                 onNavigateToFeedPost={navigateToFeedAndFocusPost}
                                                 isPlaying={isPlaying}
@@ -20193,8 +20215,13 @@ ${afcMapContext}
                     syncBlocks={syncBlocks}
                     accent={accent}
                     user={user}
-                    onClose={() => setIsPublishSelectorOpen(false)}
+                    highlightLink={highlightPublishLink}
+                    onClose={() => {
+                        setIsPublishSelectorOpen(false);
+                        setHighlightPublishLink(false);
+                    }}
                     onPublished={(newBlock) => {
+                        setHighlightPublishLink(false);
                         // Refresh feed from server â€” the block is already saved
                         fetchFeed();
                         setView('feed');

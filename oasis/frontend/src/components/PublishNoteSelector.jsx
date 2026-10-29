@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { X, Globe, Search, ArrowRight, Check, ImagePlus, ChevronLeft, Upload, MapPin, Loader2, Film, Image, ShoppingBag, DollarSign } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Globe, Search, ArrowRight, Check, ImagePlus, ChevronLeft, Upload, MapPin, Loader2, Film, Image, ShoppingBag, DollarSign, Link2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ||
     ((typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')))
@@ -12,10 +12,12 @@ export default function PublishNoteSelector({
     syncBlocks, 
     onClose, 
     onPublished,
-    accent = '#ef4444',
-    user
+    accent = '#84396F',
+    user,
+    highlightLink = false
 }) {
-    const [step, setStep] = useState('select_type');
+    const [step, setStep] = useState(() => highlightLink ? 'details' : 'select_type');
+    const [isLinkHighlighted, setIsLinkHighlighted] = useState(Boolean(highlightLink));
     const [searchTerm, setSearchTerm] = useState('');
     const [status, setStatus] = useState('idle'); // 'idle' | 'uploading' | 'saving' | 'done' | 'error'
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -38,6 +40,29 @@ export default function PublishNoteSelector({
 
     const fileInputRef = useRef(null);
     const thumbnailInputRef = useRef(null);
+    const buyLinkInputRef = useRef(null);
+    const linkSectionRef = useRef(null);
+
+    useEffect(() => {
+        if (highlightLink) {
+            setIsLinkHighlighted(true);
+            setStep('details');
+        }
+    }, [highlightLink]);
+
+    useEffect(() => {
+        if (step === 'details' && isLinkHighlighted) {
+            const timer = setTimeout(() => {
+                if (linkSectionRef.current) {
+                    linkSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                if (buyLinkInputRef.current) {
+                    buyLinkInputRef.current.focus();
+                }
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [step, isLinkHighlighted]);
 
     const availableBlocks = blocks.filter(b => {
         if (b.id === 'profile_settings' || b.id === 'user_settings') return false;
@@ -59,7 +84,6 @@ export default function PublishNoteSelector({
         setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
         setPendingFile(file);
         setSelectedBlock(null);
-        setTitle('');
         setStep('details');
     };
 
@@ -175,13 +199,16 @@ export default function PublishNoteSelector({
                         ...(price.trim() ? { price: price.trim() } : {})
                     }
                 };
-            } else if (finalMediaUrl) {
-                // Publishing new media
+            } else if (finalMediaUrl || finalThumbnailUrl || buyLink.trim() || title.trim() || caption.trim()) {
+                // Publishing new media or link post
                 const finalTitle = title.trim() ? title.trim() : (caption ? (caption.length > 30 ? caption.substring(0, 30) + '...' : caption) : 'Publicación');
+                const contentValue = finalMediaUrl
+                    ? (mediaType === 'image' ? `[img]${finalMediaUrl}[/img]` : `[vid]${finalMediaUrl}[/vid]`)
+                    : (finalThumbnailUrl ? `[img]${finalThumbnailUrl}[/img]` : (caption.trim() || title.trim() || buyLink.trim()));
                 publishedBlock = {
                     id: `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     type: 'note',
-                    content: mediaType === 'image' ? `[img]${finalMediaUrl}[/img]` : `[vid]${finalMediaUrl}[/vid]`,
+                    content: contentValue,
                     x: 0, y: 0, rotation: 0,
                     caption: finalTitle,
                     color: accent,
@@ -200,7 +227,7 @@ export default function PublishNoteSelector({
                     }
                 };
             } else {
-                throw new Error('Nada que publicar');
+                throw new Error('Selecciona una foto/video o escribe un título y enlace para publicar.');
             }
 
             // STEP 3: POST to decoupled feed publish endpoint
@@ -296,7 +323,7 @@ export default function PublishNoteSelector({
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={(e) => {
                 e.preventDefault(); e.stopPropagation();
-                if (step === 'select_type' && e.dataTransfer.files?.length > 0) {
+                if (e.dataTransfer.files?.length > 0) {
                     const file = e.dataTransfer.files[0];
                     setLocalPreviewUrl(URL.createObjectURL(file));
                     setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
@@ -305,6 +332,9 @@ export default function PublishNoteSelector({
                 }
             }}
         >
+            {/* Always-mounted file input so both select_type and details can trigger it */}
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
+
             {/* Close button */}
             {step === 'select_type' && (
                 <div className="absolute top-4 right-4 z-50">
@@ -320,8 +350,6 @@ export default function PublishNoteSelector({
                     </div>
                     <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white mb-2">Nueva publicación</h3>
                     <p className="text-sm text-zinc-500 mb-8 max-w-xs">Arrastra un archivo aquí o selecciona desde tu dispositivo</p>
-
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
 
                     <div className="flex gap-3 mb-6 w-full max-w-sm">
                         <button
@@ -405,14 +433,23 @@ export default function PublishNoteSelector({
             {step === 'details' && (
                 <div className="flex-1 flex flex-col h-full animate-in fade-in slide-in-from-right-8 duration-300 pb-24">
                     <div className="shrink-0 px-4 py-3 border-b border-white/5 flex items-center justify-between sticky top-0 bg-[#050506]/80 backdrop-blur-md z-10">
-                        <button onClick={() => setStep(selectedBlock ? 'select_note' : 'select_type')} className="p-2 -ml-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">
+                        <button
+                            onClick={() => {
+                                if (highlightLink && !selectedBlock && !localPreviewUrl) {
+                                    onClose();
+                                } else {
+                                    setStep(selectedBlock ? 'select_note' : 'select_type');
+                                }
+                            }}
+                            className="p-2 -ml-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                        >
                             <ChevronLeft size={20} />
                         </button>
                         <h2 className="text-base font-black text-white tracking-tight">Nueva publicación</h2>
                         <button
                             onClick={handlePublishClick}
-                            className="px-4 py-1.5 rounded-full text-sm font-bold transition-all flex items-center gap-2"
-                            style={{ color: accent, backgroundColor: `${accent}20` }}
+                            className="px-4 py-1.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 cursor-pointer hover:opacity-90"
+                            style={{ color: accent, backgroundColor: `${accent}25` }}
                         >
                             Compartir
                         </button>
@@ -428,6 +465,9 @@ export default function PublishNoteSelector({
                                 {localPreviewUrl && mediaType === 'video' && (
                                     <video src={localPreviewUrl} controls playsInline preload="metadata" className="w-full h-full object-contain absolute inset-0" />
                                 )}
+                                {!localPreviewUrl && localThumbnailUrl && (
+                                    <img src={localThumbnailUrl} className="w-full h-full object-contain absolute inset-0" alt="Preview Portada" />
+                                )}
                                 {selectedBlock && (
                                     <div className="w-full h-full flex flex-col p-6 overflow-y-auto bg-gradient-to-br from-zinc-900 to-[#0a0a0b] absolute inset-0">
                                         <h4 className="text-white font-bold mb-3 text-lg">{selectedBlock.caption || 'Fragmento'}</h4>
@@ -436,6 +476,36 @@ export default function PublishNoteSelector({
                                                 ? selectedBlock.content.replace(/\[\/?(?:img|vid|aud)\]/g, '').trim()
                                                 : ''}
                                         </p>
+                                    </div>
+                                )}
+                                {!localPreviewUrl && !localThumbnailUrl && !selectedBlock && (
+                                    <div className="w-full h-full absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-4 bg-gradient-to-b from-zinc-900/40 to-zinc-950">
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-16 h-16 rounded-full bg-white/5 hover:bg-accent/20 border-2 border-dashed border-white/20 hover:border-accent flex items-center justify-center cursor-pointer transition-all group/up"
+                                        >
+                                            <ImagePlus size={26} className="text-zinc-400 group-hover/up:text-white transition-colors" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-white">Añade una imagen o video a tu publicación</p>
+                                            <p className="text-[11px] text-zinc-500">O selecciona un fragmento de tus notas</p>
+                                        </div>
+                                        <div className="flex items-center gap-2.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold text-white transition-all cursor-pointer"
+                                            >
+                                                Subir Foto / Video
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStep('select_note')}
+                                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-zinc-300 hover:text-white transition-all cursor-pointer"
+                                            >
+                                                Elegir Nota
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -460,7 +530,7 @@ export default function PublishNoteSelector({
                                     )}
                                     <button 
                                         onClick={() => thumbnailInputRef.current?.click()}
-                                        className="text-[10px] px-3 py-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-all font-black uppercase tracking-wider"
+                                        className="text-[10px] px-3 py-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-all font-black uppercase tracking-wider cursor-pointer"
                                     >
                                         {localThumbnailUrl ? 'Cambiar' : 'Añadir imagen'}
                                     </button>
@@ -502,25 +572,45 @@ export default function PublishNoteSelector({
                                 </div>
                             </div>
 
-                            <div className="divide-y divide-white/5 bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
-                                <div className="w-full px-4 py-3 flex items-center gap-3 text-sm text-white focus-within:bg-white/[0.04] transition-all">
-                                    <ShoppingBag size={18} className="text-zinc-500 shrink-0" />
+                            {/* APARTADO DE ENLACE Y PRECIO (RESALTADO CUANDO SE ABRE DESDE "+ PUBLICAR CON LINK") */}
+                            <div
+                                ref={linkSectionRef}
+                                className={`divide-y divide-white/5 rounded-2xl overflow-hidden transition-all duration-500 ${
+                                    isLinkHighlighted
+                                        ? 'bg-accent/[0.12] border-2 border-accent ring-4 ring-accent/25 shadow-[0_0_30px_rgba(var(--accent-rgb),0.45)]'
+                                        : 'bg-white/[0.02] border border-white/5'
+                                }`}
+                            >
+                                {isLinkHighlighted && (
+                                    <div className="px-4 py-2 bg-accent/25 flex items-center justify-between">
+                                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                                            <Link2 size={13} className="text-white animate-pulse" />
+                                            <span>Apartado de Enlace — Pega aquí tu link</span>
+                                        </span>
+                                        <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/40 text-white/90 border border-white/15">
+                                            Destacado
+                                        </span>
+                                    </div>
+                                )}
+                                <div className={`w-full px-4 py-3.5 flex items-center gap-3 text-sm text-white focus-within:bg-white/[0.06] transition-all ${isLinkHighlighted ? 'bg-accent/[0.08]' : ''}`}>
+                                    <ShoppingBag size={18} className={isLinkHighlighted ? 'text-white shrink-0' : 'text-zinc-500 shrink-0'} style={isLinkHighlighted ? { color: accent } : undefined} />
                                     <input 
+                                        ref={buyLinkInputRef}
                                         type="url"
                                         placeholder="Enlace de compra o tienda (opcional)..."
                                         value={buyLink}
                                         onChange={(e) => setBuyLink(e.target.value)}
-                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none focus:ring-0 p-0 placeholder:text-zinc-600"
+                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none focus:ring-0 p-0 placeholder:text-zinc-400"
                                     />
                                 </div>
                                 <div className="w-full px-4 py-3 flex items-center gap-3 text-sm text-white focus-within:bg-white/[0.04] transition-all">
-                                    <DollarSign size={18} className="text-zinc-500 shrink-0" />
+                                    <DollarSign size={18} className={isLinkHighlighted ? 'text-white shrink-0' : 'text-zinc-500 shrink-0'} style={isLinkHighlighted ? { color: accent } : undefined} />
                                     <input 
                                         type="text"
                                         placeholder="Precio del producto (opcional, ej. $25.00)..."
                                         value={price}
                                         onChange={(e) => setPrice(e.target.value)}
-                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none focus:ring-0 p-0 placeholder:text-zinc-600"
+                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none focus:ring-0 p-0 placeholder:text-zinc-500"
                                     />
                                 </div>
                                 <div className="w-full px-4 py-3 flex items-center justify-between text-sm text-white">
