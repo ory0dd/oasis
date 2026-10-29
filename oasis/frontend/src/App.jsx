@@ -5456,18 +5456,26 @@ const ProfileView = ({
     const bentoValuableMemories = useMemo(() => {
         const items = [];
         (soulPieces || []).forEach(sp => {
-            if (items.length < 2) {
+            if (items.length < 3 && !items.some(i => i.id === (sp.id || sp.Id))) {
                 items.push({
                     id: sp.id || sp.Id,
                     title: sp.title || sp.Title || 'Fragmento íntimo',
                     subtitle: sp.category || 'guardado en libreta',
-                    icon: 'ticket'
+                    icon: items.length === 0 ? 'diamond' : items.length === 1 ? 'ticket' : 'star'
                 });
             }
         });
-        if (items.length < 2) {
-            items.push({ id: 'mem-1', title: 'Ticket Tren Nocturno (2025)', subtitle: 'guardado en libreta', icon: 'ticket' });
-            items.push({ id: 'mem-2', title: 'Piedra con esmalte espejo', subtitle: 'amuleto de mesa', icon: 'diamond' });
+        const fallbackMemories = [
+            { id: 'mem-1', title: 'Esencia', subtitle: 'guardado en libreta', icon: 'diamond' },
+            { id: 'mem-2', title: 'Memoria', subtitle: 'guardado en libreta', icon: 'ticket' },
+            { id: 'mem-3', title: 'Resonancia', subtitle: 'amuleto guardado', icon: 'star' }
+        ];
+        let fIdx = 0;
+        while (items.length < 3 && fIdx < fallbackMemories.length) {
+            if (!items.some(i => i.title.toLowerCase() === fallbackMemories[fIdx].title.toLowerCase())) {
+                items.push(fallbackMemories[fIdx]);
+            }
+            fIdx++;
         }
         return items;
     }, [soulPieces]);
@@ -5964,80 +5972,16 @@ const ProfileView = ({
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (DERECHA): LA FIRMA + RECUERDOS VALIOSOS ABAJO */}
+                        {/* FILA 2 (DERECHA): RECUERDOS VALIOSOS ARRIBA + PROCESO INTERNO ABAJO */}
                         {/* ======================================================== */}
-                        <div className="col-span-1 lg:col-span-6 order-3 flex flex-col gap-2">
-                            {/* LA FIRMA / NARRATIVA DE PROCESO ("ÚLTIMAMENTE ME SIENTO...") */}
-                            <div className="bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative transition-all group/quote">
+                        <div className="col-span-1 lg:col-span-6 order-3 flex flex-col justify-between gap-2">
+                            
+                            {/* RECUERDOS VALIOSOS // MEMORABILIA (AHORA ARRIBA CON 3 RECUERDOS) */}
+                            <div className="flex-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 relative">
                                 <div className="flex items-center justify-between pb-0.5">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
-                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                                            Proceso Interno
-                                        </span>
-                                    </div>
-                                    {isOwnProfile && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsEditingFirma(!isEditingFirma)}
-                                            className="text-[7px] sm:text-[7.5px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
-                                            title="Editar cómo te sientes últimamente"
-                                        >
-                                            <Pencil size={7} />
-                                            <span>{isEditingFirma ? 'Listo' : 'Editar'}</span>
-                                        </button>
-                                    )}
-                                </div>
-
-                                {isEditingFirma ? (
-                                    <div className="flex flex-col gap-1.5 my-1">
-                                        <textarea
-                                            value={customFirma || bentoSensoryQuote}
-                                            onChange={(e) => {
-                                                setCustomFirma(e.target.value);
-                                                localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, e.target.value);
-                                            }}
-                                            placeholder="últimamente me siento..."
-                                            rows={3}
-                                            className="w-full bg-black/60 border border-emerald-500/30 rounded-lg p-2 text-[9px] sm:text-[10px] text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 font-serif italic resize-none"
-                                        />
-                                        <div className="flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsEditingFirma(false);
-                                                    fetch(`${API_URL}/api/oasis/clinical-data?user=${effectiveUser}`, {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': effectiveUser },
-                                                        body: JSON.stringify({
-                                                            [`oasis_custom_firma_${effectiveUser}`]: customFirma || bentoSensoryQuote
-                                                        })
-                                                    }).catch(console.error);
-                                                }}
-                                                className="px-2 py-0.5 rounded bg-emerald-500 text-black text-[7.5px] font-mono font-bold cursor-pointer hover:bg-emerald-400 transition-colors"
-                                            >
-                                                Guardar
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-[9px] sm:text-[10.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3">
-                                        "{bentoSensoryQuote}"
-                                    </p>
-                                )}
-
-                                <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] font-mono text-zinc-500">
-                                    <span>bitácora íntima</span>
-                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
-                                </div>
-                            </div>
-
-                            {/* RECUERDOS VALIOSOS // MEMORABILIA (DIRECTAMENTE ABAJO DE LA FIRMA) */}
-                            <div className="flex-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 relative">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1">
                                         <Sparkles size={9} className="text-emerald-400" />
-                                        <h3 className="text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-white">
+                                        <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
                                             Recuerdos Valiosos
                                         </h3>
                                     </div>
@@ -6053,10 +5997,10 @@ const ProfileView = ({
                                             onClick={() => {
                                                 if (onOpenSimpleNotes) onOpenSimpleNotes();
                                             }}
-                                            className="flex items-center gap-1.5 p-1 sm:p-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs"
+                                            className="flex items-center gap-2 p-1.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs"
                                         >
-                                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
-                                                {memo.icon === 'diamond' ? <Aperture size={9} /> : <StickyNote size={9} />}
+                                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
+                                                {memo.icon === 'diamond' ? <Aperture size={9} /> : memo.icon === 'star' ? <Star size={9} /> : <StickyNote size={9} />}
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate leading-tight">
@@ -6070,63 +6014,35 @@ const ProfileView = ({
                                     ))}
                                 </div>
                             </div>
-                        </div>
 
-                        {/* ======================================================== */}
-                        {/* FILA 3: PUBLICACIONES RECIENTES & PROCESO CLÍNICO */}
-                        {/* ======================================================== */}
-                        <div className="col-span-2 lg:col-span-8 order-4 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col gap-1.5 sm:gap-2 relative">
-                            <div className="flex items-center justify-between pb-0.5">
-                                <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-                                    Publicaciones Recientes
-                                </h3>
-                                <span className="text-[7px] sm:text-[8px] font-mono text-emerald-400 uppercase tracking-widest">
-                                    {bentoRecentPhotos.length} Fotos
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                                {bentoRecentPhotos.map((item, idx) => (
-                                    <div
-                                        key={item.id || idx}
-                                        onClick={() => {
-                                            if (item.raw) setSelectedModalPost(item.raw);
-                                        }}
-                                        className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/rec cursor-pointer hover:border-white/20 transition-all shadow-md"
-                                    >
-                                        <img
-                                            src={formatUrl(item.image)}
-                                            alt="Publicación reciente"
-                                            className="w-full h-full object-cover group-hover/rec:scale-105 transition-transform duration-500"
-                                            onError={(e) => {
-                                                if (!e.target.dataset.failed) {
-                                                    e.target.dataset.failed = 'true';
-                                                    e.target.src = 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600';
-                                                }
-                                            }}
-                                        />
+                            {/* PROCESO INTERNO / LA FIRMA (GENERADO COMO FIRMA EXISTENCIAL) */}
+                            <div className="bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative transition-all group/quote">
+                                <div className="flex items-center justify-between pb-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                                            Proceso Interno
+                                        </span>
                                     </div>
-                                ))}
-                            </div>
+                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                        Firma
+                                    </span>
+                                </div>
 
-                            <div className="flex justify-center pt-0.5">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const el = document.getElementById('profile-feed-section');
-                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/[0.1] flex items-center justify-center text-zinc-300 hover:text-white transition-all cursor-pointer shadow-xs hover:scale-110 active:scale-95"
-                                    title="Ver todas las publicaciones y archivo"
-                                >
-                                    <ArrowDown size={10} />
-                                </button>
+                                <p className="text-[9px] sm:text-[10.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3 my-0.5">
+                                    "{bentoSensoryQuote}"
+                                </p>
+
+                                <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] font-mono text-zinc-500">
+                                    <span>bitácora íntima</span>
+                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
+                                </div>
                             </div>
                         </div>
 
                         {/* PROCESO CLÍNICO */}
                         {isOwnProfile && (
-                            <div className="col-span-2 lg:col-span-4 order-5 bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
+                            <div className="col-span-2 lg:col-span-12 order-4 bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <Heart size={12} className="text-purple-400 shrink-0" />
                                     <div className="flex flex-col min-w-0">
@@ -6143,7 +6059,7 @@ const ProfileView = ({
                                         setView('soul');
                                         if (typeof setSoulTab === 'function') setSoulTab('tests');
                                     }}
-                                    className="px-2 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 text-[7.5px] sm:text-[8px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
+                                    className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 text-[7.5px] sm:text-[8px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
                                 >
                                     {isConsentSigned ? 'Abrir' : 'Iniciar'}
                                 </button>
@@ -6382,23 +6298,23 @@ const ProfileView = ({
                 {/* 3. SECCIÓN DE FEED: MONOLITO & EDITORIAL (IMAGES 2, 3 & 5) */}
                 <div id="profile-feed-section" className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-4 z-10 relative pointer-events-auto">
                     
-                    {/* Barra de Navegación y Vistas: Monolito vs Editorial */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-6">
+                    {/* Barra de Navegación y Vistas: Publicaciones y Switcher de Modos sin texto */}
+                    <div className="flex items-center justify-between gap-3 pb-6">
                         
-                        {/* Pestañas: Campaña & Obras / Archivo / Destacados */}
-                        <div className="flex items-center gap-1.5 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
+                        {/* Pestañas: Publicaciones / Archivo / Destacados */}
+                        <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
                             <button
                                 type="button"
                                 onClick={() => setReleaseTab('campana')}
-                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'campana' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'campana' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
                             >
                                 <Sparkles size={11} className={releaseTab === 'campana' ? 'text-emerald-400' : ''} />
-                                <span>Campaña & Obras</span>
+                                <span>Publicaciones</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setReleaseTab('archivo')}
-                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'archivo' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'archivo' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
                             >
                                 <Bookmark size={11} />
                                 <span>Archivo</span>
@@ -6406,32 +6322,30 @@ const ProfileView = ({
                             <button
                                 type="button"
                                 onClick={() => setReleaseTab('destacados')}
-                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'destacados' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
+                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'destacados' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
                             >
                                 <Zap size={11} className={releaseTab === 'destacados' ? 'text-amber-400' : ''} />
                                 <span>Destacados</span>
                             </button>
                         </div>
 
-                        {/* Switcher de Vistas: Monolito vs Editorial */}
-                        <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
+                        {/* Switcher de Vistas: Solo iconos de Monolito y Editorial sin texto */}
+                        <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-xl backdrop-blur-md shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setProfileFeedView('monolito')}
-                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${profileFeedView === 'monolito' ? 'bg-[#18191d] text-white shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
-                                title="Vista Monolito (Cinemática completa vertical)"
+                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${profileFeedView === 'monolito' ? 'bg-[#18191d] text-emerald-400 shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
+                                title="Vista Monolito"
                             >
-                                <Maximize2 size={11} />
-                                <span>Monolito</span>
+                                <Maximize2 size={13} />
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setProfileFeedView('editorial')}
-                                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${profileFeedView === 'editorial' ? 'bg-[#18191d] text-white shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
-                                title="Vista Editorial (Mosaico curado)"
+                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${profileFeedView === 'editorial' ? 'bg-[#18191d] text-emerald-400 shadow-md border border-white/15' : 'text-zinc-400 hover:text-white'}`}
+                                title="Vista Editorial"
                             >
-                                <LayoutGrid size={11} />
-                                <span>Editorial</span>
+                                <LayoutGrid size={13} />
                             </button>
                         </div>
                     </div>
