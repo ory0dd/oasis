@@ -5570,7 +5570,7 @@ const ProfileView = ({
                         <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
                             
                             {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS EN EL MISMO ESPACIO */}
-                            <div className="w-[38%] sm:w-[35%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
+                            <div className="w-[40%] sm:w-[36%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
                                 
                                 {/* Fila 1: Avatar + @usuario + Botón Personalizar */}
                                 <div className="flex items-center gap-1.5 min-w-0">
@@ -5665,15 +5665,15 @@ const ProfileView = ({
                                 </p>
 
                                 {/* Fila 4: Archivo (en el lugar donde estaba el botón de editar) */}
-                                <div className="grid grid-cols-3 gap-1 pt-0.5">
+                                <div className="grid grid-cols-3 gap-0.5 sm:gap-1 pt-0.5">
                                     <div
                                         onClick={() => {
                                             if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
                                         }}
-                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs"
+                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs min-w-0"
                                         title="Comunidad (32 activos)"
                                     >
-                                        <Radio size={8} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
+                                        <Radio size={7.5} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
                                             32
                                         </span>
@@ -5685,10 +5685,10 @@ const ProfileView = ({
                                                 profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
                                             }
                                         }}
-                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs"
+                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs min-w-0"
                                         title="Podcast (#04)"
                                     >
-                                        <Mic size={8} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
+                                        <Mic size={7.5} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
                                             #04
                                         </span>
@@ -5700,10 +5700,10 @@ const ProfileView = ({
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="flex items-center justify-center gap-1 py-1 px-1 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs"
+                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs min-w-0"
                                         title="Fanzines y Libros"
                                     >
-                                        <Bookmark size={8} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
+                                        <Bookmark size={7.5} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
                                         <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
                                             zine
                                         </span>
@@ -5712,8 +5712,8 @@ const ProfileView = ({
                             </div>
 
                             {/* LADO DERECHO: 3 PIEZAS MÁS GRANDES + BOTÓN (+) SÚPER PEQUEÑO EN LA ESQUINA */}
-                            <div className="flex-1 flex flex-col justify-center min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-3 relative pr-1">
-                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 items-center w-full my-auto">
+                            <div className="flex-1 flex flex-col justify-center min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-3 relative pr-0.5">
+                                <div className="grid grid-cols-3 gap-1 sm:gap-2 items-center w-full my-auto pb-2">
                                     {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
                                         <div
                                             key={item.id || idx}
@@ -5743,21 +5743,21 @@ const ProfileView = ({
                                                     {item.price}
                                                 </span>
                                             </div>
-                                            <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
+                                            <span className="text-[7px] sm:text-[8px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
                                                 {item.title}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
 
-                                {/* Botón (+) súper pequeño en la esquina inferior */}
+                                {/* Botón (+) micro en la esquina bien abajo para que no estorbe */}
                                 <button
                                     type="button"
                                     onClick={() => setIsPiecesModalOpen(true)}
-                                    className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white/10 hover:bg-[#10b981] hover:text-black border border-white/20 text-zinc-400 hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90 z-10"
+                                    className="absolute -bottom-0.5 -right-0.5 sm:bottom-0 sm:right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-white/[0.08] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-400 hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90 z-20"
                                     title="Abrir catálogo con más piezas"
                                 >
-                                    <Plus size={8} strokeWidth={3} />
+                                    <Plus size={6} strokeWidth={3} />
                                 </button>
                             </div>
                         </div>
