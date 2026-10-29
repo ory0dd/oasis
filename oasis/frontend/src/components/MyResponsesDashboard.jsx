@@ -4064,6 +4064,32 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
     }, [selectedNode, tourActiveIndex, selectedQuestionIndex, mapViewTab, sortedTourNodes]);
 
+    const zoomToNode = useCallback((targetNode) => {
+        if (targetNode && mapContainerRef.current) {
+            const rect = mapContainerRef.current.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            if (width === 0 || height === 0) return;
+            const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
+            const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
+            const isMobile = window.innerWidth < 768;
+            let targetScale = isMobile ? 0.85 : 0.95;
+            targetScale = Math.min(Math.max(0.20, targetScale), 2.5);
+
+            // Centrar exactamente en el área visible (en PC el modal lateral ocupa ~420px a la derecha)
+            const visibleCenterX = isMobile ? (width / 2) : Math.max(width * 0.30, (width - 430) / 2);
+            const visibleCenterY = isMobile ? (height * 0.38) : (height / 2);
+
+            const tx = visibleCenterX - px * targetScale;
+            const ty = visibleCenterY - py * targetScale;
+
+            triggerProgrammaticTransition();
+            transformRef.current = { x: tx, y: ty, scale: targetScale };
+            setMapTransform({ x: tx, y: ty, scale: targetScale });
+            updateDOMTransform(tx, ty, targetScale);
+        }
+    }, [triggerProgrammaticTransition, updateDOMTransform]);
+
     const resetMapTransform = useCallback((requestedMode = null, overrideNodes = null) => {
         if (!mapContainerRef.current) return;
         const rect = mapContainerRef.current.getBoundingClientRect();
@@ -4205,31 +4231,7 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
     }, [focusedStageIndex, panToColumn, resetMapTransform, isMobileDevice]);
 
-    const zoomToNode = useCallback((targetNode) => {
-        if (targetNode && mapContainerRef.current) {
-            const rect = mapContainerRef.current.getBoundingClientRect();
-            const width = rect.width;
-            const height = rect.height;
-            if (width === 0 || height === 0) return;
-            const px = VIRTUAL_WIDTH * ((targetNode.x ?? 50) / 100);
-            const py = VIRTUAL_HEIGHT * ((targetNode.y ?? 50) / 100);
-            const isMobile = window.innerWidth < 768;
-            let targetScale = isMobile ? 0.85 : 0.95;
-            targetScale = Math.min(Math.max(0.20, targetScale), 2.5);
 
-            // Centrar exactamente en el área visible (en PC el modal lateral ocupa ~420px a la derecha)
-            const visibleCenterX = isMobile ? (width / 2) : Math.max(width * 0.30, (width - 430) / 2);
-            const visibleCenterY = isMobile ? (height * 0.38) : (height / 2);
-
-            const tx = visibleCenterX - px * targetScale;
-            const ty = visibleCenterY - py * targetScale;
-
-            triggerProgrammaticTransition();
-            transformRef.current = { x: tx, y: ty, scale: targetScale };
-            setMapTransform({ x: tx, y: ty, scale: targetScale });
-            updateDOMTransform(tx, ty, targetScale);
-        }
-    }, [triggerProgrammaticTransition, updateDOMTransform]);
 
     const hasAutoSelectedNode = useRef(false);
     useEffect(() => {
