@@ -4707,38 +4707,72 @@ const ProfileView = ({
     const profileAudioRef = useRef(null);
     const audioFileInputRef = useRef(null);
     const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
-    const [playlistTracks, setPlaylistTracks] = useState(() => {
+
+    const buildProfilePlaylist = useCallback((targetUser, overrideAudioUrl, overrideAudioTitle, rawPlaylistJson) => {
+        const cleanU = (targetUser || effectiveUser || '').replace('@', '');
+        const customUrl = overrideAudioUrl ||
+            publicProfileData?.ambientAudioUrl ||
+            publicProfileData?.AmbientAudioUrl ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${cleanU}`) : null) || '';
+        const customTitle = overrideAudioTitle ||
+            publicProfileData?.ambientAudioTitle ||
+            publicProfileData?.AmbientAudioTitle ||
+            (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${cleanU}`) : null) || '';
+
+        const hasRealProfileSong = Boolean(customUrl && !customUrl.includes('SoundHelix') && customUrl !== DEFAULT_AMBIENT_URL);
+        const formattedCustomUrl = hasRealProfileSong ? formatUrl(customUrl) : '';
+        const cleanCustomTitle = (customTitle && !customTitle.includes('Sincronía Profunda') && !customTitle.includes('Sincronia Profunda'))
+            ? customTitle
+            : ' Canción de Perfil';
+
+        let savedList = [];
         try {
-            const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_playlist_${effectiveUser}`) : null);
-            if (stored) {
-                const parsed = JSON.parse(stored);
+            const raw = rawPlaylistJson ||
+                (typeof window !== 'undefined'
+                    ? (localStorage.getItem(`oasis_playlist_${cleanU}`) || localStorage.getItem(`oasis_playlist_tracks_${cleanU}`))
+                    : null);
+            if (raw) {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
                 if (Array.isArray(parsed)) {
-                    const cleaned = parsed.filter(t => t && t.id !== 'def-2' && t.id !== 'def-3');
-                    if (cleaned.length > 0) return cleaned;
+                    savedList = parsed.filter(t => t && t.url && !String(t.id || '').startsWith('def-') && t.url !== DEFAULT_AMBIENT_URL);
                 }
             }
         } catch (e) {}
 
-        const initial = [];
-        const existingAudio = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null);
-        const existingTitle = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null);
+        if (hasRealProfileSong) {
+            const alreadyInList = savedList.some(t => formatUrl(t.url) === formattedCustomUrl || t.url === customUrl);
+            if (!alreadyInList) {
+                savedList = [
+                    {
+                        id: 'track-profile-main',
+                        title: cleanCustomTitle,
+                        url: formattedCustomUrl
+                    },
+                    ...savedList
+                ];
+            } else {
+                savedList = savedList.map(t =>
+                    (formatUrl(t.url) === formattedCustomUrl || t.url === customUrl) && cleanCustomTitle
+                        ? { ...t, title: t.title === 'respiración lenta [432 Hz]' ? cleanCustomTitle : (t.title || cleanCustomTitle), url: formattedCustomUrl }
+                        : { ...t, url: formatUrl(t.url) }
+                );
+            }
+        }
 
-        if (existingAudio && existingTitle) {
-            initial.push({
-                id: 'track-main-1',
-                title: existingTitle,
-                url: existingAudio
-            });
-        } else {
-            initial.push({
+        if (savedList.length > 0) {
+            return savedList;
+        }
+
+        return [
+            {
                 id: 'def-1',
                 title: 'respiración lenta [432 Hz]',
                 url: DEFAULT_AMBIENT_URL
-            });
-        }
+            }
+        ];
+    }, [effectiveUser, publicProfileData]);
 
-        return initial;
-    });
+    const [playlistTracks, setPlaylistTracks] = useState(() => buildProfilePlaylist(effectiveUser));
 
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
     const [isUploadingPlaylist, setIsUploadingPlaylist] = useState(false);
@@ -4909,6 +4943,27 @@ const ProfileView = ({
         return t;
     }, [customAudioTitle, publicProfileData, effectiveUser]);
 
+    // Sincronizar automáticamente la música del perfil dentro de la playlist del perfil y la cola global
+    useEffect(() => {
+        setPlaylistTracks(prev => {
+            const next = buildProfilePlaylist(effectiveUser, customAudioUrl, customAudioTitle);
+            const prevKey = JSON.stringify(prev.map(t => ({ title: t.title, url: t.url })));
+            const nextKey = JSON.stringify(next.map(t => ({ title: t.title, url: t.url })));
+            return prevKey === nextKey ? prev : next;
+        });
+    }, [effectiveUser, customAudioUrl, customAudioTitle, buildProfilePlaylist]);
+
+    useEffect(() => {
+        if (typeof setPlayQueue === 'function' && playlistTracks && playlistTracks.length > 0) {
+            setPlayQueue(playlistTracks.map(t => ({
+                id: t.id,
+                title: t.title,
+                artist: `@${effectiveUser || 'oasis'}`,
+                url: formatUrl(t.url)
+            })));
+        }
+    }, [playlistTracks, effectiveUser, setPlayQueue]);
+
     // Auto-reproducción suave para visitantes: intenta reproducir y se activa al primer tap/click si el navegador lo bloquea
     useEffect(() => {
         let hasInteracted = false;
@@ -4966,6 +5021,17 @@ const ProfileView = ({
                     localStorage.setItem(`oasis_ambient_audio_${effectiveUser}`, fullAudioUrl);
                     localStorage.setItem(`oasis_ambient_title_${effectiveUser}`, songTitle);
                 }
+                setPlaylistTracks(prev => {
+                    const nonDefaults = prev.filter(t => !String(t.id || '').startsWith('def-') && t.url !== DEFAULT_AMBIENT_URL);
+                    const updated = [
+                        { id: 'track-' + Date.now(), title: songTitle, url: fullAudioUrl },
+                        ...nonDefaults.filter(t => t.url !== fullAudioUrl)
+                    ];
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(updated));
+                    }
+                    return updated;
+                });
                 if (onSaveProfile) {
                     onSaveProfile({
                         ambientAudioUrl: fullAudioUrl,
@@ -5435,6 +5501,7 @@ const ProfileView = ({
 
                     const bAudio = serverData['oasis_ambient_audio_' + targetU];
                     const bAudioTitle = serverData['oasis_ambient_title_' + targetU];
+                    const bPlaylist = serverData['oasis_playlist_' + targetU];
                     if (bAudio) {
                         const formatted = formatUrl(bAudio);
                         setCustomAudioUrl(formatted);
@@ -5443,6 +5510,12 @@ const ProfileView = ({
                     if (bAudioTitle) {
                         setCustomAudioTitle(bAudioTitle);
                         localStorage.setItem('oasis_ambient_title_' + targetU, bAudioTitle);
+                    }
+                    if (bPlaylist) {
+                        localStorage.setItem('oasis_playlist_' + targetU, typeof bPlaylist === 'string' ? bPlaylist : JSON.stringify(bPlaylist));
+                    }
+                    if (bAudio || bAudioTitle || bPlaylist) {
+                        setPlaylistTracks(buildProfilePlaylist(targetU, bAudio ? formatUrl(bAudio) : undefined, bAudioTitle, bPlaylist));
                     }
                 }).catch(() => {});
 
@@ -6644,11 +6717,16 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         {/* Audio Engine y File Input ocultos */}
                         <audio
                             ref={profileAudioRef}
-                            src={ambientAudioUrl}
-                            loop
+                            src={playlistTracks[currentTrackIndex]?.url || ambientAudioUrl}
+                            loop={playlistTracks.length <= 1}
                             preload="auto"
                             onPlay={() => setIsProfileAudioPlaying(true)}
                             onPause={() => setIsProfileAudioPlaying(false)}
+                            onEnded={() => {
+                                if (playlistTracks.length > 1) {
+                                    handleNextTrack();
+                                }
+                            }}
                         />
                         <input
                             ref={audioFileInputRef}
@@ -7147,7 +7225,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
                                     <span className="text-[10px] sm:text-xs md:text-sm font-bold text-white font-sans truncate">
-                                        {playlistTracks[currentTrackIndex]?.title || bentoCentralPiece.title}
+                                        {playlistTracks[currentTrackIndex]?.title || ambientAudioTitle || bentoCentralPiece.title}
                                     </span>
                                 </div>
                                 <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 tracking-wider shrink-0 ml-1.5">
@@ -7155,8 +7233,8 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 </span>
                             </div>
 
-                            {/* Lista de Canciones Espaciosa sin textos cortados (Solo se muestra si hay más de 1 track) */}
-                            {playlistTracks.length > 1 && (
+                            {/* Lista de Canciones en Playlist (Incluye la música activa del perfil sin tracks falsos extra) */}
+                            {playlistTracks.length > 0 && (
                             <div className="flex flex-col gap-1 border-t border-white/[0.05] pt-1.5">
                                 {playlistTracks.map((track, idx) => {
                                     const isCurrent = currentTrackIndex === idx;
@@ -8305,21 +8383,40 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                     </div>
 
                                     <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto no-scrollbar pr-0.5">
-                                        {playlistTracks.map((tr, idx) => (
+                                        {playlistTracks.map((tr, idx) => {
+                                            const isCurrent = currentTrackIndex === idx;
+                                            const isThisPlaying = isCurrent && isProfileAudioPlaying;
+                                            return (
                                             <div
                                                 key={tr.id || idx}
-                                                className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] transition-all"
+                                                onClick={() => {
+                                                    if (isCurrent && profileAudioRef.current) {
+                                                        if (profileAudioRef.current.paused) {
+                                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                                        } else {
+                                                            profileAudioRef.current.pause();
+                                                            setIsProfileAudioPlaying(false);
+                                                        }
+                                                    } else {
+                                                        playTrackAtIndex(idx);
+                                                    }
+                                                }}
+                                                className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                                                    isCurrent
+                                                        ? 'bg-emerald-500/15 border-emerald-500/35 text-white'
+                                                        : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.06] text-zinc-200'
+                                                }`}
                                             >
                                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                                     <span className="text-[9px] font-mono font-bold text-emerald-400 w-5 shrink-0">
-                                                        0{idx + 1}
+                                                        {isThisPlaying ? '▶' : `0${idx + 1}`}
                                                     </span>
                                                     <span className="text-[11px] font-mono text-zinc-200 truncate flex-1">
                                                         {tr.title}
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-1 shrink-0 ml-2">
+                                                <div className="flex items-center gap-1 shrink-0 ml-2" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         type="button"
                                                         disabled={idx === 0}
@@ -8329,7 +8426,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                                 const temp = arr[idx - 1];
                                                                 arr[idx - 1] = arr[idx];
                                                                 arr[idx] = temp;
-                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(arr));
                                                                 return arr;
                                                             });
                                                         }}
@@ -8347,7 +8444,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                                 const temp = arr[idx + 1];
                                                                 arr[idx + 1] = arr[idx];
                                                                 arr[idx] = temp;
-                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(arr));
                                                                 return arr;
                                                             });
                                                         }}
@@ -8356,12 +8453,13 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     >
                                                         ▼
                                                     </button>
+                                                    {playlistTracks.length > 1 && (
                                                     <button
                                                         type="button"
                                                         onClick={() => {
                                                             setPlaylistTracks(prev => {
                                                                 const arr = prev.filter((_, i) => i !== idx);
-                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(arr));
                                                                 return arr;
                                                             });
                                                         }}
@@ -8370,9 +8468,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     >
                                                         <Trash2 size={12} />
                                                     </button>
+                                                    )}
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
