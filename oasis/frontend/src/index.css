@@ -408,3 +408,17 @@ html, body { touch-action: auto; overscroll-behavior-y: none; }
   }
 }
 
+
+
+/* High-performance Map Dragging GPU Mode */
+.is-dragging-map * {
+    pointer-events: none !important;
+    user-select: none !important;
+}
+.is-dragging-map svg line,
+.is-dragging-map svg path {
+    filter: none !important;
+}
+.is-dragging-map .interactive-map-node {
+    transition: none !important;
+}

@@ -3334,10 +3334,21 @@ ESTRUCTURA JSON OBLIGATORIA:
         }, 200);
     }, []);
 
+    const rafTransformId = useRef(null);
     const updateDOMTransform = useCallback((x, y, scale) => {
         if (transformContainerRef.current) {
-            transformContainerRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+            transformContainerRef.current.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${scale})`;
         }
+    }, []);
+
+    const scheduleDOMTransform = useCallback((x, y, scale) => {
+        if (rafTransformId.current) return;
+        rafTransformId.current = requestAnimationFrame(() => {
+            if (transformContainerRef.current) {
+                transformContainerRef.current.style.transform = `translate3d(${x}px, ${y}px, 0px) scale(${scale})`;
+            }
+            rafTransformId.current = null;
+        });
     }, []);
 
     useEffect(() => {
@@ -6582,7 +6593,10 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
     const handleMapMouseDown = (e) => {
         isDraggingMapRef.current = true;
-        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grabbing';
+        if (mapContainerRef.current) {
+            mapContainerRef.current.style.cursor = 'grabbing';
+            mapContainerRef.current.classList.add('is-dragging-map');
+        }
         lastPointerPos.current = { x: e.clientX, y: e.clientY };
         mapDragged.current = false;
     };
@@ -6668,12 +6682,19 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
         const current = transformRef.current;
         current.x += deltaX;
         current.y += deltaY;
-        updateDOMTransform(current.x, current.y, current.scale);
+        scheduleDOMTransform(current.x, current.y, current.scale);
     };
 
     const handleDragEnd = () => {
         isDraggingMapRef.current = false;
-        if (mapContainerRef.current) mapContainerRef.current.style.cursor = 'grab';
+        if (mapContainerRef.current) {
+            mapContainerRef.current.style.cursor = 'grab';
+            mapContainerRef.current.classList.remove('is-dragging-map');
+        }
+        if (rafTransformId.current) {
+            cancelAnimationFrame(rafTransformId.current);
+            rafTransformId.current = null;
+        }
         if (draggingNodeId && nodeDraggedRef.current) {
             setSelectedNode(null);
             setSelectedPatternId(null);
@@ -6741,6 +6762,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
     const handleMapTouchStart = (e) => {
         if (e.touches.length === 1) {
             isDraggingMapRef.current = true;
+            if (mapContainerRef.current) mapContainerRef.current.classList.add('is-dragging-map');
             const touch = e.touches[0];
             lastPointerPos.current = { x: touch.clientX, y: touch.clientY };
             mapDragged.current = false;
@@ -6795,7 +6817,7 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
                 const current = transformRef.current;
                 current.x += deltaX;
                 current.y += deltaY;
-                updateDOMTransform(current.x, current.y, current.scale);
+                scheduleDOMTransform(current.x, current.y, current.scale);
             }
         } else if (e.touches.length === 2) {
             const t1 = e.touches[0];
@@ -8359,7 +8381,7 @@ Devuelve estrictamente el JSON sin formato extra.
                                 <div
                                     ref={transformContainerRef}
                                     className={`absolute top-0 left-0 origin-top-left ${isInitialZoom ? 'transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]' : isProgrammaticTransition ? 'transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]' : 'transition-none duration-0'}`}
-                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate3d(${mapTransform.x}px, ${mapTransform.y}px, 0px) scale(${mapTransform.scale})`, willChange: isDraggingMap ? 'transform' : 'auto', contain: 'layout style', textRendering: 'optimizeSpeed' }}
+                                    style={{ width: `${VIRTUAL_WIDTH}px`, height: `${VIRTUAL_HEIGHT}px`, transform: `translate3d(${mapTransform.x}px, ${mapTransform.y}px, 0px) scale(${mapTransform.scale})`, willChange: 'transform', transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', contain: 'layout style', textRendering: 'optimizeSpeed' }}
                                 >
                                     {/* Case Formulation Column Architectural Guidelines & Watermark Headers */}
                                     <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">

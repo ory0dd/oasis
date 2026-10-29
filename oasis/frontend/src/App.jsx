@@ -35,6 +35,58 @@ import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
 import InformedConsentModal from './components/InformedConsentModal';
 
+export const CURATED_AVATARS = [
+    '/avatars/avatar_1.png',
+    '/avatars/avatar_2.png',
+    '/avatars/avatar_3.jpg',
+    '/avatars/avatar_4.jpg',
+    '/avatars/avatar_5.png',
+    '/avatars/avatar_6.png',
+    '/avatars/avatar_7.png',
+    '/avatars/avatar_8.png',
+    '/avatars/avatar_9.png',
+    '/avatars/avatar_10.png'
+];
+
+export const DEFAULT_COMMUNITY_TEMPLATES = [
+    {
+        id: 'template_paseo_lindo',
+        name: 'PASEO EN UN LUGAR LINDOO',
+        type: 'video',
+        value: 'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-a-field-of-wildflowers-41727-large.mp4',
+        isTiled: false,
+        creator: 'ory11'
+    },
+    {
+        id: 'template_nebula_violeta',
+        name: 'NEBULA VIOLETA & RUIDO',
+        type: 'image',
+        value: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2568&auto=format&fit=crop',
+        isTiled: false,
+        creator: 'somnispiria'
+    },
+    {
+        id: 'template_aurora_boreal',
+        name: 'AURORA SILENCIOSA',
+        type: 'image',
+        value: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=2670&auto=format&fit=crop',
+        isTiled: false,
+        creator: 'jss93'
+    }
+];
+
+export const getDefaultAvatar = (username) => {
+    if (!username) return CURATED_AVATARS[0];
+    let hash = 0;
+    const str = String(username).toLowerCase().replace('@', '').trim();
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const idx = Math.abs(hash) % CURATED_AVATARS.length;
+    return CURATED_AVATARS[idx];
+};
+
 // ErrorBoundary: Prevents black screen crashes by catching render errors
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -1212,7 +1264,8 @@ const FeedItem = ({
 
     const postAuthor = (f.username || (f.metadata?.feedUsername ? f.metadata.feedUsername.replace('@', '') : null) || 'anon').replace('@', '');
     const authorProfile = publicUsers?.find(u => (u.Username || u.username)?.toLowerCase() === postAuthor?.toLowerCase());
-    const authorAvatar = authorProfile?.Avatar || ((postAuthor?.toLowerCase() === (user || '').toLowerCase() || f.metadata?.feedUsername?.toLowerCase() === ('@' + user)?.toLowerCase()) && currentUserAvatar ? currentUserAvatar : f.metadata?.userAvatar) || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor)}`;
+    const rawAv = authorProfile?.Avatar || ((postAuthor?.toLowerCase() === (user || '').toLowerCase() || f.metadata?.feedUsername?.toLowerCase() === ('@' + user)?.toLowerCase()) && currentUserAvatar ? currentUserAvatar : f.metadata?.userAvatar);
+    const authorAvatar = (rawAv && !rawAv.includes('dicebear') && !rawAv.includes('ba90867f')) ? rawAv : getDefaultAvatar(postAuthor);
 
     const isOwner = postAuthor.toLowerCase() === (user || '').toLowerCase() || (blocks && blocks.some(b => b.id === f.id));
 
@@ -1445,18 +1498,26 @@ const FeedItem = ({
         if (onCloseDetail) onCloseDetail();
     };
 
+    const [toastMessage, setToastMessage] = React.useState(null);
+    const commentInputRef = React.useRef(null);
+
     const handleDirectMessage = (e) => {
         if (e) e.stopPropagation();
-        if (onOpenDirectMessage && postAuthor) {
-            onOpenDirectMessage(postAuthor, `¡Hola @${postAuthor}! Te escribo por tu publicación: "${f.caption || f.metadata?.feedCaption || 'Publicación'}"`);
+        if (onOpenDetail) {
+            onOpenDetail(f);
+        } else if (commentInputRef.current) {
+            commentInputRef.current.focus();
         }
     };
 
     const handleShare = (e) => {
         if (e) e.stopPropagation();
-        const url = window.location.href;
-        navigator.clipboard?.writeText(url);
-        alert('Enlace copiado al portapapeles');
+        const postUrl = `${window.location.origin}/?p=${f.id}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(postUrl);
+        }
+        setToastMessage('Enlace de la publicación copiado');
+        setTimeout(() => setToastMessage(null), 2500);
     };
 
     // Slide renderer
@@ -1468,7 +1529,7 @@ const FeedItem = ({
                         onError={(e) => {
                             if (!e.target.dataset.failed) {
                                 e.target.dataset.failed = 'true';
-                                e.target.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor || 'oasis')}`;
+                                e.target.src = getDefaultAvatar(postAuthor);
                             }
                         }}
                         src={slide.url} 
@@ -1841,7 +1902,7 @@ const FeedItem = ({
                                 onError={(e) => {
                                     if (!e.target.dataset.failed) {
                                         e.target.dataset.failed = 'true';
-                                        e.target.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(postAuthor || 'oasis')}`;
+                                        e.target.src = getDefaultAvatar(postAuthor);
                                     }
                                 }}
                                 src={authorAvatar} 
@@ -2137,7 +2198,7 @@ const SimpleNarrativeRenderer = React.memo(({ content, isChild = false, cleanMin
                                 onError={(e) => {
                                     if (!e.target.dataset.failed) {
                                         e.target.dataset.failed = 'true';
-                                        e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=oasis';
+                                        e.target.src = getDefaultAvatar("oasis");
                                     }
                                 }} 
                                 src={url} 
@@ -2336,7 +2397,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
                                     <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }} src={formatUrl(mb.content)} className="w-full h-full object-cover pointer-events-none" />
                                 ) : (
@@ -4436,6 +4497,7 @@ const PHENOM_QUESTIONS = [
 
 const ProfileView = ({
     user, targetUser, isVisitor = false, onCloseVisitor, publicProfileData, publicUsers = [],
+    isNavbarHidden = false, setIsNavbarHidden,
     hasAcceptedConsent = false, setSoulTab,
     soulPieces, blocks, setBlocks, syncBlocks, accent, isEditingProfile, setIsEditingProfile,
     deleteBlock, deleteBlocks,
@@ -4530,6 +4592,8 @@ const ProfileView = ({
     const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
     const [isUploadingPlaylist, setIsUploadingPlaylist] = useState(false);
     const multiAudioInputRef = useRef(null);
+    const playlistCoverInputRef = useRef(null);
+    const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
     const playTrackAtIndex = (index) => {
         if (!playlistTracks || index < 0 || index >= playlistTracks.length) return;
@@ -4827,6 +4891,69 @@ const ProfileView = ({
     const [releaseTab, setReleaseTab] = useState('campana'); // 'campana' | 'archivo' | 'destacados'
     const [profileFeedView, setProfileFeedView] = useState('monolito'); // 'monolito' | 'editorial'
     const [selectedModalPost, setSelectedModalPost] = useState(null);
+    const [modalCommentText, setModalCommentText] = useState('');
+    const [modalPostComments, setModalPostComments] = useState({});
+    const [modalToast, setModalToast] = useState(null);
+    const modalCommentInputRef = useRef(null);
+
+    // Mini-ventanas interactivas para los 3 botones icónicos del perfil
+    const [isCommunityWidgetOpen, setIsCommunityWidgetOpen] = useState(false);
+    const [isPodcastWidgetOpen, setIsPodcastWidgetOpen] = useState(false);
+    const [isPdfLibraryWidgetOpen, setIsPdfLibraryWidgetOpen] = useState(false);
+    const [uploadedPdfs, setUploadedPdfs] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_pdfs_${effectiveUser}`);
+            return saved ? JSON.parse(saved) : [
+                { id: 'pdf-1', title: 'Manifiesto Ruido Interior // Zine #01', date: '2026', size: '1.2 MB' },
+                { id: 'pdf-2', title: 'Topología del Alma y Resonancia', date: '2026', size: '2.4 MB' }
+            ];
+        } catch { return []; }
+    });
+    const pdfFileInputRef = useRef(null);
+
+    const handlePdfUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const newPdf = {
+            id: 'pdf-' + Date.now(),
+            title: file.name.replace(/\.pdf$/i, ''),
+            date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+            size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        };
+        const updated = [newPdf, ...uploadedPdfs];
+        setUploadedPdfs(updated);
+        try { localStorage.setItem(`oasis_pdfs_${effectiveUser}`, JSON.stringify(updated)); } catch(e) {}
+    };
+
+    const handleAddModalComment = (e) => {
+        if (e) e.preventDefault();
+        if (!modalCommentText.trim() || !selectedModalPost) return;
+        const postId = selectedModalPost.id;
+        const newComment = {
+            id: 'c-' + Date.now(),
+            username: user || 'explorador',
+            avatar: avatar,
+            text: modalCommentText.trim(),
+            timestamp: new Date().toISOString()
+        };
+        setModalPostComments(prev => {
+            const existing = prev[postId] || [];
+            const next = [...existing, newComment];
+            try { localStorage.setItem(`oasis_comments_${postId}`, JSON.stringify(next)); } catch(e) {}
+            return { ...prev, [postId]: next };
+        });
+        setModalCommentText('');
+    };
+
+    const handleShareModalPost = () => {
+        if (!selectedModalPost) return;
+        const postUrl = `${window.location.origin}/?p=${selectedModalPost.id}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(postUrl);
+        }
+        setModalToast('Enlace copiado al portapapeles');
+        setTimeout(() => setModalToast(null), 2500);
+    };
 
     const [copiedLink, setCopiedLink] = useState(false);
     const handleShareProfile = (e) => {
@@ -4862,18 +4989,20 @@ const ProfileView = ({
             const stored = localStorage.getItem('oasis_avatar_' + (user || ''));
             if (stored && !stored.includes('ba90867f') && !stored.includes('dicebear')) return stored;
             if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
-            return avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${effectiveUser}`;
+            return getDefaultAvatar(effectiveUser);
         }
-        if (publicProfileData?.avatar || publicProfileData?.Avatar) return publicProfileData.avatar || publicProfileData.Avatar;
+        const pubAv = publicProfileData?.avatar || publicProfileData?.Avatar;
+        if (pubAv && !pubAv.includes('dicebear') && !pubAv.includes('ba90867f')) return pubAv;
         if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
         const postWithAv = (feed || []).find(p => {
             if (!p) return false;
             const u1 = (p.username || '').replace('@', '').toLowerCase();
             const u2 = (p.metadata?.feedUsername || '').replace('@', '').toLowerCase();
-            return (u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase()) && p.metadata?.userAvatar;
+            const av = p.metadata?.userAvatar;
+            return (u1 === effectiveUser.toLowerCase() || u2 === effectiveUser.toLowerCase()) && av && !av.includes('dicebear') && !av.includes('ba90867f');
         });
-        if (postWithAv) return postWithAv.metadata.userAvatar;
-        return `https://api.dicebear.com/7.x/pixel-art/svg?seed=${effectiveUser}`;
+        if (postWithAv?.metadata?.userAvatar) return postWithAv.metadata.userAvatar;
+        return getDefaultAvatar(effectiveUser);
     }, [isOwnProfile, avatar, publicProfileData, feed, effectiveUser, isOry, user]);
 
     const targetUserPosts = useMemo(() => {
@@ -5432,7 +5561,18 @@ const ProfileView = ({
     const bentoSensoryQuote = useMemo(() => {
         if (customFirma && customFirma.trim() !== '') return customFirma;
 
-        const defaultProcess = "últimamente me siento habitando un ritmo más pausado, dejando que las ideas respiren y encontrando claridad en las pequeñas pausas del día...";
+        const candidateQuotes = [
+            "últimamente me siento habitando un ritmo más pausado, dejando que las ideas respiren y encontrando claridad en las pequeñas pausas del día...",
+            "últimamente me doy cuenta de que no necesito tener todas las respuestas ahora, solo aprender a quedarme en silencio un rato...",
+            "últimamente siento el peso de querer resolverlo todo a la vez, pero voy descubriendo que avanzar despacio también cuenta...",
+            "últimamente me permito dudar sin juzgarme tanto, buscando un lugar interno donde no haya prisa por encajar...",
+            "últimamente noto cómo el cuerpo me pide calma, aprendiendo a escuchar el cansancio antes de que se vuelva ruido...",
+            "últimamente encuentro refugio en lo simple, dejando de pelear con lo que no puedo controlar y cuidando mi espacio...",
+            "últimamente estoy aprendiendo a convivir con la incertidumbre, sin exigirle a mi mente certezas que aún no existen...",
+            "últimamente me siento reconectando con lo que de verdad me importa, soltando expectativas ajenas paso a paso...",
+            "últimamente procuro que mis pensamientos no corran más rápido que mi respiración, dándome tiempo para sentir...",
+            "últimamente comprendo que cuidar mi paz no es un lujo, sino el único suelo firme sobre el que puedo crear..."
+        ];
 
         try {
             let resonanceData = null;
@@ -5446,11 +5586,18 @@ const ProfileView = ({
                 }
             }
 
-            if (resonanceData?.proceso) return resonanceData.proceso;
-            if (resonanceData?.habitar && resonanceData.habitar.toLowerCase().includes('últimamente')) return resonanceData.habitar;
+            if (resonanceData?.proceso && resonanceData.proceso.trim() !== '') return resonanceData.proceso;
         } catch(e) {}
 
-        return defaultProcess;
+        // Hash determinista único por usuario para que cada usuario tenga una reflexión diferente y personalizada
+        let hash = 0;
+        const seedStr = (effectiveUser || 'ruido').toLowerCase();
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+            hash |= 0;
+        }
+        const quoteIndex = Math.abs(hash) % candidateQuotes.length;
+        return candidateQuotes[quoteIndex];
     }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser]);
 
     const bentoValuableMemories = useMemo(() => {
@@ -5484,17 +5631,30 @@ const ProfileView = ({
         ? `${playerTracks[currentTrack]?.artist || 'oasis'} — ${playerTracks[currentTrack]?.title}`
         : 'brian eno — an ending (ascent)';
 
+    const lastProfileScrollRef = useRef(0);
+    const handleProfileScroll = useCallback((e) => {
+        const current = e.target.scrollTop;
+        const diff = current - lastProfileScrollRef.current;
+        if (Math.abs(diff) < 6) return;
+        if (diff > 8 && current > 60) {
+            if (setIsNavbarHidden) setIsNavbarHidden(true);
+        } else if (diff < -8 || current <= 30) {
+            if (setIsNavbarHidden) setIsNavbarHidden(false);
+        }
+        lastProfileScrollRef.current = current;
+    }, [setIsNavbarHidden]);
+
     return (
         <div
-            className={`fixed z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none ${
-                hasSession
+            className={`fixed z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none transition-all duration-300 ${
+                (hasSession && !isNavbarHidden)
                     ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
                     : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
             }`}
             onClick={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
         >
-            <div id="profile-scroll-container" ref={containerRef} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-24 sm:pb-36" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div id="profile-scroll-container" ref={containerRef} onScroll={handleProfileScroll} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-24 sm:pb-36" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* AMBIENTE LUMINOSO Y COLORIDO DE FONDO */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none bg-[#070709]">
                     <div
@@ -5635,7 +5795,7 @@ const ProfileView = ({
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
                                                             e.target.dataset.failed = 'true';
-                                                            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(effectiveUser || 'oasis');
+                                                            e.target.src = getDefaultAvatar(effectiveUser);
                                                         }
                                                     }}
                                                     src={formatUrl(displayAvatar)}
@@ -5696,8 +5856,8 @@ const ProfileView = ({
                                     )}
                                 </div>
 
-                                {/* Fila 2: Proceso Clínico (Acceso directo para el dueño; indicador privado para visitantes) */}
-                                {isOwnProfile ? (
+                                {/* Fila 2: Proceso Clínico (Solo existe para el dueño de la cuenta; en visitantes desaparece por completo) */}
+                                {isOwnProfile && (
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -5713,77 +5873,41 @@ const ProfileView = ({
                                         </div>
                                         <ChevronRight size={7} className="md:w-3 md:h-3 text-purple-400/70 shrink-0 ml-0.5 group-hover/proc:translate-x-0.5 transition-transform" />
                                     </button>
-                                ) : (
-                                    <div
-                                        className="w-full flex items-center justify-between px-1.5 md:px-2.5 py-0.5 md:py-1.5 rounded-md md:rounded-lg bg-white/[0.03] border border-white/[0.08] text-[7px] sm:text-[8px] md:text-[9.5px] lg:text-[10px] font-mono text-zinc-400 select-none shadow-xs"
-                                        title="Expediente confidencial y privado"
-                                    >
-                                        <div className="flex items-center gap-1 min-w-0">
-                                            <Heart size={8} className="text-zinc-500 shrink-0 md:w-2.5 md:h-2.5" />
-                                            <span className="truncate text-zinc-400 font-semibold tracking-wide">proceso clínico</span>
-                                        </div>
-                                        <span className="text-[6.5px] md:text-[8px] font-mono text-zinc-600 uppercase tracking-widest shrink-0 ml-1">privado</span>
-                                    </div>
                                 )}
 
                                 {/* Fila 3: Bio */}
-                                <p className="text-[7px] sm:text-[8px] md:text-[10px] lg:text-[11px] leading-tight md:leading-relaxed text-zinc-300 font-sans line-clamp-1 md:line-clamp-2">
+                                <p className="text-[7.5px] sm:text-[8.5px] md:text-[10.5px] lg:text-[11.5px] leading-tight md:leading-relaxed text-zinc-300 font-sans line-clamp-1 md:line-clamp-2">
                                     {bio || 'ruido extraviado'}
                                 </p>
 
-                                {/* Fila 4: Archivo (en el lugar donde estaba el botón de editar) */}
-                                <div className="grid grid-cols-3 gap-0.5 sm:gap-1 md:gap-2 pt-0.5 md:pt-1">
-                                    <div
-                                        onClick={() => {
-                                            if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
-                                        }}
-                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs min-w-0"
-                                        title="Comunidad (32 activos)"
+                                {/* Fila 4: 3 Botones Icónicos Grandes (Comunidad, Podcast, Archivo PDFs) sin texto para máxima elegancia */}
+                                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 md:gap-2 pt-0.5 md:pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCommunityWidgetOpen(prev => !prev)}
+                                        className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/35 transition-all flex items-center justify-center text-emerald-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/c"
+                                        title="Comunidad y almas en sintonía"
                                     >
-                                        <Radio size={7.5} className="md:w-3.5 md:h-3.5 text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
-                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-zinc-400 group-hover/c:text-zinc-200">
-                                            Comunidad
-                                        </span>
-                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
-                                            32
-                                        </span>
-                                    </div>
+                                        <Radio size={14} className="md:w-4 md:h-4 group-hover/c:scale-110 transition-transform" />
+                                    </button>
 
-                                    <div
-                                        onClick={() => {
-                                            if (profileAudioRef.current) {
-                                                profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
-                                            }
-                                        }}
-                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs min-w-0"
-                                        title="Podcast (#04)"
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPodcastWidgetOpen(prev => !prev)}
+                                        className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-purple-500/15 border border-white/[0.08] hover:border-purple-500/35 transition-all flex items-center justify-center text-purple-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/p"
+                                        title="Podcast y registros sonoros"
                                     >
-                                        <Mic size={7.5} className="md:w-3.5 md:h-3.5 text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
-                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-purple-400/80 group-hover/p:text-purple-300">
-                                            Podcast
-                                        </span>
-                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
-                                            #04
-                                        </span>
-                                    </div>
+                                        <Mic size={14} className="md:w-4 md:h-4 group-hover/p:scale-110 transition-transform" />
+                                    </button>
 
-                                    <div
-                                        onClick={() => {
-                                            setProfileFeedView('editorial');
-                                            const el = document.getElementById('profile-feed-section');
-                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
-                                        }}
-                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs min-w-0"
-                                        title="Fanzines y Libros"
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPdfLibraryWidgetOpen(prev => !prev)}
+                                        className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/35 transition-all flex items-center justify-center text-amber-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/f"
+                                        title="Archivo, fanzines y subir PDFs"
                                     >
-                                        <Bookmark size={7.5} className="md:w-3.5 md:h-3.5 text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
-                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-amber-400/80 group-hover/l:text-amber-300">
-                                            Libros
-                                        </span>
-                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
-                                            zine
-                                        </span>
-                                    </div>
+                                        <Bookmark size={14} className="md:w-4 md:h-4 group-hover/f:scale-110 transition-transform" />
+                                    </button>
                                 </div>
                             </div>
 
@@ -5813,9 +5937,71 @@ const ProfileView = ({
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (IZQUIERDA): EL CUADRO ORIGINAL + PLAYLIST EN PEQUEÑO ABAJO */}
+                        {/* FILA 2 (EN MEDIO): PIEZAS EN VENTA (ANCHO COMPLETO, GRANDES Y VISIBLES) */}
                         {/* ======================================================== */}
-                        <div className="col-span-1 lg:col-span-6 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 relative overflow-hidden">
+                        <div className="col-span-2 lg:col-span-12 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
+                            <div className="flex items-center justify-between pb-0.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Sparkles size={11} className="text-emerald-400 shrink-0" />
+                                    <span className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-200">
+                                        Piezas
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPiecesModalOpen(true)}
+                                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-[#10b981] hover:text-black border border-white/10 text-zinc-400 hover:text-black text-[7px] sm:text-[8px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                                    title="Abrir catálogo completo"
+                                >
+                                    <span>Catálogo</span>
+                                    <Plus size={8} strokeWidth={3} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 items-center w-full my-auto">
+                                {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
+                                    <div
+                                        key={item.id || idx}
+                                        onClick={() => {
+                                            if (item.buyLink) {
+                                                window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                            } else if (item.raw) {
+                                                setSelectedModalPost(item.raw);
+                                            }
+                                        }}
+                                        className="group/item flex flex-col cursor-pointer"
+                                        title={item.title}
+                                    >
+                                        <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                            <img
+                                                src={formatUrl(item.image)}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                                                onError={(e) => {
+                                                    if (!e.target.dataset.failed) {
+                                                        e.target.dataset.failed = 'true';
+                                                        e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[8.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                {item.price}
+                                            </span>
+                                        </div>
+                                        <span className="text-[7.5px] sm:text-[9.5px] md:text-xs font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
+                                            {item.title}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ======================================================== */}
+                        {/* FILA 3 (ABAJO): SONIDOS (PLAYLIST GRANDE) + RECUERDOS VALIOSOS (SOLOS Y EQUILIBRADOS) */}
+                        {/* ======================================================== */}
+                        
+                        {/* LADO IZQUIERDO: SONIDOS / PLAYLIST ESPACIOSA Y SIN TEXTOS MOCHOS */}
+                        <div className="col-span-1 lg:col-span-6 order-3 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
                             
                             {/* Input oculto para subir múltiples archivos MP3 */}
                             <input
@@ -5857,59 +6043,53 @@ const ProfileView = ({
                                 <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
                                 
                                 {/* Badge Superior Derecho */}
-                                <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-200 shadow-md">
+                                <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[7px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
                                     {playlistTracks.length > 1 ? `${playlistTracks.length} tracks` : 'loop continuo'}
                                 </div>
 
-                                {/* Botón discreto para Subir MP3 */}
+                                {/* Botón discreto para Subir MP3 / Gestor de Playlist */}
                                 {isOwnProfile && (
                                     <button
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            multiAudioInputRef.current?.click();
+                                            setIsPlaylistModalOpen(true);
                                         }}
-                                        disabled={isUploadingPlaylist}
-                                        className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 hover:bg-[#10b981] hover:text-black backdrop-blur-md border border-white/20 text-zinc-300 text-[6.5px] sm:text-[7.5px] font-mono font-bold transition-all cursor-pointer shadow-md active:scale-95 z-10"
-                                        title="Subir una o varias canciones en formato MP3"
+                                        className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 hover:bg-[#10b981] hover:text-black backdrop-blur-md border border-white/20 text-zinc-200 text-[8px] sm:text-[9px] font-mono font-bold transition-all cursor-pointer shadow-lg active:scale-95 z-10"
+                                        title="Gestionar lista de reproducción, portada y subir tracks"
                                     >
-                                        {isUploadingPlaylist ? (
-                                            <>
-                                                <Loader2 size={7} className="animate-spin text-emerald-400" />
-                                                <span>Subiendo...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Upload size={7} />
-                                                <span>+ Subir MP3</span>
-                                            </>
-                                        )}
+                                        <UploadCloud size={10} className="sm:w-3.5 sm:h-3.5" />
+                                        <span>+ Subir MP3</span>
                                     </button>
                                 )}
 
-                                {/* Botón Central Play / Pause con Glow Esmeralda */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
-                                        {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
+                                {/* Botón Play / Pause Grande en el Centro */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                        {isProfileAudioPlaying ? (
+                                            <Pause size={16} className="sm:w-6 sm:h-6 fill-emerald-400" />
+                                        ) : (
+                                            <Play size={16} className="sm:w-6 sm:h-6 fill-emerald-400 ml-0.5" />
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Título de la canción en reproducción */}
                             <div className="flex items-center justify-between px-0.5 pt-0.5">
-                                <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
-                                    <span className="text-[9.5px] sm:text-xs font-bold text-white font-sans truncate">
+                                    <span className="text-[10px] sm:text-xs md:text-sm font-bold text-white font-sans truncate">
                                         {playlistTracks[currentTrackIndex]?.title || bentoCentralPiece.title}
                                     </span>
                                 </div>
-                                <span className="text-[7.5px] sm:text-[8.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
+                                <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 tracking-wider shrink-0 ml-1.5">
                                     {bentoCentralPiece.tag || '[432 Hz]'}
                                 </span>
                             </div>
 
-                            {/* Canciones en pequeño abajo */}
-                            <div className="flex flex-col gap-0.5 max-h-[60px] sm:max-h-[75px] overflow-y-auto no-scrollbar border-t border-white/[0.05] pt-1">
+                            {/* Lista de Canciones Espaciosa sin textos cortados */}
+                            <div className="flex flex-col gap-1 border-t border-white/[0.05] pt-1.5">
                                 {playlistTracks.map((track, idx) => {
                                     const isCurrent = currentTrackIndex === idx;
                                     const isThisPlaying = isCurrent && isProfileAudioPlaying;
@@ -5930,29 +6110,29 @@ const ProfileView = ({
                                                     playTrackAtIndex(idx);
                                                 }
                                             }}
-                                            className={`group/track flex items-center justify-between px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200'}`}
+                                            className={`group/track flex items-center justify-between px-2 py-1 rounded-lg transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20' : 'hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200'}`}
                                         >
-                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                <span className={`text-[6.5px] sm:text-[7px] font-mono shrink-0 ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                <span className={`text-[7px] sm:text-[8px] font-mono shrink-0 ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
                                                     {isThisPlaying ? '▶' : `0${idx + 1}`}
                                                 </span>
-                                                <span className="text-[7px] sm:text-[8px] font-mono truncate max-w-[150px] sm:max-w-[210px]">
+                                                <span className="text-[7.5px] sm:text-[9px] font-mono truncate flex-1">
                                                     {track.title}
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <span className={`text-[6px] sm:text-[6.5px] font-mono ${isCurrent ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                                            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                                                <span className={`text-[6.5px] sm:text-[7.5px] font-mono px-1 py-0.2 rounded ${isCurrent ? 'text-emerald-400 bg-emerald-500/20 font-bold' : 'text-zinc-600 bg-white/[0.02]'}`}>
                                                     {isThisPlaying ? 'ON' : 'MP3'}
                                                 </span>
                                                 {isOwnProfile && playlistTracks.length > 1 && (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => handleRemoveTrack(track.id, e)}
-                                                        className="p-0.5 opacity-0 group-hover/track:opacity-100 hover:text-red-400 text-zinc-500 transition-opacity cursor-pointer"
+                                                        className="p-0.5 opacity-0 group-hover/track:opacity-100 hover:text-red-400 text-zinc-500 transition-opacity cursor-pointer ml-0.5"
                                                         title="Eliminar de playlist"
                                                     >
-                                                        <X size={7} />
+                                                        <X size={8} />
                                                     </button>
                                                 )}
                                             </div>
@@ -5962,112 +6142,44 @@ const ProfileView = ({
                             </div>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* FILA 2 (DERECHA): RECUERDOS VALIOSOS ARRIBA + PROCESO INTERNO ABAJO */}
-                        {/* ======================================================== */}
-                        <div className="col-span-1 lg:col-span-6 order-3 flex flex-col justify-between gap-2">
-                            
-                            {/* RECUERDOS VALIOSOS // MEMORABILIA (AHORA ARRIBA CON 3 RECUERDOS) */}
-                            <div className="flex-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 relative">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <Sparkles size={9} className="text-emerald-400" />
-                                        <h3 className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-white">
-                                            Recuerdos Valiosos
-                                        </h3>
-                                    </div>
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
-                                        Memorabilia
-                                    </span>
+                        {/* LADO DERECHO: RECUERDOS VALIOSOS (LLENA TODA LA TARJETA, ELEGANTE Y COMPLETO) */}
+                        <div className="col-span-1 lg:col-span-6 order-4 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative">
+                            <div className="flex items-center justify-between pb-0.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Sparkles size={10} className="text-emerald-400" />
+                                    <h3 className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold uppercase tracking-wider text-white">
+                                        Recuerdos Valiosos
+                                    </h3>
                                 </div>
-
-                                <div className="flex flex-col gap-1 my-auto">
-                                    {bentoValuableMemories.map((memo, idx) => (
-                                        <div
-                                            key={memo.id || idx}
-                                            onClick={() => {
-                                                if (onOpenSimpleNotes) onOpenSimpleNotes();
-                                            }}
-                                            className="flex items-center gap-2 p-1.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs"
-                                        >
-                                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
-                                                {memo.icon === 'diamond' ? <Aperture size={9} /> : memo.icon === 'star' ? <Star size={9} /> : <StickyNote size={9} />}
-                                            </div>
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate leading-tight">
-                                                    {memo.title}
-                                                </span>
-                                                <span className="text-[6px] sm:text-[7px] font-mono text-zinc-500 truncate leading-tight">
-                                                    {memo.subtitle}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <span className="text-[7px] sm:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                    Memorabilia
+                                </span>
                             </div>
 
-                            {/* PIEZAS / TIENDA (AHORA ABAJO CON SUS 3 PRODUCTOS + BOTÓN (+) MICRO) */}
-                            <div className="bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative overflow-hidden group/pieces">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <Sparkles size={10} className="text-emerald-400 shrink-0" />
-                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-200">
-                                            Piezas
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsPiecesModalOpen(true)}
-                                        className="w-3.5 h-3.5 rounded-full bg-white/[0.08] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-400 transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
-                                        title="Abrir catálogo completo"
+                            <div className="flex flex-col justify-between gap-1.5 sm:gap-2.5 my-auto h-full py-1">
+                                {bentoValuableMemories.map((memo, idx) => (
+                                    <div
+                                        key={memo.id || idx}
+                                        onClick={() => {
+                                            if (onOpenSimpleNotes) onOpenSimpleNotes();
+                                        }}
+                                        className="flex items-center gap-2.5 p-2 sm:p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs flex-1"
                                     >
-                                        <Plus size={7} strokeWidth={3} />
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-1 sm:gap-2 items-center w-full my-auto">
-                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
-                                        <div
-                                            key={item.id || idx}
-                                            onClick={() => {
-                                                if (item.buyLink) {
-                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
-                                                } else if (item.raw) {
-                                                    setSelectedModalPost(item.raw);
-                                                }
-                                            }}
-                                            className="group/item flex flex-col cursor-pointer"
-                                            title={item.title}
-                                        >
-                                            <div className="w-full aspect-square rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
-                                                <img
-                                                    src={formatUrl(item.image)}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
-                                                    onError={(e) => {
-                                                        if (!e.target.dataset.failed) {
-                                                            e.target.dataset.failed = 'true';
-                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
-                                                        }
-                                                    }}
-                                                />
-                                                <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6px] sm:text-[7px] font-mono font-black text-emerald-400 shadow-sm">
-                                                    {item.price}
-                                                </span>
-                                            </div>
-                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
-                                                {item.title}
+                                        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
+                                            {memo.icon === 'diamond' ? <Aperture size={12} className="sm:w-4 sm:h-4" /> : memo.icon === 'star' ? <Star size={12} className="sm:w-4 sm:h-4" /> : <StickyNote size={12} className="sm:w-4 sm:h-4" />}
+                                        </div>
+                                        <div className="flex flex-col min-w-0 flex-1">
+                                            <span className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate leading-tight">
+                                                {memo.title}
+                                            </span>
+                                            <span className="text-[6.5px] sm:text-[8px] font-mono text-zinc-500 truncate leading-tight mt-0.5">
+                                                {memo.subtitle}
                                             </span>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-
-                        
-
-                    </div>
-                </div>
 
                 {/* MODAL DE PERSONALIZACIÓN RÁPIDA (FONDO, AUDIO, FOTO DE PERFIL Y BIO) */}
                 {isQuickCustomizeOpen && (
@@ -6484,39 +6596,29 @@ const ProfileView = ({
                     )}
                 </div>
 
-                {/* 4. LIGHTBOX MODAL: DETALLE DE REGISTRO RE-IMAGINADO (IMAGE 4) */}
+                {/* 4. MODAL ESTILO INSTAGRAM SPLIT VIEW (IMAGE 2 & 3) */}
                 {selectedModalPost && (
                     <div
-                        className="fixed inset-0 z-[7000] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        className="fixed inset-0 z-[7000] bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 select-none animate-in fade-in duration-200 pointer-events-auto"
                         onClick={() => setSelectedModalPost(null)}
                     >
+                        {/* Toast de Enlace Copiado */}
+                        {modalToast && (
+                            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[7500] px-4 py-2 rounded-full bg-emerald-500 text-black font-mono font-bold text-xs shadow-2xl animate-in fade-in slide-in-from-top-2">
+                                {modalToast}
+                            </div>
+                        )}
+
                         <div
-                            className="w-full max-w-3xl rounded-3xl overflow-hidden bg-[#0c0d11] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col max-h-[92vh]"
+                            className="w-full max-w-5xl h-[88vh] max-h-[820px] rounded-2xl md:rounded-3xl overflow-hidden bg-[#0c0d12] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col md:flex-row relative"
                             onClick={e => e.stopPropagation()}
                         >
-                            {/* Modal Header */}
-                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08] bg-zinc-950/80">
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-                                    <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-300 font-bold">
-                                        {effectiveUser} // Registro #{String(selectedModalPost.id || '294').slice(-3)}
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedModalPost(null)}
-                                    className="p-1.5 rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-
-                            {/* Media Content */}
-                            <div className="flex-1 min-h-[260px] max-h-[58vh] overflow-hidden bg-black flex items-center justify-center relative">
+                            {/* COLUMNA IZQUIERDA: CONTENIDO MULTIMEDIA (IMAGEN / VIDEO) */}
+                            <div className="w-full md:w-[58%] lg:w-[62%] h-[40vh] md:h-full bg-black flex items-center justify-center relative select-none shrink-0 overflow-hidden">
                                 {getBlockPreviewImage(selectedModalPost) ? (
                                     <img
                                         src={getBlockPreviewImage(selectedModalPost)}
-                                        alt={selectedModalPost.caption || 'Obra'}
+                                        alt={selectedModalPost.caption || 'Publicación'}
                                         className="w-full h-full object-contain"
                                     />
                                 ) : getBlockPreviewVideo(selectedModalPost) ? (
@@ -6524,6 +6626,7 @@ const ProfileView = ({
                                         src={getBlockPreviewVideo(selectedModalPost)}
                                         controls
                                         autoPlay
+                                        loop
                                         className="w-full h-full object-contain"
                                     />
                                 ) : (
@@ -6533,28 +6636,509 @@ const ProfileView = ({
                                 )}
                             </div>
 
-                            {/* Bottom Info Card (Image 4) */}
-                            <div className="p-5 sm:p-6 bg-zinc-950/90 border-t border-white/[0.08] flex flex-col gap-3">
-                                <div className="flex items-start justify-between gap-4">
-                                    <h3 className="text-base sm:text-lg font-black uppercase tracking-tight text-white font-mono">
-                                        {selectedModalPost.caption || selectedModalPost.title || 'ESTRUCTURA BIOMÓRFICA // SERIE LILA #01'}
-                                    </h3>
-                                    <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap pt-1">
-                                        {selectedModalPost.timestamp ? new Date(selectedModalPost.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '26 Oct 2026'}
-                                    </span>
-                                </div>
-
-                                <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                                    {selectedModalPost.metadata?.feedText || (selectedModalPost.content && typeof selectedModalPost.content === 'string' ? selectedModalPost.content.replace(/\[.*?\]/g, '').trim() : '') || 'Exploración de formas orgánicas vivas contrastadas con la textura porosa del asfalto. El marco actúa como portal óptico reflectante.'}
-                                </p>
-
-                                <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[10px] font-mono">
-                                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                                        <Sparkles size={11} />
-                                        <span>{selectedModalPost.metadata?.resonanceScore || 342} resonancias</span>
+                            {/* COLUMNA DERECHA: PERFIL, COMENTARIOS Y ENTRADA DE COMENTARIO */}
+                            <div className="w-full md:w-[42%] lg:w-[38%] h-full flex flex-col justify-between bg-[#121316] border-t md:border-t-0 md:border-l border-white/[0.08] min-w-0">
+                                
+                                {/* Header: Autor + Botón Seguir + Opciones */}
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-[#121316] shrink-0">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-800 border border-white/10 shrink-0">
+                                            <img
+                                                src={formatUrl(displayAvatar)}
+                                                alt={effectiveUser}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className="text-xs font-mono font-bold text-white truncate">
+                                                @{effectiveUser}
+                                            </span>
+                                            <span className="text-[10px] text-zinc-500 font-mono">·</span>
+                                            <span className="text-[11px] font-sans font-semibold text-emerald-400 cursor-pointer hover:underline shrink-0">
+                                                {isOwnProfile ? 'Tú' : 'Seguir'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-zinc-500">Espacio protegido por silencio</span>
+
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedModalPost(null)}
+                                            className="p-1 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            <X size={17} />
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Zona Central: Caption y Comentarios (Scrollable) */}
+                                <div className="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar min-h-0">
+                                    {/* Caption del Post */}
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/10 shrink-0 mt-0.5">
+                                            <img src={formatUrl(displayAvatar)} alt={effectiveUser} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex flex-col text-xs min-w-0 leading-relaxed">
+                                            <p className="text-zinc-200">
+                                                <span className="font-mono font-bold text-white mr-1.5">@{effectiveUser}</span>
+                                                {selectedModalPost.caption || selectedModalPost.metadata?.feedText || (typeof selectedModalPost.content === 'string' ? selectedModalPost.content.replace(/\[.*?\]/g, '').trim() : '')}
+                                            </p>
+                                            <span className="text-[10px] text-zinc-500 font-mono mt-1">
+                                                {selectedModalPost.timestamp ? new Date(selectedModalPost.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'reciente'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Lista de Comentarios o Estado Vacío */}
+                                    {(() => {
+                                        const postId = selectedModalPost.id;
+                                        let comments = modalPostComments[postId];
+                                        if (!comments) {
+                                            try {
+                                                const saved = localStorage.getItem(`oasis_comments_${postId}`);
+                                                if (saved) comments = JSON.parse(saved);
+                                            } catch(e) {}
+                                        }
+                                        comments = comments || [];
+
+                                        if (comments.length === 0) {
+                                            return (
+                                                <div className="flex flex-col items-center justify-center my-auto py-12 sm:py-16 text-center text-zinc-400">
+                                                    <span className="text-sm font-bold text-white mb-1">
+                                                        Todavía no hay comentarios.
+                                                    </span>
+                                                    <span className="text-xs text-zinc-500 font-sans">
+                                                        Inicia la conversación.
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+
+                                        return comments.map((c, i) => (
+                                            <div key={c.id || i} className="flex items-start gap-2.5">
+                                                <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/10 shrink-0 mt-0.5">
+                                                    <img
+                                                        src={c.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(c.username || 'user')}`}
+                                                        alt={c.username}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col text-xs min-w-0 leading-relaxed">
+                                                    <p className="text-zinc-200">
+                                                        <span className="font-mono font-bold text-white mr-1.5">@{c.username}</span>
+                                                        {c.text}
+                                                    </p>
+                                                    <span className="text-[9.5px] text-zinc-500 font-mono mt-0.5">
+                                                        {c.timestamp ? new Date(c.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'hace un momento'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+
+                                {/* Zona Inferior: Botones de Acción (Heart, Comment, Share, Bookmark) */}
+                                <div className="border-t border-white/[0.08] bg-[#121316] shrink-0 p-3.5 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    // Toggle like
+                                                    const key = `oasis_liked_${selectedModalPost.id}`;
+                                                    const cur = localStorage.getItem(key) === 'true';
+                                                    localStorage.setItem(key, String(!cur));
+                                                    setModalToast(!cur ? 'Te gusta esta publicación' : null);
+                                                    setTimeout(() => setModalToast(null), 1500);
+                                                }}
+                                                className="text-zinc-300 hover:text-red-400 transition-colors cursor-pointer"
+                                                title="Me gusta"
+                                            >
+                                                <Heart size={20} className={localStorage.getItem(`oasis_liked_${selectedModalPost.id}`) === 'true' ? 'fill-red-500 text-red-500' : ''} />
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => modalCommentInputRef.current?.focus()}
+                                                className="text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                                title="Comentar"
+                                            >
+                                                <MessageCircle size={20} />
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={handleShareModalPost}
+                                                className="text-zinc-300 hover:text-emerald-400 transition-colors cursor-pointer"
+                                                title="Copiar enlace de esta publicación"
+                                            >
+                                                <Share2 size={20} />
+                                            </button>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const key = `oasis_saved_${selectedModalPost.id}`;
+                                                const cur = localStorage.getItem(key) === 'true';
+                                                localStorage.setItem(key, String(!cur));
+                                                setModalToast(!cur ? 'Guardado en tu archivo' : 'Eliminado de guardados');
+                                                setTimeout(() => setModalToast(null), 1500);
+                                            }}
+                                            className="text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                                            title="Guardar"
+                                        >
+                                            <Bookmark size={20} className={localStorage.getItem(`oasis_saved_${selectedModalPost.id}`) === 'true' ? 'fill-white text-white' : ''} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[11px] font-sans">
+                                        <span className="font-semibold text-white">
+                                            {selectedModalPost.metadata?.resonanceScore || 1} resonancias
+                                        </span>
+                                        <span className="text-[10px] text-zinc-500 font-mono">
+                                            {selectedModalPost.timestamp ? new Date(selectedModalPost.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '26 de octubre'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Formulario para Añadir Comentario */}
+                                <form
+                                    onSubmit={handleAddModalComment}
+                                    className="flex items-center gap-2.5 px-4 py-3 border-t border-white/[0.08] bg-[#0c0d12] shrink-0"
+                                >
+                                    <Smile size={19} className="text-zinc-500 hover:text-white cursor-pointer shrink-0 transition-colors" />
+                                    <input
+                                        ref={modalCommentInputRef}
+                                        type="text"
+                                        value={modalCommentText}
+                                        onChange={e => setModalCommentText(e.target.value)}
+                                        placeholder="Añade un comentario..."
+                                        className="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none font-sans"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!modalCommentText.trim()}
+                                        className="text-xs font-bold text-emerald-400 hover:text-emerald-300 disabled:opacity-20 disabled:pointer-events-none transition-opacity cursor-pointer shrink-0"
+                                    >
+                                        Publicar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ======================================================== */}
+                {/* 5. MINI-VENTANAS INTERACTIVAS (COMUNIDAD, PODCAST Y ARCHIVO PDF) */}
+                {/* ======================================================== */}
+                
+                {/* Mini-ventana 1: Comunidad */}
+                {isCommunityWidgetOpen && (
+                    <div className="fixed bottom-16 left-4 sm:left-8 z-[6500] w-[300px] sm:w-[340px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
+                            <div className="flex items-center gap-2">
+                                <Radio size={14} className="text-emerald-400" />
+                                <span className="text-xs font-mono font-bold text-white">Comunidad & Almas</span>
+                            </div>
+                            <button onClick={() => setIsCommunityWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
+                        </div>
+                        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto no-scrollbar">
+                            {(publicUsers && publicUsers.length > 0 ? publicUsers.slice(0, 5) : [
+                                { Username: 'somnispiria', status: 'en resonancia' },
+                                { Username: 'ory11', status: 'explorando ruido' },
+                                { Username: 'jss93', status: 'activo' }
+                            ]).map((u, i) => (
+                                <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] transition-all">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-white/10">
+                                            <img src={u.Avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(u.Username || 'user')}`} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <span className="text-[11px] font-mono text-white truncate">@{u.Username || u.username}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setIsCommunityWidgetOpen(false);
+                                            if (setDirectWidgetActiveUser) setDirectWidgetActiveUser(u.Username || u.username);
+                                            if (setIsDirectWidgetOpen) setIsDirectWidgetOpen(true);
+                                        }}
+                                        className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all cursor-pointer"
+                                    >
+                                        Saludar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Mini-ventana 2: Podcast */}
+                {isPodcastWidgetOpen && (
+                    <div className="fixed bottom-16 left-4 sm:left-24 z-[6500] w-[300px] sm:w-[340px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
+                            <div className="flex items-center gap-2">
+                                <Mic size={14} className="text-purple-400" />
+                                <span className="text-xs font-mono font-bold text-white">Podcast & Frecuencias</span>
+                            </div>
+                            <button onClick={() => setIsPodcastWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
+                        </div>
+                        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto no-scrollbar">
+                            {playlistTracks.map((tr, idx) => (
+                                <div
+                                    key={tr.id || idx}
+                                    onClick={() => playTrackAtIndex(idx)}
+                                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-purple-500/10 border border-white/[0.05] hover:border-purple-500/30 transition-all cursor-pointer group"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-5 h-5 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
+                                            {currentTrackIndex === idx && isProfileAudioPlaying ? <Pause size={10} /> : <Play size={10} />}
+                                        </div>
+                                        <span className="text-[11px] font-mono text-zinc-200 group-hover:text-white truncate">{tr.title}</span>
+                                    </div>
+                                    <span className="text-[9px] font-mono text-purple-400">#0${idx + 1}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Mini-ventana 3: Archivo & Subir PDFs */}
+                {isPdfLibraryWidgetOpen && (
+                    <div className="fixed bottom-16 left-4 sm:left-40 z-[6500] w-[310px] sm:w-[350px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
+                            <div className="flex items-center gap-2">
+                                <Bookmark size={14} className="text-amber-400" />
+                                <span className="text-xs font-mono font-bold text-white">Archivo & PDFs</span>
+                            </div>
+                            <button onClick={() => setIsPdfLibraryWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
+                        </div>
+
+                        {/* Botón para subir PDF */}
+                        <input
+                            ref={pdfFileInputRef}
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            className="hidden"
+                            onChange={handlePdfUpload}
+                        />
+                        {isOwnProfile && (
+                            <button
+                                type="button"
+                                onClick={() => pdfFileInputRef.current?.click()}
+                                className="w-full mb-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
+                            >
+                                <UploadCloud size={13} />
+                                <span>Subir PDF / Zine</span>
+                            </button>
+                        )}
+
+                        <div className="flex flex-col gap-2 max-h-[190px] overflow-y-auto no-scrollbar">
+                            {uploadedPdfs.map((pdf) => (
+                                <div
+                                    key={pdf.id}
+                                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-amber-500/10 border border-white/[0.05] hover:border-amber-500/30 transition-all cursor-pointer group"
+                                    onClick={() => alert(`Abriendo lectura de: ${pdf.title}`)}
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Bookmark size={12} className="text-amber-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[10.5px] font-mono text-zinc-200 group-hover:text-white truncate">{pdf.title}</span>
+                                            <span className="text-[8px] font-mono text-zinc-500">{pdf.size} · {pdf.date}</span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[8px] font-mono text-amber-400 px-1.5 py-0.5 rounded bg-amber-500/10">LEER</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Mini-ventana 4: Micro-Modal de Gestión de Playlist & Canciones */}
+                {isPlaylistModalOpen && (
+                    <div
+                        className="fixed inset-0 z-[7500] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-200"
+                        onClick={() => setIsPlaylistModalOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-md rounded-2xl sm:rounded-3xl bg-[#0e1015] border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.08] bg-[#12141a] shrink-0">
+                                <div className="flex items-center gap-2.5">
+                                    <Radio size={16} className="text-emerald-400 animate-pulse" />
+                                    <div>
+                                        <h3 className="text-xs sm:text-sm font-mono font-bold text-white tracking-wide">Gestor de Playlist</h3>
+                                        <p className="text-[9px] text-zinc-400 font-mono">Personaliza portada, sube canciones y organízalas</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsPlaylistModalOpen(false)}
+                                    className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {/* Contenido Scrollable */}
+                            <div className="p-4 sm:p-5 overflow-y-auto space-y-4 no-scrollbar">
+                                {/* 1. Selector de Foto de Portada para Bento Sonidos */}
+                                <input
+                                    type="file"
+                                    ref={playlistCoverInputRef}
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                            const newCover = ev.target.result;
+                                            setBentoAudioCover(newCover);
+                                            localStorage.setItem(`oasis_playlist_cover_${effectiveUser}`, newCover);
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }}
+                                />
+                                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3.5">
+                                    <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/15 bg-black shrink-0 relative group">
+                                        <img
+                                            src={formatUrl(bentoAudioCover)}
+                                            alt="Portada de playlist"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => playlistCoverInputRef.current?.click()}
+                                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
+                                        >
+                                            <Camera size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[10px] font-mono text-zinc-400 block mb-1">Portada del Reproductor</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => playlistCoverInputRef.current?.click()}
+                                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[10px] font-mono font-bold text-white transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                                        >
+                                            <Camera size={12} />
+                                            <span>Cambiar Portada</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 2. Botón Subir Canciones */}
+                                <div>
+                                    <button
+                                        type="button"
+                                        onClick={() => multiAudioInputRef.current?.click()}
+                                        disabled={isUploadingPlaylist}
+                                        className="w-full py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-300 font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+                                    >
+                                        {isUploadingPlaylist ? (
+                                            <>
+                                                <RefreshCw size={14} className="animate-spin" />
+                                                <span>Subiendo canciones...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <UploadCloud size={14} />
+                                                <span>+ Subir Canciones (MP3 / Audio)</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* 3. Lista de Canciones con reordenar (Arriba / Abajo) y Eliminar */}
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between px-1">
+                                        <span className="text-[10px] font-mono font-bold text-zinc-400">Canciones en Lista ({playlistTracks.length})</span>
+                                        <span className="text-[9px] font-mono text-zinc-500">Usa las flechas para ordenar</span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto no-scrollbar pr-0.5">
+                                        {playlistTracks.map((tr, idx) => (
+                                            <div
+                                                key={tr.id || idx}
+                                                className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] transition-all"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <span className="text-[9px] font-mono font-bold text-emerald-400 w-5 shrink-0">
+                                                        0{idx + 1}
+                                                    </span>
+                                                    <span className="text-[11px] font-mono text-zinc-200 truncate flex-1">
+                                                        {tr.title}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-1 shrink-0 ml-2">
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === 0}
+                                                        onClick={() => {
+                                                            setPlaylistTracks(prev => {
+                                                                const arr = [...prev];
+                                                                const temp = arr[idx - 1];
+                                                                arr[idx - 1] = arr[idx];
+                                                                arr[idx] = temp;
+                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                return arr;
+                                                            });
+                                                        }}
+                                                        className="p-1 rounded text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 transition-colors cursor-pointer"
+                                                        title="Mover arriba"
+                                                    >
+                                                        ▲
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={idx === playlistTracks.length - 1}
+                                                        onClick={() => {
+                                                            setPlaylistTracks(prev => {
+                                                                const arr = [...prev];
+                                                                const temp = arr[idx + 1];
+                                                                arr[idx + 1] = arr[idx];
+                                                                arr[idx] = temp;
+                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                return arr;
+                                                            });
+                                                        }}
+                                                        className="p-1 rounded text-zinc-400 hover:text-white disabled:opacity-20 disabled:hover:text-zinc-400 transition-colors cursor-pointer"
+                                                        title="Mover abajo"
+                                                    >
+                                                        ▼
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setPlaylistTracks(prev => {
+                                                                const arr = prev.filter((_, i) => i !== idx);
+                                                                localStorage.setItem(`oasis_playlist_tracks_${effectiveUser}`, JSON.stringify(arr));
+                                                                return arr;
+                                                            });
+                                                        }}
+                                                        className="p-1 rounded text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors ml-1 cursor-pointer"
+                                                        title="Eliminar de playlist"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-5 py-3 border-t border-white/[0.08] bg-[#12141a] flex items-center justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPlaylistModalOpen(false)}
+                                    className="px-4 py-1.5 rounded-xl bg-emerald-500 text-black font-mono font-bold text-xs hover:bg-emerald-400 transition-all cursor-pointer active:scale-95"
+                                >
+                                    Listo
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -6562,6 +7146,8 @@ const ProfileView = ({
 
             </div>
         </div>
+    </div>
+</div>
     );
 };
 
@@ -7008,11 +7594,34 @@ function OasisApp() {
     const composerLongPressTimerRef = useRef(null);
     const isComposerLongPressRef = useRef(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [bgType, setBgType] = useState('color');
-    const [bgValue, setBgValue] = useState('#030304');
+    const [bgType, setBgType] = useState(() => {
+        return localStorage.getItem('oasis_bg_type') || 'video';
+    });
+    const [bgValue, setBgValue] = useState(() => {
+        const stored = localStorage.getItem('oasis_bg_value');
+        if (stored && stored !== '#030304' && stored !== '#000000') return stored;
+        return 'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-a-field-of-wildflowers-41727-large.mp4';
+    });
     const [isTiled, setIsTiled] = useState(false);
     const [_unused1, _unused2] = useState(0.8);
-    const [bgTemplates, setBgTemplates] = useState([]);
+    const [bgTemplates, setBgTemplates] = useState(() => {
+        try {
+            const stored = localStorage.getItem('oasis_community_templates');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    const combined = [...parsed];
+                    DEFAULT_COMMUNITY_TEMPLATES.forEach(dt => {
+                        if (!combined.some(c => c.name === dt.name || c.id === dt.id)) {
+                            combined.unshift(dt);
+                        }
+                    });
+                    return combined;
+                }
+            }
+        } catch(e) {}
+        return DEFAULT_COMMUNITY_TEMPLATES;
+    });
     const [newTemplateName, setNewTemplateName] = useState('');
     const [clabeInput, setClabeInput] = useState('');
     const [withdrawStatus, setWithdrawStatus] = useState('');
@@ -10532,7 +11141,15 @@ function OasisApp() {
             const res = await fetch(`${API_URL}/api/oasis/backgrounds/templates`);
             if (res.ok) {
                 const data = await res.json();
-                setBgTemplates(data || []);
+                if (Array.isArray(data) && data.length > 0) {
+                    const combined = [...data];
+                    DEFAULT_COMMUNITY_TEMPLATES.forEach(dt => {
+                        if (!combined.some(c => c.name === dt.name || c.id === dt.id)) combined.unshift(dt);
+                    });
+                    setBgTemplates(combined);
+                    localStorage.setItem('oasis_community_templates', JSON.stringify(combined));
+                    return;
+                }
             }
         } catch (err) {
             console.error("Error al cargar plantillas de fondo: ", err);
@@ -10556,7 +11173,11 @@ function OasisApp() {
             });
             if (res.ok) {
                 const newTpl = await res.json();
-                setBgTemplates(prev => [...prev, newTpl]);
+                setBgTemplates(prev => {
+                    const updated = [...prev, newTpl];
+                    localStorage.setItem('oasis_community_templates', JSON.stringify(updated));
+                    return updated;
+                });
                 setNewTemplateName('');
             }
         } catch (err) {
@@ -15202,7 +15823,7 @@ ${afcMapContext}
                     <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }}
                         src={imageUrl}
@@ -16866,8 +17487,8 @@ ${afcMapContext}
                     });
                     if (postWithAv) userAvatar = postWithAv.metadata.userAvatar;
                 }
-                if (!userAvatar) {
-                    userAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(currentUsername)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+                if (!userAvatar || userAvatar.includes('dicebear') || userAvatar.includes('ba90867f')) {
+                    userAvatar = getDefaultAvatar(currentUsername);
                 }
 
                 return {
@@ -16964,7 +17585,7 @@ ${afcMapContext}
                                                                             onError={(e) => {
                                                                                 if (!e.target.dataset.failed) {
                                                                                     e.target.dataset.failed = 'true';
-                                                                                    e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent(soul.username || 'oasis');
+                                                                                    e.target.src = getDefaultAvatar(soul.username);
                                                                                 }
                                                                             }}
                                                                             src={formatUrl(soul.img)}
@@ -17024,7 +17645,7 @@ ${afcMapContext}
                                 title="Ir a mi perfil"
                             >
                                 <img 
-                                    src={avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(cleanCurrentU || 'me')}`}
+                                    src={avatar || getDefaultAvatar(cleanCurrentU)}
                                     alt={cleanCurrentU}
                                     className="w-11 h-11 rounded-full object-cover border border-white/10 group-hover/me:border-accent transition-colors shrink-0 bg-zinc-900"
                                 />
@@ -17403,7 +18024,9 @@ ${afcMapContext}
         <div className="fixed top-0 left-0 w-screen h-[100dvh] bg-transparent text-zinc-100 overflow-hidden" onMouseMove={handleMove} onMouseUp={handleEnd} onTouchMove={handleMove} onTouchEnd={handleEnd} onContextMenu={(e) => { if (!e.target.closest('input') && !e.target.closest('textarea') && !e.target.closest('[contenteditable="true"]')) e.preventDefault(); }}>
 
             {/* GLOBAL ATMOSPHERE ENGINE */}
-            <div className="fixed top-0 left-0 w-screen h-[100dvh] z-[-1] overflow-hidden pointer-events-none bg-transparent">
+            <div className="fixed top-0 left-0 w-screen h-[100dvh] z-[-1] overflow-hidden pointer-events-none bg-black">
+                {/* Soft backdrop vignette overlay */}
+                <div className="absolute inset-0 bg-black/40 z-[1] pointer-events-none" />
                 {(() => {
                     const activeBgType = bgType;
                     const activeBgValue = bgValue;
@@ -17421,7 +18044,7 @@ ${afcMapContext}
                                             <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }} key={`tile-img-${i}`} src={formatUrl(activeBgValue)} className="w-full h-full object-cover" />
                                         ))}
@@ -17430,7 +18053,7 @@ ${afcMapContext}
                                     <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }} key={activeBgValue} src={formatUrl(activeBgValue)} className="absolute inset-0 w-full h-full object-cover opacity-80 transition-all duration-1000" alt="Background" />
                                 )
@@ -17487,6 +18110,8 @@ ${afcMapContext}
                                             <div className="fixed inset-0 z-[1399] bg-black/25 backdrop-blur-[2px] transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
                                             <ProfileView
                                                 user={user}
+                                                isNavbarHidden={isNavbarHidden}
+                                                setIsNavbarHidden={setIsNavbarHidden}
                                                 isLoggedIn={isLoggedIn}
                                                 hasAcceptedConsent={hasAcceptedConsent}
                                                 setSoulTab={setSoulTab}
@@ -17694,7 +18319,7 @@ ${afcMapContext}
                                                 <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }} src={formatUrl(template.value)} alt={template.name} className={`absolute inset-0 w-full h-full opacity-60 group-hover:opacity-100 transition-opacity ${template.isTiled ? 'object-repeat' : 'object-cover'}`} />
                                             )}
@@ -18072,7 +18697,7 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && view === 'feed') ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && (view === 'feed' || view === 'profile')) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
                     style={{ top: 'max(14px, calc(env(safe-area-inset-top) + 10px))' }}
                 >
                     {/* 1. Perfil */}
@@ -18512,7 +19137,7 @@ ${afcMapContext}
                         <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }}
                             src={zoomedImage}
@@ -20058,7 +20683,7 @@ function MuralWorkspace({ blocks: initialBlocks, onSave, onClose, accent, bgType
                                         <img onError={(e) => {
         if (!e.target.dataset.failed) {
             e.target.dataset.failed = 'true';
-            e.target.src = 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + encodeURIComponent((typeof effectiveUser !== 'undefined' ? effectiveUser : '') || 'oasis');
+            e.target.src = getDefaultAvatar(typeof effectiveUser !== "undefined" ? effectiveUser : "oasis");
         }
     }}
                                             src={block.content}
