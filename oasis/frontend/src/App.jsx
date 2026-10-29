@@ -48,6 +48,49 @@ export const CURATED_AVATARS = [
     '/avatars/avatar_10.png'
 ];
 
+export const CURATED_PROFILE_COVERS = [
+    { id: 'vid_1', type: 'video', url: '/covers/cover_video_1.mp4', title: 'Marea Gris (Lo-Fi Video)' },
+    { id: 'vid_2', type: 'video', url: '/covers/cover_video_2.mp4', title: 'Destello Etéreo (Lo-Fi Video)' },
+    { id: 'vid_3', type: 'video', url: '/covers/cover_video_3.mp4', title: 'Paseo Atemporal (Lo-Fi Video)' },
+    { id: 'vid_4', type: 'video', url: '/covers/cover_video_4.mp4', title: 'Vessel Fractal (Lo-Fi Video)' },
+    { id: 'vid_5', type: 'video', url: '/covers/cover_video_5.mp4', title: 'Humo & Malla (Lo-Fi Video)' },
+    { id: 'img_1', type: 'image', url: '/covers/cover_img_1.jpg', title: 'Ángel de Código' },
+    { id: 'img_2', type: 'image', url: '/covers/cover_img_2.jpg', title: 'Terminal en la Colina' },
+    { id: 'img_3', type: 'image', url: '/covers/cover_img_3.jpg', title: 'Bosque Brumoso' },
+    { id: 'img_4', type: 'image', url: '/covers/cover_img_4.jpg', title: 'Exodus Cyber' },
+    { id: 'img_5', type: 'image', url: '/covers/cover_img_5.jpg', title: 'Esferas Cromadas' },
+    { id: 'img_6', type: 'image', url: '/covers/cover_img_6.jpg', title: 'Silence Nocturno' }
+];
+
+export const isCoverVideoUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    const clean = url.split('?')[0].toLowerCase();
+    return clean.endsWith('.mp4') || clean.endsWith('.webm') || clean.endsWith('.mov') || url.startsWith('data:video/');
+};
+
+export const getDefaultCover = (username, indexOffset = 0) => {
+    if (!username) return CURATED_PROFILE_COVERS[indexOffset % CURATED_PROFILE_COVERS.length].url;
+    const str = String(username).toLowerCase().replace('@', '').trim();
+    const explicitCoverMap = {
+        'ory11': '/covers/cover_video_1.mp4',
+        'observador1': '/covers/cover_video_2.mp4',
+        'ghfd3': '/covers/cover_video_3.mp4',
+        'kiotest': '/covers/cover_video_4.mp4',
+        'testuser_soul': '/covers/cover_video_5.mp4',
+        'jss93': '/covers/cover_img_1.jpg',
+        'somnispiria': '/covers/cover_img_2.jpg',
+        'observador': '/covers/cover_img_3.jpg'
+    };
+    if (explicitCoverMap[str]) return explicitCoverMap[str];
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    const idx = (Math.abs(hash) + indexOffset) % CURATED_PROFILE_COVERS.length;
+    return CURATED_PROFILE_COVERS[idx].url;
+};
+
 export const DEFAULT_COMMUNITY_TEMPLATES = [
     {
         id: 'b65130f8-66e1-47fe-ae5f-5e8804dcd632',
@@ -257,6 +300,10 @@ localStorage.setItem = function (key, value) {
                 'oasis_facts_',
                 'oasis_style_profile_',
                 'oasis_avatar_',
+                'oasis_cover_',
+                'oasis_bio_',
+                'oasis_fullname_',
+                'oasis_profilelink_',
                 'oasis_credits_',
                 'oasis_public_traits_',
                 'oasis_afc_attempted_',
@@ -558,7 +605,7 @@ const formatUrl = (url) => {
         url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
     }
 
-    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/covers/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
     if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     }
@@ -2361,7 +2408,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/covers/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -2623,7 +2670,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/covers/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -4551,7 +4598,7 @@ const ProfileView = ({
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/covers/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -4892,15 +4939,15 @@ const ProfileView = ({
     const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : (publicProfileData?.fullName || effectiveUser));
 
     const [coverImage, setCoverImage] = useState(() => {
+        const isLegacyOrDead = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
         if (isOwnProfile) {
-            const stored = localStorage.getItem('oasis_cover_' + user);
-            if (stored && !stored.includes('950091e3') && !stored.includes('unsplash')) return stored;
-            if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
-            return stored || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
+            const stored = localStorage.getItem('oasis_cover_' + user) || localStorage.getItem('oasis_cover_' + (user || '').toLowerCase().replace('@', ''));
+            if (stored && !isLegacyOrDead(stored)) return stored;
+            return getDefaultCover(effectiveUser);
         }
-        if (publicProfileData?.coverImage || publicProfileData?.CoverImage) return publicProfileData.coverImage || publicProfileData.CoverImage;
-        if (isOry) return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
-        return 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
+        const pubCv = publicProfileData?.coverImage || publicProfileData?.CoverImage;
+        if (pubCv && !isLegacyOrDead(pubCv)) return pubCv;
+        return getDefaultCover(effectiveUser);
     });
 
     const [coverPosition, setCoverPosition] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_pos_' + user) || 'center') : 'center');
@@ -5142,11 +5189,12 @@ const ProfileView = ({
                 let avatarVal = data.avatar !== undefined ? data.avatar : data.Avatar;
                 let linkVal = data.profileLink !== undefined ? data.profileLink : data.ProfileLink;
 
+                const isLegacyCover = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
                 if (isTargetOry) {
                     if (!bioVal || bioVal.includes('Explorador del Oasis')) bioVal = 'ruido extraviado';
                     if (!linkVal || linkVal.includes('muleinterior')) linkVal = 'https://inn3r.shop/';
-                    if (!coverVal || coverVal.includes('950091e3') || coverVal.includes('unsplash')) {
-                        coverVal = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+                    if (isLegacyCover(coverVal)) {
+                        coverVal = '/covers/cover_video_1.mp4';
                     }
                     if (!avatarVal || avatarVal.includes('ba90867f') || avatarVal.includes('dicebear')) {
                         avatarVal = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
@@ -5159,7 +5207,8 @@ const ProfileView = ({
                     setFullName(safeFn);
                     localStorage.setItem('oasis_fullname_' + user, safeFn);
                 }
-                if (coverVal !== undefined) { setCoverImage(coverVal || ''); localStorage.setItem('oasis_cover_' + user, coverVal || ''); }
+                const recentlyUpdatedCoverLocal = Number(localStorage.getItem('oasis_cover_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                if (coverVal !== undefined && !recentlyUpdatedCoverLocal && !isLegacyCover(coverVal)) { setCoverImage(coverVal || ''); localStorage.setItem('oasis_cover_' + user, coverVal || ''); }
                 const recentlyUpdatedAvLocal = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
                 if (avatarVal !== undefined && !recentlyUpdatedAvLocal) { setAvatar(avatarVal || ''); localStorage.setItem('oasis_avatar_' + user, avatarVal || ''); }
                 if (linkVal !== undefined) { setProfileLink(linkVal || ''); localStorage.setItem('oasis_profilelink_' + user, linkVal || ''); }
@@ -5173,7 +5222,9 @@ const ProfileView = ({
         const targetStoredFn = localStorage.getItem('oasis_fullname_' + targetU);
         if (targetStoredFn && !targetStoredFn.includes('@')) setFullName(cleanDisplayName(targetStoredFn, targetU || 'Oasis Explorer'));
         const storedCover = localStorage.getItem('oasis_cover_' + targetU);
-        if (storedCover && (!isTargetOry || !storedCover.includes('950091e3'))) setCoverImage(storedCover);
+        if (storedCover && !storedCover.includes('950091e3') && !storedCover.includes('unsplash') && !storedCover.includes('e1475baf') && !(storedCover.includes('/uploads/') && !storedCover.includes('supabase.co'))) {
+            setCoverImage(storedCover);
+        }
         const storedLink = localStorage.getItem('oasis_profilelink_' + targetU);
         if (storedLink && (!isTargetOry || !storedLink.includes('muleinterior'))) setProfileLink(storedLink);
 
@@ -5189,18 +5240,21 @@ const ProfileView = ({
                     let bAv = serverData[`oasis_avatar_${targetU}`];
                     const bPub = serverData[`oasis_is_public_${targetU}`];
                     const bFn = serverData[`oasis_fullname_${targetU}`];
+                    const isDeadCv = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
 
                     if (isTargetOry) {
                         if (!bBio || bBio.includes('Explorador del Oasis')) bBio = 'ruido extraviado';
                         if (!bLink || bLink.includes('muleinterior')) bLink = 'https://inn3r.shop/';
-                        if (!bCover || bCover.includes('950091e3')) bCover = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg';
+                        if (isDeadCv(bCover)) bCover = '/covers/cover_video_1.mp4';
                         if (!bAv || bAv.includes('ba90867f')) bAv = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
                     }
 
                     const recentlyUpdatedAv = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                    const recentlyUpdatedCv = Number(localStorage.getItem('oasis_cover_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                    const localCv = localStorage.getItem('oasis_cover_' + targetU);
                     if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                     if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
-                    if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
+                    if (bCover && !isDeadCv(bCover) && !recentlyUpdatedCv && !(localCv && localCv.startsWith('/covers/'))) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
                     if (bAv && !recentlyUpdatedAv) { if (setAvatar) setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
                     if (bPub !== undefined) { localStorage.setItem('oasis_is_public_' + targetU, String(bPub)); }
                     if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
@@ -5233,11 +5287,14 @@ const ProfileView = ({
                             const bAudio = parsed.ambientAudioUrl || parsed.AmbientAudioUrl;
                             const bAudioTitle = parsed.ambientAudioTitle || parsed.AmbientAudioTitle;
                             const recentlyUpdatedAv2 = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                            const recentlyUpdatedCv2 = Number(localStorage.getItem('oasis_cover_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                            const localCv2 = localStorage.getItem('oasis_cover_' + targetU);
+                            const isDeadCv2 = !bCover || bCover.includes('950091e3') || bCover.includes('unsplash') || bCover.includes('e1475baf') || (bCover.includes('/uploads/') && !bCover.includes('supabase.co'));
 
                             if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                             if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
                             if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
-                            if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
+                            if (bCover && !isDeadCv2 && !recentlyUpdatedCv2 && !(localCv2 && localCv2.startsWith('/covers/'))) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
                             if (bAv && setAvatar && isOwnProfile && !recentlyUpdatedAv2) { setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
                             if (bAudio) {
                                 const formatted = formatUrl(bAudio);
@@ -5339,9 +5396,35 @@ const ProfileView = ({
         }
     };
 
+    const handleSelectCuratedCover = (coverUrl, e) => {
+        if (e) e.stopPropagation();
+        setCoverImage(coverUrl);
+        const cleanU = (user || effectiveUser || '').toLowerCase().replace('@', '');
+        if (user) localStorage.setItem('oasis_cover_' + user, coverUrl);
+        if (cleanU) {
+            localStorage.setItem('oasis_cover_' + cleanU, coverUrl);
+            localStorage.setItem('oasis_cover_updated_at_' + cleanU, String(Date.now()));
+        }
+        if (onSaveProfile) {
+            onSaveProfile({ coverImage: coverUrl, fullName, bio, profileLink });
+        }
+    };
+
+    const handleRandomCover = (e) => {
+        if (e) e.stopPropagation();
+        const currentCv = coverImage || '';
+        const available = CURATED_PROFILE_COVERS.filter(c => c.url !== currentCv);
+        const nextObj = available[Math.floor(Math.random() * available.length)] || CURATED_PROFILE_COVERS[0];
+        handleSelectCuratedCover(nextObj.url, e);
+    };
+
     const handleCoverChange = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        const cleanU = (user || effectiveUser || '').toLowerCase().replace('@', '');
+        const localPreviewUrl = URL.createObjectURL(file);
+        setCoverImage(localPreviewUrl);
 
         const formData = new FormData();
         formData.append('file', file);
@@ -5356,14 +5439,15 @@ const ProfileView = ({
                 if (data.url) {
                     setCoverImage(data.url);
                     localStorage.setItem('oasis_cover_' + user, data.url);
+                    if (cleanU) {
+                        localStorage.setItem('oasis_cover_' + cleanU, data.url);
+                        localStorage.setItem('oasis_cover_updated_at_' + cleanU, String(Date.now()));
+                    }
                     if (onSaveProfile) onSaveProfile({ coverImage: data.url });
                 }
-            } else {
-                alert('Error al subir la portada.');
             }
         } catch (err) {
             console.error(err);
-            alert('Error al subir la portada.');
         }
     };
 
@@ -5717,7 +5801,7 @@ const ProfileView = ({
                 style={{ WebkitOverflowScrolling: 'touch', WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
             >
                 {/* 1. PORTADA BANNER SUPERIOR CON CONTROLES FROSTED GLASS (IMAGE 1) */}
-                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
+                <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*,video/*" className="hidden" />
                 <div className="w-full pt-0 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
@@ -5729,22 +5813,71 @@ const ProfileView = ({
                                 : 'h-24 sm:h-36 md:h-64'
                         }`}
                     >
-                        <img
-                            src={formatUrl(coverImage)}
-                            alt="Foto de fondo"
-                            className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
-                                coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
-                            } ${
-                                coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
-                            }`}
-                            onError={(e) => {
-                                if (!e.target.dataset.failed) {
-                                    e.target.dataset.failed = 'true';
-                                    e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
-                                }
-                            }}
-                        />
+                        {isCoverVideoUrl(coverImage) ? (
+                            <video
+                                key={coverImage}
+                                src={formatUrl(coverImage)}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="auto"
+                                className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
+                                    coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
+                                } ${
+                                    coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
+                                }`}
+                                onError={() => {
+                                    if (coverImage !== '/covers/cover_img_1.jpg') {
+                                        setCoverImage('/covers/cover_img_1.jpg');
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <img
+                                key={coverImage}
+                                src={formatUrl(coverImage)}
+                                alt="Portada de perfil"
+                                className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
+                                    coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
+                                } ${
+                                    coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
+                                }`}
+                                onError={() => {
+                                    if (coverImage !== '/covers/cover_video_1.mp4') {
+                                        setCoverImage('/covers/cover_video_1.mp4');
+                                    }
+                                }}
+                            />
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
+
+                        {/* Controles rápidos de Portada (Aleatorio Video/Foto) en esquina inferior derecha */}
+                        {isOwnProfile && (
+                            <div
+                                className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 z-20 flex items-center gap-1.5 opacity-80 sm:opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={handleRandomCover}
+                                    className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black/95 border border-white/15 hover:border-purple-400/50 backdrop-blur-md text-[9px] font-mono font-bold text-zinc-200 hover:text-white flex items-center gap-1.5 shadow-lg transition-all cursor-pointer active:scale-95"
+                                    title="Cambiar a otra portada aleatoria (Videos Lo-Fi y Fotos)"
+                                >
+                                    <RefreshCw size={10} className="text-purple-400" />
+                                    <span>Portada Aleatoria</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setIsQuickCustomizeOpen(true); }}
+                                    className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black/95 border border-white/15 hover:border-emerald-400/50 backdrop-blur-md text-[9px] font-mono font-bold text-zinc-200 hover:text-white flex items-center gap-1 shadow-lg transition-all cursor-pointer active:scale-95"
+                                    title="Abrir archivo de portadas"
+                                >
+                                    <Film size={10} className="text-emerald-400" />
+                                    <span>Archivo</span>
+                                </button>
+                            </div>
+                        )}
 
                         {/* Audio Engine y File Input ocultos */}
                         <audio
@@ -5788,28 +5921,50 @@ const ProfileView = ({
                     >
                         <div className="absolute top-5 right-5 flex items-center gap-3 z-10" onClick={e => e.stopPropagation()}>
                             {isOwnProfile && (
-                                <button
-                                    onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                    className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-lg"
-                                >
-                                    <Camera size={13} />
-                                    <span>Cambiar portada</span>
-                                </button>
+                                <>
+                                    <button
+                                        onClick={handleRandomCover}
+                                        className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+                                    >
+                                        <RefreshCw size={13} className="text-purple-400" />
+                                        <span>Aleatorio</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
+                                        className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-lg cursor-pointer"
+                                    >
+                                        <Camera size={13} />
+                                        <span>Subir Video / Foto</span>
+                                    </button>
+                                </>
                             )}
                             <button
                                 onClick={() => setIsCoverLightboxOpen(false)}
-                                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all shadow-lg"
+                                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition-all shadow-lg cursor-pointer"
                                 title="Cerrar"
                             >
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="max-w-5xl max-h-[85vh] flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
-                            <img
-                                src={formatUrl(coverImage)}
-                                alt="Portada completa"
-                                className="w-auto h-auto max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
-                            />
+                            {isCoverVideoUrl(coverImage) ? (
+                                <video
+                                    key={coverImage}
+                                    src={formatUrl(coverImage)}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    controls
+                                    className="w-auto h-auto max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+                                />
+                            ) : (
+                                <img
+                                    src={formatUrl(coverImage)}
+                                    alt="Portada completa"
+                                    className="w-auto h-auto max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
+                                />
+                            )}
                         </div>
                         <span className="text-zinc-500 text-xs font-mono mt-3">Portada de @{effectiveUser} · Toca fuera para cerrar</span>
                     </div>
@@ -6310,24 +6465,105 @@ const ProfileView = ({
                                     </div>
                                 </div>
 
-                                {/* 2. Cambiar fondo de pantalla */}
-                                <div
-                                    onClick={() => {
-                                        if (coverInputRef.current) coverInputRef.current.click();
-                                        setIsQuickCustomizeOpen(false);
-                                    }}
-                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-purple-500/40 transition-all cursor-pointer group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
-                                            <Sparkles size={18} />
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Fondo de Pantalla</span>
-                                            <span className="text-[9px] font-sans text-zinc-400">Cambiar la portada principal</span>
+                                {/* 2. Cambiar Portada del Perfil (Archivo de Videos Lo-Fi + Fotos + Subir) */}
+                                <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-purple-500/40 transition-all">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-14 h-9 rounded-xl overflow-hidden bg-zinc-900 border border-purple-500/40 shrink-0 shadow-md relative">
+                                                {isCoverVideoUrl(coverImage) ? (
+                                                    <video
+                                                        key={coverImage}
+                                                        src={formatUrl(coverImage)}
+                                                        autoPlay
+                                                        loop
+                                                        muted
+                                                        playsInline
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={formatUrl(coverImage)}
+                                                        alt="Portada actual"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                )}
+                                                <span className="absolute bottom-0.5 right-0.5 px-1 py-[1px] rounded bg-black/80 text-[6px] font-mono font-bold text-purple-300 uppercase">
+                                                    {isCoverVideoUrl(coverImage) ? 'LO-FI VID' : 'IMG'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col text-left min-w-0">
+                                                <span className="text-xs font-mono font-bold text-zinc-100">Portada del Perfil</span>
+                                                <span className="text-[9px] font-sans text-zinc-400">Videos lo-fi ligeros e imágenes predeterminadas</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-mono text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">Cambiar ↗</span>
+
+                                    {/* Tira horizontal de Videos Lo-Fi e Imágenes de Portada */}
+                                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                                        {CURATED_PROFILE_COVERS.map((item) => {
+                                            const isSelected = coverImage === item.url;
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={(e) => handleSelectCuratedCover(item.url, e)}
+                                                    className={`relative w-14 h-9 rounded-lg overflow-hidden shrink-0 border transition-all cursor-pointer group/cv ${
+                                                        isSelected
+                                                            ? 'border-purple-400 ring-1 ring-purple-400/60 scale-105'
+                                                            : 'border-white/10 hover:border-white/35 opacity-75 hover:opacity-100'
+                                                    }`}
+                                                    title={item.title}
+                                                >
+                                                    {item.type === 'video' ? (
+                                                        <video
+                                                            src={item.url}
+                                                            muted
+                                                            loop
+                                                            playsInline
+                                                            autoPlay
+                                                            preload="metadata"
+                                                            className="w-full h-full object-cover pointer-events-none"
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={item.url}
+                                                            alt={item.title}
+                                                            className="w-full h-full object-cover pointer-events-none"
+                                                        />
+                                                    )}
+                                                    <span className={`absolute bottom-0.5 left-0.5 px-1 py-[0.5px] rounded text-[5.5px] font-mono font-bold uppercase ${
+                                                        item.type === 'video' ? 'bg-purple-950/90 text-purple-300' : 'bg-black/80 text-zinc-300'
+                                                    }`}>
+                                                        {item.type === 'video' ? '▶ VID' : 'IMG'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={handleRandomCover}
+                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-purple-400/50 text-[10px] font-mono font-bold text-zinc-100 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            title="Probar otro video o foto de portada aleatorio"
+                                        >
+                                            <RefreshCw size={12} className="text-purple-400" />
+                                            <span>Aleatorio</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (coverInputRef.current) coverInputRef.current.click();
+                                                setIsQuickCustomizeOpen(false);
+                                            }}
+                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/35 text-[10px] font-mono font-bold text-purple-300 hover:text-purple-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            title="Subir tu propio video o foto de portada"
+                                        >
+                                            <UploadCloud size={12} />
+                                            <span>Subir Video/Foto ↗</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* 3. Cambiar audio de fondo / Playlist */}
