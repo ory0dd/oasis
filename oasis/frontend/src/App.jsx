@@ -6973,8 +6973,8 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                             <div className="flex-1 flex flex-col justify-between min-w-0 border-l border-white/[0.08] pl-2 sm:pl-3.5 pr-1 py-0.5 relative group/quote">
                                 <div className="flex items-center justify-between gap-1 pb-0.5">
                                     <div className="flex items-center gap-1.5 min-w-0">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse shrink-0" />
-                                        <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-accent/80 animate-pulse shrink-0" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-accent truncate">
                                             Proceso Interno
                                         </span>
                                     </div>
@@ -6985,10 +6985,10 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     type="button"
                                                     onClick={handleGenerateFirma}
                                                     disabled={isGeneratingFirma}
-                                                    className="px-1.5 sm:px-2 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 hover:border-emerald-400/60 text-[6.5px] sm:text-[7.5px] md:text-[8px] font-mono font-bold text-emerald-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95 shadow-xs"
+                                                    className="px-1.5 sm:px-2 py-0.5 rounded-md bg-accent/15 hover:bg-accent/25 border border-accent/35 hover:border-accent/60 text-[6.5px] sm:text-[7.5px] md:text-[8px] font-mono font-bold text-accent hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95 shadow-xs"
                                                     title="Generar nueva firma existencial"
                                                 >
-                                                    <Sparkles size={9} className={isGeneratingFirma ? 'animate-spin text-emerald-400' : 'text-emerald-400'} />
+                                                    <Sparkles size={9} className={isGeneratingFirma ? 'animate-spin text-accent' : 'text-accent'} />
                                                     <span>{isGeneratingFirma ? 'Generando...' : 'Generar Firma'}</span>
                                                 </button>
                                                 <button
@@ -7013,7 +7013,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             value={customFirma || bentoSensoryQuote}
                                             onChange={(e) => setCustomFirma(e.target.value)}
                                             rows={2}
-                                            className="w-full bg-black/60 border border-emerald-500/40 rounded-lg p-1.5 text-[9px] sm:text-[10.5px] text-zinc-100 font-serif italic outline-none resize-none"
+                                            className="w-full bg-black/60 border border-accent/40 rounded-lg p-1.5 text-[9px] sm:text-[10.5px] text-zinc-100 font-serif italic outline-none resize-none"
                                             placeholder="Escribe tu firma o proceso interno..."
                                         />
                                         <div className="flex justify-end gap-1.5">
@@ -7047,7 +7047,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                                 <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] md:text-[8.5px] font-mono text-zinc-500">
                                     <span>bitácora íntima</span>
-                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
+                                    <span className="text-accent font-bold">03:14 AM</span>
                                 </div>
                             </div>
                         </div>
@@ -7058,7 +7058,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         <div className="col-span-2 lg:col-span-12 order-2 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
                             <div className="flex items-center justify-between pb-0.5">
                                 <div className="flex items-center gap-1.5">
-                                    <Sparkles size={11} className="text-emerald-400 shrink-0" />
+                                    <Sparkles size={11} className="text-accent shrink-0" />
                                     <span className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-200">
                                         Piezas
                                     </span>
@@ -7083,7 +7083,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         <button
                                             type="button"
                                             onClick={() => (onOpenPublishWithLink || openNewComposer)()}
-                                            className="mt-0.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[8px] sm:text-[9px] font-mono font-bold text-emerald-300 hover:text-white transition-all cursor-pointer"
+                                            className="mt-0.5 px-2.5 py-1 rounded-lg bg-accent/15 hover:bg-accent/25 border border-accent/35 text-[8px] sm:text-[9px] font-mono font-bold text-accent hover:text-white transition-all cursor-pointer"
                                         >
                                             + Publicar con link
                                         </button>
@@ -7104,7 +7104,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             className="group/item flex flex-col cursor-pointer"
                                             title={item.title}
                                         >
-                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/50 group-hover/item:border-emerald-500/40 transition-all shadow-md flex items-center justify-center">
+                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/50 group-hover/item:border-accent/50 transition-all shadow-md flex items-center justify-center">
                                                 {item.image ? (
                                                     <img
                                                         src={formatUrl(item.image)}
@@ -7122,13 +7122,13 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     />
                                                 ) : (
                                                     <div className="p-3 text-center flex flex-col items-center justify-center gap-1.5">
-                                                        <ArrowUpRight size={18} className="text-emerald-400" />
+                                                        <ArrowUpRight size={18} className="text-accent" />
                                                         <span className="text-[9px] sm:text-[10px] font-mono text-zinc-300 line-clamp-2">
                                                             {item.title}
                                                         </span>
                                                     </div>
                                                 )}
-                                                <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[8.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-accent/40 text-[7px] sm:text-[8.5px] font-mono font-black text-accent shadow-sm">
                                                     {item.price}
                                                 </span>
                                             </div>
@@ -7210,11 +7210,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                                 {/* Botón Play / Pause Grande en el Centro */}
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/70 hover:bg-black/90 border border-accent/60 text-accent flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)] transition-all group-hover/loop:scale-110 active:scale-95">
                                         {isProfileAudioPlaying ? (
-                                            <Pause size={16} className="sm:w-6 sm:h-6 fill-emerald-400" />
+                                            <Pause size={16} className="sm:w-6 sm:h-6 fill-accent" />
                                         ) : (
-                                            <Play size={16} className="sm:w-6 sm:h-6 fill-emerald-400 ml-0.5" />
+                                            <Play size={16} className="sm:w-6 sm:h-6 fill-accent ml-0.5" />
                                         )}
                                     </div>
                                 </div>
@@ -7223,12 +7223,12 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                             {/* Título de la canción en reproducción */}
                             <div className="flex items-center justify-between px-0.5 pt-0.5">
                                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-accent animate-pulse shadow-[0_0_8px_rgba(var(--accent-rgb),0.8)]' : 'bg-zinc-600'}`} />
                                     <span className="text-[10px] sm:text-xs md:text-sm font-bold text-white font-sans truncate">
                                         {playlistTracks[currentTrackIndex]?.title || ambientAudioTitle || bentoCentralPiece.title}
                                     </span>
                                 </div>
-                                <span className="text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 tracking-wider shrink-0 ml-1.5">
+                                <span className="text-[8px] sm:text-[9px] font-mono font-black text-accent tracking-wider shrink-0 ml-1.5">
                                     {bentoCentralPiece.tag || '[432 Hz]'}
                                 </span>
                             </div>
@@ -7256,10 +7256,10 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     playTrackAtIndex(idx);
                                                 }
                                             }}
-                                            className={`group/track flex items-center justify-between px-2 py-1 rounded-lg transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20' : 'hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200'}`}
+                                            className={`group/track flex items-center justify-between px-2 py-1 rounded-lg transition-all cursor-pointer ${isCurrent ? 'bg-accent/15 text-accent font-bold border border-accent/30' : 'hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200'}`}
                                         >
                                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                <span className={`text-[7px] sm:text-[8px] font-mono shrink-0 ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                                <span className={`text-[7px] sm:text-[8px] font-mono shrink-0 ${isCurrent ? 'text-accent' : 'text-zinc-500'}`}>
                                                     {isThisPlaying ? '▶' : `0${idx + 1}`}
                                                 </span>
                                                 <span className="text-[7.5px] sm:text-[9px] font-mono truncate flex-1">
@@ -7268,7 +7268,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             </div>
 
                                             <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                                                <span className={`text-[6.5px] sm:text-[7.5px] font-mono px-1 py-0.2 rounded ${isCurrent ? 'text-emerald-400 bg-emerald-500/20 font-bold' : 'text-zinc-600 bg-white/[0.02]'}`}>
+                                                <span className={`text-[6.5px] sm:text-[7.5px] font-mono px-1 py-0.2 rounded ${isCurrent ? 'text-accent bg-accent/25 font-bold' : 'text-zinc-600 bg-white/[0.02]'}`}>
                                                     {isThisPlaying ? 'ON' : 'MP3'}
                                                 </span>
                                                 {isOwnProfile && playlistTracks.length > 1 && (
@@ -16924,7 +16924,7 @@ ${afcMapContext}
                                 </button>
                                 <span className="text-zinc-600 font-sans">/</span>
                                 <div className="flex items-center gap-1.5 min-w-0 pr-1">
-                                    <span className="w-2 h-2 rounded-[2px] bg-blue-500 shrink-0 shadow-[0_0_6px_rgba(59,130,246,0.6)]" />
+                                    <span className="w-2 h-2 rounded-[2px] bg-accent shrink-0 shadow-[0_0_6px_rgba(var(--accent-rgb),0.6)]" />
                                     <span className="font-bold text-white text-xs tracking-tight truncate max-w-[130px]" title={currentBoardTitle}>
                                         {currentBoardTitle}
                                     </span>
@@ -20163,7 +20163,7 @@ ${afcMapContext}
                                             alert("Error exportando datos: " + e.message);
                                         }
                                     }}
-                                    className="w-full py-5 bg-blue-500/10 border border-blue-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-blue-500 hover:bg-blue-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
+                                    className="w-full py-5 bg-accent/10 border border-accent/25 rounded-[2rem] flex items-center justify-center gap-3 text-accent hover:bg-accent/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
                                 >
                                     <Save size={16} />
                                     Exportar Datos (Backup)
@@ -20188,7 +20188,7 @@ ${afcMapContext}
                                             }
                                         }
                                     }}
-                                    className="w-full py-5 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] flex items-center justify-center gap-3 text-emerald-500 hover:bg-emerald-500/20 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
+                                    className="w-full py-5 bg-accent/15 border border-accent/30 rounded-[2rem] flex items-center justify-center gap-3 text-accent hover:bg-accent/25 transition-all text-[10px] font-black uppercase tracking-[0.2em]"
                                 >
                                     <Download size={16} />
                                     Importar Datos (Restaurar)
