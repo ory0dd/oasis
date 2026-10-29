@@ -12396,9 +12396,11 @@ function OasisApp() {
 
     const handleAuth = async (username, password, fullName = "", age = null, role = "patient", clinicianId = "") => {
         setAuthError('');
+        const cleanUser = (username || '').trim().replace(/^@+/, '');
+        const cleanPass = (password || '').trim();
         const endpoint = isRegisterMode ? 'register' : 'login';
         try {
-            const reqBody = { Username: username, Password: password };
+            const reqBody = { Username: cleanUser, Password: cleanPass };
             if (isRegisterMode) {
                 reqBody.FullName = fullName;
                 reqBody.Age = age ? parseInt(age, 10) : null;
@@ -19322,16 +19324,17 @@ ${afcMapContext}
             }
             setAuthError("");
             try {
+                const cleanResetUser = (resetUsername || '').trim().replace(/^@+/, '');
                 const res = await fetch(`${API_URL}/api/oasis/reset-password-123`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Username: resetUsername, Password: newPwd })
+                    body: JSON.stringify({ Username: cleanResetUser, Password: newPwd })
                 });
                 const text = await res.text();
                 const data = text ? JSON.parse(text) : {};
                 if (res.ok) {
                     setResetPasswordMode(false);
-                    handleAuth(resetUsername, newPwd);
+                    handleAuth(cleanResetUser, newPwd);
                 } else {
                     setAuthError(data.msg || "Error al actualizar.");
                 }

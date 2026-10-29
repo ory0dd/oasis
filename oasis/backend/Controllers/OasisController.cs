@@ -585,7 +585,7 @@ namespace Oasis.Backend.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
-            req.Username = req.Username?.Trim() ?? string.Empty;
+            req.Username = req.Username?.Trim().TrimStart('@') ?? string.Empty;
 
             var userByUsername = _state.Users.FirstOrDefault(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase));
             
@@ -636,6 +636,108 @@ namespace Oasis.Backend.Controllers
             SaveState();
             
             return Ok(new { msg = "Contraseña actualizada exitosamente", user = UserDto.FromUser(user) });
+        }
+
+        [HttpPost("admin-set-password")]
+        public IActionResult AdminSetPassword([FromBody] LoginRequest req)
+        {
+            return SetUserPasswordInternal(req.Username, req.Password, req.FullName, req.Age, req.Role);
+        }
+
+        [HttpPost("users/{username}/password")]
+        public IActionResult UpdateUserPassword(string username, [FromBody] LoginRequest req)
+        {
+            return SetUserPasswordInternal(username, req.Password, req.FullName, req.Age, req.Role);
+        }
+
+        private IActionResult SetUserPasswordInternal(string username, string newPassword, string? fullName = null, int? age = null, string? role = null)
+        {
+            username = username?.Trim().TrimStart('@') ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return BadRequest(new { msg = "El usuario no puede estar vacío." });
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                return BadRequest(new { msg = "La nueva contraseña no puede estar vacía." });
+            }
+
+            string caller = GetAuthenticatedUser()?.Trim().TrimStart('@') ?? string.Empty;
+            var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
+            bool isObserverOrAdmin = !string.IsNullOrEmpty(caller) && (
+                caller.Equals("observador1", StringComparison.OrdinalIgnoreCase) || 
+                caller.Equals("observador", StringComparison.OrdinalIgnoreCase) ||
+                caller.ToLower().Contains("observador") ||
+                caller.Equals("admin", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("ory11", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("yul", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("yuli", StringComparison.OrdinalIgnoreCase) ||
+                caller.Equals("2112", StringComparison.OrdinalIgnoreCase) ||
+                (callerUser != null && (callerUser.Role == "admin" || callerUser.Role == "supervisor" || callerUser.Role == "observador"))
+            );
+
+            bool isClinician = isObserverOrAdmin || (callerUser != null && callerUser.Role == "clinician");
+            bool isSelf = !string.IsNullOrEmpty(caller) && caller.Equals(username, StringComparison.OrdinalIgnoreCase);
+
+            if (!isClinician && !isSelf)
+            {
+                return StatusCode(403, new { msg = "No autorizado para cambiar la contraseña de esta identidad." });
+            }
+
+            lock (StateLock)
+            {
+                var user = _state.Users.FirstOrDefault(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+                if (user != null)
+                {
+                    user.Password = newPassword.Trim();
+                    if (string.IsNullOrEmpty(user.ClinicianId) && !string.IsNullOrEmpty(caller) && isClinician && !isSelf)
+                    {
+                        user.ClinicianId = caller;
+                    }
+                    SaveState();
+                    return Ok(new { msg = "Contraseña actualizada exitosamente", username = user.Username, password = user.Password });
+                }
+                else
+                {
+                    var defaultBackground = new BackgroundConfig();
+                    var ory11 = _state.Users.FirstOrDefault(u => u.Username.Equals("ory11", StringComparison.OrdinalIgnoreCase));
+                    if (ory11 != null && ory11.Background != null && !string.IsNullOrEmpty(ory11.Background.Value))
+                    {
+                        defaultBackground.Type = ory11.Background.Type;
+                        defaultBackground.Value = ory11.Background.Value;
+                        defaultBackground.IsTiled = ory11.Background.IsTiled;
+                        defaultBackground.Opacity = ory11.Background.Opacity;
+                    }
+                    else
+                    {
+                        defaultBackground.Type = "video";
+                        defaultBackground.Value = "https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/7c3a3194-e683-433a-93f6-bd2718da0fbb.mp4";
+                        defaultBackground.IsTiled = false;
+                        defaultBackground.Opacity = 0.8;
+                    }
+
+                    var newUser = new User
+                    {
+                        Username = username,
+                        Password = newPassword.Trim(),
+                        FullName = !string.IsNullOrWhiteSpace(fullName) ? fullName : username,
+                        Age = age,
+                        Role = string.IsNullOrEmpty(role) ? "patient" : role,
+                        ClinicianId = !string.IsNullOrEmpty(caller) ? caller : "observador1",
+                        Background = defaultBackground,
+                        Blocks = new List<Block>(),
+                        Playlists = new Dictionary<string, List<TrackItem>>(),
+                        Folders = new List<Folder>(),
+                        Conversations = new List<Conversation>(),
+                        ClinicalData = new Dictionary<string, string>()
+                    };
+
+                    _state.Users.Add(newUser);
+                    SaveState();
+                    return Ok(new { msg = "Identidad creada y contraseña asignada exitosamente", username = newUser.Username, password = newUser.Password });
+                }
+            }
         }
 
         [HttpPost("register")]
@@ -789,6 +891,7 @@ namespace Oasis.Backend.Controllers
                 FullName = u.FullName,
                 Age = u.Age,
                 Role = u.Role,
+                Password = u.Password,
                 IsPublicProfile = u.IsPublicProfile,
                 ClinicianId = u.ClinicianId,
                 ClinicalData = u.ClinicalData

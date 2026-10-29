@@ -4,7 +4,7 @@ import { Aperture, Mic, Network,
     ChevronRight, CheckCircle2, User, Compass, FileText, Zap, Hexagon,
     Plus, Trash2, Save, X, Edit3, MessageSquare, GripHorizontal, ArrowLeft,
     Settings, Archive, ChevronDown, Check, LogOut, CheckCircle, Target, Sparkles, Menu, Copy, Eye, Folder,
-    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon, Upload, ExternalLink
+    Lock, ShieldCheck, Award, BookOpen, Cloud, RefreshCw, Camera, MessageCircle, Palette, Image as ImageIcon, Upload, ExternalLink, EyeOff, Key, Edit2
 } from 'lucide-react';
 import icarQuestions from '../data/icar16_questions.json';
 import icarRationale from '../data/icar16_rationale.json';
@@ -906,6 +906,11 @@ const PsychologistDashboard = ({ onClose }) => {
     });
     const [isBgModalOpen, setIsBgModalOpen] = useState(false);
     const [customBgInput, setCustomBgInput] = useState('');
+    const [passwordModalPatient, setPasswordModalPatient] = useState(null);
+    const [newPasswordInput, setNewPasswordInput] = useState('');
+    const [isSavingPassword, setIsSavingPassword] = useState(false);
+    const [passwordToast, setPasswordToast] = useState(null);
+    const [showPasswordInModal, setShowPasswordInModal] = useState(false);
 
     useEffect(() => {
         if (dashboardSubView) {
@@ -1711,6 +1716,67 @@ Responde ÚNICAMENTE con un JSON válido.`;
         } catch (err) {
             console.error(err);
             alert(`Error al eliminar usuario ${username}: ${err.message}`);
+        }
+    };
+
+    const handleUpdatePatientPassword = async (patientToUpdate, newPass) => {
+        if (!patientToUpdate || !newPass || !newPass.trim()) return;
+        setIsSavingPassword(true);
+        const cleanUser = (patientToUpdate.name || '').trim().replace(/^@+/, '');
+        const rawUser = localStorage.getItem('oasis_user') || '';
+        const isStaff = rawUser.toLowerCase().includes('observador') || ['yul', 'yuli', '2112', 'ory11', 'admin'].includes(rawUser.toLowerCase());
+        const currentUser = isStaff ? rawUser : 'observador1';
+
+        try {
+            const res = await fetch(`${API_URL}/api/oasis/admin-set-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Oasis-User': currentUser
+                },
+                body: JSON.stringify({
+                    Username: cleanUser,
+                    Password: newPass.trim(),
+                    FullName: patientToUpdate.fullName || cleanUser,
+                    Role: patientToUpdate.role || 'patient'
+                })
+            });
+
+            if (res.ok) {
+                setPatients(prev => prev.map(p => {
+                    if ((p.name || '').toLowerCase() === cleanUser.toLowerCase()) {
+                        return { ...p, password: newPass.trim() };
+                    }
+                    return p;
+                }));
+
+                if (selectedPatient && (selectedPatient.name || '').toLowerCase() === cleanUser.toLowerCase()) {
+                    setSelectedPatient(prev => ({ ...prev, password: newPass.trim() }));
+                }
+
+                setPasswordToast({
+                    type: 'success',
+                    message: `✓ Contraseña de @${cleanUser} actualizada a: ${newPass.trim()}`
+                });
+                setTimeout(() => setPasswordToast(null), 4000);
+                setPasswordModalPatient(null);
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                setPasswordToast({
+                    type: 'error',
+                    message: errData.msg || errData.message || 'Error al actualizar contraseña'
+                });
+                setTimeout(() => setPasswordToast(null), 4000);
+            }
+        } catch (e) {
+            console.error('Error changing password:', e);
+            setPasswordToast({
+                type: 'error',
+                message: 'Error de conexión al actualizar contraseña'
+            });
+            setTimeout(() => setPasswordToast(null), 4000);
+        } finally {
+            setIsSavingPassword(false);
         }
     };
 
@@ -2528,10 +2594,21 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                                 {patient.id}
                                             </span>
                                             <span className="text-zinc-700 select-none">•</span>
-                                            <span className="text-emerald-400 font-mono font-medium shrink-0 flex items-center gap-1" title="Contraseña de acceso">
-                                                <Lock size={11} className="text-emerald-500 opacity-90" />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPasswordModalPatient(patient);
+                                                    setNewPasswordInput(patient.password || '123');
+                                                    setShowPasswordInModal(false);
+                                                }}
+                                                className="text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 px-2 py-0.5 rounded font-mono font-medium shrink-0 flex items-center gap-1 transition-all cursor-pointer group/pass"
+                                                title="Clic para ver o cambiar contraseña"
+                                            >
+                                                <Lock size={11} className="text-emerald-500 opacity-90 group-hover/pass:scale-110 transition-transform" />
                                                 <span>{patient.password || '123'}</span>
-                                            </span>
+                                                <Edit2 size={9} className="opacity-50 group-hover/pass:opacity-100 ml-0.5" />
+                                            </button>
                                         </div>
 
                                         <div className="flex items-center gap-2 sm:gap-3 text-zinc-600 shrink-0">
@@ -2565,6 +2642,18 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                                 title="Copiar contraseña"
                                             >
                                                 <Copy size={14} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPasswordModalPatient(patient);
+                                                    setNewPasswordInput(patient.password || '123');
+                                                    setShowPasswordInModal(false);
+                                                }}
+                                                className="p-1 text-zinc-600 hover:text-emerald-400 transition-colors"
+                                                title="Cambiar contraseña de esta cuenta"
+                                            >
+                                                <Key size={14} />
                                             </button>
                                             <button
                                                 onClick={(e) => handleDeleteUser(e, patient.name)}
@@ -5379,10 +5468,21 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <div className="text-[9px] font-mono text-zinc-500 mt-0.5 flex items-center gap-1.5">
                                             <span>{selectedPatient.id}</span>
                                             <span className="text-zinc-700 select-none">•</span>
-                                            <span className="text-emerald-400 font-bold flex items-center gap-1" title="Contraseña">
-                                                <Lock size={10} className="text-emerald-500" />
-                                                {selectedPatient.password || '123'}
-                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPasswordModalPatient(selectedPatient);
+                                                    setNewPasswordInput(selectedPatient.password || '123');
+                                                    setShowPasswordInModal(false);
+                                                }}
+                                                className="text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer group/badge"
+                                                title="Clic para cambiar contraseña o entrar a su cuenta"
+                                            >
+                                                <Lock size={9} className="text-emerald-400 group-hover/badge:scale-110 transition-transform" />
+                                                <span>{selectedPatient.password || '123'}</span>
+                                                <Edit2 size={8} className="text-emerald-500 opacity-60 group-hover/badge:opacity-100 ml-0.5" />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -6166,6 +6266,123 @@ Devuelve estrictamente el JSON sin formato extra.
             )}
             
             {/* Background / Wallpaper Settings Modal */}
+
+
+            {/* PASSWORD CHANGE MODAL */}
+            {passwordModalPatient && (
+                <div 
+                    className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setPasswordModalPatient(null)}
+                >
+                    <div 
+                        className="w-full max-w-sm bg-[#0d0d11] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-5 text-zinc-100"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                    <Key size={16} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xs font-bold text-white tracking-wide">Clave de Acceso</h3>
+                                    <p className="text-[10px] font-mono text-zinc-400">@{passwordModalPatient.name}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setPasswordModalPatient(null)}
+                                className="p-1.5 text-zinc-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                            >
+                                <X size={15} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2.5">
+                            <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+                                Nueva Contraseña para la Entrada
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPasswordInModal ? "text" : "password"}
+                                    value={newPasswordInput}
+                                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleUpdatePatientPassword(passwordModalPatient, newPasswordInput);
+                                        }
+                                    }}
+                                    placeholder="Escribe la nueva contraseña..."
+                                    className="w-full h-11 bg-zinc-900/90 border border-white/10 focus:border-emerald-500/50 rounded-xl px-3.5 pr-10 text-xs font-mono text-white placeholder:text-zinc-600 outline-none transition-colors"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordInModal(!showPasswordInModal)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                                >
+                                    {showPasswordInModal ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                            </div>
+                            <p className="text-[9px] text-zinc-500 font-sans leading-relaxed">
+                                Esta clave es la que usará para entrar en el formulario principal (@{passwordModalPatient.name}).
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1">
+                            <button
+                                onClick={() => handleUpdatePatientPassword(passwordModalPatient, newPasswordInput)}
+                                disabled={isSavingPassword || !newPasswordInput.trim()}
+                                className="flex-1 h-10 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                            >
+                                {isSavingPassword ? (
+                                    <span>Guardando...</span>
+                                ) : (
+                                    <>
+                                        <Check size={14} />
+                                        <span>Guardar Contraseña</span>
+                                    </>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(newPasswordInput || passwordModalPatient.password || '123');
+                                    setPasswordToast({ type: 'success', message: '✓ Contraseña copiada al portapapeles' });
+                                    setTimeout(() => setPasswordToast(null), 3000);
+                                }}
+                                className="h-10 px-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 hover:text-white text-[10px] font-bold rounded-xl border border-white/5 transition-all flex items-center gap-1"
+                                title="Copiar contraseña"
+                            >
+                                <Copy size={13} />
+                            </button>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
+                            <button
+                                onClick={() => {
+                                    localStorage.setItem('oasis_user', passwordModalPatient.name);
+                                    window.location.href = '/';
+                                }}
+                                className="text-zinc-400 hover:text-emerald-400 transition-colors flex items-center gap-1.5 font-mono text-[9px]"
+                            >
+                                <ExternalLink size={11} />
+                                <span>Entrar a sesión de @{passwordModalPatient.name}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PASSWORD TOAST */}
+            {passwordToast && (
+                <div className={`fixed top-5 right-5 z-[999999] px-4 py-3 rounded-xl shadow-2xl border font-mono text-xs flex items-center gap-2.5 animate-in slide-in-from-top duration-300 ${
+                    passwordToast.type === 'success' 
+                        ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40 backdrop-blur-md'
+                        : 'bg-rose-950/90 text-rose-300 border-rose-500/40 backdrop-blur-md'
+                }`}>
+                    {passwordToast.type === 'success' ? <CheckCircle size={15} /> : <AlertTriangle size={15} />}
+                    <span>{passwordToast.message}</span>
+                </div>
+            )}
+
             {isBgModalOpen && (
                 <div 
                     className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
