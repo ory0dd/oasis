@@ -774,6 +774,19 @@ const smartMergeBlocks = (serverBlocks, username) => {
                 }
             }
 
+            // Preserve sub_board cover and image
+            if (serverBlock.type === 'sub_board' || localBlock.type === 'sub_board') {
+                const coverVal = serverBlock.cover || localBlock.cover || serverBlock.image || localBlock.image || mergedMeta.cover || mergedMeta.thumbnail || '/covers/pixel_lamb.png';
+                if (coverVal) {
+                    serverBlock.cover = coverVal;
+                    serverBlock.image = coverVal;
+                    localBlock.cover = coverVal;
+                    localBlock.image = coverVal;
+                    mergedMeta.cover = coverVal;
+                    mergedMeta.thumbnail = coverVal;
+                }
+            }
+
             serverBlock.metadata = mergedMeta;
             if (localBlock.metadata) {
                 localBlock.metadata = { ...localBlock.metadata, ...mergedMeta };
@@ -4171,12 +4184,57 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         const boardPalette = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#366354'];
                         const boardColor = block.color && block.color !== '#bef264' ? block.color : '#3b82f6';
                         const childCount = (blocks || []).filter(b => b.canvasId === block.id).length;
+                        const boardImage = block.cover || block.image || block.thumbnail || block.metadata?.cover || block.metadata?.thumbnail || (block.content && (block.content.startsWith('http') || block.content.startsWith('/')) ? block.content : null) || '/covers/pixel_lamb.png';
 
                         return (
                             <div className="flex-1 w-full h-full flex flex-col items-center justify-center select-none group/board relative">
-                                {/* BLOQUE / ICONO CENTRAL DE TABLERO (ESTÉTICA PORTAL / MILANOTE) */}
+                                {/* BLOQUE / ICONO CENTRAL DE TABLERO (PORTADA PIXEL ART) */}
                                 <div className="relative mb-2.5">
-                                    {/* Botón flotante para cambiar el color del tablero */}
+                                    {/* Botón flotante para subir / cambiar imagen de portada */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const fileInput = document.createElement('input');
+                                            fileInput.type = 'file';
+                                            fileInput.accept = 'image/*';
+                                            fileInput.onchange = async (ev) => {
+                                                const file = ev.target.files?.[0];
+                                                if (file) {
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    try {
+                                                        const res = await fetch(`${API_URL}/api/oasis/upload`, {
+                                                            method: 'POST',
+                                                            body: formData
+                                                        });
+                                                        if (res.ok) {
+                                                            const data = await res.json();
+                                                            const url = data.url;
+                                                            if (onUpdateBlock) {
+                                                                onUpdateBlock({
+                                                                    ...block,
+                                                                    cover: url,
+                                                                    image: url,
+                                                                    metadata: { ...(block.metadata || {}), cover: url, thumbnail: url }
+                                                                });
+                                                            }
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Error subiendo portada de tablero:", err);
+                                                    }
+                                                }
+                                            };
+                                            fileInput.click();
+                                        }}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -left-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-300 hover:text-white hover:scale-110 transition-all shadow-lg cursor-pointer"
+                                        title="Cambiar imagen de portada"
+                                    >
+                                        <ImageIcon size={11} />
+                                    </button>
+
+                                    {/* Botón flotante para cambiar el color de acento del tablero */}
                                     <button
                                         type="button"
                                         onClick={(e) => {
@@ -4188,10 +4246,10 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             }
                                         }}
                                         onMouseDown={(e) => e.stopPropagation()}
-                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -left-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-300 hover:text-white hover:scale-110 transition-all shadow-lg"
-                                        title="Cambiar color del tablero"
+                                        className="opacity-0 group-hover/board:opacity-100 absolute -bottom-2 -left-2 z-20 w-5 h-5 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-300 hover:text-white hover:scale-110 transition-all shadow-lg cursor-pointer"
+                                        title="Color de acento"
                                     >
-                                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: boardColor }} />
+                                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: boardColor }} />
                                     </button>
 
                                     {/* Botón flotante para eliminar el tablero */}
@@ -4202,43 +4260,59 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             setShowDeleteConfirm(true);
                                         }}
                                         onMouseDown={(e) => e.stopPropagation()}
-                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-400 hover:text-red-400 hover:scale-110 transition-all shadow-lg"
+                                        className="opacity-0 group-hover/board:opacity-100 absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-[#121316]/95 border border-white/15 flex items-center justify-center text-zinc-400 hover:text-red-400 hover:scale-110 transition-all shadow-lg cursor-pointer"
                                         title="Eliminar tablero"
                                     >
                                         <X size={12} />
                                     </button>
 
-                                    {/* Squircle Principal del Tablero */}
-                                    <div onClick={(e) => { const dist = Math.hypot(e.clientX - mouseDownPos.current.x, e.clientY - mouseDownPos.current.y); if (dist < 6) { e.stopPropagation(); if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero'); } }} className="w-[84px] h-[84px] rounded-[24px] flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover/board:-translate-y-1 group-hover/board:scale-[1.04] active:scale-95 border border-white/20"
+                                    {/* Squircle Principal del Tablero con la imagen pixelada */}
+                                    <div
+                                        onClick={(e) => {
+                                            const dist = Math.hypot(e.clientX - mouseDownPos.current.x, e.clientY - mouseDownPos.current.y);
+                                            if (dist < 6) {
+                                                e.stopPropagation();
+                                                if (onOpenSubBoard) onOpenSubBoard(block.id, block.caption || 'Nuevo Tablero');
+                                            }
+                                        }}
+                                        className="w-[84px] h-[84px] rounded-[24px] flex items-center justify-center relative overflow-hidden transition-all duration-300 group-hover/board:-translate-y-1 group-hover/board:scale-[1.04] active:scale-95 border border-white/20 shadow-[0_16px_36px_-8px_rgba(0,0,0,0.6)] cursor-pointer bg-zinc-900"
                                         style={{
-                                            backgroundColor: boardColor,
-                                            boxShadow: `0 16px 36px -8px ${boardColor}66, inset 0 1px 1px rgba(255,255,255,0.35)`
+                                            boxShadow: `0 16px 36px -8px rgba(0,0,0,0.65), 0 0 0 1px ${boardColor}40`
                                         }}
                                         title="Abrir tablero"
                                     >
-                                        {/* Brillo sutil diagonal */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/25 pointer-events-none" />
-
-                                        {/* Tarjeta trasera inclinada (efecto de profundidad/capas) */}
-                                        <div className="absolute w-[38px] h-[44px] rounded-[9px] bg-white/25 -rotate-6 -translate-x-1 -translate-y-0.5 transition-transform duration-300 group-hover/board:-rotate-12 group-hover/board:-translate-x-1.5" />
-
-                                        {/* Mini-lienzo interior (inspirado en Milanote pero con mini-retícula Oasis) */}
-                                        <div className="relative w-[40px] h-[46px] rounded-[10px] bg-white shadow-[0_6px_16px_rgba(0,0,0,0.28)] flex flex-col overflow-hidden transition-transform duration-300 group-hover/board:scale-105">
-                                            <div className="flex-1 p-1.5 grid grid-cols-2 gap-1 bg-white">
-                                                <div className="rounded-[3px] bg-zinc-200/90" />
-                                                <div className="rounded-[3px]" style={{ backgroundColor: `${boardColor}30` }} />
-                                                <div className="col-span-2 rounded-[3px] bg-zinc-100" />
-                                            </div>
-                                            <div
-                                                className="h-3 w-full flex items-center justify-center"
-                                                style={{ backgroundColor: `${boardColor}45` }}
-                                            >
-                                                <div
-                                                    className="w-3.5 h-1 rounded-full"
-                                                    style={{ backgroundColor: boardColor }}
+                                        {boardImage ? (
+                                            <>
+                                                <img
+                                                    src={boardImage}
+                                                    alt={block.caption || 'Tablero'}
+                                                    className="w-full h-full object-cover rounded-[24px] pointer-events-none select-none"
+                                                    style={{ imageRendering: 'pixelated' }}
                                                 />
-                                            </div>
-                                        </div>
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/15 pointer-events-none rounded-[24px]" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/25 pointer-events-none" />
+                                                <div className="absolute w-[38px] h-[44px] rounded-[9px] bg-white/25 -rotate-6 -translate-x-1 -translate-y-0.5 transition-transform duration-300 group-hover/board:-rotate-12 group-hover/board:-translate-x-1.5" />
+                                                <div className="relative w-[40px] h-[46px] rounded-[10px] bg-white shadow-[0_6px_16px_rgba(0,0,0,0.28)] flex flex-col overflow-hidden transition-transform duration-300 group-hover/board:scale-105">
+                                                    <div className="flex-1 p-1.5 grid grid-cols-2 gap-1 bg-white">
+                                                        <div className="rounded-[3px] bg-zinc-200/90" />
+                                                        <div className="rounded-[3px]" style={{ backgroundColor: `${boardColor}30` }} />
+                                                        <div className="col-span-2 rounded-[3px] bg-zinc-100" />
+                                                    </div>
+                                                    <div
+                                                        className="h-3 w-full flex items-center justify-center"
+                                                        style={{ backgroundColor: `${boardColor}45` }}
+                                                    >
+                                                        <div
+                                                            className="w-3.5 h-1 rounded-full"
+                                                            style={{ backgroundColor: boardColor }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
@@ -11915,12 +11989,18 @@ function OasisApp() {
                 }
                 if (linksRes.ok) {
                     const data = await linksRes.json();
-                    if (data) {
-                        setLinks(data);
-                        localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(data));
+                    if (Array.isArray(data) && data.length > 0) {
+                        setLinks(prev => {
+                            const linkMap = new Map();
+                            data.forEach(l => { if (l && l.from && l.to) linkMap.set(`${l.from}->${l.to}`, l); });
+                            (prev || []).forEach(l => { if (l && l.from && l.to && !linkMap.has(`${l.from}->${l.to}`)) linkMap.set(`${l.from}->${l.to}`, l); });
+                            const merged = Array.from(linkMap.values());
+                            localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(merged));
+                            return merged;
+                        });
                     }
                 }
-            } catch (_) { /* offline â€” ignorar */ }
+            } catch (_) { /* offline — ignorar */ }
         };
 
         const handleVisibility = () => {
@@ -12190,19 +12270,26 @@ function OasisApp() {
 
     const syncLinks = (newLinks) => {
         if (!isLoggedIn || !user || !isDataLoaded) return;
+        lastLocalSaveRef.current = Date.now();
         localStorage.setItem('oasis_canvas_edges_' + user, JSON.stringify(newLinks));
         console.log(`[Oasis] Sincronizando ${newLinks.length} vínculos para ${user}...`);
         if (window.syncLinksTimeout) clearTimeout(window.syncLinksTimeout);
         window.syncLinksTimeout = setTimeout(() => {
             fetch(`${API_URL}/api/oasis/links?user=${user}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user },
                 body: JSON.stringify(newLinks)
             }).then(res => {
                 if (res.ok) console.log(`[Oasis] Sincronización de vínculos exitosa.`);
                 else console.error(`[Oasis] Error de sincronización: ${res.status}`);
             });
-        }, 2500);
+            // Respaldo secundario en clinical-data para máxima persistencia
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${user}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user },
+                body: JSON.stringify({ [`oasis_canvas_edges_${user}`]: JSON.stringify(newLinks) })
+            }).catch(() => {});
+        }, 1000);
     };
 
     // Auto-purge any legacy insight blocks and their links
@@ -12452,6 +12539,7 @@ function OasisApp() {
                 setUser(userData.username);
                 setIsLoggedIn(true);
 
+                let filteredBlocks = [];
                 window.isDownloadingClinicalData = true;
                 try {
                     localStorage.setItem('oasis_user', userData.username);
@@ -12477,7 +12565,7 @@ function OasisApp() {
 
                     // Load user data immediately
                     const serverBlocks = (userData.blocks || []).filter(b => b.type !== 'diary' && b.type !== 'diary_notebook' && (!b.entries || b.entries.length === 0));
-                    const filteredBlocks = serverBlocks.filter(b => b.type !== 'insight');
+                    filteredBlocks = serverBlocks.filter(b => b.type !== 'insight');
 
                     let shouldOpenSoul = false; // No forzar soul en login ni registro libre
                     try {
@@ -12491,15 +12579,24 @@ function OasisApp() {
                     window.isDownloadingClinicalData = false;
                 }
 
-                const serverLinks = userData.links || [];
-                const filteredLinks = serverLinks.filter(l =>
+                const serverLinks = Array.isArray(userData.links) ? userData.links : [];
+                let localEdges = [];
+                try {
+                    localEdges = JSON.parse(localStorage.getItem('oasis_canvas_edges_' + userData.username) || '[]');
+                } catch (_) {}
+                const edgeMap = new Map();
+                serverLinks.forEach(l => { if (l && l.from && l.to) edgeMap.set(`${l.from}->${l.to}`, l); });
+                (Array.isArray(localEdges) ? localEdges : []).forEach(l => { if (l && l.from && l.to && !edgeMap.has(`${l.from}->${l.to}`)) edgeMap.set(`${l.from}->${l.to}`, l); });
+                const allEdges = Array.from(edgeMap.values());
+
+                const filteredLinks = allEdges.filter(l =>
                     filteredBlocks.some(b => b.id === l.from) &&
                     filteredBlocks.some(b => b.id === l.to)
                 );
                 if (filteredLinks.length !== serverLinks.length) {
                     fetch(`${API_URL}/api/oasis/links?user=${userData.username}`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': userData.username },
                         body: JSON.stringify(filteredLinks)
                     });
                 }
@@ -16659,6 +16756,8 @@ ${afcMapContext}
                                         type: 'sub_board',
                                         caption: 'Nuevo Tablero',
                                         color: '#3b82f6',
+                                        cover: '/covers/pixel_lamb.png',
+                                        image: '/covers/pixel_lamb.png',
                                         content: '',
                                         x: (-cam.x / cam.scale) + jitterX,
                                         y: (-cam.y / cam.scale) + jitterY,
