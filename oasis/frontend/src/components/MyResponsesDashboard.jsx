@@ -1822,14 +1822,91 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
     }, [user]);
 
     
-    const generateDynamicTraits = async () => {
+    const buildMapSummaryAndFallbackFirma = useCallback((targetAfc = null) => {
+        let mapObj = targetAfc || afcData;
+        if (!mapObj || !Array.isArray(mapObj.nodes) || mapObj.nodes.length === 0) {
+            try {
+                const rawMap = getLocalItemCaseInsensitive('oasis_afc_real_data', user);
+                if (rawMap) mapObj = JSON.parse(rawMap);
+            } catch (_) {}
+        }
+
+        const nodes = Array.isArray(mapObj?.nodes) ? mapObj.nodes : [];
+        const byRole = (roleList) => nodes.filter(n => n && (roleList.includes(n.type) || roleList.includes(n.clinical_role)));
+        const cleanLbl = (n) => (n?.label || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+
+        const histNodes = byRole(['historical', 'social', 'context']);
+        const antNodes = byRole(['antecedent']);
+        const cogNodes = byRole(['cognitive']);
+        const physNodes = byRole(['physiological', 'biological']);
+        const motNodes = byRole(['motor']);
+        const consNodes = byRole(['consequence']);
+        const funcNodes = byRole(['function']);
+        const moldedNodes = nodes.filter(n => n && (n.is_corrected || n.molded_note));
+
+        const topHist = cleanLbl(histNodes[0]) || 'las huellas de mi historia';
+        const topAnt = cleanLbl(antNodes[0]) || 'la presión de mi entorno';
+        const topCog = cleanLbl(cogNodes[0]) || 'el ruido de mis pensamientos';
+        const topPhys = cleanLbl(physNodes[0]) || 'la tensión que guarda mi cuerpo';
+        const topMot = cleanLbl(motNodes[0]) || 'mis mecanismos de resguardo';
+        const topCons = cleanLbl(consNodes[0]) || 'la pausa tras el desgaste';
+        const topFunc = cleanLbl(funcNodes[0]) || 'cuidar lo que más me importa';
+
+        const moldedSummary = moldedNodes
+            .map(n => `${cleanLbl(n)}${n.molded_note ? ` ("${n.molded_note}")` : ''}`)
+            .slice(0, 5)
+            .join('; ');
+
+        const mapTopologySummary = nodes.length > 0 ? [
+            `- Nodos de Historia y Contexto: ${histNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Detonantes del Mapa: ${antNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Eventos Privados (Cognitivos): ${cogNodes.map(cleanLbl).filter(Boolean).slice(0, 8).join(', ') || 'N/A'}`,
+            `- Respuestas Corporales/Fisiológicas: ${physNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Conductas y Respuestas Operantes: ${motNodes.map(cleanLbl).filter(Boolean).slice(0, 7).join(', ') || 'N/A'}`,
+            `- Consecuencias en el Bucle: ${consNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Función Nuclear del Bucle: ${funcNodes.map(cleanLbl).filter(Boolean).slice(0, 5).join(', ') || 'N/A'}`,
+            moldedSummary ? `- Aclaraciones Reales Moldeadas en el Mapa: ${moldedSummary}` : '',
+            mapObj?.hypotheses?.mantenimiento ? `- Hipótesis de Mantenimiento del Mapa: ${mapObj.hypotheses.mantenimiento}` : '',
+            mapObj?.hypotheses?.solucion ? `- Hipótesis de Salida del Mapa: ${mapObj.hypotheses.solucion}` : '',
+            mapObj?.explicacion_sencilla ? `- Síntesis del Bucle: ${mapObj.explicacion_sencilla}` : ''
+        ].filter(Boolean).join('\n') : 'Mapa funcional en construcción.';
+
+        const fallbackSintesis = mapObj?.firma_resonancia?.sintesis ||
+            `Habito entre ${topHist.toLowerCase()} y el impulso de responder ante ${topAnt.toLowerCase()}; cuando aparece ${topCog.toLowerCase()} y siento ${topPhys.toLowerCase()}, a veces recurro a ${topMot.toLowerCase()} para protegerme, aunque me deje en ${topCons.toLowerCase()}, porque en el fondo solo busco ${topFunc.toLowerCase()} con mayor calma y verdad.`;
+
+        const fallbackTraits = {
+            sintesis: fallbackSintesis,
+            proceso: fallbackSintesis,
+            habitar: mapObj?.firma_resonancia?.habitar || `Mi cuerpo registra ${topPhys.toLowerCase()} mientras mi mente navega ${topCog.toLowerCase()}.`,
+            vinculo: mapObj?.firma_resonancia?.vinculo || `Me resguardo mediante ${topMot.toLowerCase()} cuando siento ${topAnt.toLowerCase()}.`,
+            busqueda: mapObj?.firma_resonancia?.busqueda || `Transformar ${topCons.toLowerCase()} en un camino fiel hacia ${topFunc.toLowerCase()}.`,
+            keywords: mapObj?.firma_resonancia?.keywords || [
+                cleanLbl(cogNodes[0]) || 'Lucidez',
+                cleanLbl(motNodes[0]) || 'Resguardo',
+                cleanLbl(funcNodes[0]) || 'Autenticidad'
+            ].map(k => k.split(' ').slice(0, 2).join(' '))
+        };
+
+        return { mapTopologySummary, fallbackTraits, hasMapNodes: nodes.length > 0 };
+    }, [afcData, user]);
+
+    const generateDynamicTraits = async (fromMapAction = false) => {
         setIsGeneratingDynamicTraits(true);
         let aiContent = "";
+        const { mapTopologySummary, fallbackTraits, hasMapNodes } = buildMapSummaryAndFallbackFirma();
+
         try {
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
-            if (!activeKey) {
-                activeKey = (localStorage.getItem('oasis_deepseek_key') || '');
-                if (activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") || activeKey.includes("VAR>")) activeKey = '';
+            if (activeKey && (
+                activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") ||
+                activeKey.includes("VAR>") ||
+                activeKey.includes("7c7e257ac179439185c9deeff48d11f0") ||
+                activeKey.includes("6cf43dc93") ||
+                activeKey.includes("qw12") ||
+                activeKey.includes("YOUR_DEEPSEEK_KEY") ||
+                activeKey.includes("ESCRIBE_AQUI")
+            )) {
+                activeKey = '';
             }
 
             const rawPID = pidIndices?.raw || {};
@@ -1840,14 +1917,20 @@ const MyResponsesDashboard = ({ user, onClose, accent = '#a855f7', conversations
             let userResponsesText = "Respuestas del usuario no encontradas.";
             if (typeof phenomData !== 'undefined' && phenomData) {
                 userResponsesText = Object.entries(phenomData)
-                    .map(([qId, r]) => {
-                        return `Pregunta: ${qId}\nRespuesta: ${r}`;
-                    })
+                    .map(([qId, r]) => `Pregunta: ${qId}\nRespuesta: ${r}`)
                     .join('\n\n');
             }
 
+            let bioResponsesText = "";
+            if (typeof bioData !== 'undefined' && bioData) {
+                bioResponsesText = Object.entries(bioData)
+                    .map(([qId, r]) => `Bio ${qId}: ${r}`)
+                    .slice(0, 12)
+                    .join('\n');
+            }
+
             const prompt = `
-Eres un analista clínico experto. Tu tarea es analizar los datos psicométricos y la historia del paciente para generar descripciones clínicas profundas y detalladas de sus malestares y rasgos de personalidad (PID-5).
+Eres un analista clínico experto. Tu tarea es analizar EL MAPA FUNCIONAL DEL PACIENTE (sus nodos, bucles, detonantes, pensamientos, respuestas corporales, conductas y función), junto con sus datos psicométricos y su historia, para generar su "Firma de Resonancia Existencial" y el desglose clínico.
 Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "malestarCognitivo": Análisis profundo del malestar cognitivo (Dudas, rumiación, autocrítica).
 - "malestarMotor": Análisis profundo del malestar motor (Evitaciones, conductas de escape).
@@ -1857,20 +1940,27 @@ Debes devolver ÚNICAMENTE un objeto JSON válido con las siguientes claves:
 - "pidAsertividad": Análisis profundo de su Asertividad (Antagonismo).
 - "pidRitmo": Análisis profundo de su Ritmo (Desinhibición).
 - "pidSingularidad": Análisis profundo de su Singularidad (Psicoticismo).
-- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial". Debe usar un lenguaje hermosamente literario y empático, pero ESTRICTAMENTE ANCLADO EN LA VERDAD DE SU HISTORIA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su dolor en una metáfora literaria sin perder el sentido de quién es (no lo hagas tan abstracto que pierda conexión con su vida real). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su alma. Enfócate en la belleza de su tensión interna y sus anhelos más profundos. Debe ser UN SOLO PÁRRAFO con una longitud visual de aproximadamente 5 renglones. Estructura estricta:
+- "publicTraits": Un objeto JSON que represente su "Firma de Resonancia Existencial" extraída DIRECTAMENTE DE LA INFORMACIÓN DE SU MAPA FUNCIONAL. Debe usar un lenguaje hermosamente literario y empático, pero ESTRICTAMENTE ANCLADO EN LOS NODOS REALES DE SU MAPA Y LA VERDAD DE SU HISTORIA (sus detonantes, lo que siente en mente/cuerpo, cómo intenta protegerse en su bucle y qué anhela en el fondo). Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi'), como si el paciente mismo estuviera verbalizando el fondo de su mapa interior. Debe ser UN SOLO PÁRRAFO con una longitud visual de aproximadamente 4 a 5 renglones. Estructura estricta:
   {
-     "sintesis": "Párrafo poético, cálido y profundo anclado en su historia real (aprox 5 líneas).",
+     "sintesis": "Párrafo poético, cálido y profundo en primera persona anclado directamente en los nodos y bucles de su mapa (aprox 4-5 líneas).",
+     "habitar": "Cómo habito mi cuerpo y mi mente según mi mapa (máx 14 palabras).",
+     "vinculo": "Cómo me vinculo o me protejo frente a los demás según mi mapa (máx 14 palabras).",
+     "busqueda": "Mi búsqueda existencial y la función de fondo en mi mapa (máx 14 palabras).",
      "keywords": ["Palabra1", "Palabra2", "Palabra3"]
   }
 
-DATOS DEL PACIENTE:
+INFORMACIÓN DEL MAPA FUNCIONAL DEL PACIENTE (FUENTE PRINCIPAL DE LA FIRMA):
+${mapTopologySummary}
+
+DATOS PSICOMÉTRICOS DEL PACIENTE:
 - Malestar Motor Bruto: ${rawM}
 - Malestar Cognitivo Bruto: ${rawC}
 - Malestar Fisiológico/Somático Bruto: ${rawS}
 - Rasgos PID-5 en bruto: ${JSON.stringify(rawPID)}
 
-RESPUESTAS EXISTENCIALES:
+RESPUESTAS EXISTENCIALES Y BIOGRÁFICAS:
 ${userResponsesText}
+${bioResponsesText}
 `;
 
             const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
@@ -1892,21 +1982,19 @@ ${userResponsesText}
             if (!res.ok) throw new Error("Network response was not ok");
             
             const data = await res.json();
-            aiContent = data.choices[0].message.content;
+            aiContent = data.choices?.[0]?.message?.content || data.content || "";
             
             const parsedContent = safeJSONParse(aiContent);
             
-            // LLMs sometimes nest things unexpectedly, search deeply for habitar
+            // LLMs sometimes nest things unexpectedly, search deeply for habitar/sintesis
             let pTraits = parsedContent.publicTraits || parsedContent.PublicTraits;
             if (!pTraits && parsedContent.FirmaDeResonancia) pTraits = parsedContent.FirmaDeResonancia;
             if (!pTraits && parsedContent["Firma de Resonancia Existencial"]) pTraits = parsedContent["Firma de Resonancia Existencial"];
             
-            // If still not found, check if it's flat on the root object
             if (!pTraits && (parsedContent.sintesis || parsedContent.Sintesis || parsedContent.habitar || parsedContent.Habitar)) {
                 pTraits = parsedContent;
             }
 
-            // If still not found, let's search all values in case it nested it deeper
             if (!pTraits || (typeof pTraits === 'object' && !pTraits.sintesis && !pTraits.Sintesis && !pTraits.habitar && !pTraits.Habitar)) {
                 for (const key in parsedContent) {
                     const val = parsedContent[key];
@@ -1917,40 +2005,51 @@ ${userResponsesText}
                 }
             }
 
-            if (pTraits) {
-                // Ensure keys are lowercase before saving
-                const normalizedTraits = {
-                    sintesis: pTraits.sintesis || pTraits.Sintesis || '',
-                    habitar: pTraits.habitar || pTraits.Habitar || '',
-                    vinculo: pTraits.vinculo || pTraits.Vinculo || pTraits.vínculo || pTraits.Vínculo || '',
-                    busqueda: pTraits.busqueda || pTraits.Busqueda || pTraits.búsqueda || pTraits.Búsqueda || '',
-                    keywords: pTraits.keywords || pTraits.Keywords || []
-                };
-                setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
-                
-                // Add to clinical report view
-                parsedContent["Firma de Resonancia"] = normalizedTraits.sintesis ? 
-                    `Síntesis Existencial: ${normalizedTraits.sintesis}` :
-                    `Habitar: ${normalizedTraits.habitar}\n` +
-                    `Vínculo: ${normalizedTraits.vinculo}\n` +
-                    `Búsqueda: ${normalizedTraits.busqueda}\n` +
-                    `Palabras clave: ${(normalizedTraits.keywords || []).join(', ')}`;
-                
-                delete parsedContent.publicTraits;
-                delete parsedContent.PublicTraits;
-            } else {
-                console.warn("Firma de resonancia no encontrada en formato esperado.");
-                parsedContent["Firma de Resonancia (Aviso)"] = "La IA estructuró parcialmente la firma existencial.";
+            const sintesisFinal = (pTraits?.sintesis || pTraits?.Sintesis || fallbackTraits.sintesis || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+            const normalizedTraits = {
+                sintesis: sintesisFinal,
+                proceso: sintesisFinal,
+                habitar: pTraits?.habitar || pTraits?.Habitar || fallbackTraits.habitar || '',
+                vinculo: pTraits?.vinculo || pTraits?.Vinculo || pTraits?.vínculo || pTraits?.Vínculo || fallbackTraits.vinculo || '',
+                busqueda: pTraits?.busqueda || pTraits?.Busqueda || pTraits?.búsqueda || pTraits?.Búsqueda || fallbackTraits.busqueda || '',
+                keywords: pTraits?.keywords || pTraits?.Keywords || fallbackTraits.keywords || []
+            };
+
+            setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(normalizedTraits));
+            if (sintesisFinal) {
+                setLocalItem(`oasis_custom_firma_${user}`, sintesisFinal);
             }
+
+            parsedContent["Firma de Resonancia"] = normalizedTraits.sintesis ? 
+                `Síntesis Existencial: ${normalizedTraits.sintesis}` :
+                `Habitar: ${normalizedTraits.habitar}\n` +
+                `Vínculo: ${normalizedTraits.vinculo}\n` +
+                `Búsqueda: ${normalizedTraits.busqueda}\n` +
+                `Palabras clave: ${(normalizedTraits.keywords || []).join(', ')}`;
+            
+            delete parsedContent.publicTraits;
+            delete parsedContent.PublicTraits;
+
             handleTreatmentPlanChange('dynamicTraits', parsedContent);
+            if (fromMapAction) {
+                setInsightActionToast("✨ Firma existencial generada con la información de tu mapa y sincronizada en tu perfil.");
+            }
         } catch (e) {
-            console.error("Error en generateDynamicTraits:", e);
-            // Salvage the raw text and show it in the dashboard so it's not lost
+            console.error("Error en generateDynamicTraits, aplicando síntesis directa de los nodos del mapa:", e);
+            setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(fallbackTraits));
+            if (fallbackTraits.sintesis) {
+                setLocalItem(`oasis_custom_firma_${user}`, fallbackTraits.sintesis);
+            }
             const fallbackContent = {
-                "Error de Estructura": "La IA no devolvió el formato JSON válido que se le pidió. A continuación se muestra lo que respondió:",
-                "Respuesta Cruda": aiContent ? aiContent : "Datos no disponibles."
+                ...(treatmentPlan?.dynamicTraits || {}),
+                "Firma de Resonancia": `Síntesis Existencial: ${fallbackTraits.sintesis}`
             };
             handleTreatmentPlanChange('dynamicTraits', fallbackContent);
+            if (fromMapAction) {
+                setInsightActionToast(hasMapNodes
+                    ? "✨ Firma existencial sintetizada desde los nodos de tu mapa y actualizada en tu perfil."
+                    : "✨ Firma existencial actualizada en tu perfil.");
+            }
         } finally {
             setIsGeneratingDynamicTraits(false);
         }
@@ -5193,18 +5292,26 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
 
     const generateFallbackInsightsFromTopology = (topology, clinicalContext = '', currentUser = '') => {
         const nodes = topology?.nodes || [];
-        const cognitiveNodes = nodes.filter(n => n.type === 'cognitive');
-        const motorNodes = nodes.filter(n => n.type === 'motor');
-        const consequenceNodes = nodes.filter(n => n.type === 'consequence');
-        const historicalNodes = nodes.filter(n => n.type === 'historical');
+        const cognitiveNodes = nodes.filter(n => n.type === 'cognitive' || n.clinical_role === 'cognitive');
+        const motorNodes = nodes.filter(n => n.type === 'motor' || n.clinical_role === 'motor');
+        const consequenceNodes = nodes.filter(n => n.type === 'consequence' || n.clinical_role === 'consequence');
+        const historicalNodes = nodes.filter(n => n.type === 'historical' || n.clinical_role === 'context');
+        const physioNodes = nodes.filter(n => n.type === 'physiological' || n.clinical_role === 'physiological');
+        const funcNodes = nodes.filter(n => n.type === 'function' || n.clinical_role === 'function');
 
         const topCog = cognitiveNodes[0]?.label || 'autoexigencia y sobrepensar';
         const topMot = motorNodes[0]?.label || 'conductas de escape';
         const topCons = consequenceNodes[0]?.label || 'sensación de estancamiento';
         const topHist = historicalNodes[0]?.label || 'experiencias formativas tempranas';
+        const topPhys = physioNodes[0]?.label || 'tensión en el cuerpo';
+        const topFunc = funcNodes[0]?.label || 'proteger mi tranquilidad interior';
+
+        const sintesisFromMap = `Habito entre las huellas de ${topHist.toLowerCase()} y el impulso de sostener mi propio espacio; cuando aparece ${topCog.toLowerCase()} y siento ${topPhys.toLowerCase()}, a veces recurro a ${topMot.toLowerCase()} buscando refugio, aunque desemboque en ${topCons.toLowerCase()}, porque en el fondo solo busco ${topFunc.toLowerCase()} con mayor calma y autenticidad.`;
 
         return {
             firma_resonancia: {
+                sintesis: sintesisFromMap,
+                proceso: sintesisFromMap,
                 habitar: "Cuerpo que acumula tensión mientras la mente busca certeza y control.",
                 vinculo: "Distancia preventiva y dificultad para expresar vulnerabilidad sin temor al juicio.",
                 busqueda: "Anhelo profundo de autenticidad, libertad de criterio y descanso emocional.",
@@ -5793,6 +5900,7 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
 (CRÍTICO: Devuelve EXCLUSIVAMENTE un objeto JSON válido)
 {
   "firma_resonancia": {
+    "sintesis": "Párrafo poético, cálido y profundo en PRIMERA PERSONA ('yo', 'mi', 'habito', 'busco') de 3 a 5 líneas, estrictamente anclado en los nodos reales de su mapa funcional (conectando su origen/detonantes, lo que pasa en su mente y cuerpo, su conducta protectora y su anhelo de salida).",
     "habitar": "Frase poética pero clínica de máx. 12 palabras sobre cómo la persona habita su cuerpo y espacio.",
     "vinculo": "Frase de máx. 12 palabras sobre cómo se conecta con otros o su barrera principal.",
     "busqueda": "Frase de máx. 12 palabras sobre su anhelo existencial o motor oculto.",
@@ -5873,6 +5981,23 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
 
             setAfcData(parsedAfc);
             setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(parsedAfc));
+            try {
+                const { fallbackTraits } = buildMapSummaryAndFallbackFirma(parsedAfc);
+                const fr = parsedAfc.firma_resonancia || {};
+                const sintesisFromMap = (fr.sintesis || fr.Sintesis || fallbackTraits.sintesis || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+                const traitsToSave = {
+                    sintesis: sintesisFromMap,
+                    proceso: sintesisFromMap,
+                    habitar: fr.habitar || fallbackTraits.habitar || '',
+                    vinculo: fr.vinculo || fallbackTraits.vinculo || '',
+                    busqueda: fr.busqueda || fallbackTraits.busqueda || '',
+                    keywords: fr.keywords || fallbackTraits.keywords || []
+                };
+                setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(traitsToSave));
+                if (sintesisFromMap) {
+                    setLocalItem(`oasis_custom_firma_${user}`, sintesisFromMap);
+                }
+            } catch (_) {}
             setLoadingProgress(prev => Math.max(prev, 98.5));
             setSelectedNode(null);
             setSelectedBlindSpotIndex(0);
@@ -5892,6 +6017,22 @@ ETAPA 2: INSIGHTS PROFUNDOS. Ya tienes la topología del paciente generada en la
                 safeAfc.nodes = layoutClinicalNodes(safeAfc.nodes, safeAfc.edges || [], user, bioData, phenomData);
                 setAfcData(safeAfc);
                 setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(safeAfc));
+                try {
+                    const fr = safeAfc.firma_resonancia || {};
+                    const sintesisFromMap = (fr.sintesis || '').trim();
+                    if (sintesisFromMap) {
+                        const traitsToSave = {
+                            sintesis: sintesisFromMap,
+                            proceso: sintesisFromMap,
+                            habitar: fr.habitar || '',
+                            vinculo: fr.vinculo || '',
+                            busqueda: fr.busqueda || '',
+                            keywords: fr.keywords || []
+                        };
+                        setLocalItem(`oasis_public_traits_${user}`, JSON.stringify(traitsToSave));
+                        setLocalItem(`oasis_custom_firma_${user}`, sintesisFromMap);
+                    }
+                } catch (_) {}
                 setSelectedNode(null);
                 setSelectedBlindSpotIndex(0);
                 setViewMode('dashboard');
@@ -7230,14 +7371,23 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
                     return (
                         <div className="mb-6 rounded-2xl bg-zinc-950/40 border border-emerald-500/20 overflow-hidden shadow-xl">
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-zinc-900/40">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-zinc-900/40 flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     <span className="text-[10px] font-black text-zinc-300 tracking-widest uppercase">Firma de Resonancia Existencial</span>
                                     <span className="text-[7.5px] font-mono tracking-widest uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-                                        Solo Observador
+                                        Mapa &amp; Perfil
                                     </span>
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={() => generateDynamicTraits(true)}
+                                    disabled={isGeneratingDynamicTraits}
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-white text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                >
+                                    <Sparkles size={11} className={isGeneratingDynamicTraits ? "animate-spin text-emerald-400" : "text-emerald-400"} />
+                                    <span>{isGeneratingDynamicTraits ? "Generando del Mapa..." : "Generar Firma del Mapa"}</span>
+                                </button>
                             </div>
                             <div className="p-5 space-y-4">
                                 {sintesisText && (
@@ -8292,6 +8442,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                             >
                                                 <Sparkles size={13} />
                                                 <span>{isAnalyzing ? 'generando...' : 'generar mapa'}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => { setIsMapMenuOpen(false); generateDynamicTraits(true); }}
+                                                disabled={isGeneratingDynamicTraits}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-amber-300 hover:text-amber-200 transition-colors"
+                                                title="Generar tu Firma de Resonancia Existencial usando los nodos y bucles de tu mapa"
+                                            >
+                                                <Sparkles size={13} className={isGeneratingDynamicTraits ? 'animate-spin' : ''} />
+                                                <span>{isGeneratingDynamicTraits ? 'generando firma...' : 'generar firma del mapa'}</span>
                                             </button>
                                             {afcData && !afcData.is_mock && (
                                                 <button

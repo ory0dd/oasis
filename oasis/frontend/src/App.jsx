@@ -5173,7 +5173,21 @@ const ProfileView = ({
     }, [feed, blocks, effectiveUser, user]);
 
     const linkedPosts = useMemo(() => {
-        return targetUserPosts.filter(b => (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') || (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== ''));
+        return targetUserPosts.filter(b => {
+            if (!b) return false;
+            const hasMetaLink = (typeof b.metadata?.buyLink === 'string' && b.metadata.buyLink.trim() !== '') ||
+                (typeof b.metadata?.externalUrl === 'string' && b.metadata.externalUrl.trim() !== '') ||
+                (typeof b.metadata?.link === 'string' && b.metadata.link.trim() !== '') ||
+                (typeof b.metadata?.price === 'string' && b.metadata.price.trim() !== '');
+            if (hasMetaLink) return true;
+            const textBody = [
+                b.metadata?.feedText || '',
+                typeof b.content === 'string'
+                    ? b.content.replace(/\[(img|vid|aud)\].*?\[\/\1\]/gi, '').replace(/\[\/?(img|vid|aud)\]/gi, '')
+                    : ''
+            ].join(' ');
+            return /https?:\/\/[^\s]+/i.test(textBody);
+        });
     }, [targetUserPosts]);
 
     const [activePurchasingId, setActivePurchasingId] = useState(null);
@@ -5621,15 +5635,15 @@ const ProfileView = ({
         return results;
     }, [linkedPosts, targetUserPosts]);
 
-    // Feed items for the Monolito / Editorial stream (Only real user works, zero mockups)
+    // Feed items for the Monolito / Editorial stream: ONLY posts with uploaded images or videos
     const displayFeedPosts = useMemo(() => {
-        let posts = [...targetUserPosts];
+        let posts = targetUserPosts.filter(p => Boolean(getBlockPreviewImage(p) || getBlockPreviewVideo(p)));
 
         if (releaseTab === 'destacados') {
             posts = posts.filter(p => (p.metadata?.resonanceScore > 0) || (p.content && p.content.includes('[resonancia]')) || p.type === 'highlight');
         } else if (releaseTab === 'archivo') {
             if (isOwnProfile && savedPostIds.length > 0) {
-                posts = (feed || []).filter(b => savedPostIds.includes(b.id));
+                posts = (feed || []).filter(b => savedPostIds.includes(b.id) && Boolean(getBlockPreviewImage(b) || getBlockPreviewVideo(b)));
             }
         }
 
@@ -5682,62 +5696,37 @@ const ProfileView = ({
         };
     }, [setView, setIsBitacoraOpen, isOwnProfile]);
 
-    // BENTO DASHBOARD: EQUILIBRIO DE SENTIDOS // DATA
-    const bentoPiecesForSale = useMemo(() => {
-        const list = [];
-        (linkedPosts || []).forEach(lp => {
-            if (list.length < 3 && !list.some(p => p.id === lp.id)) {
-                list.push({
-                    id: lp.id,
-                    title: lp.caption || lp.content?.split('\n')[0]?.replace(/\[.*?\]/g, '').trim().slice(0, 16) || 'Reliquia',
-                    price: lp.metadata?.price || '$45',
-                    image: getBlockPreviewImage(lp) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600',
-                    buyLink: lp.metadata?.buyLink,
-                    raw: lp
-                });
-            }
-        });
-        const defaults = [
-            { id: 'def-1', title: 'Cuadro Lindo', price: '$100', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600' },
-            { id: 'def-2', title: 'Glitch Spikes', price: '$65', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600' },
-            { id: 'def-3', title: 'Echo 01 USB', price: '$45', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600' }
-        ];
-        let dIdx = 0;
-        while (list.length < 3 && dIdx < defaults.length) {
-            list.push(defaults[dIdx++]);
-        }
-        return list;
-    }, [linkedPosts]);
-
+    // BENTO DASHBOARD: EQUILIBRIO DE SENTIDOS // DATA (SOLO POSTS REALES CON LINKS, CERO RELLENO)
     const allPiecesForSale = useMemo(() => {
         const list = [];
         (linkedPosts || []).forEach(lp => {
             if (!list.some(p => p.id === lp.id)) {
+                const textBody = [
+                    lp.metadata?.feedText || '',
+                    typeof lp.content === 'string'
+                        ? lp.content.replace(/\[(img|vid|aud)\].*?\[\/\1\]/gi, '').replace(/\[\/?(img|vid|aud)\]/gi, '')
+                        : ''
+                ].join(' ');
+                const urlMatch = textBody.match(/https?:\/\/[^\s]+/i);
+                const extractedLink = lp.metadata?.buyLink || lp.metadata?.externalUrl || lp.metadata?.link || (urlMatch ? urlMatch[0] : '');
+                const cleanTitle = lp.caption || lp.metadata?.feedCaption || lp.content?.split('\n')[0]?.replace(/\[.*?\]/g, '').trim().slice(0, 24) || 'Publicación con enlace';
                 list.push({
                     id: lp.id,
-                    title: lp.caption || lp.content?.split('\n')[0]?.replace(/\[.*?\]/g, '').trim().slice(0, 20) || 'Reliquia',
-                    price: lp.metadata?.price || '$45',
-                    image: getBlockPreviewImage(lp) || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600',
-                    buyLink: lp.metadata?.buyLink,
+                    title: cleanTitle,
+                    price: lp.metadata?.price || 'Link ↗',
+                    image: getBlockPreviewImage(lp),
+                    video: getBlockPreviewVideo(lp),
+                    buyLink: extractedLink,
                     raw: lp
                 });
             }
         });
-        const defaults = [
-            { id: 'def-1', title: 'Cuadro Lindo', price: '$100', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600', buyLink: 'https://inn3r.shop' },
-            { id: 'def-2', title: 'Glitch Spikes', price: '$65', image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600', buyLink: 'https://inn3r.shop' },
-            { id: 'def-3', title: 'Echo 01 USB', price: '$45', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600', buyLink: 'https://inn3r.shop' },
-            { id: 'def-4', title: 'Fanzine Void #01', price: '$25', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=600', buyLink: 'https://inn3r.shop' },
-            { id: 'def-5', title: 'Cassette Ambient 432Hz', price: '$35', image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600', buyLink: 'https://inn3r.shop' },
-            { id: 'def-6', title: 'Monolito Cerámico', price: '$85', image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600', buyLink: 'https://inn3r.shop' }
-        ];
-        defaults.forEach(d => {
-            if (!list.some(p => p.id === d.id || p.title === d.title)) {
-                list.push(d);
-            }
-        });
         return list;
     }, [linkedPosts]);
+
+    const bentoPiecesForSale = useMemo(() => {
+        return allPiecesForSale.slice(0, 3);
+    }, [allPiecesForSale]);
 
     const bentoCentralPiece = useMemo(() => {
         const cand = (featuredWorks && featuredWorks[0]) || (targetUserPosts && targetUserPosts[0]);
@@ -5784,26 +5773,206 @@ const ProfileView = ({
     ], []);
 
     const [isGeneratingFirma, setIsGeneratingFirma] = useState(false);
+    const [firmaMapVersion, setFirmaMapVersion] = useState(0);
+
+    const getStorageItemCI = useCallback((prefix, targetU) => {
+        if (!targetU) return null;
+        const cleanU = targetU.replace(/^@/, '');
+        const direct = localStorage.getItem(`${prefix}_${cleanU}`) || localStorage.getItem(`${prefix}_${cleanU.toLowerCase()}`);
+        if (direct !== null) return direct;
+        const targetKey = `${prefix}_${cleanU}`.toLowerCase();
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.toLowerCase() === targetKey) {
+                return localStorage.getItem(k);
+            }
+        }
+        return null;
+    }, []);
+
+    const extractMapFirmaContext = useCallback((targetU, lensOffset = 0) => {
+        let mapObj = null;
+        try {
+            const rawMap = getStorageItemCI('oasis_afc_real_data', targetU);
+            if (rawMap) mapObj = typeof rawMap === 'string' ? JSON.parse(rawMap) : rawMap;
+        } catch (_) {}
+
+        const nodes = Array.isArray(mapObj?.nodes) ? mapObj.nodes : [];
+        const hasRealMap = nodes.length > 0 && !mapObj?.is_mock && mapObj?.is_valid !== false;
+        const byRole = (roles) => nodes.filter(n => n && (roles.includes(n.type) || roles.includes(n.clinical_role)));
+        const cleanLbl = (n) => (n?.label || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+
+        const histNodes = byRole(['historical', 'social', 'context']);
+        const antNodes = byRole(['antecedent']);
+        const cogNodes = byRole(['cognitive']);
+        const physNodes = byRole(['physiological', 'biological']);
+        const motNodes = byRole(['motor']);
+        const consNodes = byRole(['consequence']);
+        const funcNodes = byRole(['function']);
+        const moldedNodes = nodes.filter(n => n && (n.is_corrected || n.molded_note));
+
+        const pickLbl = (arr, idx, fallback) => cleanLbl(arr[idx % Math.max(arr.length, 1)]) || fallback;
+
+        const h1 = pickLbl(histNodes, lensOffset, 'las huellas de mi historia');
+        const a1 = pickLbl(antNodes, lensOffset, 'la presión de mi entorno');
+        const c1 = pickLbl(cogNodes, lensOffset, 'el ruido de mis pensamientos');
+        const p1 = pickLbl(physNodes, lensOffset, 'la tensión que guarda mi cuerpo');
+        const m1 = pickLbl(motNodes, lensOffset, 'mis mecanismos de resguardo');
+        const cs1 = pickLbl(consNodes, lensOffset, 'la pausa tras el desgaste');
+        const f1 = pickLbl(funcNodes, lensOffset, 'cuidar lo que más me importa');
+
+        const mapLenses = [
+            `Habito entre ${h1.toLowerCase()} y el impulso de responder ante ${a1.toLowerCase()}; cuando aparece ${c1.toLowerCase()} y siento ${p1.toLowerCase()}, a veces recurro a ${m1.toLowerCase()} para protegerme, aunque me deje en ${cs1.toLowerCase()}, porque en el fondo solo busco ${f1.toLowerCase()} con mayor calma y verdad.`,
+            `En mi mapa interior reconozco cómo ${a1.toLowerCase()} despierta en mí ${c1.toLowerCase()} y ${p1.toLowerCase()}; hoy comprendo que ${m1.toLowerCase()} fue mi manera de resguardarme desde ${h1.toLowerCase()}, mientras aprendo a abrirme paso hacia ${f1.toLowerCase()}.`,
+            `Aprendí a sostenerme frente a ${h1.toLowerCase()} refugiándome en ${m1.toLowerCase()} cada vez que ${c1.toLowerCase()} o ${p1.toLowerCase()} me sobrepasan; hoy elijo mirar de frente ${cs1.toLowerCase()} para habitar con autenticidad mi deseo de ${f1.toLowerCase()}.`,
+            `Mi cuerpo registra ${p1.toLowerCase()} cuando ${a1.toLowerCase()} activa ${c1.toLowerCase()}; detrás de ${m1.toLowerCase()} no hay debilidad, sino una búsqueda silenciosa por ${f1.toLowerCase()} sin perderme en ${cs1.toLowerCase()}.`
+        ];
+
+        const moldedSummary = moldedNodes
+            .map(n => `${cleanLbl(n)}${n.molded_note ? ` ("${n.molded_note}")` : ''}`)
+            .slice(0, 5)
+            .join('; ');
+
+        let nodeChatsSummary = '';
+        try {
+            const rawChats = getStorageItemCI('oasis_node_chats', targetU);
+            if (rawChats) {
+                const parsedChats = JSON.parse(rawChats);
+                const userMsgs = [];
+                Object.values(parsedChats || {}).forEach(chatVal => {
+                    const arr = Array.isArray(chatVal) ? (Array.isArray(chatVal[0]) ? chatVal[0] : chatVal) : (chatVal?.[0] || []);
+                    (Array.isArray(arr) ? arr : []).forEach(m => {
+                        if (m?.role === 'user' && m.content) userMsgs.push(m.content);
+                    });
+                });
+                if (userMsgs.length > 0) nodeChatsSummary = userMsgs.slice(-6).join(' | ');
+            }
+        } catch (_) {}
+
+        let phenomSummary = '';
+        try {
+            const rawPhenom = getStorageItemCI('oasis_phenom_qualitative', targetU);
+            if (rawPhenom) {
+                const parsedP = JSON.parse(rawPhenom);
+                phenomSummary = Object.entries(parsedP || {}).map(([k, v]) => `${k}: ${v}`).slice(0, 8).join('\n');
+            }
+        } catch (_) {}
+
+        let bioSummary = '';
+        try {
+            const rawBio = getStorageItemCI('oasis_bio_transcriptions', targetU);
+            if (rawBio) {
+                const parsedB = JSON.parse(rawBio);
+                bioSummary = Object.entries(parsedB || {}).map(([k, v]) => `${k}: ${v}`).slice(0, 8).join('\n');
+            }
+        } catch (_) {}
+
+        const mapTopologySummary = [
+            `- Nodos de Historia y Contexto: ${histNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Detonantes del Mapa: ${antNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Eventos Privados (Cognitivos): ${cogNodes.map(cleanLbl).filter(Boolean).slice(0, 8).join(', ') || 'N/A'}`,
+            `- Respuestas Corporales/Fisiológicas: ${physNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Conductas y Respuestas Operantes: ${motNodes.map(cleanLbl).filter(Boolean).slice(0, 7).join(', ') || 'N/A'}`,
+            `- Consecuencias en el Bucle: ${consNodes.map(cleanLbl).filter(Boolean).slice(0, 6).join(', ') || 'N/A'}`,
+            `- Función Nuclear del Bucle: ${funcNodes.map(cleanLbl).filter(Boolean).slice(0, 5).join(', ') || 'N/A'}`,
+            moldedSummary ? `- Aclaraciones Moldeadas en el Mapa: ${moldedSummary}` : '',
+            nodeChatsSummary ? `- Reflexiones del usuario dentro de los nodos del mapa: ${nodeChatsSummary}` : '',
+            mapObj?.hypotheses?.mantenimiento ? `- Hipótesis de Mantenimiento del Mapa: ${mapObj.hypotheses.mantenimiento}` : '',
+            mapObj?.hypotheses?.solucion ? `- Hipótesis de Salida del Mapa: ${mapObj.hypotheses.solucion}` : '',
+            mapObj?.explicacion_sencilla ? `- Explicación del Bucle: ${mapObj.explicacion_sencilla}` : '',
+            phenomSummary ? `- Respuestas Existenciales:\n${phenomSummary}` : '',
+            bioSummary ? `- Historia Biográfica:\n${bioSummary}` : ''
+        ].filter(Boolean).join('\n');
+
+        const synthesizedFromMap = mapLenses[Math.abs(lensOffset) % mapLenses.length];
+        const savedMapSintesis = (mapObj?.firma_resonancia?.sintesis || mapObj?.firma_resonancia?.proceso || '').trim();
+
+        return {
+            hasRealMap,
+            mapObj,
+            mapTopologySummary,
+            savedMapSintesis,
+            synthesizedFromMap,
+            hasClinicalContext: Boolean(hasRealMap || phenomSummary || bioSummary || nodeChatsSummary)
+        };
+    }, [getStorageItemCI]);
+
+    // Sincronizar Firma y Mapa desde la nube clínica si aún no están en localStorage
+    useEffect(() => {
+        if (!effectiveUser) return;
+        const cleanTarget = effectiveUser.replace(/^@/, '');
+        const hasLocalTraits = Boolean(getStorageItemCI('oasis_public_traits', cleanTarget));
+        const hasLocalMap = Boolean(getStorageItemCI('oasis_afc_real_data', cleanTarget));
+        if (hasLocalTraits && hasLocalMap) return;
+
+        let cancelled = false;
+        fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(cleanTarget)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(cloudData => {
+                if (cancelled || !cloudData || typeof cloudData !== 'object') return;
+                let updated = false;
+                const traitsRaw = cloudData[`oasis_public_traits_${cleanTarget}`] || cloudData[`oasis_public_traits_${cleanTarget.toLowerCase()}`];
+                if (traitsRaw && !hasLocalTraits) {
+                    localStorage.setItem(`oasis_public_traits_${cleanTarget}`, typeof traitsRaw === 'string' ? traitsRaw : JSON.stringify(traitsRaw));
+                    updated = true;
+                }
+                const customFirmaRaw = cloudData[`oasis_custom_firma_${cleanTarget}`] || cloudData[`oasis_custom_firma_${cleanTarget.toLowerCase()}`];
+                if (customFirmaRaw && !localStorage.getItem(`oasis_custom_firma_${cleanTarget}`)) {
+                    localStorage.setItem(`oasis_custom_firma_${cleanTarget}`, String(customFirmaRaw));
+                    if (isOwnProfile) setCustomFirma(String(customFirmaRaw));
+                    updated = true;
+                }
+                const afcRaw = cloudData[`oasis_afc_real_data_${cleanTarget}`] || cloudData[`oasis_afc_real_data_${cleanTarget.toLowerCase()}`];
+                if (afcRaw && !hasLocalMap) {
+                    localStorage.setItem(`oasis_afc_real_data_${cleanTarget}`, typeof afcRaw === 'string' ? afcRaw : JSON.stringify(afcRaw));
+                    updated = true;
+                }
+                if (updated) setFirmaMapVersion(v => v + 1);
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [effectiveUser, isOwnProfile, getStorageItemCI]);
 
     const bentoSensoryQuote = useMemo(() => {
         if (customFirma && customFirma.trim() !== '') return customFirma;
 
+        const targetU = isOwnProfile ? (user || effectiveUser) : effectiveUser;
         try {
             let resonanceData = null;
-            if (isOwnProfile) {
-                const saved = localStorage.getItem('oasis_public_traits_' + user);
-                if (saved) resonanceData = JSON.parse(saved);
-            } else if (publicUsers && Array.isArray(publicUsers)) {
-                const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === effectiveUser.toLowerCase());
+            const saved = getStorageItemCI('oasis_public_traits', targetU);
+            if (saved) {
+                resonanceData = typeof saved === 'string' ? JSON.parse(saved) : saved;
+            }
+            if (!resonanceData && publicUsers && Array.isArray(publicUsers)) {
+                const pUserObj = publicUsers.find(u => (u.Username || u.username || '').toLowerCase() === (effectiveUser || '').toLowerCase());
                 if (pUserObj && pUserObj.publicTraits) {
                     resonanceData = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
                 }
             }
 
-            if (resonanceData?.proceso && resonanceData.proceso.trim() !== '') return resonanceData.proceso;
+            const sintesisOrProceso = (
+                resonanceData?.sintesis ||
+                resonanceData?.Sintesis ||
+                resonanceData?.proceso ||
+                resonanceData?.Proceso ||
+                ''
+            ).trim();
+            if (sintesisOrProceso) return sintesisOrProceso;
+
+            if (resonanceData?.habitar || resonanceData?.busqueda) {
+                const parts = [resonanceData.habitar, resonanceData.vinculo, resonanceData.busqueda].filter(Boolean).join(' ');
+                if (parts.trim()) return parts.trim();
+            }
         } catch(e) {}
 
-        // Hash determinista único por usuario para que cada usuario tenga una reflexión diferente y personalizada
+        // Si el usuario tiene un Mapa Funcional (oasis_afc_real_data_), extraer o sintetizar la Firma directamente de su Mapa
+        try {
+            const { hasRealMap, savedMapSintesis, synthesizedFromMap } = extractMapFirmaContext(targetU, 0);
+            if (savedMapSintesis) return savedMapSintesis;
+            if (hasRealMap && synthesizedFromMap) return synthesizedFromMap;
+        } catch (_) {}
+
+        // Fallback únicamente cuando el usuario aún no ha generado su Mapa
         let hash = 0;
         const seedStr = (effectiveUser || 'ruido').toLowerCase();
         for (let i = 0; i < seedStr.length; i++) {
@@ -5812,92 +5981,224 @@ const ProfileView = ({
         }
         const quoteIndex = Math.abs(hash) % FIRMA_CANDIDATE_QUOTES.length;
         return FIRMA_CANDIDATE_QUOTES[quoteIndex];
-    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser, FIRMA_CANDIDATE_QUOTES]);
+    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser, FIRMA_CANDIDATE_QUOTES, firmaMapVersion, getStorageItemCI, extractMapFirmaContext]);
 
     const handleGenerateFirma = useCallback(async (e) => {
         if (e) e.stopPropagation();
         setIsGeneratingFirma(true);
 
-        const currentQuote = customFirma || bentoSensoryQuote || '';
-        const pool = FIRMA_CANDIDATE_QUOTES.filter(q => q !== currentQuote);
-        const instantNext = pool[Math.floor(Math.random() * pool.length)] || FIRMA_CANDIDATE_QUOTES[0];
+        const targetU = (user || effectiveUser || '').replace(/^@/, '');
+        const nextLens = firmaMapVersion + 1;
+        setFirmaMapVersion(nextLens);
 
-        // Aplicar inmediatamente una nueva firma para respuesta instantánea
-        setCustomFirma(instantNext);
-        localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, instantNext);
-        try {
-            const existingTraits = JSON.parse(localStorage.getItem('oasis_public_traits_' + (user || effectiveUser)) || '{}');
-            const updatedTraits = { ...existingTraits, proceso: instantNext };
-            localStorage.setItem('oasis_public_traits_' + (user || effectiveUser), JSON.stringify(updatedTraits));
-        } catch (_) {}
+        const saveGeneratedFirma = (firmaText, extraTraits = {}) => {
+            const cleanText = (firmaText || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+            if (!cleanText) return;
+            setCustomFirma(cleanText);
+            localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, cleanText);
+            localStorage.setItem(`oasis_custom_firma_${targetU}`, cleanText);
+            try {
+                const existingRaw = getStorageItemCI('oasis_public_traits', targetU) || '{}';
+                const existingTraits = JSON.parse(existingRaw);
+                const updatedTraits = {
+                    ...existingTraits,
+                    ...extraTraits,
+                    sintesis: cleanText,
+                    proceso: cleanText
+                };
+                const serializedTraits = JSON.stringify(updatedTraits);
+                localStorage.setItem(`oasis_public_traits_${targetU}`, serializedTraits);
+                if (effectiveUser && effectiveUser !== targetU) {
+                    localStorage.setItem(`oasis_public_traits_${effectiveUser}`, serializedTraits);
+                }
+                const caller = localStorage.getItem('oasis_user') || targetU || 'observador1';
+                fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(targetU)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Oasis-User': caller
+                    },
+                    body: JSON.stringify({
+                        [`oasis_public_traits_${targetU}`]: serializedTraits,
+                        [`oasis_custom_firma_${targetU}`]: cleanText
+                    })
+                }).catch(() => {});
+            } catch (_) {}
+        };
 
-        // Intentar enriquecer con IA a partir de las notas/bio del usuario si el backend responde rápido
         try {
-            const userNotesSample = (blocks || [])
-                .filter(b => b && b.content && typeof b.content === 'string' && b.id !== 'profile_settings' && !b.content.startsWith('http'))
-                .slice(0, 4)
-                .map(b => b.content.replace(/\[.*?\]/g, '').slice(0, 120))
-                .join(' | ');
+            // 1. Si no hay mapa en localStorage aún, intentar sincronizar desde clinical-data del servidor primero
+            if (!getStorageItemCI('oasis_afc_real_data', targetU)) {
+                try {
+                    const cloudRes = await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(targetU)}`);
+                    if (cloudRes.ok) {
+                        const cloudData = await cloudRes.json();
+                        const afcRaw = cloudData?.[`oasis_afc_real_data_${targetU}`] || cloudData?.[`oasis_afc_real_data_${targetU.toLowerCase()}`];
+                        if (afcRaw) {
+                            localStorage.setItem(`oasis_afc_real_data_${targetU}`, typeof afcRaw === 'string' ? afcRaw : JSON.stringify(afcRaw));
+                        }
+                        const phenomRaw = cloudData?.[`oasis_phenom_qualitative_${targetU}`] || cloudData?.[`oasis_phenom_qualitative_${targetU.toLowerCase()}`];
+                        if (phenomRaw) {
+                            localStorage.setItem(`oasis_phenom_qualitative_${targetU}`, typeof phenomRaw === 'string' ? phenomRaw : JSON.stringify(phenomRaw));
+                        }
+                        const bioRaw = cloudData?.[`oasis_bio_transcriptions_${targetU}`] || cloudData?.[`oasis_bio_transcriptions_${targetU.toLowerCase()}`];
+                        if (bioRaw) {
+                            localStorage.setItem(`oasis_bio_transcriptions_${targetU}`, typeof bioRaw === 'string' ? bioRaw : JSON.stringify(bioRaw));
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            // 2. Extraer toda la información del Mapa Funcional y respuestas clínicas del usuario
+            const { hasRealMap, mapTopologySummary, synthesizedFromMap, hasClinicalContext } = extractMapFirmaContext(targetU, nextLens);
+
+            // Aplicar síntesis inmediata construida con los nodos reales de su mapa mientras la IA redacta la versión profunda
+            if (hasRealMap && synthesizedFromMap) {
+                saveGeneratedFirma(synthesizedFromMap);
+            }
+
+            // 3. Generar la Firma de Resonancia Existencial con IA a partir de la información del Mapa (igual que al crear el mapa)
+            let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
+            if (activeKey && (
+                activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") ||
+                activeKey.includes("VAR>") ||
+                activeKey.includes("7c7e257ac179439185c9deeff48d11f0") ||
+                activeKey.includes("6cf43dc93") ||
+                activeKey.includes("qw12") ||
+                activeKey.includes("YOUR_DEEPSEEK_KEY") ||
+                activeKey.includes("ESCRIBE_AQUI")
+            )) {
+                activeKey = '';
+            }
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
+
+            const mapPrompt = `
+Eres un analista clínico y existencial experto. Tu tarea es generar la "Firma de Resonancia Existencial" del usuario basándote ESTRICTAMENTE EN LA INFORMACIÓN DE SU MAPA FUNCIONAL (nodos de origen/historia, detonantes, pensamientos, respuestas corporales, conductas de resguardo, consecuencias y función del bucle) y sus respuestas clínicas.
+Debe usar un lenguaje hermosamente literario y empático, pero ESTRICTAMENTE ANCLADO EN LOS NODOS Y LA VERDAD DE SU MAPA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su tensión interna sin perder conexión con su mapa real.
+Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi', 'habito', 'busco'), como si el usuario mismo estuviera verbalizando el fondo de su mapa interior.
+Enfócate en la belleza de su tensión interna y sus anhelos más profundos en UN SOLO PÁRRAFO breve y contundente (entre 35 y 65 palabras, aprox 3 a 5 líneas).
+
+Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
+{
+  "sintesis": "Párrafo poético, cálido y profundo en primera persona anclado directamente en los nodos y bucles de su mapa.",
+  "habitar": "Cómo habito mi cuerpo y mi mente según mi mapa (máx 12 palabras).",
+  "vinculo": "Cómo me vinculo o me protejo frente a otros según mi mapa (máx 12 palabras).",
+  "busqueda": "Mi anhelo existencial y función de fondo según mi mapa (máx 12 palabras).",
+  "keywords": ["Palabra1", "Palabra2", "Palabra3"]
+}
+
+INFORMACIÓN DEL MAPA FUNCIONAL DEL USUARIO:
+${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 'En exploración interior'}`}
+`;
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4500);
-            const res = await fetch(`${API_URL}/api/oasis/chat`, {
+            const timeoutId = setTimeout(() => controller.abort(), 9000);
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,
                 body: JSON.stringify({
-                    user: effectiveUser,
-                    message: `Genera únicamente una frase breve en primera persona (máximo 22 palabras, sin comillas, tono íntimo, poético y existencial estilo bitácora interior) que sintetice mi momento actual. Mi bio es: "${bio || ''}". Mis notas recientes: "${userNotesSample}". No uses introducciones, responde solo la frase.`,
-                    history: []
+                    endpoint,
+                    key: activeKey,
+                    payload: {
+                        model,
+                        messages: [{ role: 'user', content: mapPrompt }],
+                        temperature: 0.65,
+                        response_format: { type: "json_object" }
+                    }
                 })
             });
             clearTimeout(timeoutId);
+
             if (res.ok) {
                 const data = await res.json();
-                const reply = (data.reply || data.response || data.message || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
-                if (reply && reply.length > 15 && reply.length < 240 && !reply.toLowerCase().includes('error')) {
-                    setCustomFirma(reply);
-                    localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, reply);
-                    try {
-                        const existingTraits = JSON.parse(localStorage.getItem('oasis_public_traits_' + (user || effectiveUser)) || '{}');
-                        const updatedTraits = { ...existingTraits, proceso: reply };
-                        localStorage.setItem('oasis_public_traits_' + (user || effectiveUser), JSON.stringify(updatedTraits));
-                    } catch (_) {}
+                const rawContent = data.choices?.[0]?.message?.content || data.content || '';
+                let parsed = null;
+                try {
+                    const cleanJson = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+                    parsed = JSON.parse(cleanJson);
+                } catch (_) {}
+
+                const pTraits = parsed?.publicTraits || parsed?.firma_resonancia || parsed;
+                const aiSintesis = (pTraits?.sintesis || pTraits?.Sintesis || pTraits?.proceso || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+                if (aiSintesis && aiSintesis.length > 20) {
+                    saveGeneratedFirma(aiSintesis, {
+                        habitar: pTraits?.habitar || pTraits?.Habitar || '',
+                        vinculo: pTraits?.vinculo || pTraits?.Vinculo || '',
+                        busqueda: pTraits?.busqueda || pTraits?.Busqueda || '',
+                        keywords: pTraits?.keywords || pTraits?.Keywords || []
+                    });
+                    return;
+                }
+            }
+
+            // Fallback secundario vía /api/oasis/chat usando la misma información del mapa
+            const chatRes = await fetch(`${API_URL}/api/oasis/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: effectiveUser,
+                    message: `Basándote EXCLUSIVAMENTE en los siguientes nodos y bucles de mi Mapa Funcional:\n${mapTopologySummary}\n\nRedacta mi "Firma de Resonancia Existencial" en PRIMERA PERSONA ('yo', 'mi', 'habito', 'busco'), en un solo párrafo poético, lúcido y profundamente anclado en los nodos reales de mi mapa (entre 35 y 60 palabras, sin comillas ni introducciones).`,
+                    history: []
+                })
+            });
+            if (chatRes.ok) {
+                const chatData = await chatRes.json();
+                const reply = (chatData.reply || chatData.response || chatData.message || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+                if (reply && reply.length > 20 && !reply.toLowerCase().includes('error')) {
+                    saveGeneratedFirma(reply);
                 }
             }
         } catch (_) {
-            // Si está offline o tarda, conservamos instantNext que ya se aplicó al instante
+            // Si la red falla, se mantiene la síntesis extraída directamente de los nodos del mapa
         } finally {
             setIsGeneratingFirma(false);
         }
-    }, [customFirma, bentoSensoryQuote, FIRMA_CANDIDATE_QUOTES, effectiveUser, user, blocks, bio]);
+    }, [effectiveUser, user, bio, firmaMapVersion, getStorageItemCI, extractMapFirmaContext]);
 
     const bentoValuableMemories = useMemo(() => {
         const items = [];
-        (soulPieces || []).forEach(sp => {
-            if (items.length < 3 && !items.some(i => i.id === (sp.id || sp.Id))) {
+        const linkedIds = new Set((linkedPosts || []).map(lp => lp.id));
+
+        (targetUserPosts || []).forEach(tp => {
+            if (!tp || linkedIds.has(tp.id)) return;
+            const hasImg = Boolean(getBlockPreviewImage(tp));
+            const hasVid = Boolean(getBlockPreviewVideo(tp));
+            const isAud = tp.type === 'audio' || (typeof tp.content === 'string' && tp.content.includes('[aud]'));
+            if (hasImg || hasVid || isAud) return;
+
+            const rawText = (
+                tp.metadata?.feedText ||
+                (typeof tp.content === 'string'
+                    ? tp.content.replace(/\[.*?\]/g, '').trim()
+                    : '') ||
+                tp.caption ||
+                ''
+            ).trim();
+            if (!rawText) return;
+
+            const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+            const titleText = (tp.caption && tp.caption !== 'Sin título' && tp.caption !== 'Publicación')
+                ? tp.caption
+                : (lines[0] || 'Nota de texto').slice(0, 36);
+            const subtitleText = lines.length > 1
+                ? lines.slice(1).join(' ')
+                : rawText;
+
+            if (!items.some(i => i.id === tp.id)) {
                 items.push({
-                    id: sp.id || sp.Id,
-                    title: sp.title || sp.Title || 'Fragmento íntimo',
-                    subtitle: sp.category || 'guardado en libreta',
-                    icon: items.length === 0 ? 'diamond' : items.length === 1 ? 'ticket' : 'star'
+                    id: tp.id,
+                    title: titleText,
+                    subtitle: subtitleText,
+                    icon: items.length % 3 === 0 ? 'ticket' : items.length % 3 === 1 ? 'diamond' : 'star',
+                    raw: tp
                 });
             }
         });
-        const fallbackMemories = [
-            { id: 'mem-1', title: 'Esencia', subtitle: 'guardado en libreta', icon: 'diamond' },
-            { id: 'mem-2', title: 'Memoria', subtitle: 'guardado en libreta', icon: 'ticket' },
-            { id: 'mem-3', title: 'Resonancia', subtitle: 'amuleto guardado', icon: 'star' }
-        ];
-        let fIdx = 0;
-        while (items.length < 3 && fIdx < fallbackMemories.length) {
-            if (!items.some(i => i.title.toLowerCase() === fallbackMemories[fIdx].title.toLowerCase())) {
-                items.push(fallbackMemories[fIdx]);
-            }
-            fIdx++;
-        }
+
         return items;
-    }, [soulPieces]);
+    }, [targetUserPosts, linkedPosts]);
 
     const activeTrackTitle = playerTracks && playerTracks[currentTrack]?.title
         ? `${playerTracks[currentTrack]?.artist || 'oasis'} — ${playerTracks[currentTrack]?.title}`
@@ -6265,7 +6566,7 @@ const ProfileView = ({
                         {/* ======================================================== */}
                         {/* FILA 1: PERFIL PEQUEÑITO + PIEZAS / VENTA + ARCHIVO (CANALES) */}
                         {/* ======================================================== */}
-                        <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
+                        <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-md shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
                             
                             {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS (RESPONSIVE MÓVIL Y ELEGANTE EN PC) */}
                             <div className="w-[40%] sm:w-[36%] md:w-[34%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 md:gap-3 min-w-0 pr-1 md:pr-3">
@@ -6489,9 +6790,9 @@ const ProfileView = ({
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (EN MEDIO): PIEZAS EN VENTA (ANCHO COMPLETO, GRANDES Y VISIBLES) */}
+                        {/* FILA 2 (EN MEDIO): PIEZAS CON ENLACES PUBLICADAS */}
                         {/* ======================================================== */}
-                        <div className="col-span-2 lg:col-span-12 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
+                        <div className="col-span-2 lg:col-span-12 order-2 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
                             <div className="flex items-center justify-between pb-0.5">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={11} className="text-emerald-400 shrink-0" />
@@ -6503,57 +6804,86 @@ const ProfileView = ({
                                     type="button"
                                     onClick={() => setIsPiecesModalOpen(true)}
                                     className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-[#10b981] hover:text-black border border-white/10 text-zinc-400 hover:text-black text-[7px] sm:text-[8px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95"
-                                    title="Abrir catálogo completo"
+                                    title="Abrir catálogo de publicaciones con enlace"
                                 >
                                     <span>Catálogo</span>
                                     <Plus size={8} strokeWidth={3} />
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 items-center w-full my-auto">
-                                {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
-                                    <div
-                                        key={item.id || idx}
-                                        onClick={() => {
-                                            if (item.buyLink) {
-                                                window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
-                                            } else if (item.raw) {
-                                                setSelectedModalPost(item.raw);
-                                            }
-                                        }}
-                                        className="group/item flex flex-col cursor-pointer"
-                                        title={item.title}
-                                    >
-                                        <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
-                                            <img
-                                                src={formatUrl(item.image)}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
-                                                onError={(e) => {
-                                                    if (!e.target.dataset.failed) {
-                                                        e.target.dataset.failed = 'true';
-                                                        e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
-                                                    }
-                                                }}
-                                            />
-                                            <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[8.5px] font-mono font-black text-emerald-400 shadow-sm">
-                                                {item.price}
+                            {bentoPiecesForSale.length === 0 ? (
+                                <div className="w-full py-6 px-4 rounded-xl bg-black/25 border border-white/[0.05] border-dashed flex flex-col items-center justify-center text-center gap-1.5 my-auto">
+                                    <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400">
+                                        {isOwnProfile ? 'Aún no has publicado posts con enlaces' : 'Sin publicaciones con enlaces aún'}
+                                    </span>
+                                    {isOwnProfile && openNewComposer && (
+                                        <button
+                                            type="button"
+                                            onClick={() => openNewComposer()}
+                                            className="mt-0.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[8px] sm:text-[9px] font-mono font-bold text-emerald-300 hover:text-white transition-all cursor-pointer"
+                                        >
+                                            + Publicar con link
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 items-center w-full my-auto">
+                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
+                                        <div
+                                            key={item.id || idx}
+                                            onClick={() => {
+                                                if (item.buyLink) {
+                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                                } else if (item.raw) {
+                                                    setSelectedModalPost(item.raw);
+                                                }
+                                            }}
+                                            className="group/item flex flex-col cursor-pointer"
+                                            title={item.title}
+                                        >
+                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/50 group-hover/item:border-emerald-500/40 transition-all shadow-md flex items-center justify-center">
+                                                {item.image ? (
+                                                    <img
+                                                        src={formatUrl(item.image)}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                                                    />
+                                                ) : item.video ? (
+                                                    <video
+                                                        src={formatUrl(item.video)}
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        autoPlay
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 text-center flex flex-col items-center justify-center gap-1.5">
+                                                        <ArrowUpRight size={18} className="text-emerald-400" />
+                                                        <span className="text-[9px] sm:text-[10px] font-mono text-zinc-300 line-clamp-2">
+                                                            {item.title}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[7px] sm:text-[8.5px] font-mono font-black text-emerald-400 shadow-sm">
+                                                    {item.price}
+                                                </span>
+                                            </div>
+                                            <span className="text-[7.5px] sm:text-[9.5px] md:text-xs font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
+                                                {item.title}
                                             </span>
                                         </div>
-                                        <span className="text-[7.5px] sm:text-[9.5px] md:text-xs font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-1 text-center">
-                                            {item.title}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 3 (ABAJO): SONIDOS (PLAYLIST GRANDE) + RECUERDOS VALIOSOS (SOLOS Y EQUILIBRADOS) */}
+                        {/* FILA 3 (ABAJO): SONIDOS (PLAYLIST GRANDE) + RECUERDOS VALIOSOS (SOLO PURO TEXTO) */}
                         {/* ======================================================== */}
                         
                         {/* LADO IZQUIERDO: SONIDOS / PLAYLIST ESPACIOSA Y SIN TEXTOS MOCHOS */}
-                        <div className="col-span-1 lg:col-span-6 order-3 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
+                        <div className="col-span-1 lg:col-span-6 order-3 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
                             
                             {/* Input oculto para subir múltiples archivos MP3 */}
                             <input
@@ -6694,8 +7024,8 @@ const ProfileView = ({
                             </div>
                         </div>
 
-                        {/* LADO DERECHO: RECUERDOS VALIOSOS (LLENA TODA LA TARJETA, ELEGANTE Y COMPLETO) */}
-                        <div className="col-span-1 lg:col-span-6 order-4 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative">
+                        {/* LADO DERECHO: RECUERDOS VALIOSOS (SOLO POSTS DE PURO TEXTO) */}
+                        <div className="col-span-1 lg:col-span-6 order-4 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative">
                             <div className="flex items-center justify-between pb-0.5">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={10} className="text-emerald-400" />
@@ -6708,29 +7038,42 @@ const ProfileView = ({
                                 </span>
                             </div>
 
-                            <div className="flex flex-col justify-between gap-1.5 sm:gap-2.5 my-auto h-full py-1">
-                                {bentoValuableMemories.map((memo, idx) => (
-                                    <div
-                                        key={memo.id || idx}
-                                        onClick={() => {
-                                            if (onOpenSimpleNotes) onOpenSimpleNotes();
-                                        }}
-                                        className="flex items-center gap-2.5 p-2 sm:p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs flex-1"
-                                    >
-                                        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
-                                            {memo.icon === 'diamond' ? <Aperture size={12} className="sm:w-4 sm:h-4" /> : memo.icon === 'star' ? <Star size={12} className="sm:w-4 sm:h-4" /> : <StickyNote size={12} className="sm:w-4 sm:h-4" />}
+                            {bentoValuableMemories.length === 0 ? (
+                                <div className="w-full py-8 px-3 rounded-xl bg-black/25 border border-white/[0.05] border-dashed flex flex-col items-center justify-center text-center gap-1.5 my-auto">
+                                    <StickyNote size={16} className="text-zinc-600" />
+                                    <span className="text-[9px] sm:text-[10px] font-mono text-zinc-400">
+                                        {isOwnProfile ? 'Aquí aparecerán tus publicaciones de puro texto' : 'Sin publicaciones de puro texto aún'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col justify-between gap-1.5 sm:gap-2.5 my-auto h-full py-1">
+                                    {bentoValuableMemories.slice(0, 4).map((memo, idx) => (
+                                        <div
+                                            key={memo.id || idx}
+                                            onClick={() => {
+                                                if (memo.raw) {
+                                                    setSelectedModalPost(memo.raw);
+                                                } else if (onOpenSimpleNotes) {
+                                                    onOpenSimpleNotes();
+                                                }
+                                            }}
+                                            className="flex items-center gap-2.5 p-2 sm:p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] hover:border-emerald-500/30 transition-all cursor-pointer group/memo shadow-xs flex-1"
+                                        >
+                                            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 group-hover/memo:text-emerald-400 transition-colors shrink-0">
+                                                {memo.icon === 'diamond' ? <Aperture size={12} className="sm:w-4 sm:h-4" /> : memo.icon === 'star' ? <Star size={12} className="sm:w-4 sm:h-4" /> : <StickyNote size={12} className="sm:w-4 sm:h-4" />}
+                                            </div>
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate leading-tight">
+                                                    {memo.title}
+                                                </span>
+                                                <span className="text-[6.5px] sm:text-[8px] font-mono text-zinc-400 line-clamp-1 leading-tight mt-0.5">
+                                                    {memo.subtitle}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col min-w-0 flex-1">
-                                            <span className="text-[8px] sm:text-[10px] md:text-[11px] font-mono font-bold text-zinc-200 group-hover/memo:text-white truncate leading-tight">
-                                                {memo.title}
-                                            </span>
-                                            <span className="text-[6.5px] sm:text-[8px] font-mono text-zinc-500 truncate leading-tight mt-0.5">
-                                                {memo.subtitle}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -7032,46 +7375,62 @@ const ProfileView = ({
                             </div>
 
                             {/* Grid de Piezas en el Modal */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto no-scrollbar p-1 max-h-[60vh]">
-                                {allPiecesForSale.map((item, idx) => (
-                                    <div
-                                        key={item.id || idx}
-                                        onClick={() => {
-                                            if (item.buyLink) {
-                                                window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
-                                            } else if (item.raw) {
-                                                setSelectedModalPost(item.raw);
-                                            }
-                                        }}
-                                        className="group/modalItem flex flex-col rounded-2xl bg-black/50 border border-white/[0.08] hover:border-emerald-500/50 p-2 transition-all cursor-pointer shadow-md hover:scale-[1.02]"
-                                    >
-                                        <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.05] bg-zinc-950">
-                                            <img
-                                                src={formatUrl(item.image)}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover group-hover/modalItem:scale-105 transition-transform duration-500"
-                                                onError={(e) => {
-                                                    if (!e.target.dataset.failed) {
-                                                        e.target.dataset.failed = 'true';
-                                                        e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
-                                                    }
-                                                }}
-                                            />
-                                            <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shadow-md">
-                                                {item.price}
-                                            </span>
+                            {allPiecesForSale.length === 0 ? (
+                                <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-2 border border-white/5 border-dashed rounded-2xl">
+                                    <span className="text-xs font-mono text-zinc-400">No hay publicaciones con enlaces aún.</span>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto no-scrollbar p-1 max-h-[60vh]">
+                                    {allPiecesForSale.map((item, idx) => (
+                                        <div
+                                            key={item.id || idx}
+                                            onClick={() => {
+                                                if (item.buyLink) {
+                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                                } else if (item.raw) {
+                                                    setSelectedModalPost(item.raw);
+                                                }
+                                            }}
+                                            className="group/modalItem flex flex-col rounded-2xl bg-black/50 border border-white/[0.08] hover:border-emerald-500/50 p-2 transition-all cursor-pointer shadow-md hover:scale-[1.02]"
+                                        >
+                                            <div className="w-full aspect-square rounded-xl overflow-hidden relative border border-white/[0.05] bg-zinc-950 flex items-center justify-center">
+                                                {item.image ? (
+                                                    <img
+                                                        src={formatUrl(item.image)}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover group-hover/modalItem:scale-105 transition-transform duration-500"
+                                                    />
+                                                ) : item.video ? (
+                                                    <video
+                                                        src={formatUrl(item.video)}
+                                                        muted
+                                                        loop
+                                                        playsInline
+                                                        autoPlay
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="p-3 text-center flex flex-col items-center justify-center gap-1.5">
+                                                        <ArrowUpRight size={20} className="text-emerald-400" />
+                                                        <span className="text-[10px] font-mono text-zinc-300 line-clamp-2">{item.title}</span>
+                                                    </div>
+                                                )}
+                                                <span className="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[8px] sm:text-[9px] font-mono font-black text-emerald-400 shadow-md">
+                                                    {item.price}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-2 px-0.5">
+                                                <span className="text-[10px] sm:text-xs font-mono font-bold text-zinc-200 group-hover/modalItem:text-white truncate">
+                                                    {item.title}
+                                                </span>
+                                                <span className="text-[8px] font-mono text-emerald-400 font-bold group-hover/modalItem:translate-x-0.5 transition-transform">
+                                                    Ver ↗
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center justify-between mt-2 px-0.5">
-                                            <span className="text-[10px] sm:text-xs font-mono font-bold text-zinc-200 group-hover/modalItem:text-white truncate">
-                                                {item.title}
-                                            </span>
-                                            <span className="text-[8px] font-mono text-emerald-400 font-bold group-hover/modalItem:translate-x-0.5 transition-transform">
-                                                Ver ↗
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Footer del Modal */}
                             <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-[8px] sm:text-[9px] font-mono text-zinc-500">
@@ -7111,13 +7470,13 @@ const ProfileView = ({
                         </div>
                     </div>
 
-                    {/* Feed de Obras: Monolito / Editorial con estado vacío si no hay posts reales */}
+                    {/* Feed de Obras: Monolito / Editorial (Solo imágenes y videos publicados) */}
                     {displayFeedPosts.length === 0 ? (
-                        <div className="w-full py-16 px-4 rounded-3xl bg-zinc-950/40 border border-white/[0.06] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-6">
+                        <div className="w-full py-16 px-4 rounded-3xl bg-[#0b0c10]/65 backdrop-blur-md border border-white/[0.06] flex flex-col items-center justify-center text-center max-w-xl mx-auto my-6">
                             <FileText size={22} className="text-zinc-600 mb-2" />
                             <p className="text-xs font-mono text-zinc-400 font-medium">Archivo editorial vacío</p>
-                            <span className="text-[10px] font-mono text-zinc-600 mt-1 max-w-xs">
-                                {isOwnProfile ? 'Las notas y obras que publiques en tu feed se mostrarán aquí.' : 'Este usuario aún no ha publicado piezas en su perfil.'}
+                            <span className="text-[10px] font-mono text-zinc-500 mt-1 max-w-xs">
+                                {isOwnProfile ? 'Las publicaciones con imágenes o videos que subas se mostrarán aquí.' : 'Este usuario aún no ha subido imágenes o videos en su archivo.'}
                             </span>
                         </div>
                     ) : profileFeedView === 'monolito' ? (
@@ -18793,8 +19152,6 @@ ${afcMapContext}
                                         </div>
                                     ) :
                                         <>
-                                            {renderCanvasView()}
-                                            <div className="fixed inset-0 z-[1399] bg-black/25 backdrop-blur-[2px] transition-all duration-700 animate-in fade-in cursor-default pointer-events-auto" />
                                             <ProfileView
                                                 user={user}
                                                 isNavbarHidden={isNavbarHidden}
