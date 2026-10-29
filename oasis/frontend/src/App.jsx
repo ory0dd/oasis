@@ -5908,9 +5908,9 @@ const ProfileView = ({
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (IZQUIERDA): PLAYLIST PERSONAL // TRACKS MP3 */}
+                        {/* FILA 2 (IZQUIERDA): EL CUADRO ORIGINAL + PLAYLIST EN PEQUEÑO ABAJO */}
                         {/* ======================================================== */}
-                        <div className="col-span-1 lg:col-span-6 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
+                        <div className="col-span-1 lg:col-span-6 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 relative overflow-hidden">
                             
                             {/* Input oculto para subir múltiples archivos MP3 */}
                             <input
@@ -5922,115 +5922,89 @@ const ProfileView = ({
                                 onChange={handleMultipleAudioUpload}
                             />
 
-                            {/* Header de la Playlist */}
-                            <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                    <ListMusic size={11} className="text-emerald-400 shrink-0" />
-                                    <h3 className="text-[8.5px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-white truncate">
-                                        Playlist
-                                    </h3>
-                                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[6.5px] sm:text-[7.5px] font-mono font-bold text-emerald-400 shrink-0">
-                                        {playlistTracks.length} tracks
-                                    </span>
+                            {/* EL CUADRO (FOTO PRINCIPAL ORIGINAL CON PLAY EN EL CENTRO) */}
+                            <div
+                                onClick={() => {
+                                    if (profileAudioRef.current) {
+                                        if (profileAudioRef.current.paused) {
+                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                        } else {
+                                            profileAudioRef.current.pause();
+                                            setIsProfileAudioPlaying(false);
+                                        }
+                                    } else if (bentoCentralPiece.raw) {
+                                        setSelectedModalPost(bentoCentralPiece.raw);
+                                    }
+                                }}
+                                className="w-full aspect-[4/3] rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/loop cursor-pointer shadow-md"
+                            >
+                                <img
+                                    src={formatUrl(bentoCentralPiece.image)}
+                                    alt={bentoCentralPiece.title}
+                                    className="w-full h-full object-cover group-hover/loop:scale-105 transition-transform duration-700"
+                                    onError={(e) => {
+                                        if (!e.target.dataset.failed) {
+                                            e.target.dataset.failed = 'true';
+                                            e.target.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop';
+                                        }
+                                    }}
+                                />
+                                <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
+                                
+                                {/* Badge Superior Derecho */}
+                                <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-200 shadow-md">
+                                    {playlistTracks.length > 1 ? `${playlistTracks.length} tracks` : 'loop continuo'}
                                 </div>
 
+                                {/* Botón discreto para Subir MP3 */}
                                 {isOwnProfile && (
                                     <button
                                         type="button"
-                                        onClick={() => multiAudioInputRef.current?.click()}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            multiAudioInputRef.current?.click();
+                                        }}
                                         disabled={isUploadingPlaylist}
-                                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.05] hover:bg-emerald-500 hover:text-black border border-white/10 text-zinc-300 text-[7px] sm:text-[7.5px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                                        className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/80 hover:bg-[#10b981] hover:text-black backdrop-blur-md border border-white/20 text-zinc-300 text-[6.5px] sm:text-[7.5px] font-mono font-bold transition-all cursor-pointer shadow-md active:scale-95 z-10"
                                         title="Subir una o varias canciones en formato MP3"
                                     >
                                         {isUploadingPlaylist ? (
                                             <>
-                                                <Loader2 size={8} className="animate-spin text-emerald-400" />
+                                                <Loader2 size={7} className="animate-spin text-emerald-400" />
                                                 <span>Subiendo...</span>
                                             </>
                                         ) : (
                                             <>
-                                                <Upload size={7.5} />
+                                                <Upload size={7} />
                                                 <span>+ Subir MP3</span>
                                             </>
                                         )}
                                     </button>
                                 )}
-                            </div>
 
-                            {/* Mini Player Visual Suave */}
-                            <div className="relative w-full rounded-xl overflow-hidden border border-white/[0.08] bg-black/60 p-2 sm:p-2.5 flex items-center justify-between gap-2 shadow-inner">
-                                <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
-                                
-                                <div className="flex items-center gap-2 min-w-0 z-10">
-                                    {/* Mini Cover con Ecualizador Animado */}
-                                    <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden shrink-0 border border-white/10 bg-zinc-900 shadow-xs flex items-center justify-center">
-                                        <img
-                                            src={formatUrl(bentoCentralPiece.image)}
-                                            alt="Cover"
-                                            className="w-full h-full object-cover opacity-60"
-                                        />
-                                        {isProfileAudioPlaying && (
-                                            <div className="absolute inset-0 flex items-center justify-center gap-[2px] bg-black/40 backdrop-blur-[1px]">
-                                                <span className="w-[2px] h-3 bg-emerald-400 animate-pulse rounded-full" />
-                                                <span className="w-[2px] h-4 bg-emerald-400 animate-bounce rounded-full" />
-                                                <span className="w-[2px] h-2 bg-emerald-400 animate-pulse rounded-full" />
-                                            </div>
-                                        )}
+                                {/* Botón Central Play / Pause con Glow Esmeralda */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                        {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
                                     </div>
-
-                                    {/* Información del Track Actual */}
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="text-[7px] font-mono uppercase tracking-wider text-emerald-400/80 font-bold">
-                                            {isProfileAudioPlaying ? 'En reproducción' : 'Pausado'}
-                                        </span>
-                                        <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white truncate max-w-[130px] sm:max-w-[180px]">
-                                            {playlistTracks[currentTrackIndex]?.title || 'respiración lenta [432 Hz]'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Controles de Reproducción Minimalistas */}
-                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 z-10">
-                                    <button
-                                        type="button"
-                                        onClick={handlePrevTrack}
-                                        className="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-white/15 text-zinc-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
-                                        title="Anterior"
-                                    >
-                                        <SkipBack size={9} />
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (profileAudioRef.current) {
-                                                if (profileAudioRef.current.paused) {
-                                                    profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
-                                                } else {
-                                                    profileAudioRef.current.pause();
-                                                    setIsProfileAudioPlaying(false);
-                                                }
-                                            }
-                                        }}
-                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#10b981] hover:bg-[#059669] text-black font-black flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95 hover:scale-105"
-                                        title={isProfileAudioPlaying ? 'Pausar' : 'Reproducir'}
-                                    >
-                                        {isProfileAudioPlaying ? <Pause size={10} strokeWidth={2.5} /> : <Play size={10} className="ml-0.5" strokeWidth={2.5} />}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={handleNextTrack}
-                                        className="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-white/15 text-zinc-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
-                                        title="Siguiente"
-                                    >
-                                        <SkipForward size={9} />
-                                    </button>
                                 </div>
                             </div>
 
-                            {/* Lista de Canciones Suave y Minimalista */}
-                            <div className="flex flex-col gap-1 max-h-[115px] sm:max-h-[135px] overflow-y-auto no-scrollbar pr-0.5">
+                            {/* Título de la canción en reproducción */}
+                            <div className="flex items-center justify-between px-0.5 pt-0.5">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
+                                    <span className="text-[9.5px] sm:text-xs font-bold text-white font-sans truncate">
+                                        {playlistTracks[currentTrackIndex]?.title || bentoCentralPiece.title}
+                                    </span>
+                                </div>
+                                <span className="text-[7.5px] sm:text-[8.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
+                                    {bentoCentralPiece.tag || '[432 Hz]'}
+                                </span>
+                            </div>
+
+                            {/* Canciones en pequeño abajo */}
+                            <div className="flex flex-col gap-0.5 max-h-[60px] sm:max-h-[75px] overflow-y-auto no-scrollbar border-t border-white/[0.05] pt-1">
                                 {playlistTracks.map((track, idx) => {
                                     const isCurrent = currentTrackIndex === idx;
                                     const isThisPlaying = isCurrent && isProfileAudioPlaying;
@@ -6051,37 +6025,29 @@ const ProfileView = ({
                                                     playTrackAtIndex(idx);
                                                 }
                                             }}
-                                            className={`group/track flex items-center justify-between px-2 py-1.5 rounded-xl border transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 border-emerald-500/35 text-white' : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.04] hover:border-white/10 text-zinc-300'}`}
+                                            className={`group/track flex items-center justify-between px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 text-emerald-400 font-bold' : 'hover:bg-white/[0.04] text-zinc-400 hover:text-zinc-200'}`}
                                         >
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 text-[7px] font-mono font-bold transition-all ${isCurrent ? 'bg-[#10b981] text-black shadow-xs' : 'bg-white/[0.05] text-zinc-400 group-hover/track:text-white'}`}>
-                                                    {isThisPlaying ? (
-                                                        <div className="flex items-end gap-[1px] h-2">
-                                                            <span className="w-[1px] h-full bg-black animate-pulse" />
-                                                            <span className="w-[1px] h-1 bg-black animate-bounce" />
-                                                            <span className="w-[1px] h-1.5 bg-black animate-pulse" />
-                                                        </div>
-                                                    ) : (
-                                                        <span>0${idx + 1}</span>
-                                                    )}
-                                                </div>
-                                                <span className={`text-[8px] sm:text-[9px] font-mono font-bold truncate max-w-[140px] sm:max-w-[210px] ${isCurrent ? 'text-emerald-400' : 'text-zinc-300 group-hover/track:text-white'}`}>
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className={`text-[6.5px] sm:text-[7px] font-mono shrink-0 ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                                    {isThisPlaying ? '▶' : `0${idx + 1}`}
+                                                </span>
+                                                <span className="text-[7px] sm:text-[8px] font-mono truncate max-w-[150px] sm:max-w-[210px]">
                                                     {track.title}
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                <span className={`text-[6.5px] sm:text-[7px] font-mono font-bold ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <span className={`text-[6px] sm:text-[6.5px] font-mono ${isCurrent ? 'text-emerald-400' : 'text-zinc-600'}`}>
                                                     {isThisPlaying ? 'ON' : 'MP3'}
                                                 </span>
                                                 {isOwnProfile && playlistTracks.length > 1 && (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => handleRemoveTrack(track.id, e)}
-                                                        className="p-0.5 rounded opacity-0 group-hover/track:opacity-100 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
-                                                        title="Quitar de playlist"
+                                                        className="p-0.5 opacity-0 group-hover/track:opacity-100 hover:text-red-400 text-zinc-500 transition-opacity cursor-pointer"
+                                                        title="Eliminar de playlist"
                                                     >
-                                                        <X size={7.5} />
+                                                        <X size={7} />
                                                     </button>
                                                 )}
                                             </div>
