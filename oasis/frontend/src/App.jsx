@@ -75,15 +75,28 @@ export const DEFAULT_COMMUNITY_TEMPLATES = [
     }
 ];
 
-export const getDefaultAvatar = (username) => {
-    if (!username) return CURATED_AVATARS[0];
-    let hash = 0;
+export const getDefaultAvatar = (username, indexOffset = 0) => {
+    if (!username) return CURATED_AVATARS[indexOffset % CURATED_AVATARS.length];
     const str = String(username).toLowerCase().replace('@', '').trim();
+    const explicitMap = {
+        'ory11': '/avatars/avatar_1.png',
+        'observador1': '/avatars/avatar_2.png',
+        'ghfd3': '/avatars/avatar_3.jpg',
+        'kiotest': '/avatars/avatar_4.jpg',
+        'testuser_soul': '/avatars/avatar_5.png',
+        'jss93': '/avatars/avatar_6.png',
+        'somnispiria': '/avatars/avatar_7.png',
+        'observador': '/avatars/avatar_8.png',
+        'oasis': '/avatars/avatar_9.png',
+        'anon': '/avatars/avatar_10.png'
+    };
+    if (explicitMap[str]) return explicitMap[str];
+    let hash = 2166136261;
     for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
     }
-    const idx = Math.abs(hash) % CURATED_AVATARS.length;
+    const idx = (Math.abs(hash) + indexOffset) % CURATED_AVATARS.length;
     return CURATED_AVATARS[idx];
 };
 
@@ -545,7 +558,7 @@ const formatUrl = (url) => {
         url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
     }
 
-    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
     if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
         return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     }
@@ -2348,7 +2361,7 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -2610,7 +2623,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -4538,7 +4551,7 @@ const ProfileView = ({
             url = url.replace(/https?:\/\/(localhost|127\.0\.0\.1):5046\/?/g, API_URL.endsWith('/') ? API_URL : API_URL + '/');
         }
 
-        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/avatars/') || url.startsWith('/audio/') || url.startsWith('/icar16/')) return url;
         if (isLocal && (url.startsWith('/uploads/') || url.startsWith('uploads/'))) {
             return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
         }
@@ -17493,8 +17506,8 @@ ${afcMapContext}
                     });
                     if (postWithAv) userAvatar = postWithAv.metadata.userAvatar;
                 }
-                if (!userAvatar || userAvatar.includes('dicebear') || userAvatar.includes('ba90867f')) {
-                    userAvatar = getDefaultAvatar(currentUsername);
+                if (!userAvatar || userAvatar.includes('dicebear') || userAvatar.includes('ba90867f') || userAvatar.startsWith('/uploads/') || userAvatar.startsWith('uploads/')) {
+                    userAvatar = getDefaultAvatar(currentUsername, idx);
                 }
 
                 return {
@@ -17651,7 +17664,13 @@ ${afcMapContext}
                                 title="Ir a mi perfil"
                             >
                                 <img 
-                                    src={avatar || getDefaultAvatar(cleanCurrentU)}
+                                    src={(avatar && !avatar.includes('dicebear') && !avatar.includes('ba90867f') && !avatar.startsWith('/uploads/')) ? avatar : getDefaultAvatar(cleanCurrentU)}
+                                    onError={(e) => {
+                                        if (!e.target.dataset.failed) {
+                                            e.target.dataset.failed = 'true';
+                                            e.target.src = getDefaultAvatar(cleanCurrentU);
+                                        }
+                                    }}
                                     alt={cleanCurrentU}
                                     className="w-11 h-11 rounded-full object-cover border border-white/10 group-hover/me:border-accent transition-colors shrink-0 bg-zinc-900"
                                 />
@@ -17709,6 +17728,12 @@ ${afcMapContext}
                                         >
                                             <img
                                                 src={formatUrl(soul.img)}
+                                                onError={(e) => {
+                                                    if (!e.target.dataset.failed) {
+                                                        e.target.dataset.failed = 'true';
+                                                        e.target.src = getDefaultAvatar(soul.username, idx);
+                                                    }
+                                                }}
                                                 alt={soul.username}
                                                 className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0 bg-zinc-900 group-hover/sug:border-white/30 transition-colors"
                                             />

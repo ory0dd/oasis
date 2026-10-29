@@ -82,6 +82,29 @@ export default function DirectMessagesWidget({
         } catch (_) {}
     };
 
+    const getCuratedAvatar = (username, idx = 0) => {
+        const avatars = [
+            '/avatars/avatar_1.png', '/avatars/avatar_2.png', '/avatars/avatar_3.jpg',
+            '/avatars/avatar_4.jpg', '/avatars/avatar_5.png', '/avatars/avatar_6.png',
+            '/avatars/avatar_7.png', '/avatars/avatar_8.png', '/avatars/avatar_9.png',
+            '/avatars/avatar_10.png'
+        ];
+        const str = String(username || '').toLowerCase().replace('@', '').trim();
+        const explicitMap = {
+            'ory11': '/avatars/avatar_1.png', 'observador1': '/avatars/avatar_2.png',
+            'ghfd3': '/avatars/avatar_3.jpg', 'kiotest': '/avatars/avatar_4.jpg',
+            'testuser_soul': '/avatars/avatar_5.png', 'jss93': '/avatars/avatar_6.png',
+            'somnispiria': '/avatars/avatar_7.png'
+        };
+        if (explicitMap[str]) return explicitMap[str];
+        let hash = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+            hash ^= str.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        return avatars[(Math.abs(hash) + idx) % avatars.length];
+    };
+
     // Helper to get user info
     const getUserInfo = (username) => {
         const clean = (username || '').replace('@', '').toLowerCase();
@@ -90,11 +113,12 @@ export default function DirectMessagesWidget({
             return uclean === clean;
         });
 
-        const defaultAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(clean)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+        const rawAv = found?.avatar || found?.Avatar;
+        const finalAv = (rawAv && !rawAv.includes('dicebear') && !rawAv.startsWith('/uploads/')) ? rawAv : getCuratedAvatar(clean);
         return {
             username: clean,
             displayName: found?.FullName || found?.fullName || found?.Username || found?.username || clean,
-            avatar: found?.avatar || found?.Avatar || defaultAvatar
+            avatar: finalAv
         };
     };
 
@@ -203,9 +227,10 @@ export default function DirectMessagesWidget({
     const previewAvatars = (publicUsers || [])
         .filter(u => (u.Username || u.username || '').replace('@', '').toLowerCase() !== cleanCurrent)
         .slice(0, 3)
-        .map(u => {
+        .map((u, idx) => {
             const uname = (u.Username || u.username || '').replace('@', '');
-            return u.avatar || u.Avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+            const rawAv = u.avatar || u.Avatar;
+            return (rawAv && !rawAv.includes('dicebear') && !rawAv.startsWith('/uploads/')) ? rawAv : getCuratedAvatar(uname, idx);
         });
 
     const activeThread = activeUser ? (threads[activeUser.toLowerCase()] || { messages: [] }) : null;
