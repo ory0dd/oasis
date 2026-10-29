@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import BitacoraExistencial from './components/BitacoraExistencial';
 import { createPortal } from 'react-dom';
 import {
     Plus, Minus, Edit2, Check, Radio, Focus, Compass, CheckSquare,
@@ -15,25 +14,36 @@ import {
     MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import OasisChat from './components/OasisChat';
-import PsychologistDashboard from './components/PsychologistDashboard';
-import { ResonanceNotebook } from './components/ResonanceNotebook';
-import { DiaryNotebook } from './components/DiaryNotebook';
-import MyResponsesDashboard from './components/MyResponsesDashboard';
 import SimpleNotesView from './components/SimpleNotesView';
-import UnifiedCreatorView from './components/UnifiedCreatorView';
 import icarQuestions from './data/icar16_questions.json';
 import icarRationale from './data/icar16_rationale.json';
 import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
-import { BiographicInterview } from './components/BiographicInterview';
-import PublishNoteSelector from './components/PublishNoteSelector';
 import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
-import DirectMessagesModal from './components/DirectMessagesModal';
 import DirectMessagesWidget from './components/DirectMessagesWidget';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
-import InformedConsentModal from './components/InformedConsentModal';
+
+const withLazySuspense = (loader) => {
+    const LazyComponent = React.lazy(loader);
+    return React.forwardRef((props, ref) => (
+        <React.Suspense fallback={null}>
+            <LazyComponent {...props} ref={ref} />
+        </React.Suspense>
+    ));
+};
+
+const BitacoraExistencial = withLazySuspense(() => import('./components/BitacoraExistencial'));
+const OasisChat = withLazySuspense(() => import('./components/OasisChat'));
+const PsychologistDashboard = withLazySuspense(() => import('./components/PsychologistDashboard'));
+const ResonanceNotebook = withLazySuspense(() => import('./components/ResonanceNotebook').then(m => ({ default: m.ResonanceNotebook })));
+const DiaryNotebook = withLazySuspense(() => import('./components/DiaryNotebook').then(m => ({ default: m.DiaryNotebook })));
+const MyResponsesDashboard = withLazySuspense(() => import('./components/MyResponsesDashboard'));
+const UnifiedCreatorView = withLazySuspense(() => import('./components/UnifiedCreatorView'));
+const BiographicInterview = withLazySuspense(() => import('./components/BiographicInterview').then(m => ({ default: m.BiographicInterview })));
+const PublishNoteSelector = withLazySuspense(() => import('./components/PublishNoteSelector'));
+const DirectMessagesModal = withLazySuspense(() => import('./components/DirectMessagesModal'));
+const InformedConsentModal = withLazySuspense(() => import('./components/InformedConsentModal'));
 
 export const CURATED_AVATARS = [
     '/avatars/avatar_1.png',
@@ -19471,7 +19481,7 @@ ${afcMapContext}
                                                 key={`tile-${i}`}
                                                 src={formatUrl(activeBgValue)}
                                                 autoPlay loop muted playsInline
-                                                preload="auto"
+                                                preload="metadata"
                                                 className="w-full h-full object-cover global-bg-video"
                                                 onError={handleBackgroundVideoError}
                                                 onStalled={handleBackgroundVideoStalled}
@@ -19484,7 +19494,7 @@ ${afcMapContext}
                                         key={activeBgValue}
                                         src={formatUrl(activeBgValue)}
                                         autoPlay loop muted playsInline
-                                        preload="auto"
+                                        preload="metadata"
                                         className="absolute inset-0 w-full h-screen object-cover opacity-60 transition-all duration-1000 global-bg-video"
                                         onError={handleBackgroundVideoError}
                                         onStalled={handleBackgroundVideoStalled}
@@ -20478,20 +20488,22 @@ ${afcMapContext}
                 />
             )}
 
-            <DirectMessagesModal
-                isOpen={isDirectMessagesOpen}
-                onClose={() => setIsDirectMessagesOpen(false)}
-                currentUser={user}
-                currentUserAvatar={avatar}
-                publicUsers={publicUsers}
-                initialTargetUser={directMessageTargetUser}
-                initialContextMessage={directMessageContext}
-                onOpenProfile={(uname) => {
-                    setIsDirectMessagesOpen(false);
-                    setPublicProfileUser(uname);
-                }}
-                accent={accent}
-            />
+            {isDirectMessagesOpen && (
+                <DirectMessagesModal
+                    isOpen={isDirectMessagesOpen}
+                    onClose={() => setIsDirectMessagesOpen(false)}
+                    currentUser={user}
+                    currentUserAvatar={avatar}
+                    publicUsers={publicUsers}
+                    initialTargetUser={directMessageTargetUser}
+                    initialContextMessage={directMessageContext}
+                    onOpenProfile={(uname) => {
+                        setIsDirectMessagesOpen(false);
+                        setPublicProfileUser(uname);
+                    }}
+                    accent={accent}
+                />
+            )}
             {isHighlightModalOpen && (
                 <HighlightModal
                     user={user}

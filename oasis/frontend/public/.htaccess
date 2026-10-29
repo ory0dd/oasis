@@ -3,19 +3,36 @@
 # ==============================================================================
 
 # 1. Asignar el tipo MIME correcto a módulos JavaScript (.mjs y .js)
-# Evita el error "Setting up fake worker failed: Failed to fetch dynamically imported module"
 <IfModule mod_mime.c>
     AddType application/javascript .mjs .js
     AddType application/json .json
     AddType application/manifest+json .webmanifest
 </IfModule>
 
-# 2. Habilitar compresión si está disponible
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript text/css text/html text/plain application/json
+# 2. Evitar fallos ERR_SOCKET_NOT_CONNECTED por UDP/QUIC (HTTP/3) en redes lentas
+# y configurar caché agresiva para assets estáticos con hash
+<IfModule mod_headers.c>
+    Header always unset alt-svc
+    Header always set Alt-Svc "clear"
+    Header always set Connection "keep-alive"
+
+    # index.html siempre fresco para recibir actualizaciones al instante
+    <FilesMatch "^index\.html$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    # Bundles de Vite con hash (/assets/*) y recursos multimedia en caché local
+    <FilesMatch "\.(js|mjs|css|woff2|woff|ttf|png|jpg|jpeg|webp|gif|svg|mp4|mp3)$">
+        Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+    </FilesMatch>
 </IfModule>
 
-# 3. Soporte para rutas SPA (React / Vite) y PWA
+# 3. Habilitar compresión GZIP / Brotli
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript text/css text/html text/plain application/json image/svg+xml
+</IfModule>
+
+# 4. Soporte para rutas SPA (React / Vite) y PWA
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /

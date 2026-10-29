@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es" style="background:#030304">
 
-<head><script>window.onerror = function(m, s, l, c, e) { fetch("http://localhost:3001/log", { method: "POST", body: JSON.stringify({error: m, stack: e?e.stack:null}) }) };</script>
+<head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="apple-touch-icon" href="/logo.png" />
@@ -12,29 +12,67 @@
   <style>
     html, body, #root {
       background-color: #030304;
+      color: #f4f4f5;
       margin: 0;
       padding: 0;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    @keyframes oasisPulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.98); }
+      50% { opacity: 0.85; transform: scale(1); }
+    }
+    .oasis-boot-shell {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 35%, rgba(132, 57, 111, 0.14), #030304 65%);
+      z-index: 1;
+      user-select: none;
+    }
+    .oasis-boot-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      background: #84396F;
+      box-shadow: 0 0 24px #84396F;
+      margin-bottom: 16px;
+      animation: oasisPulse 1.6s ease-in-out infinite;
+    }
+    .oasis-boot-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.55);
     }
   </style>
   <title>Ruido Interior</title>
-  <meta name="description"
-    content="Exploración e introspección offline" />
+  <meta name="description" content="Exploración e introspección offline" />
   <link rel="manifest" href="/manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Space+Mono:wght@400;700&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="oasis-boot-shell">
+      <div class="oasis-boot-dot"></div>
+      <div class="oasis-boot-title">Ruido Interior</div>
+    </div>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
-  
-  <!-- Scripts modulares PWA (Ruido Interior) -->
-  <script src="/js/db.js"></script>
-  <script src="/js/app.js"></script>
-  
+
+  <!-- Scripts modulares PWA (Ruido Interior) con defer para no bloquear el render inicial -->
+  <script defer src="/js/db.js"></script>
+  <script defer src="/js/app.js"></script>
+
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
