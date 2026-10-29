@@ -4915,6 +4915,12 @@ const ProfileView = ({
     const [activePurchasingId, setActivePurchasingId] = useState(null);
     const [activeSuccessId, setActiveSuccessId] = useState(null);
     const [isFirmaExpanded, setIsFirmaExpanded] = useState(false);
+    const [customFirma, setCustomFirma] = useState(() => {
+        const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_custom_firma_${effectiveUser}`) : null);
+        if (stored) return stored;
+        return publicProfileData?.firma || publicProfileData?.Firma || '';
+    });
+    const [isEditingFirma, setIsEditingFirma] = useState(false);
     const [isPiecesModalOpen, setIsPiecesModalOpen] = useState(false);
     const [isQuickCustomizeOpen, setIsQuickCustomizeOpen] = useState(false);
 
@@ -5424,8 +5430,12 @@ const ProfileView = ({
     }, [targetUserPosts]);
 
     const bentoSensoryQuote = useMemo(() => {
-        let resonanceData = null;
+        if (customFirma && customFirma.trim() !== '') return customFirma;
+
+        const defaultProcess = "últimamente me siento habitando un ritmo más pausado, dejando que las ideas respiren y encontrando claridad en las pequeñas pausas del día...";
+
         try {
+            let resonanceData = null;
             if (isOwnProfile) {
                 const saved = localStorage.getItem('oasis_public_traits_' + user);
                 if (saved) resonanceData = JSON.parse(saved);
@@ -5435,12 +5445,13 @@ const ProfileView = ({
                     resonanceData = typeof pUserObj.publicTraits === 'string' ? JSON.parse(pUserObj.publicTraits) : pUserObj.publicTraits;
                 }
             }
+
+            if (resonanceData?.proceso) return resonanceData.proceso;
+            if (resonanceData?.habitar && resonanceData.habitar.toLowerCase().includes('últimamente')) return resonanceData.habitar;
         } catch(e) {}
 
-        if (resonanceData?.habitar) return resonanceData.habitar;
-        if (resonanceData?.sintesis) return resonanceData.sintesis;
-        return "hoy sentí calma al no apurarme con la pieza c:";
-    }, [isOwnProfile, user, publicUsers, effectiveUser]);
+        return defaultProcess;
+    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser]);
 
     const bentoValuableMemories = useMemo(() => {
         const items = [];
@@ -5533,54 +5544,6 @@ const ProfileView = ({
                             onChange={handleAmbientAudioUpload}
                         />
 
-                        {/* Top-Left: Ambient Audio Badge (Estilo refinado con indicador [ON]/[OFF] y speaker) */}
-                        <div 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (profileAudioRef.current) {
-                                    if (profileAudioRef.current.paused) {
-                                        profileAudioRef.current.play()
-                                            .then(() => setIsProfileAudioPlaying(true))
-                                            .catch((err) => {
-                                                console.warn('Audio playback error:', err);
-                                            });
-                                    } else {
-                                        profileAudioRef.current.pause();
-                                        setIsProfileAudioPlaying(false);
-                                    }
-                                }
-                            }}
-                            className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-white shadow-xl transition-all cursor-pointer group/ambient"
-                            title="Toca para reproducir/pausar ambiente sonoro de este perfil"
-                        >
-                            <span className={`w-2 h-2 rounded-full shrink-0 ${isProfileAudioPlaying ? 'bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-[#10b981]/70'}`} />
-                            <span className="text-[10px] font-mono tracking-wider text-zinc-200 group-hover/ambient:text-white truncate max-w-[140px] sm:max-w-[220px]">
-                                {ambientAudioTitle}
-                            </span>
-                            <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded tracking-wider transition-colors ${isProfileAudioPlaying ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/10 text-zinc-400'}`}>
-                                {isProfileAudioPlaying ? 'ON' : 'OFF'}
-                            </span>
-                            {isProfileAudioPlaying ? (
-                                <Volume2 size={11} className="text-[#10b981] shrink-0" />
-                            ) : (
-                                <VolumeX size={11} className="text-zinc-400 group-hover/ambient:text-white shrink-0" />
-                            )}
-                            {isOwnProfile && (
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        audioFileInputRef.current?.click();
-                                    }}
-                                    className="p-1 -mr-1 rounded-full hover:bg-white/15 text-zinc-400 hover:text-emerald-400 transition-colors ml-0.5 cursor-pointer"
-                                    title="Subir canción personalizada para tu perfil (se escuchará al entrar)"
-                                    disabled={isUploadingAudio}
-                                >
-                                    {isUploadingAudio ? <Loader2 size={10} className="animate-spin text-emerald-400" /> : <Upload size={10} />}
-                                </button>
-                            )}
-                        </div>
-
                         {/* Volver al feed si es perfil visitante */}
                         {!isOwnProfile && user && (
                             <div className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20" onClick={e => e.stopPropagation()}>
@@ -5595,78 +5558,6 @@ const ProfileView = ({
                                 </button>
                             </div>
                         )}
-
-                        {/* Controles Inferiores de la Portada (Sleek Minimal Frosted Glass Pills - Image 1) */}
-                        <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex items-center gap-1 sm:gap-2 z-20 flex-wrap justify-end max-w-[95%]" onClick={e => e.stopPropagation()}>
-                            {/* Mi Enlace / Compartir */}
-                            <button
-                                type="button"
-                                onClick={handleShareProfile}
-                                className={`px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 ${copiedLink ? 'border-[#10b981] text-[#10b981]' : 'border-white/15 hover:border-white/30'}`}
-                                title="Copiar enlace personalizado del perfil"
-                            >
-                                {copiedLink ? <Check size={11} strokeWidth={2.5} /> : <Share2 size={11} strokeWidth={2} />}
-                                <span>{copiedLink ? '¡Copiado!' : 'Mi Enlace'}</span>
-                            </button>
-
-                            {/* Ver Completa */}
-                            <button
-                                type="button"
-                                onClick={() => setIsCoverLightboxOpen(true)}
-                                className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                title="Ver portada en tamaño original"
-                            >
-                                <Maximize2 size={11} />
-                                <span className="hidden sm:inline">Ver Completa</span>
-                            </button>
-
-                            {/* Selector de Encuadre */}
-                            {isOwnProfile && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const next = coverPosition === 'center' ? 'top' : coverPosition === 'top' ? 'bottom' : 'center';
-                                        setCoverPosition(next);
-                                        localStorage.setItem('oasis_cover_pos_' + user, next);
-                                    }}
-                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title={`Encuadre: ${coverPosition}`}
-                                >
-                                    <Crop size={11} />
-                                    <span className="hidden md:inline">Encuadre: {coverPosition === 'top' ? 'Arriba' : coverPosition === 'bottom' ? 'Abajo' : 'Centro'}</span>
-                                </button>
-                            )}
-
-                            {/* Alternar Altura */}
-                            {isOwnProfile && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const next = coverHeightMode === 'expanded' ? 'full' : coverHeightMode === 'full' ? 'compact' : 'expanded';
-                                        setCoverHeightMode(next);
-                                        localStorage.setItem('oasis_cover_height_' + user, next);
-                                    }}
-                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title={`Vista: ${coverHeightMode}`}
-                                >
-                                    <Layers size={11} />
-                                    <span className="hidden md:inline">Vista: {coverHeightMode === 'expanded' ? 'Expandida' : coverHeightMode === 'full' ? 'Completa' : 'Compacta'}</span>
-                                </button>
-                            )}
-
-                            {/* Cambiar fondo */}
-                            {isOwnProfile && (
-                                <button
-                                    type="button"
-                                    onClick={() => { if (coverInputRef.current) coverInputRef.current.click(); }}
-                                    className="px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md border border-white/15 hover:border-white/30 text-white font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                                    title="Cambiar fotografía de fondo"
-                                >
-                                    <Sparkles size={11} className="text-[#10b981]" />
-                                    <span>Cambiar Fondo</span>
-                                </button>
-                            )}
-                        </div>
                     </div>
                 </div>
 
@@ -6076,14 +5967,69 @@ const ProfileView = ({
                         {/* FILA 2 (DERECHA): LA FIRMA + RECUERDOS VALIOSOS ABAJO */}
                         {/* ======================================================== */}
                         <div className="col-span-1 lg:col-span-6 order-3 flex flex-col gap-2">
-                            {/* LA FIRMA / ESTADO EXISTENCIAL */}
+                            {/* LA FIRMA / NARRATIVA DE PROCESO ("ÚLTIMAMENTE ME SIENTO...") */}
                             <div className="bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative transition-all group/quote">
-                                <p className="text-[9px] sm:text-[11px] text-zinc-200 font-serif italic leading-snug line-clamp-3">
-                                    "{bentoSensoryQuote}"
-                                </p>
-                                <span className="text-[7.5px] sm:text-[8.5px] font-mono font-black text-emerald-400 shrink-0 tracking-wider text-right">
-                                    03:14 AM
-                                </span>
+                                <div className="flex items-center justify-between pb-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                                            Proceso Interno
+                                        </span>
+                                    </div>
+                                    {isOwnProfile && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingFirma(!isEditingFirma)}
+                                            className="text-[7px] sm:text-[7.5px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer flex items-center gap-0.5"
+                                            title="Editar cómo te sientes últimamente"
+                                        >
+                                            <Pencil size={7} />
+                                            <span>{isEditingFirma ? 'Listo' : 'Editar'}</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {isEditingFirma ? (
+                                    <div className="flex flex-col gap-1.5 my-1">
+                                        <textarea
+                                            value={customFirma || bentoSensoryQuote}
+                                            onChange={(e) => {
+                                                setCustomFirma(e.target.value);
+                                                localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, e.target.value);
+                                            }}
+                                            placeholder="últimamente me siento..."
+                                            rows={3}
+                                            className="w-full bg-black/60 border border-emerald-500/30 rounded-lg p-2 text-[9px] sm:text-[10px] text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 font-serif italic resize-none"
+                                        />
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsEditingFirma(false);
+                                                    fetch(`${API_URL}/api/oasis/clinical-data?user=${effectiveUser}`, {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': effectiveUser },
+                                                        body: JSON.stringify({
+                                                            [`oasis_custom_firma_${effectiveUser}`]: customFirma || bentoSensoryQuote
+                                                        })
+                                                    }).catch(console.error);
+                                                }}
+                                                className="px-2 py-0.5 rounded bg-emerald-500 text-black text-[7.5px] font-mono font-bold cursor-pointer hover:bg-emerald-400 transition-colors"
+                                            >
+                                                Guardar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-[9px] sm:text-[10.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3">
+                                        "{bentoSensoryQuote}"
+                                    </p>
+                                )}
+
+                                <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] font-mono text-zinc-500">
+                                    <span>bitácora íntima</span>
+                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
+                                </div>
                             </div>
 
                             {/* RECUERDOS VALIOSOS // MEMORABILIA (DIRECTAMENTE ABAJO DE LA FIRMA) */}
