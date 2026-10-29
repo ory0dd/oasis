@@ -15,7 +15,7 @@ export default function DirectMessagesWidget({
     publicUsers = [],
     onOpenFullScreen,
     onOpenProfile,
-    accent = '#10b981',
+    accent = '#84396F',
     isNavbarHidden = false
 }) {
     const cleanCurrent = (currentUser || 'anon').replace('@', '').toLowerCase();
@@ -185,7 +185,7 @@ export default function DirectMessagesWidget({
                         rel="noopener noreferrer"
                         className="block rounded-xl overflow-hidden border border-white/15 bg-black/40 hover:bg-black/60 transition-colors shadow-md group/card text-left"
                     >
-                        <div className="p-2 bg-[#0095f6]/80 text-white font-mono text-[11px] truncate font-medium">
+                        <div className="p-2 bg-accent/80 text-white font-mono text-[11px] truncate font-medium">
                             {url}
                         </div>
                         {isShop && (
@@ -358,7 +358,7 @@ export default function DirectMessagesWidget({
                                         <div
                                             className={`rounded-2xl px-3.5 py-2 text-sm leading-snug max-w-[82%] shadow-md select-text ${
                                                 isOutgoing
-                                                    ? 'bg-[#0095f6] text-white rounded-br-xs'
+                                                    ? 'bg-accent text-white rounded-br-xs'
                                                     : 'bg-[#262626] text-zinc-100 rounded-bl-xs'
                                             }`}
                                         >
@@ -405,7 +405,7 @@ export default function DirectMessagesWidget({
                                 <button
                                     type="button"
                                     onClick={() => handleSendMessage()}
-                                    className="text-xs sm:text-sm font-bold text-[#0095f6] hover:brightness-125 px-1 transition-all"
+                                    className="text-xs sm:text-sm font-bold text-accent hover:brightness-125 px-1 transition-all"
                                 >
                                     Enviar
                                 </button>
@@ -528,7 +528,7 @@ export default function DirectMessagesWidget({
                                                             <span className="text-[11px] text-zinc-400 truncate">{info.displayName}</span>
                                                         </div>
                                                     </div>
-                                                    <span className="text-xs font-bold text-[#0095f6]">Chatear</span>
+                                                    <span className="text-xs font-bold text-accent">Chatear</span>
                                                 </div>
                                             );
                                         })}
@@ -578,7 +578,7 @@ export default function DirectMessagesWidget({
                                 <button
                                     type="button"
                                     onClick={() => setIsComposingNew(true)}
-                                    className="px-4 py-1.5 rounded-full bg-[#0095f6] hover:bg-[#0081d6] text-white text-xs font-bold transition-all shadow-md"
+                                    className="px-4 py-1.5 rounded-full bg-accent hover:opacity-90 text-white text-xs font-bold transition-all shadow-md"
                                 >
                                     Enviar primer mensaje
                                 </button>

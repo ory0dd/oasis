@@ -15,7 +15,7 @@ export default function DirectMessagesModal({
     initialTargetUser = null,
     initialContextMessage = '',
     onOpenProfile,
-    accent = '#10b981'
+    accent = '#84396F'
 }) {
     if (!isOpen) return null;
 

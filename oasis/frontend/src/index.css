@@ -9,8 +9,8 @@
   --bg-primary: #030304;
   --bg-secondary: rgba(255,255,255,0.05);
   --bg-card: rgba(255,255,255,0.03);
-  --accent: #bef264;
-  --accent-rgb: 190, 242, 100;
+  --accent: #84396F;
+  --accent-rgb: 132, 57, 111;
   --insight-purple: #a855f7;
   --insight-purple-rgb: 168, 85, 247;
 }
@@ -101,7 +101,7 @@ input, textarea, [contenteditable="true"] {
     to { transform: rotate(360deg); }
   }
   .shadow-glow-accent {
-    box-shadow: 0 0 15px var(--accent), 0 0 30px rgba(190, 242, 100, 0.3);
+    box-shadow: 0 0 15px var(--accent), 0 0 30px rgba(var(--accent-rgb), 0.3);
   }
   @keyframes flow {
     from { stroke-dashoffset: 24; }
@@ -265,7 +265,7 @@ input, textarea, [contenteditable="true"] {
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .custom-sidebar-scroll::-webkit-scrollbar-thumb:hover { 
-    background: var(--accent, #bef264); 
+    background: var(--accent, #84396F); 
   }
 
   /* HIGH VISIBILITY CRM SCROLLBAR */

@@ -49,17 +49,19 @@ export const CURATED_AVATARS = [
 ];
 
 export const CURATED_PROFILE_COVERS = [
-    { id: 'vid_1', type: 'video', url: '/covers/cover_video_1.mp4', title: 'Marea Gris (Lo-Fi Video)' },
-    { id: 'vid_2', type: 'video', url: '/covers/cover_video_2.mp4', title: 'Destello Etéreo (Lo-Fi Video)' },
-    { id: 'vid_3', type: 'video', url: '/covers/cover_video_3.mp4', title: 'Paseo Atemporal (Lo-Fi Video)' },
-    { id: 'vid_4', type: 'video', url: '/covers/cover_video_4.mp4', title: 'Vessel Fractal (Lo-Fi Video)' },
-    { id: 'vid_5', type: 'video', url: '/covers/cover_video_5.mp4', title: 'Humo & Malla (Lo-Fi Video)' },
-    { id: 'img_1', type: 'image', url: '/covers/cover_img_1.jpg', title: 'Ángel de Código' },
-    { id: 'img_2', type: 'image', url: '/covers/cover_img_2.jpg', title: 'Terminal en la Colina' },
-    { id: 'img_3', type: 'image', url: '/covers/cover_img_3.jpg', title: 'Bosque Brumoso' },
-    { id: 'img_4', type: 'image', url: '/covers/cover_img_4.jpg', title: 'Exodus Cyber' },
-    { id: 'img_5', type: 'image', url: '/covers/cover_img_5.jpg', title: 'Esferas Cromadas' },
-    { id: 'img_6', type: 'image', url: '/covers/cover_img_6.jpg', title: 'Silence Nocturno' }
+    { id: 'vid_1', type: 'video', url: '/covers/cover_video_1.mp4', poster: '/covers/cover_vid_thumb_1.jpg', title: 'Destello Solar (Lo-Fi Video)' },
+    { id: 'vid_2', type: 'video', url: '/covers/cover_video_2.mp4', poster: '/covers/cover_vid_thumb_2.jpg', title: 'Colina del Tiempo (Lo-Fi Video)' },
+    { id: 'vid_3', type: 'video', url: '/covers/cover_video_3.mp4', poster: '/covers/cover_vid_thumb_3.jpg', title: 'Malla & Trazo (Lo-Fi Video)' },
+    { id: 'vid_4', type: 'video', url: '/covers/cover_video_4.mp4', poster: '/covers/cover_vid_thumb_4.jpg', title: 'Marea Gris (Lo-Fi Video)' },
+    { id: 'vid_5', type: 'video', url: '/covers/cover_video_5.mp4', poster: '/covers/cover_vid_thumb_5.jpg', title: 'Vessel Fractal (Lo-Fi Video)' },
+    { id: 'vid_6', type: 'video', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/7c3a3194-e683-433a-93f6-bd2718da0fbb.mp4', poster: '/covers/cover_img_3.jpg', title: 'Paseo en un lugar lindo (Video)' },
+    { id: 'img_classic', type: 'image', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg', poster: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/e1475baf-2ceb-4027-94f4-f2ce321b311c.jpg', title: 'Portada Clásica Oasis' },
+    { id: 'img_1', type: 'image', url: '/covers/cover_img_1.jpg', poster: '/covers/cover_img_1.jpg', title: 'Ángel de Código' },
+    { id: 'img_2', type: 'image', url: '/covers/cover_img_2.jpg', poster: '/covers/cover_img_2.jpg', title: 'Terminal en la Colina' },
+    { id: 'img_3', type: 'image', url: '/covers/cover_img_3.jpg', poster: '/covers/cover_img_3.jpg', title: 'Bosque Brumoso' },
+    { id: 'img_4', type: 'image', url: '/covers/cover_img_4.jpg', poster: '/covers/cover_img_4.jpg', title: 'Exodus Cyber' },
+    { id: 'img_5', type: 'image', url: '/covers/cover_img_5.jpg', poster: '/covers/cover_img_5.jpg', title: 'Esferas Cromadas' },
+    { id: 'img_6', type: 'image', url: '/covers/cover_img_6.jpg', poster: '/covers/cover_img_6.jpg', title: 'Silence Nocturno' }
 ];
 
 export const isCoverVideoUrl = (url) => {
@@ -1799,9 +1801,9 @@ const FeedItem = ({
 
                         {/* Buy Piece Banner if on sale */}
                         {(f.metadata?.buyLink || f.metadata?.price) && (
-                            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2 mt-2">
+                            <div className="p-3 rounded-2xl bg-accent/15 border border-accent/35 flex items-center justify-between gap-2 mt-2">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <ShoppingBag size={14} className="text-emerald-400 shrink-0" />
+                                    <ShoppingBag size={14} className="text-accent shrink-0" />
                                     <span className="text-xs font-bold text-white truncate">
                                         {f.metadata?.price ? f.metadata.price : 'Pieza disponible'}
                                     </span>
@@ -1810,7 +1812,7 @@ const FeedItem = ({
                                     href={f.metadata?.buyLink || 'https://ruidointerior.com/shop'}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[11px] uppercase transition-all"
+                                    className="px-3 py-1 rounded-xl bg-accent hover:opacity-90 text-white font-extrabold text-[11px] uppercase transition-all shadow-[0_0_12px_rgba(var(--accent-rgb),0.35)]"
                                 >
                                     Comprar
                                 </a>
@@ -2184,9 +2186,9 @@ const FeedItem = ({
 
                 {/* 7. SINGLE BUY PIECE ROW (IF ON SALE) */}
                 {(f.metadata?.buyLink || f.metadata?.price) && (
-                    <div className="mx-3.5 mb-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between gap-2">
+                    <div className="mx-3.5 mb-2.5 p-2.5 rounded-xl bg-accent/15 border border-accent/35 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                            <ShoppingBag size={14} className="text-emerald-400 shrink-0" />
+                            <ShoppingBag size={14} className="text-accent shrink-0" />
                             <span className="text-xs font-bold text-white truncate">
                                 {f.metadata?.price ? (String(f.metadata.price).startsWith('$') ? f.metadata.price : `$${f.metadata.price}`) : 'Pieza disponible'}
                             </span>
@@ -2196,7 +2198,7 @@ const FeedItem = ({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase flex items-center gap-1 transition-all"
+                            className="px-3 py-1 rounded-lg bg-accent hover:opacity-90 text-white font-extrabold text-[10px] uppercase flex items-center gap-1 transition-all shadow-[0_0_12px_rgba(var(--accent-rgb),0.35)]"
                         >
                             <span>Comprar</span>
                             <ExternalLink size={10} strokeWidth={2.5} />
@@ -4939,7 +4941,7 @@ const ProfileView = ({
     const [fullName, setFullName] = useState(() => isOwnProfile ? cleanDisplayName(localStorage.getItem('oasis_fullname_' + user), user || 'Oasis Explorer') : (publicProfileData?.fullName || effectiveUser));
 
     const [coverImage, setCoverImage] = useState(() => {
-        const isLegacyOrDead = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
+        const isLegacyOrDead = (val) => !val || val.includes('950091e3');
         if (isOwnProfile) {
             const stored = localStorage.getItem('oasis_cover_' + user) || localStorage.getItem('oasis_cover_' + (user || '').toLowerCase().replace('@', ''));
             if (stored && !isLegacyOrDead(stored)) return stored;
@@ -4966,11 +4968,12 @@ const ProfileView = ({
                     offsetY: typeof parsed.offsetY === 'number' ? parsed.offsetY : 50,
                     rotation: typeof parsed.rotation === 'number' ? parsed.rotation : 0,
                     flipX: Boolean(parsed.flipX),
-                    zoom: typeof parsed.zoom === 'number' ? parsed.zoom : 1
+                    zoom: typeof parsed.zoom === 'number' ? parsed.zoom : 1,
+                    lofi: parsed.lofi !== false
                 };
             }
         } catch (e) {}
-        return { offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1 };
+        return { offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1, lofi: true };
     });
     const [isAdjustingCover, setIsAdjustingCover] = useState(false);
     const [isDraggingCover, setIsDraggingCover] = useState(false);
@@ -5271,7 +5274,7 @@ const ProfileView = ({
                 let avatarVal = data.avatar !== undefined ? data.avatar : data.Avatar;
                 let linkVal = data.profileLink !== undefined ? data.profileLink : data.ProfileLink;
 
-                const isLegacyCover = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
+                const isLegacyCover = (val) => !val || val.includes('950091e3');
                 if (isTargetOry) {
                     if (!bioVal || bioVal.includes('Explorador del Oasis')) bioVal = 'ruido extraviado';
                     if (!linkVal || linkVal.includes('muleinterior')) linkVal = 'https://inn3r.shop/';
@@ -5304,7 +5307,7 @@ const ProfileView = ({
         const targetStoredFn = localStorage.getItem('oasis_fullname_' + targetU);
         if (targetStoredFn && !targetStoredFn.includes('@')) setFullName(cleanDisplayName(targetStoredFn, targetU || 'Oasis Explorer'));
         const storedCover = localStorage.getItem('oasis_cover_' + targetU);
-        if (storedCover && !storedCover.includes('950091e3') && !storedCover.includes('unsplash') && !storedCover.includes('e1475baf') && !(storedCover.includes('/uploads/') && !storedCover.includes('supabase.co'))) {
+        if (storedCover && !storedCover.includes('950091e3')) {
             setCoverImage(storedCover);
         }
         const storedLink = localStorage.getItem('oasis_profilelink_' + targetU);
@@ -5322,7 +5325,7 @@ const ProfileView = ({
                     let bAv = serverData[`oasis_avatar_${targetU}`];
                     const bPub = serverData[`oasis_is_public_${targetU}`];
                     const bFn = serverData[`oasis_fullname_${targetU}`];
-                    const isDeadCv = (val) => !val || val.includes('950091e3') || val.includes('unsplash') || val.includes('e1475baf') || (val.includes('/uploads/') && !val.includes('supabase.co'));
+                    const isDeadCv = (val) => !val || val.includes('950091e3');
 
                     if (isTargetOry) {
                         if (!bBio || bBio.includes('Explorador del Oasis')) bBio = 'ruido extraviado';
@@ -5371,7 +5374,7 @@ const ProfileView = ({
                             const recentlyUpdatedAv2 = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
                             const recentlyUpdatedCv2 = Number(localStorage.getItem('oasis_cover_updated_at_' + targetU) || 0) > Date.now() - 30000;
                             const localCv2 = localStorage.getItem('oasis_cover_' + targetU);
-                            const isDeadCv2 = !bCover || bCover.includes('950091e3') || bCover.includes('unsplash') || bCover.includes('e1475baf') || (bCover.includes('/uploads/') && !bCover.includes('supabase.co'));
+                            const isDeadCv2 = !bCover || bCover.includes('950091e3');
 
                             if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                             if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
@@ -6309,34 +6312,49 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         {(() => {
                             const rot = coverTransform.rotation || 0;
                             const isQuarterTurn = (rot === 90 || rot === 270) && coverHeightMode !== 'full';
-                            const baseScale = (coverTransform.zoom || 1) * (isQuarterTurn ? 1.75 : 1);
-                            const panX = (50 - (coverTransform.offsetX ?? 50)) * 0.45;
-                            const panY = (50 - (coverTransform.offsetY ?? 50)) * 0.45;
+                            const baseScale = (coverTransform.zoom || 1) * (isQuarterTurn ? 1.85 : 1.02);
+                            const offX = coverTransform.offsetX ?? 50;
+                            const offY = coverTransform.offsetY ?? 50;
+                            const isLofi = coverTransform.lofi !== false && isCoverVideoUrl(coverImage);
+                            const matchedCurated = CURATED_PROFILE_COVERS.find(c => c.url === coverImage);
                             const mediaStyle = {
-                                objectPosition: `${coverTransform.offsetX ?? 50}% ${coverTransform.offsetY ?? 50}%`,
-                                transform: `translate3d(${panX}%, ${panY}%, 0) rotate(${rot}deg) scaleX(${coverTransform.flipX ? -baseScale : baseScale}) scaleY(${baseScale})`,
-                                transition: isDraggingCover ? 'none' : 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)'
+                                objectPosition: `${offX}% ${offY}%`,
+                                transformOrigin: isQuarterTurn ? '50% 50%' : `${offX}% ${offY}%`,
+                                transform: `rotate(${rot}deg) scaleX(${coverTransform.flipX ? -baseScale : baseScale}) scaleY(${baseScale})`,
+                                filter: isLofi ? 'contrast(1.06) saturate(0.82) brightness(0.94)' : 'none',
+                                transition: isDraggingCover ? 'none' : 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), object-position 0.12s ease-out'
                             };
 
                             return isCoverVideoUrl(coverImage) ? (
-                                <video
-                                    key={coverImage}
-                                    src={formatUrl(coverImage)}
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    preload="auto"
-                                    style={mediaStyle}
-                                    className={`w-full h-full pointer-events-none ${
-                                        coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
-                                    }`}
-                                    onError={() => {
-                                        if (coverImage !== '/covers/cover_img_1.jpg') {
-                                            setCoverImage('/covers/cover_img_1.jpg');
-                                        }
-                                    }}
-                                />
+                                <>
+                                    <video
+                                        key={coverImage}
+                                        src={formatUrl(coverImage)}
+                                        poster={matchedCurated?.poster || undefined}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        preload="auto"
+                                        style={mediaStyle}
+                                        className={`w-full h-full pointer-events-none ${
+                                            coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
+                                        }`}
+                                        onError={() => {
+                                            if (coverImage !== '/covers/cover_img_1.jpg') {
+                                                setCoverImage('/covers/cover_img_1.jpg');
+                                            }
+                                        }}
+                                    />
+                                    {isLofi && (
+                                        <div
+                                            className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay"
+                                            style={{
+                                                backgroundImage: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 1px, transparent 1px, transparent 3px)'
+                                            }}
+                                        />
+                                    )}
+                                </>
                             ) : (
                                 <img
                                     key={coverImage}
@@ -6366,14 +6384,14 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 onTouchStart={e => e.stopPropagation()}
                             >
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold text-emerald-400">
+                                    <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold text-accent">
                                         <Move size={12} className="animate-pulse" />
-                                        <span>Arrastra la portada para mover su posición ({coverTransform.offsetX}%, {coverTransform.offsetY}%)</span>
+                                        <span>Arrastra la portada para encuadrar ({coverTransform.offsetX}%, {coverTransform.offsetY}%)</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <button
                                             type="button"
-                                            onClick={() => updateCoverTransform({ offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1 })}
+                                            onClick={() => updateCoverTransform({ offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1, lofi: true })}
                                             className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[9px] font-mono text-zinc-300 hover:text-white transition-all cursor-pointer"
                                         >
                                             Restablecer
@@ -6381,7 +6399,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         <button
                                             type="button"
                                             onClick={() => setIsAdjustingCover(false)}
-                                            className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-[9px] font-mono font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-md"
+                                            className="px-3 py-1 rounded-lg bg-accent hover:opacity-90 text-white text-[9px] font-mono font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-md"
                                         >
                                             <Check size={11} strokeWidth={3} />
                                             <span>Listo</span>
@@ -6397,7 +6415,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         className="px-2.5 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-[9px] font-mono font-bold text-white flex items-center gap-1 cursor-pointer active:scale-95"
                                         title="Girar 90 grados"
                                     >
-                                        <RotateCw size={11} className="text-purple-400" />
+                                        <RotateCw size={11} className="text-accent" />
                                         <span>Girar ({coverTransform.rotation || 0}°)</span>
                                     </button>
 
@@ -6407,7 +6425,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         onClick={() => updateCoverTransform(p => ({ ...p, flipX: !p.flipX }))}
                                         className={`px-2.5 py-1 rounded-lg border text-[9px] font-mono font-bold flex items-center gap-1 cursor-pointer active:scale-95 ${
                                             coverTransform.flipX
-                                                ? 'bg-purple-500/25 border-purple-400 text-purple-200'
+                                                ? 'bg-accent/25 border-accent text-white'
                                                 : 'bg-white/[0.08] hover:bg-white/[0.15] border-white/15 text-zinc-200'
                                         }`}
                                         title="Voltear horizontalmente"
@@ -6415,20 +6433,36 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         <span>↔ Voltear</span>
                                     </button>
 
+                                    {/* Filtro Lo-Fi para Videos */}
+                                    {isCoverVideoUrl(coverImage) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => updateCoverTransform(p => ({ ...p, lofi: p.lofi === false }))}
+                                            className={`px-2.5 py-1 rounded-lg border text-[9px] font-mono font-bold flex items-center gap-1 cursor-pointer active:scale-95 ${
+                                                coverTransform.lofi !== false
+                                                    ? 'bg-accent/25 border-accent text-white'
+                                                    : 'bg-white/[0.08] hover:bg-white/[0.15] border-white/15 text-zinc-300'
+                                            }`}
+                                            title="Aplicar estética Lo-Fi al video de portada"
+                                        >
+                                            <span>✨ Lo-Fi {coverTransform.lofi !== false ? 'ON' : 'OFF'}</span>
+                                        </button>
+                                    )}
+
                                     {/* Posiciones rápidas: Arriba / Centro / Abajo */}
                                     <div className="flex items-center bg-black/50 rounded-lg p-0.5 border border-white/10">
                                         {[
-                                            { label: 'Arriba', y: 15 },
+                                            { label: 'Arriba', y: 10 },
                                             { label: 'Centro', y: 50 },
-                                            { label: 'Abajo', y: 85 }
+                                            { label: 'Abajo', y: 90 }
                                         ].map(pos => (
                                             <button
                                                 key={pos.label}
                                                 type="button"
                                                 onClick={() => updateCoverTransform(p => ({ ...p, offsetY: pos.y }))}
                                                 className={`px-2 py-0.5 rounded-md text-[8.5px] font-mono font-bold transition-all cursor-pointer ${
-                                                    Math.abs((coverTransform.offsetY ?? 50) - pos.y) <= 10
-                                                        ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                                                    Math.abs((coverTransform.offsetY ?? 50) - pos.y) <= 12
+                                                        ? 'bg-accent/30 text-white border border-accent/50'
                                                         : 'text-zinc-400 hover:text-white'
                                                 }`}
                                             >
@@ -6625,7 +6659,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
                                     <div className="relative shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-14 md:h-14 lg:w-16 lg:h-16">
                                         <div
-                                            className={`w-8 h-8 sm:w-9 sm:h-9 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[1.5px] md:p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
+                                            className={`w-8 h-8 sm:w-9 sm:h-9 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[1.5px] md:p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-accent via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -6658,7 +6692,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                         {isOwnProfile && (
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                                className="absolute -bottom-0.5 -right-0.5 md:bottom-0 md:right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-5 md:h-5 bg-[#10b981] rounded-full border border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                                                className="absolute -bottom-0.5 -right-0.5 md:bottom-0 md:right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-5 md:h-5 bg-accent rounded-full border border-[#0b0c10] flex items-center justify-center text-white font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
                                                 title="Subir historia"
                                             >
                                                 <Plus size={8} strokeWidth={3} className="md:w-3 md:h-3" />
@@ -6671,7 +6705,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             <span className="text-[9px] sm:text-[10px] md:text-sm lg:text-base font-mono font-bold text-white truncate tracking-tight">
                                                 @{effectiveUser}
                                             </span>
-                                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
+                                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-accent shrink-0 animate-pulse" title="Activo" />
                                         </div>
                                         <span className="hidden md:block text-[8px] lg:text-[9px] font-mono text-zinc-400 truncate">
                                             {effectiveUser?.toLowerCase() === 'ory11' ? 'Resonancia interna' : 'Ruido Interior'}
@@ -6729,7 +6763,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 <div className="grid grid-cols-3 gap-1 sm:gap-1.5 md:gap-2 pt-0.5 md:pt-1">
                                     <button
                                         type="button"
-                                        onClick={() => setIsCommunityWidgetOpen(prev => !prev)}
+                                        onClick={() => {
+                                            setIsPodcastWidgetOpen(false);
+                                            setIsPdfLibraryWidgetOpen(false);
+                                            setIsCommunityWidgetOpen(prev => !prev);
+                                        }}
                                         className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-emerald-500/15 border border-white/[0.08] hover:border-emerald-500/35 transition-all flex items-center justify-center text-emerald-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/c"
                                         title="Comunidad y almas en sintonía"
                                     >
@@ -6738,7 +6776,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                                     <button
                                         type="button"
-                                        onClick={() => setIsPodcastWidgetOpen(prev => !prev)}
+                                        onClick={() => {
+                                            setIsCommunityWidgetOpen(false);
+                                            setIsPdfLibraryWidgetOpen(false);
+                                            setIsPodcastWidgetOpen(prev => !prev);
+                                        }}
                                         className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-purple-500/15 border border-white/[0.08] hover:border-purple-500/35 transition-all flex items-center justify-center text-purple-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/p"
                                         title="Podcast y registros sonoros"
                                     >
@@ -6747,7 +6789,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                                     <button
                                         type="button"
-                                        onClick={() => setIsPdfLibraryWidgetOpen(prev => !prev)}
+                                        onClick={() => {
+                                            setIsCommunityWidgetOpen(false);
+                                            setIsPodcastWidgetOpen(false);
+                                            setIsPdfLibraryWidgetOpen(prev => !prev);
+                                        }}
                                         className="w-full py-1.5 sm:py-2 md:py-2.5 rounded-xl bg-white/[0.03] hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/35 transition-all flex items-center justify-center text-amber-400 hover:text-white cursor-pointer shadow-xs active:scale-95 group/f"
                                         title="Archivo, fanzines y subir PDFs"
                                     >
@@ -6816,7 +6862,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     } catch (_) {}
                                                     setIsEditingFirma(false);
                                                 }}
-                                                className="px-2 py-0.5 rounded bg-emerald-500 text-black text-[8px] font-mono font-bold cursor-pointer"
+                                                className="px-2 py-0.5 rounded bg-accent text-white text-[8px] font-mono font-bold cursor-pointer"
                                             >
                                                 Guardar
                                             </button>
@@ -6853,7 +6899,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 <button
                                     type="button"
                                     onClick={() => setIsPiecesModalOpen(true)}
-                                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-[#10b981] hover:text-black border border-white/10 text-zinc-400 hover:text-black text-[7px] sm:text-[8px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] hover:bg-accent hover:text-white border border-white/10 text-zinc-400 text-[7px] sm:text-[8px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95"
                                     title="Abrir catálogo de publicaciones con enlace"
                                 >
                                     <span>Catálogo</span>
@@ -6987,7 +7033,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             e.stopPropagation();
                                             setIsPlaylistModalOpen(true);
                                         }}
-                                        className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 hover:bg-[#10b981] hover:text-black backdrop-blur-md border border-white/20 text-zinc-200 text-[8px] sm:text-[9px] font-mono font-bold transition-all cursor-pointer shadow-lg active:scale-95 z-10"
+                                        className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 hover:bg-accent hover:text-white backdrop-blur-md border border-white/20 text-zinc-200 text-[8px] sm:text-[9px] font-mono font-bold transition-all cursor-pointer shadow-lg active:scale-95 z-10"
                                         title="Gestionar lista de reproducción, portada y subir tracks"
                                     >
                                         <UploadCloud size={10} className="sm:w-3.5 sm:h-3.5" />
@@ -6997,7 +7043,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
 
                                 {/* Botón Play / Pause Grande en el Centro */}
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
+                                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
                                         {isProfileAudioPlaying ? (
                                             <Pause size={16} className="sm:w-6 sm:h-6 fill-emerald-400" />
                                         ) : (
@@ -7141,7 +7187,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                             {/* Header */}
                             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                                 <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                                    <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                                     <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
                                         Personalizar Perfil
                                     </h3>
@@ -7213,11 +7259,13 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     <video
                                                         key={coverImage}
                                                         src={formatUrl(coverImage)}
+                                                        poster={CURATED_PROFILE_COVERS.find(c => c.url === coverImage)?.poster}
                                                         autoPlay
                                                         loop
                                                         muted
                                                         playsInline
                                                         className="w-full h-full object-cover"
+                                                        style={{ filter: coverTransform.lofi !== false ? 'contrast(1.06) saturate(0.82) brightness(0.94)' : 'none' }}
                                                     />
                                                 ) : (
                                                     <img
@@ -7232,7 +7280,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             </div>
                                             <div className="flex flex-col text-left min-w-0">
                                                 <span className="text-xs font-mono font-bold text-zinc-100">Portada del Perfil</span>
-                                                <span className="text-[9px] font-sans text-zinc-400">Videos lo-fi ligeros e imágenes predeterminadas</span>
+                                                <span className="text-[9px] font-sans text-zinc-400">Videos lo-fi, portadas clásicas o sube el tuyo</span>
                                             </div>
                                         </div>
                                     </div>
@@ -7249,27 +7297,16 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     className={`relative w-14 h-9 rounded-lg overflow-hidden shrink-0 border transition-all cursor-pointer group/cv ${
                                                         isSelected
                                                             ? 'border-purple-400 ring-1 ring-purple-400/60 scale-105'
-                                                            : 'border-white/10 hover:border-white/35 opacity-75 hover:opacity-100'
+                                                            : 'border-white/10 hover:border-white/35 opacity-80 hover:opacity-100'
                                                     }`}
                                                     title={item.title}
                                                 >
-                                                    {item.type === 'video' ? (
-                                                        <video
-                                                            src={item.url}
-                                                            muted
-                                                            loop
-                                                            playsInline
-                                                            autoPlay
-                                                            preload="metadata"
-                                                            className="w-full h-full object-cover pointer-events-none"
-                                                        />
-                                                    ) : (
-                                                        <img
-                                                            src={item.url}
-                                                            alt={item.title}
-                                                            className="w-full h-full object-cover pointer-events-none"
-                                                        />
-                                                    )}
+                                                    <img
+                                                        src={item.poster || item.url}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover pointer-events-none"
+                                                        style={item.type === 'video' ? { filter: 'contrast(1.06) saturate(0.82) brightness(0.94)' } : undefined}
+                                                    />
                                                     <span className={`absolute bottom-0.5 left-0.5 px-1 py-[0.5px] rounded text-[5.5px] font-mono font-bold uppercase ${
                                                         item.type === 'video' ? 'bg-purple-950/90 text-purple-300' : 'bg-black/80 text-zinc-300'
                                                     }`}>
@@ -7373,7 +7410,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             }
                                             setIsQuickCustomizeOpen(false);
                                         }}
-                                        className="flex-1 py-2 rounded-xl bg-[#10b981] hover:bg-[#059669] text-black font-mono font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                                        className="flex-1 py-2 rounded-xl bg-accent hover:opacity-90 text-white font-mono font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                                     >
                                         <Check size={14} strokeWidth={2.5} />
                                         <span>Guardar Cambios</span>
@@ -7601,7 +7638,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                                     <button
                                                         type="button"
                                                         onClick={() => setSelectedModalPost(post)}
-                                                        className="text-xs font-mono font-bold text-[#10b981] hover:text-white flex items-center gap-1 shrink-0 transition-colors cursor-pointer group/exp py-1"
+                                                        className="text-xs font-mono font-bold text-accent hover:text-white flex items-center gap-1 shrink-0 transition-colors cursor-pointer group/exp py-1"
                                                     >
                                                         <span>Expandir</span>
                                                         <ArrowUpRight size={13} className="group-hover/exp:translate-x-0.5 group-hover/exp:-translate-y-0.5 transition-transform" />
@@ -7919,119 +7956,143 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                 
                 {/* Mini-ventana 1: Comunidad */}
                 {isCommunityWidgetOpen && (
-                    <div className="fixed bottom-16 left-4 sm:left-8 z-[6500] w-[300px] sm:w-[340px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
-                            <div className="flex items-center gap-2">
-                                <Radio size={14} className="text-emerald-400" />
-                                <span className="text-xs font-mono font-bold text-white">Comunidad & Almas</span>
-                            </div>
-                            <button onClick={() => setIsCommunityWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
-                        </div>
-                        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto no-scrollbar">
-                            {(publicUsers && publicUsers.length > 0 ? publicUsers.slice(0, 5) : [
-                                { Username: 'somnispiria', status: 'en resonancia' },
-                                { Username: 'ory11', status: 'explorando ruido' },
-                                { Username: 'jss93', status: 'activo' }
-                            ]).map((u, i) => (
-                                <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] transition-all">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-white/10">
-                                            <img src={(u.Avatar && !u.Avatar.includes('dicebear')) ? u.Avatar : getDefaultAvatar(u.Username || u.username || 'user')} alt="" className="w-full h-full object-cover" />
-                                        </div>
-                                        <span className="text-[11px] font-mono text-white truncate">@{u.Username || u.username}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            setIsCommunityWidgetOpen(false);
-                                            window.dispatchEvent(new CustomEvent('oasis-open-dm', { detail: { username: u.Username || u.username } }));
-                                        }}
-                                        className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all cursor-pointer"
-                                    >
-                                        Saludar
-                                    </button>
+                    <div
+                        className="fixed inset-0 z-[7500] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsCommunityWidgetOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-sm bg-[#0e1015] border border-white/15 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] p-4 animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08] mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Radio size={14} className="text-emerald-400" />
+                                    <span className="text-xs font-mono font-bold text-white">Comunidad & Almas</span>
                                 </div>
-                            ))}
+                                <button onClick={() => setIsCommunityWidgetOpen(false)} className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"><X size={14} /></button>
+                            </div>
+                            <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto no-scrollbar">
+                                {(publicUsers && publicUsers.length > 0 ? publicUsers.slice(0, 5) : [
+                                    { Username: 'somnispiria', status: 'en resonancia' },
+                                    { Username: 'ory11', status: 'explorando ruido' },
+                                    { Username: 'jss93', status: 'activo' }
+                                ]).map((u, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] transition-all">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-white/10">
+                                                <img src={(u.Avatar && !u.Avatar.includes('dicebear')) ? u.Avatar : getDefaultAvatar(u.Username || u.username || 'user')} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="text-xs font-mono text-white truncate">@{u.Username || u.username}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setIsCommunityWidgetOpen(false);
+                                                window.dispatchEvent(new CustomEvent('oasis-open-dm', { detail: { username: u.Username || u.username } }));
+                                            }}
+                                            className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 hover:bg-accent hover:text-white transition-all cursor-pointer"
+                                        >
+                                            Saludar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {/* Mini-ventana 2: Podcast */}
                 {isPodcastWidgetOpen && (
-                    <div className="fixed bottom-16 left-4 sm:left-24 z-[6500] w-[300px] sm:w-[340px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
-                            <div className="flex items-center gap-2">
-                                <Mic size={14} className="text-purple-400" />
-                                <span className="text-xs font-mono font-bold text-white">Podcast & Frecuencias</span>
-                            </div>
-                            <button onClick={() => setIsPodcastWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
-                        </div>
-                        <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto no-scrollbar">
-                            {playlistTracks.map((tr, idx) => (
-                                <div
-                                    key={tr.id || idx}
-                                    onClick={() => playTrackAtIndex(idx)}
-                                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-purple-500/10 border border-white/[0.05] hover:border-purple-500/30 transition-all cursor-pointer group"
-                                >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <div className="w-5 h-5 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
-                                            {currentTrackIndex === idx && isProfileAudioPlaying ? <Pause size={10} /> : <Play size={10} />}
-                                        </div>
-                                        <span className="text-[11px] font-mono text-zinc-200 group-hover:text-white truncate">{tr.title}</span>
-                                    </div>
-                                    <span className="text-[9px] font-mono text-purple-400">#0${idx + 1}</span>
+                    <div
+                        className="fixed inset-0 z-[7500] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsPodcastWidgetOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-sm bg-[#0e1015] border border-white/15 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] p-4 animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08] mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Mic size={14} className="text-purple-400" />
+                                    <span className="text-xs font-mono font-bold text-white">Podcast & Frecuencias</span>
                                 </div>
-                            ))}
+                                <button onClick={() => setIsPodcastWidgetOpen(false)} className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"><X size={14} /></button>
+                            </div>
+                            <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto no-scrollbar">
+                                {playlistTracks.map((tr, idx) => (
+                                    <div
+                                        key={tr.id || idx}
+                                        onClick={() => playTrackAtIndex(idx)}
+                                        className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-purple-500/10 border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group"
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
+                                                {currentTrackIndex === idx && isProfileAudioPlaying ? <Pause size={11} /> : <Play size={11} />}
+                                            </div>
+                                            <span className="text-xs font-mono text-zinc-200 group-hover:text-white truncate">{tr.title}</span>
+                                        </div>
+                                        <span className="text-[10px] font-mono text-purple-400 shrink-0 ml-2">#0{idx + 1}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {/* Mini-ventana 3: Archivo & Subir PDFs */}
                 {isPdfLibraryWidgetOpen && (
-                    <div className="fixed bottom-16 left-4 sm:left-40 z-[6500] w-[310px] sm:w-[350px] bg-[#0e1015]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-2 duration-200">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/[0.08] mb-3">
-                            <div className="flex items-center gap-2">
-                                <Bookmark size={14} className="text-amber-400" />
-                                <span className="text-xs font-mono font-bold text-white">Archivo & PDFs</span>
-                            </div>
-                            <button onClick={() => setIsPdfLibraryWidgetOpen(false)} className="text-zinc-400 hover:text-white"><X size={14} /></button>
-                        </div>
-
-                        {/* Botón para subir PDF */}
-                        <input
-                            ref={pdfFileInputRef}
-                            type="file"
-                            accept=".pdf,application/pdf"
-                            className="hidden"
-                            onChange={handlePdfUpload}
-                        />
-                        {isOwnProfile && (
-                            <button
-                                type="button"
-                                onClick={() => pdfFileInputRef.current?.click()}
-                                className="w-full mb-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
-                            >
-                                <UploadCloud size={13} />
-                                <span>Subir PDF / Zine</span>
-                            </button>
-                        )}
-
-                        <div className="flex flex-col gap-2 max-h-[190px] overflow-y-auto no-scrollbar">
-                            {uploadedPdfs.map((pdf) => (
-                                <div
-                                    key={pdf.id}
-                                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-amber-500/10 border border-white/[0.05] hover:border-amber-500/30 transition-all cursor-pointer group"
-                                    onClick={() => alert(`Abriendo lectura de: ${pdf.title}`)}
-                                >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <Bookmark size={12} className="text-amber-400 shrink-0" />
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-[10.5px] font-mono text-zinc-200 group-hover:text-white truncate">{pdf.title}</span>
-                                            <span className="text-[8px] font-mono text-zinc-500">{pdf.size} · {pdf.date}</span>
-                                        </div>
-                                    </div>
-                                    <span className="text-[8px] font-mono text-amber-400 px-1.5 py-0.5 rounded bg-amber-500/10">LEER</span>
+                    <div
+                        className="fixed inset-0 z-[7500] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsPdfLibraryWidgetOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-sm bg-[#0e1015] border border-white/15 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.95)] p-4 animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08] mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Bookmark size={14} className="text-amber-400" />
+                                    <span className="text-xs font-mono font-bold text-white">Archivo & PDFs</span>
                                 </div>
-                            ))}
+                                <button onClick={() => setIsPdfLibraryWidgetOpen(false)} className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"><X size={14} /></button>
+                            </div>
+
+                            {/* Botón para subir PDF */}
+                            <input
+                                ref={pdfFileInputRef}
+                                type="file"
+                                accept=".pdf,application/pdf"
+                                className="hidden"
+                                onChange={handlePdfUpload}
+                            />
+                            {isOwnProfile && (
+                                <button
+                                    type="button"
+                                    onClick={() => pdfFileInputRef.current?.click()}
+                                    className="w-full mb-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-amber-300 font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs active:scale-95"
+                                >
+                                    <UploadCloud size={14} />
+                                    <span>Subir PDF / Zine</span>
+                                </button>
+                            )}
+
+                            <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto no-scrollbar">
+                                {uploadedPdfs.map((pdf) => (
+                                    <div
+                                        key={pdf.id}
+                                        className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-amber-500/10 border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group"
+                                        onClick={() => alert(`Abriendo lectura de: ${pdf.title}`)}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                                            <Bookmark size={13} className="text-amber-400 shrink-0" />
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-xs font-mono text-zinc-200 group-hover:text-white truncate">{pdf.title}</span>
+                                                <span className="text-[9px] font-mono text-zinc-500">{pdf.size} · {pdf.date}</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-mono font-bold text-amber-400 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 shrink-0">LEER</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -8218,7 +8279,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 <button
                                     type="button"
                                     onClick={() => setIsPlaylistModalOpen(false)}
-                                    className="px-4 py-1.5 rounded-xl bg-emerald-500 text-black font-mono font-bold text-xs hover:bg-emerald-400 transition-all cursor-pointer active:scale-95"
+                                    className="px-4 py-1.5 rounded-xl bg-accent text-white font-mono font-bold text-xs hover:opacity-90 transition-all cursor-pointer active:scale-95"
                                 >
                                     Listo
                                 </button>
@@ -8248,7 +8309,7 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
 
                 const { p1, p2, cp1, cp2 } = getConnectionPoints(from, to, false, draggingId, camScale);
                 const path = `M ${p1.x} ${p1.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
-                const color = link.color || '#10b981';
+                const color = link.color || accent || '#84396F';
 
                 return (
                     <g key={`canvas-${link.from}-${link.to}-${idx}`} className="pointer-events-auto cursor-pointer group/link-canvas" onClick={(e) => {
@@ -8284,7 +8345,7 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
                     <g>
                         <path
                             d={path}
-                            stroke="#10b981"
+                            stroke={accent || '#84396F'}
                             strokeWidth="3.2"
                             strokeLinecap="round"
                             fill="none"
@@ -8561,7 +8622,11 @@ function OasisApp() {
     const [startupScreen, setStartupScreen] = useState(initialStartupScreen);
 
     const [isBitacoraOpen, setIsBitacoraOpen] = useState(initialStartupScreen === 'bitacora');
-    const [accent, setAccent] = useState(localStorage.getItem('oasis_accent') || '#bef264');
+    const [accent, setAccent] = useState(() => {
+        const saved = localStorage.getItem('oasis_accent');
+        if (!saved || saved.toLowerCase() === '#bef264' || saved.toLowerCase() === '#10b981') return '#84396F';
+        return saved;
+    });
     const [lastInteractedBlockId, setLastInteractedBlockId] = useState(null);
 
     useEffect(() => {
@@ -16367,7 +16432,7 @@ ${afcMapContext}
                                 }}
                                 className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
                             >
-                                <div className="w-4 h-4 rounded-[4px] bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <div className="w-4 h-4 rounded-[4px] bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.5)]" />
                                 <span className="text-[10px] font-mono tracking-tight">Color</span>
                             </button>
 
@@ -16406,7 +16471,7 @@ ${afcMapContext}
                     >
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }}
-                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-[#10b981]/20 border-[#10b981] text-[#10b981]' : 'bg-white/[0.03] border-[#10b981]/40 text-[#10b981] hover:bg-[#10b981]/15'}`}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-accent/20 border-accent text-accent' : 'bg-white/[0.03] border-accent/40 text-accent hover:bg-accent/15'}`}
                             title="Bitácora Existencial"
                         >
                             {isBitacoraOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
@@ -16438,7 +16503,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-[#10b981]/15 border border-[#10b981]/40 hover:bg-[#10b981]/25 flex items-center justify-center text-[#10b981] shadow-[0_0_18px_rgba(16,185,129,0.25)] transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-accent/15 border border-accent/40 hover:bg-accent/25 flex items-center justify-center text-accent shadow-[0_0_18px_rgba(var(--accent-rgb),0.25)] transition-all"
                             title="Publicar en Feed"
                         >
                             <Activity size={15} />
@@ -18641,7 +18706,7 @@ ${afcMapContext}
                                                     <button
                                                         type="button"
                                                         onClick={() => setIsDirectWidgetOpen(true)}
-                                                        className="text-xs font-semibold text-[#0095f6] hover:text-white transition-colors"
+                                                        className="text-xs font-semibold text-accent hover:text-white transition-colors"
                                                     >
                                                         Ver todo
                                                     </button>
@@ -18691,7 +18756,7 @@ ${afcMapContext}
                                                                     className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold transition-all shadow-sm ${
                                                                         isFollowing
                                                                             ? 'bg-white/10 text-zinc-300 hover:bg-white/15'
-                                                                            : 'bg-[#0095f6] hover:bg-[#1877f2] text-white active:scale-95'
+                                                                            : 'bg-accent hover:opacity-90 text-white shadow-[0_0_14px_rgba(var(--accent-rgb),0.3)] active:scale-95'
                                                                     }`}
                                                                 >
                                                                     {isFollowing ? 'Siguiendo' : 'Seguir'}
@@ -18748,7 +18813,7 @@ ${afcMapContext}
                             <button
                                 type="button"
                                 onClick={() => setView('profile')}
-                                className="text-xs font-bold text-[#0095f6] hover:text-white transition-colors shrink-0"
+                                className="text-xs font-bold text-accent hover:text-white transition-colors shrink-0"
                             >
                                 Cambiar
                             </button>
@@ -18828,7 +18893,7 @@ ${afcMapContext}
                                                 className={`text-xs font-semibold transition-colors ${
                                                     isFollowing
                                                         ? 'text-zinc-400 hover:text-white'
-                                                        : 'text-[#0095f6] hover:brightness-125'
+                                                        : 'text-accent hover:brightness-125'
                                                 }`}
                                             >
                                                 {isFollowing ? 'Siguiendo' : 'Seguir'}
@@ -19809,7 +19874,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('profile');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Perfil"
                     >
                         <User size={15} />
@@ -19830,7 +19895,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('my_responses');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Mi Expediente"
                     >
                         <RefreshCw size={15} />
@@ -19851,7 +19916,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('canvas');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_22px_rgba(16,185,129,0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_22px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Lienzo Principal"
                     >
                         <Pencil size={15} />
@@ -19872,7 +19937,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('feed');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Feed Público"
                     >
                         <Home size={15} />
@@ -19886,7 +19951,7 @@ ${afcMapContext}
                             setDirectMessageContext('');
                             setIsDirectMessagesOpen(true);
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${isDirectMessagesOpen ? 'bg-[#10b981] text-black border-[#10b981] shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${isDirectMessagesOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Mensajes Directos / Chat"
                     >
                         <MessageCircle size={15} />

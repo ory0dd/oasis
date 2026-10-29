@@ -7,7 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: 'var(--accent, #bef264)',
+        accent: 'rgba(var(--accent-rgb), <alpha-value>)',
+        emerald: {
+          50: 'rgba(var(--accent-rgb), <alpha-value>)',
+          100: 'rgba(var(--accent-rgb), <alpha-value>)',
+          200: 'rgba(var(--accent-rgb), <alpha-value>)',
+          300: 'rgba(var(--accent-rgb), <alpha-value>)',
+          400: 'rgba(var(--accent-rgb), <alpha-value>)',
+          500: 'rgba(var(--accent-rgb), <alpha-value>)',
+          600: 'rgba(var(--accent-rgb), <alpha-value>)',
+          700: 'rgba(var(--accent-rgb), <alpha-value>)',
+          800: 'rgba(var(--accent-rgb), <alpha-value>)',
+          900: 'rgba(var(--accent-rgb), <alpha-value>)',
+          950: 'rgba(var(--accent-rgb), <alpha-value>)',
+          DEFAULT: 'rgba(var(--accent-rgb), <alpha-value>)',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
