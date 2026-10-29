@@ -12,7 +12,7 @@ import {
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
-    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, Loader2, Music
+    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import OasisChat from './components/OasisChat';
@@ -4594,6 +4594,13 @@ const ProfileView = ({
     const multiAudioInputRef = useRef(null);
     const playlistCoverInputRef = useRef(null);
     const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+    const [bentoAudioCover, setBentoAudioCover] = useState(() => {
+        try {
+            return localStorage.getItem('oasis_playlist_cover_' + (effectiveUser || user || '')) || '';
+        } catch (e) {
+            return '';
+        }
+    });
 
     const playTrackAtIndex = (index) => {
         if (!playlistTracks || index < 0 || index >= playlistTracks.length) return;
@@ -6030,7 +6037,7 @@ const ProfileView = ({
                                 className="w-full aspect-[4/3] rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/loop cursor-pointer shadow-md"
                             >
                                 <img
-                                    src={formatUrl(bentoCentralPiece.image)}
+                                    src={formatUrl(bentoAudioCover || bentoCentralPiece.image)}
                                     alt={bentoCentralPiece.title}
                                     className="w-full h-full object-cover group-hover/loop:scale-105 transition-transform duration-700"
                                     onError={(e) => {
@@ -6718,7 +6725,7 @@ const ProfileView = ({
                                             <div key={c.id || i} className="flex items-start gap-2.5">
                                                 <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border border-white/10 shrink-0 mt-0.5">
                                                     <img
-                                                        src={c.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(c.username || 'user')}`}
+                                                        src={(c.avatar && !c.avatar.includes('dicebear')) ? c.avatar : getDefaultAvatar(c.username || 'user')}
                                                         alt={c.username}
                                                         className="w-full h-full object-cover"
                                                     />
@@ -6852,15 +6859,14 @@ const ProfileView = ({
                                 <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.05] transition-all">
                                     <div className="flex items-center gap-2 min-w-0">
                                         <div className="w-6 h-6 rounded-full bg-zinc-800 overflow-hidden shrink-0 border border-white/10">
-                                            <img src={u.Avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(u.Username || 'user')}`} alt="" className="w-full h-full object-cover" />
+                                            <img src={(u.Avatar && !u.Avatar.includes('dicebear')) ? u.Avatar : getDefaultAvatar(u.Username || u.username || 'user')} alt="" className="w-full h-full object-cover" />
                                         </div>
                                         <span className="text-[11px] font-mono text-white truncate">@{u.Username || u.username}</span>
                                     </div>
                                     <button
                                         onClick={() => {
                                             setIsCommunityWidgetOpen(false);
-                                            if (setDirectWidgetActiveUser) setDirectWidgetActiveUser(u.Username || u.username);
-                                            if (setIsDirectWidgetOpen) setIsDirectWidgetOpen(true);
+                                            window.dispatchEvent(new CustomEvent('oasis-open-dm', { detail: { username: u.Username || u.username } }));
                                         }}
                                         className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all cursor-pointer"
                                     >
@@ -7003,7 +7009,7 @@ const ProfileView = ({
                                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-3.5">
                                     <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/15 bg-black shrink-0 relative group">
                                         <img
-                                            src={formatUrl(bentoAudioCover)}
+                                            src={formatUrl(bentoAudioCover || bentoCentralPiece.image)}
                                             alt="Portada de playlist"
                                             className="w-full h-full object-cover"
                                         />
