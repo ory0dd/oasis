@@ -6187,6 +6187,8 @@ const ProfileView = ({
                                 ))}
                             </div>
                         </div>
+                    </div>
+                </div>
 
                 {/* MODAL DE PERSONALIZACIÓN RÁPIDA (FONDO, AUDIO, FOTO DE PERFIL Y BIO) */}
                 {isQuickCustomizeOpen && (
@@ -7152,8 +7154,6 @@ const ProfileView = ({
 
             </div>
         </div>
-    </div>
-</div>
     );
 };
 
