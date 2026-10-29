@@ -5714,14 +5714,14 @@ const ProfileView = ({
                         {/* ======================================================== */}
                         <div className="col-span-2 lg:col-span-12 order-1 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-row items-stretch gap-1.5 sm:gap-2.5 relative overflow-hidden">
                             
-                            {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS EN EL MISMO ESPACIO */}
-                            <div className="w-[40%] sm:w-[36%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 min-w-0 pr-1">
+                            {/* LADO IZQUIERDO: USUARIO + ARCHIVO COMBINADOS (RESPONSIVE MÓVIL Y ELEGANTE EN PC) */}
+                            <div className="w-[40%] sm:w-[36%] md:w-[34%] lg:w-[32%] shrink-0 flex flex-col justify-between gap-1 sm:gap-1.5 md:gap-3 min-w-0 pr-1 md:pr-3">
                                 
                                 {/* Fila 1: Avatar + @usuario + Botón Personalizar */}
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="relative shrink-0 w-8 h-8 sm:w-9 sm:h-9">
+                                <div className="flex items-center gap-1.5 md:gap-3 min-w-0">
+                                    <div className="relative shrink-0 w-8 h-8 sm:w-9 sm:h-9 md:w-14 md:h-14 lg:w-16 lg:h-16">
                                         <div
-                                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl p-[1px] sm:p-[1.5px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
+                                            className={`w-8 h-8 sm:w-9 sm:h-9 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl md:rounded-2xl p-[1px] sm:p-[1.5px] md:p-[2px] overflow-hidden ${hasActiveStories ? 'bg-gradient-to-tr from-[#10b981] via-purple-500 to-orange-500' : 'bg-white/10'} cursor-pointer group/avatar relative shadow-md hover:scale-105 transition-all shrink-0`}
                                             onClick={(e) => {
                                                 if (hasActiveStories && !isEditingProfile) {
                                                     setViewing24hStories(user24hStories);
@@ -5731,7 +5731,7 @@ const ProfileView = ({
                                             }}
                                             title={isOwnProfile ? "Toca para cambiar foto de perfil" : undefined}
                                         >
-                                            <div className="w-full h-full rounded-[7px] sm:rounded-[8px] overflow-hidden bg-zinc-900 shrink-0">
+                                            <div className="w-full h-full rounded-[7px] sm:rounded-[8px] md:rounded-[13px] overflow-hidden bg-zinc-900 shrink-0">
                                                 <img
                                                     onError={(e) => {
                                                         if (!e.target.dataset.failed) {
@@ -5744,8 +5744,8 @@ const ProfileView = ({
                                                 />
                                             </div>
                                             {isOwnProfile && (
-                                                <div className="absolute inset-0 m-[1px] rounded-[7px] sm:rounded-[8px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
-                                                    <Camera size={9} className="text-white" />
+                                                <div className="absolute inset-0 m-[1px] rounded-[7px] sm:rounded-[8px] md:rounded-[13px] bg-black/70 flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
+                                                    <Camera size={14} className="text-white" />
                                                 </div>
                                             )}
                                         </div>
@@ -5754,19 +5754,24 @@ const ProfileView = ({
                                         {isOwnProfile && (
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); setIsStoryUploadModalOpen(true); }}
-                                                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-[#10b981] rounded-full border border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                                                className="absolute -bottom-0.5 -right-0.5 md:bottom-0 md:right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-5 md:h-5 bg-[#10b981] rounded-full border border-[#0b0c10] flex items-center justify-center text-black font-black cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-md z-10"
                                                 title="Subir historia"
                                             >
-                                                <Plus size={6} strokeWidth={3} />
+                                                <Plus size={8} strokeWidth={3} className="md:w-3 md:h-3" />
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex-1 min-w-0 flex items-center gap-1">
-                                        <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white truncate tracking-tight">
-                                            @{effectiveUser}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5 md:gap-1">
+                                        <div className="flex items-center gap-1 md:gap-1.5">
+                                            <span className="text-[9px] sm:text-[10px] md:text-sm lg:text-base font-mono font-bold text-white truncate tracking-tight">
+                                                @{effectiveUser}
+                                            </span>
+                                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
+                                        </div>
+                                        <span className="hidden md:block text-[8px] lg:text-[9px] font-mono text-zinc-400 truncate">
+                                            {effectiveUser?.toLowerCase() === 'ory11' ? 'Resonancia interna' : 'Explorador del Oasis'}
                                         </span>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                     </div>
 
                                     {/* Botón rápido de personalización o compartir */}
@@ -5774,19 +5779,20 @@ const ProfileView = ({
                                         <button
                                             type="button"
                                             onClick={() => setIsQuickCustomizeOpen(true)}
-                                            className="p-1 rounded-md bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0 flex items-center gap-0.5"
+                                            className="p-1 md:p-1.5 rounded-md md:rounded-lg bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0 flex items-center gap-1"
                                             title="Personalizar foto, fondo y audio"
                                         >
-                                            <Pencil size={8} className="text-emerald-400" />
+                                            <Pencil size={8} className="md:w-3 md:h-3 text-emerald-400" />
+                                            <span className="hidden lg:inline text-[9px] font-mono text-zinc-300">Editar</span>
                                         </button>
                                     ) : (
                                         <button
                                             type="button"
                                             onClick={handleShareProfile}
-                                            className="p-1 rounded-md bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0"
+                                            className="p-1 md:p-1.5 rounded-md md:rounded-lg bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer shadow-xs shrink-0"
                                             title="Compartir perfil"
                                         >
-                                            <Share2 size={8} />
+                                            <Share2 size={8} className="md:w-3 md:h-3" />
                                         </button>
                                     )}
                                 </div>
@@ -5796,30 +5802,33 @@ const ProfileView = ({
                                     href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full flex items-center justify-between px-1.5 py-0.5 rounded-md bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7px] sm:text-[8px] font-mono text-emerald-400 transition-all group/link shadow-xs"
+                                    className="w-full flex items-center justify-between px-1.5 md:px-2.5 py-0.5 md:py-1.5 rounded-md md:rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7px] sm:text-[8px] md:text-[9.5px] lg:text-[10px] font-mono text-emerald-400 transition-all group/link shadow-xs"
                                 >
                                     <span className="truncate">
                                         {profileLink ? profileLink.replace(/^https?:\/\//, '') : (effectiveUser?.toLowerCase() === 'ory11' ? 'inn3r.shop/' : `${effectiveUser}`)}
                                     </span>
-                                    <ChevronRight size={7} className="text-zinc-500 shrink-0 ml-0.5" />
+                                    <ChevronRight size={7} className="md:w-3 md:h-3 text-zinc-500 shrink-0 ml-0.5" />
                                 </a>
 
                                 {/* Fila 3: Bio */}
-                                <p className="text-[7px] sm:text-[8px] leading-tight text-zinc-300 font-sans line-clamp-1 truncate">
+                                <p className="text-[7px] sm:text-[8px] md:text-[10px] lg:text-[11px] leading-tight md:leading-relaxed text-zinc-300 font-sans line-clamp-1 md:line-clamp-2">
                                     {bio || 'ruido extraviado'}
                                 </p>
 
                                 {/* Fila 4: Archivo (en el lugar donde estaba el botón de editar) */}
-                                <div className="grid grid-cols-3 gap-0.5 sm:gap-1 pt-0.5">
+                                <div className="grid grid-cols-3 gap-0.5 sm:gap-1 md:gap-2 pt-0.5 md:pt-1">
                                     <div
                                         onClick={() => {
                                             if (profileLink) window.open(profileLink.startsWith('http') ? profileLink : `https://${profileLink}`, '_blank', 'noopener,noreferrer');
                                         }}
-                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs min-w-0"
+                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-emerald-500/30 transition-all cursor-pointer group/c shadow-xs min-w-0"
                                         title="Comunidad (32 activos)"
                                     >
-                                        <Radio size={7.5} className="text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
-                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
+                                        <Radio size={7.5} className="md:w-3.5 md:h-3.5 text-emerald-400 shrink-0 group-hover/c:scale-110 transition-transform" />
+                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-zinc-400 group-hover/c:text-zinc-200">
+                                            Comunidad
+                                        </span>
+                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-zinc-300 group-hover/c:text-white truncate">
                                             32
                                         </span>
                                     </div>
@@ -5830,11 +5839,14 @@ const ProfileView = ({
                                                 profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
                                             }
                                         }}
-                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs min-w-0"
+                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group/p shadow-xs min-w-0"
                                         title="Podcast (#04)"
                                     >
-                                        <Mic size={7.5} className="text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
-                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
+                                        <Mic size={7.5} className="md:w-3.5 md:h-3.5 text-purple-400 shrink-0 group-hover/p:scale-110 transition-transform" />
+                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-purple-400/80 group-hover/p:text-purple-300">
+                                            Podcast
+                                        </span>
+                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-purple-400 group-hover/p:text-purple-300 truncate">
                                             #04
                                         </span>
                                     </div>
@@ -5845,11 +5857,14 @@ const ProfileView = ({
                                             const el = document.getElementById('profile-feed-section');
                                             if (el) el.scrollIntoView({ behavior: 'smooth' });
                                         }}
-                                        className="flex items-center justify-center gap-0.5 py-0.5 sm:py-1 px-0.5 rounded bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs min-w-0"
+                                        className="flex items-center justify-center gap-0.5 md:gap-1.5 py-0.5 sm:py-1 md:py-2 px-0.5 md:px-2 rounded md:rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 transition-all cursor-pointer group/l shadow-xs min-w-0"
                                         title="Fanzines y Libros"
                                     >
-                                        <Bookmark size={7.5} className="text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
-                                        <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
+                                        <Bookmark size={7.5} className="md:w-3.5 md:h-3.5 text-amber-400 shrink-0 group-hover/l:scale-110 transition-transform" />
+                                        <span className="hidden md:inline text-[9px] font-mono font-bold text-amber-400/80 group-hover/l:text-amber-300">
+                                            Libros
+                                        </span>
+                                        <span className="text-[6.5px] sm:text-[7.5px] md:text-[9.5px] font-mono font-bold text-amber-400 group-hover/l:text-amber-300 truncate">
                                             zine
                                         </span>
                                     </div>
