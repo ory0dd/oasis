@@ -4954,6 +4954,74 @@ const ProfileView = ({
     const [coverHeightMode, setCoverHeightMode] = useState(() => isOwnProfile ? (localStorage.getItem('oasis_cover_height_' + user) || 'expanded') : 'expanded');
     const [isCoverLightboxOpen, setIsCoverLightboxOpen] = useState(false);
 
+    // Estado para Girar, Encuadrar y Mover Posición de la Portada
+    const [coverTransform, setCoverTransform] = useState(() => {
+        try {
+            const cleanU = (effectiveUser || user || '').toLowerCase().replace('@', '');
+            const raw = localStorage.getItem(`oasis_cover_transform_${cleanU}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                return {
+                    offsetX: typeof parsed.offsetX === 'number' ? parsed.offsetX : 50,
+                    offsetY: typeof parsed.offsetY === 'number' ? parsed.offsetY : 50,
+                    rotation: typeof parsed.rotation === 'number' ? parsed.rotation : 0,
+                    flipX: Boolean(parsed.flipX),
+                    zoom: typeof parsed.zoom === 'number' ? parsed.zoom : 1
+                };
+            }
+        } catch (e) {}
+        return { offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1 };
+    });
+    const [isAdjustingCover, setIsAdjustingCover] = useState(false);
+    const [isDraggingCover, setIsDraggingCover] = useState(false);
+    const coverDragStartRef = useRef({ x: 0, y: 0, startX: 50, startY: 50 });
+
+    const updateCoverTransform = useCallback((updater) => {
+        setCoverTransform(prev => {
+            const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
+            try {
+                const cleanU = (effectiveUser || user || '').toLowerCase().replace('@', '');
+                if (cleanU) {
+                    localStorage.setItem(`oasis_cover_transform_${cleanU}`, JSON.stringify(next));
+                }
+            } catch (e) {}
+            return next;
+        });
+    }, [effectiveUser, user]);
+
+    const handleCoverDragStart = (e) => {
+        if (!isAdjustingCover) return;
+        e.stopPropagation();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        setIsDraggingCover(true);
+        coverDragStartRef.current = {
+            x: clientX,
+            y: clientY,
+            startX: coverTransform.offsetX,
+            startY: coverTransform.offsetY
+        };
+    };
+
+    const handleCoverDragMove = (e) => {
+        if (!isAdjustingCover || !isDraggingCover) return;
+        e.stopPropagation();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const dx = clientX - coverDragStartRef.current.x;
+        const dy = clientY - coverDragStartRef.current.y;
+        const sensitivity = 0.22;
+        const nextX = Math.max(0, Math.min(100, Math.round(coverDragStartRef.current.startX - dx * sensitivity)));
+        const nextY = Math.max(0, Math.min(100, Math.round(coverDragStartRef.current.startY - dy * sensitivity)));
+        updateCoverTransform({ offsetX: nextX, offsetY: nextY });
+    };
+
+    const handleCoverDragEnd = (e) => {
+        if (!isDraggingCover) return;
+        if (e) e.stopPropagation();
+        setIsDraggingCover(false);
+    };
+
     // Feed tabs and views
     const [releaseTab, setReleaseTab] = useState('campana'); // 'campana' | 'archivo' | 'destacados'
     const [profileFeedView, setProfileFeedView] = useState('monolito'); // 'monolito' | 'editorial'
@@ -5697,21 +5765,28 @@ const ProfileView = ({
         return photos;
     }, [targetUserPosts]);
 
+    const FIRMA_CANDIDATE_QUOTES = useMemo(() => [
+        "últimamente me siento habitando un ritmo más pausado, dejando que las ideas respiren y encontrando claridad en las pequeñas pausas del día...",
+        "últimamente me doy cuenta de que no necesito tener todas las respuestas ahora, solo aprender a quedarme en silencio un rato...",
+        "últimamente siento el peso de querer resolverlo todo a la vez, pero voy descubriendo que avanzar despacio también cuenta...",
+        "últimamente me permito dudar sin juzgarme tanto, buscando un lugar interno donde no haya prisa por encajar...",
+        "últimamente noto cómo el cuerpo me pide calma, aprendiendo a escuchar el cansancio antes de que se vuelva ruido...",
+        "últimamente encuentro refugio en lo simple, dejando de pelear con lo que no puedo controlar y cuidando mi espacio...",
+        "últimamente estoy aprendiendo a convivir con la incertidumbre, sin exigirle a mi mente certezas que aún no existen...",
+        "últimamente me siento reconectando con lo que de verdad me importa, soltando expectativas ajenas paso a paso...",
+        "últimamente procuro que mis pensamientos no corran más rápido que mi respiración, dándome tiempo para sentir...",
+        "últimamente comprendo que cuidar mi paz no es un lujo, sino el único suelo firme sobre el que puedo crear...",
+        "entre el ruido de afuera y lo que callo adentro, voy tejiendo una forma más honesta de estar conmigo...",
+        "aprendiendo a no forzar los procesos: lo que tiene raíz verdadera crece en silencio antes de hacerse visible...",
+        "hoy prefiero habitar mis preguntas con ternura antes que aceptar respuestas que no siento mías...",
+        "transformando la nostalgia y el vértigo en trazos propios; cada fragmento roto también deja entrar la luz...",
+        "soltando la urgencia de explicarme ante el mundo para escuchar con más nitidez mi propia frecuencia..."
+    ], []);
+
+    const [isGeneratingFirma, setIsGeneratingFirma] = useState(false);
+
     const bentoSensoryQuote = useMemo(() => {
         if (customFirma && customFirma.trim() !== '') return customFirma;
-
-        const candidateQuotes = [
-            "últimamente me siento habitando un ritmo más pausado, dejando que las ideas respiren y encontrando claridad en las pequeñas pausas del día...",
-            "últimamente me doy cuenta de que no necesito tener todas las respuestas ahora, solo aprender a quedarme en silencio un rato...",
-            "últimamente siento el peso de querer resolverlo todo a la vez, pero voy descubriendo que avanzar despacio también cuenta...",
-            "últimamente me permito dudar sin juzgarme tanto, buscando un lugar interno donde no haya prisa por encajar...",
-            "últimamente noto cómo el cuerpo me pide calma, aprendiendo a escuchar el cansancio antes de que se vuelva ruido...",
-            "últimamente encuentro refugio en lo simple, dejando de pelear con lo que no puedo controlar y cuidando mi espacio...",
-            "últimamente estoy aprendiendo a convivir con la incertidumbre, sin exigirle a mi mente certezas que aún no existen...",
-            "últimamente me siento reconectando con lo que de verdad me importa, soltando expectativas ajenas paso a paso...",
-            "últimamente procuro que mis pensamientos no corran más rápido que mi respiración, dándome tiempo para sentir...",
-            "últimamente comprendo que cuidar mi paz no es un lujo, sino el único suelo firme sobre el que puedo crear..."
-        ];
 
         try {
             let resonanceData = null;
@@ -5735,9 +5810,67 @@ const ProfileView = ({
             hash = (hash << 5) - hash + seedStr.charCodeAt(i);
             hash |= 0;
         }
-        const quoteIndex = Math.abs(hash) % candidateQuotes.length;
-        return candidateQuotes[quoteIndex];
-    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser]);
+        const quoteIndex = Math.abs(hash) % FIRMA_CANDIDATE_QUOTES.length;
+        return FIRMA_CANDIDATE_QUOTES[quoteIndex];
+    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser, FIRMA_CANDIDATE_QUOTES]);
+
+    const handleGenerateFirma = useCallback(async (e) => {
+        if (e) e.stopPropagation();
+        setIsGeneratingFirma(true);
+
+        const currentQuote = customFirma || bentoSensoryQuote || '';
+        const pool = FIRMA_CANDIDATE_QUOTES.filter(q => q !== currentQuote);
+        const instantNext = pool[Math.floor(Math.random() * pool.length)] || FIRMA_CANDIDATE_QUOTES[0];
+
+        // Aplicar inmediatamente una nueva firma para respuesta instantánea
+        setCustomFirma(instantNext);
+        localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, instantNext);
+        try {
+            const existingTraits = JSON.parse(localStorage.getItem('oasis_public_traits_' + (user || effectiveUser)) || '{}');
+            const updatedTraits = { ...existingTraits, proceso: instantNext };
+            localStorage.setItem('oasis_public_traits_' + (user || effectiveUser), JSON.stringify(updatedTraits));
+        } catch (_) {}
+
+        // Intentar enriquecer con IA a partir de las notas/bio del usuario si el backend responde rápido
+        try {
+            const userNotesSample = (blocks || [])
+                .filter(b => b && b.content && typeof b.content === 'string' && b.id !== 'profile_settings' && !b.content.startsWith('http'))
+                .slice(0, 4)
+                .map(b => b.content.replace(/\[.*?\]/g, '').slice(0, 120))
+                .join(' | ');
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4500);
+            const res = await fetch(`${API_URL}/api/oasis/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    user: effectiveUser,
+                    message: `Genera únicamente una frase breve en primera persona (máximo 22 palabras, sin comillas, tono íntimo, poético y existencial estilo bitácora interior) que sintetice mi momento actual. Mi bio es: "${bio || ''}". Mis notas recientes: "${userNotesSample}". No uses introducciones, responde solo la frase.`,
+                    history: []
+                })
+            });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const data = await res.json();
+                const reply = (data.reply || data.response || data.message || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+                if (reply && reply.length > 15 && reply.length < 240 && !reply.toLowerCase().includes('error')) {
+                    setCustomFirma(reply);
+                    localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, reply);
+                    try {
+                        const existingTraits = JSON.parse(localStorage.getItem('oasis_public_traits_' + (user || effectiveUser)) || '{}');
+                        const updatedTraits = { ...existingTraits, proceso: reply };
+                        localStorage.setItem('oasis_public_traits_' + (user || effectiveUser), JSON.stringify(updatedTraits));
+                    } catch (_) {}
+                }
+            }
+        } catch (_) {
+            // Si está offline o tarda, conservamos instantNext que ya se aplicó al instante
+        } finally {
+            setIsGeneratingFirma(false);
+        }
+    }, [customFirma, bentoSensoryQuote, FIRMA_CANDIDATE_QUOTES, effectiveUser, user, blocks, bio]);
 
     const bentoValuableMemories = useMemo(() => {
         const items = [];
@@ -5804,8 +5937,17 @@ const ProfileView = ({
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*,video/*" className="hidden" />
                 <div className="w-full pt-0 pb-1 z-10 relative pointer-events-auto">
                     <div 
-                        onClick={() => setIsCoverLightboxOpen(true)}
-                        className={`w-full rounded-2xl sm:rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
+                        onClick={() => { if (!isAdjustingCover) setIsCoverLightboxOpen(true); }}
+                        onMouseDown={handleCoverDragStart}
+                        onMouseMove={handleCoverDragMove}
+                        onMouseUp={handleCoverDragEnd}
+                        onMouseLeave={handleCoverDragEnd}
+                        onTouchStart={handleCoverDragStart}
+                        onTouchMove={handleCoverDragMove}
+                        onTouchEnd={handleCoverDragEnd}
+                        className={`w-full rounded-2xl sm:rounded-3xl overflow-hidden relative border ${
+                            isAdjustingCover ? 'border-emerald-400/70 ring-2 ring-emerald-500/30 cursor-grab active:cursor-grabbing' : 'border-white/10 cursor-pointer'
+                        } shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md transition-all duration-300 ${
                             coverHeightMode === 'expanded'
                                 ? 'h-52 sm:h-64 md:h-[390px] lg:h-[430px]'
                                 : coverHeightMode === 'full'
@@ -5813,51 +5955,197 @@ const ProfileView = ({
                                 : 'h-24 sm:h-36 md:h-64'
                         }`}
                     >
-                        {isCoverVideoUrl(coverImage) ? (
-                            <video
-                                key={coverImage}
-                                src={formatUrl(coverImage)}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                preload="auto"
-                                className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
-                                    coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
-                                } ${
-                                    coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
-                                }`}
-                                onError={() => {
-                                    if (coverImage !== '/covers/cover_img_1.jpg') {
-                                        setCoverImage('/covers/cover_img_1.jpg');
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <img
-                                key={coverImage}
-                                src={formatUrl(coverImage)}
-                                alt="Portada de perfil"
-                                className={`w-full h-full group-hover/cover:scale-[1.015] transition-transform duration-700 ${
-                                    coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
-                                } ${
-                                    coverPosition === 'top' ? 'object-top' : coverPosition === 'bottom' ? 'object-bottom' : 'object-center'
-                                }`}
-                                onError={() => {
-                                    if (coverImage !== '/covers/cover_video_1.mp4') {
-                                        setCoverImage('/covers/cover_video_1.mp4');
-                                    }
-                                }}
-                            />
-                        )}
+                        {(() => {
+                            const rot = coverTransform.rotation || 0;
+                            const isQuarterTurn = (rot === 90 || rot === 270) && coverHeightMode !== 'full';
+                            const baseScale = (coverTransform.zoom || 1) * (isQuarterTurn ? 1.75 : 1);
+                            const panX = (50 - (coverTransform.offsetX ?? 50)) * 0.45;
+                            const panY = (50 - (coverTransform.offsetY ?? 50)) * 0.45;
+                            const mediaStyle = {
+                                objectPosition: `${coverTransform.offsetX ?? 50}% ${coverTransform.offsetY ?? 50}%`,
+                                transform: `translate3d(${panX}%, ${panY}%, 0) rotate(${rot}deg) scaleX(${coverTransform.flipX ? -baseScale : baseScale}) scaleY(${baseScale})`,
+                                transition: isDraggingCover ? 'none' : 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)'
+                            };
+
+                            return isCoverVideoUrl(coverImage) ? (
+                                <video
+                                    key={coverImage}
+                                    src={formatUrl(coverImage)}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    style={mediaStyle}
+                                    className={`w-full h-full pointer-events-none ${
+                                        coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
+                                    }`}
+                                    onError={() => {
+                                        if (coverImage !== '/covers/cover_img_1.jpg') {
+                                            setCoverImage('/covers/cover_img_1.jpg');
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    key={coverImage}
+                                    src={formatUrl(coverImage)}
+                                    alt="Portada de perfil"
+                                    draggable={false}
+                                    style={mediaStyle}
+                                    className={`w-full h-full pointer-events-none ${
+                                        coverHeightMode === 'full' ? 'object-contain bg-black/70' : 'object-cover'
+                                    }`}
+                                    onError={() => {
+                                        if (coverImage !== '/covers/cover_video_1.mp4') {
+                                            setCoverImage('/covers/cover_video_1.mp4');
+                                        }
+                                    }}
+                                />
+                            );
+                        })()}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
 
-                        {/* Controles rápidos de Portada (Aleatorio Video/Foto) en esquina inferior derecha */}
-                        {isOwnProfile && (
+                        {/* HUD INTERACTIVO DE MOVER POSICIÓN Y GIRAR PORTADA */}
+                        {isOwnProfile && isAdjustingCover && (
                             <div
-                                className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 z-20 flex items-center gap-1.5 opacity-80 sm:opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200"
+                                className="absolute inset-x-2 bottom-2 sm:inset-x-4 sm:bottom-3 z-30 bg-[#0b0c10]/92 backdrop-blur-xl border border-white/15 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                onClick={e => e.stopPropagation()}
+                                onMouseDown={e => e.stopPropagation()}
+                                onTouchStart={e => e.stopPropagation()}
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold text-emerald-400">
+                                        <Move size={12} className="animate-pulse" />
+                                        <span>Arrastra la portada para mover su posición ({coverTransform.offsetX}%, {coverTransform.offsetY}%)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => updateCoverTransform({ offsetX: 50, offsetY: 50, rotation: 0, flipX: false, zoom: 1 })}
+                                            className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[9px] font-mono text-zinc-300 hover:text-white transition-all cursor-pointer"
+                                        >
+                                            Restablecer
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAdjustingCover(false)}
+                                            className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-[9px] font-mono font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-md"
+                                        >
+                                            <Check size={11} strokeWidth={3} />
+                                            <span>Listo</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-white/10">
+                                    {/* Girar 90° */}
+                                    <button
+                                        type="button"
+                                        onClick={() => updateCoverTransform(p => ({ ...p, rotation: ((p.rotation || 0) + 90) % 360 }))}
+                                        className="px-2.5 py-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-[9px] font-mono font-bold text-white flex items-center gap-1 cursor-pointer active:scale-95"
+                                        title="Girar 90 grados"
+                                    >
+                                        <RotateCw size={11} className="text-purple-400" />
+                                        <span>Girar ({coverTransform.rotation || 0}°)</span>
+                                    </button>
+
+                                    {/* Voltear Horizontal */}
+                                    <button
+                                        type="button"
+                                        onClick={() => updateCoverTransform(p => ({ ...p, flipX: !p.flipX }))}
+                                        className={`px-2.5 py-1 rounded-lg border text-[9px] font-mono font-bold flex items-center gap-1 cursor-pointer active:scale-95 ${
+                                            coverTransform.flipX
+                                                ? 'bg-purple-500/25 border-purple-400 text-purple-200'
+                                                : 'bg-white/[0.08] hover:bg-white/[0.15] border-white/15 text-zinc-200'
+                                        }`}
+                                        title="Voltear horizontalmente"
+                                    >
+                                        <span>↔ Voltear</span>
+                                    </button>
+
+                                    {/* Posiciones rápidas: Arriba / Centro / Abajo */}
+                                    <div className="flex items-center bg-black/50 rounded-lg p-0.5 border border-white/10">
+                                        {[
+                                            { label: 'Arriba', y: 15 },
+                                            { label: 'Centro', y: 50 },
+                                            { label: 'Abajo', y: 85 }
+                                        ].map(pos => (
+                                            <button
+                                                key={pos.label}
+                                                type="button"
+                                                onClick={() => updateCoverTransform(p => ({ ...p, offsetY: pos.y }))}
+                                                className={`px-2 py-0.5 rounded-md text-[8.5px] font-mono font-bold transition-all cursor-pointer ${
+                                                    Math.abs((coverTransform.offsetY ?? 50) - pos.y) <= 10
+                                                        ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                                                        : 'text-zinc-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {pos.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Slider de Zoom */}
+                                    <div className="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-lg border border-white/10">
+                                        <span className="text-[8.5px] font-mono text-zinc-400">Zoom</span>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="2.4"
+                                            step="0.05"
+                                            value={coverTransform.zoom || 1}
+                                            onChange={(e) => updateCoverTransform(p => ({ ...p, zoom: parseFloat(e.target.value) }))}
+                                            className="w-16 sm:w-20 accent-emerald-400 cursor-pointer h-1"
+                                        />
+                                        <span className="text-[8.5px] font-mono text-emerald-400 font-bold">
+                                            {Number(coverTransform.zoom || 1).toFixed(1)}x
+                                        </span>
+                                    </div>
+
+                                    {/* Tamaño de Altura: Compacta / Expandida / Completa */}
+                                    <div className="flex items-center bg-black/50 rounded-lg p-0.5 border border-white/10 ml-auto">
+                                        {[
+                                            { id: 'compact', label: 'Compacta' },
+                                            { id: 'expanded', label: 'Expandida' },
+                                            { id: 'full', label: 'Completa' }
+                                        ].map(mode => (
+                                            <button
+                                                key={mode.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setCoverHeightMode(mode.id);
+                                                    if (user) localStorage.setItem('oasis_cover_height_' + user, mode.id);
+                                                }}
+                                                className={`px-2 py-0.5 rounded-md text-[8.5px] font-mono font-bold transition-all cursor-pointer ${
+                                                    coverHeightMode === mode.id
+                                                        ? 'bg-purple-500/25 text-purple-300 border border-purple-500/40'
+                                                        : 'text-zinc-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {mode.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Controles rápidos de Portada (Mover/Girar, Aleatorio, Archivo) en esquina inferior derecha */}
+                        {isOwnProfile && !isAdjustingCover && (
+                            <div
+                                className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 z-20 flex items-center gap-1.5 opacity-85 sm:opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200"
                                 onClick={e => e.stopPropagation()}
                             >
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setIsAdjustingCover(true); }}
+                                    className="px-2.5 py-1 rounded-full bg-black/75 hover:bg-black/95 border border-white/15 hover:border-emerald-400/50 backdrop-blur-md text-[9px] font-mono font-bold text-zinc-200 hover:text-white flex items-center gap-1.5 shadow-lg transition-all cursor-pointer active:scale-95"
+                                    title="Mover posición, girar o ajustar zoom de la portada"
+                                >
+                                    <Move size={10} className="text-emerald-400" />
+                                    <span>Mover / Girar</span>
+                                </button>
                                 <button
                                     type="button"
                                     onClick={handleRandomCover}
@@ -5865,7 +6153,7 @@ const ProfileView = ({
                                     title="Cambiar a otra portada aleatoria (Videos Lo-Fi y Fotos)"
                                 >
                                     <RefreshCw size={10} className="text-purple-400" />
-                                    <span>Portada Aleatoria</span>
+                                    <span>Aleatoria</span>
                                 </button>
                                 <button
                                     type="button"
@@ -6119,21 +6407,79 @@ const ProfileView = ({
 
                             {/* LADO DERECHO: PROCESO INTERNO / LA FIRMA (GENERADO COMO FIRMA EXISTENCIAL) */}
                             <div className="flex-1 flex flex-col justify-between min-w-0 border-l border-white/[0.08] pl-2 sm:pl-3.5 pr-1 py-0.5 relative group/quote">
-                                <div className="flex items-center justify-between pb-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
-                                        <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                                <div className="flex items-center justify-between gap-1 pb-0.5">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse shrink-0" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400 truncate">
                                             Proceso Interno
                                         </span>
                                     </div>
-                                    <span className="text-[6.5px] sm:text-[7px] md:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
-                                        Firma
-                                    </span>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {isOwnProfile && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerateFirma}
+                                                    disabled={isGeneratingFirma}
+                                                    className="px-1.5 sm:px-2 py-0.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 hover:border-emerald-400/60 text-[6.5px] sm:text-[7.5px] md:text-[8px] font-mono font-bold text-emerald-300 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95 shadow-xs"
+                                                    title="Generar nueva firma existencial"
+                                                >
+                                                    <Sparkles size={9} className={isGeneratingFirma ? 'animate-spin text-emerald-400' : 'text-emerald-400'} />
+                                                    <span>{isGeneratingFirma ? 'Generando...' : 'Generar Firma'}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsEditingFirma(prev => !prev)}
+                                                    className="p-1 rounded-md bg-white/[0.04] hover:bg-white/10 border border-white/[0.08] text-zinc-400 hover:text-white transition-all cursor-pointer"
+                                                    title="Escribir o editar firma manualmente"
+                                                >
+                                                    <Pencil size={8} />
+                                                </button>
+                                            </>
+                                        )}
+                                        <span className="hidden sm:inline text-[6.5px] sm:text-[7px] md:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold ml-0.5">
+                                            Firma
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <p className="text-[8.5px] sm:text-[10px] md:text-[11.5px] lg:text-[12.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3 md:line-clamp-4 my-auto">
-                                    "{bentoSensoryQuote}"
-                                </p>
+                                {isEditingFirma && isOwnProfile ? (
+                                    <div className="my-auto flex flex-col gap-1.5 py-1">
+                                        <textarea
+                                            value={customFirma || bentoSensoryQuote}
+                                            onChange={(e) => setCustomFirma(e.target.value)}
+                                            rows={2}
+                                            className="w-full bg-black/60 border border-emerald-500/40 rounded-lg p-1.5 text-[9px] sm:text-[10.5px] text-zinc-100 font-serif italic outline-none resize-none"
+                                            placeholder="Escribe tu firma o proceso interno..."
+                                        />
+                                        <div className="flex justify-end gap-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const valToSave = (customFirma || bentoSensoryQuote || '').trim();
+                                                    setCustomFirma(valToSave);
+                                                    localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, valToSave);
+                                                    try {
+                                                        const existingTraits = JSON.parse(localStorage.getItem('oasis_public_traits_' + (user || effectiveUser)) || '{}');
+                                                        localStorage.setItem('oasis_public_traits_' + (user || effectiveUser), JSON.stringify({ ...existingTraits, proceso: valToSave }));
+                                                    } catch (_) {}
+                                                    setIsEditingFirma(false);
+                                                }}
+                                                className="px-2 py-0.5 rounded bg-emerald-500 text-black text-[8px] font-mono font-bold cursor-pointer"
+                                            >
+                                                Guardar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p
+                                        onClick={() => { if (isOwnProfile) setIsEditingFirma(true); }}
+                                        className={`text-[8.5px] sm:text-[10px] md:text-[11.5px] lg:text-[12.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3 md:line-clamp-4 my-auto ${isOwnProfile ? 'cursor-pointer hover:text-white transition-colors' : ''}`}
+                                        title={isOwnProfile ? 'Toca para editar tu firma o usa el botón Generar Firma' : undefined}
+                                    >
+                                        "{bentoSensoryQuote}"
+                                    </p>
+                                )}
 
                                 <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] md:text-[8.5px] font-mono text-zinc-500">
                                     <span>bitácora íntima</span>
@@ -6541,14 +6887,26 @@ const ProfileView = ({
                                         })}
                                     </div>
 
-                                    <div className="flex items-center gap-2 pt-0.5">
+                                    <div className="flex items-center gap-1.5 pt-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsQuickCustomizeOpen(false);
+                                                setIsAdjustingCover(true);
+                                            }}
+                                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-[9.5px] font-mono font-bold text-emerald-300 hover:text-emerald-200 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
+                                            title="Mover posición, girar 90° o hacer zoom a la portada"
+                                        >
+                                            <Move size={11} />
+                                            <span>Mover / Girar</span>
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={handleRandomCover}
-                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-purple-400/50 text-[10px] font-mono font-bold text-zinc-100 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            className="flex-1 py-1.5 px-2 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-purple-400/50 text-[9.5px] font-mono font-bold text-zinc-100 hover:text-white flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
                                             title="Probar otro video o foto de portada aleatorio"
                                         >
-                                            <RefreshCw size={12} className="text-purple-400" />
+                                            <RefreshCw size={11} className="text-purple-400" />
                                             <span>Aleatorio</span>
                                         </button>
                                         <button
@@ -6557,11 +6915,11 @@ const ProfileView = ({
                                                 if (coverInputRef.current) coverInputRef.current.click();
                                                 setIsQuickCustomizeOpen(false);
                                             }}
-                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/35 text-[10px] font-mono font-bold text-purple-300 hover:text-purple-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            className="flex-1 py-1.5 px-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/35 text-[9.5px] font-mono font-bold text-purple-300 hover:text-purple-200 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
                                             title="Subir tu propio video o foto de portada"
                                         >
-                                            <UploadCloud size={12} />
-                                            <span>Subir Video/Foto ↗</span>
+                                            <UploadCloud size={11} />
+                                            <span>Subir ↗</span>
                                         </button>
                                     </div>
                                 </div>
