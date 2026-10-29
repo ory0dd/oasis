@@ -5790,6 +5790,41 @@ const ProfileView = ({
         return null;
     }, []);
 
+    const softenMapNodeLabel = useCallback((raw, fallback) => {
+        let s = (raw || '').replace(/^["'«“]+|["'»”]+$/g, '').trim().toLowerCase();
+        if (!s) return fallback;
+        s = s
+            .replace(/^conductas?\s+de\s+/i, '')
+            .replace(/^respuesta\s+(fisiol[óo]gica|corporal|operante|motora)\s+de\s+/i, '')
+            .replace(/^pensamientos?\s+(autom[áa]ticos?\s+)?de\s+/i, '')
+            .replace(/^evento\s+privado\s+de\s+/i, '')
+            .replace(/^falta\s+de\s+l[íi]mites\s+en\s+(mi\s+|la\s+)?crianza/i, 'lo difícil que fue poner límites antes')
+            .replace(/\ben\s+(mi\s+|la\s+)?crianza\b/gi, 'desde antes')
+            .replace(/\b(en\s+)?mi\s+mapa(\s+interior|\s+funcional)?\b/gi, 'en mi día a día')
+            .replace(/\bmi\s+bucle\b/gi, 'lo que vivo')
+            .trim();
+        return s || fallback;
+    }, []);
+
+    const softenFirmaTone = useCallback((rawText, fallbackSoft = '') => {
+        let t = (rawText || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+        if (!t) return fallbackSoft;
+        if (/^(habito entre|en mi mapa interior|aprendí a sostenerme frente a|mi cuerpo registra)/i.test(t) && fallbackSoft) {
+            return fallbackSoft;
+        }
+        t = t
+            .replace(/^soy un eco de\s+([^,.]+),?\s*atrapad[oa]\s+entre\s+/i, 'a veces me siento entre $1 y ')
+            .replace(/^soy\s+un[a]?\s+/i, 'a veces me siento como alguien que transita ')
+            .replace(/^soy\s+/i, 'a veces me siento ')
+            .replace(/^yo\s+soy\s+/i, 'a veces me siento ')
+            .replace(/^yo\s+/i, 'últimamente ')
+            .replace(/^habito\s+entre\s+/i, 'a veces me siento entre ')
+            .replace(/\ben\s+mi\s+mapa(\s+interior|\s+funcional)?\b/gi, 'en lo que vivo')
+            .replace(/\ben\s+(mi\s+|la\s+)?crianza\b/gi, 'en mi historia')
+            .replace(/\bmi\s+bucle\b/gi, 'mi proceso');
+        return t;
+    }, []);
+
     const extractMapFirmaContext = useCallback((targetU, lensOffset = 0) => {
         let mapObj = null;
         try {
@@ -5811,21 +5846,21 @@ const ProfileView = ({
         const funcNodes = byRole(['function']);
         const moldedNodes = nodes.filter(n => n && (n.is_corrected || n.molded_note));
 
-        const pickLbl = (arr, idx, fallback) => cleanLbl(arr[idx % Math.max(arr.length, 1)]) || fallback;
+        const pickSoft = (arr, idx, fallback) => softenMapNodeLabel(cleanLbl(arr[idx % Math.max(arr.length, 1)]), fallback);
 
-        const h1 = pickLbl(histNodes, lensOffset, 'las huellas de mi historia');
-        const a1 = pickLbl(antNodes, lensOffset, 'la presión de mi entorno');
-        const c1 = pickLbl(cogNodes, lensOffset, 'el ruido de mis pensamientos');
-        const p1 = pickLbl(physNodes, lensOffset, 'la tensión que guarda mi cuerpo');
-        const m1 = pickLbl(motNodes, lensOffset, 'mis mecanismos de resguardo');
-        const cs1 = pickLbl(consNodes, lensOffset, 'la pausa tras el desgaste');
-        const f1 = pickLbl(funcNodes, lensOffset, 'cuidar lo que más me importa');
+        const h1 = pickSoft(histNodes, lensOffset, 'lo que vengo cargando de antes');
+        const a1 = pickSoft(antNodes, lensOffset, 'la presión del día a día');
+        const c1 = pickSoft(cogNodes, lensOffset, 'darle muchas vueltas a las cosas');
+        const p1 = pickSoft(physNodes, lensOffset, 'cierto cansancio en el cuerpo');
+        const m1 = pickSoft(motNodes, lensOffset, 'guardarme un rato en mi espacio');
+        const cs1 = pickSoft(consNodes, lensOffset, 'esa sensación de desgaste después');
+        const f1 = pickSoft(funcNodes, lensOffset, 'cuidar mi calma y lo que me importa');
 
         const mapLenses = [
-            `Habito entre ${h1.toLowerCase()} y el impulso de responder ante ${a1.toLowerCase()}; cuando aparece ${c1.toLowerCase()} y siento ${p1.toLowerCase()}, a veces recurro a ${m1.toLowerCase()} para protegerme, aunque me deje en ${cs1.toLowerCase()}, porque en el fondo solo busco ${f1.toLowerCase()} con mayor calma y verdad.`,
-            `En mi mapa interior reconozco cómo ${a1.toLowerCase()} despierta en mí ${c1.toLowerCase()} y ${p1.toLowerCase()}; hoy comprendo que ${m1.toLowerCase()} fue mi manera de resguardarme desde ${h1.toLowerCase()}, mientras aprendo a abrirme paso hacia ${f1.toLowerCase()}.`,
-            `Aprendí a sostenerme frente a ${h1.toLowerCase()} refugiándome en ${m1.toLowerCase()} cada vez que ${c1.toLowerCase()} o ${p1.toLowerCase()} me sobrepasan; hoy elijo mirar de frente ${cs1.toLowerCase()} para habitar con autenticidad mi deseo de ${f1.toLowerCase()}.`,
-            `Mi cuerpo registra ${p1.toLowerCase()} cuando ${a1.toLowerCase()} activa ${c1.toLowerCase()}; detrás de ${m1.toLowerCase()} no hay debilidad, sino una búsqueda silenciosa por ${f1.toLowerCase()} sin perderme en ${cs1.toLowerCase()}.`
+            `a veces me siento entre ${c1} y las ganas de estar más en calma; cuando noto ${p1} frente a ${a1}, me pasa que busco refugio en ${m1}, aunque poco a poco voy aprendiendo a acercarme a ${f1} a mi propio ritmo...`,
+            `últimamente vivo momentos donde ${a1} despierta un poco de ${c1} y ${p1}; a veces me guardo en ${m1} para cuidarme del desgaste, mientras voy descubriendo cómo darle más lugar a ${f1} con suavidad...`,
+            `me pasa que cuando siento ${p1} o me ronda ${c1}, tiendo a refugiarme en ${m1} por lo aprendido en ${h1}; aun así, últimamente intento no ser tan duro conmigo ante ${cs1} y acercarme más a ${f1}...`,
+            `hay días en los que noto cómo ${a1} me mueve por dentro con ${c1}; aunque a veces todavía vivo ${m1} como refugio, poco a poco me siento más cerca de ${f1} sin tanta prisa...`
         ];
 
         const moldedSummary = moldedNodes
@@ -5895,7 +5930,7 @@ const ProfileView = ({
             synthesizedFromMap,
             hasClinicalContext: Boolean(hasRealMap || phenomSummary || bioSummary || nodeChatsSummary)
         };
-    }, [getStorageItemCI]);
+    }, [getStorageItemCI, softenMapNodeLabel]);
 
     // Sincronizar Firma y Mapa desde la nube clínica si aún no están en localStorage
     useEffect(() => {
@@ -5934,9 +5969,21 @@ const ProfileView = ({
     }, [effectiveUser, isOwnProfile, getStorageItemCI]);
 
     const bentoSensoryQuote = useMemo(() => {
-        if (customFirma && customFirma.trim() !== '') return customFirma;
-
         const targetU = isOwnProfile ? (user || effectiveUser) : effectiveUser;
+        let mapFallbackSoft = '';
+        let hasRealMap = false;
+        let savedMapSintesis = '';
+        try {
+            const ctx = extractMapFirmaContext(targetU, firmaMapVersion);
+            hasRealMap = ctx.hasRealMap;
+            savedMapSintesis = ctx.savedMapSintesis;
+            mapFallbackSoft = ctx.synthesizedFromMap || '';
+        } catch (_) {}
+
+        if (customFirma && customFirma.trim() !== '') {
+            return softenFirmaTone(customFirma, mapFallbackSoft);
+        }
+
         try {
             let resonanceData = null;
             const saved = getStorageItemCI('oasis_public_traits', targetU);
@@ -5957,20 +6004,17 @@ const ProfileView = ({
                 resonanceData?.Proceso ||
                 ''
             ).trim();
-            if (sintesisOrProceso) return sintesisOrProceso;
+            if (sintesisOrProceso) return softenFirmaTone(sintesisOrProceso, mapFallbackSoft);
 
             if (resonanceData?.habitar || resonanceData?.busqueda) {
                 const parts = [resonanceData.habitar, resonanceData.vinculo, resonanceData.busqueda].filter(Boolean).join(' ');
-                if (parts.trim()) return parts.trim();
+                if (parts.trim()) return softenFirmaTone(parts.trim(), mapFallbackSoft);
             }
         } catch(e) {}
 
         // Si el usuario tiene un Mapa Funcional (oasis_afc_real_data_), extraer o sintetizar la Firma directamente de su Mapa
-        try {
-            const { hasRealMap, savedMapSintesis, synthesizedFromMap } = extractMapFirmaContext(targetU, 0);
-            if (savedMapSintesis) return savedMapSintesis;
-            if (hasRealMap && synthesizedFromMap) return synthesizedFromMap;
-        } catch (_) {}
+        if (savedMapSintesis) return softenFirmaTone(savedMapSintesis, mapFallbackSoft);
+        if (hasRealMap && mapFallbackSoft) return mapFallbackSoft;
 
         // Fallback únicamente cuando el usuario aún no ha generado su Mapa
         let hash = 0;
@@ -5981,7 +6025,7 @@ const ProfileView = ({
         }
         const quoteIndex = Math.abs(hash) % FIRMA_CANDIDATE_QUOTES.length;
         return FIRMA_CANDIDATE_QUOTES[quoteIndex];
-    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser, FIRMA_CANDIDATE_QUOTES, firmaMapVersion, getStorageItemCI, extractMapFirmaContext]);
+    }, [customFirma, isOwnProfile, user, publicUsers, effectiveUser, FIRMA_CANDIDATE_QUOTES, firmaMapVersion, getStorageItemCI, extractMapFirmaContext, softenFirmaTone]);
 
     const handleGenerateFirma = useCallback(async (e) => {
         if (e) e.stopPropagation();
@@ -5991,8 +6035,10 @@ const ProfileView = ({
         const nextLens = firmaMapVersion + 1;
         setFirmaMapVersion(nextLens);
 
+        let currentSoftFallback = '';
+
         const saveGeneratedFirma = (firmaText, extraTraits = {}) => {
-            const cleanText = (firmaText || '').replace(/^["'«“]+|["'»”]+$/g, '').trim();
+            const cleanText = softenFirmaTone(firmaText, currentSoftFallback);
             if (!cleanText) return;
             setCustomFirma(cleanText);
             localStorage.setItem(`oasis_custom_firma_${effectiveUser}`, cleanText);
@@ -6051,13 +6097,14 @@ const ProfileView = ({
 
             // 2. Extraer toda la información del Mapa Funcional y respuestas clínicas del usuario
             const { hasRealMap, mapTopologySummary, synthesizedFromMap, hasClinicalContext } = extractMapFirmaContext(targetU, nextLens);
+            currentSoftFallback = synthesizedFromMap || '';
 
             // Aplicar síntesis inmediata construida con los nodos reales de su mapa mientras la IA redacta la versión profunda
             if (hasRealMap && synthesizedFromMap) {
                 saveGeneratedFirma(synthesizedFromMap);
             }
 
-            // 3. Generar la Firma de Resonancia Existencial con IA a partir de la información del Mapa (igual que al crear el mapa)
+            // 3. Generar la Firma de Resonancia Existencial con IA a partir de la información del Mapa, en tono suave y cercano
             let activeKey = localStorage.getItem('oasis_deepseek_key') || '';
             if (activeKey && (
                 activeKey.includes("07b18eb6601a4b11a109c96a56c92a16") ||
@@ -6074,21 +6121,24 @@ const ProfileView = ({
             const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o-mini';
 
             const mapPrompt = `
-Eres un analista clínico y existencial experto. Tu tarea es generar la "Firma de Resonancia Existencial" del usuario basándote ESTRICTAMENTE EN LA INFORMACIÓN DE SU MAPA FUNCIONAL (nodos de origen/historia, detonantes, pensamientos, respuestas corporales, conductas de resguardo, consecuencias y función del bucle) y sus respuestas clínicas.
-Debe usar un lenguaje hermosamente literario y empático, pero ESTRICTAMENTE ANCLADO EN LOS NODOS Y LA VERDAD DE SU MAPA. Debe sentirse profundamente personalizado, conectando sus vivencias reales, sus miedos y su tensión interna sin perder conexión con su mapa real.
-Debe estar escrito estrictamente en PRIMERA PERSONA ('yo', 'soy', 'mi', 'habito', 'busco'), como si el usuario mismo estuviera verbalizando el fondo de su mapa interior.
-Enfócate en la belleza de su tensión interna y sus anhelos más profundos en UN SOLO PÁRRAFO breve y contundente (entre 35 y 65 palabras, aprox 3 a 5 líneas).
+Eres un escritor sensible y cercano. Tu tarea es redactar el "Proceso Interno / Firma" del usuario inspirándote en la información real de su mapa funcional, pero traducido a una nota íntima, suave, cotidiana y muy humana.
+
+REGLAS ESTRICTAS DE TONO (OBLIGATORIAS):
+1. TONO SUAVE Y FLUIDO: Usa aperturas y transiciones suaves como "a veces me siento...", "últimamente vivo...", "me pasa que cuando...", "hay momentos en que noto...", "poco a poco voy aprendiendo a...".
+2. PROHIBIDO UN "YO" RÍGIDO O DRAMÁTICO: NUNCA empieces con "Soy..." ni "Yo...". No uses metáforas teatrales ni dramáticas (prohibido decir "soy un eco", "mar de frustraciones", "atrapado", "abismo").
+3. PROHIBIDO LENGUAJE DE MAPA O CLÍNICO: NUNCA digas "en mi mapa", "mi bucle", "mi crianza", "falta de límites en mi crianza" ni etiquetas técnicas. Tradúcelo a cómo se siente en el día a día con palabras sencillas y amables.
+4. EXTENSIÓN: Un solo párrafo breve y cálido de entre 30 y 50 palabras (3 a 4 líneas).
 
 Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
 {
-  "sintesis": "Párrafo poético, cálido y profundo en primera persona anclado directamente en los nodos y bucles de su mapa.",
-  "habitar": "Cómo habito mi cuerpo y mi mente según mi mapa (máx 12 palabras).",
-  "vinculo": "Cómo me vinculo o me protejo frente a otros según mi mapa (máx 12 palabras).",
-  "busqueda": "Mi anhelo existencial y función de fondo según mi mapa (máx 12 palabras).",
+  "sintesis": "Párrafo suave, cálido y cotidiano (empezando con 'a veces me siento...', 'últimamente vivo...', 'me pasa que...' o similar, sin 'Soy' ni 'en mi mapa').",
+  "habitar": "Cómo se siente el cuerpo y la mente en el día a día con suavidad (máx 12 palabras).",
+  "vinculo": "Cómo me cuido o me acerco a los demás (máx 12 palabras).",
+  "busqueda": "Lo que poco a poco voy buscando cuidar o habitar (máx 12 palabras).",
   "keywords": ["Palabra1", "Palabra2", "Palabra3"]
 }
 
-INFORMACIÓN DEL MAPA FUNCIONAL DEL USUARIO:
+CONTEXTO DE LO QUE VIVE EL USUARIO:
 ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 'En exploración interior'}`}
 `;
 
@@ -6133,13 +6183,13 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                 }
             }
 
-            // Fallback secundario vía /api/oasis/chat usando la misma información del mapa
+            // Fallback secundario vía /api/oasis/chat usando tono suave y cotidiano
             const chatRes = await fetch(`${API_URL}/api/oasis/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     user: effectiveUser,
-                    message: `Basándote EXCLUSIVAMENTE en los siguientes nodos y bucles de mi Mapa Funcional:\n${mapTopologySummary}\n\nRedacta mi "Firma de Resonancia Existencial" en PRIMERA PERSONA ('yo', 'mi', 'habito', 'busco'), en un solo párrafo poético, lúcido y profundamente anclado en los nodos reales de mi mapa (entre 35 y 60 palabras, sin comillas ni introducciones).`,
+                    message: `Con base en lo que vivo:\n${mapTopologySummary}\n\nEscribe una nota personal muy suave y cotidiana (de 30 a 50 palabras, un solo párrafo, sin comillas) usando giros como "a veces me siento...", "últimamente vivo...", "me pasa que..." o "poco a poco voy aprendiendo a...". PROHIBIDO empezar con "Soy" o "Yo", prohibido decir "en mi mapa" o "mi crianza", y sin dramatismo.`,
                     history: []
                 })
             });
@@ -6151,11 +6201,11 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                 }
             }
         } catch (_) {
-            // Si la red falla, se mantiene la síntesis extraída directamente de los nodos del mapa
+            // Si la red falla, se mantiene la síntesis suave extraída directamente del mapa
         } finally {
             setIsGeneratingFirma(false);
         }
-    }, [effectiveUser, user, bio, firmaMapVersion, getStorageItemCI, extractMapFirmaContext]);
+    }, [effectiveUser, user, bio, firmaMapVersion, getStorageItemCI, extractMapFirmaContext, softenFirmaTone]);
 
     const bentoValuableMemories = useMemo(() => {
         const items = [];
