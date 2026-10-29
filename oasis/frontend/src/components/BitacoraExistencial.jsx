@@ -21,10 +21,34 @@ export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId,
     const [editingCanvasName, setEditingCanvasName] = useState("");
 
     
-    const storedCanvases = blocks.filter(b => b.type === 'canvas').sort((a, b) => b.timestamp - a.timestamp);
+    const getCanvasThumbnail = (c) => {
+        if (!c) return '';
+        return c.metadata?.thumbnail || 
+               (user && localStorage.getItem(`oasis_canvas_thumbnail_${user}_${c.id}`)) || 
+               localStorage.getItem(`oasis_canvas_thumbnail_${c.id}`) || '';
+    };
+
+    const storedCanvases = blocks.filter(b => b.type === 'canvas').sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     const hasDefaultCanvas = storedCanvases.find(c => c.id === 'canvas_default');
-    const canvases = hasDefaultCanvas ? storedCanvases : [
-        { id: 'canvas_default', type: 'canvas', content: 'Pizarrón Principal', timestamp: 0 },
+    const defaultCover = (user && localStorage.getItem(`oasis_canvas_thumbnail_${user}_canvas_default`)) || 
+                         localStorage.getItem('oasis_canvas_thumbnail_canvas_default') || '';
+
+    const canvases = hasDefaultCanvas ? storedCanvases.map(c => {
+        const thumb = getCanvasThumbnail(c);
+        if (thumb && !c.metadata?.thumbnail) {
+            return { ...c, metadata: { ...(c.metadata || {}), thumbnail: thumb } };
+        }
+        return c;
+    }) : [
+        { 
+            id: 'canvas_default', 
+            type: 'canvas', 
+            content: 'Pizarrón 1', 
+            text: 'Pizarrón 1', 
+            timestamp: 0, 
+            user: user,
+            metadata: defaultCover ? { thumbnail: defaultCover } : {} 
+        },
         ...storedCanvases
     ];
 
@@ -203,12 +227,16 @@ export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId,
                             {canvases.map(canvas => (
                                 <div key={canvas.id} onClick={() => { setActiveCanvasId(canvas.id); setViewMode('notes'); }} className={`relative p-5 rounded-3xl border transition-all cursor-pointer flex flex-col gap-3 aspect-square justify-between overflow-hidden ${canvas.id === activeCanvasId ? 'bg-accent/10 border-accent/50 shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)]' : 'bg-black/40 border-white/10 hover:border-white/20'}`}>
                                     
-                                    {canvas.metadata?.thumbnail && (
-                                        <div className="absolute inset-0 z-0">
-                                            <div className="absolute inset-0 bg-black/50 z-10" />
-                                            <img src={formatUrl(canvas.metadata.thumbnail)} alt="Cover" className="w-full h-full object-cover opacity-80" />
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const thumb = getCanvasThumbnail(canvas);
+                                        if (!thumb) return null;
+                                        return (
+                                            <div className="absolute inset-0 z-0">
+                                                <div className="absolute inset-0 bg-black/50 z-10" />
+                                                <img src={formatUrl(thumb)} alt="Cover" className="w-full h-full object-cover opacity-80" />
+                                            </div>
+                                        );
+                                    })()}
 
                                     <div className="relative z-10 flex flex-col gap-3 h-full justify-between">
                                         <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0 backdrop-blur-md">
@@ -240,23 +268,19 @@ export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId,
                                                                     const file = ev.target.files?.[0];
                                                                     if (!file) return;
 
-                                                                    // 1. Vista previa instantánea
-                                                                    const reader = new FileReader();
-                                                                    reader.onload = (re) => {
-                                                                        const localDataUrl = re.target.result;
-                                                                        try {
-                                                                            localStorage.setItem('oasis_canvas_thumbnail_' + canvas.id, localDataUrl);
-                                                                        } catch (err) {}
-                                                                        setBlocks(prev => {
-                                                                            const exists = prev.some(b => b.id === canvas.id);
-                                                                            const updated = !exists
-                                                                                ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { thumbnail: localDataUrl } }]
-                                                                                : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: localDataUrl } } : b);
-                                                                            if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                                                            return updated;
-                                                                        });
-                                                                    };
-                                                                    reader.readAsDataURL(file);
+                                                                    // 1. Vista previa instantánea sin sobrecargar localStorage con base64
+                                                                    const previewUrl = URL.createObjectURL(file);
+                                                                    if (user) {
+                                                                        try { localStorage.setItem(`oasis_canvas_thumbnail_${user}_${canvas.id}`, previewUrl); } catch (e) {}
+                                                                    }
+                                                                    try { localStorage.setItem(`oasis_canvas_thumbnail_${canvas.id}`, previewUrl); } catch (e) {}
+
+                                                                    setBlocks(prev => {
+                                                                        const exists = prev.some(b => b.id === canvas.id);
+                                                                        return !exists
+                                                                            ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', text: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { ...(canvas.metadata || {}), thumbnail: previewUrl } }]
+                                                                            : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: previewUrl } } : b);
+                                                                    });
 
                                                                     // 2. Subida permanente a /api/oasis/upload
                                                                     const formData = new FormData();
@@ -268,14 +292,26 @@ export default function BitacoraExistencial({ activeCanvasId, setActiveCanvasId,
                                                                     .then(res => res.json())
                                                                     .then(data => {
                                                                         if (data && data.url) {
-                                                                            try {
-                                                                                localStorage.setItem('oasis_canvas_thumbnail_' + canvas.id, data.url);
-                                                                            } catch (err) {}
+                                                                            const finalUrl = data.url;
+                                                                            if (user) {
+                                                                                try { localStorage.setItem(`oasis_canvas_thumbnail_${user}_${canvas.id}`, finalUrl); } catch (e) {}
+                                                                            }
+                                                                            try { localStorage.setItem(`oasis_canvas_thumbnail_${canvas.id}`, finalUrl); } catch (e) {}
+
                                                                             setBlocks(prev => {
                                                                                 const exists = prev.some(b => b.id === canvas.id);
                                                                                 const updated = !exists
-                                                                                    ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { thumbnail: data.url } }]
-                                                                                    : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: data.url } } : b);
+                                                                                    ? [...prev, { id: canvas.id, type: 'canvas', content: canvas.content || canvas.text || 'Pizarrón 1', text: canvas.content || canvas.text || 'Pizarrón 1', timestamp: new Date().toISOString(), user, metadata: { ...(canvas.metadata || {}), thumbnail: finalUrl } }]
+                                                                                    : prev.map(b => b.id === canvas.id ? { ...b, metadata: { ...(b.metadata || {}), thumbnail: finalUrl } } : b);
+
+                                                                                if (user) {
+                                                                                    try { localStorage.setItem('oasis_canvas_nodes_' + user, JSON.stringify(updated)); } catch (e) {}
+                                                                                    fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
+                                                                                        method: 'POST',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify(updated)
+                                                                                    }).catch(() => {});
+                                                                                }
                                                                                 if (typeof syncBlocks === 'function') syncBlocks(updated);
                                                                                 return updated;
                                                                             });

@@ -1406,6 +1406,10 @@ namespace Oasis.Backend.Controllers
                 foreach(var b in incomingBlocks) {
                     b.Username = u.Username;
                     b.Content = EnsureFileNotBase64(b.Content);
+                    if (b.Metadata != null && b.Metadata.TryGetValue("thumbnail", out var thumbVal) && thumbVal is string thumbStr)
+                    {
+                        b.Metadata["thumbnail"] = EnsureFileNotBase64(thumbStr);
+                    }
                     
                     // Preserve existing metadata (like psychologicalAnalysis) to prevent redundant AI re-analysis and massive token/credit consumption!
                     var existingBlock = u.Blocks.FirstOrDefault(ex => ex.Id == b.Id);

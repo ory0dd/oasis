@@ -752,15 +752,31 @@ const smartMergeBlocks = (serverBlocks, username) => {
             const serverTs = getBlockTime(serverBlock);
             const localTs = getBlockTime(localBlock);
 
-            // Merge metadata: if server has psychologicalAnalysis and local doesn't, adopt it
-            const serverMeta = serverBlock.metadata || serverBlock.Metadata;
-            const serverAnalysis = serverMeta?.psychologicalAnalysis || serverMeta?.PsychologicalAnalysis;
+            // Merge metadata: preserve both psychologicalAnalysis and canvas thumbnail
+            const serverMeta = serverBlock.metadata || serverBlock.Metadata || {};
+            const localMeta = localBlock.metadata || localBlock.Metadata || {};
 
-            if (serverAnalysis) {
-                if (!localBlock.metadata) localBlock.metadata = {};
-                if (!localBlock.metadata.psychologicalAnalysis) {
-                    localBlock.metadata.psychologicalAnalysis = serverAnalysis;
+            const mergedMeta = { ...serverMeta };
+            if (localMeta.psychologicalAnalysis && !mergedMeta.psychologicalAnalysis) {
+                mergedMeta.psychologicalAnalysis = localMeta.psychologicalAnalysis;
+            }
+
+            // Preserve canvas thumbnail from localBlock or localStorage
+            if (serverBlock.type === 'canvas' || localBlock.type === 'canvas') {
+                const storedThumb = localMeta.thumbnail || 
+                                    localStorage.getItem(`oasis_canvas_thumbnail_${username}_${serverBlock.id}`) ||
+                                    localStorage.getItem(`oasis_canvas_thumbnail_${serverBlock.id}`);
+                if (storedThumb && !mergedMeta.thumbnail) {
+                    mergedMeta.thumbnail = storedThumb;
                 }
+                if (storedThumb && !localMeta.thumbnail) {
+                    localMeta.thumbnail = storedThumb;
+                }
+            }
+
+            serverBlock.metadata = mergedMeta;
+            if (localBlock.metadata) {
+                localBlock.metadata = { ...localBlock.metadata, ...mergedMeta };
             }
 
             if (localTs > serverTs) {
@@ -11808,7 +11824,17 @@ function OasisApp() {
                 // Inyectar logica de Pizarrones
                 let hasCanvas = serverData.some(b => b.type === 'canvas');
                 if (!hasCanvas && user) {
-                    serverData.push({ id: 'canvas_default', type: 'canvas', text: 'Pizarrón 1', timestamp: Date.now(), user: user });
+                    const savedThumb = localStorage.getItem(`oasis_canvas_thumbnail_${user}_canvas_default`) || 
+                                       localStorage.getItem('oasis_canvas_thumbnail_canvas_default') || '';
+                    serverData.push({ 
+                        id: 'canvas_default', 
+                        type: 'canvas', 
+                        content: 'Pizarrón 1', 
+                        text: 'Pizarrón 1', 
+                        timestamp: 0, 
+                        user: user,
+                        metadata: savedThumb ? { thumbnail: savedThumb } : {} 
+                    });
                 }
                 const mappedServerData = serverData.map(b => {
                     if (b.type !== 'canvas' && b.id !== 'user_settings' && b.id !== 'profile_settings' && !b.canvasId && b.type !== 'insight') {
