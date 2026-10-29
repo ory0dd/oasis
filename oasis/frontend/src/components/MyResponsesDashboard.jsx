@@ -4077,10 +4077,16 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         }
 
         const nodes = (overrideNodes && overrideNodes.length > 0) ? overrideNodes : (afcData?.nodes || []);
+        if (selectedNode) {
+            zoomToNode(selectedNode);
+            return;
+        }
+
         if (nodes.length === 0) {
             triggerProgrammaticTransition();
             transformRef.current = { x: 0, y: 0, scale: 0.55 };
             setMapTransform({ x: 0, y: 0, scale: 0.55 });
+            updateDOMTransform(0, 0, 0.55);
             return;
         }
 
@@ -4148,7 +4154,8 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
         triggerProgrammaticTransition();
         transformRef.current = { x: tx, y: ty, scale: fitScale };
         setMapTransform({ x: tx, y: ty, scale: fitScale });
-    }, [afcData, triggerProgrammaticTransition, mobileViewMode]);
+        updateDOMTransform(tx, ty, fitScale);
+    }, [afcData, triggerProgrammaticTransition, mobileViewMode, selectedNode, zoomToNode, updateDOMTransform]);
 
     const toggleMobileFitOrReset = useCallback(() => {
         const isMobile = window.innerWidth < 768;
@@ -4209,13 +4216,20 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
             const isMobile = window.innerWidth < 768;
             let targetScale = isMobile ? 0.85 : 0.95;
             targetScale = Math.min(Math.max(0.20, targetScale), 2.5);
-            const tx = width / 2 - px * targetScale;
-            const ty = (height * (isMobile ? 0.32 : 0.40)) - py * targetScale;
+
+            // Centrar exactamente en el área visible (en PC el modal lateral ocupa ~420px a la derecha)
+            const visibleCenterX = isMobile ? (width / 2) : Math.max(width * 0.30, (width - 430) / 2);
+            const visibleCenterY = isMobile ? (height * 0.38) : (height / 2);
+
+            const tx = visibleCenterX - px * targetScale;
+            const ty = visibleCenterY - py * targetScale;
+
             triggerProgrammaticTransition();
             transformRef.current = { x: tx, y: ty, scale: targetScale };
             setMapTransform({ x: tx, y: ty, scale: targetScale });
+            updateDOMTransform(tx, ty, targetScale);
         }
-    }, [triggerProgrammaticTransition]);
+    }, [triggerProgrammaticTransition, updateDOMTransform]);
 
     const hasAutoSelectedNode = useRef(false);
     useEffect(() => {
@@ -4308,13 +4322,29 @@ Formula UNA ÚNICA PREGUNTA personalizada, profunda y reveladora que le permita 
 
         if (tabChangedToMap || nodeDeselected || isFirstDataLoad) {
             hasInitializedAfcDataRef.current = true;
-            const timer = setTimeout(() => resetMapTransform(null, afcData?.nodes), 150);
+            const timer = setTimeout(() => {
+                if (selectedNode) {
+                    zoomToNode(selectedNode);
+                } else {
+                    resetMapTransform(null, afcData?.nodes);
+                }
+            }, 150);
             prevMapStateRef.current = { tab: mapViewTab, node: selectedNode };
             return () => clearTimeout(timer);
         }
         
         prevMapStateRef.current = { tab: mapViewTab, node: selectedNode };
     }, [afcData, resetMapTransform, mapViewTab, selectedNode]);
+
+    // Auto-centrar en el nodo seleccionado cuando cambie o se navegue
+    useEffect(() => {
+        if (selectedNode && mapViewTab === 'map') {
+            const timer = setTimeout(() => {
+                zoomToNode(selectedNode);
+            }, 30);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedNode?.id, mapViewTab, zoomToNode]);
 
     const nextTourNode = useCallback(() => {
         if (sortedTourNodes.length === 0) return;

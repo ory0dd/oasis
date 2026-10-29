@@ -419,7 +419,7 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
 // --- CONFIGURACIÓN DE AURAS (THEMES) ---
 const AURAS = {
     'oasis': {
-        name: 'Oasis Classic',
+        name: 'Ruido Interior Classic',
         primary: '#bef264',
         bg: '#030304',
         sidebar: 'rgba(255,255,255,0.05)',
@@ -4488,7 +4488,7 @@ const ProfileView = ({
 
     // Profile Ambient Audio Engine (Self-contained for 100% public & owner reliability)
     const DEFAULT_AMBIENT_URL = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3';
-    const DEFAULT_AMBIENT_TITLE = 'Oasis Ambient — Resonancia Serena';
+    const DEFAULT_AMBIENT_TITLE = 'Ruido Interior Ambient — Resonancia Serena';
 
     const profileAudioRef = useRef(null);
     const audioFileInputRef = useRef(null);
@@ -4786,11 +4786,11 @@ const ProfileView = ({
             const stored = localStorage.getItem('oasis_bio_' + user);
             if (stored && !stored.includes('Explorador del Oasis')) return stored;
             if (isOry) return 'ruido extraviado';
-            return stored || 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+            return stored || 'Ruido Interior // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
         }
         if (publicProfileData?.bio || publicProfileData?.Bio) return publicProfileData.bio || publicProfileData.Bio;
         if (isOry) return 'ruido extraviado';
-        return 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+        return 'Ruido Interior // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
     });
 
     const [profileLink, setProfileLink] = useState(() => {
@@ -4927,7 +4927,7 @@ const ProfileView = ({
     React.useEffect(() => {
         if (!isOwnProfile) {
             let vFullName = effectiveUser;
-            let vBio = 'Explorador del Oasis // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
+            let vBio = 'Ruido Interior // Tejiendo ideas y resonancias en el éter digital. Esculpiendo calma en la sobreinformación.';
             let vCover = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=2564&auto=format&fit=crop';
             let vLink = '';
 
@@ -5512,7 +5512,7 @@ const ProfileView = ({
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-2xl sm:rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
                             coverHeightMode === 'expanded'
-                                ? 'h-32 sm:h-44 md:h-[390px] lg:h-[430px]'
+                                ? 'h-52 sm:h-64 md:h-[390px] lg:h-[430px]'
                                 : coverHeightMode === 'full'
                                 ? 'h-auto max-h-[460px] aspect-[16/10] sm:aspect-[16/9]'
                                 : 'h-24 sm:h-36 md:h-64'
@@ -5669,7 +5669,7 @@ const ProfileView = ({
                                             <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#10b981] shrink-0 animate-pulse" title="Activo" />
                                         </div>
                                         <span className="hidden md:block text-[8px] lg:text-[9px] font-mono text-zinc-400 truncate">
-                                            {effectiveUser?.toLowerCase() === 'ory11' ? 'Resonancia interna' : 'Explorador del Oasis'}
+                                            {effectiveUser?.toLowerCase() === 'ory11' ? 'Resonancia interna' : 'Ruido Interior'}
                                         </span>
                                     </div>
 
@@ -5696,18 +5696,35 @@ const ProfileView = ({
                                     )}
                                 </div>
 
-                                {/* Fila 2: Enlace */}
-                                <a
-                                    href={profileLink && profileLink.trim() !== '' ? (profileLink.startsWith('http') ? profileLink : `https://${profileLink}`) : `/?u=${effectiveUser}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full flex items-center justify-between px-1.5 md:px-2.5 py-0.5 md:py-1.5 rounded-md md:rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-emerald-500/40 text-[7px] sm:text-[8px] md:text-[9.5px] lg:text-[10px] font-mono text-emerald-400 transition-all group/link shadow-xs"
-                                >
-                                    <span className="truncate">
-                                        {profileLink ? profileLink.replace(/^https?:\/\//, '') : (effectiveUser?.toLowerCase() === 'ory11' ? 'inn3r.shop/' : `${effectiveUser}`)}
-                                    </span>
-                                    <ChevronRight size={7} className="md:w-3 md:h-3 text-zinc-500 shrink-0 ml-0.5" />
-                                </a>
+                                {/* Fila 2: Proceso Clínico (Acceso directo para el dueño; indicador privado para visitantes) */}
+                                {isOwnProfile ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setView('soul');
+                                            if (typeof setSoulTab === 'function') setSoulTab('tests');
+                                        }}
+                                        className="w-full flex items-center justify-between px-1.5 md:px-2.5 py-0.5 md:py-1.5 rounded-md md:rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 hover:border-purple-500/50 text-[7px] sm:text-[8px] md:text-[9.5px] lg:text-[10px] font-mono text-purple-300 transition-all group/proc shadow-xs cursor-pointer"
+                                        title="Abrir Proceso Clínico y Tests"
+                                    >
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            <Heart size={8} className="text-purple-400 shrink-0 md:w-2.5 md:h-2.5" />
+                                            <span className="truncate font-semibold tracking-wide">proceso clínico</span>
+                                        </div>
+                                        <ChevronRight size={7} className="md:w-3 md:h-3 text-purple-400/70 shrink-0 ml-0.5 group-hover/proc:translate-x-0.5 transition-transform" />
+                                    </button>
+                                ) : (
+                                    <div
+                                        className="w-full flex items-center justify-between px-1.5 md:px-2.5 py-0.5 md:py-1.5 rounded-md md:rounded-lg bg-white/[0.03] border border-white/[0.08] text-[7px] sm:text-[8px] md:text-[9.5px] lg:text-[10px] font-mono text-zinc-400 select-none shadow-xs"
+                                        title="Expediente confidencial y privado"
+                                    >
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            <Heart size={8} className="text-zinc-500 shrink-0 md:w-2.5 md:h-2.5" />
+                                            <span className="truncate text-zinc-400 font-semibold tracking-wide">proceso clínico</span>
+                                        </div>
+                                        <span className="text-[6.5px] md:text-[8px] font-mono text-zinc-600 uppercase tracking-widest shrink-0 ml-1">privado</span>
+                                    </div>
+                                )}
 
                                 {/* Fila 3: Bio */}
                                 <p className="text-[7px] sm:text-[8px] md:text-[10px] lg:text-[11px] leading-tight md:leading-relaxed text-zinc-300 font-sans line-clamp-1 md:line-clamp-2">
@@ -5770,54 +5787,28 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* LADO DERECHO: 3 PIEZAS MÁS GRANDES + BOTÓN (+) SÚPER PEQUEÑO EN LA ESQUINA */}
-                            <div className="flex-1 flex flex-col justify-center min-w-0 border-l border-white/[0.08] pl-1.5 sm:pl-3 relative pr-0.5">
-                                <div className="grid grid-cols-3 gap-1 sm:gap-2 items-center w-full my-auto pb-2">
-                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
-                                        <div
-                                            key={item.id || idx}
-                                            onClick={() => {
-                                                if (item.buyLink) {
-                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
-                                                } else if (item.raw) {
-                                                    setSelectedModalPost(item.raw);
-                                                }
-                                            }}
-                                            className="group/item flex flex-col cursor-pointer"
-                                            title={item.title}
-                                        >
-                                            <div className="w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
-                                                <img
-                                                    src={formatUrl(item.image)}
-                                                    alt={item.title}
-                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
-                                                    onError={(e) => {
-                                                        if (!e.target.dataset.failed) {
-                                                            e.target.dataset.failed = 'true';
-                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
-                                                        }
-                                                    }}
-                                                />
-                                                <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6.5px] sm:text-[7.5px] font-mono font-black text-emerald-400 shadow-sm">
-                                                    {item.price}
-                                                </span>
-                                            </div>
-                                            <span className="text-[7px] sm:text-[8px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
-                                                {item.title}
-                                            </span>
-                                        </div>
-                                    ))}
+                            {/* LADO DERECHO: PROCESO INTERNO / LA FIRMA (GENERADO COMO FIRMA EXISTENCIAL) */}
+                            <div className="flex-1 flex flex-col justify-between min-w-0 border-l border-white/[0.08] pl-2 sm:pl-3.5 pr-1 py-0.5 relative group/quote">
+                                <div className="flex items-center justify-between pb-0.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+                                            Proceso Interno
+                                        </span>
+                                    </div>
+                                    <span className="text-[6.5px] sm:text-[7px] md:text-[8px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
+                                        Firma
+                                    </span>
                                 </div>
 
-                                {/* Botón (+) micro en la esquina bien abajo para que no estorbe */}
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPiecesModalOpen(true)}
-                                    className="absolute -bottom-0.5 -right-0.5 sm:bottom-0 sm:right-0 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-white/[0.08] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-400 hover:text-black transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90 z-20"
-                                    title="Abrir catálogo con más piezas"
-                                >
-                                    <Plus size={6} strokeWidth={3} />
-                                </button>
+                                <p className="text-[8.5px] sm:text-[10px] md:text-[11.5px] lg:text-[12.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3 md:line-clamp-4 my-auto">
+                                    "{bentoSensoryQuote}"
+                                </p>
+
+                                <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] md:text-[8.5px] font-mono text-zinc-500">
+                                    <span>bitácora íntima</span>
+                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
+                                </div>
                             </div>
                         </div>
 
@@ -6015,56 +6006,65 @@ const ProfileView = ({
                                 </div>
                             </div>
 
-                            {/* PROCESO INTERNO / LA FIRMA (GENERADO COMO FIRMA EXISTENCIAL) */}
-                            <div className="bg-[#0b0c10]/90 border border-emerald-500/35 hover:border-emerald-500/55 rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative transition-all group/quote">
+                            {/* PIEZAS / TIENDA (AHORA ABAJO CON SUS 3 PRODUCTOS + BOTÓN (+) MICRO) */}
+                            <div className="bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3 backdrop-blur-xl shadow-lg flex flex-col justify-between gap-1.5 relative overflow-hidden group/pieces">
                                 <div className="flex items-center justify-between pb-0.5">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
-                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-                                            Proceso Interno
+                                        <Sparkles size={10} className="text-emerald-400 shrink-0" />
+                                        <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold uppercase tracking-wider text-zinc-200">
+                                            Piezas
                                         </span>
                                     </div>
-                                    <span className="text-[6.5px] sm:text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold">
-                                        Firma
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPiecesModalOpen(true)}
+                                        className="w-3.5 h-3.5 rounded-full bg-white/[0.08] hover:bg-[#10b981] hover:text-black border border-white/15 text-zinc-400 transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
+                                        title="Abrir catálogo completo"
+                                    >
+                                        <Plus size={7} strokeWidth={3} />
+                                    </button>
                                 </div>
 
-                                <p className="text-[9px] sm:text-[10.5px] text-zinc-200 font-serif italic leading-relaxed line-clamp-3 my-0.5">
-                                    "{bentoSensoryQuote}"
-                                </p>
-
-                                <div className="flex items-center justify-between pt-0.5 text-[7px] sm:text-[8px] font-mono text-zinc-500">
-                                    <span>bitácora íntima</span>
-                                    <span className="text-emerald-400 font-bold">03:14 AM</span>
+                                <div className="grid grid-cols-3 gap-1 sm:gap-2 items-center w-full my-auto">
+                                    {bentoPiecesForSale.slice(0, 3).map((item, idx) => (
+                                        <div
+                                            key={item.id || idx}
+                                            onClick={() => {
+                                                if (item.buyLink) {
+                                                    window.open(item.buyLink.startsWith('http') ? item.buyLink : `https://${item.buyLink}`, '_blank', 'noopener,noreferrer');
+                                                } else if (item.raw) {
+                                                    setSelectedModalPost(item.raw);
+                                                }
+                                            }}
+                                            className="group/item flex flex-col cursor-pointer"
+                                            title={item.title}
+                                        >
+                                            <div className="w-full aspect-square rounded-lg overflow-hidden relative border border-white/[0.08] bg-black/60 group-hover/item:border-emerald-500/40 transition-all shadow-md">
+                                                <img
+                                                    src={formatUrl(item.image)}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-500"
+                                                    onError={(e) => {
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600';
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-emerald-500/40 text-[6px] sm:text-[7px] font-mono font-black text-emerald-400 shadow-sm">
+                                                    {item.price}
+                                                </span>
+                                            </div>
+                                            <span className="text-[6.5px] sm:text-[7.5px] font-mono font-bold text-zinc-300 truncate group-hover/item:text-white mt-0.5 text-center">
+                                                {item.title}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* PROCESO CLÍNICO */}
-                        {isOwnProfile && (
-                            <div className="col-span-2 lg:col-span-12 order-4 bg-[#0b0c10]/90 border border-purple-500/20 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl flex items-center justify-between gap-2 shadow-md">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <Heart size={12} className="text-purple-400 shrink-0" />
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-purple-300 truncate">
-                                            Proceso Clínico
-                                        </span>
-                                        <span className="text-[7px] sm:text-[7.5px] font-sans text-zinc-400 truncate">
-                                            {isConsentSigned ? 'Expediente activo' : 'Diagnóstico voluntario'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setView('soul');
-                                        if (typeof setSoulTab === 'function') setSoulTab('tests');
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-300 text-[7.5px] sm:text-[8px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
-                                >
-                                    {isConsentSigned ? 'Abrir' : 'Iniciar'}
-                                </button>
-                            </div>
-                        )}
+                        
 
                     </div>
                 </div>
@@ -6299,35 +6299,9 @@ const ProfileView = ({
                 <div id="profile-feed-section" className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-4 z-10 relative pointer-events-auto">
                     
                     {/* Barra de Navegación y Vistas: Publicaciones y Switcher de Modos sin texto */}
-                    <div className="flex items-center justify-between gap-3 pb-6">
+                    <div className="flex items-center justify-end gap-3 pb-6">
                         
-                        {/* Pestañas: Publicaciones / Archivo / Destacados */}
-                        <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-2xl backdrop-blur-md">
-                            <button
-                                type="button"
-                                onClick={() => setReleaseTab('campana')}
-                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'campana' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
-                            >
-                                <Sparkles size={11} className={releaseTab === 'campana' ? 'text-emerald-400' : ''} />
-                                <span>Publicaciones</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReleaseTab('archivo')}
-                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'archivo' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
-                            >
-                                <Bookmark size={11} />
-                                <span>Archivo</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setReleaseTab('destacados')}
-                                className={`px-3 py-1.5 rounded-xl text-[9.5px] sm:text-[10px] font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${releaseTab === 'destacados' ? 'bg-white/15 text-white shadow-md border border-white/10' : 'text-zinc-400 hover:text-white'}`}
-                            >
-                                <Zap size={11} className={releaseTab === 'destacados' ? 'text-amber-400' : ''} />
-                                <span>Destacados</span>
-                            </button>
-                        </div>
+                        
 
                         {/* Switcher de Vistas: Solo iconos de Monolito y Editorial sin texto */}
                         <div className="flex items-center gap-1 p-1 bg-black/60 border border-white/[0.08] rounded-xl backdrop-blur-md shrink-0">
@@ -17002,7 +16976,7 @@ ${afcMapContext}
                                                                         @{soul.username}
                                                                     </span>
                                                                     <span className="text-[10px] text-zinc-400 truncate max-w-full mb-3">
-                                                                        {soul.name && soul.name !== soul.username ? soul.name : 'Creador Oasis'}
+                                                                        {soul.name && soul.name !== soul.username ? soul.name : 'Creador Ruido Interior'}
                                                                     </span>
                                                                 </div>
 
@@ -17059,7 +17033,7 @@ ${afcMapContext}
                                         @{cleanCurrentU}
                                     </span>
                                     <span className="text-[11px] text-zinc-400 truncate">
-                                        Explorador Oasis
+                                        Explorador Ruido Interior
                                     </span>
                                 </div>
                             </div>
@@ -17093,7 +17067,7 @@ ${afcMapContext}
                                 const isFollowing = followedUsernames.has(cleanTarget);
                                 const reasons = [
                                     'Sugerencia para ti',
-                                    'Alma resonante en Oasis',
+                                    'Alma resonante en Ruido Interior',
                                     'Nuevo creador en el feed',
                                     'Coincidencia de frecuencias',
                                     'Sigue esta cuenta'
@@ -17165,7 +17139,7 @@ ${afcMapContext}
                                 <span className="hover:underline cursor-pointer">Idioma</span>
                             </div>
                             <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">
-                                © 2026 OASIS FROM RUIDO INTERIOR
+                                © 2026 RUIDO INTERIOR
                             </div>
                         </div>
                     </div>
