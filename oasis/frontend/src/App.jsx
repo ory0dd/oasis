@@ -4493,6 +4493,151 @@ const ProfileView = ({
     const profileAudioRef = useRef(null);
     const audioFileInputRef = useRef(null);
     const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
+    const [playlistTracks, setPlaylistTracks] = useState(() => {
+        try {
+            const stored = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_playlist_${effectiveUser}`) : null);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch (e) {}
+
+        const initial = [];
+        const existingAudio = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_audio_${effectiveUser}`) : null);
+        const existingTitle = (typeof window !== 'undefined' ? localStorage.getItem(`oasis_ambient_title_${effectiveUser}`) : null);
+
+        if (existingAudio && existingTitle) {
+            initial.push({
+                id: 'track-main-1',
+                title: existingTitle,
+                url: existingAudio
+            });
+        } else {
+            initial.push({
+                id: 'def-1',
+                title: 'respiración lenta [432 Hz]',
+                url: DEFAULT_AMBIENT_URL
+            });
+        }
+
+        initial.push(
+            { id: 'def-2', title: 'resonancia serena [432 Hz]', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' },
+            { id: 'def-3', title: 'frecuencia etérea [528 Hz]', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' }
+        );
+        return initial;
+    });
+
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+    const [isUploadingPlaylist, setIsUploadingPlaylist] = useState(false);
+    const multiAudioInputRef = useRef(null);
+
+    const playTrackAtIndex = (index) => {
+        if (!playlistTracks || index < 0 || index >= playlistTracks.length) return;
+        setCurrentTrackIndex(index);
+        const track = playlistTracks[index];
+        if (profileAudioRef.current && track?.url) {
+            profileAudioRef.current.src = track.url;
+            profileAudioRef.current.play()
+                .then(() => setIsProfileAudioPlaying(true))
+                .catch((err) => console.log('Audio playback error:', err));
+        }
+        setCustomAudioUrl(track.url);
+        setCustomAudioTitle(track.title);
+    };
+
+    const handleNextTrack = () => {
+        if (!playlistTracks || playlistTracks.length === 0) return;
+        const next = (currentTrackIndex + 1) % playlistTracks.length;
+        playTrackAtIndex(next);
+    };
+
+    const handlePrevTrack = () => {
+        if (!playlistTracks || playlistTracks.length === 0) return;
+        const prev = (currentTrackIndex - 1 + playlistTracks.length) % playlistTracks.length;
+        playTrackAtIndex(prev);
+    };
+
+    const handleMultipleAudioUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        setIsUploadingPlaylist(true);
+
+        try {
+            const addedTracks = [];
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch(`${API_URL}/api/oasis/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data?.url) {
+                    const fullUrl = (data.url.startsWith('http://') || data.url.startsWith('https://'))
+                        ? data.url
+                        : `${API_URL}${data.url.startsWith('/') ? '' : '/'}${data.url}`;
+                    const songName = file.name.replace(/\.[^/.]+$/, '');
+                    addedTracks.push({
+                        id: 'track-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                        title: songName,
+                        url: fullUrl
+                    });
+                }
+            }
+
+            if (addedTracks.length > 0) {
+                setPlaylistTracks(prev => {
+                    const nonDefaults = prev.filter(t => !t.id.startsWith('def-'));
+                    const updated = [...nonDefaults, ...addedTracks];
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(updated));
+                    }
+                    fetch(`${API_URL}/api/oasis/clinical-data?user=${effectiveUser}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': effectiveUser },
+                        body: JSON.stringify({
+                            [`oasis_playlist_${effectiveUser}`]: JSON.stringify(updated)
+                        })
+                    }).catch(console.error);
+
+                    if (addedTracks[0]) {
+                        setCustomAudioUrl(addedTracks[0].url);
+                        setCustomAudioTitle(addedTracks[0].title);
+                        if (profileAudioRef.current) {
+                            profileAudioRef.current.src = addedTracks[0].url;
+                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                        }
+                    }
+
+                    return updated;
+                });
+            }
+        } catch (err) {
+            console.error('Error uploading playlist mp3s:', err);
+        } finally {
+            setIsUploadingPlaylist(false);
+            if (e.target) e.target.value = '';
+        }
+    };
+
+    const handleRemoveTrack = (trackId, e) => {
+        e.stopPropagation();
+        setPlaylistTracks(prev => {
+            const updated = prev.filter(t => t.id !== trackId);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(`oasis_playlist_${effectiveUser}`, JSON.stringify(updated));
+            }
+            fetch(`${API_URL}/api/oasis/clinical-data?user=${effectiveUser}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': effectiveUser },
+                body: JSON.stringify({
+                    [`oasis_playlist_${effectiveUser}`]: JSON.stringify(updated)
+                })
+            }).catch(console.error);
+            return updated;
+        });
+    };
+
     const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
     const [customAudioUrl, setCustomAudioUrl] = useState(() => {
@@ -5763,55 +5908,186 @@ const ProfileView = ({
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (IZQUIERDA): OBRA CENTRAL / LOOP CONTINUO [432 HZ] */}
+                        {/* FILA 2 (IZQUIERDA): PLAYLIST PERSONAL // TRACKS MP3 */}
                         {/* ======================================================== */}
-                        <div className="col-span-1 lg:col-span-6 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-1.5 sm:gap-2.5 relative">
-                            <div
-                                onClick={() => {
-                                    if (profileAudioRef.current) {
-                                        if (profileAudioRef.current.paused) {
-                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
-                                        } else {
-                                            profileAudioRef.current.pause();
-                                            setIsProfileAudioPlaying(false);
-                                        }
-                                    } else if (bentoCentralPiece.raw) {
-                                        setSelectedModalPost(bentoCentralPiece.raw);
-                                    }
-                                }}
-                                className="w-full aspect-[4/3] rounded-xl overflow-hidden relative border border-white/[0.08] bg-zinc-950 group/loop cursor-pointer shadow-md"
-                            >
-                                <img
-                                    src={formatUrl(bentoCentralPiece.image)}
-                                    alt={bentoCentralPiece.title}
-                                    className="w-full h-full object-cover group-hover/loop:scale-105 transition-transform duration-700"
-                                    onError={(e) => {
-                                        if (!e.target.dataset.failed) {
-                                            e.target.dataset.failed = 'true';
-                                            e.target.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop';
-                                        }
-                                    }}
-                                />
-                                <div className="absolute inset-0 bg-black/25 group-hover/loop:bg-black/15 transition-colors" />
-                                
-                                <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[6.5px] sm:text-[8px] font-mono font-bold text-zinc-200 shadow-md">
-                                    {bentoCentralPiece.badge}
+                        <div className="col-span-1 lg:col-span-6 order-2 bg-[#0b0c10]/90 border border-white/[0.08] rounded-2xl p-2.5 sm:p-3.5 backdrop-blur-xl shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
+                            
+                            {/* Input oculto para subir múltiples archivos MP3 */}
+                            <input
+                                ref={multiAudioInputRef}
+                                type="file"
+                                accept="audio/*"
+                                multiple
+                                className="hidden"
+                                onChange={handleMultipleAudioUpload}
+                            />
+
+                            {/* Header de la Playlist */}
+                            <div className="flex items-center justify-between pb-1.5 border-b border-white/[0.06]">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <ListMusic size={11} className="text-emerald-400 shrink-0" />
+                                    <h3 className="text-[8.5px] sm:text-[9.5px] font-mono font-bold uppercase tracking-wider text-white truncate">
+                                        Playlist
+                                    </h3>
+                                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[6.5px] sm:text-[7.5px] font-mono font-bold text-emerald-400 shrink-0">
+                                        {playlistTracks.length} tracks
+                                    </span>
                                 </div>
 
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/70 hover:bg-black/90 border border-emerald-400/50 text-emerald-400 flex items-center justify-center backdrop-blur-md shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all group-hover/loop:scale-110 active:scale-95">
-                                        {isProfileAudioPlaying ? <Pause size={11} className="sm:w-3.5 sm:h-3.5" /> : <Play size={11} className="ml-0.5 sm:w-3.5 sm:h-3.5" />}
+                                {isOwnProfile && (
+                                    <button
+                                        type="button"
+                                        onClick={() => multiAudioInputRef.current?.click()}
+                                        disabled={isUploadingPlaylist}
+                                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.05] hover:bg-emerald-500 hover:text-black border border-white/10 text-zinc-300 text-[7px] sm:text-[7.5px] font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                                        title="Subir una o varias canciones en formato MP3"
+                                    >
+                                        {isUploadingPlaylist ? (
+                                            <>
+                                                <Loader2 size={8} className="animate-spin text-emerald-400" />
+                                                <span>Subiendo...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={7.5} />
+                                                <span>+ Subir MP3</span>
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Mini Player Visual Suave */}
+                            <div className="relative w-full rounded-xl overflow-hidden border border-white/[0.08] bg-black/60 p-2 sm:p-2.5 flex items-center justify-between gap-2 shadow-inner">
+                                <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
+                                
+                                <div className="flex items-center gap-2 min-w-0 z-10">
+                                    {/* Mini Cover con Ecualizador Animado */}
+                                    <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden shrink-0 border border-white/10 bg-zinc-900 shadow-xs flex items-center justify-center">
+                                        <img
+                                            src={formatUrl(bentoCentralPiece.image)}
+                                            alt="Cover"
+                                            className="w-full h-full object-cover opacity-60"
+                                        />
+                                        {isProfileAudioPlaying && (
+                                            <div className="absolute inset-0 flex items-center justify-center gap-[2px] bg-black/40 backdrop-blur-[1px]">
+                                                <span className="w-[2px] h-3 bg-emerald-400 animate-pulse rounded-full" />
+                                                <span className="w-[2px] h-4 bg-emerald-400 animate-bounce rounded-full" />
+                                                <span className="w-[2px] h-2 bg-emerald-400 animate-pulse rounded-full" />
+                                            </div>
+                                        )}
                                     </div>
+
+                                    {/* Información del Track Actual */}
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[7px] font-mono uppercase tracking-wider text-emerald-400/80 font-bold">
+                                            {isProfileAudioPlaying ? 'En reproducción' : 'Pausado'}
+                                        </span>
+                                        <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white truncate max-w-[130px] sm:max-w-[180px]">
+                                            {playlistTracks[currentTrackIndex]?.title || 'respiración lenta [432 Hz]'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Controles de Reproducción Minimalistas */}
+                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 z-10">
+                                    <button
+                                        type="button"
+                                        onClick={handlePrevTrack}
+                                        className="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-white/15 text-zinc-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
+                                        title="Anterior"
+                                    >
+                                        <SkipBack size={9} />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (profileAudioRef.current) {
+                                                if (profileAudioRef.current.paused) {
+                                                    profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                                } else {
+                                                    profileAudioRef.current.pause();
+                                                    setIsProfileAudioPlaying(false);
+                                                }
+                                            }
+                                        }}
+                                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#10b981] hover:bg-[#059669] text-black font-black flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95 hover:scale-105"
+                                        title={isProfileAudioPlaying ? 'Pausar' : 'Reproducir'}
+                                    >
+                                        {isProfileAudioPlaying ? <Pause size={10} strokeWidth={2.5} /> : <Play size={10} className="ml-0.5" strokeWidth={2.5} />}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleNextTrack}
+                                        className="w-6 h-6 rounded-full bg-white/[0.04] hover:bg-white/15 text-zinc-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-90"
+                                        title="Siguiente"
+                                    >
+                                        <SkipForward size={9} />
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between px-0.5 pt-0.5">
-                                <span className="text-[10px] sm:text-xs font-bold text-white font-sans truncate">
-                                    {bentoCentralPiece.title}
-                                </span>
-                                <span className="text-[8px] sm:text-[9.5px] font-mono font-black text-emerald-400 tracking-wider shrink-0">
-                                    {bentoCentralPiece.tag}
-                                </span>
+                            {/* Lista de Canciones Suave y Minimalista */}
+                            <div className="flex flex-col gap-1 max-h-[115px] sm:max-h-[135px] overflow-y-auto no-scrollbar pr-0.5">
+                                {playlistTracks.map((track, idx) => {
+                                    const isCurrent = currentTrackIndex === idx;
+                                    const isThisPlaying = isCurrent && isProfileAudioPlaying;
+                                    return (
+                                        <div
+                                            key={track.id || idx}
+                                            onClick={() => {
+                                                if (isCurrent) {
+                                                    if (profileAudioRef.current) {
+                                                        if (profileAudioRef.current.paused) {
+                                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                                        } else {
+                                                            profileAudioRef.current.pause();
+                                                            setIsProfileAudioPlaying(false);
+                                                        }
+                                                    }
+                                                } else {
+                                                    playTrackAtIndex(idx);
+                                                }
+                                            }}
+                                            className={`group/track flex items-center justify-between px-2 py-1.5 rounded-xl border transition-all cursor-pointer ${isCurrent ? 'bg-emerald-500/10 border-emerald-500/35 text-white' : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.04] hover:border-white/10 text-zinc-300'}`}
+                                        >
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 text-[7px] font-mono font-bold transition-all ${isCurrent ? 'bg-[#10b981] text-black shadow-xs' : 'bg-white/[0.05] text-zinc-400 group-hover/track:text-white'}`}>
+                                                    {isThisPlaying ? (
+                                                        <div className="flex items-end gap-[1px] h-2">
+                                                            <span className="w-[1px] h-full bg-black animate-pulse" />
+                                                            <span className="w-[1px] h-1 bg-black animate-bounce" />
+                                                            <span className="w-[1px] h-1.5 bg-black animate-pulse" />
+                                                        </div>
+                                                    ) : (
+                                                        <span>0${idx + 1}</span>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[8px] sm:text-[9px] font-mono font-bold truncate max-w-[140px] sm:max-w-[210px] ${isCurrent ? 'text-emerald-400' : 'text-zinc-300 group-hover/track:text-white'}`}>
+                                                    {track.title}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <span className={`text-[6.5px] sm:text-[7px] font-mono font-bold ${isCurrent ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                                    {isThisPlaying ? 'ON' : 'MP3'}
+                                                </span>
+                                                {isOwnProfile && playlistTracks.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleRemoveTrack(track.id, e)}
+                                                        className="p-0.5 rounded opacity-0 group-hover/track:opacity-100 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
+                                                        title="Quitar de playlist"
+                                                    >
+                                                        <X size={7.5} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -6018,10 +6294,10 @@ const ProfileView = ({
                                     <span className="text-[10px] font-mono text-purple-400 font-bold group-hover:translate-x-0.5 transition-transform">Cambiar ↗</span>
                                 </div>
 
-                                {/* 3. Cambiar audio de fondo */}
+                                {/* 3. Cambiar audio de fondo / Playlist */}
                                 <div
                                     onClick={() => {
-                                        if (audioFileInputRef.current) audioFileInputRef.current.click();
+                                        if (multiAudioInputRef.current) multiAudioInputRef.current.click();
                                         setIsQuickCustomizeOpen(false);
                                     }}
                                     className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-500/40 transition-all cursor-pointer group"
@@ -6031,11 +6307,11 @@ const ProfileView = ({
                                             <Music size={18} />
                                         </div>
                                         <div className="flex flex-col text-left">
-                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Audio de Fondo</span>
-                                            <span className="text-[9px] font-sans text-zinc-400">Música ambiental que suena al entrar</span>
+                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Playlist / Canciones</span>
+                                            <span className="text-[9px] font-sans text-zinc-400">Subir uno o varios MP3 para tu perfil</span>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-mono text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform">Subir ↗</span>
+                                    <span className="text-[10px] font-mono text-amber-400 font-bold group-hover:translate-x-0.5 transition-transform">Subir MP3 ↗</span>
                                 </div>
                             </div>
 
