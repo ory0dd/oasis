@@ -50,10 +50,10 @@ export const CURATED_AVATARS = [
 
 export const DEFAULT_COMMUNITY_TEMPLATES = [
     {
-        id: 'template_paseo_lindo',
+        id: 'b65130f8-66e1-47fe-ae5f-5e8804dcd632',
         name: 'PASEO EN UN LUGAR LINDOO',
         type: 'video',
-        value: 'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-a-field-of-wildflowers-41727-large.mp4',
+        value: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/7c3a3194-e683-433a-93f6-bd2718da0fbb.mp4',
         isTiled: false,
         creator: 'ory11'
     },
@@ -5160,7 +5160,8 @@ const ProfileView = ({
                     localStorage.setItem('oasis_fullname_' + user, safeFn);
                 }
                 if (coverVal !== undefined) { setCoverImage(coverVal || ''); localStorage.setItem('oasis_cover_' + user, coverVal || ''); }
-                if (avatarVal !== undefined) { setAvatar(avatarVal || ''); localStorage.setItem('oasis_avatar_' + user, avatarVal || ''); }
+                const recentlyUpdatedAvLocal = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
+                if (avatarVal !== undefined && !recentlyUpdatedAvLocal) { setAvatar(avatarVal || ''); localStorage.setItem('oasis_avatar_' + user, avatarVal || ''); }
                 if (linkVal !== undefined) { setProfileLink(linkVal || ''); localStorage.setItem('oasis_profilelink_' + user, linkVal || ''); }
             } catch (e) {
                 console.error("Error parsing profile settings:", e);
@@ -5196,10 +5197,11 @@ const ProfileView = ({
                         if (!bAv || bAv.includes('ba90867f')) bAv = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg';
                     }
 
+                    const recentlyUpdatedAv = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
                     if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                     if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
                     if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
-                    if (bAv) { if (setAvatar) setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
+                    if (bAv && !recentlyUpdatedAv) { if (setAvatar) setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
                     if (bPub !== undefined) { localStorage.setItem('oasis_is_public_' + targetU, String(bPub)); }
                     if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
 
@@ -5230,12 +5232,13 @@ const ProfileView = ({
                             const bAv = parsed.avatar || parsed.Avatar;
                             const bAudio = parsed.ambientAudioUrl || parsed.AmbientAudioUrl;
                             const bAudioTitle = parsed.ambientAudioTitle || parsed.AmbientAudioTitle;
+                            const recentlyUpdatedAv2 = Number(localStorage.getItem('oasis_avatar_updated_at_' + targetU) || 0) > Date.now() - 30000;
 
                             if (bBio) { setBio(bBio); localStorage.setItem('oasis_bio_' + targetU, bBio); }
                             if (bLink) { setProfileLink(bLink); localStorage.setItem('oasis_profilelink_' + targetU, bLink); }
                             if (bFn && !bFn.includes('@')) { setFullName(cleanDisplayName(bFn, targetU)); localStorage.setItem('oasis_fullname_' + targetU, bFn); }
                             if (bCover) { setCoverImage(bCover); localStorage.setItem('oasis_cover_' + targetU, bCover); }
-                            if (bAv && setAvatar && isOwnProfile) { setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
+                            if (bAv && setAvatar && isOwnProfile && !recentlyUpdatedAv2) { setAvatar(bAv); localStorage.setItem('oasis_avatar_' + targetU, bAv); }
                             if (bAudio) {
                                 const formatted = formatUrl(bAudio);
                                 setCustomAudioUrl(formatted);
@@ -5280,6 +5283,20 @@ const ProfileView = ({
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const cleanU = (user || effectiveUser || '').toLowerCase().replace('@', '');
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            if (ev.target?.result) {
+                setAvatar(ev.target.result);
+                if (user) localStorage.setItem('oasis_avatar_' + user, ev.target.result);
+                if (cleanU) {
+                    localStorage.setItem('oasis_avatar_' + cleanU, ev.target.result);
+                    localStorage.setItem('oasis_avatar_updated_at_' + cleanU, String(Date.now()));
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -5293,14 +5310,32 @@ const ProfileView = ({
                 if (data.url) {
                     setAvatar(data.url);
                     localStorage.setItem('oasis_avatar_' + user, data.url);
+                    if (cleanU) {
+                        localStorage.setItem('oasis_avatar_' + cleanU, data.url);
+                        localStorage.setItem('oasis_avatar_updated_at_' + cleanU, String(Date.now()));
+                    }
                     if (onSaveProfile) onSaveProfile({ avatar: data.url });
                 }
-            } else {
-                alert('Error al subir el avatar.');
             }
         } catch (err) {
             console.error(err);
-            alert('Error al subir el avatar.');
+        }
+    };
+
+    const handleRandomAvatar = (e) => {
+        if (e) e.stopPropagation();
+        const currentAv = avatar || displayAvatar || '';
+        const available = CURATED_AVATARS.filter(a => a !== currentAv);
+        const nextAv = available[Math.floor(Math.random() * available.length)] || CURATED_AVATARS[0];
+        setAvatar(nextAv);
+        const cleanU = (user || effectiveUser || '').toLowerCase().replace('@', '');
+        if (user) localStorage.setItem('oasis_avatar_' + user, nextAv);
+        if (cleanU) {
+            localStorage.setItem('oasis_avatar_' + cleanU, nextAv);
+            localStorage.setItem('oasis_avatar_updated_at_' + cleanU, String(Date.now()));
+        }
+        if (onSaveProfile) {
+            onSaveProfile({ avatar: nextAv, fullName, bio, profileLink });
         }
     };
 
@@ -5666,28 +5701,24 @@ const ProfileView = ({
 
     return (
         <div
-            className={`fixed z-[1500] flex flex-col bg-[#070709] text-white shadow-2xl overflow-hidden animate-in fade-in duration-300 pointer-events-auto select-none transition-all duration-300 ${
+            className={`fixed z-[1500] inset-x-0 px-2 sm:px-6 lg:px-8 flex flex-col items-center text-white animate-in fade-in duration-300 pointer-events-auto select-none transition-all duration-300 ${
                 (hasSession && !isNavbarHidden)
-                    ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
-                    : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 inset-x-1 sm:inset-x-3 md:inset-x-6 bottom-1 sm:bottom-3 rounded-2xl md:rounded-3xl border border-white/10'
+                    ? 'top-[calc(68px+env(safe-area-inset-top,0px))] md:top-[86px] bottom-1 sm:bottom-3'
+                    : 'top-[calc(12px+env(safe-area-inset-top,0px))] md:top-4 bottom-1 sm:bottom-3'
             }`}
             onClick={e => e.stopPropagation()}
             onPointerDown={e => e.stopPropagation()}
         >
-            <div id="profile-scroll-container" ref={containerRef} onScroll={handleProfileScroll} className="w-full h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar pb-24 sm:pb-36" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {/* AMBIENTE LUMINOSO Y COLORIDO DE FONDO */}
-                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none bg-[#070709]">
-                    <div
-                        className="absolute -inset-10 bg-cover bg-center opacity-25 blur-3xl scale-110 transition-all duration-1000"
-                        style={{ backgroundImage: `url(${formatUrl(coverImage)})` }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#070709] via-[#070709]/90 to-[#070709]" />
-                    <div className="absolute inset-0 opacity-15 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
-                </div>
-
+            <div
+                id="profile-scroll-container"
+                ref={containerRef}
+                onScroll={handleProfileScroll}
+                className="w-full max-w-6xl mx-auto h-full flex flex-col gap-0 text-white select-none overflow-y-auto overflow-x-hidden no-scrollbar rounded-2xl sm:rounded-3xl pb-24 sm:pb-36"
+                style={{ WebkitOverflowScrolling: 'touch', WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+            >
                 {/* 1. PORTADA BANNER SUPERIOR CON CONTROLES FROSTED GLASS (IMAGE 1) */}
                 <input type="file" ref={coverInputRef} onChange={handleCoverChange} accept="image/*" className="hidden" />
-                <div className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-1 z-10 relative pointer-events-auto">
+                <div className="w-full pt-0 pb-1 z-10 relative pointer-events-auto">
                     <div 
                         onClick={() => setIsCoverLightboxOpen(true)}
                         className={`w-full rounded-2xl sm:rounded-3xl overflow-hidden relative border border-white/10 shadow-[0_15px_45px_rgba(0,0,0,0.7)] group/cover bg-zinc-950/90 backdrop-blur-md cursor-pointer transition-all duration-300 ${
@@ -5785,7 +5816,7 @@ const ProfileView = ({
                 )}
 
                 {/* 2. BENTO DASHBOARD COMPACTO: EQUILIBRIO DE SENTIDOS (CENTRO DE EXPLORACIÓN INTERNA) */}
-                <div className="w-full max-w-6xl mx-auto px-1.5 sm:px-4 lg:px-8 pt-2 sm:pt-3 z-10 relative pointer-events-auto">
+                <div className="w-full pt-2 sm:pt-3 z-10 relative pointer-events-auto">
                     <div className="grid grid-cols-2 lg:grid-cols-12 gap-2 sm:gap-3 lg:gap-4 items-start">
                         
                         {/* ======================================================== */}
@@ -6231,24 +6262,52 @@ const ProfileView = ({
 
                             {/* Acciones Rápidas Directas */}
                             <div className="flex flex-col gap-2">
-                                {/* 1. Cambiar foto de perfil */}
-                                <div
-                                    onClick={() => {
-                                        if (fileInputRef.current) fileInputRef.current.click();
-                                        setIsQuickCustomizeOpen(false);
-                                    }}
-                                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-emerald-500/40 transition-all cursor-pointer group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                                            <Camera size={18} />
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className="text-xs font-mono font-bold text-zinc-100 group-hover:text-white">Foto de Perfil</span>
-                                            <span className="text-[9px] font-sans text-zinc-400">Actualizar tu avatar squircle</span>
+                                {/* 1. Cambiar foto de perfil (Aleatorio o Subir Foto) */}
+                                <div className="flex flex-col gap-2.5 p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/40 transition-all">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-900 border border-emerald-500/40 shrink-0 shadow-md">
+                                                <img
+                                                    src={formatUrl(displayAvatar)}
+                                                    alt="Avatar actual"
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        if (!e.target.dataset.failed) {
+                                                            e.target.dataset.failed = 'true';
+                                                            e.target.src = getDefaultAvatar(effectiveUser);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex flex-col text-left min-w-0">
+                                                <span className="text-xs font-mono font-bold text-zinc-100">Foto de Perfil</span>
+                                                <span className="text-[9px] font-sans text-zinc-400">Intercambia aleatorio o sube tu foto</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-mono text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">Cambiar ↗</span>
+                                    <div className="flex items-center gap-2 pt-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={handleRandomAvatar}
+                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] border border-white/15 hover:border-emerald-400/50 text-[10px] font-mono font-bold text-zinc-100 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            title="Probar otro avatar aleatorio de la colección"
+                                        >
+                                            <RefreshCw size={12} className="text-emerald-400" />
+                                            <span>Aleatorio</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (fileInputRef.current) fileInputRef.current.click();
+                                                setIsQuickCustomizeOpen(false);
+                                            }}
+                                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-[10px] font-mono font-bold text-emerald-400 hover:text-emerald-300 flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                            title="Subir una foto desde tu dispositivo"
+                                        >
+                                            <Camera size={12} />
+                                            <span>Subir Foto ↗</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* 2. Cambiar fondo de pantalla */}
@@ -6430,7 +6489,7 @@ const ProfileView = ({
                 )}
 
                 {/* 3. SECCIÓN DE FEED: MONOLITO & EDITORIAL (IMAGES 2, 3 & 5) */}
-                <div id="profile-feed-section" className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-10 pb-4 z-10 relative pointer-events-auto">
+                <div id="profile-feed-section" className="w-full pt-10 pb-4 z-10 relative pointer-events-auto">
                     
                     {/* Barra de Navegación y Vistas: Publicaciones y Switcher de Modos sin texto */}
                     <div className="flex items-center justify-end gap-3 pb-6">
@@ -7618,8 +7677,8 @@ function OasisApp() {
     });
     const [bgValue, setBgValue] = useState(() => {
         const stored = localStorage.getItem('oasis_bg_value');
-        if (stored && stored !== '#030304' && stored !== '#000000') return stored;
-        return 'https://assets.mixkit.co/videos/preview/mixkit-sunset-over-a-field-of-wildflowers-41727-large.mp4';
+        if (stored && stored !== '#030304' && stored !== '#000000' && !stored.includes('mixkit')) return stored;
+        return 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/7c3a3194-e683-433a-93f6-bd2718da0fbb.mp4';
     });
     const [isTiled, setIsTiled] = useState(false);
     const [_unused1, _unused2] = useState(0.8);
@@ -10219,7 +10278,7 @@ function OasisApp() {
                         const bgRaw = localStorage.getItem('oasis_bg_' + user);
                         if (bgRaw) {
                             const parsed = JSON.parse(bgRaw);
-                            if (parsed && parsed.value) {
+                            if (parsed && parsed.value && parsed.value !== '#030304' && parsed.value !== '#000000' && !parsed.value.includes('mixkit')) {
                                 setBgType(parsed.type); setBgValue(parsed.value); setIsTiled(parsed.isTiled);
                             }
                         }
@@ -11094,7 +11153,7 @@ function OasisApp() {
                 if (chatMessagesRef.current) chatMessagesRef.current = [];
                 if (userData.playlists) setPlaylists(userData.playlists);
                 else setPlaylists({ 'Favoritos': [] });
-                if (userData.background) {
+                if (userData.background && userData.background.value && userData.background.value !== '#030304' && userData.background.value !== '#000000' && !userData.background.value.includes('mixkit')) {
                     setBgType(userData.background.type);
                     setBgValue(userData.background.value);
                     setIsTiled(userData.background.isTiled);
@@ -18059,8 +18118,11 @@ ${afcMapContext}
                 {/* Soft backdrop vignette overlay */}
                 <div className="absolute inset-0 bg-black/40 z-[1] pointer-events-none" />
                 {(() => {
-                    const activeBgType = bgType;
-                    const activeBgValue = bgValue;
+                    const isDefaultOrEmpty = !bgValue || bgValue === '#030304' || bgValue === '#000000' || (typeof bgValue === 'string' && bgValue.includes('mixkit'));
+                    const activeBgType = isDefaultOrEmpty ? 'video' : bgType;
+                    const activeBgValue = isDefaultOrEmpty
+                        ? 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/7c3a3194-e683-433a-93f6-bd2718da0fbb.mp4'
+                        : bgValue;
                     const activeIsTiled = isTiled;
 
                     return (
@@ -18213,7 +18275,7 @@ ${afcMapContext}
                                     )}
                     {publicProfileUser && (
                         <div 
-                            className="fixed inset-0 z-[3000] pointer-events-auto bg-[#08080a]/90 backdrop-blur-sm animate-in fade-in duration-200"
+                            className="fixed inset-0 z-[3000] pointer-events-auto bg-transparent animate-in fade-in duration-200"
                             onClick={() => setPublicProfileUser(null)}
                         >
                             {renderPublicProfileView()}

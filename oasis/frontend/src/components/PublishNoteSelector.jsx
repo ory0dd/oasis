@@ -484,7 +484,7 @@ export default function PublishNoteSelector({
                         {/* Caption + options */}
                         <div className="w-full lg:w-1/2 flex flex-col gap-4">
                             <div className="flex items-start gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl focus-within:border-white/20 focus-within:bg-white/[0.04] transition-all">
-                                <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user || 'anon'}`} className="w-8 h-8 rounded-full bg-zinc-800 shrink-0" alt="avatar" />
+                                <img src="/avatars/avatar_1.png" className="w-8 h-8 rounded-full bg-zinc-800 shrink-0 object-cover" alt="avatar" />
                                 <div className="flex-1 flex flex-col gap-3">
                                     <input
                                         type="text"

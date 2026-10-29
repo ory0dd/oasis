@@ -26,6 +26,31 @@ export default function DirectMessagesModal({
     const FRIENDS_KEY = `oasis_friends_${cleanCurrent}`;
     const ZEN_KEY = `oasis_dm_zen_mode_${cleanCurrent}`;
 
+    const getCuratedAvatar = (username, idx = 0) => {
+        const avatars = [
+            '/avatars/avatar_1.png', '/avatars/avatar_2.png', '/avatars/avatar_3.jpg',
+            '/avatars/avatar_4.jpg', '/avatars/avatar_5.png', '/avatars/avatar_6.png',
+            '/avatars/avatar_7.png', '/avatars/avatar_8.png', '/avatars/avatar_9.png',
+            '/avatars/avatar_10.png'
+        ];
+        const str = String(username || '').toLowerCase().replace('@', '').trim();
+        const explicitMap = {
+            'ory11': '/avatars/avatar_1.png', 'observador1': '/avatars/avatar_2.png',
+            'ghfd3': '/avatars/avatar_3.jpg', 'kiotest': '/avatars/avatar_4.jpg',
+            'testuser_soul': '/avatars/avatar_5.png', 'jss93': '/avatars/avatar_6.png',
+            'somnispiria': '/avatars/avatar_7.png', 'ajdlsmaba': '/avatars/avatar_8.png',
+            'vacio1': '/avatars/avatar_9.png', 'tutio': '/avatars/avatar_10.png',
+            'second_save': '/avatars/avatar_2.png'
+        };
+        if (explicitMap[str]) return explicitMap[str];
+        let hash = 2166136261;
+        for (let i = 0; i < str.length; i++) {
+            hash ^= str.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        return avatars[(Math.abs(hash) + idx) % avatars.length];
+    };
+
     // ─── FILTER REAL USERS ONLY (EXCLUDE CLINICAL PATIENT IDS & SELF) ───
     const realUsers = useMemo(() => {
         return (publicUsers || []).filter(u => {
@@ -38,7 +63,10 @@ export default function DirectMessagesModal({
             return true;
         }).map((u, idx) => {
             const uname = (u.Username || u.username || '').replace('@', '');
-            const avatar = u.Avatar || u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(uname)}`;
+            const rawAv = u.Avatar || u.avatar;
+            const avatar = (rawAv && !rawAv.includes('dicebear') && !rawAv.includes('ba90867f') && !rawAv.startsWith('/uploads/') && !rawAv.startsWith('uploads/'))
+                ? rawAv
+                : getCuratedAvatar(uname, idx);
             return {
                 id: u.id || idx,
                 username: uname,
@@ -175,14 +203,14 @@ export default function DirectMessagesModal({
     }, []);
 
     const getUserMeta = (username) => {
-        if (!username) return { username: 'anon', displayName: 'Explorador', avatar: '', categoryTag: '#obra' };
+        if (!username) return { username: 'anon', displayName: 'Explorador', avatar: getCuratedAvatar('anon'), categoryTag: '#obra' };
         const clean = username.replace('@', '').toLowerCase();
         const foundReal = realUsers.find(r => r.username.toLowerCase() === clean);
         if (foundReal) return foundReal;
         return {
             username: clean,
             displayName: clean,
-            avatar: `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(clean)}`,
+            avatar: getCuratedAvatar(clean),
             categoryTag: '#frecuencia',
             isOnline: true,
             vibe: 'En sintonía con Oasis'
