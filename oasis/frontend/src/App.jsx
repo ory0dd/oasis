@@ -120,6 +120,73 @@ export const DEFAULT_COMMUNITY_TEMPLATES = [
     }
 ];
 
+export const DEFAULT_PUBLIC_USERS_FALLBACK = [
+    { username: 'ory11', fullName: 'Ory11', role: 'admin', avatar: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/1b57bd8a-f199-441c-96d8-65213ed159b2.jpg' },
+    { username: 'somnispiria', fullName: 'Somnispiria', role: 'patient' },
+    { username: 'jss93', fullName: 'Jss93', role: 'patient' },
+    { username: 'observador1', fullName: 'Observador Clínico', role: 'supervisor' },
+    { username: 'kiotest', fullName: 'Kio Test', role: 'patient' },
+    { username: 'testuser_soul', fullName: 'Test Soul', role: 'patient' },
+    { username: 'ghfd3', fullName: 'ghfd3', role: 'patient' },
+    { username: 'vacio1', fullName: 'Vacio 1', role: 'patient' },
+    { username: 'scubi', fullName: 'Scubi', role: 'patient' },
+    { username: 'joca97', fullName: 'Joca', role: 'patient' },
+    { username: 'VALERIACHIPULI', fullName: 'Valeria Chipuli', role: 'patient' },
+    { username: 'TUTIO', fullName: 'TUTIO', role: 'patient' },
+    { username: 'Second_save', fullName: 'Second Save', role: 'patient' },
+    { username: 'Ajdlsmaba', fullName: 'Ajdlsmaba', role: 'patient' }
+];
+
+export const DEFAULT_FEED_FALLBACK = [
+    {
+        id: 'feed_block_1792998127644_6dhealgo6',
+        type: 'note',
+        x: 0,
+        y: 0,
+        content: '[img]https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/2d0dba28-b2ad-42e0-997f-4dbdc8edd378.jpg[/img]',
+        rotation: 0,
+        color: '#49745f',
+        isPublic: true,
+        caption: 'cuadro lindo c:',
+        username: 'ory11',
+        timestamp: '2026-10-26T07:02:08.85051+00:00',
+        metadata: {
+            price: '200',
+            buyLink: 'https://www.mercadopago.com.mx/checkout/v1/payment/redirect/0ca03ed4-2046-4629-9bb2-99617c67016c/payment-option-form/?source=link&router-request-id=0d202845-2701-40cf-b20c-ebb32041ac70&preference-id=1552605753-4691563d-58c3-45d2-afe2-60f774632221&p=00ee65674e9423bb34c4032366f8f3bc',
+            feedText: 'quien quiera este cuadro mande msj ohyeah\n',
+            feedCaption: 'cuadro lindo c:',
+            publishedAt: '2026-10-26T07:02:07.644Z',
+            psychologicalAnalysis: {
+                esfera_existencial: 'Eigenwelt',
+                lente_percepcion: 'Analítico'
+            }
+        }
+    },
+    {
+        id: 'feed_note_1782194892758_0',
+        type: 'note',
+        x: 0,
+        y: 0,
+        content: '**Origen y Raíces**\n\nContexto base:\n\nTest input for step 1',
+        rotation: 0,
+        color: '#a855f7',
+        isPublic: true,
+        caption: 'Mi nota de origen',
+        username: 'testuser_soul',
+        timestamp: '2026-06-24T21:55:42.750902+00:00',
+        metadata: {
+            feedText: 'Esta es una prueba de publicacion de nota',
+            feedCaption: 'Mi nota de origen',
+            publishedAt: '2026-06-24T21:55:39.652Z',
+            psychologicalAnalysis: {
+                esfera_existencial: 'Eigenwelt',
+                lente_percepcion: 'Analítico'
+            },
+            isOnboardingDiagnostic: true
+        }
+    }
+];
+
 export const getDefaultAvatar = (username, indexOffset = 0) => {
     if (!username) return CURATED_AVATARS[indexOffset % CURATED_AVATARS.length];
     const str = String(username).toLowerCase().replace('@', '').trim();
@@ -408,7 +475,20 @@ window.fetch = async function (input, init) {
             }
         }
     }
-    return originalFetch.call(this, input, init);
+    if (typeof input === 'string' && input.includes(':5046') && window.__localBackendOffline) {
+        const prodUrl = input.replace(/^https?:\/\/[^/]+:5046/, 'https://oasis-production-6303.up.railway.app');
+        return originalFetch.call(this, prodUrl, init);
+    }
+    try {
+        return await originalFetch.call(this, input, init);
+    } catch (err) {
+        if (typeof input === 'string' && input.includes(':5046')) {
+            window.__localBackendOffline = true;
+            const prodUrl = input.replace(/^https?:\/\/[^/]+:5046/, 'https://oasis-production-6303.up.railway.app');
+            return originalFetch.call(this, prodUrl, init);
+        }
+        throw err;
+    }
 };
 
 
@@ -8679,8 +8759,20 @@ function OasisApp() {
         return (activeCanvasId === 'canvas_default' ? 'Pizarrón 1' : 'Carpeta');
     }, [activeBoardBlock, activeCanvasId]);
     const [soulPieces, setSoulPieces] = useState(INITIAL_SOUL_PIECES);
-    const [feed, setFeed] = useState([]);
-    const [publicUsers, setPublicUsers] = useState([]);
+    const [feed, setFeed] = useState(() => {
+        try {
+            const cached = JSON.parse(localStorage.getItem('oasis_cached_feed_v1') || 'null');
+            if (Array.isArray(cached) && cached.length > 0) return cached;
+        } catch (_) {}
+        return DEFAULT_FEED_FALLBACK;
+    });
+    const [publicUsers, setPublicUsers] = useState(() => {
+        try {
+            const cached = JSON.parse(localStorage.getItem('oasis_cached_public_users_v1') || 'null');
+            if (Array.isArray(cached) && cached.length > 0) return cached;
+        } catch (_) {}
+        return DEFAULT_PUBLIC_USERS_FALLBACK;
+    });
     const [activeFeedIndex, setActiveFeedIndex] = useState(0);
 
     const [isComposerOpen, setIsComposerOpenRaw] = useState(false);
@@ -12037,7 +12129,12 @@ function OasisApp() {
                     post.type !== 'canvas' &&
                     !(typeof post.content === 'string' && post.content.includes('"avatar"') && post.content.includes('"fullName"'))
                 );
-                setFeed(cleanFeed);
+                if (cleanFeed.length > 0) {
+                    setFeed(cleanFeed);
+                    try {
+                        localStorage.setItem('oasis_cached_feed_v1', JSON.stringify(cleanFeed));
+                    } catch (_) {}
+                }
                 // Pre-cache avatars and names from feed posts so they load instantly in profiles
                 data.forEach(post => {
                     if (post.metadata?.userAvatar || post.metadata?.userFullName || post.metadata?.feedUsername) {
@@ -12104,20 +12201,61 @@ function OasisApp() {
         });
     };
 
-    useEffect(() => {
-        fetchFeed();
-        const interval = setInterval(fetchFeed, 10000); // Sincronía constante cada 10s
-        return () => clearInterval(interval);
-    }, [fetchFeed]);
+    const fetchPublicUsers = useCallback(async () => {
+        let fetched = null;
+        try {
+            const res = await fetch(`${API_URL}/api/oasis/public-users`);
+            if (res.ok) {
+                const json = await res.json();
+                if (Array.isArray(json) && json.length > 0) fetched = json;
+            }
+        } catch (_) {}
+
+        if (!fetched) {
+            try {
+                const prodRes = await originalFetch('https://oasis-production-6303.up.railway.app/api/oasis/public-users');
+                if (prodRes.ok) {
+                    const json = await prodRes.json();
+                    if (Array.isArray(json) && json.length > 0) fetched = json;
+                }
+            } catch (_) {}
+        }
+
+        const baseList = Array.isArray(fetched) && fetched.length > 0 ? fetched : DEFAULT_PUBLIC_USERS_FALLBACK;
+        const seen = new Set();
+        const merged = [];
+        [...baseList, ...DEFAULT_PUBLIC_USERS_FALLBACK].forEach(u => {
+            const uname = (u?.Username || u?.username || '').replace('@', '').trim();
+            if (!uname) return;
+            const key = uname.toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+            merged.push({
+                ...u,
+                username: uname,
+                Username: uname,
+                fullName: u.FullName || u.fullName || uname,
+                FullName: u.FullName || u.fullName || uname
+            });
+        });
+
+        try {
+            localStorage.setItem('oasis_cached_public_users_v1', JSON.stringify(merged));
+        } catch (_) {}
+
+        const cleanCurrent = (user || '').replace('@', '').toLowerCase();
+        setPublicUsers(merged.filter(u => (u.username || '').toLowerCase() !== cleanCurrent));
+    }, [user]);
 
     useEffect(() => {
-        if (user) {
-            fetch(`${API_URL}/api/oasis/public-users`)
-                .then(res => res.json())
-                .then(data => setPublicUsers(data.filter(u => u.username !== user)))
-                .catch(err => console.error("Failed to fetch public users:", err));
-        }
-    }, [user]);
+        fetchFeed();
+        fetchPublicUsers();
+        const interval = setInterval(() => {
+            fetchFeed();
+            fetchPublicUsers();
+        }, 10000); // Sincronía constante cada 10s
+        return () => clearInterval(interval);
+    }, [fetchFeed, fetchPublicUsers]);
 
     const [cliniciansList, setCliniciansList] = useState([]);
     useEffect(() => {
@@ -18612,10 +18750,21 @@ ${afcMapContext}
 
         // Mostrar todos los otros usuarios de la comunidad ("Otras Almas")
         const cleanCurrentU = (user || '').replace('@', '').toLowerCase();
-        const otherSouls = (publicUsers || [])
+        const feedAuthorUsers = (feed || []).map(f => ({
+            username: (f.username || f.metadata?.feedUsername || '').replace('@', ''),
+            fullName: f.metadata?.userFullName || (f.username || '').replace('@', ''),
+            avatar: f.metadata?.userAvatar || ''
+        })).filter(u => u.username);
+
+        const seenSouls = new Set();
+        const combinedRawSouls = [...(publicUsers || []), ...feedAuthorUsers, ...DEFAULT_PUBLIC_USERS_FALLBACK];
+        const otherSouls = combinedRawSouls
             .filter(u => {
-                const uname = (u.Username || u.username || '').replace('@', '').toLowerCase();
-                return uname && uname !== cleanCurrentU && uname !== 'anon' && !uname.startsWith('test_');
+                const uname = (u?.Username || u?.username || '').replace('@', '').trim().toLowerCase();
+                if (!uname || uname === cleanCurrentU || uname === 'anon' || uname.startsWith('test_')) return false;
+                if (seenSouls.has(uname)) return false;
+                seenSouls.add(uname);
+                return true;
             })
             .map((u, idx) => {
                 const currentUsername = (u.Username || u.username || '').replace('@', '');
@@ -18651,9 +18800,86 @@ ${afcMapContext}
                 {/* AMBIENTE (PERMANECENTE) */}
                 <div className="fixed inset-0 pointer-events-none opacity-5" style={{ background: 'radial-gradient(circle at 50% 50%, ' + accent + '30 0%, transparent 70%)' }} />
 
-                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-8 xl:gap-14 px-2 xs:px-3 sm:px-6 pt-[86px] sm:pt-[90px] md:pt-[92px] pb-36">
+                <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex justify-center gap-6 lg:gap-8 xl:gap-14 px-2 xs:px-3 sm:px-6 pt-[86px] sm:pt-[90px] md:pt-[92px] pb-36">
                     {/* COLUMNA PRINCIPAL DEL FEED */}
                     <div className="w-full max-w-[380px] xs:max-w-[410px] sm:max-w-[460px] flex flex-col items-center">
+                        {/* BARRA SUPERIOR DE PERFILES DE LA COMUNIDAD */}
+                        {similarSouls.length > 0 && (
+                            <div className="w-full mb-4 p-3 sm:p-3.5 rounded-2xl bg-[#121316]/90 backdrop-blur-xl border border-white/10 shadow-xl relative z-10">
+                                <div className="flex items-center justify-between mb-2.5 px-1">
+                                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-300 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                        <span>Perfiles de la Comunidad</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDirectMessagesOpen(true)}
+                                        className="text-[10px] font-mono font-bold text-accent hover:text-white transition-colors cursor-pointer"
+                                    >
+                                        Explorar ({similarSouls.length})
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 snap-x">
+                                    {/* Mi propio perfil primero */}
+                                    {cleanCurrentU && (
+                                        <div
+                                            onClick={() => setView('profile')}
+                                            className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group/myav snap-start w-[62px]"
+                                            title="Ir a mi perfil"
+                                        >
+                                            <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-accent via-purple-500/80 to-white/30 group-hover/myav:scale-105 transition-transform shadow-md">
+                                                <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 border-2 border-[#121316]">
+                                                    <img
+                                                        src={(avatar && !avatar.includes('dicebear') && !avatar.includes('ba90867f') && !avatar.startsWith('/uploads/')) ? formatUrl(avatar) : getDefaultAvatar(cleanCurrentU)}
+                                                        onError={(e) => {
+                                                            if (!e.target.dataset.failed) {
+                                                                e.target.dataset.failed = 'true';
+                                                                e.target.src = getDefaultAvatar(cleanCurrentU);
+                                                            }
+                                                        }}
+                                                        alt={cleanCurrentU}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-mono font-bold text-accent truncate max-w-full">
+                                                Tu perfil
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Perfiles de otros usuarios */}
+                                    {similarSouls.map((soul, idx) => (
+                                        <div
+                                            key={soul.id || soul.username}
+                                            onClick={() => setPublicProfileUser(soul.username)}
+                                            className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group/soulav snap-start w-[62px]"
+                                            title={`Ver perfil de @${soul.username}`}
+                                        >
+                                            <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-accent/80 via-white/20 to-accent/40 group-hover/soulav:from-accent group-hover/soulav:to-purple-400 group-hover/soulav:scale-105 transition-all shadow-md">
+                                                <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 border-2 border-[#121316]">
+                                                    <img
+                                                        src={formatUrl(soul.img)}
+                                                        onError={(e) => {
+                                                            if (!e.target.dataset.failed) {
+                                                                e.target.dataset.failed = 'true';
+                                                                e.target.src = getDefaultAvatar(soul.username, idx);
+                                                            }
+                                                        }}
+                                                        alt={soul.username}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-mono text-zinc-300 group-hover/soulav:text-white truncate max-w-full">
+                                                @{soul.username}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* LISTA DE PUBLICACIONES */}
                         {activeFeedItems.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-zinc-500 font-mono text-[10px] uppercase tracking-widest gap-4 h-64 relative z-10 pb-32">
@@ -18690,8 +18916,8 @@ ${afcMapContext}
                                             />
                                         </div>
 
-                                        {/* RECOMENDACIÓN DE A QUIÉN SEGUIR (En medio del feed mientras vas bajando) */}
-                                        {(i === 1 || (activeFeedItems.length === 1 && i === 0)) && similarSouls.length > 0 && (
+                                        {/* RECOMENDACIÓN DE A QUIÉN SEGUIR (Después de la primera publicación) */}
+                                        {i === 0 && similarSouls.length > 0 && (
                                             <div className="w-full my-2 p-4 sm:p-5 rounded-2xl bg-[#121316]/95 backdrop-blur-xl border border-white/10 shadow-2xl">
                                                 <div className="flex items-center justify-between mb-3.5 px-0.5">
                                                     <div className="flex flex-col">
@@ -18782,7 +19008,7 @@ ${afcMapContext}
                     </div>
 
                     {/* COLUMNA LATERAL DERECHA (Sugerencias para ti - Flujo natural al scrollear hacia abajo) */}
-                    <div className="hidden lg:block w-[310px] xl:w-[340px] shrink-0 self-start space-y-5 select-none">
+                    <div className="hidden md:block w-[280px] lg:w-[310px] xl:w-[340px] shrink-0 self-start space-y-5 select-none">
                         {/* Perfil del usuario actual */}
                         <div className="flex items-center justify-between py-1">
                             <div 
