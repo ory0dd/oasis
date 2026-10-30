@@ -3456,10 +3456,30 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                 </div>
                             )}
 
-                            {/* TITULO DE LA NOTA */}
-                            <h3 className={`${block.type === 'text' ? (isChildNote ? 'text-sm mb-1.5 font-bold tracking-tight text-white break-words' : 'text-[18px] mb-2 font-bold tracking-tight leading-snug text-white break-words') : `${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none truncate ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'}`} shrink-0`}>
-                                {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || 'Estética Nocturna')}
-                            </h3>
+                            {/* TITULO DE LA NOTA (EDITABLE DIRECTO PARA NOTAS DE TEXTO) */}
+                            {block.type === 'text' ? (
+                                <input
+                                    type="text"
+                                    value={block.caption || ''}
+                                    placeholder="Título de la nota..."
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                        if (onUpdateBlock) {
+                                            onUpdateBlock({
+                                                ...block,
+                                                caption: e.target.value
+                                            });
+                                        }
+                                    }}
+                                    className={`${isChildNote ? 'text-sm mb-1.5' : 'text-[18px] mb-2'} font-bold tracking-tight leading-snug text-white bg-transparent border-none outline-none focus:bg-white/5 focus:ring-1 focus:ring-emerald-500/40 rounded px-1 -mx-1 w-full shrink-0 transition-all placeholder:text-zinc-600 truncate`}
+                                    title="Clic para editar título de la nota"
+                                />
+                            ) : (
+                                <h3 className={`${isChildNote ? 'text-sm mb-1.5' : 'text-xl mb-3'} font-black italic uppercase tracking-tighter leading-none truncate ${isDiaryAny ? 'text-amber-500 font-serif' : block.type === 'conversation_notebook' ? 'text-purple-500' : 'text-white'} shrink-0`}>
+                                    {isDiaryAny ? (block.caption || 'Diario Personal') : block.type === 'conversation_notebook' ? (block.caption || 'Diálogos Recientes') : (block.caption || '')}
+                                </h3>
+                            )}
 
                             {block.muralBlocks && block.muralBlocks.length > 0 && (
                                 <div className="shrink-0 mb-3">
@@ -12973,6 +12993,7 @@ function OasisApp() {
         }, 1000);
     };
 
+
     // Auto-purge any legacy insight blocks and their links
     useEffect(() => {
         if (!isLoggedIn || !isDataLoaded || !user || blocks === INITIAL_BLOCKS) return;
@@ -13635,6 +13656,50 @@ function OasisApp() {
     useEffect(() => {
         setAvailableModels(['gpt-4o', 'deepseek-reasoner', 'deepseek-chat']);
     }, []);
+
+    // Auto-sincronizar notas conectadas a títulos del lienzo si aún conservan título provisional con hora
+    const syncedTimeNotesRef = useRef(new Set());
+    useEffect(() => {
+        if (!isDataLoaded || !blocks || blocks.length === 0 || !links || links.length === 0) return;
+        let hasChanges = false;
+        const nextBlocks = blocks.map(b => {
+            if ((b.type === 'text' || b.type === 'insight') && b.caption && !syncedTimeNotesRef.current.has(b.id)) {
+                const isTimeTitle = /^Nota\s*[•\-\/]/i.test(b.caption) || /\b\d{1,2}:\d{2}\s*(am|pm|a\.m\.|p\.m\.)?/i.test(b.caption);
+                if (isTimeTitle) {
+                    const conn = links.find(l => l.from === b.id || l.to === b.id);
+                    if (conn) {
+                        const otherId = conn.from === b.id ? conn.to : conn.from;
+                        const otherBlock = blocks.find(x => x.id === otherId);
+                        if (otherBlock && (otherBlock.type === 'canvas_title' || (otherBlock.type === 'text' && !/^Nota\s*[•\-\/]/i.test(otherBlock.caption || '')))) {
+                            const newTitle = (otherBlock.content || otherBlock.caption || '').trim();
+                            if (newTitle && newTitle !== b.caption) {
+                                syncedTimeNotesRef.current.add(b.id);
+                                hasChanges = true;
+                                const currentCat = b.metadata?.category || '';
+                                const isTimeCat = /\d{1,2}:\d{2}/.test(currentCat) || currentCat.startsWith('NOTA //');
+                                return {
+                                    ...b,
+                                    caption: newTitle,
+                                    metadata: {
+                                        ...(b.metadata || {}),
+                                        category: isTimeCat ? 'NOTA // CONCEPTO' : currentCat,
+                                        connectedTitleId: otherBlock.id
+                                    }
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            return b;
+        });
+
+        if (hasChanges) {
+            setBlocks(nextBlocks);
+            if (typeof syncBlocks === 'function') syncBlocks(nextBlocks);
+        }
+    }, [links, blocks, isDataLoaded]);
+
 
     const editBlock = (block) => {
         if (block.type === 'diary_notebook') {
@@ -16179,6 +16244,56 @@ ${afcMapContext}
                 // Pop up the color menu automatically at the target node's position on screen
                 const fromNode = blocks.find(b => b.id === linkSource);
                 const targetNode = blocks.find(b => b.id === targetId);
+
+                // Si se conecta un título/concepto a un texto grande (o viceversa), actualizar el título de la nota con el nuevo título
+                let titleNode = null;
+                let noteNode = null;
+                if (fromNode && targetNode) {
+                    if (fromNode.type === 'canvas_title' && (targetNode.type === 'text' || targetNode.type === 'insight')) {
+                        titleNode = fromNode;
+                        noteNode = targetNode;
+                    } else if (targetNode.type === 'canvas_title' && (fromNode.type === 'text' || fromNode.type === 'insight')) {
+                        titleNode = targetNode;
+                        noteNode = fromNode;
+                    } else if (fromNode.type === 'text' && targetNode.type === 'text') {
+                        const isFromTime = /^Nota\s*[•\-\/]/i.test(fromNode.caption || '') || /\d{1,2}:\d{2}/.test(fromNode.caption || '');
+                        const isTargetTime = /^Nota\s*[•\-\/]/i.test(targetNode.caption || '') || /\d{1,2}:\d{2}/.test(targetNode.caption || '');
+                        if (isTargetTime && !isFromTime) {
+                            titleNode = fromNode;
+                            noteNode = targetNode;
+                        } else if (isFromTime && !isTargetTime) {
+                            titleNode = targetNode;
+                            noteNode = fromNode;
+                        }
+                    }
+                }
+
+                if (titleNode && noteNode) {
+                    const newTitle = (titleNode.content || titleNode.caption || '').trim();
+                    if (newTitle) {
+                        setBlocks(prev => {
+                            const updated = prev.map(b => {
+                                if (b.id === noteNode.id) {
+                                    const currentCat = b.metadata?.category || '';
+                                    const isTimeCat = /\d{1,2}:\d{2}/.test(currentCat) || currentCat.includes('01:01') || currentCat.startsWith('NOTA //');
+                                    const cleanCat = isTimeCat ? 'NOTA // CONCEPTO' : currentCat;
+                                    return {
+                                        ...b,
+                                        caption: newTitle,
+                                        metadata: {
+                                            ...(b.metadata || {}),
+                                            category: cleanCat,
+                                            connectedTitleId: titleNode.id
+                                        }
+                                    };
+                                }
+                                return b;
+                            });
+                            if (typeof syncBlocks === 'function') syncBlocks(updated);
+                            return updated;
+                        });
+                    }
+                }
                 if (targetNode) {
                     const midX = fromNode ? (fromNode.x + targetNode.x) / 2 : targetNode.x;
                     const midY = fromNode ? (fromNode.y + targetNode.y) / 2 : targetNode.y;
@@ -17351,7 +17466,32 @@ ${afcMapContext}
 
     const handleInlineBlockUpdate = (updatedBlock) => {
         setBlocks(prev => {
-            const next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
+            let next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
+            if (updatedBlock.type === 'canvas_title' && updatedBlock.content) {
+                const newTitle = updatedBlock.content.trim();
+                const connectedNoteIds = new Set();
+                (links || []).forEach(l => {
+                    if (l.from === updatedBlock.id) connectedNoteIds.add(l.to);
+                    if (l.to === updatedBlock.id) connectedNoteIds.add(l.from);
+                });
+                if (connectedNoteIds.size > 0) {
+                    next = next.map(b => {
+                        if (connectedNoteIds.has(b.id) && (b.type === 'text' || b.type === 'insight')) {
+                            if (b.metadata?.connectedTitleId === updatedBlock.id || /^Nota\s*[•\-\/]/i.test(b.caption || '') || /\d{1,2}:\d{2}/.test(b.caption || '')) {
+                                return {
+                                    ...b,
+                                    caption: newTitle,
+                                    metadata: {
+                                        ...(b.metadata || {}),
+                                        connectedTitleId: updatedBlock.id
+                                    }
+                                };
+                            }
+                        }
+                        return b;
+                    });
+                }
+            }
             if (typeof syncBlocks === 'function') syncBlocks(next);
             return next;
         });
