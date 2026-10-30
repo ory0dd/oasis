@@ -25,7 +25,26 @@ import { useTranscription } from './hooks/useTranscription';
 import { StoryViewer, HighlightModal, StoryUploadModal } from './components/StoryHighlights';
 
 const withLazySuspense = (loader) => {
-    const LazyComponent = React.lazy(loader);
+    const LazyComponent = React.lazy(async () => {
+        try {
+            return await loader();
+        } catch (error) {
+            console.error('Dynamic module import failed:', error);
+            const isChunkError = error?.message?.includes('Failed to fetch dynamically imported module') ||
+                                 error?.message?.includes('Importing a module script failed') ||
+                                 error?.message?.includes('error loading dynamically imported module');
+            if (isChunkError) {
+                const reloadKey = 'oasis_chunk_reload_' + (window.location.pathname || 'root');
+                const lastReload = parseInt(sessionStorage.getItem(reloadKey) || '0', 10);
+                if (Date.now() - lastReload > 8000) {
+                    sessionStorage.setItem(reloadKey, Date.now().toString());
+                    window.location.reload();
+                    return new Promise(() => {}); // Wait for reload
+                }
+            }
+            throw error;
+        }
+    });
     return React.forwardRef((props, ref) => (
         <React.Suspense fallback={null}>
             <LazyComponent {...props} ref={ref} />
@@ -237,34 +256,69 @@ class ErrorBoundary extends React.Component {
     }
     render() {
         if (this.state.hasError) {
+            const isChunkError = this.state.error?.message?.includes('Failed to fetch dynamically imported module') ||
+                                 this.state.error?.message?.includes('Importing a module script') ||
+                                 this.state.error?.message?.includes('error loading dynamically imported module') ||
+                                 this.state.error?.message?.includes('dynamically imported');
+
             return (
                 <div style={{
                     position: 'fixed', inset: 0, zIndex: 99999,
                     background: '#030304', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexDirection: 'column', gap: '24px', padding: '32px', fontFamily: 'Inter, system-ui, sans-serif'
                 }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '20px' }}>⚠️</span>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: isChunkError ? 'rgba(168,85,247,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${isChunkError ? 'rgba(168,85,247,0.3)' : 'rgba(239,68,68,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '20px' }}>{isChunkError ? '🔄' : '⚠️'}</span>
                     </div>
-                    <h2 style={{ color: '#e4e4e7', fontSize: '16px', fontWeight: 600, margin: 0 }}>Algo salió mal</h2>
-                    <p style={{ color: '#71717a', fontSize: '12px', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', margin: 0 }}>
-                        Se detectó un error de renderizado. Tu información está segura.
+                    <h2 style={{ color: '#e4e4e7', fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                        {isChunkError ? 'Nueva versión de Oasis detectada' : 'Algo salió mal'}
+                    </h2>
+                    <p style={{ color: '#71717a', fontSize: '12px', textAlign: 'center', maxWidth: '420px', lineHeight: '1.6', margin: 0 }}>
+                        {isChunkError 
+                            ? 'Se ha desplegado una nueva actualización en el servidor. Haz clic en "Actualizar ahora" para sincronizar tus módulos.'
+                            : 'Se detectó un error de renderizado. Tu información está segura.'}
                     </p>
                     <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 16px', maxWidth: '500px', width: '100%', maxHeight: '120px', overflow: 'auto' }}>
-                        <code style={{ color: '#ef4444', fontSize: '10px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                        <code style={{ color: isChunkError ? '#c084fc' : '#ef4444', fontSize: '10px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                             {this.state.error?.message || 'Error desconocido'}
                         </code>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
                         <button
-                            onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+                            onClick={() => {
+                                if (isChunkError) {
+                                    window.location.reload();
+                                } else {
+                                    this.setState({ hasError: false, error: null, errorInfo: null });
+                                }
+                            }}
                             style={{
-                                padding: '10px 24px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                                color: '#e4e4e7', borderRadius: '12px', cursor: 'pointer', fontSize: '11px', fontWeight: 700,
+                                padding: '10px 24px', 
+                                background: isChunkError ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.05)', 
+                                border: isChunkError ? '1px solid rgba(168,85,247,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                                color: isChunkError ? '#e9d5ff' : '#e4e4e7', 
+                                borderRadius: '12px', cursor: 'pointer', fontSize: '11px', fontWeight: 700,
                                 textTransform: 'uppercase', letterSpacing: '0.1em'
                             }}
                         >
-                            Reintentar
+                            {isChunkError ? 'Actualizar Ahora' : 'Reintentar'}
+                        </button>
+                        <button
+                            onClick={() => { 
+                                try {
+                                    if (typeof window !== 'undefined' && 'caches' in window && window.caches) {
+                                        window.caches.keys().then(names => names.forEach(n => window.caches.delete(n))).catch(() => {});
+                                    }
+                                } catch(e) {}
+                                window.location.reload(); 
+                            }}
+                            style={{
+                                padding: '10px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#a1a1aa', borderRadius: '12px', cursor: 'pointer', fontSize: '11px', fontWeight: 600
+                            }}
+                            title="Recarga completa limpiando caché de la aplicación"
+                        >
+                            Recargar Página
                         </button>
                         <button
                             onClick={() => { localStorage.removeItem('oasis_user'); window.location.reload(); }}
