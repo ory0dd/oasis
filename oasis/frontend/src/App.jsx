@@ -12,7 +12,7 @@ import {
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
     MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music,
-    Lock, Unlock, Workflow
+    Lock, Unlock, Workflow, Undo, Redo
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import SimpleNotesView from './components/SimpleNotesView';
@@ -9751,6 +9751,7 @@ function OasisApp() {
         }
     }, []);
 
+
     // Current active canvas / sub-board block and hierarchical navigation
     const activeBoardBlock = useMemo(() => {
         if (!activeCanvasId || activeCanvasId === 'canvas_default') {
@@ -13219,6 +13220,7 @@ function OasisApp() {
     }, []);
 
     const handleResizeNodeComplete = useCallback((id, width, height) => {
+        pushUndoSnapshot();
         setBlocks(prev => {
             const updated = prev.map(b => b.id === id ? { ...b, width, height } : b);
             syncBlocks(updated);
@@ -13227,6 +13229,7 @@ function OasisApp() {
     }, [syncBlocks]);
 
     const deleteBlock = (id) => {
+        pushUndoSnapshot();
         const idStr = String(id);
         syncBlocks(prev => prev.filter(b => b.id !== id && b.Id !== id && String(b.id) !== idStr && String(b.Id) !== idStr));
         setLinks(prev => {
@@ -13242,6 +13245,7 @@ function OasisApp() {
     };
 
     const deleteBlocks = (ids) => {
+        pushUndoSnapshot();
         const idSet = new Set(ids.map(i => String(i)));
         syncBlocks(prev => prev.filter(b => !idSet.has(String(b.id)) && !idSet.has(String(b.Id))));
         setLinks(prev => {
@@ -13758,6 +13762,100 @@ function OasisApp() {
     const [isLinking, setIsLinking] = useState(false);
     const [linkSource, setLinkSource] = useState(null);
     const [newAttrTitle, setNewAttrTitle] = useState('');
+
+
+
+    // --- CANVAS HISTORY ENGINE (UNDO / REDO - CTRL+Z / CTRL+Y) ---
+    const undoStackRef = useRef([]);
+    const redoStackRef = useRef([]);
+    const dragSnapshotRef = useRef(null);
+    const historyToastTimeoutRef = useRef(null);
+    const [historyToast, setHistoryToast] = useState(null);
+
+    const latestBlocksRef = useRef(blocks);
+    latestBlocksRef.current = blocks;
+    const latestLinksRef = useRef(links);
+    latestLinksRef.current = links;
+
+    const pushUndoSnapshot = useCallback(() => {
+        undoStackRef.current.push({
+            blocks: JSON.parse(JSON.stringify(latestBlocksRef.current || [])),
+            links: JSON.parse(JSON.stringify(latestLinksRef.current || []))
+        });
+        if (undoStackRef.current.length > 50) {
+            undoStackRef.current.shift();
+        }
+        redoStackRef.current = [];
+    }, []);
+
+    const handleUndo = useCallback(() => {
+        if (undoStackRef.current.length === 0) return;
+        const prevSnapshot = undoStackRef.current.pop();
+        if (!prevSnapshot) return;
+
+        redoStackRef.current.push({
+            blocks: JSON.parse(JSON.stringify(latestBlocksRef.current || [])),
+            links: JSON.parse(JSON.stringify(latestLinksRef.current || []))
+        });
+        if (redoStackRef.current.length > 50) redoStackRef.current.shift();
+
+        setBlocks(prevSnapshot.blocks);
+        setLinks(prevSnapshot.links);
+        if (typeof syncBlocks === 'function') syncBlocks(prevSnapshot.blocks);
+        if (typeof syncLinks === 'function') syncLinks(prevSnapshot.links);
+
+        setHistoryToast('↶ Deshecho');
+        if (historyToastTimeoutRef.current) clearTimeout(historyToastTimeoutRef.current);
+        historyToastTimeoutRef.current = setTimeout(() => setHistoryToast(null), 1500);
+    }, [setBlocks, setLinks, syncBlocks, syncLinks]);
+
+    const handleRedo = useCallback(() => {
+        if (redoStackRef.current.length === 0) return;
+        const nextSnapshot = redoStackRef.current.pop();
+        if (!nextSnapshot) return;
+
+        undoStackRef.current.push({
+            blocks: JSON.parse(JSON.stringify(latestBlocksRef.current || [])),
+            links: JSON.parse(JSON.stringify(latestLinksRef.current || []))
+        });
+        if (undoStackRef.current.length > 50) undoStackRef.current.shift();
+
+        setBlocks(nextSnapshot.blocks);
+        setLinks(nextSnapshot.links);
+        if (typeof syncBlocks === 'function') syncBlocks(nextSnapshot.blocks);
+        if (typeof syncLinks === 'function') syncLinks(nextSnapshot.links);
+
+        setHistoryToast('↷ Rehecho');
+        if (historyToastTimeoutRef.current) clearTimeout(historyToastTimeoutRef.current);
+        historyToastTimeoutRef.current = setTimeout(() => setHistoryToast(null), 1500);
+    }, [setBlocks, setLinks, syncBlocks, syncLinks]);
+
+    useEffect(() => {
+        const handleCanvasUndoRedoKeyDown = (e) => {
+            if (view !== 'canvas') return;
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+                return;
+            }
+
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            if (isCtrlOrCmd && !e.altKey) {
+                // Redo: Ctrl+Shift+Z or Ctrl+Y
+                if ((e.shiftKey && e.key.toLowerCase() === 'z') || e.key.toLowerCase() === 'y') {
+                    e.preventDefault();
+                    handleRedo();
+                }
+                // Undo: Ctrl+Z
+                else if (!e.shiftKey && e.key.toLowerCase() === 'z') {
+                    e.preventDefault();
+                    handleUndo();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleCanvasUndoRedoKeyDown);
+        return () => window.removeEventListener('keydown', handleCanvasUndoRedoKeyDown);
+    }, [view, handleUndo, handleRedo]);
 
     const [editingId, setEditingId] = useState(null);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -16091,6 +16189,11 @@ ${afcMapContext}
         if (id !== 'canvas' && id !== 'universe' && id !== 'feed' && id !== 'player') {
             setLastInteractedBlockId(id);
             setSelectedBlockId(id);
+            // Capturar snapshot inicial para Ctrl+Z en movimientos del lienzo
+            dragSnapshotRef.current = {
+                blocks: JSON.parse(JSON.stringify(latestBlocksRef.current || [])),
+                links: JSON.parse(JSON.stringify(latestLinksRef.current || []))
+            };
         } else {
             setSelectedBlockId(null);
         }
@@ -16401,7 +16504,20 @@ ${afcMapContext}
         window.dragVelocity = { x: 0, y: 0 };
         window.lastMousePos = null;
         if (draggingId && draggingId !== 'canvas' && draggingId !== 'universe' && draggingId !== 'feed' && draggingId !== 'player') {
-            // Snapping is only visual; do not auto-connect or auto-group nodes on release.
+            // Si el bloque se movió respecto al inicio del arrastre, registrar en historial Ctrl+Z
+            if (dragSnapshotRef.current) {
+                const currentBlocks = latestBlocksRef.current || [];
+                const hasMoved = dragSnapshotRef.current.blocks.some(b => {
+                    const currentB = currentBlocks.find(x => x.id === b.id);
+                    return currentB && (currentB.x !== b.x || currentB.y !== b.y);
+                });
+                if (hasMoved) {
+                    undoStackRef.current.push(dragSnapshotRef.current);
+                    if (undoStackRef.current.length > 50) undoStackRef.current.shift();
+                    redoStackRef.current = [];
+                }
+                dragSnapshotRef.current = null;
+            }
 
             // Guardar posición final con garantía de estado actual
             syncBlocks(prev => prev);
@@ -17644,6 +17760,7 @@ ${afcMapContext}
     };
 
     const handleInlineBlockUpdate = (updatedBlock) => {
+        pushUndoSnapshot();
         setBlocks(prev => {
             let next = prev.map(item => item.id === updatedBlock.id ? updatedBlock : item);
             if (updatedBlock.type === 'canvas_title' && updatedBlock.content) {
@@ -17677,6 +17794,7 @@ ${afcMapContext}
     };
 
     const handleGenerateStructuredMap = ({ mainTitle, sections = [] }) => {
+        pushUndoSnapshot();
         if (!sections.length && !mainTitle) return;
 
         const viewportW = window.innerWidth || 1200;
@@ -17828,6 +17946,7 @@ ${afcMapContext}
     };
 
     const spawnMilanoteBlock = (type, overrides = {}) => {
+        pushUndoSnapshot();
         const jitterX = (Math.random() - 0.5) * 90;
         const jitterY = (Math.random() - 0.5) * 70;
         const baseX = (-cam.x / cam.scale) + jitterX;
@@ -18463,6 +18582,22 @@ ${afcMapContext}
                             title="Estructurador de Mapa por Puntos (Cartografía)"
                         >
                             <Workflow size={15} />
+                        </button>
+
+                        <button
+                            onClick={handleUndo}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Deshacer (Ctrl+Z)"
+                        >
+                            <Undo size={15} />
+                        </button>
+
+                        <button
+                            onClick={handleRedo}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Rehacer (Ctrl+Y)"
+                        >
+                            <Redo size={15} />
                         </button>
 
                         <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
@@ -22192,6 +22327,12 @@ ${afcMapContext}
                     onVolumeChange={handleVolumeChange}
                     coverImage={typeof window !== 'undefined' ? (localStorage.getItem('oasis_playlist_cover_' + (user || '')) || '') : ''}
                 />
+            )}
+
+            {historyToast && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[7500] px-4 py-1.5 rounded-2xl bg-[#111215]/95 backdrop-blur-md border border-white/15 text-white font-mono text-xs flex items-center gap-2 shadow-[0_10px_35px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in duration-150 pointer-events-none">
+                    <span className="text-accent font-bold tracking-wide">{historyToast}</span>
+                </div>
             )}
 
             {isMapStructureModalOpen && (
