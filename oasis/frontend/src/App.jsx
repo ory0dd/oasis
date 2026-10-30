@@ -9477,6 +9477,12 @@ function OasisApp() {
     const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
     const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
     const [isMilanoteToolsOpen, setIsMilanoteToolsOpen] = useState(false);
+    const dockScrollRef = useRef(null);
+    const scrollDock = useCallback((direction) => {
+        if (dockScrollRef.current) {
+            dockScrollRef.current.scrollBy({ left: direction * 220, behavior: 'smooth' });
+        }
+    }, []);
     const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
     const [selectedBoardTemplate, setSelectedBoardTemplate] = useState('character_profile');
     const [keepTemplateContent, setKeepTemplateContent] = useState(true);
@@ -18219,24 +18225,39 @@ ${afcMapContext}
                 </>
             )}
 
-            {/* NAVBAR DOCK UNIFICADO MINIMALISTA DEL LIENZO */}
+            {/* NAVBAR DOCK UNIFICADO MINIMALISTA DEL LIENZO (ANCHO CONTROLADO ANTISUPERPOSICIÓN) */}
             {view === 'canvas' && (
                 <>
                     <div
-                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-2xl border border-white/[0.08] px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-[22px] sm:rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-1 sm:gap-1.5 pointer-events-auto w-max max-w-[95vw] sm:max-w-[90vw] overflow-x-auto no-scrollbar scroll-smooth overscroll-contain select-none scale-95 sm:scale-100 origin-bottom"
+                        className="fixed left-1/2 -translate-x-1/2 z-[2500] pointer-events-auto flex items-center select-none shadow-[0_20px_50px_rgba(0,0,0,0.88)] origin-bottom"
                         style={{
-                            bottom: window.innerWidth >= 768 ? '20px' : '12px',
-                            touchAction: 'pan-x'
+                            bottom: window.innerWidth >= 768 ? '20px' : '12px'
                         }}
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
-                        onWheel={e => {
-                            e.stopPropagation();
-                            if (e.deltaY !== 0) {
-                                e.currentTarget.scrollLeft += e.deltaY * 0.9;
-                            }
-                        }}
                     >
+                        {/* Botón deslizar izquierda */}
+                        <button
+                            type="button"
+                            onClick={() => scrollDock(-1)}
+                            className="w-6 h-11 rounded-l-[22px] bg-[#111215]/95 hover:bg-zinc-800 border-y border-l border-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                            title="Deslizar herramientas a la izquierda"
+                        >
+                            <ChevronLeft size={13} />
+                        </button>
+
+                        {/* Pista deslizable con ancho controlado para evitar cualquier superposición con MiniPlayer y Zoom */}
+                        <div
+                            ref={dockScrollRef}
+                            className="w-[74vw] sm:w-[460px] md:w-[520px] max-w-[calc(100vw-540px)] bg-[#111215]/95 backdrop-blur-2xl border-y border-white/[0.1] px-2 py-1.5 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-contain"
+                            style={{ touchAction: 'pan-x' }}
+                            onWheel={e => {
+                                e.stopPropagation();
+                                if (e.deltaY !== 0) {
+                                    e.currentTarget.scrollLeft += e.deltaY * 0.9;
+                                }
+                            }}
+                        >
                         {/* GRUPO 1: ELEMENTOS Y BLOQUES DEL LIENZO */}
                         {/* 1. Nota */}
                         <button
@@ -18638,6 +18659,17 @@ ${afcMapContext}
                             <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-red-400 transition-colors">Vaciar</span>
                         </button>
                     </div>
+
+                    {/* Botón deslizar derecha */}
+                    <button
+                        type="button"
+                        onClick={() => scrollDock(1)}
+                        className="w-6 h-11 rounded-r-[22px] bg-[#111215]/95 hover:bg-zinc-850 border-y border-r border-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                        title="Deslizar herramientas a la derecha"
+                    >
+                        <ChevronRight size={13} />
+                    </button>
+                </div>
 
                     {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM */}
                     <div

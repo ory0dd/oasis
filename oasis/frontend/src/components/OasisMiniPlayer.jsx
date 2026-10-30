@@ -93,7 +93,7 @@ export default function OasisMiniPlayer({
             onMouseDown={e => e.stopPropagation()}
             onTouchStart={e => e.stopPropagation()}
         >
-            <div className="flex items-center gap-2.5 sm:gap-3 bg-[#0c0d10]/95 backdrop-blur-2xl border border-white/[0.1] hover:border-white/[0.18] p-2 sm:px-3 sm:py-2.5 rounded-[22px] sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.88)] transition-all max-w-[94vw] sm:max-w-md">
+            <div className="flex items-center gap-2 sm:gap-2.5 bg-[#0c0d10]/95 backdrop-blur-2xl border border-white/[0.1] hover:border-white/[0.18] p-1.5 sm:px-2.5 sm:py-2 rounded-[22px] sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.88)] transition-all w-max max-w-[260px] sm:max-w-[275px]">
                 
                 {/* Portada o ecualizador animado */}
                 <div 
