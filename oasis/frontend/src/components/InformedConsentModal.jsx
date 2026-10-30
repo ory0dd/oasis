@@ -267,9 +267,12 @@ export default function InformedConsentModal({ user, onAccept, onCancel, initial
                     syncPayload[`oasis_consent_photo_${user}`] = capturedPhoto;
                 }
 
-                fetch(`${API_URL}/api/oasis/clinical-data?user=${user}`, {
+                fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(user)}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Oasis-User': user
+                    },
                     body: JSON.stringify(syncPayload)
                 }).catch(err => console.error("Consent server sync warning:", err));
             } catch (err) {

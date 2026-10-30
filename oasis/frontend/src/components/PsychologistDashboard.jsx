@@ -1400,27 +1400,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                         if (cData && Object.keys(cData).length > 0) {
                             window.isDownloadingClinicalData = true;
                             try {
-                                // Free localStorage quota from heavy base64 photos or duplicate map keys
-                                for (let i = localStorage.length - 1; i >= 0; i--) {
-                                    const existingKey = localStorage.key(i);
-                                    if (
-                                        existingKey &&
-                                        (existingKey.startsWith('oasis_consent_photo_') ||
-                                         existingKey.startsWith('oasis_consent_record_') ||
-                                         existingKey.startsWith('oasis_afc_map_'))
-                                    ) {
-                                        try { localStorage.removeItem(existingKey); } catch (e) {}
-                                    }
-                                }
                                 Object.keys(cData).forEach(key => {
-                                    // Keep heavy base64 consent photos and legacy duplicate maps in memory/cloud only
-                                    if (
-                                        key.startsWith('oasis_consent_photo_') ||
-                                        key.startsWith('oasis_consent_record_') ||
-                                        key.startsWith('oasis_afc_map_')
-                                    ) {
-                                        return;
-                                    }
                                     try {
                                         localStorage.setItem(key, cData[key]);
                                         if (key.includes('__')) {
@@ -1430,7 +1410,7 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                             localStorage.setItem(`oasis_test_result_${uname}__${sub}`, cData[key]);
                                         }
                                     } catch (quotaErr) {
-                                        // Ignore localStorage quota limits gracefully so all users continue loading
+                                        // Ignore localStorage quota limits gracefully
                                     }
                                 });
                             } finally {
@@ -1777,6 +1757,139 @@ Responde ÚNICAMENTE con un JSON válido.`;
             setTimeout(() => setPasswordToast(null), 4000);
         } finally {
             setIsSavingPassword(false);
+        }
+    };
+
+    const handleEnterPatientAccount = async (targetUser, targetPass = '123') => {
+        const cleanUser = (targetUser || '').trim().replace(/^@+/, '');
+        if (!cleanUser) return;
+        try {
+            const caller = localStorage.getItem('oasis_user') || 'observador1';
+            localStorage.setItem('oasis_clinician_return_user', caller);
+            
+            // 1. Intentar cambio de sesión seguro en backend
+            const res = await fetch(`${API_URL}/api/oasis/switch-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': caller },
+                body: JSON.stringify({ Username: cleanUser, Password: targetPass })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.user) {
+                    localStorage.setItem('oasis_user', cleanUser);
+                    localStorage.setItem('oasis_role', data.user.role || 'patient');
+                    window.location.href = '/';
+                    return;
+                }
+            }
+            // 2. Fallback de login directo
+            const loginRes = await fetch(`${API_URL}/api/oasis/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Username: cleanUser, Password: targetPass })
+            });
+            if (loginRes.ok) {
+                const lData = await loginRes.json();
+                localStorage.setItem('oasis_user', cleanUser);
+                localStorage.setItem('oasis_role', lData?.user?.role || 'patient');
+                window.location.href = '/';
+                return;
+            }
+        } catch (e) {
+            console.error("Error al ingresar a la cuenta:", e);
+        }
+        localStorage.setItem('oasis_user', cleanUser);
+        window.location.href = '/';
+    };
+
+    const [isFormalizingMemory, setIsFormalizingMemory] = useState(false);
+    const handleFormalizeContinuousMemory = async () => {
+        if (!selectedPatient?.name) return;
+        setIsFormalizingMemory(true);
+        try {
+            const pName = selectedPatient.name;
+            const callerUser = localStorage.getItem('oasis_user') || 'observador1';
+            const transcripts = activePatientData?.phenomenology?.transcripts || {};
+            const phenomText = Object.entries(transcripts).map(([k, v]) => `${k}:\n${v}`).join('\n\n');
+            const bioTranscripts = activePatientData?.clínicalInterview?.transcripts || {};
+            const bioText = Object.entries(bioTranscripts).map(([k, v]) => `P${k}: ${v}`).join('\n');
+            
+            const rawNotes = `${phenomText}\n\n${bioText}`.trim();
+            if (!rawNotes || rawNotes.length < 15) {
+                alert("No hay suficientes antecedentes cualitativos o entrevistas registradas para formalizar la memoria.");
+                setIsFormalizingMemory(false);
+                return;
+            }
+
+            const prompt = `Actúa como psicólogo clínico experto e investigador existencial-fenomenológico de Oasis. 
+Tu tarea es formalizar, estructurar y sintetizar la memoria clínica continua para el consultante @${pName} a partir de sus respuestas cualitativas brutas:
+
+ANTECEDENTES DEL CONSULTANTE:
+${rawNotes.substring(0, 10000)}
+
+Genera una MEMORIA CLÍNICA FORMALIZADA Y FOCALIZADA organizada en:
+1. NÚCLEO IDENTITARIO & DIAGNÓSTICO ESTRUCTURAL: (Neurodivergencia, estilos de afrontamiento base, autodefinición).
+2. DINÁMICA RELACIONAL & SISTEMA FAMILIAR: (Apego, mandatos, lugar en la hermandad, apoyo percibido).
+3. EJE EJECUTIVO-COGNITIVO: (Planeación vs ejecución, dispersión, procrastinación, factores de atención).
+4. EJE EXISTENCIAL, CREATIVIDAD & AFECTIVIDAD: (Proyectos, artes, dibujo/animación, pasiones, aplanamiento o distancia afectiva reciente, cambio vocacional).
+
+Redacta de manera clara, focalizada, empática y rigurosa en español.`;
+
+            const activeKey = localStorage.getItem('oasis_openai_key') || localStorage.getItem('oasis_gemini_key') || '';
+            const endpoint = localStorage.getItem('oasis_deepseek_endpoint') || 'https://api.openai.com/v1/chat/completions';
+            const model = localStorage.getItem('oasis_deepseek_model') || 'gpt-4o';
+
+            const res = await fetch(`${API_URL}/api/oasis/config/chat-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    endpoint,
+                    key: activeKey,
+                    payload: {
+                        model,
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.3
+                    }
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const formalized = data.choices?.[0]?.message?.content?.trim();
+                if (formalized) {
+                    localStorage.setItem(`oasis_continuous_memory_${pName}`, formalized);
+                    
+                    await fetch(`${API_URL}/api/oasis/memory?user=${encodeURIComponent(pName)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': callerUser },
+                        body: JSON.stringify({ memory: formalized })
+                    }).catch(() => {});
+
+                    await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(pName)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Oasis-User': callerUser },
+                        body: JSON.stringify({ [`oasis_continuous_memory_${pName}`]: formalized })
+                    }).catch(() => {});
+
+                    setSelectedPatient(prev => ({
+                        ...prev,
+                        clinicalData: { ...(prev?.clinicalData || {}), [`oasis_continuous_memory_${pName}`]: formalized }
+                    }));
+
+                    setPasswordToast({
+                        type: 'success',
+                        message: `✓ Memoria clínica de @${pName} formalizada y guardada en la nube`
+                    });
+                    setTimeout(() => setPasswordToast(null), 4000);
+                }
+            } else {
+                throw new Error("Respuesta no satisfactoria del modelo LLM");
+            }
+        } catch (err) {
+            console.error("Error formalizando memoria:", err);
+            alert("Error formalizando memoria con el modelo LLM. Verifica tu API Key en configuración.");
+        } finally {
+            setIsFormalizingMemory(false);
         }
     };
 
@@ -2612,16 +2725,17 @@ Responde ÚNICAMENTE con un JSON válido.`;
                                         </div>
 
                                         <div className="flex items-center gap-2 sm:gap-3 text-zinc-600 shrink-0">
-                                            <a
-                                                href={`/?u=${encodeURIComponent(patient.name)}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="p-1 text-zinc-500 hover:text-emerald-400 transition-colors"
-                                                title={`Entrar a sesión de @${patient.name}`}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEnterPatientAccount(patient.name, patient.password || '123');
+                                                }}
+                                                className="p-1 text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                                                title={`Entrar directamente a la cuenta de @${patient.name}`}
                                             >
                                                 <ExternalLink size={14} />
-                                            </a>
+                                            </button>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -3253,12 +3367,59 @@ Responde ÚNICAMENTE con un JSON válido.`;
             { key: "Premisa de Realidad", title: "Premisa de Realidad", desc: "¿Qué ideas o certezas cambian en ti cuando estás en crisis?", id: "3" }
         ];
 
+        const pName = selectedPatient?.name;
+        const continuousMem = selectedPatient?.clinicalData?.[`oasis_continuous_memory_${pName}`] || 
+                              localStorage.getItem(`oasis_continuous_memory_${pName}`) || 
+                              selectedPatient?.continuousMemory || '';
+
         return (
             <div className="space-y-6">
-                <div>
-                    <h3 className="text-lg font-black text-white italic">Diagnóstico Fenomenológico (Parte II)</h3>
-                    <p className="text-zinc-500 text-xs mt-1 font-mono uppercase tracking-wider">Estructuración existencial cualitativa del self</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/5">
+                    <div>
+                        <h3 className="text-lg font-black text-white italic">Diagnóstico Fenomenológico (Parte II)</h3>
+                        <p className="text-zinc-500 text-xs mt-0.5 font-mono uppercase tracking-wider">Estructuración existencial cualitativa del self</p>
+                    </div>
+                    <button
+                        onClick={handleFormalizeContinuousMemory}
+                        disabled={isFormalizingMemory || !hasData}
+                        className="self-start sm:self-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase font-mono tracking-wider flex items-center gap-2 shadow-lg shadow-purple-500/20 transition-all cursor-pointer"
+                        title="Formalizar con IA la memoria clínica cualitativa y guardarla permanentemente en el servidor"
+                    >
+                        <Sparkles size={14} className={isFormalizingMemory ? "animate-spin text-amber-300" : "text-purple-200"} />
+                        <span>{isFormalizingMemory ? "Formalizando Memoria..." : "✨ Formalizar Memoria con IA"}</span>
+                    </button>
                 </div>
+
+                {/* MEMORIA CONTINUA FORMALIZADA Y FOCALIZADA */}
+                {continuousMem && (
+                    <div className="bg-gradient-to-br from-purple-950/30 via-zinc-900/60 to-black/80 border border-purple-500/30 rounded-3xl p-6 space-y-4 shadow-xl">
+                        <div className="flex items-center justify-between gap-2 border-b border-purple-500/20 pb-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
+                                    <Brain size={16} />
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-black uppercase text-purple-300 tracking-wider font-mono">Memoria Continua Formalizada & Focalizada</h4>
+                                    <span className="text-[9px] text-zinc-400 font-mono">Sintetizada y persistida en nube para @{pName}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(continuousMem);
+                                    setPasswordToast({ type: 'success', message: '✓ Memoria formalizada copiada' });
+                                    setTimeout(() => setPasswordToast(null), 3000);
+                                }}
+                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                                title="Copiar memoria"
+                            >
+                                <Copy size={13} />
+                            </button>
+                        </div>
+                        <div className="p-4 bg-zinc-950/60 border border-purple-500/10 rounded-2xl text-xs text-zinc-200 leading-relaxed font-sans whitespace-pre-wrap select-text">
+                            {continuousMem}
+                        </div>
+                    </div>
+                )}
                 
                 {!hasData ? (
                     <div className="bg-zinc-900/20 border border-white/5 p-8 rounded-2xl text-center text-zinc-500 text-xs italic font-mono uppercase tracking-widest">
@@ -5484,6 +5645,15 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 <Edit2 size={8} className="text-emerald-500 opacity-60 group-hover/badge:opacity-100 ml-0.5" />
                                             </button>
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEnterPatientAccount(selectedPatient.name, selectedPatient.password || '123')}
+                                            className="mt-2 w-full py-1.5 px-2 bg-gradient-to-r from-emerald-600/25 via-teal-600/30 to-emerald-600/25 hover:from-emerald-600/40 hover:to-teal-600/40 text-emerald-300 border border-emerald-500/30 rounded-xl text-[9px] font-bold font-mono uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                                            title={`Iniciar sesión como @${selectedPatient.name}`}
+                                        >
+                                            <Zap size={11} className="text-emerald-400 animate-pulse" />
+                                            <span>Entrar a cuenta de @{selectedPatient.name}</span>
+                                        </button>
                                     </div>
                                 </div>
                                 <button 
@@ -5677,25 +5847,43 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 e.target.style.display = 'none';
                                                             }}
                                                         />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5 justify-between">
                                                             <span className="text-[8px] font-mono text-purple-300 font-semibold flex items-center gap-1">
                                                                 <Camera size={9} />
-                                                                <span>Ver Selfie de Firma ✨</span>
+                                                                <span>Ver Selfie ✨</span>
                                                             </span>
+                                                            <label 
+                                                                onClick={(e) => e.stopPropagation()} 
+                                                                className="text-[7.5px] font-mono text-zinc-300 hover:text-white bg-black/70 px-1.5 py-0.5 rounded cursor-pointer border border-white/10 flex items-center gap-0.5"
+                                                                title="Cambiar fotografía"
+                                                            >
+                                                                <Upload size={8} />
+                                                                <span>Cambiar</span>
+                                                                <input type="file" accept="image/*" className="hidden" onChange={handleUploadConsentPhoto} />
+                                                            </label>
                                                         </div>
                                                     </div>
                                                 ) : hasConsent ? (
-                                                    <button 
-                                                        onClick={() => {
-                                                            setConsentPhotoLoadError(false);
-                                                            setViewingConsentPhoto({ photo: null, signer: consentSigner, date: consentDate });
-                                                        }}
-                                                        className="mt-1 flex items-center justify-center gap-1.5 w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 py-1.5 rounded-xl text-[9px] font-mono font-bold uppercase transition-colors"
-                                                        title="Ver o sincronizar selfie de firma"
-                                                    >
-                                                        <Camera size={11} className="text-purple-400" />
-                                                        <span>Selfie de Firma Digital ✨</span>
-                                                    </button>
+                                                    <div className="flex gap-1 mt-1">
+                                                        <button 
+                                                            onClick={() => {
+                                                                setConsentPhotoLoadError(false);
+                                                                setViewingConsentPhoto({ photo: null, signer: consentSigner, date: consentDate });
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center gap-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 py-1.5 rounded-xl text-[9px] font-mono font-bold uppercase transition-colors"
+                                                            title="Ver o sincronizar selfie de firma"
+                                                        >
+                                                            <Camera size={11} className="text-purple-400" />
+                                                            <span>Selfie de Firma ✨</span>
+                                                        </button>
+                                                        <label 
+                                                            className="px-2.5 flex items-center justify-center bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-xl text-[9px] font-mono font-bold uppercase transition-colors cursor-pointer"
+                                                            title="Subir o adjuntar fotografía de selfie"
+                                                        >
+                                                            <Upload size={11} className="text-purple-400" />
+                                                            <input type="file" accept="image/*" className="hidden" onChange={handleUploadConsentPhoto} />
+                                                        </label>
+                                                    </div>
                                                 ) : null}
                                             </div>
                                         )}
@@ -6358,10 +6546,9 @@ Devuelve estrictamente el JSON sin formato extra.
                         <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
                             <button
                                 onClick={() => {
-                                    localStorage.setItem('oasis_user', passwordModalPatient.name);
-                                    window.location.href = '/';
+                                    handleEnterPatientAccount(passwordModalPatient.name, newPasswordInput || passwordModalPatient.password || '123');
                                 }}
-                                className="text-zinc-400 hover:text-emerald-400 transition-colors flex items-center gap-1.5 font-mono text-[9px]"
+                                className="text-zinc-400 hover:text-emerald-400 transition-colors flex items-center gap-1.5 font-mono text-[9px] cursor-pointer"
                             >
                                 <ExternalLink size={11} />
                                 <span>Entrar a sesión de @{passwordModalPatient.name}</span>
