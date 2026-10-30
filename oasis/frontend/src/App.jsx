@@ -12,7 +12,7 @@ import {
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
     MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music,
-    Lock, Unlock
+    Lock, Unlock, Workflow
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import SimpleNotesView from './components/SimpleNotesView';
@@ -20,6 +20,7 @@ import icarQuestions from './data/icar16_questions.json';
 import icarRationale from './data/icar16_rationale.json';
 import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
 import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
+import MapStructureGeneratorModal from './components/MapStructureGeneratorModal';
 import DirectMessagesWidget from './components/DirectMessagesWidget';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
@@ -2956,7 +2957,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
             >
                 {/* FLOATING ACTION TOOLBAR WHEN SELECTED */}
                 {isTitleSelected && !showDeleteConfirm && (
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/90 backdrop-blur-md border border-white/20 rounded-full px-3 py-1 shadow-2xl z-40 pointer-events-auto animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/90 backdrop-blur-md border border-white/20 rounded-xl sm:rounded-2xl px-3 py-1.5 shadow-2xl z-40 pointer-events-auto animate-in fade-in zoom-in-95 duration-150">
                         <button
                             type="button"
                             onClick={(e) => {
@@ -2967,7 +2968,28 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                             title="Modificar estilo y texto"
                         >
                             <Pencil size={12} className="text-accent" />
-                            <span>Editar Estilo</span>
+                            <span>Editar</span>
+                        </button>
+                        <div className="w-px h-3 bg-white/20 mx-0.5" />
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const isBold = (block.fontWeight || '800') !== '400';
+                                const nextWeight = isBold ? '400' : '800';
+                                if (onUpdateBlock) {
+                                    onUpdateBlock({
+                                        ...block,
+                                        fontWeight: nextWeight,
+                                        hasStroke: !isBold,
+                                        strokeWidth: isBold ? 0 : 2.5
+                                    });
+                                }
+                            }}
+                            className={`flex items-center gap-1 text-[10.5px] font-mono px-2 py-0.5 rounded-lg border transition-colors ${block.fontWeight === '400' ? 'bg-accent/20 border-accent/40 text-accent font-normal' : 'bg-white/5 border-white/10 text-zinc-300 font-bold hover:text-white'}`}
+                            title="Alternar grosor (normal sin negrito vs negrita)"
+                        >
+                            <span>{block.fontWeight === '400' ? 'Sin Negrita' : 'Negrita'}</span>
                         </button>
                         <div className="w-px h-3 bg-white/20 mx-0.5" />
                         <button
@@ -3017,7 +3039,7 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                         color: titleColor,
                         WebkitTextFillColor: titleColor,
                         paintOrder: 'stroke fill',
-                        WebkitTextStroke: titleHasStroke && titleStrokeWidth > 0 ? `${titleStrokeWidth}px ${titleStrokeColor}` : '0px transparent',
+                        WebkitTextStroke: (block.fontWeight === '400' ? false : titleHasStroke) && titleStrokeWidth > 0 ? `${titleStrokeWidth}px ${titleStrokeColor}` : '0px transparent',
                         textShadow: titleHasStroke && titleHasShadow && titleStrokeWidth > 0
                             ? `0px 2px 0px ${titleStrokeColor}, 0px 4px 0px ${titleStrokeColor}, 2px 4px 0px ${titleStrokeColor}, -2px 4px 0px ${titleStrokeColor}, 3px 3px 0px ${titleStrokeColor}, -3px 3px 0px ${titleStrokeColor}, 0px 15px 40px rgba(0,0,0,0.6)`
                             : (titleHasShadow ? '0px 10px 30px rgba(0,0,0,0.6)' : 'none'),
@@ -7439,79 +7461,62 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                             </div>
                         </div>
 
-                        {/* ======================================================== */}
-                        {/* RECUADRO EXTRA: PROCESO PERSONAL // LIENZO DESTACADO */}
+                        {/* ==============================RECUADRO MINIMALISTA: PROCESO DE DECONSTRUCCIÓN // LIENZO */}
                         {/* ======================================================== */}
                         {(showcaseSettings?.enabled || isOwnProfile) && (
-                            <div className="col-span-2 lg:col-span-12 order-2 bg-gradient-to-r from-[#0c0f14] via-[#090d12] to-[#0c1218] border border-emerald-500/25 hover:border-emerald-500/45 rounded-2xl p-3 sm:p-4 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3.5 relative overflow-hidden group/showcase transition-all">
-                                <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                            <div className="col-span-2 lg:col-span-12 order-2 bg-[#0c0d11] border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-3 sm:p-4 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative transition-all">
                                 
                                 {/* Info izquierda */}
-                                <div className="flex-1 min-w-0 flex flex-col gap-1.5 z-10 w-full sm:w-auto">
+                                <div className="flex-1 min-w-0 flex flex-col gap-1.5 w-full sm:w-auto">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                                            <Sparkles size={9} />
-                                            PROCESO PERSONAL // LIENZO DESTACADO
+                                        <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[8px] font-mono font-bold uppercase tracking-wider text-zinc-300">
+                                            PROCESO // CARTOGRAFÍA
                                         </span>
-                                        <span className="px-2 py-0.5 rounded-md bg-black/70 border border-emerald-500/30 text-[7.5px] sm:text-[8.5px] font-mono font-black text-emerald-300">
+                                        <span className="px-2 py-0.5 rounded-md bg-black/60 border border-white/10 text-[8.5px] font-mono font-medium text-zinc-200">
                                             {showcaseSettings?.price || '$250 MXN'}
                                         </span>
-                                        <span className="px-1.5 py-0.2 rounded bg-white/[0.06] text-[6.5px] sm:text-[7.5px] font-mono text-zinc-400 uppercase flex items-center gap-1">
-                                            <Lock size={8} className="text-emerald-400" />
-                                            Teaser Protegido
+                                        <span className="px-1.5 py-0.5 rounded bg-white/[0.03] text-[7.5px] font-mono text-zinc-500 uppercase flex items-center gap-1">
+                                            <Lock size={8} className="text-zinc-400" />
+                                            Protegido
                                         </span>
                                     </div>
-                                    <h4 className="text-[12px] sm:text-[14px] md:text-[15px] font-mono font-black text-white tracking-tight truncate">
-                                        {showcaseSettings?.title || 'Proceso de Deconstrucción & Reinvención'}
+                                    <h4 className="text-[13px] sm:text-[14px] font-mono font-bold text-white tracking-tight truncate">
+                                        {showcaseSettings?.title || 'Proceso de Deconstrucción'}
                                     </h4>
-                                    <p className="text-[8px] sm:text-[9.5px] text-zinc-400 font-sans line-clamp-2 leading-relaxed">
-                                        {showcaseSettings?.description || 'Mapa cognitivo y existencial estructurado paso a paso con nodos interconectados, ejercicios de resignificación y bitácora clínica.'}
+                                    <p className="text-[9px] sm:text-[10px] text-zinc-400 font-sans line-clamp-1 leading-relaxed">
+                                        {showcaseSettings?.description || 'Cartografía existencial y cognitiva estructurada con nodos interconectados y bitácora clínica.'}
                                     </p>
                                 </div>
 
-                                {/* Portada pixelada y acciones derecha */}
-                                <div className="flex items-center gap-3 shrink-0 z-10 w-full sm:w-auto justify-between sm:justify-end">
-                                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-emerald-500/30 bg-black/60 shadow-md shrink-0">
-                                        <img
-                                            src={showcaseSettings?.coverImage ? formatUrl(showcaseSettings.coverImage) : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600&auto=format&fit=crop'}
-                                            alt="Portada Teaser"
-                                            className="w-full h-full object-cover"
-                                            style={{ filter: 'blur(1px) contrast(140%) saturate(120%)', imageRendering: 'pixelated' }}
-                                        />
-                                        <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-[0.5px]" />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-[7.5px] font-mono font-black text-emerald-300 bg-black/80 px-1 rounded border border-emerald-500/40">TEASER</span>
-                                        </div>
-                                    </div>
+                                {/* Acciones derecha - minimalistas sin imagen */}
+                                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenTeaserModal}
+                                        className="px-3.5 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 text-white font-mono text-[9px] sm:text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                                        title="Abrir lienzo del proceso"
+                                    >
+                                        <Eye size={12} className="text-zinc-300" />
+                                        <span>Ver Proceso</span>
+                                    </button>
 
-                                    <div className="flex flex-col sm:flex-row items-center gap-1.5">
+                                    {isOwnProfile && (
                                         <button
                                             type="button"
-                                            onClick={handleOpenTeaserModal}
-                                            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all cursor-pointer active:scale-95"
-                                            title="Abrir vista previa interactiva del lienzo"
+                                            onClick={() => setIsCanvasSettingsModalOpen(true)}
+                                            className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/5 text-zinc-400 hover:text-white font-mono text-[9px] sm:text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                            title="Configurar ajustes del proceso"
                                         >
-                                            <Eye size={12} />
-                                            <span>Explorar Teaser ✨</span>
+                                            <Settings size={11} />
+                                            <span>Ajustes</span>
                                         </button>
-
-                                        {isOwnProfile && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsCanvasSettingsModalOpen(true)}
-                                                className="w-full sm:w-auto px-2.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white font-mono font-bold text-[8.5px] sm:text-[9.5px] flex items-center justify-center gap-1 transition-all cursor-pointer"
-                                                title="Configurar precio, título, portada y nodos abiertos"
-                                            >
-                                                <Settings size={11} />
-                                                <span>Ajustes</span>
-                                            </button>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}
 
                         {/* ======================================================== */}
+                        {/* ========================== */}
                         {/* FILA 3 (EN MEDIO): PIEZAS CON ENLACES PUBLICADAS */}
                         {/* ======================================================== */}
                         <div className="col-span-2 lg:col-span-12 order-3 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
@@ -9422,6 +9427,7 @@ function OasisApp() {
     const [canvasBoardTitle, setCanvasBoardTitle] = useState(() => localStorage.getItem('oasis_canvas_title_' + initialUser) || 'Pizarrón 1');
     const [canvasBoardSubtitle, setCanvasBoardSubtitle] = useState(() => localStorage.getItem('oasis_canvas_subtitle_' + initialUser) || 'Carretera 191');
     const [titlePrompt, setTitlePrompt] = useState(null);
+    const [isMapStructureModalOpen, setIsMapStructureModalOpen] = useState(false);
     const [isHighlightModalOpen, setIsHighlightModalOpen] = useState(false);
     const [isDirectMessagesOpen, setIsDirectMessagesOpen] = useState(false);
     const [isDirectWidgetOpen, setIsDirectWidgetOpen] = useState(false);
@@ -15871,6 +15877,10 @@ ${afcMapContext}
                 } else if (!isLongText) {
                     // Texto corto / concepto para mapas: SOLO TEXTO en el lienzo (como canvas_title, sin caja ni fondo)
                     const fontSize = text.length <= 25 ? 46 : (text.length <= 60 ? 38 : 30);
+                    const isReflectivePhrase = text.length > 40;
+                    const pasteFw = isReflectivePhrase ? '400' : '800';
+                    const pasteHasStroke = !isReflectivePhrase;
+                    const pasteStrokeWidth = isReflectivePhrase ? 0 : 2.5;
                     const calcWidth = text.length <= 25 ? 420 : (text.length <= 65 ? 580 : 720);
 
                     // Para canvas_title, (x, y) es el centro del texto flotante en el viewport
@@ -15883,10 +15893,10 @@ ${afcMapContext}
                         content: text,
                         fontFamily: 'outfit',
                         fontSize: fontSize,
-                        fontWeight: '800',
+                        fontWeight: text.length > 40 ? '400' : '800',
                         color: '#ffffff',
-                        hasStroke: true,
-                        strokeWidth: 2.5,
+                        hasStroke: text.length > 40 ? false : true,
+                        strokeWidth: text.length > 40 ? 0 : 2.5,
                         strokeColor: '#000000',
                         hasShadow: true,
                         lineHeight: 1.15,
@@ -17546,6 +17556,157 @@ ${afcMapContext}
         });
     };
 
+    const handleGenerateStructuredMap = ({ mainTitle, sections = [] }) => {
+        if (!sections.length && !mainTitle) return;
+
+        const viewportW = window.innerWidth || 1200;
+        const viewportH = window.innerHeight || 800;
+        const centerX = Math.round((-cam.x / cam.scale) + (viewportW / (2 * cam.scale)));
+        const centerY = Math.round((-cam.y / cam.scale) + (viewportH / (2 * cam.scale)));
+
+        const newBlocksToAdd = [];
+        const newLinksToAdd = [];
+        const timestamp = new Date().toISOString();
+        const targetCanvasId = activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined;
+
+        // 1. Título Principal en el Lienzo
+        if (mainTitle && mainTitle.trim()) {
+            const mainTitleBlock = {
+                id: `title-main-${Date.now()}`,
+                type: 'canvas_title',
+                content: mainTitle.trim(),
+                fontFamily: 'outfit',
+                fontSize: 48,
+                fontWeight: '800',
+                color: '#ffffff',
+                hasStroke: true,
+                strokeWidth: 2,
+                strokeColor: '#000000',
+                hasShadow: true,
+                lineHeight: 1.15,
+                textAlign: 'center',
+                width: Math.min(850, Math.max(500, mainTitle.length * 20)),
+                isSingleLine: false,
+                x: centerX,
+                y: centerY - 280,
+                username: user,
+                isPublic: false,
+                createdAt: timestamp,
+                canvasId: targetCanvasId
+            };
+            newBlocksToAdd.push(mainTitleBlock);
+        }
+
+        // 2. Secciones / Puntos ordenados
+        const N = sections.length;
+        const colSpacing = 480;
+        const totalColsWidth = (N - 1) * colSpacing;
+        const startX = centerX - Math.round(totalColsWidth / 2);
+
+        sections.forEach((sec, idx) => {
+            const colX = startX + (idx * colSpacing);
+            const sectionId = `sec-${Date.now()}-${idx}`;
+
+            // A. Título del Punto (solo texto flotante)
+            const secTitleBlock = {
+                id: `title-${sectionId}`,
+                type: 'canvas_title',
+                content: sec.title || `0${idx + 1}. Punto`,
+                fontFamily: 'outfit',
+                fontSize: 32,
+                fontWeight: '700',
+                color: '#ffffff',
+                hasStroke: true,
+                strokeWidth: 1.5,
+                strokeColor: '#000000',
+                hasShadow: true,
+                lineHeight: 1.2,
+                textAlign: 'center',
+                width: 380,
+                isSingleLine: false,
+                x: colX,
+                y: centerY - 100,
+                username: user,
+                isPublic: false,
+                createdAt: timestamp,
+                canvasId: targetCanvasId
+            };
+            newBlocksToAdd.push(secTitleBlock);
+
+            // B. Tarjeta de Preguntas
+            const cardW = 340;
+            const cardH = 260;
+            const questionsCardBlock = {
+                id: `card-${sectionId}`,
+                type: 'text',
+                title: sec.title,
+                content: Array.isArray(sec.questions) ? sec.questions.join('\n\n') : (sec.questions || ''),
+                color: '#121316',
+                width: cardW,
+                height: cardH,
+                x: colX - Math.round(cardW / 2),
+                y: centerY + 20,
+                username: user,
+                isPublic: false,
+                createdAt: timestamp,
+                canvasId: targetCanvasId
+            };
+            newBlocksToAdd.push(questionsCardBlock);
+
+            // C. Conexión línea entre el Título y la Tarjeta
+            newLinksToAdd.push({
+                id: `link-${sectionId}`,
+                from: secTitleBlock.id,
+                to: questionsCardBlock.id,
+                color: accent || '#bef264',
+                style: 'solid',
+                showPoints: true
+            });
+
+            // D. Frase Reflexiva (sin negrita, estilo poético editorial)
+            if (sec.reflection && sec.reflection.trim()) {
+                const reflectionBlock = {
+                    id: `refl-${sectionId}`,
+                    type: 'canvas_title',
+                    content: `"${sec.reflection.trim()}"`,
+                    fontFamily: 'editorial',
+                    fontSize: 22,
+                    fontWeight: '400',
+                    color: '#94a3b8',
+                    hasStroke: false,
+                    strokeWidth: 0,
+                    strokeColor: '#000000',
+                    hasShadow: false,
+                    lineHeight: 1.3,
+                    textAlign: 'center',
+                    width: 340,
+                    isSingleLine: false,
+                    x: colX,
+                    y: centerY + cardH + 70,
+                    username: user,
+                    isPublic: false,
+                    createdAt: timestamp,
+                    canvasId: targetCanvasId
+                };
+                newBlocksToAdd.push(reflectionBlock);
+            }
+        });
+
+        setBlocks(prev => {
+            const next = [...prev, ...newBlocksToAdd];
+            if (typeof syncBlocks === 'function') syncBlocks(next);
+            return next;
+        });
+
+        if (newLinksToAdd.length > 0) {
+            setLinks(prev => {
+                const next = [...prev, ...newLinksToAdd];
+                if (typeof syncLinks === 'function') syncLinks(next);
+                return next;
+            });
+        }
+    };
+
     const spawnMilanoteBlock = (type, overrides = {}) => {
         const jitterX = (Math.random() - 0.5) * 90;
         const jitterY = (Math.random() - 0.5) * 70;
@@ -17708,6 +17869,7 @@ ${afcMapContext}
                                     defaultValue: b.content || '',
                                     fontFamily: b.fontFamily || 'outfit',
                                     fontSize: b.fontSize || 64,
+                                    fontWeight: b.fontWeight || '800',
                                     color: b.color || '#ffffff',
                                     hasStroke: b.hasStroke !== undefined ? b.hasStroke : true,
                                     strokeWidth: b.strokeWidth !== undefined ? b.strokeWidth : 2.5,
@@ -17726,6 +17888,7 @@ ${afcMapContext}
                                             content: text.trim(),
                                             fontFamily: data.fontFamily || b.fontFamily || 'outfit',
                                             fontSize: data.fontSize || b.fontSize || 64,
+                                            fontWeight: data.fontWeight || b.fontWeight || '800',
                                             color: data.color || b.color || '#ffffff',
                                             hasStroke: data.hasStroke !== undefined ? data.hasStroke : (b.hasStroke !== undefined ? b.hasStroke : true),
                                             strokeWidth: data.strokeWidth !== undefined ? data.strokeWidth : (b.strokeWidth !== undefined ? b.strokeWidth : 2.5),
@@ -18005,7 +18168,7 @@ ${afcMapContext}
 
                     {/* DOCK PRINCIPAL INFERIOR */}
                     <div
-                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-1.5 sm:px-3 sm:py-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-0.5 sm:gap-1.5 pointer-events-auto w-max max-w-[96vw] overflow-x-auto no-scrollbar scale-95 sm:scale-100 origin-bottom"
+                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-1.5 sm:px-3 sm:py-2 rounded-[22px] sm:rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-0.5 sm:gap-1.5 pointer-events-auto w-max max-w-[96vw] overflow-x-auto no-scrollbar scale-95 sm:scale-100 origin-bottom"
                         style={{
                             bottom: window.innerWidth >= 768 ? '24px' : '14px'
                         }}
@@ -18015,7 +18178,7 @@ ${afcMapContext}
                     >
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }}
-                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-accent/20 border-accent text-accent' : 'bg-white/[0.03] border-accent/40 text-accent hover:bg-accent/15'}`}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-accent/20 border-accent text-accent' : 'bg-white/[0.03] border-accent/40 text-accent hover:bg-accent/15'}`}
                             title="Bitácora Existencial"
                         >
                             {isBitacoraOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
@@ -18023,7 +18186,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Crear Nota"
                         >
                             <Pencil size={15} />
@@ -18031,7 +18194,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Chat IA"
                         >
                             <MessageSquare size={15} />
@@ -18039,7 +18202,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Ruido"
                         >
                             <Sparkles size={15} />
@@ -18047,7 +18210,7 @@ ${afcMapContext}
 
                         <button
                             onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-accent/15 border border-accent/40 hover:bg-accent/25 flex items-center justify-center text-accent shadow-[0_0_18px_rgba(var(--accent-rgb),0.25)] transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl bg-accent/15 border border-accent/40 hover:bg-accent/25 flex items-center justify-center text-accent shadow-[0_0_18px_rgba(var(--accent-rgb),0.25)] transition-all"
                             title="Publicar en Feed"
                         >
                             <Activity size={15} />
@@ -18057,7 +18220,7 @@ ${afcMapContext}
 
                         <button
                             onClick={triggerCanvasImageUpload}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Añadir Imagen al Lienzo"
                         >
                             <Paperclip size={15} />
@@ -18107,7 +18270,7 @@ ${afcMapContext}
                                 };
                                 fileInput.click();
                             }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Añadir Audio al Lienzo"
                         >
                             <Headphones size={15} />
@@ -18115,7 +18278,7 @@ ${afcMapContext}
 
                         <button
                             onClick={toggleCanvasRecording}
-                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
                             title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
                         >
                             <Mic size={15} />
@@ -18168,17 +18331,25 @@ ${afcMapContext}
                                     }
                                 });
                             }}
-                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Añadir Título al Pizarrón"
                         >
                             <Type size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => setIsMapStructureModalOpen(true)}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Estructurador de Mapa por Puntos (Cartografía)"
+                        >
+                            <Workflow size={15} />
                         </button>
 
                         <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
 
                         <button
                             onClick={() => setIsMilanoteToolsOpen(prev => !prev)}
-                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/10 text-white ring-2 ring-white shadow-[0_0_16px_rgba(255,255,255,0.25)]' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/10 text-white ring-2 ring-white shadow-[0_0_16px_rgba(255,255,255,0.25)]' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
                             title="Más herramientas (Milanote)"
                         >
                             <MoreHorizontal size={16} />
@@ -18187,7 +18358,7 @@ ${afcMapContext}
 
                     {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM */}
                     <div
-                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
+                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
                     >
@@ -21499,7 +21670,7 @@ ${afcMapContext}
                 <div
                     onTouchStart={handleNavbarTouchStart}
                     onTouchEnd={handleNavbarTouchEnd}
-                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-full shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && (view === 'feed' || view === 'profile')) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
+                    className={`fixed left-1/2 -translate-x-1/2 z-[2000] flex items-center gap-1.5 p-1.5 sm:gap-2 sm:px-3 sm:py-2 bg-[#111215]/92 backdrop-blur-xl border border-white/[0.08] rounded-[22px] sm:rounded-[24px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] w-max max-w-[98vw] overflow-x-auto no-scrollbar animate-in duration-500 scale-[0.85] sm:scale-100 origin-top transition-all ${(window.innerWidth < 768 && typeof document !== 'undefined' && document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && (maxHeight - viewportStats.visualHeight) > 150) ? '-translate-y-[200%] opacity-0 pointer-events-none' : (isNavbarHidden && (view === 'feed' || view === 'profile')) ? '-translate-y-[200%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 pointer-events-auto'}`}
                     style={{ top: 'max(14px, calc(env(safe-area-inset-top) + 10px))' }}
                 >
                     {/* 1. Perfil */}
@@ -21517,7 +21688,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('profile');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'profile' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Perfil"
                     >
                         <User size={15} />
@@ -21538,7 +21709,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('my_responses');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'my_responses' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Mi Expediente"
                     >
                         <RefreshCw size={15} />
@@ -21559,7 +21730,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('canvas');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_22px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'canvas' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_22px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Lienzo Principal"
                     >
                         <Pencil size={15} />
@@ -21580,7 +21751,7 @@ ${afcMapContext}
                             setPublicProfileUser(null);
                             setView('feed');
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border shrink-0 ${view === 'feed' && !activeNotebook && !isChatOpen && !isSimpleNotesOpen && !isComposerOpen && !isPublishSelectorOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Feed Público"
                     >
                         <Home size={15} />
@@ -21594,7 +21765,7 @@ ${afcMapContext}
                             setDirectMessageContext('');
                             setIsDirectMessagesOpen(true);
                         }}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border shrink-0 ${isDirectMessagesOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border shrink-0 ${isDirectMessagesOpen ? 'bg-accent text-white border-accent shadow-[0_0_20px_rgba(var(--accent-rgb),0.45)]' : 'bg-[#18191d] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-[#23252a]'}`}
                         title="Mensajes Directos / Chat"
                     >
                         <MessageCircle size={15} />
@@ -21862,6 +22033,18 @@ ${afcMapContext}
                             fetch(`${API_URL}/api/oasis/feed/${cleanId}`, { method: 'DELETE' }).catch(console.error);
                         }
                     }}
+                />
+            )}
+
+            {isMapStructureModalOpen && (
+                <MapStructureGeneratorModal
+                    isOpen={isMapStructureModalOpen}
+                    onClose={() => setIsMapStructureModalOpen(false)}
+                    onGenerateMap={handleGenerateStructuredMap}
+                    cam={cam}
+                    accent={accent}
+                    apiUrl={API_URL}
+                    deepseekKey={deepseekKey}
                 />
             )}
 

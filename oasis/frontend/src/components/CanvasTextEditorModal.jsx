@@ -36,6 +36,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
     const [content, setContent] = useState(titlePrompt.defaultValue || initialBlock.content || '');
     const [fontFamily, setFontFamily] = useState(titlePrompt.fontFamily || initialBlock.fontFamily || 'outfit');
     const [fontSize, setFontSize] = useState(titlePrompt.fontSize || initialBlock.fontSize || 64);
+    const [fontWeight, setFontWeight] = useState(titlePrompt.fontWeight || initialBlock.fontWeight || '800');
     const [color, setColor] = useState(titlePrompt.color || initialBlock.color || '#ffffff');
     const [hasStroke, setHasStroke] = useState(
         titlePrompt.hasStroke !== undefined ? titlePrompt.hasStroke : (initialBlock.hasStroke !== undefined ? initialBlock.hasStroke : true)
@@ -62,6 +63,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
             content: content.trim(),
             fontFamily,
             fontSize: Number(fontSize),
+            fontWeight,
             color,
             hasStroke,
             strokeWidth: Number(strokeWidth),
@@ -144,7 +146,7 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
                                 style={{
                                     fontFamily: currentFontCSS,
                                     fontSize: `${Math.min(fontSize, 56)}px`,
-                                    fontWeight: '800',
+                                    fontWeight: fontWeight || '800',
                                     color: color,
                                     WebkitTextFillColor: color,
                                     paintOrder: 'stroke fill',
@@ -190,6 +192,45 @@ export default function CanvasTextEditorModal({ titlePrompt, onClose, accent = '
                                         {font.label}
                                     </span>
                                     <span className="text-[10px] text-zinc-500">{font.category}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* GROSOR DE TEXTO (FONT WEIGHT - NORMAL / NEGRITA) */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Grosor del Texto</label>
+                            <span className="text-xs text-accent font-medium">
+                                {fontWeight === '400' ? 'Sin Negrita (Normal)' : (fontWeight === '600' ? 'Seminegrita' : 'Negrita (Bold)')}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { label: 'Sin Negrita (Normal)', val: '400' },
+                                { label: 'Seminegrita', val: '600' },
+                                { label: 'Negrita (Bold)', val: '800' }
+                            ].map((wPreset) => (
+                                <button
+                                    key={wPreset.val}
+                                    type="button"
+                                    onClick={() => {
+                                        setFontWeight(wPreset.val);
+                                        if (wPreset.val === '400') {
+                                            setHasStroke(false);
+                                        } else if (wPreset.val === '800') {
+                                            setHasStroke(true);
+                                        }
+                                    }}
+                                    className={`py-2 px-3 rounded-xl border text-center transition-all ${
+                                        fontWeight === wPreset.val
+                                            ? 'bg-accent/20 border-accent text-white shadow-sm'
+                                            : 'bg-black/30 border-white/5 text-zinc-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <span className={`text-xs block ${wPreset.val === '400' ? 'font-normal' : (wPreset.val === '600' ? 'font-semibold' : 'font-black')}`}>
+                                        {wPreset.label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
