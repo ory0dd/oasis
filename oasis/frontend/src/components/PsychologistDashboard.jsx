@@ -6027,6 +6027,24 @@ Devuelve estrictamente el JSON sin formato extra.
                                         <Activity size={12} />
                                         <span>Contrastar Info Nueva</span>
                                     </button>
+                                    <div className="grid grid-cols-2 gap-1 pt-0.5">
+                                        <button
+                                            onClick={() => dispatchMapCommand({ action: 'optimal_path' })}
+                                            className="px-2.5 py-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-[11px] text-purple-300 flex items-center justify-center gap-1.5 transition-all font-semibold"
+                                            title="Visualizar y recorrer el camino clínico causal óptimo"
+                                        >
+                                            <Sparkles size={12} className="text-purple-400" />
+                                            <span>Mejor Camino</span>
+                                        </button>
+                                        <button
+                                            onClick={() => dispatchMapCommand({ action: 'organize_optimal' })}
+                                            className="px-2.5 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-[11px] text-amber-300 flex items-center justify-center gap-1.5 transition-all font-semibold"
+                                            title="Organizar y desenredar el mapa alineando los nodos según el flujo óptimo"
+                                        >
+                                            <Zap size={12} className="text-amber-400" />
+                                            <span>Organizar Flujo</span>
+                                        </button>
+                                    </div>
                                     <div className="grid grid-cols-3 gap-1 pt-0.5">
                                         <button
                                             onClick={() => dispatchMapCommand({ action: 'reorganize' })}

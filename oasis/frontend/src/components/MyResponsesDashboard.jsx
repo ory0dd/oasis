@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, ArrowLeft, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Menu } from 'lucide-react';
+import {Settings, Aperture, Edit2, Activity, ChevronLeft, ChevronRight, ShieldAlert, Sparkles, Brain, Clock, Focus, Target, CheckCircle2, Heart, MessageCircle, AlertTriangle, ArrowRight, ArrowLeft, X, ChevronDown, ChevronUp, Lock, Network, Maximize2, Minimize2, FileText, ZoomIn, ZoomOut, Move, RotateCw, Key, Compass, Play, Check, Pin, Save, Trash2, MessageSquare, Copy, Eye, Menu, Zap } from 'lucide-react';
 import { BIO_QUESTIONS } from './BiographicInterview';
 import ClinicalTracker from './ClinicalTracker';
 import { safeJSONParse } from '../utils/jsonParser';
@@ -1246,6 +1246,372 @@ export const getClinicalLayerIndex = (n) => {
     return 2;
 };
 
+
+export const computeOptimalPath = (rawNodes, rawEdges = [], focusNode = null) => {
+    if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) {
+        return { pathNodes: [], pathNodeIds: new Set(), pathEdgeKeys: new Set(), stepMap: {} };
+    }
+
+    const nodeMap = new Map();
+    rawNodes.forEach(n => { if (n && n.id) nodeMap.set(n.id, n); });
+
+    const adj = new Map();
+    const radj = new Map();
+    rawNodes.forEach(n => {
+        if (n && n.id) {
+            adj.set(n.id, []);
+            radj.set(n.id, []);
+        }
+    });
+
+    (rawEdges || []).forEach(e => {
+        if (e && e.source && e.target && nodeMap.has(e.source) && nodeMap.has(e.target)) {
+            adj.get(e.source).push({ target: e.target, edge: e });
+            radj.get(e.target).push({ source: e.source, edge: e });
+        }
+    });
+
+    const degrees = new Map();
+    rawNodes.forEach(n => {
+        if (n && n.id) {
+            const deg = (adj.get(n.id)?.length || 0) + (radj.get(n.id)?.length || 0);
+            degrees.set(n.id, deg);
+        }
+    });
+
+    const getEdgeScore = (srcId, tgtId, edge) => {
+        const srcNode = nodeMap.get(srcId);
+        const tgtNode = nodeMap.get(tgtId);
+        if (!srcNode || !tgtNode) return 0;
+        const srcLayer = getClinicalLayerIndex(srcNode);
+        const tgtLayer = getClinicalLayerIndex(tgtNode);
+        const weight = Number(edge?.weight) || 1;
+        const hubBonus = (srcNode.is_island_hub ? 3 : 0) + (tgtNode.is_island_hub ? 3 : 0);
+        const layerProgressionBonus = tgtLayer > srcLayer ? (tgtLayer - srcLayer) * 4 : (tgtLayer === srcLayer ? 1 : -5);
+        return weight * 2 + hubBonus + (degrees.get(srcId) || 0) * 0.5 + (degrees.get(tgtId) || 0) * 0.5 + layerProgressionBonus;
+    };
+
+    let optimalPathIds = [];
+
+    if (focusNode && nodeMap.has(focusNode.id)) {
+        // Trace backward from focusNode to root
+        const backMemo = new Map();
+        const getBackward = (currId, visited) => {
+            if (backMemo.has(currId)) return backMemo.get(currId);
+            const currLayer = getClinicalLayerIndex(nodeMap.get(currId));
+            let bestScore = degrees.get(currId) || 0;
+            let bestSubPath = [currId];
+
+            const preds = radj.get(currId) || [];
+            for (const { source: prevId, edge } of preds) {
+                if (visited.has(prevId)) continue;
+                const prevNode = nodeMap.get(prevId);
+                if (!prevNode) continue;
+                const prevLayer = getClinicalLayerIndex(prevNode);
+                if (prevLayer <= currLayer) {
+                    const edgeScore = getEdgeScore(prevId, currId, edge);
+                    const nextVisited = new Set(visited).add(prevId);
+                    const { score: subScore, path: subPath } = getBackward(prevId, nextVisited);
+                    const totalScore = subScore + edgeScore;
+                    if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestSubPath = [...subPath, currId];
+                    }
+                }
+            }
+            const res = { score: bestScore, path: bestSubPath };
+            backMemo.set(currId, res);
+            return res;
+        };
+
+        // Trace forward from focusNode to sink
+        const fwdMemo = new Map();
+        const getForward = (currId, visited) => {
+            if (fwdMemo.has(currId)) return fwdMemo.get(currId);
+            const currLayer = getClinicalLayerIndex(nodeMap.get(currId));
+            let bestScore = degrees.get(currId) || 0;
+            let bestSubPath = [currId];
+
+            const succs = adj.get(currId) || [];
+            for (const { target: nextId, edge } of succs) {
+                if (visited.has(nextId)) continue;
+                const nextNode = nodeMap.get(nextId);
+                if (!nextNode) continue;
+                const nextLayer = getClinicalLayerIndex(nextNode);
+                if (nextLayer >= currLayer) {
+                    const edgeScore = getEdgeScore(currId, nextId, edge);
+                    const nextVisited = new Set(visited).add(nextId);
+                    const { score: subScore, path: subPath } = getForward(nextId, nextVisited);
+                    const totalScore = subScore + edgeScore;
+                    if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestSubPath = [currId, ...subPath];
+                    }
+                }
+            }
+            const res = { score: bestScore, path: bestSubPath };
+            fwdMemo.set(currId, res);
+            return res;
+        };
+
+        const { path: backPath } = getBackward(focusNode.id, new Set([focusNode.id]));
+        const { path: fwdPath } = getForward(focusNode.id, new Set([focusNode.id]));
+        optimalPathIds = [...backPath.slice(0, -1), ...fwdPath];
+    } else {
+        // Global optimal path across the clinical layers 0 -> 5
+        const memo = new Map();
+        const findLongestForward = (currId, visited) => {
+            const state = `${currId}_${visited.size}`;
+            if (memo.has(state)) return memo.get(state);
+
+            const currNode = nodeMap.get(currId);
+            const currLayer = getClinicalLayerIndex(currNode);
+            let bestScore = (degrees.get(currId) || 0) + (currNode?.is_island_hub ? 6 : 0);
+            let bestSubPath = [currId];
+
+            const succs = adj.get(currId) || [];
+            for (const { target: nextId, edge } of succs) {
+                if (visited.has(nextId)) continue;
+                const nextNode = nodeMap.get(nextId);
+                if (!nextNode) continue;
+                const nextLayer = getClinicalLayerIndex(nextNode);
+                if (nextLayer >= currLayer) {
+                    const edgeScore = getEdgeScore(currId, nextId, edge);
+                    const nextVisited = new Set(visited).add(nextId);
+                    const { score: subScore, path: subPath } = findLongestForward(nextId, nextVisited);
+                    const totalScore = subScore + edgeScore;
+                    if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestSubPath = [currId, ...subPath];
+                    }
+                }
+            }
+            const res = { score: bestScore, path: bestSubPath };
+            memo.set(state, res);
+            return res;
+        };
+
+        const minLayer = Math.min(...rawNodes.map(n => getClinicalLayerIndex(n)));
+        let startCandidates = rawNodes.filter(n => getClinicalLayerIndex(n) === minLayer);
+        if (startCandidates.length === 0) startCandidates = rawNodes;
+
+        let bestGlobalScore = -1;
+        for (const startNode of startCandidates) {
+            const { score, path } = findLongestForward(startNode.id, new Set([startNode.id]));
+            if (score > bestGlobalScore && path.length > 1) {
+                bestGlobalScore = score;
+                optimalPathIds = path;
+            }
+        }
+        if (optimalPathIds.length === 0 && rawNodes.length > 0) {
+            optimalPathIds = [rawNodes[0].id];
+        }
+    }
+
+    const pathNodes = optimalPathIds.map(id => nodeMap.get(id)).filter(Boolean);
+    const pathNodeIds = new Set(pathNodes.map(n => n.id));
+
+    const pathEdgeKeys = new Set();
+    for (let i = 0; i < pathNodes.length - 1; i++) {
+        const u = pathNodes[i].id;
+        const v = pathNodes[i + 1].id;
+        pathEdgeKeys.add(`${u}->${v}`);
+        pathEdgeKeys.add(`${u}-${v}`);
+    }
+
+    // Feedback loop edge from terminal node back to early stage
+    if (pathNodes.length > 2) {
+        const lastId = pathNodes[pathNodes.length - 1].id;
+        const outFromLast = adj.get(lastId) || [];
+        for (const { target: loopTargetId } of outFromLast) {
+            if (pathNodeIds.has(loopTargetId) && loopTargetId !== lastId) {
+                pathEdgeKeys.add(`${lastId}->${loopTargetId}`);
+                pathEdgeKeys.add(`${lastId}-${loopTargetId}`);
+                break;
+            }
+        }
+    }
+
+    const stepMap = {};
+    pathNodes.forEach((n, idx) => {
+        stepMap[n.id] = idx + 1;
+    });
+
+    return { pathNodes, pathNodeIds, pathEdgeKeys, stepMap };
+};
+
+export const layoutOptimalPathNodes = (rawNodes, rawEdges = [], optimalPathIds = new Set(), user = null, bioData = null, phenomData = null) => {
+    if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) return [];
+
+    const isFakeOrCoachingNode = (n) => {
+        if (!n || !n.label) return true;
+        const l = (n.label || '').toLowerCase();
+        const d = (n.description || '').toLowerCase();
+        if (l.includes('pivote') || l.startsWith('valor:')) return true;
+        if (l.includes('revisar chat') || d.includes('revisar chat') || d.includes('chat de tu pareja') || d.includes('chat compulsivamente')) return true;
+        if (l.includes('callar desacuerdos con pareja') || d.includes('desacuerdos con pareja')) return true;
+        return false;
+    };
+
+    const sanitizedNodes = rawNodes.filter(n => !isFakeOrCoachingNode(n));
+
+    const newNodes = enrichAfcNodesWithPerspectiveMetadata(
+        sanitizedNodes.map(n => {
+            const clean = { ...n, label: n.is_corrected ? n.label : softenNodeLabel(n.label) };
+            delete clean.is_value;
+            return clean;
+        }),
+        user,
+        bioData,
+        phenomData,
+        rawEdges
+    );
+
+    const pathIds = optimalPathIds instanceof Set ? optimalPathIds : new Set(optimalPathIds || []);
+
+    const columnConfig = [
+        { baseX: 12.0, baseY: 50.0, minX: 6.0, maxX: 18.0 },
+        { baseX: 27.0, baseY: 48.0, minX: 21.0, maxX: 33.0 },
+        { baseX: 42.0, baseY: 50.0, minX: 36.0, maxX: 48.0 },
+        { baseX: 57.0, baseY: 50.0, minX: 51.0, maxX: 63.0 },
+        { baseX: 72.0, baseY: 50.0, minX: 66.0, maxX: 78.0 },
+        { baseX: 87.0, baseY: 50.0, minX: 81.0, maxX: 93.0 }
+    ];
+
+    const nodeMap = new Map();
+    newNodes.forEach(n => nodeMap.set(n.id, n));
+
+    const colNodes = [[], [], [], [], [], []];
+    newNodes.forEach(n => {
+        const l = getClinicalLayerIndex(n);
+        colNodes[l].push(n);
+    });
+
+    const adj = new Map();
+    newNodes.forEach(n => adj.set(n.id, []));
+    (rawEdges || []).forEach(e => {
+        if (e && e.source && e.target && nodeMap.has(e.source) && nodeMap.has(e.target)) {
+            adj.get(e.source).push(e.target);
+            adj.get(e.target).push(e.source);
+        }
+    });
+
+    // 1. Initial vertical distribution
+    for (let colIdx = 0; colIdx < 6; colIdx++) {
+        const list = colNodes[colIdx];
+        if (!list || list.length === 0) continue;
+        const cfg = columnConfig[colIdx];
+        const count = list.length;
+        const step = Math.min(18.0, 60.0 / Math.max(1, count));
+        const startY = cfg.baseY - ((count - 1) * step) / 2.0;
+
+        list.forEach((n, idx) => {
+            n.x = cfg.baseX;
+            n.y = Math.max(14.0, Math.min(86.0, startY + idx * step));
+        });
+    }
+
+    // 2. Multi-pass Barycentric Sweep (Forward & Backward) to eliminate edge crossings
+    for (let it = 0; it < 6; it++) {
+        // Forward Sweep (Cols 1 to 5)
+        for (let colIdx = 1; colIdx < 6; colIdx++) {
+            const list = colNodes[colIdx];
+            if (!list || list.length === 0) continue;
+            list.forEach(n => {
+                const nbrs = (adj.get(n.id) || []).map(id => nodeMap.get(id)).filter(Boolean);
+                const prevNbrs = nbrs.filter(nb => getClinicalLayerIndex(nb) < colIdx);
+                if (prevNbrs.length > 0) {
+                    const avgY = prevNbrs.reduce((acc, nb) => acc + nb.y, 0) / prevNbrs.length;
+                    n._idealY = pathIds.has(n.id) ? (avgY * 0.4 + 50.0 * 0.6) : avgY;
+                } else {
+                    n._idealY = pathIds.has(n.id) ? 50.0 : n.y;
+                }
+            });
+
+            list.sort((a, b) => (a._idealY ?? 50) - (b._idealY ?? 50));
+            const count = list.length;
+            const step = Math.min(18.0, 64.0 / Math.max(1, count));
+            const startY = 50.0 - ((count - 1) * step) / 2.0;
+            const avgIdeal = list.reduce((acc, n) => acc + (n._idealY ?? 50), 0) / count;
+            const shiftY = Math.max(-14.0, Math.min(14.0, avgIdeal - 50.0));
+
+            list.forEach((n, idx) => {
+                n.y = Math.max(14.0, Math.min(86.0, startY + shiftY + idx * step));
+            });
+        }
+
+        // Backward Sweep (Cols 4 down to 0)
+        for (let colIdx = 4; colIdx >= 0; colIdx--) {
+            const list = colNodes[colIdx];
+            if (!list || list.length === 0) continue;
+            list.forEach(n => {
+                const nbrs = (adj.get(n.id) || []).map(id => nodeMap.get(id)).filter(Boolean);
+                const nextNbrs = nbrs.filter(nb => getClinicalLayerIndex(nb) > colIdx);
+                if (nextNbrs.length > 0) {
+                    const avgY = nextNbrs.reduce((acc, nb) => acc + nb.y, 0) / nextNbrs.length;
+                    n._idealY = pathIds.has(n.id) ? (avgY * 0.4 + 50.0 * 0.6) : avgY;
+                } else {
+                    n._idealY = pathIds.has(n.id) ? 50.0 : n.y;
+                }
+            });
+
+            list.sort((a, b) => (a._idealY ?? 50) - (b._idealY ?? 50));
+            const count = list.length;
+            const step = Math.min(18.0, 64.0 / Math.max(1, count));
+            const startY = 50.0 - ((count - 1) * step) / 2.0;
+            const avgIdeal = list.reduce((acc, n) => acc + (n._idealY ?? 50), 0) / count;
+            const shiftY = Math.max(-14.0, Math.min(14.0, avgIdeal - 50.0));
+
+            list.forEach((n, idx) => {
+                n.y = Math.max(14.0, Math.min(86.0, startY + shiftY + idx * step));
+            });
+        }
+    }
+
+    // 3. Anchor optimal path nodes along the central axis
+    for (let colIdx = 0; colIdx < 6; colIdx++) {
+        const list = colNodes[colIdx];
+        if (!list || list.length === 0) continue;
+        const cfg = columnConfig[colIdx];
+
+        list.forEach((n, idx) => {
+            if (pathIds.has(n.id)) {
+                if (colIdx === 2) {
+                    const isPhys = n.type === 'physiological' || n.clinical_role === 'physiological';
+                    n.y = isPhys ? 60.0 : 40.0;
+                } else {
+                    n.y = Math.max(38.0, Math.min(62.0, n.y));
+                }
+                n.x = cfg.baseX;
+            } else {
+                const xOffset = (idx % 2 === 0 ? -2.2 : 2.2);
+                n.x = Math.max(cfg.minX, Math.min(cfg.maxX, cfg.baseX + (list.length > 1 ? xOffset : 0)));
+            }
+            delete n._idealY;
+        });
+    }
+
+    // 4. Fine collision relaxation
+    const minDy = 7.0;
+    for (let colIdx = 0; colIdx < 6; colIdx++) {
+        const list = colNodes[colIdx];
+        if (list.length <= 1) continue;
+        list.sort((a, b) => a.y - b.y);
+        for (let i = 0; i < list.length - 1; i++) {
+            const n1 = list[i];
+            const n2 = list[i + 1];
+            const overlap = minDy - (n2.y - n1.y);
+            if (overlap > 0) {
+                const shift = overlap / 2;
+                n1.y = Math.max(12.0, n1.y - shift);
+                n2.y = Math.min(88.0, n2.y + shift);
+            }
+        }
+    }
+
+    return newNodes;
+};
+
 export const layoutClinicalNodes = (rawNodes, rawEdges = [], user = null, bioData = null, phenomData = null) => {
     if (!rawNodes || !Array.isArray(rawNodes) || rawNodes.length === 0) return [];
 
@@ -2351,6 +2717,7 @@ Devuelve estrictamente el JSON sin formato extra.
     const [mapViewTab, setMapViewTab] = useState('map'); // 'map', 'loop', 'exit_keys', 'avances'
     const [isMapMenuOpen, setIsMapMenuOpen] = useState(false);
     const [selectedNode, setSelectedNode] = useState(null);
+    const [isOptimalPathMode, setIsOptimalPathMode] = useState(false);
     const [lifeUpdateText, setLifeUpdateText] = useState("");
     const [isUpdatingMap, setIsUpdatingMap] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -3414,6 +3781,17 @@ ESTRUCTURA JSON OBLIGATORIA:
 
         return { nodesToRender: nodes, edgesToRender: edges };
     }, [afcData, activeSpot, solidifyingBlindSpotId, user]);
+
+    // Reactive optimal pathway computation (adapts when selectedNode or graph changes)
+    const optimalPathResult = useMemo(() => {
+        const nodes = Array.isArray(nodesToRender) ? nodesToRender : [];
+        const edges = Array.isArray(edgesToRender) ? edgesToRender : [];
+        if (nodes.length === 0) {
+            return { pathNodes: [], pathNodeIds: new Set(), pathEdgeKeys: new Set(), stepMap: {} };
+        }
+        return computeOptimalPath(nodes, edges, selectedNode);
+    }, [nodesToRender, edgesToRender, selectedNode?.id]);
+
 
     // Map Interaction State
     const [mapTransform, setMapTransform] = useState({ x: 0, y: 0, scale: 0.2 });
@@ -7041,6 +7419,31 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
 
     /* Removed old resetMapTransform */
 
+    
+    const organizeByOptimalPath = useCallback((inputNodes = null) => {
+        const isArray = Array.isArray(inputNodes);
+        const currentNodes = isArray ? inputNodes : (afcData ? afcData.nodes : null);
+        const edges = (afcData && afcData.edges) || [];
+        if (!currentNodes || currentNodes.length === 0) return isArray ? inputNodes : [];
+
+        const opt = computeOptimalPath(currentNodes, edges, selectedNode);
+        const resolvedNodes = layoutOptimalPathNodes(currentNodes, edges, opt.pathNodeIds, user, bioData, phenomData);
+        const validNodeIds = new Set(resolvedNodes.map(n => n.id));
+        const cleanEdges = edges.filter(e => e && validNodeIds.has(e.source) && validNodeIds.has(e.target));
+
+        if (!isArray) {
+            const updated = { ...afcData, nodes: resolvedNodes, edges: cleanEdges, layout_version: 10 };
+            setAfcData(updated);
+            if (user) {
+                setLocalItem(`oasis_afc_real_data_${user}`, JSON.stringify(updated));
+            }
+            triggerProgrammaticTransition();
+            setTimeout(() => resetMapTransform(isMobileDevice ? 'readable' : 'overview', resolvedNodes), 60);
+        }
+
+        return resolvedNodes;
+    }, [afcData, selectedNode, user, bioData, phenomData, triggerProgrammaticTransition, resetMapTransform, isMobileDevice]);
+
     const reorganizeNodes = useCallback((inputNodes = null) => {
         const isArray = Array.isArray(inputNodes);
         const currentNodes = isArray ? inputNodes : (afcData ? afcData.nodes : null);
@@ -7080,7 +7483,14 @@ Devuelve ÚNICAMENTE un objeto JSON con esta estructura:
             } else if (detail.action === 'contrast') {
                 setViewMode('dashboard');
                 handleGenerateMap(null, true);
-            } else if (detail.action === 'reorganize') {
+            } else if (detail.action === 'reorganize' || detail.action === 'organize_optimal') {
+                setViewMode('dashboard');
+                setMapViewTab('map');
+                organizeByOptimalPath();
+            } else if (detail.action === 'optimal_path') {
+                setViewMode('dashboard');
+                setMapViewTab('map');
+                setIsOptimalPathMode(prev => !prev);
                 setViewMode('dashboard');
                 setMapViewTab('map');
                 reorganizeNodes();
@@ -8440,17 +8850,18 @@ Devuelve estrictamente el JSON sin formato extra.
                                 style={{ display: 'none' }}
                             />
 
-                            {/* Standalone Minimalist Menu Button (when not inside PsychologistDashboard, which has its own unified menu button at top-4 left-4) */}
+                            {/* Standalone Minimalist Menu & Path Controls */}
                             {!isEmbedded && (
-                                <div className="absolute top-4 left-4 z-[250] pointer-events-auto">
-                                    <button
-                                        onClick={() => setIsMapMenuOpen(prev => !prev)}
-                                        className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
-                                        title="Menú de apartados"
-                                    >
-                                        <Menu size={14} />
-                                        <span>menú</span>
-                                    </button>
+                                <div className="absolute top-4 left-4 z-[250] pointer-events-auto flex items-center gap-2">
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsMapMenuOpen(prev => !prev)}
+                                            className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
+                                            title="Menú de apartados"
+                                        >
+                                            <Menu size={14} />
+                                            <span>menú</span>
+                                        </button>
 
                                     {isMapMenuOpen && (
                                         <div className="mt-2 w-56 rounded-xl bg-[#08080a]/95 border border-white/10 backdrop-blur-xl shadow-2xl p-2 font-mono text-xs text-zinc-300 space-y-1">
@@ -8500,6 +8911,20 @@ Devuelve estrictamente el JSON sin formato extra.
                                                 </button>
                                             )}
                                             <button
+                                                onClick={() => { setIsMapMenuOpen(false); setIsOptimalPathMode(prev => !prev); }}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-purple-300 hover:text-purple-200 transition-colors"
+                                            >
+                                                <Sparkles size={13} />
+                                                <span>{isOptimalPathMode ? 'ocultar mejor camino' : 'ver mejor camino'}</span>
+                                            </button>
+                                            <button
+                                                onClick={() => { setIsMapMenuOpen(false); organizeByOptimalPath(); }}
+                                                className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-amber-300 hover:text-amber-200 transition-colors"
+                                            >
+                                                <Zap size={13} />
+                                                <span>organizar por camino</span>
+                                            </button>
+                                            <button
                                                 onClick={() => { setIsMapMenuOpen(false); reorganizeNodes(); }}
                                                 className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
                                             >
@@ -8515,6 +8940,56 @@ Devuelve estrictamente el JSON sin formato extra.
                                             </button>
                                         </div>
                                     )}
+                                    </div>
+
+                                    <button
+                                        onClick={() => setIsOptimalPathMode(prev => !prev)}
+                                        className={`px-3 py-1.5 rounded-lg border font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer ${
+                                            isOptimalPathMode
+                                                ? 'bg-purple-950/90 border-purple-500/50 text-purple-200 shadow-purple-950/50 ring-1 ring-purple-500/30'
+                                                : 'bg-zinc-950/90 hover:bg-zinc-900 border-white/10 hover:border-white/20 text-zinc-300 hover:text-white'
+                                        }`}
+                                        title="Visualizar y recorrer el camino causal óptimo del bucle"
+                                    >
+                                        <Sparkles size={13} className={isOptimalPathMode ? 'text-purple-400 animate-pulse' : 'text-zinc-400'} />
+                                        <span>{isOptimalPathMode ? 'camino activo' : 'mejor camino'}</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => organizeByOptimalPath()}
+                                        className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
+                                        title="Organizar y desenredar el mapa alineando los nodos según el flujo óptimo"
+                                    >
+                                        <Zap size={13} className="text-amber-400" />
+                                        <span>organizar camino</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Embedded View Floating Actions (when inside PsychologistDashboard) */}
+                            {isEmbedded && (
+                                <div className="absolute top-4 left-28 z-[250] pointer-events-auto flex items-center gap-2">
+                                    <button
+                                        onClick={() => setIsOptimalPathMode(prev => !prev)}
+                                        className={`px-3 py-1.5 rounded-lg border font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer ${
+                                            isOptimalPathMode
+                                                ? 'bg-purple-950/90 border-purple-500/50 text-purple-200 shadow-purple-950/50 ring-1 ring-purple-500/30'
+                                                : 'bg-zinc-950/90 hover:bg-zinc-900 border-white/10 hover:border-white/20 text-zinc-300 hover:text-white'
+                                        }`}
+                                        title="Visualizar y recorrer el camino causal óptimo del bucle"
+                                    >
+                                        <Sparkles size={13} className={isOptimalPathMode ? 'text-purple-400 animate-pulse' : 'text-zinc-400'} />
+                                        <span>{isOptimalPathMode ? 'camino activo' : 'mejor camino'}</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => organizeByOptimalPath()}
+                                        className="px-3 py-1.5 rounded-lg bg-zinc-950/90 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white font-mono text-xs transition-all flex items-center gap-2 shadow-lg backdrop-blur-md cursor-pointer"
+                                        title="Organizar y desenredar el mapa alineando los nodos según el flujo óptimo"
+                                    >
+                                        <Zap size={13} className="text-amber-400" />
+                                        <span>organizar camino</span>
+                                    </button>
                                 </div>
                             )}
 
@@ -8646,6 +9121,9 @@ Devuelve estrictamente el JSON sin formato extra.
                                             <marker id="arrowhead-feedback" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                                                 <path d="M 0 0.5 L 7 4 L 0 7.5 Q 1.8 4 0 0.5 Z" fill="#c084fc" />
                                             </marker>
+                                            <marker id="arrowhead-optimal" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+                                                <path d="M 0 0.5 L 8 4.5 L 0 8.5 Q 2.2 4.5 0 0.5 Z" fill="#c084fc" />
+                                            </marker>
                                         </defs>
                                         {finalEdgesToRender.map((edge, i) => {
                                             const source = nodesToRender.find(n => n.id === edge.source);
@@ -8704,6 +9182,10 @@ Devuelve estrictamente el JSON sin formato extra.
                                             const isHighlighted = (activeNodeId && (isIncoming || isOutgoing)) || isEdgeInPattern;
                                             const isAnyNodeSelected = !!activeNodeId || !!selectedPatternId;
 
+                                            const edgeKey1 = `${source.id}->${target.id}`;
+                                            const edgeKey2 = `${source.id}-${target.id}`;
+                                            const isOptimalEdge = isOptimalPathMode && (optimalPathResult.pathEdgeKeys.has(edgeKey1) || optimalPathResult.pathEdgeKeys.has(edgeKey2));
+
                                             // Stage focus state
                                             const isStageFocused = focusedStageIndex !== null;
                                             const isEdgeInFocusedStage = !isStageFocused || (
@@ -8718,7 +9200,17 @@ Devuelve estrictamente el JSON sin formato extra.
                                             let markerEnd = isFeedback ? "url(#arrowhead-feedback)" : (edge.type === 'unidirectional' ? "url(#arrowhead-default)" : "");
                                             let style = {};
 
-                                            if (isStageFocused && !isEdgeInFocusedStage && !isHighlighted) {
+                                            if (isOptimalEdge) {
+                                                strokeColor = "#c084fc";
+                                                strokeWidth = 3.2;
+                                                markerEnd = "url(#arrowhead-optimal)";
+                                                className = "animate-pulse";
+                                                style = { filter: 'drop-shadow(0 0 6px rgba(192, 132, 252, 0.8))' };
+                                            } else if (isOptimalPathMode) {
+                                                strokeColor = "rgba(255, 255, 255, 0.04)";
+                                                strokeWidth = 0.5;
+                                                markerEnd = "";
+                                            } else if (isStageFocused && !isEdgeInFocusedStage && !isHighlighted) {
                                                 // When stage is focused, dim edges outside this stage
                                                 strokeColor = "rgba(255, 255, 255, 0.03)";
                                                 strokeWidth = 0.5;
@@ -8790,7 +9282,12 @@ Devuelve estrictamente el JSON sin formato extra.
                                         const nodeLayer = getClinicalLayerIndex(node);
                                         const isStageFocused = focusedStageIndex !== null;
                                         const isNodeInFocusedStage = !isStageFocused || (nodeLayer === focusedStageIndex);
-                                        const isDimmed = ((activeNodeId || selectedPatternId) && !isConnected) || (isStageFocused && !isNodeInFocusedStage && !isConnected && !isSelected);
+                                        const isOnOptimalPath = isOptimalPathMode && optimalPathResult.pathNodeIds.has(node.id);
+                                        const optimalStepNum = isOnOptimalPath ? optimalPathResult.stepMap[node.id] : null;
+
+                                        const isDimmed = (isOptimalPathMode && !isOnOptimalPath) ||
+                                            ((activeNodeId || selectedPatternId) && !isConnected && !isOptimalPathMode) ||
+                                            (isStageFocused && !isNodeInFocusedStage && !isConnected && !isSelected && !isOptimalPathMode);
 
                                         // Prevenir event propagation en el clic del nodo para no disparar el drag si el usuario da un click rápido
                                         const handleNodeClick = (e) => {
@@ -8974,11 +9471,13 @@ Devuelve estrictamente el JSON sin formato extra.
 
                                                     const fillColor = isHub ? '#ffffff' : (isCondition ? '#10b981' : '#94a3b8');
                                                     const borderColor = isHub ? 'rgba(255,255,255,0.95)' : (isCondition ? '#34d399' : '#64748b');
-                                                    const glowShadow = isHub 
-                                                        ? (isSelected || isConnected ? '0 0 25px #ffffff, 0 0 50px rgba(255,255,255,0.8)' : '0 0 15px rgba(255,255,255,0.6)')
-                                                        : isCondition
-                                                            ? (isSelected || isConnected ? '0 0 20px #10b981, 0 0 35px #34d399' : '0 0 10px rgba(16,185,129,0.6)')
-                                                            : (isSelected || isConnected ? '0 0 16px #94a3b8' : '0 0 5px rgba(148,163,184,0.3)');
+                                                    const glowShadow = isOnOptimalPath
+                                                        ? '0 0 25px #c084fc, 0 0 45px rgba(168,85,247,0.85)'
+                                                        : isHub 
+                                                            ? (isSelected || isConnected ? '0 0 25px #ffffff, 0 0 50px rgba(255,255,255,0.8)' : '0 0 15px rgba(255,255,255,0.6)')
+                                                            : isCondition
+                                                                ? (isSelected || isConnected ? '0 0 20px #10b981, 0 0 35px #34d399' : '0 0 10px rgba(16,185,129,0.6)')
+                                                                : (isSelected || isConnected ? '0 0 16px #94a3b8' : '0 0 5px rgba(148,163,184,0.3)');
 
                                                     return (
                                                         <div className="relative flex flex-col items-center" style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.12s ease-out' }}>
@@ -9018,9 +9517,17 @@ Devuelve estrictamente el JSON sin formato extra.
                                                                 className="absolute flex flex-col items-center pointer-events-none transition-all duration-300"
                                                                 style={{ top: `${labelOffset}px`, width: isHub ? '135px' : isCondition ? '100px' : '92px' }}
                                                             >
+                                                                {/* Badge de paso en camino óptimo */}
+                                                                {isOnOptimalPath && (
+                                                                    <span 
+                                                                        className="font-mono font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border mb-1 text-[8px] bg-purple-500/25 border-purple-400 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
+                                                                    >
+                                                                        {String(optimalStepNum).padStart(2, '0')}. Paso
+                                                                    </span>
+                                                                )}
                                                                 {/* Badge sutil de rol */}
                                                                 <span 
-                                                                    className={`font-mono uppercase tracking-widest px-1.5 py-0.2 rounded-full border mb-0.5 text-[7px] ${
+                                                                    className={`font-mono uppercase tracking-widest px-1.5 py-0.2 rounded-full border mb-0.5 text-[7px] ${isOnOptimalPath ? 'text-purple-300 bg-purple-950/60 border-purple-500/40 ' : ''}${
                                                                         isHub 
                                                                             ? 'text-white bg-white/10 border-white/20' 
                                                                             : isCondition 
@@ -9052,6 +9559,56 @@ Devuelve estrictamente el JSON sin formato extra.
                                 </React.Fragment>
                                 )
                                 })()}
+
+                                {/* Floating Step-by-Step Optimal Pathway Pill */}
+                                {isOptimalPathMode && optimalPathResult.pathNodes.length > 0 && (
+                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[250] pointer-events-auto max-w-[95vw] bg-[#08080a]/95 border border-purple-500/30 backdrop-blur-xl shadow-2xl rounded-2xl px-3.5 py-2 flex items-center gap-2 font-mono text-xs text-zinc-300 animate-in slide-in-from-bottom-3 duration-200">
+                                        <div className="flex items-center gap-1.5 pr-2.5 border-r border-white/10 shrink-0">
+                                            <Sparkles size={13} className="text-purple-400 animate-pulse" />
+                                            <span className="text-[11px] font-bold text-purple-200 hidden sm:inline">Mejor Camino</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-[60vw]">
+                                            {optimalPathResult.pathNodes.map((pNode, idx) => {
+                                                const isCurrent = selectedNode?.id === pNode.id;
+                                                return (
+                                                    <button
+                                                        key={pNode.id}
+                                                        onClick={() => {
+                                                            setSelectedNode(pNode);
+                                                            setTimeout(() => zoomToNode(pNode), 30);
+                                                        }}
+                                                        className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                                                            isCurrent
+                                                                ? 'bg-purple-600/30 border-purple-400 text-white font-bold shadow-[0_0_12px_rgba(168,85,247,0.5)]'
+                                                                : 'bg-white/[0.03] border-white/10 hover:border-white/20 text-zinc-300 hover:text-white'
+                                                        }`}
+                                                        title={`Ir al nodo: ${pNode.label}`}
+                                                    >
+                                                        <span className="text-[9px] text-purple-400 font-bold">{String(idx + 1).padStart(2, '0')}.</span>
+                                                        <span className="text-[11px] max-w-[110px] truncate">{pNode.label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="pl-2 border-l border-white/10 flex items-center gap-1.5 shrink-0">
+                                            <button
+                                                onClick={() => organizeByOptimalPath()}
+                                                className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                                                title="Alinear nodos al flujo del camino óptimo"
+                                            >
+                                                <Zap size={11} />
+                                                <span className="hidden md:inline">Alinear</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setIsOptimalPathMode(false)}
+                                                className="p-1 rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                                title="Cerrar vista de camino"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 </div>
 
                                 {/* Text Overlays for tabs */}
