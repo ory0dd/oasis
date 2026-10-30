@@ -21,6 +21,7 @@ import icarRationale from './data/icar16_rationale.json';
 import { NekronomikronFull, OasisPlayer } from './components/Nekronomikron';
 import CanvasTextEditorModal, { getFontFamilyCSS } from './components/CanvasTextEditorModal';
 import MapStructureGeneratorModal from './components/MapStructureGeneratorModal';
+import OasisMiniPlayer from './components/OasisMiniPlayer';
 import DirectMessagesWidget from './components/DirectMessagesWidget';
 import { saveObservation, getObservations, deleteObservation } from './utils/db';
 import { useTranscription } from './hooks/useTranscription';
@@ -4908,6 +4909,8 @@ const PHENOM_QUESTIONS = [
 
 
 const ProfileView = ({
+    audioPlayerRef,
+
     user, targetUser, isVisitor = false, onCloseVisitor, publicProfileData, publicUsers = [],
     isNavbarHidden = false, setIsNavbarHidden,
     hasAcceptedConsent = false, setSoulTab,
@@ -4965,8 +4968,9 @@ const ProfileView = ({
     const DEFAULT_AMBIENT_TITLE = 'Ruido Interior Ambient — Resonancia Serena';
 
     const profileAudioRef = useRef(null);
+    const activeAudioRef = audioPlayerRef || profileAudioRef;
     const audioFileInputRef = useRef(null);
-    const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(false);
+    const [isProfileAudioPlaying, setIsProfileAudioPlaying] = useState(Boolean(isPlaying));
 
     const buildProfilePlaylist = useCallback((targetUser, overrideAudioUrl, overrideAudioTitle, rawPlaylistJson) => {
         const cleanU = (targetUser || effectiveUser || '').replace('@', '');
@@ -5051,15 +5055,39 @@ const ProfileView = ({
         if (!playlistTracks || index < 0 || index >= playlistTracks.length) return;
         setCurrentTrackIndex(index);
         const track = playlistTracks[index];
-        if (profileAudioRef.current && track?.url) {
-            profileAudioRef.current.src = track.url;
-            profileAudioRef.current.play()
-                .then(() => setIsProfileAudioPlaying(true))
+        if (setPlayQueue) setPlayQueue(playlistTracks);
+        if (setCurrentTrack) setCurrentTrack(index);
+        const targetRef = activeAudioRef?.current;
+        if (targetRef && track?.url) {
+            if (targetRef.src !== track.url) {
+                targetRef.src = track.url;
+            }
+            targetRef.play()
+                .then(() => {
+                    setIsProfileAudioPlaying(true);
+                    if (setIsPlaying) setIsPlaying(true);
+                })
                 .catch((err) => console.log('Audio playback error:', err));
         }
         setCustomAudioUrl(track.url);
         setCustomAudioTitle(track.title);
     };
+
+    useEffect(() => {
+        setIsProfileAudioPlaying(Boolean(isPlaying));
+    }, [isPlaying]);
+
+    useEffect(() => {
+        if (typeof currentTrack === 'number' && currentTrack >= 0 && currentTrack < playlistTracks.length) {
+            setCurrentTrackIndex(currentTrack);
+        }
+    }, [currentTrack, playlistTracks.length]);
+
+    useEffect(() => {
+        if (playlistTracks && playlistTracks.length > 0 && setPlayQueue) {
+            setPlayQueue(playlistTracks);
+        }
+    }, [playlistTracks]);
 
     const handleNextTrack = () => {
         if (!playlistTracks || playlistTracks.length === 0) return;
@@ -5238,10 +5266,20 @@ const ProfileView = ({
             window.removeEventListener('keydown', tryPlay);
         };
 
-        if (profileAudioRef.current && ambientAudioUrl) {
-            profileAudioRef.current.src = ambientAudioUrl;
-            profileAudioRef.current.play()
-                .then(() => setIsProfileAudioPlaying(true))
+        if (isPlaying) {
+            setIsProfileAudioPlaying(true);
+            return;
+        }
+
+        if (activeAudioRef.current && ambientAudioUrl) {
+            if (activeAudioRef.current.src !== ambientAudioUrl) {
+                activeAudioRef.current.src = ambientAudioUrl;
+            }
+            activeAudioRef.current.play()
+                .then(() => {
+                    setIsProfileAudioPlaying(true);
+                    if (setIsPlaying) setIsPlaying(true);
+                })
                 .catch(() => {
                     window.addEventListener('click', tryPlay, { once: true });
                     window.addEventListener('touchstart', tryPlay, { once: true });
@@ -7104,6 +7142,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         )}
 
                         {/* Audio Engine y File Input ocultos */}
+                        {!audioPlayerRef && (
                         <audio
                             ref={profileAudioRef}
                             src={playlistTracks[currentTrackIndex]?.url || ambientAudioUrl}
@@ -7117,6 +7156,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                 }
                             }}
                         />
+                        )}
                         <input
                             ref={audioFileInputRef}
                             type="file"
@@ -7625,12 +7665,23 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                             {/* EL CUADRO (FOTO PRINCIPAL ORIGINAL CON PLAY EN EL CENTRO) */}
                             <div
                                 onClick={() => {
-                                    if (profileAudioRef.current) {
-                                        if (profileAudioRef.current.paused) {
-                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                    const targetAudio = activeAudioRef?.current;
+                                    if (targetAudio) {
+                                        if (targetAudio.paused) {
+                                            const track = playlistTracks[currentTrackIndex];
+                                            if (track?.url && (!targetAudio.src || targetAudio.src === window.location.href)) {
+                                                targetAudio.src = track.url;
+                                            }
+                                            if (setPlayQueue) setPlayQueue(playlistTracks);
+                                            if (setCurrentTrack) setCurrentTrack(currentTrackIndex);
+                                            targetAudio.play().then(() => {
+                                                setIsProfileAudioPlaying(true);
+                                                if (setIsPlaying) setIsPlaying(true);
+                                            }).catch(() => {});
                                         } else {
-                                            profileAudioRef.current.pause();
+                                            targetAudio.pause();
                                             setIsProfileAudioPlaying(false);
+                                            if (setIsPlaying) setIsPlaying(false);
                                         }
                                     } else if (bentoCentralPiece.raw) {
                                         setSelectedModalPost(bentoCentralPiece.raw);
@@ -7708,12 +7759,17 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                             key={track.id || idx}
                                             onClick={() => {
                                                 if (isCurrent) {
-                                                    if (profileAudioRef.current) {
-                                                        if (profileAudioRef.current.paused) {
-                                                            profileAudioRef.current.play().then(() => setIsProfileAudioPlaying(true)).catch(() => {});
+                                                    const targetAudio = activeAudioRef?.current;
+                                                    if (targetAudio) {
+                                                        if (targetAudio.paused) {
+                                                            targetAudio.play().then(() => {
+                                                                setIsProfileAudioPlaying(true);
+                                                                if (setIsPlaying) setIsPlaying(true);
+                                                            }).catch(() => {});
                                                         } else {
-                                                            profileAudioRef.current.pause();
+                                                            targetAudio.pause();
                                                             setIsProfileAudioPlaying(false);
+                                                            if (setIsPlaying) setIsPlaying(false);
                                                         }
                                                     }
                                                 } else {
@@ -14107,17 +14163,81 @@ function OasisApp() {
     const [isPlayerFull, setIsPlayerFull] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [playerPos, setPlayerPos] = useState({ x: 0, y: 0 });
-    const [playerTracks, setPlayerTracks] = useState([
-        { title: 'Resonancia Serena', artist: 'Oasis Ambient', url: 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3' },
-        { title: 'Glitch Astral', artist: 'Flux', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-        { title: 'Memoria RAM', artist: 'Holo', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-    ]);
+    const getInitialSoundtrack = () => {
+        const cleanU = (initialUser || '').replace('@', '');
+        const DEFAULT_AMBIENT_URL = 'https://mxxasrhqwzpbcuzglzif.supabase.co/storage/v1/object/public/oasis-media/657aba2b-404b-45f4-9bf0-5bfc10d73661.mp3';
+        try {
+            const raw = localStorage.getItem('oasis_playlist_' + cleanU) || localStorage.getItem('oasis_playlist_tracks_' + cleanU);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed.filter(t => t && t.url);
+                }
+            }
+            const customUrl = localStorage.getItem('oasis_ambient_audio_' + cleanU);
+            const customTitle = localStorage.getItem('oasis_ambient_title_' + cleanU);
+            if (customUrl && !customUrl.includes('SoundHelix')) {
+                return [{
+                    id: 'track-profile-main',
+                    title: customTitle || 'Canción de Perfil',
+                    artist: cleanU || 'oasis',
+                    url: customUrl
+                }];
+            }
+        } catch (e) {}
+
+        return [
+            {
+                id: 'def-ambient-1',
+                title: 'respiración lenta [432 Hz]',
+                artist: 'soundtrack continuo',
+                url: DEFAULT_AMBIENT_URL
+            }
+        ];
+    };
+
+    const [playerTracks, setPlayerTracks] = useState(getInitialSoundtrack);
     const [playlists, setPlaylists] = useState({ 'Favoritos': [] });
 
     const [playerSearchQuery, setPlayerSearchQuery] = useState('');
     const [playerSearchResults, setPlayerSearchResults] = useState([]);
     const [isPlayerSearching, setIsPlayerSearching] = useState(false);
-    const [playQueue, setPlayQueue] = useState([]);
+    const [playQueue, setPlayQueue] = useState(getInitialSoundtrack);
+    const [isMuted, setIsMuted] = useState(false);
+
+    const toggleGlobalAudioPlay = () => {
+        const a = audioPlayerRef.current;
+        if (!a) {
+            setIsPlaying(prev => !prev);
+            return;
+        }
+        if (isPlaying) {
+            a.pause();
+            setIsPlaying(false);
+        } else {
+            const activeUrl = playQueue[currentTrack]?.url || playQueue[0]?.url;
+            if (activeUrl && (!a.src || a.src === window.location.href)) {
+                a.src = activeUrl;
+            }
+            a.play()
+                .then(() => setIsPlaying(true))
+                .catch(e => {
+                    console.log('Audio playback interaction:', e);
+                    setIsPlaying(true);
+                });
+        }
+    };
+
+    const handleVolumeChange = (newVol) => {
+        setVolume(newVol);
+        setIsMuted(false);
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.volume = newVol;
+        }
+        try {
+            localStorage.setItem('oasis_audio_volume', String(newVol));
+        } catch (e) {}
+    };
     const [playSource, setPlaySource] = useState('library'); // 'search', 'playlist', 'library'
     const [activePlayerView, setActivePlayerView] = useState('search'); // 'search' or playlist name
     const [trackProgress, setTrackProgress] = useState(0);
@@ -20233,6 +20353,9 @@ ${afcMapContext}
         if (!publicProfileUser) return null;
         return (
             <ProfileView
+                audioPlayerRef={audioPlayerRef}
+                playQueue={playQueue}
+                setPlayQueue={setPlayQueue}
                 targetUser={publicProfileUser}
                 isVisitor={true}
                 isLoggedIn={isLoggedIn}
@@ -21078,6 +21201,9 @@ ${afcMapContext}
                                     ) :
                                         <>
                                             <ProfileView
+                                                audioPlayerRef={audioPlayerRef}
+                                                playQueue={playQueue}
+                                                setPlayQueue={setPlayQueue}
                                                 user={user}
                                                 isNavbarHidden={isNavbarHidden}
                                                 setIsNavbarHidden={setIsNavbarHidden}
@@ -21235,10 +21361,13 @@ ${afcMapContext}
             {createPortal(
                 <audio
                     ref={audioPlayerRef}
-                    src={playQueue[currentTrack]?.url}
+                    src={playQueue[currentTrack]?.url || playQueue[0]?.url}
+                    loop={playQueue.length <= 1}
+                    preload="auto"
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={handleNextTrack}
-                    autoPlay={isPlaying}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
                 />,
                 document.getElementById('background-media-engine') || document.body
             )}
@@ -22033,6 +22162,35 @@ ${afcMapContext}
                             fetch(`${API_URL}/api/oasis/feed/${cleanId}`, { method: 'DELETE' }).catch(console.error);
                         }
                     }}
+                />
+            )}
+
+            {view !== 'profile' && !publicProfileUser && playQueue && playQueue.length > 0 && (
+                <OasisMiniPlayer
+                    track={playQueue[currentTrack] || playQueue[0]}
+                    isPlaying={isPlaying}
+                    onTogglePlay={toggleGlobalAudioPlay}
+                    onNext={handleNextTrack}
+                    onPrev={handlePrevTrack}
+                    hasMultipleTracks={playQueue.length > 1}
+                    accent={accent}
+                    onOpenProfile={() => {
+                        setIsBitacoraOpen(false);
+                        setIsSimpleNotesOpen(false);
+                        setIsComposerOpen(false);
+                        setIsChatOpen(false);
+                        setView('profile');
+                    }}
+                    isMuted={isMuted}
+                    onToggleMute={() => {
+                        if (audioPlayerRef.current) {
+                            audioPlayerRef.current.muted = !audioPlayerRef.current.muted;
+                            setIsMuted(audioPlayerRef.current.muted);
+                        }
+                    }}
+                    volume={volume}
+                    onVolumeChange={handleVolumeChange}
+                    coverImage={typeof window !== 'undefined' ? (localStorage.getItem('oasis_playlist_cover_' + (user || '')) || '') : ''}
                 />
             )}
 
