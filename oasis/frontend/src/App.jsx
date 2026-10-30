@@ -9477,12 +9477,6 @@ function OasisApp() {
     const [view, setViewRaw] = useState(() => isInitialClinician ? 'clinical' : 'canvas');
     const [activeCanvasId, setActiveCanvasId] = useState(() => localStorage.getItem('oasis_active_canvas_' + initialUser) || 'canvas_default');
     const [isMilanoteToolsOpen, setIsMilanoteToolsOpen] = useState(false);
-    const dockScrollRef = useRef(null);
-    const scrollDock = useCallback((direction) => {
-        if (dockScrollRef.current) {
-            dockScrollRef.current.scrollBy({ left: direction * 220, behavior: 'smooth' });
-        }
-    }, []);
     const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
     const [selectedBoardTemplate, setSelectedBoardTemplate] = useState('character_profile');
     const [keepTemplateContent, setKeepTemplateContent] = useState(true);
@@ -18225,59 +18219,310 @@ ${afcMapContext}
                 </>
             )}
 
-            {/* NAVBAR DOCK UNIFICADO MINIMALISTA DEL LIENZO (ANCHO CONTROLADO ANTISUPERPOSICIÓN) */}
+            {/* BARRA SECUNDARIA MILANOTE + DOCK PRINCIPAL INFERIOR */}
             {view === 'canvas' && (
                 <>
+                    {/* SUB-BARRA DE HERRAMIENTAS MILANOTE */}
+                    {isMilanoteToolsOpen && (
+                        <div
+                            className="fixed left-1/2 -translate-x-1/2 z-[2510] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] px-2 sm:px-5 py-2 sm:py-2.5 rounded-[22px] sm:rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.88)] flex items-center gap-1 sm:gap-3 pointer-events-auto w-full max-w-[96vw] sm:w-max overflow-x-auto no-scrollbar overscroll-contain scroll-smooth animate-in fade-in slide-in-from-bottom-2 duration-200"
+                            style={{
+                                bottom: window.innerWidth >= 768 ? '94px' : '78px'
+                            }}
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
+                            onWheel={e => e.stopPropagation()}
+                        >
+                            {/* 1. Nota */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('text', {
+                                        caption: 'Estética Nocturna',
+                                        content: 'Exploración de texturas brillantes bajo luz fría de bosque. El contraste entre lo sintético y la niebla orgánica genera una tensión silenciosa.',
+                                        width: 280,
+                                        height: 195,
+                                        metadata: { category: 'DIRECCIÓN DE ARTE', timestamp: new Date().toISOString() }
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <AlignLeft size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Nota</span>
+                            </button>
+
+                            {/* 2. Enlace */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('link', {
+                                        caption: 'Referencia Visual',
+                                        content: 'https://milanote.com',
+                                        width: 265,
+                                        height: 98
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <Link2 size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Enlace</span>
+                            </button>
+
+                            {/* 3. To-do */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('todo', {
+                                        caption: 'ENTREGABLES LOOKBOOK',
+                                        content: '',
+                                        width: 285,
+                                        height: 215,
+                                        metadata: {
+                                            items: [
+                                                { id: `td-${Date.now()}-1`, text: 'Scouting locación interestatal 191', done: true },
+                                                { id: `td-${Date.now()}-2`, text: 'Prenda Raspberry Hills vintage', done: true },
+                                                { id: `td-${Date.now()}-3`, text: 'Prueba de luces cálidas y tungsteno', done: false }
+                                            ]
+                                        }
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <ListTodo size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">To-do</span>
+                            </button>
+
+                            {/* 4. Línea (Conectar tarjetas) */}
+                            <button
+                                onClick={() => {
+                                    setIsLinking(prev => !prev);
+                                    setLinkSource(null);
+                                }}
+                                className={`flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-all group ${isLinking ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30' : 'hover:bg-white/[0.06] text-zinc-400 hover:text-white'}`}
+                                title="Haz clic en dos tarjetas para conectarlas con una línea punteada"
+                            >
+                                <ArrowUpRight size={16} className={isLinking ? 'text-[#10b981]' : 'group-hover:text-[#10b981] transition-colors'} />
+                                <span className="text-[10px] font-mono tracking-tight">Línea</span>
+                            </button>
+
+                            {/* 5. Tablero */}
+                            <button
+                                onClick={() => {
+                                    const newBoardId = `sub_board-${Date.now()}`;
+                                    const jitterX = (Math.random() - 0.5) * 90;
+                                    const jitterY = (Math.random() - 0.5) * 70;
+                                    const newBoardBlock = {
+                                        id: newBoardId,
+                                        type: 'sub_board',
+                                        caption: 'Nuevo Tablero',
+                                        color: '#3b82f6',
+                                        cover: '/covers/pixel_lamb.png',
+                                        image: '/covers/pixel_lamb.png',
+                                        content: '',
+                                        x: (-cam.x / cam.scale) + jitterX,
+                                        y: (-cam.y / cam.scale) + jitterY,
+                                        width: 180,
+                                        height: 160,
+                                        isPublic: false,
+                                        createdAt: new Date().toISOString(),
+                                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                    };
+                                    setBlocks(prev => {
+                                        const updated = [...prev, newBoardBlock];
+                                        if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                        return updated;
+                                    });
+                                    setActiveCanvasId(newBoardId);
+                                    setCam({ x: 0, y: 0, scale: 1 });
+                                    setIsTemplatePickerOpen(true);
+                                    setIsMilanoteToolsOpen(false);
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <LayoutGrid size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Tablero</span>
+                            </button>
+
+                            {/* 6. Columna */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('column', {
+                                        caption: 'COLUMNA CREATIVA',
+                                        content: '',
+                                        width: 290,
+                                        height: 340
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <Columns size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Columna</span>
+                            </button>
+
+                            {/* 7. Imagen */}
+                            <button
+                                onClick={triggerCanvasImageUpload}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <ImageIcon size={16} className="group-hover:text-[#10b981] transition-colors" />
+                                <span className="text-[10px] font-mono tracking-tight">Imagen</span>
+                            </button>
+
+                            {/* 8. Color Swatch */}
+                            <button
+                                onClick={() => {
+                                    spawnMilanoteBlock('color_swatch', {
+                                        caption: 'Stromboli',
+                                        color: '#366354',
+                                        content: '#366354',
+                                        width: 215,
+                                        height: 205
+                                    });
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.06] text-zinc-400 hover:text-white transition-all group"
+                            >
+                                <div className="w-4 h-4 rounded-[4px] bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.5)]" />
+                                <span className="text-[10px] font-mono tracking-tight">Color</span>
+                            </button>
+
+                            {/* 9. Vaciar */}
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('¿Deseas vaciar las tarjetas de este tablero actual? (Tus diarios, conversaciones y notas públicas se conservarán intactos).')) {
+                                        setBlocks(prev => {
+                                            const remaining = prev.filter(b => {
+                                                if (b.type === 'insight' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook' || b.type === 'settings' || b.type === 'canvas' || b.type === 'note' || b.isPublic || b.type === 'profile_settings' || b.type === 'user_settings' || b.type === 'diary' || (b.entries && b.entries.length > 0)) return true;
+                                                const belongsToCurrent = b.canvasId ? b.canvasId === activeCanvasId : activeCanvasId === 'canvas_default';
+                                                return !belongsToCurrent;
+                                            });
+                                            if (typeof syncBlocks === 'function') syncBlocks(remaining);
+                                            return remaining;
+                                        });
+                                    }
+                                }}
+                                className="flex flex-col items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-all group"
+                            >
+                                <Trash2 size={16} />
+                                <span className="text-[10px] font-mono tracking-tight">Vaciar</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* DOCK PRINCIPAL INFERIOR */}
                     <div
-                        className="fixed left-1/2 -translate-x-1/2 z-[2500] pointer-events-auto flex items-center select-none shadow-[0_20px_50px_rgba(0,0,0,0.88)] origin-bottom"
+                        className="fixed left-1/2 -translate-x-1/2 z-[2500] bg-[#111215]/95 backdrop-blur-xl border border-white/[0.08] p-1.5 sm:px-3 sm:py-2 rounded-[22px] sm:rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-0.5 sm:gap-1.5 pointer-events-auto w-max max-w-[96vw] overflow-x-auto no-scrollbar scale-95 sm:scale-100 origin-bottom"
                         style={{
-                            bottom: window.innerWidth >= 768 ? '20px' : '12px'
+                            bottom: window.innerWidth >= 768 ? '24px' : '14px'
                         }}
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
+                        onWheel={e => e.stopPropagation()}
                     >
-                        {/* Botón deslizar izquierda */}
                         <button
-                            type="button"
-                            onClick={() => scrollDock(-1)}
-                            className="w-6 h-11 rounded-l-[22px] bg-[#111215]/95 hover:bg-zinc-800 border-y border-l border-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
-                            title="Deslizar herramientas a la izquierda"
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(prev => !prev); setView('canvas'); }}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl border flex items-center justify-center transition-all ${isBitacoraOpen ? 'bg-accent/20 border-accent text-accent' : 'bg-white/[0.03] border-accent/40 text-accent hover:bg-accent/15'}`}
+                            title="Bitácora Existencial"
                         >
-                            <ChevronLeft size={13} />
+                            {isBitacoraOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
                         </button>
 
-                        {/* Pista deslizable con ancho controlado para evitar cualquier superposición con MiniPlayer y Zoom */}
-                        <div
-                            ref={dockScrollRef}
-                            className="w-[74vw] sm:w-[460px] md:w-[520px] max-w-[calc(100vw-540px)] bg-[#111215]/95 backdrop-blur-2xl border-y border-white/[0.1] px-2 py-1.5 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-contain"
-                            style={{ touchAction: 'pan-x' }}
-                            onWheel={e => {
-                                e.stopPropagation();
-                                if (e.deltaY !== 0) {
-                                    e.currentTarget.scrollLeft += e.deltaY * 0.9;
-                                }
-                            }}
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); openNewComposer(false, false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Crear Nota"
                         >
-                        {/* GRUPO 1: ELEMENTOS Y BLOQUES DEL LIENZO */}
-                        {/* 1. Nota */}
+                            <Pencil size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(true); setActiveNotebook(null); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Chat IA"
+                        >
+                            <MessageSquare size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook('resonance'); setIsPublishSelectorOpen(false); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Ruido"
+                        >
+                            <Sparkles size={15} />
+                        </button>
+
+                        <button
+                            onClick={() => { if (isComposerOpen && noteText?.trim()) handleComposerAutoSave(); setIsComposerOpen(false); setIsChatOpen(false); setActiveNotebook(null); setIsPublishSelectorOpen(true); setIsBitacoraOpen(false); }}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl bg-accent/15 border border-accent/40 hover:bg-accent/25 flex items-center justify-center text-accent shadow-[0_0_18px_rgba(var(--accent-rgb),0.25)] transition-all"
+                            title="Publicar en Feed"
+                        >
+                            <Activity size={15} />
+                        </button>
+
+                        <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+
+                        <button
+                            onClick={triggerCanvasImageUpload}
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Imagen al Lienzo"
+                        >
+                            <Paperclip size={15} />
+                        </button>
+
                         <button
                             onClick={() => {
-                                spawnMilanoteBlock('text', {
-                                    caption: 'Nota Creativa',
-                                    content: 'Escribe aquí tu exploración o ideas para este espacio...',
-                                    width: 280,
-                                    height: 195,
-                                    metadata: { category: 'IDEAS', timestamp: new Date().toISOString() }
-                                });
+                                const fileInput = document.createElement('input');
+                                fileInput.type = 'file';
+                                fileInput.accept = 'audio/*';
+                                fileInput.onchange = (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    const formData = new FormData();
+                                    formData.append('file', file);
+                                    const xhr = new XMLHttpRequest();
+                                    const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
+                                    xhr.open('POST', `${apiUrl}/api/oasis/upload`);
+                                    xhr.onload = () => {
+                                        if (xhr.status >= 200 && xhr.status < 300) {
+                                            try {
+                                                const data = JSON.parse(xhr.responseText);
+                                                if (data.url) {
+                                                    const newBlock = {
+                                                        id: `audio-${Date.now()}`,
+                                                        type: 'audio',
+                                                        content: data.url,
+                                                        caption: file.name,
+                                                        x: -cam.x / cam.scale,
+                                                        y: -cam.y / cam.scale,
+                                                        width: 300,
+                                                        height: 50,
+                                                        isPublic: false,
+                                                        createdAt: new Date().toISOString(),
+                                                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                                                    };
+                                                    setBlocks(prev => {
+                                                        const updated = [...prev, newBlock];
+                                                        if (typeof syncBlocks === 'function') syncBlocks(updated);
+                                                        return updated;
+                                                    });
+                                                }
+                                            } catch (err) { }
+                                        }
+                                    };
+                                    xhr.send(formData);
+                                };
+                                fileInput.click();
                             }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Nota de Texto al Lienzo"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Audio al Lienzo"
                         >
-                            <AlignLeft size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Nota</span>
+                            <Headphones size={15} />
                         </button>
 
-                        {/* 2. Título */}
+                        <button
+                            onClick={toggleCanvasRecording}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all ${canvasIsRecording ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Audio'}
+                        >
+                            <Mic size={15} />
+                        </button>
+
                         <button
                             onClick={() => {
                                 setTitlePrompt({
@@ -18325,348 +18570,50 @@ ${afcMapContext}
                                     }
                                 });
                             }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Título Grande al Pizarrón"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Añadir Título al Pizarrón"
                         >
-                            <Type size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Título</span>
+                            <Type size={15} />
                         </button>
 
-                        {/* 3. To-do */}
-                        <button
-                            onClick={() => {
-                                spawnMilanoteBlock('todo', {
-                                    caption: 'ENTREGABLES Y TAREAS',
-                                    content: '',
-                                    width: 285,
-                                    height: 215,
-                                    metadata: {
-                                        items: [
-                                            { id: `td-${Date.now()}-1`, text: 'Paso 1: Exploración conceptual', done: true },
-                                            { id: `td-${Date.now()}-2`, text: 'Paso 2: Boceto y estructura', done: false }
-                                        ]
-                                    }
-                                });
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Lista To-do al Lienzo"
-                        >
-                            <ListTodo size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">To-do</span>
-                        </button>
-
-                        {/* 4. Tablero */}
-                        <button
-                            onClick={() => {
-                                const newBoardId = `sub_board-${Date.now()}`;
-                                const jitterX = (Math.random() - 0.5) * 90;
-                                const jitterY = (Math.random() - 0.5) * 70;
-                                const newBoardBlock = {
-                                    id: newBoardId,
-                                    type: 'sub_board',
-                                    caption: 'Nuevo Tablero',
-                                    color: '#3b82f6',
-                                    cover: '/covers/pixel_lamb.png',
-                                    image: '/covers/pixel_lamb.png',
-                                    content: '',
-                                    x: (-cam.x / cam.scale) + jitterX,
-                                    y: (-cam.y / cam.scale) + jitterY,
-                                    width: 180,
-                                    height: 160,
-                                    isPublic: false,
-                                    createdAt: new Date().toISOString(),
-                                    canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
-                                };
-                                setBlocks(prev => {
-                                    const updated = [...prev, newBoardBlock];
-                                    if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                    return updated;
-                                });
-                                setActiveCanvasId(newBoardId);
-                                setCam({ x: 0, y: 0, scale: 1 });
-                                setIsTemplatePickerOpen(true);
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Crear Nuevo Sub-Tablero / Carpeta Anidada"
-                        >
-                            <LayoutGrid size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Tablero</span>
-                        </button>
-
-                        {/* 5. Columna */}
-                        <button
-                            onClick={() => {
-                                spawnMilanoteBlock('column', {
-                                    caption: 'COLUMNA CREATIVA',
-                                    content: '',
-                                    width: 290,
-                                    height: 340
-                                });
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Columna Agrupadora de Tarjetas"
-                        >
-                            <Columns size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Columna</span>
-                        </button>
-
-                        {/* 6. Enlace */}
-                        <button
-                            onClick={() => {
-                                spawnMilanoteBlock('link', {
-                                    caption: 'Referencia Visual',
-                                    content: 'https://milanote.com',
-                                    width: 265,
-                                    height: 98
-                                });
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Tarjeta de Enlace Web"
-                        >
-                            <Link2 size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Enlace</span>
-                        </button>
-
-                        {/* 7. Imagen (Unificada) */}
-                        <button
-                            onClick={triggerCanvasImageUpload}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Subir Imagen al Lienzo"
-                        >
-                            <ImageIcon size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Imagen</span>
-                        </button>
-
-                        {/* 8. Audio */}
-                        <button
-                            onClick={() => {
-                                const fileInput = document.createElement('input');
-                                fileInput.type = 'file';
-                                fileInput.accept = 'audio/*';
-                                fileInput.onchange = (e) => {
-                                    const file = e.target.files[0];
-                                    if (!file) return;
-                                    const formData = new FormData();
-                                    formData.append('file', file);
-                                    const xhr = new XMLHttpRequest();
-                                    const apiUrl = typeof API_URL !== 'undefined' ? API_URL : `http://${window.location.hostname}:5046`;
-                                    xhr.open('POST', `${apiUrl}/api/oasis/upload`);
-                                    xhr.onload = () => {
-                                        if (xhr.status >= 200 && xhr.status < 300) {
-                                            try {
-                                                const data = JSON.parse(xhr.responseText);
-                                                if (data.url) {
-                                                    const newBlock = {
-                                                        id: `audio-${Date.now()}`,
-                                                        type: 'audio',
-                                                        content: data.url,
-                                                        caption: file.name,
-                                                        x: -cam.x / cam.scale,
-                                                        y: -cam.y / cam.scale,
-                                                        width: 300,
-                                                        height: 50,
-                                                        isPublic: false,
-                                                        createdAt: new Date().toISOString(),
-                                                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
-                                                    };
-                                                    setBlocks(prev => {
-                                                        const updated = [...prev, newBlock];
-                                                        if (typeof syncBlocks === 'function') syncBlocks(updated);
-                                                        return updated;
-                                                    });
-                                                }
-                                            } catch (err) { }
-                                        }
-                                    };
-                                    xhr.send(formData);
-                                };
-                                fileInput.click();
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Subir Pista de Audio al Lienzo"
-                        >
-                            <Headphones size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Audio</span>
-                        </button>
-
-                        {/* 9. Grabar Voz */}
-                        <button
-                            onClick={toggleCanvasRecording}
-                            className={`flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95 ${canvasIsRecording ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
-                            title={canvasIsRecording ? 'Detener Grabación' : 'Grabar Nota de Voz'}
-                        >
-                            <Mic size={16} className={canvasIsRecording ? 'text-red-400' : 'group-hover:text-emerald-400 transition-colors'} />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">{canvasIsRecording ? 'Grabando' : 'Voz'}</span>
-                        </button>
-
-                        {/* 10. Color */}
-                        <button
-                            onClick={() => {
-                                spawnMilanoteBlock('color_swatch', {
-                                    caption: 'Stromboli',
-                                    color: '#366354',
-                                    content: '#366354',
-                                    width: 215,
-                                    height: 205
-                                });
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Añadir Muestra de Color (Swatch)"
-                        >
-                            <div className="w-3.5 h-3.5 rounded-[4px] bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.5)] group-hover:scale-110 transition-transform" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Color</span>
-                        </button>
-
-                        {/* 11. Línea (Conector) */}
-                        <button
-                            onClick={() => {
-                                setIsLinking(prev => !prev);
-                                setLinkSource(null);
-                            }}
-                            className={`flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95 ${isLinking ? 'bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
-                            title="Haz clic en dos tarjetas para conectarlas con una línea"
-                        >
-                            <ArrowUpRight size={16} className={isLinking ? 'text-[#10b981]' : 'group-hover:text-[#10b981] transition-colors'} />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">{isLinking ? 'Uniendo' : 'Línea'}</span>
-                        </button>
-
-                        {/* 12. Mapa (Cartografía) */}
                         <button
                             onClick={() => setIsMapStructureModalOpen(true)}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
                             title="Estructurador de Mapa por Puntos (Cartografía)"
                         >
-                            <Workflow size={16} className="group-hover:text-emerald-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Mapa</span>
+                            <Workflow size={15} />
                         </button>
 
-                        {/* SEPARADOR VERTICAL */}
-                        <div className="w-px h-6 bg-white/[0.08] mx-0.5 sm:mx-1 shrink-0" />
-
-                        {/* GRUPO 2: MÓDULOS Y ESPACIOS */}
-                        {/* 13. Bitácora */}
-                        <button
-                            onClick={() => {
-                                if (isComposerOpen && noteText?.trim()) handleComposerAutoSave();
-                                setIsComposerOpen(false);
-                                setIsChatOpen(false);
-                                setActiveNotebook(null);
-                                setIsPublishSelectorOpen(false);
-                                setIsBitacoraOpen(prev => !prev);
-                                setView('canvas');
-                            }}
-                            className={`flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95 ${isBitacoraOpen ? 'bg-accent/20 border border-accent/40 text-accent' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
-                            title="Bitácora Existencial"
-                        >
-                            <ChevronUp size={16} className={`transition-transform duration-200 ${isBitacoraOpen ? 'rotate-180 text-accent' : 'group-hover:text-accent'}`} />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Bitácora</span>
-                        </button>
-
-                        {/* 14. Chat IA */}
-                        <button
-                            onClick={() => {
-                                if (isComposerOpen && noteText?.trim()) handleComposerAutoSave();
-                                setIsComposerOpen(false);
-                                setIsChatOpen(true);
-                                setActiveNotebook(null);
-                                setIsPublishSelectorOpen(false);
-                                setIsBitacoraOpen(false);
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Abrir Chat Asistente Kio"
-                        >
-                            <MessageSquare size={16} className="group-hover:text-sky-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Chat IA</span>
-                        </button>
-
-                        {/* 15. Ruido */}
-                        <button
-                            onClick={() => {
-                                if (isComposerOpen && noteText?.trim()) handleComposerAutoSave();
-                                setIsComposerOpen(false);
-                                setIsChatOpen(false);
-                                setActiveNotebook('resonance');
-                                setIsPublishSelectorOpen(false);
-                                setIsBitacoraOpen(false);
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Ruido y Resonancia Existencial"
-                        >
-                            <Sparkles size={16} className="group-hover:text-amber-300 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Ruido</span>
-                        </button>
-
-                        {/* 16. Feed */}
-                        <button
-                            onClick={() => {
-                                if (isComposerOpen && noteText?.trim()) handleComposerAutoSave();
-                                setIsComposerOpen(false);
-                                setIsChatOpen(false);
-                                setActiveNotebook(null);
-                                setIsPublishSelectorOpen(true);
-                                setIsBitacoraOpen(false);
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Publicar en Feed Comunitario"
-                        >
-                            <Activity size={16} className="group-hover:text-purple-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Feed</span>
-                        </button>
-
-                        {/* SEPARADOR VERTICAL */}
-                        <div className="w-px h-6 bg-white/[0.08] mx-0.5 sm:mx-1 shrink-0" />
-
-                        {/* GRUPO 3: HISTORIAL Y ACCIONES */}
-                        {/* 17. Deshacer */}
                         <button
                             onClick={handleUndo}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Deshacer última acción (Ctrl+Z)"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Deshacer (Ctrl+Z)"
                         >
-                            <Undo size={16} className="group-hover:text-white transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Ctrl+Z</span>
+                            <Undo size={15} />
                         </button>
 
-                        {/* 18. Rehacer */}
                         <button
                             onClick={handleRedo}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.07] text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Rehacer acción (Ctrl+Y)"
+                            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl hover:bg-white/[0.07] flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                            title="Rehacer (Ctrl+Y)"
                         >
-                            <Redo size={16} className="group-hover:text-white transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-white transition-colors">Ctrl+Y</span>
+                            <Redo size={15} />
                         </button>
 
-                        {/* 19. Vaciar */}
+                        <div className="w-px h-5 sm:h-6 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+
                         <button
-                            onClick={() => {
-                                if (window.confirm('¿Deseas vaciar las tarjetas de este tablero actual? (Tus diarios, conversaciones y notas públicas se conservarán intactos).')) {
-                                    setBlocks(prev => {
-                                        const remaining = prev.filter(b => {
-                                            if (b.type === 'insight' || b.type === 'diary_notebook' || b.type === 'resonance_notebook' || b.type === 'conversation_notebook' || b.type === 'settings' || b.type === 'canvas' || b.type === 'note' || b.isPublic || b.type === 'profile_settings' || b.type === 'user_settings' || b.type === 'diary' || (b.entries && b.entries.length > 0)) return true;
-                                            const belongsToCurrent = b.canvasId ? b.canvasId === activeCanvasId : activeCanvasId === 'canvas_default';
-                                            return !belongsToCurrent;
-                                        });
-                                        if (typeof syncBlocks === 'function') syncBlocks(remaining);
-                                        return remaining;
-                                    });
-                                }
-                            }}
-                            className="flex flex-col items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl hover:bg-red-500/15 text-zinc-400 hover:text-red-400 transition-all group shrink-0 min-w-[48px] sm:min-w-[52px] cursor-pointer active:scale-95"
-                            title="Vaciar las tarjetas del tablero actual"
+                            onClick={() => setIsMilanoteToolsOpen(prev => !prev)}
+                            className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all ${isMilanoteToolsOpen ? 'bg-white/10 text-white ring-2 ring-white shadow-[0_0_16px_rgba(255,255,255,0.25)]' : 'hover:bg-white/[0.07] text-zinc-400 hover:text-white'}`}
+                            title="Más herramientas (Milanote)"
                         >
-                            <Trash2 size={16} className="group-hover:text-red-400 transition-colors" />
-                            <span className="text-[10px] font-mono tracking-tight text-zinc-400 group-hover:text-red-400 transition-colors">Vaciar</span>
+                            <MoreHorizontal size={16} />
                         </button>
                     </div>
 
-                    {/* Máscara de desvanecimiento derecha */}
-                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-[#111215] to-transparent pointer-events-none z-10" />
-                </div>
-
-                    {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM (RESPONSIVA ANTICOLISIÓN) */}
+                    {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM */}
                     <div
-                        className="fixed bottom-20 right-4 sm:bottom-20 sm:right-6 xl:bottom-6 xl:right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
+                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
                     >

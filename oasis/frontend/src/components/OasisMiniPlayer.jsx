@@ -34,7 +34,7 @@ export default function OasisMiniPlayer({
     if (isMinimized) {
         return (
             <div 
-                className="fixed bottom-20 left-3 sm:bottom-20 sm:left-6 xl:bottom-6 xl:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-2 duration-200 select-none pointer-events-auto"
+                className="fixed bottom-20 left-3 sm:bottom-6 sm:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-2 duration-200 select-none pointer-events-auto"
                 onMouseDown={e => e.stopPropagation()}
                 onTouchStart={e => e.stopPropagation()}
             >
@@ -89,11 +89,11 @@ export default function OasisMiniPlayer({
     // Estado Completo (Squircle moderno)
     return (
         <div 
-            className="fixed bottom-20 left-3 sm:bottom-20 sm:left-6 xl:bottom-6 xl:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-3 duration-200 select-none pointer-events-auto"
+            className="fixed bottom-20 left-3 sm:bottom-6 sm:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-3 duration-200 select-none pointer-events-auto"
             onMouseDown={e => e.stopPropagation()}
             onTouchStart={e => e.stopPropagation()}
         >
-            <div className="flex items-center gap-2 sm:gap-2.5 bg-[#0c0d10]/95 backdrop-blur-2xl border border-white/[0.1] hover:border-white/[0.18] p-1.5 sm:px-2.5 sm:py-2 rounded-[22px] sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.88)] transition-all w-max max-w-[260px] sm:max-w-[275px]">
+            <div className="flex items-center gap-2.5 sm:gap-3 bg-[#0c0d10]/95 backdrop-blur-2xl border border-white/[0.1] hover:border-white/[0.18] p-2 sm:px-3 sm:py-2.5 rounded-[22px] sm:rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.88)] transition-all max-w-[94vw] sm:max-w-md">
                 
                 {/* Portada o ecualizador animado */}
                 <div 
