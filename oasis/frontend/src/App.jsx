@@ -12787,7 +12787,7 @@ function OasisApp() {
             window.syncBlocksTimeout = setTimeout(() => {
                 fetch(`${API_URL}/api/oasis/blocks?user=${user}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user },
                     body: JSON.stringify(cleanBlocks)
                 }).then((res) => {
                     if (!res.ok) console.error("Error saving blocks:", res.status);
@@ -15677,6 +15677,127 @@ ${afcMapContext}
                     setSelectedBlockId(newBlock.id);
                 };
                 img.src = text;
+                return;
+            }
+
+            // --- TEXT OR NOTE PASTE (Ctrl+V) FOR CANVAS MAPPING ---
+            if (text) {
+                e.preventDefault();
+
+                // Detectar si es un enlace web (no imagen)
+                const isUrl = /^https?:\/\/[^\s]+$/i.test(text);
+                const isLongText = text.length > 120 || text.includes('\n\n') || (text.split('\n').length > 2 && text.length > 60);
+
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                const jitterX = (Math.random() - 0.5) * 80;
+                const jitterY = (Math.random() - 0.5) * 80;
+
+                let newBlock = null;
+
+                if (isUrl) {
+                    let domain = 'Enlace';
+                    try {
+                        domain = new URL(text).hostname.replace(/^www\./, '');
+                    } catch (_) {}
+
+                    const w = 270;
+                    const h = 100;
+                    const spawnX = Math.round((-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX);
+                    const spawnY = Math.round((-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY);
+
+                    newBlock = {
+                        id: `link-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                        type: 'link',
+                        caption: domain,
+                        content: text,
+                        x: spawnX,
+                        y: spawnY,
+                        w,
+                        h,
+                        width: w,
+                        height: h,
+                        rotation: 0,
+                        username: user,
+                        isPublic: false,
+                        timestamp: now.toISOString(),
+                        createdAt: now.toISOString(),
+                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                    };
+                } else if (!isLongText) {
+                    // Texto corto / concepto para mapas (<= 120 caracteres)
+                    const isVeryShort = text.length <= 45 && !text.includes('\n');
+                    const caption = isVeryShort ? text : (text.slice(0, 42).trim() + '...');
+                    const content = isVeryShort ? '' : text;
+
+                    const w = 260;
+                    const h = 130;
+                    const spawnX = Math.round((-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX);
+                    const spawnY = Math.round((-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY);
+
+                    newBlock = {
+                        id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                        type: 'text',
+                        caption,
+                        content,
+                        x: spawnX,
+                        y: spawnY,
+                        w,
+                        h,
+                        width: w,
+                        height: h,
+                        rotation: 0,
+                        username: user,
+                        isPublic: false,
+                        timestamp: now.toISOString(),
+                        createdAt: now.toISOString(),
+                        metadata: {
+                            category: 'MAPA // CONCEPTO',
+                            timestamp: now.toISOString()
+                        },
+                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                    };
+                } else {
+                    // Texto largo (> 120 caracteres o varios párrafos):
+                    // Se crea una NOTA directamente con el título siendo la hora en que se hizo
+                    const noteTitle = `Nota • ${timeStr}`;
+                    const textLen = text.length;
+                    const w = textLen > 400 ? 420 : (textLen > 200 ? 370 : 320);
+                    const h = 230;
+                    const spawnX = Math.round((-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX);
+                    const spawnY = Math.round((-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY);
+
+                    newBlock = {
+                        id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                        type: 'text',
+                        caption: noteTitle,
+                        content: text,
+                        x: spawnX,
+                        y: spawnY,
+                        w,
+                        h,
+                        width: w,
+                        height: h,
+                        rotation: 0,
+                        username: user,
+                        isPublic: false,
+                        timestamp: now.toISOString(),
+                        createdAt: now.toISOString(),
+                        metadata: {
+                            category: `NOTA // ${timeStr}`,
+                            timestamp: now.toISOString()
+                        },
+                        canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
+                    };
+                }
+
+                if (newBlock) {
+                    syncBlocks(prev => [newBlock, ...prev]);
+                    if (typeof setSelectedBlockId === 'function') {
+                        setSelectedBlockId(newBlock.id);
+                    }
+                }
             }
         };
 
