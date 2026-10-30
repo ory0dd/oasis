@@ -34,7 +34,7 @@ export default function OasisMiniPlayer({
     if (isMinimized) {
         return (
             <div 
-                className="fixed bottom-20 left-3 sm:bottom-6 sm:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-2 duration-200 select-none pointer-events-auto"
+                className="fixed bottom-20 left-3 sm:bottom-20 sm:left-6 xl:bottom-6 xl:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-2 duration-200 select-none pointer-events-auto"
                 onMouseDown={e => e.stopPropagation()}
                 onTouchStart={e => e.stopPropagation()}
             >
@@ -89,7 +89,7 @@ export default function OasisMiniPlayer({
     // Estado Completo (Squircle moderno)
     return (
         <div 
-            className="fixed bottom-20 left-3 sm:bottom-6 sm:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-3 duration-200 select-none pointer-events-auto"
+            className="fixed bottom-20 left-3 sm:bottom-20 sm:left-6 xl:bottom-6 xl:left-6 z-[2450] animate-in fade-in slide-in-from-bottom-3 duration-200 select-none pointer-events-auto"
             onMouseDown={e => e.stopPropagation()}
             onTouchStart={e => e.stopPropagation()}
         >

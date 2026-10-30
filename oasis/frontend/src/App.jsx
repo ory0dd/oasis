@@ -18660,20 +18660,13 @@ ${afcMapContext}
                         </button>
                     </div>
 
-                    {/* Botón deslizar derecha */}
-                    <button
-                        type="button"
-                        onClick={() => scrollDock(1)}
-                        className="w-6 h-11 rounded-r-[22px] bg-[#111215]/95 hover:bg-zinc-850 border-y border-r border-white/[0.1] text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
-                        title="Deslizar herramientas a la derecha"
-                    >
-                        <ChevronRight size={13} />
-                    </button>
+                    {/* Máscara de desvanecimiento derecha */}
+                    <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-[#111215] to-transparent pointer-events-none z-10" />
                 </div>
 
-                    {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM */}
+                    {/* PÍLDORA DE NAVEGACIÓN DE CARPETA / PIZARRÓN Y ZOOM (RESPONSIVA ANTICOLISIÓN) */}
                     <div
-                        className="fixed bottom-6 right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
+                        className="fixed bottom-20 right-4 sm:bottom-20 sm:right-6 xl:bottom-6 xl:right-6 z-[2400] flex items-center gap-2 bg-[#111215]/95 backdrop-blur-xl border border-white/[0.1] px-3.5 py-1.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.85)] text-zinc-300 font-mono text-[11px] pointer-events-auto select-none"
                         onMouseDown={e => e.stopPropagation()}
                         onTouchStart={e => e.stopPropagation()}
                     >
