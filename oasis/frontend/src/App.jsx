@@ -611,47 +611,63 @@ const getBHeight = (block, isPoint) => {
     return block.metadata?.parentId ? 160 : 220;
 };
 
+const getRectIntersection = (cx, cy, tx, ty, w, h) => {
+    const dx = tx - cx;
+    const dy = ty - cy;
+    if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+        return { x: cx, y: cy + (h / 2), relX: 0, relY: Math.round(h / 2), side: 'bottom' };
+    }
+    const hw = Math.max(16, w / 2);
+    const hh = Math.max(16, h / 2);
+
+    let ix = 0;
+    let iy = 0;
+    let side = 'bottom';
+
+    if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+        // Intersects left or right edge
+        const signX = dx > 0 ? 1 : -1;
+        ix = signX * hw;
+        iy = dy * (hw / Math.abs(dx));
+        side = signX > 0 ? 'right' : 'left';
+    } else {
+        // Intersects top or bottom edge
+        const signY = dy > 0 ? 1 : -1;
+        iy = signY * hh;
+        ix = dx * (hh / Math.abs(dy));
+        side = signY > 0 ? 'bottom' : 'top';
+    }
+
+    return {
+        x: cx + ix,
+        y: cy + iy,
+        relX: Math.round(ix),
+        relY: Math.round(iy),
+        side
+    };
+};
+
 const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale = 1) => {
-    const b2X = b2.x;
-    const b2Y = b2.y;
-
-    const b1IsChild = !!b1.metadata?.parentId;
-    const b2IsChild = !isB2Point && !!b2.metadata?.parentId;
-
     const b1W = getBWidth(b1, false);
     const b2W = getBWidth(b2, isB2Point);
     const b1H = getBHeight(b1, false);
     const b2H = getBHeight(b2, isB2Point);
 
-    // The nodes are positioned with translate(-50%, -50%), so b.x and b.y represent their exact CENTER.
-    // Dynamic border connection points based on node placement.
-    let p1, p2;
-    if (isB2Point) {
-        p1 = { x: 5000 + b1.x, y: 5000 + b1.y + (b1H / 2) };
-        p2 = { x: 5000 + b2.x, y: 5000 + b2.y };
-    } else {
-        const dx = b2.x - b1.x;
-        const dy = b2.y - b1.y;
+    let p1, p2, side1, side2;
 
-        if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal connection
-            if (dx > 0) {
-                p1 = { x: 5000 + b1.x + (b1W / 2), y: 5000 + b1.y };
-                p2 = { x: 5000 + b2.x - (b2W / 2), y: 5000 + b2.y };
-            } else {
-                p1 = { x: 5000 + b1.x - (b1W / 2), y: 5000 + b1.y };
-                p2 = { x: 5000 + b2.x + (b2W / 2), y: 5000 + b2.y };
-            }
-        } else {
-            // Vertical connection
-            if (dy > 0) {
-                p1 = { x: 5000 + b1.x, y: 5000 + b1.y + (b1H / 2) };
-                p2 = { x: 5000 + b2.x, y: 5000 + b2.y - (b2H / 2) };
-            } else {
-                p1 = { x: 5000 + b1.x, y: 5000 + b1.y - (b1H / 2) };
-                p2 = { x: 5000 + b2.x, y: 5000 + b2.y + (b2H / 2) };
-            }
-        }
+    if (isB2Point) {
+        const inter1 = getRectIntersection(b1.x, b1.y, b2.x, b2.y, b1W, b1H);
+        p1 = { x: 5000 + inter1.x, y: 5000 + inter1.y };
+        p2 = { x: 5000 + b2.x, y: 5000 + b2.y };
+        side1 = inter1.side;
+        side2 = 'point';
+    } else {
+        const inter1 = getRectIntersection(b1.x, b1.y, b2.x, b2.y, b1W, b1H);
+        const inter2 = getRectIntersection(b2.x, b2.y, b1.x, b1.y, b2W, b2H);
+        p1 = { x: 5000 + inter1.x, y: 5000 + inter1.y };
+        p2 = { x: 5000 + inter2.x, y: 5000 + inter2.y };
+        side1 = inter1.side;
+        side2 = inter2.side;
     }
 
     const dx = p2.x - p1.x;
@@ -659,19 +675,20 @@ const getConnectionPoints = (b1, b2, isB2Point = false, draggingId = null, scale
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     let cp1, cp2;
-    const isHorizontal = !isB2Point && Math.abs(b2.x - b1.x) > Math.abs(b2.y - b1.y);
+    const tension = Math.min(140, Math.max(30, distance * 0.35));
 
-    if (isHorizontal) {
-        const dir = Math.sign(p2.x - p1.x) || 1;
-        cp1 = { x: p1.x + dir * (distance * 0.25), y: p1.y };
-        cp2 = { x: p2.x - dir * (distance * 0.25), y: p2.y };
-    } else {
-        const dir = Math.sign(p2.y - p1.y) || 1;
-        cp1 = { x: p1.x, y: p1.y + dir * (distance * 0.25) };
-        cp2 = { x: p2.x, y: p2.y - dir * (distance * 0.25) };
-    }
+    if (side1 === 'left') cp1 = { x: p1.x - tension, y: p1.y };
+    else if (side1 === 'right') cp1 = { x: p1.x + tension, y: p1.y };
+    else if (side1 === 'top') cp1 = { x: p1.x, y: p1.y - tension };
+    else cp1 = { x: p1.x, y: p1.y + tension };
 
-    return { p1, p2, cp1, cp2 };
+    if (side2 === 'left') cp2 = { x: p2.x - tension, y: p2.y };
+    else if (side2 === 'right') cp2 = { x: p2.x + tension, y: p2.y };
+    else if (side2 === 'top') cp2 = { x: p2.x, y: p2.y - tension };
+    else if (side2 === 'bottom') cp2 = { x: p2.x, y: p2.y + tension };
+    else cp2 = { x: p2.x, y: p2.y };
+
+    return { p1, p2, cp1, cp2, side1, side2 };
 };
 
 // --- CONFIGURACIÓN ---
@@ -2688,7 +2705,32 @@ const MiniMuralPreview = ({ muralBlocks, accent = '#bef264', onClick, size = 'sm
     );
 };
 
-const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit, selectedBlockId, onSelectBlockId, selectedBlockIds = [] }) => {
+const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinking, onStartConnecting, onCompleteConnection, onSelect, onDelete, onUpdateBlock, onOpenSubBoard, activeNoteId, onSelectNote, onSelectGroup, onAnalyzeBlock, onTranscribeBlock, isTranscribingId, onAnalyzeGroup, isAnalyzing, showConnections = true, useInternalPosition = true, onLaunchMural, accent, hasConnections, onSelectConversation, onOpenNotebook, onResizeNodeComplete, setView, conversations = [], onNewChat, camScale = 1, onRequestTitleEdit, selectedBlockId, onSelectBlockId, selectedBlockIds = [], links = [] }) => {
+    // Calcular bloque conectado para posicionar el punto exactamente en el contorno deslizante
+    const connectedBlock = React.useMemo(() => {
+        if (!links || !blocks || links.length === 0) return null;
+        const conn = links.find(l => l.from === block.id || l.to === block.id);
+        if (!conn) return null;
+        const otherId = conn.from === block.id ? conn.to : conn.from;
+        return blocks.find(b => b.id === otherId) || null;
+    }, [links, blocks, block.id]);
+
+    const portPosition = React.useMemo(() => {
+        if (!connectedBlock) {
+            return { style: { bottom: '-10px', left: '50%', transform: 'translateX(-50%)' }, side: 'bottom' };
+        }
+        const bW = getBWidth(block, false);
+        const bH = getBHeight(block, false);
+        const inter = getRectIntersection(block.x, block.y, connectedBlock.x, connectedBlock.y, bW, bH);
+        return {
+            style: {
+                left: `calc(50% + ${inter.relX}px)`,
+                top: `calc(50% + ${inter.relY}px)`,
+                transform: 'translate(-50%, -50%)'
+            },
+            side: inter.side
+        };
+    }, [connectedBlock, block]);
     const isImage = block.type === 'image' || block.type === 'relic';
     const isVideo = block.type === 'video';
     const isAudio = block.type === 'audio';
@@ -2999,7 +3041,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                 )}
                 {!showDeleteConfirm && (
                     <div
-                        className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer group/port pointer-events-auto opacity-0 group-hover:opacity-100"
+                        className={`absolute z-[60] flex flex-col items-center gap-1 cursor-pointer group/port pointer-events-auto transition-all duration-150 ${isLinking || connectedBlock ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                        style={portPosition.style}
                         onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
@@ -4703,10 +4746,11 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     </div>
                 )}
             </div>
-            {/* NÚCLEO DE SINCRONÍA (PORT) - SUBTLE EMERALD MILANOTE CONNECTOR (OUTSIDE OVERFLOW-HIDDEN SO IT NEVER CLIPS) */}
+            {/* NÚCLEO DE SINCRONÍA (PORT) - PUNTO QUE SE DESLIZA A LO LARGO DEL CONTORNO */}
             {showConnections && !showDeleteConfirm && (
                 <div
-                    className={`absolute -bottom-3 left-1/2 -translate-x-1/2 z-[60] pointer-events-auto transition-all duration-200 ${isLinking || isActive ? 'opacity-100 scale-105' : 'opacity-0 group-hover:opacity-100'}`}
+                    className={`absolute z-[60] pointer-events-auto transition-all duration-150 ${isLinking || isActive || connectedBlock ? 'opacity-100 scale-105' : 'opacity-0 group-hover:opacity-100'}`}
+                    style={portPosition.style}
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
@@ -4717,8 +4761,8 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                     }}
                     title="Conectar tarjeta (Hilo)"
                 >
-                    <div className="w-6 h-6 rounded-full bg-[#121316] border-2 border-[#10b981]/70 hover:border-[#10b981] hover:scale-125 transition-all shadow-[0_4px_14px_rgba(0,0,0,0.85),0_0_12px_rgba(16,185,129,0.45)] flex items-center justify-center cursor-crosshair">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
+                    <div className="w-5 h-5 rounded-full bg-[#121316] border-2 border-[#10b981] hover:scale-125 transition-all shadow-[0_4px_14px_rgba(0,0,0,0.85),0_0_12px_rgba(16,185,129,0.5)] flex items-center justify-center cursor-crosshair">
+                        <div className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
                     </div>
                 </div>
             )}
@@ -9319,6 +9363,11 @@ const AnimatedCanvasConnections = React.memo(({ links, blocks, draggingId, camSc
                             fill="none"
                             className="opacity-85 transition-opacity duration-200 group-hover/link-canvas:opacity-100 filter drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
                         />
+                        {/* PUNTOS DE ANCLAJE EXACTOS EN EL CONTORNO (SLIDING CONNECTOR DOTS) */}
+                        <circle cx={p1.x} cy={p1.y} r="5" fill="#121316" stroke={color} strokeWidth="2" />
+                        <circle cx={p1.x} cy={p1.y} r="2.2" fill={color} />
+                        <circle cx={p2.x} cy={p2.y} r="5" fill="#121316" stroke={color} strokeWidth="2" />
+                        <circle cx={p2.x} cy={p2.y} r="2.2" fill={color} />
                     </g>
                 );
             })}
@@ -17699,6 +17748,7 @@ ${afcMapContext}
                             selectedBlockId={selectedBlockId}
                             selectedBlockIds={selectedBlockIds}
                             onSelectBlockId={setSelectedBlockId}
+                            links={links}
                             onStart={handleStart}
                             onSelect={editBlock}
                             onUpdateBlock={handleInlineBlockUpdate}
