@@ -3417,6 +3417,35 @@ const MemoNode = React.memo(({ block, blocks = [], draggingId, onStart, isLinkin
                                             <Edit2 size={10} />
                                         </button>
                                         <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onUpdateBlock) {
+                                                    const textContent = (block.caption && block.caption !== 'Estética Nocturna' ? block.caption : (block.content || 'Texto')).trim();
+                                                    onUpdateBlock({
+                                                        ...block,
+                                                        type: 'canvas_title',
+                                                        content: textContent,
+                                                        fontFamily: 'outfit',
+                                                        fontSize: 38,
+                                                        fontWeight: '800',
+                                                        color: '#ffffff',
+                                                        hasStroke: true,
+                                                        strokeWidth: 2.5,
+                                                        strokeColor: '#000000',
+                                                        hasShadow: true,
+                                                        lineHeight: 1.15,
+                                                        textAlign: 'center',
+                                                        width: 500,
+                                                        isSingleLine: false
+                                                    });
+                                                }
+                                            }}
+                                            className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-emerald-400 transition-colors"
+                                            title="Convertir a Solo Texto (Título)"
+                                        >
+                                            <Type size={10} />
+                                        </button>
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
                                             className="p-1 hover:bg-red-500/20 rounded-md text-zinc-400 hover:text-red-400 transition-colors"
                                             title="Eliminar Nota"
@@ -15686,7 +15715,7 @@ ${afcMapContext}
 
                 // Detectar si es un enlace web (no imagen)
                 const isUrl = /^https?:\/\/[^\s]+$/i.test(text);
-                const isLongText = text.length > 120 || text.includes('\n\n') || (text.split('\n').length > 2 && text.length > 60);
+                const isLongText = text.length > 140 || (text.split('\n').filter(l => l.trim().length > 0).length > 2 && text.length > 80);
 
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -15726,36 +15755,36 @@ ${afcMapContext}
                         canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
                     };
                 } else if (!isLongText) {
-                    // Texto corto / concepto para mapas (<= 120 caracteres)
-                    const isVeryShort = text.length <= 45 && !text.includes('\n');
-                    const caption = isVeryShort ? text : (text.slice(0, 42).trim() + '...');
-                    const content = isVeryShort ? '' : text;
+                    // Texto corto / concepto para mapas: SOLO TEXTO en el lienzo (como canvas_title, sin caja ni fondo)
+                    const fontSize = text.length <= 25 ? 46 : (text.length <= 60 ? 38 : 30);
+                    const calcWidth = text.length <= 25 ? 420 : (text.length <= 65 ? 580 : 720);
 
-                    const w = 260;
-                    const h = 130;
-                    const spawnX = Math.round((-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) - (w / 2) + jitterX);
-                    const spawnY = Math.round((-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) - (h / 2) + jitterY);
+                    // Para canvas_title, (x, y) es el centro del texto flotante en el viewport
+                    const spawnX = Math.round((-cam.x / cam.scale) + (window.innerWidth / (2 * cam.scale)) + jitterX);
+                    const spawnY = Math.round((-cam.y / cam.scale) + (window.innerHeight / (2 * cam.scale)) + jitterY);
 
                     newBlock = {
-                        id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-                        type: 'text',
-                        caption,
-                        content,
+                        id: `title-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                        type: 'canvas_title',
+                        content: text,
+                        fontFamily: 'outfit',
+                        fontSize: fontSize,
+                        fontWeight: '800',
+                        color: '#ffffff',
+                        hasStroke: true,
+                        strokeWidth: 2.5,
+                        strokeColor: '#000000',
+                        hasShadow: true,
+                        lineHeight: 1.15,
+                        textAlign: 'center',
+                        width: calcWidth,
+                        isSingleLine: false,
                         x: spawnX,
                         y: spawnY,
-                        w,
-                        h,
-                        width: w,
-                        height: h,
-                        rotation: 0,
                         username: user,
                         isPublic: false,
                         timestamp: now.toISOString(),
                         createdAt: now.toISOString(),
-                        metadata: {
-                            category: 'MAPA // CONCEPTO',
-                            timestamp: now.toISOString()
-                        },
                         canvasId: activeCanvasId !== 'canvas_default' ? activeCanvasId : undefined
                     };
                 } else {
