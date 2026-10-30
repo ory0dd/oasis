@@ -11,7 +11,8 @@ import {
     Navigation, Grid, Square, Circle, Monitor, RotateCw, Type, Move, Camera,
     User, Clock, Database, Activity, Crop, RefreshCw, Palette, Layers, List, Download, Sidebar, Rss, Film, ShoppingBag,
     Bookmark, UserSquare, Link as LinkIcon, Link2, FolderKanban, ServerCrash, Home,
-    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music
+    MoreHorizontal, ArrowUpRight, Columns, AlignLeft, ListTodo, Volume2, VolumeX, Upload, UploadCloud, Smile, Sliders, Loader2, Music,
+    Lock, Unlock
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import SimpleNotesView from './components/SimpleNotesView';
@@ -5504,6 +5505,135 @@ const ProfileView = ({
     const [isPiecesModalOpen, setIsPiecesModalOpen] = useState(false);
     const [isQuickCustomizeOpen, setIsQuickCustomizeOpen] = useState(false);
 
+    // --- ENLACES DEL PERFIL (LÍMITE MÁXIMO 5 LINKS) ---
+    const [profileLinks, setProfileLinks] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_profile_links_${effectiveUser}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch { return []; }
+    });
+    const [newLinkTitle, setNewLinkTitle] = useState('');
+    const [newLinkUrl, setNewLinkUrl] = useState('');
+
+    const handleAddProfileLink = (title, url) => {
+        if (!url || !url.trim()) return;
+        if (profileLinks.length >= 5) {
+            alert("Límite alcanzado: máximo 5 enlaces permitidos en tu perfil.");
+            return;
+        }
+        let cleanUrl = url.trim();
+        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'https://' + cleanUrl;
+        }
+        const updated = [...profileLinks, { title: (title || '').trim(), url: cleanUrl }];
+        setProfileLinks(updated);
+        localStorage.setItem(`oasis_profile_links_${effectiveUser}`, JSON.stringify(updated));
+        setNewLinkTitle('');
+        setNewLinkUrl('');
+    };
+
+    const handleRemoveProfileLink = (index) => {
+        const updated = profileLinks.filter((_, idx) => idx !== index);
+        setProfileLinks(updated);
+        localStorage.setItem(`oasis_profile_links_${effectiveUser}`, JSON.stringify(updated));
+    };
+
+    // --- RECUADRO EXTRA / LIENZO DESTACADO EN VENTA & TEASER ---
+    const [showcaseSettings, setShowcaseSettings] = useState(() => {
+        try {
+            const saved = localStorage.getItem(`oasis_canvas_showcase_${effectiveUser}`);
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return {
+            enabled: true,
+            title: 'Proceso de Deconstrucción & Reinvención',
+            price: '$250 MXN',
+            description: 'Mapa existencial y cognitivo estructurado paso a paso con nodos interconectados, ejercicios de resignificación y bitácora clínica.',
+            coverImage: '',
+            teaserOpenCount: 2,
+            canvasId: 'canvas_default'
+        };
+    });
+    const [isTeaserModalOpen, setIsTeaserModalOpen] = useState(false);
+    const [isCanvasSettingsModalOpen, setIsCanvasSettingsModalOpen] = useState(false);
+    const [teaserBlocks, setTeaserBlocks] = useState([]);
+    const [isTeaserLoading, setIsTeaserLoading] = useState(false);
+    const [isCloningCanvas, setIsCloningCanvas] = useState(false);
+    const [teaserToast, setTeaserToast] = useState(null);
+
+    const handleOpenTeaserModal = async () => {
+        setIsTeaserModalOpen(true);
+        setIsTeaserLoading(true);
+        try {
+            const caller = user || '';
+            const cId = showcaseSettings?.canvasId || 'canvas_default';
+            const count = showcaseSettings?.teaserOpenCount || 2;
+            const res = await fetch(`${API_URL}/api/oasis/canvas-teaser?user=${encodeURIComponent(effectiveUser)}&canvasId=${encodeURIComponent(cId)}&openCount=${count}`, {
+                headers: { 'X-Oasis-User': caller }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setTeaserBlocks(Array.isArray(data) ? data : []);
+            } else {
+                setTeaserBlocks([]);
+            }
+        } catch (err) {
+            console.error("Error cargando teaser del lienzo:", err);
+            setTeaserBlocks([]);
+        } finally {
+            setIsTeaserLoading(false);
+        }
+    };
+
+    const handleCloneAndAcquire = async () => {
+        if (!user) {
+            alert("Inicia sesión en Oasis para clonar y adquirir este proceso.");
+            return;
+        }
+        setIsCloningCanvas(true);
+        try {
+            const cId = showcaseSettings?.canvasId || 'canvas_default';
+            const res = await fetch(`${API_URL}/api/oasis/clone-canvas?targetUser=${encodeURIComponent(user)}&fromUser=${encodeURIComponent(effectiveUser)}&canvasId=${encodeURIComponent(cId)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setTeaserToast({ type: 'success', message: `✓ ¡Lienzo clonado a tu Oasis con éxito (${data.count || 0} nodos)! Puedes abrirlo en tu espacio de trabajo.` });
+                setTimeout(() => setTeaserToast(null), 5000);
+            } else {
+                const errText = await res.text();
+                setTeaserToast({ type: 'error', message: `Error al clonar el lienzo: ${errText}` });
+                setTimeout(() => setTeaserToast(null), 5000);
+            }
+        } catch (err) {
+            console.error("Error al clonar lienzo:", err);
+            setTeaserToast({ type: 'error', message: "Error al clonar el lienzo. Intenta nuevamente." });
+            setTimeout(() => setTeaserToast(null), 5000);
+        } finally {
+            setIsCloningCanvas(false);
+        }
+    };
+
+    const handleSaveShowcaseSettings = async (newSettings) => {
+        setShowcaseSettings(newSettings);
+        try {
+            localStorage.setItem(`oasis_canvas_showcase_${effectiveUser}`, JSON.stringify(newSettings));
+            if (user) {
+                await fetch(`${API_URL}/api/oasis/clinical-data?user=${encodeURIComponent(effectiveUser)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Oasis-User': user },
+                    body: JSON.stringify({ [`oasis_canvas_showcase_${effectiveUser}`]: JSON.stringify(newSettings) })
+                }).catch(() => {});
+            }
+        } catch (err) {
+            console.error("Error guardando ajustes del lienzo:", err);
+        }
+        setIsCanvasSettingsModalOpen(false);
+        setTeaserToast({ type: 'success', message: "✓ Ajustes del lienzo en venta guardados correctamente." });
+        setTimeout(() => setTeaserToast(null), 4000);
+    };
+
     React.useEffect(() => {
         if (!isOwnProfile) {
             let vFullName = effectiveUser;
@@ -7070,6 +7200,26 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                     {bio || 'ruido extraviado'}
                                 </p>
 
+                                {/* Enlaces del Perfil (Máximo 5 enlaces permitidos) */}
+                                {profileLinks && profileLinks.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                        {profileLinks.slice(0, 5).map((l, lIdx) => (
+                                            <a
+                                                key={lIdx}
+                                                href={l.url?.startsWith('http') ? l.url : `https://${l.url || ''}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-500/40 text-[7px] sm:text-[8px] md:text-[9px] font-mono text-zinc-300 hover:text-white transition-all shadow-xs"
+                                                title={l.url}
+                                            >
+                                                <Link2 size={9} className="text-emerald-400" />
+                                                <span className="truncate max-w-[120px] font-medium">{l.title || l.url?.replace(/^https?:\/\//, '')}</span>
+                                                <ExternalLink size={8} className="text-zinc-500" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
+
                                 {/* Fila 4: 3 Botones Icónicos Grandes (Comunidad, Podcast, Archivo PDFs) sin texto para máxima elegancia */}
                                 <div className="grid grid-cols-3 gap-1 sm:gap-1.5 md:gap-2 pt-0.5 md:pt-1">
                                     <button
@@ -7197,9 +7347,81 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         </div>
 
                         {/* ======================================================== */}
-                        {/* FILA 2 (EN MEDIO): PIEZAS CON ENLACES PUBLICADAS */}
+                        {/* RECUADRO EXTRA: PROCESO PERSONAL // LIENZO DESTACADO */}
                         {/* ======================================================== */}
-                        <div className="col-span-2 lg:col-span-12 order-2 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
+                        {(showcaseSettings?.enabled || isOwnProfile) && (
+                            <div className="col-span-2 lg:col-span-12 order-2 bg-gradient-to-r from-[#0c0f14] via-[#090d12] to-[#0c1218] border border-emerald-500/25 hover:border-emerald-500/45 rounded-2xl p-3 sm:p-4 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3.5 relative overflow-hidden group/showcase transition-all">
+                                <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+                                
+                                {/* Info izquierda */}
+                                <div className="flex-1 min-w-0 flex flex-col gap-1.5 z-10 w-full sm:w-auto">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                                            <Sparkles size={9} />
+                                            PROCESO PERSONAL // LIENZO DESTACADO
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded-md bg-black/70 border border-emerald-500/30 text-[7.5px] sm:text-[8.5px] font-mono font-black text-emerald-300">
+                                            {showcaseSettings?.price || '$250 MXN'}
+                                        </span>
+                                        <span className="px-1.5 py-0.2 rounded bg-white/[0.06] text-[6.5px] sm:text-[7.5px] font-mono text-zinc-400 uppercase flex items-center gap-1">
+                                            <Lock size={8} className="text-emerald-400" />
+                                            Teaser Protegido
+                                        </span>
+                                    </div>
+                                    <h4 className="text-[12px] sm:text-[14px] md:text-[15px] font-mono font-black text-white tracking-tight truncate">
+                                        {showcaseSettings?.title || 'Proceso de Deconstrucción & Reinvención'}
+                                    </h4>
+                                    <p className="text-[8px] sm:text-[9.5px] text-zinc-400 font-sans line-clamp-2 leading-relaxed">
+                                        {showcaseSettings?.description || 'Mapa cognitivo y existencial estructurado paso a paso con nodos interconectados, ejercicios de resignificación y bitácora clínica.'}
+                                    </p>
+                                </div>
+
+                                {/* Portada pixelada y acciones derecha */}
+                                <div className="flex items-center gap-3 shrink-0 z-10 w-full sm:w-auto justify-between sm:justify-end">
+                                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-emerald-500/30 bg-black/60 shadow-md shrink-0">
+                                        <img
+                                            src={showcaseSettings?.coverImage ? formatUrl(showcaseSettings.coverImage) : 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=600&auto=format&fit=crop'}
+                                            alt="Portada Teaser"
+                                            className="w-full h-full object-cover"
+                                            style={{ filter: 'blur(1px) contrast(140%) saturate(120%)', imageRendering: 'pixelated' }}
+                                        />
+                                        <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-[0.5px]" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-[7.5px] font-mono font-black text-emerald-300 bg-black/80 px-1 rounded border border-emerald-500/40">TEASER</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenTeaserModal}
+                                            className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all cursor-pointer active:scale-95"
+                                            title="Abrir vista previa interactiva del lienzo"
+                                        >
+                                            <Eye size={12} />
+                                            <span>Explorar Teaser ✨</span>
+                                        </button>
+
+                                        {isOwnProfile && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsCanvasSettingsModalOpen(true)}
+                                                className="w-full sm:w-auto px-2.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white font-mono font-bold text-[8.5px] sm:text-[9.5px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                                title="Configurar precio, título, portada y nodos abiertos"
+                                            >
+                                                <Settings size={11} />
+                                                <span>Ajustes</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ======================================================== */}
+                        {/* FILA 3 (EN MEDIO): PIEZAS CON ENLACES PUBLICADAS */}
+                        {/* ======================================================== */}
+                        <div className="col-span-2 lg:col-span-12 order-3 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col gap-2 relative overflow-hidden group/pieces">
                             <div className="flex items-center justify-between pb-0.5">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={11} className="text-accent shrink-0" />
@@ -7290,7 +7512,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         {/* ======================================================== */}
                         
                         {/* LADO IZQUIERDO: SONIDOS / PLAYLIST ESPACIOSA Y SIN TEXTOS MOCHOS */}
-                        <div className="col-span-1 lg:col-span-6 order-3 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
+                        <div className="col-span-1 lg:col-span-6 order-4 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative overflow-hidden">
                             
                             {/* Input oculto para subir múltiples archivos MP3 */}
                             <input
@@ -7434,7 +7656,7 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                         </div>
 
                         {/* LADO DERECHO: RECUERDOS VALIOSOS (SOLO POSTS DE PURO TEXTO) */}
-                        <div className="col-span-1 lg:col-span-6 order-4 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative">
+                        <div className="col-span-1 lg:col-span-6 order-5 bg-[#0b0c10]/70 border border-white/[0.08] rounded-2xl p-2.5 sm:p-4 backdrop-blur-md shadow-xl flex flex-col justify-between gap-2 relative">
                             <div className="flex items-center justify-between pb-0.5">
                                 <div className="flex items-center gap-1.5">
                                     <Sparkles size={10} className="text-emerald-400" />
@@ -7702,17 +7924,76 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                                     className="w-full bg-black/50 border border-white/10 rounded-xl p-2 text-xs text-white placeholder-zinc-500 outline-none focus:border-emerald-500/50 transition-all resize-none font-sans"
                                 />
 
-                                <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 mt-1">Enlace Personal</label>
-                                <input
-                                    type="text"
-                                    value={profileLink || ''}
-                                    onChange={(e) => {
-                                        setProfileLink(e.target.value);
-                                        localStorage.setItem('oasis_profilelink_' + user, e.target.value);
+                                {/* Enlaces del Perfil con límite estricto de 5 */}
+                                <div className="flex flex-col gap-1.5 mt-1">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">
+                                            Enlaces del Perfil ({profileLinks.length}/5)
+                                        </label>
+                                        {profileLinks.length >= 5 && (
+                                            <span className="text-[8px] font-mono text-amber-400 font-bold">Límite alcanzado</span>
+                                        )}
+                                    </div>
+
+                                    {profileLinks.length > 0 && (
+                                        <div className="flex flex-col gap-1">
+                                            {profileLinks.map((l, idx) => (
+                                                <div key={idx} className="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[10px] font-mono">
+                                                    <span className="text-zinc-300 font-medium truncate flex-1">{l.title ? `${l.title}: ` : ''}{l.url}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveProfileLink(idx)}
+                                                        className="text-red-400/70 hover:text-red-400 p-0.5 cursor-pointer"
+                                                        title="Eliminar enlace"
+                                                    >
+                                                        <Trash2 size={11} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {profileLinks.length < 5 && (
+                                        <div className="flex flex-col gap-1 pt-1">
+                                            <div className="flex gap-1.5">
+                                                <input
+                                                    type="text"
+                                                    value={newLinkTitle}
+                                                    onChange={(e) => setNewLinkTitle(e.target.value)}
+                                                    placeholder="Título (opcional)"
+                                                    className="w-1/3 bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-[11px] font-mono text-white placeholder-zinc-600 outline-none"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={newLinkUrl}
+                                                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                                                    placeholder="https://tu-link.com"
+                                                    className="flex-1 bg-black/50 border border-white/10 rounded-xl px-2 py-1 text-[11px] font-mono text-emerald-400 placeholder-zinc-600 outline-none"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddProfileLink(newLinkTitle, newLinkUrl)}
+                                                className="w-full py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-[9px] font-mono font-bold text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer"
+                                            >
+                                                + Agregar Enlace
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Botón para abrir ajustes del lienzo en venta */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsQuickCustomizeOpen(false);
+                                        setIsCanvasSettingsModalOpen(true);
                                     }}
-                                    placeholder="ej: inn3r.shop o instagram.com/tu_usuario"
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-emerald-400 placeholder-zinc-500 outline-none focus:border-emerald-500/50 transition-all"
-                                />
+                                    className="w-full mt-2 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 hover:from-emerald-500/30 hover:to-teal-500/30 border border-emerald-500/40 text-[10px] font-mono font-bold text-emerald-300 hover:text-white flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+                                >
+                                    <Sparkles size={12} />
+                                    <span>Ajustes del Lienzo en Venta 🏛️</span>
+                                </button>
 
                                 <div className="flex items-center gap-2 pt-2">
                                     <button
@@ -8635,6 +8916,323 @@ ${hasClinicalContext ? mapTopologySummary : `Usuario: ${targetU}\nBio: ${bio || 
                     </div>
                 )}
 
+                {/* ======================================================== */}
+                {/* VENTANA TEASER DEL LIENZO (VISTA PREVIA INTERACTIVA) */}
+                {/* ======================================================== */}
+                {isTeaserModalOpen && (
+                    <div
+                        className="fixed inset-0 z-[7500] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsTeaserModalOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-4xl max-h-[90vh] bg-[#0c0f14] border border-emerald-500/30 rounded-3xl shadow-2xl flex flex-col text-white relative animate-in zoom-in-95 duration-200 overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header del Teaser */}
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#10141b]">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-center text-emerald-400 shrink-0">
+                                        <Sparkles size={18} />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-sm sm:text-base font-mono font-bold text-white truncate">
+                                                {showcaseSettings?.title || 'Proceso Personal'}
+                                            </h3>
+                                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[7.5px] font-mono font-bold text-emerald-300 shrink-0 flex items-center gap-1">
+                                                <Lock size={8} />
+                                                TEASER
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-mono text-zinc-400">
+                                            Creado por @{effectiveUser} • {teaserBlocks.length} nodos en este lienzo
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 rounded-xl bg-black/60 border border-emerald-500/40 text-xs font-mono font-black text-emerald-400">
+                                        {showcaseSettings?.price || '$250 MXN'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTeaserModalOpen(false)}
+                                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Toast dentro del modal si existe */}
+                            {teaserToast && (
+                                <div className={`px-4 py-2 font-mono text-xs flex items-center justify-center ${teaserToast.type === 'success' ? 'bg-emerald-500/20 text-emerald-300 border-b border-emerald-500/30' : 'bg-red-500/20 text-red-300 border-b border-red-500/30'}`}>
+                                    {teaserToast.message}
+                                </div>
+                            )}
+
+                            {/* Contenido / Mosaico de Nodos del Lienzo */}
+                            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
+                                {isTeaserLoading ? (
+                                    <div className="py-20 flex flex-col items-center justify-center gap-3">
+                                        <Loader2 size={24} className="animate-spin text-emerald-400" />
+                                        <span className="text-xs font-mono text-zinc-400">Cargando nodos del proceso...</span>
+                                    </div>
+                                ) : teaserBlocks.length === 0 ? (
+                                    <div className="py-16 px-4 rounded-2xl bg-black/40 border border-white/5 border-dashed flex flex-col items-center justify-center text-center gap-2">
+                                        <Sparkles size={24} className="text-zinc-600" />
+                                        <span className="text-xs font-mono text-zinc-400">Este lienzo aún no tiene nodos registrados.</span>
+                                        {isOwnProfile && (
+                                            <span className="text-[10px] font-mono text-zinc-500">Crea nodos en tu espacio de trabajo para estructurar tu proceso.</span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {teaserBlocks.map((b, idx) => {
+                                            const isLocked = Boolean(b.metadata?.isTeaserLocked);
+                                            return (
+                                                <div
+                                                    key={b.id || idx}
+                                                    className={`rounded-2xl p-4 border transition-all flex flex-col justify-between gap-3 relative overflow-hidden ${isLocked ? 'bg-black/40 border-white/[0.08]' : 'bg-[#12161f] border-emerald-500/30 hover:border-emerald-500/60 shadow-lg'}`}
+                                                >
+                                                    {/* Header de la tarjeta */}
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <span className="w-5 h-5 rounded-md bg-white/[0.06] text-[10px] font-mono font-bold flex items-center justify-center text-zinc-400 shrink-0">
+                                                                {idx + 1}
+                                                            </span>
+                                                            <span className="text-xs font-mono font-bold text-zinc-200 truncate">
+                                                                {b.caption || b.metadata?.category || `Nodo #${idx + 1}`}
+                                                            </span>
+                                                        </div>
+                                                        {isLocked ? (
+                                                            <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[7.5px] font-mono font-bold text-red-400 flex items-center gap-1 shrink-0">
+                                                                <Lock size={8} />
+                                                                Bloqueado
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[7.5px] font-mono font-bold text-emerald-400 flex items-center gap-1 shrink-0">
+                                                                <Unlock size={8} />
+                                                                Abierto
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Cuerpo del nodo */}
+                                                    {isLocked ? (
+                                                        <div className="relative py-6 px-3 rounded-xl bg-black/60 border border-white/5 flex flex-col items-center justify-center text-center gap-2 overflow-hidden">
+                                                            <div className="absolute inset-0 filter blur-[4px] opacity-25 select-none pointer-events-none p-2 text-[9px] font-mono text-zinc-400 overflow-hidden">
+                                                                Lorem ipsum dolor sit amet deconstructio mentalis cogito ergo sum et memoria perennis continua structura...
+                                                            </div>
+                                                            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg z-10">
+                                                                <Lock size={14} />
+                                                            </div>
+                                                            <span className="text-[10px] font-mono font-bold text-zinc-300 z-10">
+                                                                Paso Protegido
+                                                            </span>
+                                                            <span className="text-[8.5px] font-mono text-zinc-500 z-10 max-w-[240px]">
+                                                                Adquiere el proceso completo para acceder a este nodo, sus enlaces y reflexiones.
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-[10.5px] font-sans text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[160px] overflow-y-auto pr-1">
+                                                            {b.content || b.caption || 'Nodo abierto del proceso.'}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Footer del nodo */}
+                                                    <div className="flex items-center justify-between text-[8px] font-mono text-zinc-500 pt-1 border-t border-white/[0.05]">
+                                                        <span>Tipo: {b.type || 'text'}</span>
+                                                        <span>{isLocked ? 'Contenido protegido' : 'Vista previa libre'}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer de Acciones del Teaser */}
+                            <div className="px-5 py-4 border-t border-white/[0.08] bg-[#10141b] flex flex-col sm:flex-row items-center justify-between gap-3">
+                                <div className="text-left w-full sm:w-auto">
+                                    <span className="text-xs font-mono font-bold text-white block">
+                                        {showcaseSettings?.title || 'Proceso Personal'}
+                                    </span>
+                                    <span className="text-[10px] font-sans text-zinc-400">
+                                        {isOwnProfile ? 'Vista previa que verán tus visitantes y compradores' : 'Adquiere y clona todo el contenido desbloqueado a tu espacio'}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                    {isOwnProfile ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsTeaserModalOpen(false);
+                                                setIsCanvasSettingsModalOpen(true);
+                                            }}
+                                            className="px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 text-white font-mono font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                                        >
+                                            <Settings size={13} />
+                                            <span>Ajustar Teaser y Precio ⚙️</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleCloneAndAcquire}
+                                            disabled={isCloningCanvas}
+                                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-black text-xs flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(16,185,129,0.4)] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                        >
+                                            {isCloningCanvas ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                                            <span>Adquirir y Clonar a mi Oasis ({showcaseSettings?.price || '$250 MXN'})</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ======================================================== */}
+                {/* MODAL DE AJUSTES DEL LIENZO EN VENTA (SOLO CREADOR) */}
+                {/* ======================================================== */}
+                {isCanvasSettingsModalOpen && isOwnProfile && (
+                    <div
+                        className="fixed inset-0 z-[7600] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200 pointer-events-auto"
+                        onClick={() => setIsCanvasSettingsModalOpen(false)}
+                    >
+                        <div
+                            className="w-full max-w-lg bg-[#0c0f14] border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-white relative animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                        <Settings size={16} />
+                                    </div>
+                                    <h3 className="text-sm sm:text-base font-mono font-bold text-white">
+                                        Ajustes del Proceso en Venta
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCanvasSettingsModalOpen(false)}
+                                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
+                                {/* Toggle Activación */}
+                                <label className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] cursor-pointer">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-mono font-bold text-zinc-100">Mostrar en el perfil</span>
+                                        <span className="text-[9.5px] font-sans text-zinc-400">Poner este proceso visible para los visitantes</span>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(showcaseSettings?.enabled)}
+                                        onChange={(e) => setShowcaseSettings(prev => ({ ...prev, enabled: e.target.checked }))}
+                                        className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                                    />
+                                </label>
+
+                                {/* Título */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">Título del Proceso</label>
+                                    <input
+                                        type="text"
+                                        value={showcaseSettings?.title || ''}
+                                        onChange={(e) => setShowcaseSettings(prev => ({ ...prev, title: e.target.value }))}
+                                        placeholder="ej: Proceso de Deconstrucción & Reinvención"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-emerald-500/50"
+                                    />
+                                </div>
+
+                                {/* Precio */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">Precio Comercial</label>
+                                    <input
+                                        type="text"
+                                        value={showcaseSettings?.price || ''}
+                                        onChange={(e) => setShowcaseSettings(prev => ({ ...prev, price: e.target.value }))}
+                                        placeholder="ej: $250 MXN o $15 USD"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-emerald-400 outline-none focus:border-emerald-500/50"
+                                    />
+                                </div>
+
+                                {/* Descripción */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">Descripción / Síntesis</label>
+                                    <textarea
+                                        value={showcaseSettings?.description || ''}
+                                        onChange={(e) => setShowcaseSettings(prev => ({ ...prev, description: e.target.value }))}
+                                        rows={2}
+                                        placeholder="Explica de qué trata este mapa de proceso..."
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs font-sans text-zinc-200 outline-none focus:border-emerald-500/50 resize-none"
+                                    />
+                                </div>
+
+                                {/* Imagen de portada */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">URL Imagen de Portada (Pixelada en perfil)</label>
+                                    <input
+                                        type="text"
+                                        value={showcaseSettings?.coverImage || ''}
+                                        onChange={(e) => setShowcaseSettings(prev => ({ ...prev, coverImage: e.target.value }))}
+                                        placeholder="https://images.unsplash.com/..."
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-zinc-300 outline-none focus:border-emerald-500/50"
+                                    />
+                                </div>
+
+                                {/* Cantidad de nodos abiertos en el teaser */}
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] font-mono uppercase tracking-wider text-zinc-400">
+                                        Nodos abiertos en Teaser (los demás se bloquean)
+                                    </label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[1, 2, 3, 4].map(num => (
+                                            <button
+                                                key={num}
+                                                type="button"
+                                                onClick={() => setShowcaseSettings(prev => ({ ...prev, teaserOpenCount: num }))}
+                                                className={`py-1.5 rounded-xl font-mono text-xs font-bold border transition-all cursor-pointer ${showcaseSettings?.teaserOpenCount === num ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-white/[0.04] text-zinc-300 border-white/10 hover:bg-white/[0.08]'}`}
+                                            >
+                                                {num} {num === 1 ? 'nodo' : 'nodos'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.08]">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCanvasSettingsModalOpen(false)}
+                                    className="px-4 py-2 rounded-xl text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSaveShowcaseSettings(showcaseSettings)}
+                                    className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono font-bold text-xs transition-all cursor-pointer active:scale-95 shadow-md"
+                                >
+                                    Guardar Ajustes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Notificación Toast del Teaser si está fuera del modal */}
+                {teaserToast && !isTeaserModalOpen && (
+                    <div className="fixed bottom-6 right-6 z-[8000] px-4 py-2.5 rounded-xl bg-black/90 border border-emerald-500/50 shadow-2xl backdrop-blur-md text-emerald-300 font-mono text-xs animate-in slide-in-from-bottom-2">
+                        {teaserToast.message}
+                    </div>
+                )}
+
             </div>
         </div>
     );
@@ -8828,7 +9426,7 @@ function OasisApp() {
             return;
         }
         const cleanUser = publicProfileUser.replace('@', '');
-        fetch(`${API_URL}/api/oasis/blocks?user=${cleanUser}`)
+        fetch(`${API_URL}/api/oasis/blocks?user=${cleanUser}`, { headers: { 'X-Oasis-User': user || cleanUser } })
             .then(r => r.json())
             .then(blocks => {
                 const profileBlock = Array.isArray(blocks) ? blocks.find(b => b.id === 'profile_settings' || b.Id === 'profile_settings') : null;
@@ -11720,7 +12318,7 @@ function OasisApp() {
                         fetch(`${API_URL}/api/oasis/background?user=${user}`).catch(() => null),
                         fetch(`${API_URL}/api/oasis/conversations?user=${user}`).catch(() => null),
                         fetch(`${API_URL}/api/oasis/folders?user=${user}`).catch(() => null),
-                        fetch(`${API_URL}/api/oasis/blocks?user=${user}`).catch(() => null)
+                        fetch(`${API_URL}/api/oasis/blocks?user=${user}`, { headers: { 'X-Oasis-User': user } }).catch(() => null)
                     ]).then(async ([bgRes, convRes, foldRes, blocksRes]) => {
                         // --- 1. Background ---
                         let gotBg = false;
@@ -15553,6 +16151,169 @@ ${afcMapContext}
             });
             if (closePicker) setIsTemplatePickerOpen(false);
             return;
+        } else if (templateId === 'personal_process') {
+            const b1 = `${ts}-pp-1`, b2 = `${ts}-pp-2`, b3 = `${ts}-pp-3`, b4 = `${ts}-pp-4`, b5 = `${ts}-pp-5`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'text',
+                    caption: withExample ? '1. Origen & Quiebre Existencial' : '1. Origen & Quiebre',
+                    content: withExample
+                        ? 'Premisa inicial:\n"Siempre sentí que debía ser el salvador de los demás para merecer afecto."\n\nDetonante del cambio:\nEl agotamiento crónico y la ruptura del pacto de complacencia silenciosa.'
+                        : 'Describe el punto de partida y la situación que detonó la necesidad de transformación...',
+                    metadata: { category: 'DECONSTRUCCIÓN // ORIGEN' },
+                    x: -600,
+                    y: -120,
+                    width: 270,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'text',
+                    caption: withExample ? '2. Identificación del Bucle' : '2. El Bucle',
+                    content: withExample
+                        ? 'Patrón recurrente:\n1. Ansiedad ante el conflicto.\n2. Sobreadaptación extrema.\n3. Resentimiento silencioso.\n4. Desconexión afectiva.'
+                        : 'Mapea la secuencia de pasos o pensamientos automáticos que sostienen el problema...',
+                    metadata: { category: 'DECONSTRUCCIÓN // PATRÓN' },
+                    x: -300,
+                    y: -120,
+                    width: 260,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'text',
+                    caption: withExample ? '3. Experimento Vital & Límites' : '3. Experimento Vital',
+                    content: withExample
+                        ? 'Micro-acción semanal:\nDecir "no puedo en este momento" sin justificarme con explicaciones largas.\n\nEvidencia observada:\nNadie se enojó. El miedo anticipatorio era 10x mayor que la realidad.'
+                        : 'Plantea una micro-conducta o prueba de realidad concreta para romper el bucle...',
+                    metadata: { category: 'DECONSTRUCCIÓN // ACCIÓN' },
+                    x: 0,
+                    y: -120,
+                    width: 270,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'text',
+                    caption: withExample ? '4. Insights & Reconfiguración' : '4. Insights',
+                    content: withExample
+                        ? 'Insight clave:\nEl valor personal no se negocia por pertenencia. La calma interna vale más que la aprobación ajena.'
+                        : 'Sintetiza la nueva premisa o verdad descubierta durante el proceso...',
+                    metadata: { category: 'REINVENCIÓN // SÍNTESIS' },
+                    x: 300,
+                    y: -120,
+                    width: 260,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b5,
+                    type: 'text',
+                    caption: withExample ? '5. Compromiso & Nuevo Rumbo' : '5. Nuevo Rumbo',
+                    content: withExample
+                        ? 'Regla no negociable:\nProteger los bloques de descanso y creatividad. El arte no es un pasatiempo opcional, es la columna vertebral de mi bienestar.'
+                        : 'Define los acuerdos no negociables contigo mismo para sostener el cambio...',
+                    metadata: { category: 'REINVENCIÓN // COMPROMISO' },
+                    x: 590,
+                    y: -120,
+                    width: 260,
+                    height: 220,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [
+                { from: b1, to: b2, color: '#10b981' },
+                { from: b2, to: b3, color: '#10b981' },
+                { from: b3, to: b4, color: '#10b981' },
+                { from: b4, to: b5, color: '#10b981' }
+            ];
+        } else if (templateId === 'creative_research') {
+            const b1 = `${ts}-cr-1`, b2 = `${ts}-cr-2`, b3 = `${ts}-cr-3`, b4 = `${ts}-cr-4`;
+            newBlocks = [
+                {
+                    id: b1,
+                    type: 'text',
+                    caption: withExample ? '1. Núcleo & Pregunta de Investigación' : '1. Pregunta Central',
+                    content: withExample
+                        ? '¿Cómo representar la soledad urbana y la hiperconectividad sin caer en lugares comunes?'
+                        : 'Formula la pregunta central o enigma que guía este proyecto...',
+                    metadata: { category: 'INVESTIGACIÓN // HIPÓTESIS' },
+                    x: -450,
+                    y: -100,
+                    width: 280,
+                    height: 200,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b2,
+                    type: 'text',
+                    caption: withExample ? '2. Evidencias & Referencias' : '2. Referencias',
+                    content: withExample
+                        ? '• Edward Hopper (Luz y aislamiento)\n• Mark Fisher (Realismo Capitalista)\n• Texturas sonoras de Burial'
+                        : 'Recopila fuentes, creadores y citas fundamentales...',
+                    metadata: { category: 'INVESTIGACIÓN // REFERENCIAS' },
+                    x: -140,
+                    y: -100,
+                    width: 270,
+                    height: 200,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b3,
+                    type: 'text',
+                    caption: withExample ? '3. Tensión Creativa & Iteración' : '3. Iteración',
+                    content: withExample
+                        ? 'Bocetos iniciales: la composición funciona mejor cuando el sujeto está de espaldas y la pantalla ilumina únicamente sus manos.'
+                        : 'Anota los hallazgos de tus primeros ensayos y errores...',
+                    metadata: { category: 'INVESTIGACIÓN // ENSAYOS' },
+                    x: 160,
+                    y: -100,
+                    width: 270,
+                    height: 200,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                },
+                {
+                    id: b4,
+                    type: 'text',
+                    caption: withExample ? '4. Síntesis & Manifiesto' : '4. Síntesis',
+                    content: withExample
+                        ? 'La obra final consistirá en una serie de 3 lienzos digitales con audio ambiental sincronizado.'
+                        : 'Define el formato y la conclusión de este ciclo de investigación...',
+                    metadata: { category: 'INVESTIGACIÓN // CONCLUSIÓN' },
+                    x: 460,
+                    y: -100,
+                    width: 270,
+                    height: 200,
+                    isPublic: false,
+                    createdAt: new Date().toISOString(),
+                    canvasId: targetCanvasId
+                }
+            ];
+            newLinks = [
+                { from: b1, to: b2, color: '#06b6d4' },
+                { from: b2, to: b3, color: '#06b6d4' },
+                { from: b3, to: b4, color: '#06b6d4' }
+            ];
         } else if (templateId === 'character_profile') {
             const b1 = `${ts}-cp-1`, b2 = `${ts}-cp-2`, b3 = `${ts}-cp-3`, b4 = `${ts}-cp-4`, b5 = `${ts}-cp-5`;
             const b6 = `${ts}-cp-6`, b7 = `${ts}-cp-7`, b8 = `${ts}-cp-8`, b9 = `${ts}-cp-9`, b10 = `${ts}-cp-10`;
@@ -17188,6 +17949,8 @@ ${afcMapContext}
                             <div className="space-y-1 mb-4">
                                 {[
                                     { id: 'empty', label: 'Tablero vacío' },
+                                    { id: 'personal_process', label: 'Proceso Personal (Deconstrucción & Reinvención)', badge: 'RECOMENDADO' },
+                                    { id: 'creative_research', label: 'Investigación & Proyecto Creativo' },
                                     { id: 'novel_plan', label: 'Plan de Novela', badge: 'ELECCIÓN TOP' },
                                     { id: 'character_profile', label: 'Perfil de Personaje' },
                                     { id: 'moodboard', label: 'Tablero de Inspiración de Novela' },

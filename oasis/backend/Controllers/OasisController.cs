@@ -42,17 +42,17 @@ namespace Oasis.Backend.Controllers
         private bool IsCallerAuthorized(string requestedUser)
         {
             string caller = GetAuthenticatedUser();
-            if (string.IsNullOrEmpty(caller))
-            {
-                // Fallback: if caller header was omitted but requestedUser is passed, allow self-operation
-                return !string.IsNullOrEmpty(requestedUser);
-            }
+            if (string.IsNullOrEmpty(caller) || string.IsNullOrEmpty(requestedUser))
+                return false;
+            
+            caller = caller.Trim().TrimStart('@');
+            requestedUser = requestedUser.Trim().TrimStart('@');
             
             if (caller.Equals(requestedUser, StringComparison.OrdinalIgnoreCase))
                 return true;
                 
             var callerUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, caller, StringComparison.OrdinalIgnoreCase));
-            if (callerUser != null && callerUser.Role == "clinician")
+            if (callerUser != null && (callerUser.Role == "clinician" || callerUser.Role == "admin" || callerUser.Role == "supervisor"))
             {
                 return true;
             }
@@ -1601,6 +1601,129 @@ namespace Oasis.Backend.Controllers
             });
 
             return Ok();
+        }
+
+        [HttpGet("canvas-teaser")]
+        public IActionResult GetCanvasTeaser([FromQuery] string user, [FromQuery] string canvasId, [FromQuery] int openCount = 2)
+        {
+            if (string.IsNullOrWhiteSpace(user)) return BadRequest("Usuario no especificado.");
+            var u = _state.Users.FirstOrDefault(usr => string.Equals(usr.Username, user.Trim().TrimStart('@'), StringComparison.OrdinalIgnoreCase));
+            if (u == null) return NotFound("Usuario no encontrado.");
+            
+            bool isAuthorized = IsCallerAuthorized(user);
+            string targetCId = string.IsNullOrWhiteSpace(canvasId) ? "canvas_default" : canvasId;
+            var canvasBlocks = u.Blocks
+                .Where(b => (b.CanvasId == targetCId) || (targetCId == "canvas_default" && string.IsNullOrEmpty(b.CanvasId)))
+                .Where(b => b.Type != "settings" && b.Id != "profile_settings" && b.Type != "diary" && b.Type != "diary_notebook")
+                .OrderBy(b => b.Y)
+                .ThenBy(b => b.X)
+                .ToList();
+
+            if (isAuthorized)
+            {
+                return Ok(canvasBlocks);
+            }
+
+            // For visitors: only the first 'openCount' nodes are fully readable; remaining are redacted for security
+            var teaserList = new List<Block>();
+            for (int i = 0; i < canvasBlocks.Count; i++)
+            {
+                var original = canvasBlocks[i];
+                if (i < openCount)
+                {
+                    teaserList.Add(original);
+                }
+                else
+                {
+                    var lockedMeta = original.Metadata != null ? new Dictionary<string, object>(original.Metadata) : new Dictionary<string, object>();
+                    lockedMeta["isTeaserLocked"] = true;
+                    if (!lockedMeta.ContainsKey("category")) lockedMeta["category"] = "PASO BLOQUEADO";
+
+                    teaserList.Add(new Block
+                    {
+                        Id = original.Id,
+                        Type = original.Type,
+                        Caption = original.Caption,
+                        Content = "[CONTENIDO BLOQUEADO • Adquiere el proceso completo para acceder a este nodo]",
+                        X = original.X,
+                        Y = original.Y,
+                        Width = original.Width,
+                        Height = original.Height,
+                        IsPublic = false,
+                        CanvasId = original.CanvasId,
+                        Metadata = lockedMeta
+                    });
+                }
+            }
+            return Ok(teaserList);
+        }
+
+        [HttpPost("clone-canvas")]
+        public IActionResult CloneCanvas([FromQuery] string targetUser, [FromQuery] string fromUser, [FromQuery] string canvasId)
+        {
+            string caller = GetAuthenticatedUser();
+            if (string.IsNullOrEmpty(caller) || !IsCallerAuthorized(targetUser))
+                return StatusCode(403, "No autorizado.");
+
+            string cleanTarget = (targetUser ?? string.Empty).Trim().TrimStart('@');
+            string cleanFrom = (fromUser ?? string.Empty).Trim().TrimStart('@');
+
+            var sourceUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, cleanFrom, StringComparison.OrdinalIgnoreCase));
+            var destUser = _state.Users.FirstOrDefault(u => string.Equals(u.Username, cleanTarget, StringComparison.OrdinalIgnoreCase));
+            if (sourceUser == null || destUser == null) return NotFound("Usuario origen o destino no encontrado.");
+
+            string targetCId = string.IsNullOrWhiteSpace(canvasId) ? "canvas_default" : canvasId;
+            var sourceBlocks = sourceUser.Blocks
+                .Where(b => (b.CanvasId == targetCId) || (targetCId == "canvas_default" && string.IsNullOrEmpty(b.CanvasId)))
+                .Where(b => b.Type != "settings" && b.Id != "profile_settings")
+                .ToList();
+
+            string newCanvasId = $"canvas_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+            var clonedBlocks = new List<Block>();
+
+            // Create parent board block in destination user's default canvas
+            clonedBlocks.Add(new Block
+            {
+                Id = newCanvasId,
+                Type = "canvas",
+                Caption = $"[Proceso] @{cleanFrom}",
+                Content = $"Copia del proceso adquirido de @{cleanFrom}",
+                X = 40,
+                Y = 40,
+                Width = 260,
+                Height = 220,
+                CanvasId = "canvas_default",
+                Username = cleanTarget,
+                Timestamp = DateTime.UtcNow
+            });
+
+            foreach (var b in sourceBlocks)
+            {
+                clonedBlocks.Add(new Block
+                {
+                    Id = $"b_{Guid.NewGuid().ToString("N").Substring(0, 8)}",
+                    Type = b.Type,
+                    Caption = b.Caption,
+                    Content = b.Content,
+                    X = b.X,
+                    Y = b.Y,
+                    Width = b.Width,
+                    Height = b.Height,
+                    IsPublic = false,
+                    CanvasId = newCanvasId,
+                    Username = cleanTarget,
+                    Metadata = b.Metadata != null ? new Dictionary<string, object>(b.Metadata) : new Dictionary<string, object>(),
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
+            lock (StateLock)
+            {
+                destUser.Blocks.AddRange(clonedBlocks);
+                SaveState();
+            }
+
+            return Ok(new { msg = "Lienzo clonado con éxito", newCanvasId, count = clonedBlocks.Count });
         }
 
         [HttpGet("links")]
